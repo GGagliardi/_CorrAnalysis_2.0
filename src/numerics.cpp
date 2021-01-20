@@ -141,6 +141,7 @@ double FTAN(double x1,  int t, int NT) {
 double Root_Brent(double R, int nt, int NT) {
 
 
+  
 
   if(NT%2 != 0) crash("Temporal lattice extent is not divisible by two!");
   NT= NT/2; //it is what enter the expression of the effective mass
@@ -190,6 +191,7 @@ double Root_Brent(double R, int nt, int NT) {
 
   }
 
+  
   return s;
 }
 

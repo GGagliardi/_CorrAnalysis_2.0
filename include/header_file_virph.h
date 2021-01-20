@@ -91,5 +91,9 @@ double Get_charge_at_em_vertex(struct header_virph &header, int icomb);
 
 VVfloat Get_obs_3pt(FILE *stream, struct header_virph &header, int ire, int icomb, int alpha, int mu, string A, int smearing_level);
 
+int Get_number_of_configs_3pt(FILE* stream, struct header_virph& header);
+
+int Get_number_of_configs_2pt(FILE* stream, struct header_virph& header);
+
 
 #endif

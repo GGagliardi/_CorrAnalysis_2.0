@@ -81,7 +81,7 @@ Pfloat Boot_ave_err(VVfloat& A) {
 
     Err_boot[ibranch] = (Err_boot[ibranch] - pow(Res_boot[ibranch],2))*A[ibranch].size()/(A[ibranch].size() -1);
     Tot_result += Res_boot[ibranch]/Nbr;
-    Tot_err += Err_boot[ibranch];
+    Tot_err += Err_boot[ibranch]/Nbr;
   }
 
   for(int ibranch=0; ibranch<Nbr;ibranch++) Tot_err += pow(Res_boot[ibranch]- Tot_result,2)/Nbr;
@@ -120,7 +120,7 @@ double Boot_err(VVfloat& A) {
 
     Err_boot[ibranch] = (Err_boot[ibranch] - pow(Res_boot[ibranch],2))*A[ibranch].size()/(A[ibranch].size() -1);
     Tot_result += Res_boot[ibranch]/Nbr;
-    Tot_err += Err_boot[ibranch];
+    Tot_err += Err_boot[ibranch]/Nbr;
   }
 
   for(int ibranch=0; ibranch<Nbr;ibranch++) Tot_err += pow(Res_boot[ibranch]- Tot_result,2)/Nbr;

@@ -4,11 +4,15 @@
 using namespace std;
 
 Vfloat CorrAnalysis::ASymm(const VVfloat &data, int t ) {
-    if((signed)data.size() <= t) crash("In call to CorrAnalysis::ASymm(VVfloat, int t), index t is larger than VVfloat.size(). Exiting..."); 
-    if(!Perform_Nt_t_average) return data[t];
-   
-    return Multiply_vector_by_scalar(Sum_vectors(data[t], Multiply_vector_by_scalar(data[(Nt-t)%Nt], (double)this->Reflection_sign)), 0.5);
+
+  if((signed)data.size() <= t) crash("In call to CorrAnalysis::ASymm(VVfloat, int t), index t is larger than VVfloat.size(). Exiting..."); 
+
   
+   
+  if(!Perform_Nt_t_average) return data[t];
+  
+  return Multiply_vector_by_scalar(Sum_vectors(data[t], Multiply_vector_by_scalar(data[(Nt-t)%Nt], (double)this->Reflection_sign)), 0.5);
+ 
 }
 
 
@@ -307,7 +311,9 @@ distr_t_list CorrAnalysis::residue_t(const VVfloat &corr_A, string Obs) {
   if((signed)corr_A.size() != Nt) crash("residue_t in CorrAnalysis called with vector of size != Nt");
 
   distr_t_list corr_distr = corr_t(corr_A, "");
+  
   distr_t effective_mass_fit_distr= Fit_distr(effective_mass_t(corr_distr, ""));
+  
 
   distr_t_list analytic_factor(UseJack,Nt);
   for(int t=0;t<Nt;t++) {
@@ -317,6 +323,7 @@ distr_t_list CorrAnalysis::residue_t(const VVfloat &corr_A, string Obs) {
     }
   }
 
+  
   residue = corr_distr/analytic_factor;
 
   result = residue.ave_err();
@@ -352,6 +359,8 @@ distr_t_list CorrAnalysis::residue_t(const distr_t_list &corr_A_distr, string Ob
   }
 
   residue = corr_A_distr/analytic_factor;
+
+  
 
   result = residue.ave_err();
 

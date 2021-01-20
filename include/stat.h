@@ -37,6 +37,12 @@ class distr_t {
  double err() const;
  Pfloat ave_err() const;
  int size() const;
+ static distr_t f_of_distr(function<double(double x)> F,const distr_t& D) {
+   distr_t res(D.UseJack);
+   for(auto &d: D.distr) res.distr.push_back(F(d));
+
+   return res;
+ }
  
 
  bool UseJack;
@@ -118,12 +124,33 @@ class distr_t_list {
  Pfloat ave_err(int i_distr) const ;
  int size() const;
  Vfloat Get_distr_index(int k) const;
+ static distr_t_list f_of_distr_list(function<double(double a, double b)> F,const distr_t_list& D_List)  {
+   distr_t_list RET(D_List.UseJack, D_List.size());
+   for(int t=0; t < RET.size();t++) {
+     for(int k=0;k< D_List.distr_list[t].size();k++) RET.distr_list[t].distr.push_back( F(D_List.distr_list[t].distr[k], t));
+   }
+
+   return RET;
+ }
+ static distr_t_list f_of_distr(function<double(double a, double b, double c)> F,const distr_t& D, int size)  {
+   distr_t_list RET(D.UseJack, size);
+   for(int t=0; t < RET.size();t++) {
+     for(int k=0;k< D.size();k++) RET.distr_list[t].distr.push_back( F(D.distr[k], t, size));
+   }
+
+   return RET;
+ }
+ 
+
+
 
   bool UseJack;
   vector<distr_t> distr_list;
 };
 
 //operator overloading
+
+
 
 
   

@@ -264,19 +264,20 @@ boot_fit_data<T1> bootstrap_fit<T1,T2>::Perform_bootstrap_fit() {
     boot_result.EDM.push_back(chi2.Edm());
     boot_result.N_it.push_back(chi2.NFcn());
     boot_result.IsValid.push_back(chi2.IsValid());
+    Vfloat PP(PNames.size());
+    for(auto const& [key,val]: PNames) PP[val] = chi2.UserState().Value(key);
+    T1 P(PP);
+    boot_result.par.push_back(P);
 
     if(verbose) { //print chi^2 details
       this->PRINT= true;
       this->TAG= "Priors released";
-      Vfloat PP(PNames.size());
-      for(auto const& [key,val]: PNames) PP[val] = chi2.UserState().Value(key);
-      T1 P(PP);
-      boot_result.par.push_back(P);
       this->operator()(PP);
       this->PRINT = false;
     }
     
 
+    
     
 
     cout<<"Chi2 for bootstrap: "<<boot_index<<" = "<<chi2.Fval()<<endl;

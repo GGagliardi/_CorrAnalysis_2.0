@@ -3,7 +3,7 @@
 
 using namespace std;
 
-const double e=  sqrt((1/137.04)*4.0*M_PI); 
+const double e= 1.0; 
 
 
 void read_header_bin(FILE *stream, struct header_virph &header)
@@ -87,7 +87,9 @@ int Get_symmetric_comb(struct header_virph &header, int icomb) {
                     found++;
         }
     }
+
     
+			  
     if (found!=1){
     auto c=header.comb[icomb];
         printf("icomb=%d\n",icomb);
@@ -101,6 +103,7 @@ int Get_symmetric_comb(struct header_virph &header, int icomb) {
         exit(3);
     }
 
+ 
     return ci;
 
 }
@@ -264,6 +267,7 @@ VVfloat Get_obs_3pt(FILE *stream, struct header_virph &header, int ire, int icom
   int tmp= header.header_size;
   int block_size_bytes = sizeof(int) + sizeof(double)*(2*header.tmax*alphas*mus*header.ncomb*header.nqsml*ncorr);
   int nconfs = (file_size_bytes-tmp)/block_size_bytes;
+ 
   if( (file_size_bytes-tmp)%block_size_bytes != 0) crash(" In Get_obs_3pt block_data_size does not divide file_size- header_size");
 
   VVfloat obs(Nt);
@@ -287,4 +291,40 @@ VVfloat Get_obs_3pt(FILE *stream, struct header_virph &header, int ire, int icom
 
  return obs;
  
+}
+
+
+int Get_number_of_configs_3pt(FILE* stream, struct header_virph& header) {
+
+ int ncorr=2;
+
+ int mus=4;
+ int alphas=4;
+  
+ fseek(stream, 0, SEEK_END);
+ int file_size_bytes = ftell(stream);
+ int tmp= header.header_size;
+ int block_size_bytes = sizeof(int) + sizeof(double)*(2*header.tmax*alphas*mus*header.ncomb*header.nqsml*ncorr);
+ int nconfs = (file_size_bytes-tmp)/block_size_bytes;
+ 
+  if( (file_size_bytes-tmp)%block_size_bytes != 0) crash(" In Get_number_of_configs_3pt block_data_size does not divide file_size- header_size");
+
+  return nconfs;
+
+}
+
+
+int Get_number_of_configs_2pt(FILE* stream, struct header_virph& header) {
+  
+  int tmp= header.header_size;
+
+  int ncorr=5;
+
+  fseek(stream, 0, SEEK_END);
+  int file_size_bytes = ftell(stream);
+  int block_size_bytes = sizeof(int) + sizeof(double)*(2*header.tmax*header.ninv*header.ninv*header.nqsml*ncorr);
+  int nconfs = (file_size_bytes-tmp)/block_size_bytes;
+  if( (file_size_bytes-tmp)%block_size_bytes != 0) crash(" In Get_number_of_configs_2pt block_data_size does not divide file_size- header_size");
+
+  return nconfs;
 }

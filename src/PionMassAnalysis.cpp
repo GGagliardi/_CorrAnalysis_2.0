@@ -5,16 +5,16 @@ using namespace std;
 namespace plt = matplotlibcpp;
 
 constexpr double kappa=2.837297;
-const double MPiPhys=0.139;
+const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
 const double e2 = alpha*4.0*M_PI;
 const double r0 = pow(0.672/0.197,2);
-const int Nbranches = 1;
-const int Nboots= 400;
-const bool Use_JB_distribution= true;
+const int Nbranches = 8;
+const int nboots= 200;
+const bool Use_JB_distribution= false;
 const bool UseJack=1;
 const int Njacks=15;
-const int nboots=100;
+const int Nboots=200;
 const bool verbose=1;
 
 
@@ -33,7 +33,7 @@ class X {
 
 public:
   X(const Vfloat &par) : ainv(3), Zv(3), Za(3) {
-    if(par.size() != 17) {
+    if(par.size() != 19) {
       cout<<"In class X, invalid call to constructor"<<endl;
       crash("par_size: +"+to_string(par.size()));
     }
@@ -42,17 +42,19 @@ public:
     this->A_1=par[2];
     this->D=par[3];
     this->Dm=par[4];
-    this->F_pi=par[5];
+    this->F_a=par[5];
     this->log_a=par[6];
-    this->f0=par[7];
+    this->F_m = par[7];
+    this->A_2=par[8];
+    this->f0=par[9];
     for(int ibeta=0;ibeta<3;ibeta++) {
-      this->ainv[ibeta] = par[8+ibeta];
+      this->ainv[ibeta] = par[10+ibeta];
     }
     for(int ibeta=0; ibeta<3;ibeta++) {
-      this->Zv[ibeta] = par[11+ibeta];
+      this->Zv[ibeta] = par[13+ibeta];
     }
     for(int ibeta=0; ibeta<3;ibeta++) {
-      this->Za[ibeta] = par[14+ibeta];
+      this->Za[ibeta] = par[16+ibeta];
     }
   }
   X() : ainv(3), Zv(3), Za(3) {}
@@ -60,7 +62,7 @@ public:
   vector<double> Zv;
   vector<double> Za;
   double f0;
-  double D, Dm, chir, log, log_a, A_1, F_pi;
+  double D, Dm, chir, log, log_a, A_1, F_a, F_m, A_2;
 };
 
 
@@ -75,6 +77,8 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
     dm_exch_data.Read("../datasets", "mes_contr_LL", "P5P5");
   }
   else if (CURRENT_TYPE=="LOCAL") { //current is local
+    // m_data.Read("../datasets", "mes_contr_00", "P5P5");
+    //dm_exch_data.Read("../datasets", "mes_contr_LL", "P5P5");
     m_data.Read("../datasetslocal", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
     dm_exch_data.Read("../datasetslocal", "mes_contr_M0_R0_F_M0_R0_F", "P5P5");
     if(IncludeDisconnected) {
@@ -100,24 +104,52 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
   for(int i=0; i < Nens; i++) {
    
     CorrAnalysis Corr(UseJack, Njacks,Nboots);
-    if(m_data.Tag[i].substr(0,1) == "A") Corr.Tmin = 13;
-    else if(m_data.Tag[i].substr(0,1) =="B") Corr.Tmin = 16;
-    else Corr.Tmin= 19;
-    Corr.Tmax = m_data.nrows[i]/2 -5;
+    if(m_data.Tag[i].substr(0,1) == "A")  Corr.Tmin = 12;
+      else if(m_data.Tag[i].substr(0,1) =="B") Corr.Tmin = 13;
+      else Corr.Tmin= 19;
+    Corr.Tmax = m_data.nrows[i]/2 -4;
     Corr.Nt = m_data.nrows[i];
     boost::filesystem::create_directory("../data");
     boost::filesystem::create_directory("../data/Mpi");
     string p= (CURRENT_TYPE=="CONSERVED")?"conserved":"local";
     boost::filesystem::create_directory("../data/Mpi/"+p);
+
+
+    //print A40.24 with stochastic photon
+    if(m_data.Tag[i] == "A40.24_48") {
+      data_t m_data_stoch, dm_hand_data_stoch;
+      m_data_stoch.Read("../A40.24_48_gen_data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
+      dm_hand_data_stoch.Read("../A40.24_48_gen_data", "handcuffs", "P5P5");
+      CorrAnalysis Corr_stoch(UseJack,Njacks,Nboots);
+      Corr_stoch.Tmin=12;
+      Corr_stoch.Tmax= m_data_stoch.nrows[0]/2 -4;
+      Corr_stoch.Nt = m_data_stoch.nrows[0];
+      distr_t_list Mpi = Corr_stoch.corr_t(m_data_stoch.col(0)[0], "");
+      distr_t_list Dm_hand = Corr_stoch.corr_t(dm_hand_data_stoch.col(0)[0],"");
+      distr_t_list ratio= Dm_hand/Mpi;
+
+      distr_t_list Mpi_non_stoch= Corr.corr_t(m_data.col(0)[i], "");
+      distr_t_list Dm_hand_non_stoch= Corr.corr_t(dm_hand_data.col(0)[i], "");
+      distr_t_list ratio_non_stoch = Dm_hand_non_stoch/Mpi_non_stoch;
+      cout<<"stoch:"<<endl;
+      for (int t=0;t<Corr_stoch.Nt;t++) cout<<t<<"  "<<ratio.ave()[t]<<" "<<ratio.err()[t]<<endl;
+      cout<<"non_stoch:"<<endl;
+      for (int t=0; t<Corr.Nt;t++) cout<<t<<"  "<<ratio_non_stoch.ave()[t]<<"  "<<ratio_non_stoch.err()[t]<<endl;
+      cout<<"Handcuff diagram from stochastic photon computed!"<<endl;
+    }
    
     distr_t_list Mpi_eff_distr = Corr.effective_mass_t(m_data.col(0)[i], "../data/Mpi/"+p+"/mass."+m_data.Tag[i]);
 
     distr_t_list Dm_exch_eff_distr =  Corr.effective_slope_t(dm_exch_data.col(0)[i], m_data.col(0)[i], "../data/Mpi/"+p+"/dm_exch."+m_data.Tag[i]);
+
+    cout<<m_data.Tag[i]<<" "<<Corr.Fit_distr(Dm_exch_eff_distr).ave()<<" "<<Corr.Fit_distr(Dm_exch_eff_distr).err()<<endl;
+   
    
     distr_t_list Dm_hand_eff_distr, Mpi_eff_hand_run_distr;
     if(IncludeDisconnected) {
       Mpi_eff_hand_run_distr= Corr.effective_mass_t(m_data_hand_run.col(0)[i], "");
       Dm_hand_eff_distr= Corr.effective_slope_t(dm_hand_data.col(0)[i], m_data_hand_run.col(0)[i], "../data/Mpi/"+p+"/dm_hand."+m_data.Tag[i]);
+      cout<<m_data.Tag[i]<<" "<<Corr.Fit_distr(Dm_hand_eff_distr).ave()<<" "<<Corr.Fit_distr(Dm_hand_eff_distr).err()<<endl;
     }
 
     
@@ -152,14 +184,19 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
   bf.Add_par("A_1", -5.7, 0.02);
   bf.Add_par("D", 2e-3, 1e-5);
   bf.Add_par("Dm", 0.5, 1e-3);
-  bf.Add_par("F_pi", 2.5, 0.1);
+  bf.Add_par("F_a", 2.5, 0.1);
   bf.Add_par("log_a", 0.1, 1e-3);
+  bf.Add_par("F_m", 2.5, 0.1);
+  bf.Add_par("A_2", 1.0, 0.01);
   bf.Add_prior_par("f0", 0.121, 1e-3);
   bf.Add_prior_pars({"ainv0", "ainv1", "ainv2", "Zv0", "Zv1", "Zv2", "Za0", "Za1", "Za2"});
     
   //Fix some parameters to make test
-  //bf.Fix_par("Dm", 0.0);
+  bf.Fix_par("F_m",0.0);
+  //bf.Fix_par("Dm",0.0);
   bf.Fix_par("log_a", 0.0);
+  bf.Fix_par("A_2", 0.0);
+  //bf.Fix_par("log", 0.0);
 
   //Add List of parameters to be released after first minimization
   bf.Fix_n_release({"ainv0", "ainv1", "ainv2", "f0"});
@@ -174,10 +211,15 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
     
   }
   else if(CURRENT_TYPE=="LOCAL") {
-    bf.Fix_n_release("Zv0");
+     bf.Fix_n_release("Zv0");
     bf.Fix_n_release("Zv1");
     bf.Fix_n_release("Zv2");
+    //bf.Fix_par("Zv0", 1.0);
+    //bf.Fix_par("Zv1",1.0);
+    //bf.Fix_par("Zv2",1.0 );
+   
     if(IncludeDisconnected) {
+      //bf.Fix_par("Za0",0.0);  bf.Fix_par("Za1",0.0);  bf.Fix_par("Za2",0.0);
       bf.Fix_n_release("Za0");
       bf.Fix_n_release("Za1");
       bf.Fix_n_release("Za2");
@@ -210,18 +252,20 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
     double Mp2 = pow(Mp,2);
 
      
-    double SD_FVE = (L>0.0)?(e2/3.0)*ip.Mpi*(1.0/pow(L/ainv,3))*r0*(1 + p.F_pi/(pow(ainv,2))):0.0;
+    double SD_FVE = (L>0.0)?(e2/3.0)*ip.Mpi*(1.0/pow(L/ainv,3))*r0*(1 + p.F_m+ p.F_a/(pow(ainv,2))):0.0;
 
      
     double FVE_universal = (L>0.0)?(kappa*alpha/L)*( ip.Mpi + 2.0/L):0.0;
 
+    double log_par= p.log;
      
     double fitted_value = 16*M_PI*alpha*p.chir*(1.0/pow(p.f0,2))
-    -(1.0/(4*M_PI))*alpha*(p.log +p.log_a/pow(ainv,2))*Mp2*log( Mp2/(pow(4*M_PI*p.f0,2)))
+    -(1.0/(4*M_PI))*alpha*(log_par +p.log_a/pow(ainv,2))*Mp2*log( Mp2/(pow(4*M_PI*p.f0,2)))
     + alpha*Mp2*(1.0/(4.0*M_PI))*p.A_1
     + p.D/pow(ainv,2)
     + SD_FVE - FVE_universal*pow(ainv,2)
-    + p.Dm*Mp2/pow(ainv,2);
+    + p.Dm*Mp2/pow(ainv,2)
+    + p.A_2*pow(Mp2,2);
 
 
     
@@ -237,7 +281,8 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
 
     double Zv = p.Zv[ip.ibeta];
     double Za = p.Za[ip.ibeta];
-    
+
+    //Za=Zv;
         
     double m1 = (e2/2)*pow(Zv,2)*ip.Dm2_exch;
     double m2 = (e2/2)*pow(Za,2)*ip.Dm2_hand;
@@ -251,6 +296,7 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
     double Zv = p.Zv[ip.ibeta];
     double Za = p.Za[ip.ibeta];
 
+    //Za=Zv;
        
     double m1 = (e2/2)*pow(Zv,2)*ip.Dm2_exch_err;
     double m2 = (e2/2)*pow(Za,2)*ip.Dm2_hand_err;
@@ -324,12 +370,12 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
       bf.Append_to_prior("ainv1", lat_input[4], sqrt(CovMatrixInput(4,4)));
       bf.Append_to_prior("ainv2", lat_input[5], sqrt(CovMatrixInput(5,5)));
       bf.Append_to_prior("f0", lat_input[2], sqrt(CovMatrixInput(2,2)));
-      bf.Append_to_prior("Zv0", IsLoc?Zv0:1.0, L_info.Retrieve_Zv("A", ibranch).second);
-      bf.Append_to_prior("Zv1", IsLoc?Zv1:1.0, L_info.Retrieve_Zv("B", ibranch).second);
-      bf.Append_to_prior("Zv2", IsLoc?Zv2:1.0, L_info.Retrieve_Zv("D", ibranch).second);
-      bf.Append_to_prior("Za0", IncludeDisconnected?Za0:0.0, L_info.Retrieve_Za("A", ibranch).second);
-      bf.Append_to_prior("Za1", IncludeDisconnected?Za1:0.0, L_info.Retrieve_Za("B", ibranch).second);
-      bf.Append_to_prior("Za2", IncludeDisconnected?Za2:0.0, L_info.Retrieve_Za("D", ibranch).second);
+      bf.Append_to_prior("Zv0", (IsLoc && 1==1)?Zv0:1.0, L_info.Retrieve_Zv("A", ibranch).second);
+      bf.Append_to_prior("Zv1", (IsLoc && 1==1)?Zv1:1.0, L_info.Retrieve_Zv("B", ibranch).second);
+      bf.Append_to_prior("Zv2", (IsLoc && 1==1)?Zv2:1.0, L_info.Retrieve_Zv("D", ibranch).second);
+      bf.Append_to_prior("Za0", (IncludeDisconnected && 1==1)?Za0:0.0, L_info.Retrieve_Za("A", ibranch).second);
+      bf.Append_to_prior("Za1", (IncludeDisconnected && 1==1)?Za1:0.0, L_info.Retrieve_Za("B", ibranch).second);
+      bf.Append_to_prior("Za2", (IncludeDisconnected && 1==1)?Za2:0.0, L_info.Retrieve_Za("D", ibranch).second);
 
 
       int k= RM();
@@ -370,34 +416,46 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
     return (kappa*alpha/L)*( Mp + 2.0/L);
   };
 
-  auto SD_FVE = [](double L, double Mp, double ainv,  double F_p) {
-    double SDE =(e2/3.0)*Mp*(1.0/pow(L,3))*pow( ainv,3)*r0*(1 + F_p*(1.0/pow(ainv,2)));
+  auto SD_FVE = [](double L, double Mp, double ainv,  double F_a, double F_m) {
+    double SDE =(e2/3.0)*Mp*(1.0/pow(L,3))*pow( ainv,3)*r0*(1 +F_m +  F_a*(1.0/pow(ainv,2)));
     return SDE/pow(ainv,2);
   };
+
 
   auto cont_ansatz = [](X p, double M) {
 
     double Mp2 = pow(M,2);
+    double log_par = p.log;
     return  16*M_PI*alpha*p.chir*(1.0/pow(p.f0,2))
-    -(1.0/(4*M_PI))*alpha*p.log*Mp2*log( Mp2/(pow(4*M_PI*p.f0,2)))
-    + alpha*Mp2*(1.0/(4.0*M_PI))*p.A_1;
+    -(1.0/(4*M_PI))*alpha*log_par*Mp2*log( Mp2/(pow(4*M_PI*p.f0,2)))
+    + alpha*Mp2*(1.0/(4.0*M_PI))*p.A_1 + p.A_2*pow(Mp2,2);
   };
 
 
   
   
   Vfloat MP(600);
+  Vfloat vols(600);
   Vfloat MP_measured(bf.Get_number_of_measurements());
-  for(unsigned int m=0; m<MP.size();m++) MP[m] = 0.0010*m;
-  VVVfloat SD_subtracted_data, Mp_measured, SD_subtracted_data_dim;
+  for(unsigned int m=0; m<MP.size();m++) MP[m] = 0.0010*m+ 0.0010;
+  for(unsigned int vol=0;vol<vols.size();vol++) vols[vol] = 1.0/(vol+18);
+  VVVfloat SD_subtracted_data, Mp_measured, SD_subtracted_data_dim, raw_data, raw_data_adim;
+  VVVfloat Univ_subtracted_data, Univ_subtracted_data_dim;
   VVVVfloat Fitted_func_adim, Fitted_func_dim;
-  VVfloat Physical_point;
+  VVfloat Physical_point, Violation_SU2;
+  VVVfloat A40_slice;
   cascade_resize(SD_subtracted_data, Vint{bf.Get_number_of_measurements(), Nbranches, nboots});
   cascade_resize(SD_subtracted_data_dim, Vint{bf.Get_number_of_measurements(), Nbranches, nboots});
+  cascade_resize(Univ_subtracted_data, Vint{bf.Get_number_of_measurements(), Nbranches, nboots});
+  Univ_subtracted_data_dim=Univ_subtracted_data;
   cascade_resize(Mp_measured, Vint{bf.Get_number_of_measurements(), Nbranches, nboots});
   cascade_resize(Fitted_func_adim, Vint{3, (int)MP.size(), Nbranches, nboots});
   cascade_resize(Fitted_func_dim, Vint{4, (int)MP.size(), Nbranches, nboots});
   cascade_resize(Physical_point, Vint{Nbranches, nboots});
+  Violation_SU2=Physical_point;
+  cascade_resize(A40_slice, Vint{ (int)vols.size(), Nbranches,nboots});
+  cascade_resize(raw_data, Vint{bf.Get_number_of_measurements(), Nbranches, nboots});
+  raw_data_adim= raw_data;
 
   
 
@@ -405,9 +463,21 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
   for(int ibranch=0; ibranch<Nbranches;ibranch++) {
     for(int iboot=0; iboot<nboots;iboot++) {
       X P = Bt_fit[ibranch].par[iboot];
+      for(unsigned int ivol=0; ivol<vols.size();ivol++) {
+	Y new_p;
+	new_p.L = 1.0/vols[ivol];
+	new_p.ibeta=0;
+	new_p.Mpi= 0.318/P.ainv[0];
+	A40_slice[ivol][ibranch][iboot] = bf.ansatz(P,new_p) + FVE(new_p.L, new_p.Mpi);
+      }
       for(int imeas=0; imeas< bf.Get_number_of_measurements(); imeas ++) {
 	Y E = all_ens[ibranch][iboot][imeas];
-	SD_subtracted_data[imeas][ibranch][iboot] = bf.measurement(P, E) + FVE(E.L, E.Mpi) - SD_FVE(E.L, E.Mpi, P.ainv[E.ibeta], P.F_pi);
+	SD_subtracted_data[imeas][ibranch][iboot] = bf.measurement(P, E) + FVE(E.L, E.Mpi) - SD_FVE(E.L, E.Mpi, P.ainv[E.ibeta], P.F_a, P.F_m);
+	Univ_subtracted_data[imeas][ibranch][iboot] = bf.measurement(P,E)+ FVE(E.L, E.Mpi);
+	raw_data_adim[imeas][ibranch][iboot] = bf.measurement(P,E);
+	raw_data[imeas][ibranch][iboot] = raw_data_adim[imeas][ibranch][iboot]*pow(P.ainv[E.ibeta],2);
+	
+	Univ_subtracted_data_dim[imeas][ibranch][iboot] = Univ_subtracted_data[imeas][ibranch][iboot]*pow(P.ainv[E.ibeta],2);
 	SD_subtracted_data_dim[imeas][ibranch][iboot] = SD_subtracted_data[imeas][ibranch][iboot]*pow(P.ainv[E.ibeta],2);
 	Mp_measured[imeas][ibranch][iboot] = E.Mpi*P.ainv[E.ibeta];
       }
@@ -426,22 +496,34 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
       }
       //Add physical point
       Physical_point[ibranch][iboot] = cont_ansatz(P, MPiPhys);
+      Violation_SU2[ibranch][iboot] = P.log - (3.0+(16.0*P.chir/pow(P.f0,4))); 
     }
   }
 
 
    
 
-  Vfloat SD_subtracted_val, SD_subtracted_err, MMP, SD_subtracted_dim_val, SD_subtracted_dim_err;
+  Vfloat SD_subtracted_val, SD_subtracted_err, MMP, SD_subtracted_dim_val, SD_subtracted_dim_err, raw_data_dim_val, raw_data_dim_err, raw_data_adim_val, raw_data_adim_err;
+  Vfloat Univ_subtracted_val, Univ_subtracted_err, Univ_subtracted_dim_val, Univ_subtracted_dim_err;
   for(int imeas=0;imeas<bf.Get_number_of_measurements();imeas++) {
     SD_subtracted_val.push_back( Boot_ave(SD_subtracted_data[imeas]));
     SD_subtracted_err.push_back( Boot_err(SD_subtracted_data[imeas]));
+    Univ_subtracted_val.push_back(Boot_ave(Univ_subtracted_data[imeas]));
+    Univ_subtracted_err.push_back(Boot_err(Univ_subtracted_data[imeas]));
+    Univ_subtracted_dim_val.push_back(Boot_ave(Univ_subtracted_data_dim[imeas]));
+    Univ_subtracted_dim_err.push_back(Boot_err(Univ_subtracted_data_dim[imeas]));
+    raw_data_dim_val.push_back(Boot_ave(raw_data[imeas]));
+    raw_data_dim_err.push_back(Boot_err(raw_data[imeas]));
+    raw_data_adim_val.push_back(Boot_ave(raw_data_adim[imeas]));
+    raw_data_adim_err.push_back(Boot_err(raw_data_adim[imeas]));
     SD_subtracted_dim_val.push_back( Boot_ave( SD_subtracted_data_dim[imeas]));
     SD_subtracted_dim_err.push_back( Boot_err( SD_subtracted_data_dim[imeas]));
     MMP.push_back( Boot_ave(Mp_measured[imeas]));
   }
   
   VVfloat Fitted_func_adim_val, Fitted_func_adim_err, Fitted_func_dim_val, Fitted_func_dim_err;
+  Vfloat A40_slice_val, A40_slice_err, A40_raw_val, A40_raw_err;
+ 
   cascade_resize(Fitted_func_adim_val, {3,(int)MP.size()});
   cascade_resize(Fitted_func_adim_err, {3,(int)MP.size()});
   cascade_resize(Fitted_func_dim_val, {4, (int)MP.size()});
@@ -450,26 +532,49 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
   for(int ibeta=0;ibeta<4;ibeta++) {
     for(unsigned int m=0; m<MP.size();m++) {
       if(ibeta<3) {
+	
 	Fitted_func_adim_val[ibeta][m] = Boot_ave(Fitted_func_adim[ibeta][m]);
 	Fitted_func_adim_err[ibeta][m] = Boot_err(Fitted_func_adim[ibeta][m]);
 	Fitted_func_dim_val[ibeta][m] = Boot_ave(Fitted_func_dim[ibeta][m]);
 	Fitted_func_dim_err[ibeta][m] = Boot_err(Fitted_func_dim[ibeta][m]);
       }
       else {
+	for(int ibranch=0; ibranch<Nbranches;ibranch++)
+	  {
+	    ofstream print_boot_res("../data/Mpi/local/correlated_disc/m_"+to_string(m)+"_ibr_"+to_string(ibranch)+"_1.dat");
+            for(int iboot=0; iboot<nboots;iboot++) print_boot_res<<MP[m]<<setw(20)<<Fitted_func_dim[3][m][ibranch][iboot]<<endl;
+	    print_boot_res.close();
+	  }
 	Fitted_func_dim_val[ibeta][m] = Boot_ave(Fitted_func_dim[ibeta][m]);
 	Fitted_func_dim_err[ibeta][m] = Boot_err(Fitted_func_dim[ibeta][m]);
       }
     }
   }
 
+  for(auto &A40_boot : A40_slice) {
+    A40_slice_val.push_back( Boot_ave(A40_boot));
+    A40_slice_err.push_back( Boot_err(A40_boot));
+  }
   //plot the result
+
+  Vfloat vol_A40, meas_A40, err_meas_A40;
+  for(int iens=0; iens<Nens;iens++)
+    if(m_data.Tag[iens].substr(0,3)=="A40") {
+      vol_A40.push_back( 1.0/L[iens]);
+      meas_A40.push_back(Univ_subtracted_val[iens]);
+      err_meas_A40.push_back(Univ_subtracted_err[iens]);
+      A40_raw_val.push_back(raw_data_adim_val[iens]);
+      A40_raw_err.push_back(raw_data_adim_err[iens]);
+    }
+
+      
 
   string print_path = (CURRENT_TYPE=="CONSERVED")?"conserved":"local";
   string exch_or_tot = IncludeDisconnected?"tot":"exch";
   // Set the size of output image to 1200x780 pixels
   plt::figure_size(1200*1.2, 780*1.2);
   plt::xlabel("$M_{\pi}$   $[GeV]$");
-  plt::ylabel("$\Delta M_{\pi}^{2}$   $[lattice units]$");
+  plt::ylabel("$D M_{\pi}^{2}$   [lattice units]");
   plt::xlim(0.0, MP[MP.size()-1]);
   
   plt::errorbar(MP, Fitted_func_adim_val[0], Fitted_func_adim_err[0], { {"c", "red"}, {"marker", "."} , {"ls" , "-"}, {"label", "Fit to A"}});
@@ -484,37 +589,69 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
   string figure_path= "../plots/Mpi/fit_dimless_"+print_path+"_"+exch_or_tot;
   plt::save(figure_path.c_str());
     
-  //Print data to file
+  
  
-  boost::filesystem::create_directory("../data");
-  boost::filesystem::create_directory("../data/Mpi/"+print_path);
-  string type = IncludeDisconnected?"total":"exchange";
-  for(int ibeta=0;ibeta<3;ibeta++) {
-    Print_To_File({}, {MP, Fitted_func_adim_val[ibeta], Fitted_func_adim_err[ibeta]}, "../data/Mpi/"+print_path+"/Fit_function"+type+"_ibeta_"+to_string(ibeta)+".data", "", "#Mpi     #Mpi^2_+ - Mpi^2_0     #err" );
-  }
-  Print_To_File(m_data.Tag, { MMP, SD_subtracted_val, SD_subtracted_err}, "../data/Mpi/"+print_path+"/sd_subtracted_data_"+type+".dat", "", "#Ens        #Mpi        #Mpi^2_+ - Mpi^2_0      #err");
+ 
 
-
+   
+ 
 
   plt::clf();
   plt::xlim(0.0, MP[MP.size()-1]);
-  plt::xlabel("$M_{\pi}$   $[GeV]$");
-  plt::ylabel("$ \Delta M_{pi}^{2}$    $[GeV^{-2}]$");
-  plt::errorbar(MP, Fitted_func_dim_val[0], Fitted_func_dim_err[0], { {"c", "red"}, {"marker", "."} , {"ls" , "-"}, {"label", "A"}});
-  plt::errorbar(MP, Fitted_func_dim_val[1], Fitted_func_dim_err[1], { {"c", "blue"}, {"marker", "."} , {"ls" , "-"}, {"label", "B"}});
-  plt::errorbar(MP, Fitted_func_dim_val[2], Fitted_func_dim_err[2], { {"c", "green"}, {"marker", "."} , {"ls" , "-"}, {"label", "D"}});
-  plt::errorbar(MP, Fitted_func_dim_val[3], Fitted_func_dim_err[3], { {"c", "yellow"}, {"marker", "."} , {"ls" , "-"}, {"label", "cont."}});
-  plt::errorbar(MMP, SD_subtracted_dim_val, SD_subtracted_dim_err, { {"c", "black"}, {"marker", "o"}, {"ls", ""}, {"label", "Data, all FVE subtracted"}});
-  plt::errorbar(Vfloat{MPiPhys}, Vfloat{1137.0*1e-6}, Vfloat{63.0*1e-6}, {{"c", "red"}, {"marker", "o"}, {"ls", ""}, {"label", "phys from 1707"}});
+  plt::xlabel("$M_{\pi}$   $(GeV)$");
+  plt::ylabel("$ \Delta M_{pi}^{2}$    $(GeV^{2})$");
+  plt::plot(MP, Fitted_func_dim_val[0],  { {"c", "red"}, {"marker", "."} , {"ls" , "-"}, {"label", "A"}});
+  plt::plot(MP, Fitted_func_dim_val[1],  { {"c", "blue"}, {"marker", "."} , {"ls" , "-"}, {"label", "B"}});
+  plt::plot(MP, Fitted_func_dim_val[2],  { {"c", "green"}, {"marker", "."} , {"ls" , "-"}, {"label", "C"}});
+  plt::errorbar(MP, Fitted_func_dim_val[3], Fitted_func_dim_err[3], { {"c", "yellow"}, {"marker", "."} , {"ls" , "-"}, {"label", "continuum"}});
+  plt::errorbar(MMP, SD_subtracted_dim_val, SD_subtracted_dim_err, { {"c", "black"}, {"marker", "o"}, {"ls", ""}, {"label", "Lattice data, all FVE subtracted"}});
+  //plt::errorbar(Vfloat{MPiPhys}, Vfloat{1137.0*1e-6}, Vfloat{63.0*1e-6}, {{"c", "red"}, {"marker", "o"}, {"ls", ""}, {"label", "phys from 1707"}});
   plt::plot(MP, Vfloat(MP.size(), 1261.2*1e-6), { {"c","grey"}, {"label", "phys."}});
+  plt::errorbar(Vfloat{MPiPhys}, Vfloat{  Boot_ave(Physical_point)}, Vfloat{Boot_err(Physical_point)}, { {"c", "black"}, {"marker", "D"}, {"ls", "" }, {"label", "Experimental value"}}); 
 
   plt::legend();
 
-  figure_path= "../plots/Mpi/fit_"+print_path+"_"+exch_or_tot;
+  figure_path="../plots/Mpi/fit_"+print_path+"_"+exch_or_tot;
   plt::save(figure_path.c_str());
 
+ 
+
+
+  plt::clf();
+  plt::xlim(0.0, vols[0]);
+  plt::xlabel("$1/L$   [lattice units]");
+  plt::ylabel("$D M_{\pi}^{2}$   [lattice units]");
+  plt::errorbar(vols, A40_slice_val, A40_slice_err, { {"c", "yellow"}, {"marker", "."} , {"ls" , "-"}, {"label", "Fit to A40 slice"}});
+  plt::errorbar(vol_A40, meas_A40, err_meas_A40, { {"c", "blue"}, {"marker", "."} , {"ls" , ""}, {"label", "A40 data, Univ FVE included."}});
+  plt::legend();
+
+  figure_path = "../plots/Mpi/A40_slice_"+print_path+"_"+exch_or_tot;
+  plt::save(figure_path.c_str());
+
+  
+  //save data in files
+  boost::filesystem::create_directory("../data");
+  boost::filesystem::create_directory("../data/Mpi/"+print_path);
+  Print_To_File({}, {MP, Fitted_func_dim_val[0], Fitted_func_dim_err[0],  Fitted_func_dim_val[1], Fitted_func_dim_err[1], Fitted_func_dim_val[2], Fitted_func_dim_err[2], Fitted_func_dim_val[3], Fitted_func_dim_err[3]} , "../data/Mpi/"+print_path+"/Fitted_func_dim_"+exch_or_tot+".dat", "OUT", "#MP     beta=1.90      beta=1.95      beta=2.10           cont");
+ 
+  Print_To_File({}, {MP, Fitted_func_adim_val[0], Fitted_func_adim_err[0],  Fitted_func_adim_val[1], Fitted_func_adim_err[1], Fitted_func_adim_val[2], Fitted_func_adim_err[2]} , "../data/Mpi/"+print_path+"/Fitted_func_adim_"+exch_or_tot+".dat", "OUT", "#MP     beta=1.90      beta=1.95      beta=2.10");
+ 
+  Print_To_File(m_data.Tag, { MMP, SD_subtracted_val, SD_subtracted_err, SD_subtracted_dim_val, SD_subtracted_dim_err}, "../data/Mpi/"+print_path+"/sd_subtracted_data_"+exch_or_tot+".dat", "", "#Ens        #Mpi        #Mpi^2_+ - Mpi^2_0      #err");
+ 
+  Print_To_File(m_data.Tag, { MMP, Univ_subtracted_dim_val, Univ_subtracted_dim_err, raw_data_dim_val, raw_data_dim_err, Univ_subtracted_val, Univ_subtracted_err, raw_data_adim_val, raw_data_adim_err  }, "../data/Mpi/"+print_path+"/data_"+exch_or_tot+".dat", "", "#Ens      MP     Univ_sub_data_dim       Raw_data_dim       Univ_sub_data_admin       Raw_data_adim");
+ 
+  Print_To_File({}, {vol_A40, meas_A40, err_meas_A40, A40_raw_val, A40_raw_err}, "../data/Mpi/"+print_path+"/A40_"+exch_or_tot+".dat","", "#1/L         univ_meas            univ_err       raw_meas      raw_err");
+  string command = "echo "+to_string_with_precision(MPiPhys,8)+"\t\t"+to_string_with_precision(Boot_ave(Physical_point),8)+"\t\t"+to_string_with_precision(Boot_err(Physical_point),8)+" > ../data/Mpi/"+print_path.c_str()+"/Phys_val_"+exch_or_tot+".dat";
+  system(command.c_str());
+  
+  
+
+   
 
   cout<<"Physical Pion mass difference squared [Mev2]: "<< Boot_ave(Physical_point)*1e+6<<"    "<<Boot_err(Physical_point)*1e+6<<endl;
+  cout<<"SU2 ChPT violation: "<<Boot_ave(Violation_SU2)<<"    "<<Boot_err(Violation_SU2)<<endl;
+  cout<<"On single branches: "<<endl;
+  for(int ibr=0; ibr<Nbranches;ibr++) cout<<"Branch: "<<ibr<<": "<<Boot_ave(Physical_point[ibr])*1e+6<<"   "<<Boot_err(Physical_point[ibr])*1e+6<<endl;
   cout<<"Average chi2:"<<endl;
   for(int ibr=0;ibr<Nbranches;ibr++) cout<<"Branch: "<<ibr<<" chi2 = "<<accumulate(Bt_fit[ibr].chi2.begin(), Bt_fit[ibr].chi2.end(), 0.0)/Bt_fit[ibr].chi2.size()<<endl;
 
