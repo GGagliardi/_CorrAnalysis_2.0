@@ -30,6 +30,7 @@
 #include <boost/generator_iterator.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/normal_distribution.hpp>
+#include <boost/random/uniform_real_distribution.hpp>
 #include <boost/format.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
@@ -78,6 +79,7 @@ double eps(int k);
 double F(double x, double a, int alpha);
 void derivative(Vfloat &RES, Vfloat &INPUT, string MODE);
 double FTAN(double x1, int t, int NT);
+double FTAN_SYMM(double x1, int t, int NT);
 double Root_Brent(double R, int nt, int NT);
 double DoConstantFit(Vfloat &data, Vfloat &err);
 void Print_To_File(const vector<string>& row_id, const VVfloat &data, string Path, string MODE, string Header);

@@ -82,7 +82,8 @@ int Get_symmetric_comb(struct header_virph &header, int icomb) {
         if (fabs(header.comb[i].ths[1]-header.comb[icomb].ths[1] )<1e-10)
         if (fabs(header.comb[i].th0[2]-header.comb[icomb].th0[2] )<1e-10)    
         if (fabs(header.comb[i].tht[2]-header.comb[icomb].tht[2] )<1e-10)        
-        if (fabs(header.comb[i].ths[2]-header.comb[icomb].ths[2] )<1e-10){
+        if (fabs(header.comb[i].ths[2]-header.comb[icomb].ths[2] )<1e-10)
+	if (fabs(header.comb[i].off - header.comb[icomb].off ) < 1e-10)  {
                     ci=i;
                     found++;
         }
@@ -99,6 +100,7 @@ int Get_symmetric_comb(struct header_virph &header, int icomb) {
         printf("tht=%f  %f  %f\n",c.tht[0],c.tht[1],c.tht[2]);
         printf("ths=%f  %f  %f\n",c.ths[0],c.ths[1],c.ths[2]);
         printf("find_icomb_with_opposite_mu\n");
+	printf("ci: %d\n", ci);
         printf("Either there is no combination with opposite mu either there are many\n");
         exit(3);
     }
@@ -124,7 +126,7 @@ int Get_comb_k0(struct  header_virph &header, int icomb){
                 if (fabs(header.comb[i].ths[k]-header.comb[icomb].ths[k] )<1e-10)
                 if (fabs(header.comb[i].mu1-header.comb[icomb].mu1 )<1e-10)    
                 if (fabs(header.comb[i].mu2-header.comb[icomb].mu2 )<1e-10)        
-                if (fabs(header.comb[i].off-header.comb[icomb].off )<1e-10){
+                if (fabs(header.comb[i].off)<1e-10){
                     foundk++;
                 }
             }
@@ -145,7 +147,8 @@ int Get_comb_k0(struct  header_virph &header, int icomb){
         printf("th0=%f  %f  %f\n",c.th0[0],c.th0[1],c.th0[2]);
         printf("tht=%f  %f  %f\n",c.tht[0],c.tht[1],c.tht[2]);
         printf("ths=%f  %f  %f\n",c.ths[0],c.ths[1],c.ths[2]);
-        printf("find_icomb_with_opposite_mu\n");
+        printf("find_icomb_with_k0\n");
+	printf("ci: %d\n", ci);
         printf("Either there is no combination with opposite mu either there are many\n");
         exit(3);
     }

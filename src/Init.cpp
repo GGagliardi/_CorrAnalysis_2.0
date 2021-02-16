@@ -41,12 +41,11 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
   }
     
   else if(Analysis_Mode=="Form_factors") {
-    string T="";
-    do{ getline(ReadInput, T);} while(T!="#Init_description_form_factors" && !ReadInput.eof());
-    if(T!="#Init_description_form_factors") crash("Error in input file. Cannot find expected string Init_description_form_factors");
-    ReadInput>>T;
-    if(T !="#Meson_to_Analyze:") crash("Error in input file. Expected #Meson_to_Analyze, obtained: "+ReadLine);
-    ReadInput >> Meson_to_analyze;    
+    //do nothing  
+  }
+
+  else if(Analysis_Mode == "Axion_l7") {
+    //do nothing
   }
   
   
@@ -62,10 +61,14 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
 
 void MasterClass_analysis::Analysis_manager() {
 
-  if(Analysis_Mode=="Form_factors") Compute_form_factors(Meson_to_analyze);
+  if(Analysis_Mode=="Form_factors") Compute_form_factors();
 
   if(Analysis_Mode=="Meson_masses") {
     if(Meson_to_analyze =="PI") Pion_mass_analysis(this->CURRENT_TYPE, this->IncludeDisconnected);
+  }
+
+  if(Analysis_Mode == "Axion_l7") {
+    Axion_l7_analysis();
   }
 
 

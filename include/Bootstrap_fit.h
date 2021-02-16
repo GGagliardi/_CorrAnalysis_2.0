@@ -87,6 +87,7 @@ public:
   bool PRINT;
   string TAG;
   string PATH;
+ 
   
 };
 
@@ -103,9 +104,12 @@ double bootstrap_fit<T1, T2>::operator()(const Vfloat& par) const {
     }
     while(pos<NumberOfMeasurements)  {
       T1 pp(par);
+      // for(unsigned int pi=0;pi<par.size();pi++) if(isnan(par[pi])) crash("par nr: "+to_string(pi)+" is nan, bootstrap: "+to_string(*ib));
       double ansatz = this->ansatz(pp, Input_pars[*ib][pos]);
       double measurement = this->measurement(pp, Input_pars[*ib][pos]);
       double error = this->error(pp, Input_pars[*ib][pos]);
+    
+     
       
       double res = pow( (ansatz-measurement)/error,2);
       if(PRINT) PrintChi<<pos<<setw(20)<<ansatz<<setw(20)<<measurement<<setw(20)<<error<<setw(20)<<res<<endl;

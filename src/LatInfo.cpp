@@ -18,6 +18,9 @@ void LatticeInfo::LatInfo(string S) {
   if(S=="A") {
     Beta= 1.90;
     ZP= 0.529;
+    ZP_err=0.007;
+    ZS=0.747;
+    ZS_err=0.012;
     a = 0.0885;
     a_err = 0.0036;
     if(CURRENT_TYPE=="LOCAL") {
@@ -37,6 +40,9 @@ void LatticeInfo::LatInfo(string S) {
   else if(S=="B") {
     Beta= 1.95;
     ZP= 0.509;
+    ZP_err=0.004;
+    ZS=0.713;
+    ZS_err=0.009;
     a = 0.0815;
     a_err = 0.0030;
     if(CURRENT_TYPE=="LOCAL") {
@@ -58,6 +64,9 @@ void LatticeInfo::LatInfo(string S) {
   else if(S=="D") {
     Beta= 2.10;
     ZP= 0.516;
+    ZP_err=0.02;
+    ZS=0.700;
+    ZS_err=0.006;
     a = 0.0619;
     a_err = 0.0018;
     if(CURRENT_TYPE=="LOCAL") {
@@ -79,6 +88,7 @@ void LatticeInfo::LatInfo(string S) {
 
 
 }
+
 
 
 

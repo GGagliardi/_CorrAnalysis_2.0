@@ -117,6 +117,10 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
 
     //print A40.24 with stochastic photon
     if(m_data.Tag[i] == "A40.24_48") {
+
+      distr_t_list Mpi_non_stoch= Corr.corr_t(m_data.col(0)[i], "../corr_PI_A40.24_48");
+
+      if(IncludeDisconnected) {
       data_t m_data_stoch, dm_hand_data_stoch;
       m_data_stoch.Read("../A40.24_48_gen_data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
       dm_hand_data_stoch.Read("../A40.24_48_gen_data", "handcuffs", "P5P5");
@@ -128,7 +132,7 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
       distr_t_list Dm_hand = Corr_stoch.corr_t(dm_hand_data_stoch.col(0)[0],"");
       distr_t_list ratio= Dm_hand/Mpi;
 
-      distr_t_list Mpi_non_stoch= Corr.corr_t(m_data.col(0)[i], "");
+      
       distr_t_list Dm_hand_non_stoch= Corr.corr_t(dm_hand_data.col(0)[i], "");
       distr_t_list ratio_non_stoch = Dm_hand_non_stoch/Mpi_non_stoch;
       cout<<"stoch:"<<endl;
@@ -136,6 +140,8 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
       cout<<"non_stoch:"<<endl;
       for (int t=0; t<Corr.Nt;t++) cout<<t<<"  "<<ratio_non_stoch.ave()[t]<<"  "<<ratio_non_stoch.err()[t]<<endl;
       cout<<"Handcuff diagram from stochastic photon computed!"<<endl;
+      }
+      
     }
    
     distr_t_list Mpi_eff_distr = Corr.effective_mass_t(m_data.col(0)[i], "../data/Mpi/"+p+"/mass."+m_data.Tag[i]);
@@ -597,6 +603,7 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
  
 
   plt::clf();
+  plt::figure_size(1200*1.2, 780*1.2);
   plt::xlim(0.0, MP[MP.size()-1]);
   plt::xlabel("$M_{\pi}$   $(GeV)$");
   plt::ylabel("$ \Delta M_{pi}^{2}$    $(GeV^{2})$");

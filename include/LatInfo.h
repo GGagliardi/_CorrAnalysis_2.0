@@ -13,6 +13,9 @@ class LatticeInfo {
   LatticeInfo(string CURRENT_TYPE) { this->CURRENT_TYPE = CURRENT_TYPE;}
   void LatInfo(string S);
   double ZP;
+  double ZP_err;
+  double ZS;
+  double ZS_err;
   double Zv;
   double Zv_err;
   double Zv_M2;

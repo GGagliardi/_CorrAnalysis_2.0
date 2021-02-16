@@ -136,6 +136,20 @@ double FTAN(double x1,  int t, int NT) {
 
 }
 
+double FTAN_SYMM(double x1,  int t, int NT) {
+
+  double dNT = (double)NT/2.0;
+  double dt = (double)t;
+  
+  double RES=  +1.0*(dNT -dt +1.0)*tanh(x1*(dNT-dt+1.0)) -1.0*(dNT -dt-1.0)*tanh(x1*(dNT-dt-1.0));
+
+  // cout<<"FTAN: "<<RES<<endl<<flush;
+
+  return RES;
+
+
+}
+
 
 
 double Root_Brent(double R, int nt, int NT) {
@@ -215,7 +229,7 @@ double DoConstantFit(Vfloat &data, Vfloat &err) {
   for(unsigned int k=0; k<data.size(); k++) {result += pow(1.0/err[k],2)*data[k]; weight += pow(1.0/err[k],2);}
 
   if(isnan(result) || isnan(weight)) { //fit without errors
-    cout<<"Switching from chi^2 minimization to least square minimization......"<<endl;
+    //cout<<"Switching from chi^2 minimization to least square minimization......"<<endl;
     result=0;
     weight=0;
     for(auto &meas: data) {result += meas; weight++;}

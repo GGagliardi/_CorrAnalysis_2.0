@@ -11,6 +11,7 @@
 #include "Bootstrap_fit.h"
 #include "header_file_virph.h"
 #include "LatInfo.h"
+#include "T_min.h"
 
 
 
@@ -23,7 +24,7 @@ class pt3_momenta {
 
  public:
   pt3_momenta() {}
-  pt3_momenta(Vfloat A, Vfloat B, Vfloat C) : theta_0(A), theta_s(B), theta_t(C) {
+ pt3_momenta(Vfloat A, Vfloat B, Vfloat C) : theta_0(A), theta_s(B), theta_t(C) {
     if (A.size() != 3 || B.size() != 3 || C.size() != 3) crash("In class pt3_momenta, call to constructor is invalid: cannot build 3_momenta using vectors of size != 3");
   }
   pt3_momenta(double A, double B, double C, double mu1, double mu2, double virt, double L , double T) {
@@ -47,7 +48,7 @@ class pt3_momenta {
 
 
   Vfloat k() {
-    Vfloat res({theta_0[0]-theta_t[0], theta_0[1]-theta_t[1], theta_0[2]-theta_t[2]});
+    Vfloat res({this->theta_0[0]-this->theta_t[0], this->theta_0[1]-this->theta_t[1], this->theta_0[2]-this->theta_t[2]});
     res= Multiply_vector_by_scalar(res, 2*M_PI/l);
     for(auto & k_i: res) k_i = 2.0*sin(k_i/2.0);
     return res;
@@ -92,7 +93,7 @@ class pt3_momenta {
   }
 
   string name() {
-    return to_string_with_precision(theta_0[2],4)+"_"+to_string_with_precision(theta_s[2],4)+"_"+to_string_with_precision(theta_t[2],4)+"_"+to_string_with_precision( mu(0),4)+"_"+to_string_with_precision(mu(1),4);
+    return to_string_with_precision(theta_0[2],4)+"_"+to_string_with_precision(theta_s[2],4)+"_"+to_string_with_precision(theta_t[2],4)+"_"+to_string_with_precision( mu(0),4)+"_"+to_string_with_precision(mu(1),4)+"_"+to_string_with_precision(virt_val,4);
   }
 
   Vfloat Theta(int i) {
@@ -254,12 +255,14 @@ distr_t_list A_ave_unpolarized(vector<vector<distr_t_list>>& distr_mom_k);
 
 distr_t_list H_V(vector<vector<distr_t_list>>& distr_mom_k, vector<vector<distr_t_list>>& distr_mom_0, pt3_momenta& Mom);
 
-void Compute_form_factors(string Meson);
+void Compute_form_factors();
 
 void Add_to_mom_list(pt3_momenta_list &M, struct header_virph &header, double& L); 
 
-void Add_to_mom_list(pt2_momenta_list &M, struct header_virph &header, double& L); 
+void Add_to_mom_list(pt2_momenta_list &M, struct header_virph &header, double& L);
 
+void Plot_form_factors(string W, distr_t_list& F, distr_t &F_fit, int Tmin, int Tmax, int Nt, string Ens_tag, double xg, double offsh, int smearing);
 
+void Fit_contaminations(string W, distr_t_list& F, distr_t &F_fit, string Ens_tag, int Nt, double xg, double offsh, int smearing); 
 
 #endif

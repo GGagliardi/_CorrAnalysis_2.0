@@ -52,7 +52,8 @@ class GaussianMersenne {
   }
 
  GaussianMersenne() {} 
- GaussianMersenne(int seed) : gen(seed)  {}
+ GaussianMersenne(int seed) : gen(seed)  {std_dev=1.0;}
+ GaussianMersenne(int seed, double std_dev) : gen(seed), std_dev(std_dev) {}
     
   
   
@@ -63,7 +64,7 @@ class GaussianMersenne {
     return GaussFlow[Length*ibranch + gen_index[ibranch]-1];
   }
   double operator()() {
-    boost::variate_generator<boost::mt19937&, boost::normal_distribution<>> b(gen, boost::normal_distribution<>());
+    boost::variate_generator<boost::mt19937&, boost::normal_distribution<>> b(gen, boost::normal_distribution<>(0.0, std_dev));
     return b();
   }
   
@@ -76,8 +77,30 @@ class GaussianMersenne {
   Vfloat GaussFlow;
   Vint gen_index;
   int Length;
+  double std_dev;
 } ;
 
+
+class UniformMersenne  {
+
+public:
+
+ UniformMersenne(int seed) : gen(seed), x(1), y(1)  {}
+ UniformMersenne(int seed, double x, double y) : gen(seed), x(x), y(y) {}
+    
+  
+  double operator()() {
+    boost::variate_generator<boost::mt19937&, boost::random::uniform_real_distribution<>> b(gen, boost::random::uniform_real_distribution<>(x, y));
+    return b();
+  }
+  
+  
+ private:
+  boost::mt19937 gen;
+  double x;
+  double y;
+  
+};
 
 
 double gauss(Pfloat A, GaussianMersenne& B);

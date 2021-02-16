@@ -3,6 +3,7 @@
 
 #include "numerics.h"
 #include "stat.h"
+#include "T_min.h"
 
 
 using namespace std;
@@ -24,6 +25,7 @@ class CorrAnalysis {
   distr_t_list residue_t(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of the residue of the pole "acts on distributions"
   distr_t_list decay_constant_t(const VVfloat &corr, string Obs); //returns jackknife or boostrap distribution of a decay constant "acts on data"
   distr_t_list decay_constant_t(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of a decay constant "acts on distribution"
+  distr_t_list effective_slope_t_2nd_ord(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr,const distr_t_list& corr_C_distr,string OBS);
   Vfloat ASymm(const VVfloat& data, int t );
 
 
