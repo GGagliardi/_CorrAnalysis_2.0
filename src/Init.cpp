@@ -47,6 +47,16 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
   else if(Analysis_Mode == "Axion_l7") {
     //do nothing
   }
+
+  else if(Analysis_Mode == "Neutral_pi_TM") {
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode =="Eta_TM") {
+    //do nothing
+
+  }
   
   
   else crash("Analysis_Mode: "+Analysis_Mode+" not found");
@@ -71,7 +81,13 @@ void MasterClass_analysis::Analysis_manager() {
     Axion_l7_analysis();
   }
 
+  if(Analysis_Mode == "Neutral_pi_TM") {
+    Neutral_pi_TM();
+  }
 
+  if(Analysis_Mode == "Eta_TM") {
+    Eta_TM();
+  }
   return;
 
 

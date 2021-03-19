@@ -87,7 +87,6 @@ int Get_2pt_p(struct header_virph &header, int i0, int is);
 
 VVfloat Get_obs_2pt(FILE *stream, struct header_virph &header, int ire,int icomb, int icorr, int smearing_level);
 
-double Get_charge_at_em_vertex(struct header_virph &header, int icomb);
 
 VVfloat Get_obs_3pt(FILE *stream, struct header_virph &header, int ire, int icomb, int alpha, int mu, string A, int smearing_level);
 

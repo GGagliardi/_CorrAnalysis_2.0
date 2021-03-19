@@ -121,12 +121,12 @@ int Get_comb_k0(struct  header_virph &header, int icomb){
     for (int i =0; i<header.ncomb;i++ ){
         foundk=0;
         for (int k=0; k<3;k++){
-            if (fabs(header.comb[i].th0[k]-header.comb[i].tht[k] )<1e-10){
-                if (fabs(header.comb[i].th0[k]-header.comb[icomb].th0[k] )<1e-10)
-                if (fabs(header.comb[i].ths[k]-header.comb[icomb].ths[k] )<1e-10)
-                if (fabs(header.comb[i].mu1-header.comb[icomb].mu1 )<1e-10)    
-                if (fabs(header.comb[i].mu2-header.comb[icomb].mu2 )<1e-10)        
-                if (fabs(header.comb[i].off)<1e-10){
+            if (fabs(header.comb[i].th0[k]-header.comb[i].tht[k] )<1e-7){
+                if (fabs(header.comb[i].th0[k]-header.comb[icomb].th0[k] )<1e-7)
+                if (fabs(header.comb[i].ths[k]-header.comb[icomb].ths[k] )<1e-7)
+                if (fabs(header.comb[i].mu1-header.comb[icomb].mu1 )<1e-7)    
+                if (fabs(header.comb[i].mu2-header.comb[icomb].mu2 )<1e-7)        
+                if (fabs(header.comb[i].off)<1e-8){
                     foundk++;
                 }
             }
@@ -163,7 +163,7 @@ int Get_2pt_k0p0(struct header_virph &header,double mu1, double mu2) {
     auto c = header.comb[icomb];
 
     if( fabs(c.mu1 -mu1) < eps(15) && fabs(c.mu2 -mu2)< eps(15)) 
-      if( pow(c.th0[0],2) + pow(c.th0[1],2) + pow(c.th0[2],2) + pow(c.ths[0],2) + pow(c.ths[1],2) + pow(c.ths[2],2) < eps(15)) return icomb;
+      if( (pow(c.th0[0],2) + pow(c.th0[1],2) + pow(c.th0[2],2) + pow(c.ths[0],2) + pow(c.ths[1],2) + pow(c.ths[2],2) < 1.0e-7) && (c.off < 1.0e-8)) return icomb;
 
   }
 
@@ -235,15 +235,7 @@ VVfloat Get_obs_2pt(FILE *stream, struct header_virph &header, int ire,int icomb
   
 }
   
-double Get_charge_at_em_vertex(struct header_virph &header, int icomb) {
 
-  double e_f;
-
-  
-
-  return e_f/3.0;
-
-}
 
 VVfloat Get_obs_3pt(FILE *stream, struct header_virph &header, int ire, int icomb, int alpha, int mu, string A, int smearing_level) {
 

@@ -63,7 +63,7 @@ class pt3_momenta {
     double e=0.0;
     Vfloat k=this->k();
     for(auto &k_x: k ) e += pow(k_x,2);
-    return 2.0*asinh(sqrt(e)/2.0);
+    return 2.0*asinh(sqrt(e + pow(2*sinh( this->virt()/2.0)  ,2) )/2.0);
   }
 
   double k_mod() {
@@ -253,7 +253,11 @@ distr_t_list V_ave_unpolarized(vector<vector<distr_t_list>>& distr_mom_k, vector
 
 distr_t_list A_ave_unpolarized(vector<vector<distr_t_list>>& distr_mom_k);
 
-distr_t_list H_V(vector<vector<distr_t_list>>& distr_mom_k, vector<vector<distr_t_list>>& distr_mom_0, pt3_momenta& Mom);
+
+distr_t_list H_2(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H03,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H03_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= kz
+distr_t_list H_1(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H03,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H03_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k=kz
+distr_t_list FA_off(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H03,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H03_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k=kz
+
 
 void Compute_form_factors();
 

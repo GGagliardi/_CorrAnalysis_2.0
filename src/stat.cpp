@@ -81,7 +81,87 @@ void Compute_correlation_matrix(bool UseJack, Eigen::MatrixXd& Corr, int nargs,.
   return;
 }
 
+distr_t Jackknife::DoJack(function<double(const Vfloat&)> F, int Nobs,...) {
 
+
+  distr_t JackDistribution(1);
+  
+  VVfloat Copy_data;
+
+  va_list args;
+  va_start(args, Nobs);
+  for(int var_i=0;var_i<Nobs;var_i++) Copy_data.push_back(va_arg(args,Vfloat));
+  va_end(args);
+
+   //check that data size is same for all observables
+  int N=0;
+  for(unsigned int i=0; i<Copy_data.size();i++) {
+    if((signed)Copy_data[i].size() != N && (signed)i != 0) crash("Jackknife::DoJack called for "+to_string(Nobs)+" observables having different data sizes");
+    else N= Copy_data[i].size();
+  }
+
+  
+  if(ThermalMeasToErase > 0) {
+    for(auto &data: Copy_data) data.erase(data.begin(), data.begin()+ThermalMeasToErase);
+  }
+
+    if(Copy_data.size() == 0) crash("Jackknife routine called with an empty vector");
+
+   
+  
+  Vfloat sigma_obs_block(block_size_max,0);
+  Vfloat mean_obs_block(block_size_max,0);
+  Vfloat block_data;
+
+  if(Verbose_jack) cout<<"#######JACKKNIFE ANALYSIS TEST MODE#######"<<endl;
+  
+  for(int block_size=1; block_size<=block_size_max;block_size++)
+    {
+      if(Verbose_jack) cout<<"block_size "<<block_size<<",block_size_max "<<block_size_max<<endl<<flush;
+      if( (block_size==block_size_max && ReturnBlockSizeMax) || Verbose_jack || block_size == N/Njacks) {
+
+	int num_bins;
+	if( (block_size==block_size_max && ReturnBlockSizeMax) || Verbose_jack) num_bins= N/block_size;
+	else num_bins = Njacks; //whether you want to fix the block size or the number of clusters to be used
+	block_data.clear();
+      
+	for(int block_index=0;block_index<num_bins;block_index++) {
+
+
+	  if(Verbose_jack) cout<<"block_index "<<block_index<<",num_bins "<<num_bins<<endl<<flush;
+	  Vfloat data_to_cluster(Nobs,0);
+	  for(int iconf=0; iconf<num_bins*block_size;iconf++ ) {
+	    if( (iconf < block_index*block_size)  || ( iconf >= (block_index+1)*block_size) ) {
+	      for(int iobs=0; iobs <Nobs;iobs++) data_to_cluster[iobs] += Copy_data[iobs][iconf]/(double)(num_bins*block_size-block_size);
+	    }
+	  }
+	
+	  
+	  
+	  block_data.push_back(F(data_to_cluster));
+	  if(ReturnBlockSizeMax && block_size==block_size_max) JackDistribution.distr.push_back(F(data_to_cluster));
+	  if(!ReturnBlockSizeMax && num_bins == Njacks) JackDistribution.distr.push_back(F(data_to_cluster));
+
+
+	
+	
+	  
+	}
+
+	for(unsigned int scroll=0;scroll<block_data.size();scroll++)  mean_obs_block[block_size-1] += block_data[scroll];
+	mean_obs_block[block_size-1] /= block_data.size();
+     
+      
+	for(unsigned int scroll=0;scroll<block_data.size();scroll++) sigma_obs_block[block_size-1] += ((num_bins-1)/((double)num_bins))*pow((mean_obs_block[block_size-1] - block_data[scroll]),2);
+	sigma_obs_block[block_size-1] = sqrt(sigma_obs_block[block_size-1]);
+
+      
+	if(Verbose_jack) cout<<block_size<<"\t"<<mean_obs_block[block_size-1]<<"\t"<<sigma_obs_block[block_size-1]<<endl<<flush;
+      }
+    }
+
+  return JackDistribution;
+}
 
 
 
@@ -124,10 +204,10 @@ distr_t Jackknife::DoJack(int Nobs,...) {
   for(int block_size=1; block_size<=block_size_max;block_size++)
     {
       if(Verbose_jack) cout<<"block_size "<<block_size<<",block_size_max "<<block_size_max<<endl<<flush;
-      if(block_size==block_size_max || Verbose_jack || block_size == N/Njacks) {
+      if( (block_size==block_size_max && ReturnBlockSizeMax) || Verbose_jack || block_size == N/Njacks) {
 
 	int num_bins;
-	if(block_size==block_size_max) num_bins= N/block_size;
+	if( (block_size==block_size_max && ReturnBlockSizeMax) || Verbose_jack) num_bins= N/block_size;
 	else num_bins = Njacks; //whether you want to fix the block size or the number of clusters to be used
 	block_data.clear();
       
@@ -190,6 +270,25 @@ distr_t Bootstrap::DoBoot(int Nobs, ...) {
     for(unsigned int j=0; j<bootstrap_data[i].size();j++)
       for(int iobs=0;iobs<Nobs;iobs++) boot_distribution.distr[i] += Copy_data[iobs][bootstrap_data[i][j]]/Copy_data[iobs].size();
   
+  
+  return boot_distribution;  
+}
+
+distr_t Bootstrap::DoBoot(function<double(const Vfloat&)> F,int Nobs, ...) {
+
+  VVfloat Copy_data;
+  va_list args;
+  va_start(args,Nobs);
+  for(int i=0;i<Nobs;i++) Copy_data.push_back(va_arg(args,Vfloat));
+  va_end(args);
+  distr_t boot_distribution(0, Nboots);
+   
+  for(int i=0; i<Nboots; i++) {
+    Vfloat Boot_obs(Nobs,0);
+    for(unsigned int j=0; j<bootstrap_data[i].size();j++)
+      for(int iobs=0;iobs<Nobs;iobs++) Boot_obs[iobs] += Copy_data[iobs][bootstrap_data[i][j]]/Copy_data[iobs].size();
+    boot_distribution.distr[i] = F(Boot_obs);
+  }
   
   return boot_distribution;  
 }

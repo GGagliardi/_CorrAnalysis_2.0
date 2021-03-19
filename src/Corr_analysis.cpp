@@ -31,7 +31,7 @@ distr_t_list  CorrAnalysis::corr_t(const VVfloat &corr_A, string Obs) {
   }
  
   if(UseJack) {
-    Jackknife J(10, Njacks);
+    Jackknife J(100, Njacks);
   
     
     for(int t=0; t<Nt;t++) 
@@ -70,7 +70,7 @@ distr_t_list CorrAnalysis::effective_mass_t(const VVfloat &corr_A, string Obs) {
  
 
   if(UseJack) { //use jackknife
-    Jackknife J(10, Njacks);
+    Jackknife J(100, Njacks);
     distr_t_list JackDistr_t(UseJack);
     for(int t=0; t<Nt;t++) JackDistr_t.distr_list.push_back(J.DoJack(1,ASymm(corr_A,t))); 
     
@@ -116,8 +116,12 @@ distr_t_list CorrAnalysis::effective_mass_t(const distr_t_list &corr_A_distr, st
  
 
    for(int t=0; t<corr_A_distr.size();t++) {
-    if(corr_A_distr.distr_list[t].size() != corr_A_distr.distr_list[(t+1)%corr_A_distr.size()].size()) crash("Call to distr_t_list effective_mass_t(distr_t_list&) is invalid, distributions in distr_t_list do not have same size"); 
-    for(int is=0; is<corr_A_distr.distr_list[t].size();is++) effective_mass_t.distr_list[t].distr.push_back( Root_Brent( corr_A_distr.distr_list[t].distr[is]/corr_A_distr.distr_list[(t+1)%corr_A_distr.size()].distr[is], t, corr_A_distr.size()));
+    if(corr_A_distr.distr_list[t].size() != corr_A_distr.distr_list[(t+1)%corr_A_distr.size()].size()) crash("Call to distr_t_list effective_mass_t(distr_t_list&) is invalid, distributions in distr_t_list do not have same size");
+    
+    for(int is=0; is<corr_A_distr.distr_list[t].size();is++) {
+      effective_mass_t.distr_list[t].distr.push_back( Root_Brent( corr_A_distr.distr_list[t].distr[is]/corr_A_distr.distr_list[(t+1)%corr_A_distr.size()].distr[is], t, corr_A_distr.size()));
+    }
+   
   }
 
   result = effective_mass_t.ave_err();
@@ -145,7 +149,7 @@ distr_t_list CorrAnalysis::effective_slope_t(const VVfloat &corr_A, const VVfloa
 
  
   if(UseJack) {
-    Jackknife J(10, Njacks);
+    Jackknife J(100, Njacks);
     distr_t_list DM_Jack_t(UseJack), M_Jack_t(UseJack);
     for(int t=0; t<Nt;t++) {
       DM_Jack_t.distr_list.push_back( J.DoJack(1,ASymm(corr_A,t)));
@@ -241,10 +245,10 @@ distr_t_list CorrAnalysis::effective_slope_t(const distr_t_list &corr_A_distr, c
   return effective_slope_t;
 }
 
-distr_t_list CorrAnalysis::effective_slope_t_2nd_ord(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr,const distr_t_list& corr_C_distr, string Obs) {
+distr_t_list CorrAnalysis::effective_slope_t_fit_t2(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr,const distr_t_list& corr_C_distr, string Obs) {
 
   
-  distr_t effective_slope_t_2nd_ord(corr_A_distr.UseJack);
+  distr_t effective_slope_t_fit_t2(corr_A_distr.UseJack);
 
   double Mj=0;
 
@@ -256,8 +260,8 @@ distr_t_list CorrAnalysis::effective_slope_t_2nd_ord(const distr_t_list& corr_A_
 
 
  
-  if(corr_A_distr.size() != corr_B_distr.size()) crash("Call to  distr_t_list effective_slope_t(distr_t_list&, distr_t_list&) is invalid, the  distributions list do not have same size");
-  if(corr_A_distr.size() != corr_C_distr.size()) crash("Call to  distr_t_list effective_slope_t(distr_t_list&, distr_t_list&) is invalid, the  distributions list do not have same size");
+  if(corr_A_distr.size() != corr_B_distr.size()) crash("Call to  distr_t_list effective_slope_t_fit_t2 is invalid, the  distributions list do not have same size");
+  if(corr_A_distr.size() != corr_C_distr.size()) crash("Call to  distr_t_list effective_slope_t_fit_t2 is invalid, the  distributions list do not have same size");
 
 
   distr_t_list ratio_A = corr_A_distr/corr_B_distr;
@@ -270,8 +274,8 @@ distr_t_list CorrAnalysis::effective_slope_t_2nd_ord(const distr_t_list& corr_A_
   for(int is=0;is<corr_A_distr.distr_list[0].size();is++) {
     Vfloat X, Y_conn, Y_disc ;
     for(int t=10;t<=Nt/2;t++) {
-      if(corr_A_distr.distr_list[t].size() != corr_A_distr.distr_list[0].size()) crash("In CorrAnalysis::effective_slope_t_2nd_ord jackknife samples in corr_A are not valid");
-      if(corr_C_distr.distr_list[t].size() != corr_A_distr.distr_list[0].size()) crash("In CorrAnalysis::effective_slope_t_2nd_ord jackknife samples in corr_C are not valid");
+      if(corr_A_distr.distr_list[t].size() != corr_A_distr.distr_list[0].size()) crash("In CorrAnalysis::effective_slope_t_fit_t2 jackknife samples in corr_A are not valid");
+      if(corr_C_distr.distr_list[t].size() != corr_A_distr.distr_list[0].size()) crash("In CorrAnalysis::effective_slope_t_fit_t2 jackknife samples in corr_C are not valid");
       X.push_back(t);
       Y_conn.push_back( ratio_A.distr_list[t].distr[is]);
       Y_disc.push_back( ratio_C.distr_list[t].distr[is]);
@@ -289,13 +293,54 @@ distr_t_list CorrAnalysis::effective_slope_t_2nd_ord(const distr_t_list& corr_A_
     fit_t_res conn_res= conn.fit();
     fit_t_res disc_res= disc.fit();
     z.distr.push_back( conn_res.pars[1]/disc_res.pars[1]);
-    //effective_slope_t_2nd_ord.distr.push_back( -1*conn_res.pars[2]  + conn_res.pars[1]*disc_res.pars[2]/disc_res.pars[1]);
-    //cout<<"ch2 : "<< conn_res.chi2/(Nt/2-(10) - 3)<<" "<<disc_res.chi2/(Nt/2-(10)-3)<<endl;
   }
 
   return effective_slope_t( corr_A_distr- z*corr_C_distr, corr_B_distr, Obs);
 
 
+}
+
+
+distr_t_list CorrAnalysis::effective_slope_t_sub_t2(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr,const distr_t_list& corr_C_distr, string Obs) {
+
+  distr_t_list effective_slope_t_sub_t2(UseJack, Nt);
+
+
+  distr_t_list eff_slope_first_ord= effective_slope_t(corr_C_distr, corr_B_distr, "");
+
+
+  if(corr_A_distr.size() != corr_B_distr.size()) crash("Call to  distr_t_list effective_slope_t_sub_t2 is invalid, the  distributions list do not have same size");
+  if(corr_A_distr.size() != corr_C_distr.size()) crash("Call to  distr_t_list effective_slope_t_sub_t2 is invalid, the  distributions list do not have same size");
+  if(corr_A_distr.size() != Nt) crash("Call to distr_t_list effective_slope_t_sub_t2 is invalid, distribution list is different from Nt");
+
+  for(int t=0; t<corr_A_distr.size();t++) {
+
+    
+    if(corr_A_distr.distr_list[t].size() != corr_B_distr.distr_list[t].size()) crash("Call to  distr_t_list effective_slope_t_sub_t2 is invalid, distributions in distr_t_list do not have same size");
+    if(corr_A_distr.distr_list[t].size() != corr_C_distr.distr_list[t].size()) crash("Call to  distr_t_list effective_slope_t_sub_t2 is invalid, distributions in distr_t_list do not have same size");
+    
+    for(int is=0; is<corr_A_distr.distr_list[t].size();is++) {
+
+      double M_j = Root_Brent(corr_B_distr.distr_list[(t-1+corr_B_distr.size())%corr_B_distr.size()].distr[is]/corr_B_distr.distr_list[t].distr[is], t-1, corr_B_distr.size());
+      double der_back = corr_A_distr.distr_list[t].distr[is]/corr_B_distr.distr_list[t].distr[is] - corr_A_distr.distr_list[(t-1+Nt)%Nt].distr[is]/corr_B_distr.distr_list[(t-1+Nt)%Nt].distr[is];
+      effective_slope_t_sub_t2.distr_list[t].distr.push_back( (der_back -(pow( (Nt/2-t),2) - pow( (Nt/2 -t+1)  ,2))*pow(eff_slope_first_ord.distr_list[t].distr[is],2))/(FTAN(M_j, t, Nt)));
+      
+    }
+    
+    
+  }
+
+
+  VPfloat result = effective_slope_t_sub_t2.ave_err();
+
+  if(Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for(int t=0; t<corr_A_distr.size(); t++) Print<<t<<setw(20)<<result[t].first<<setw(20)<<result[t].second<<endl;
+    Print.close();
+  }
+   
+  return effective_slope_t_sub_t2;
 }
 
 
@@ -310,7 +355,7 @@ distr_t_list CorrAnalysis::effective_slope2_t(const VVfloat &corr_A, const VVflo
 
   
   if(UseJack) {
-    Jackknife J(10, Njacks);
+    Jackknife J(100, Njacks);
     distr_t_list DM_Jack_t(UseJack), M_Jack_t(UseJack);
     for(int t=0; t<Nt;t++) {
       DM_Jack_t.distr_list.push_back( J.DoJack(1,ASymm(corr_A,t)));
@@ -507,6 +552,42 @@ distr_t_list CorrAnalysis::decay_constant_t(const distr_t_list &corr_A, string O
 }
 
 
+
+
+distr_t_list CorrAnalysis::residue_correction_t(const distr_t_list& corr_A_distr, const distr_t_list& corr_B_distr, string Obs) {
+
+  distr_t_list residue_corr(UseJack, Nt);
+  VPfloat result;
+  distr_t_list ratio_corr = corr_A_distr/corr_B_distr;
+  //check sizes
+  if( corr_A_distr.size() != Nt ||  corr_B_distr.size() != Nt) crash("Call to  distr_t_list::residue_correction_t(distr_t_list&, distr_t_list&,...) is invalid, the  distributions list do not have same size, or is not equal to Nt");
+
+  distr_t_list dM = effective_slope_t(corr_A_distr, corr_B_distr, "");
+  distr_t_list M= effective_mass_t(corr_B_distr, "");
+  for(int t=0; t < Nt;t++) {
+    auto F= [&](double x) -> double { return tanh( (Nt/2-t)*x);};
+    residue_corr.distr_list[t] = ratio_corr.distr_list[t] +(Nt/2 - t)*dM.distr_list[t]*distr_t::f_of_distr(F ,M.distr_list[t]);
+  }
+
+  result = residue_corr.ave_err();
+  
+  if (Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for(int t=0; t<Nt; t++) Print<<t<<setw(20)<<result[t].first<<setw(20)<<result[t].second<<endl;
+    Print.close();
+  }
+  
+  return residue_corr;
+}
+
+
+distr_t_list CorrAnalysis::residue_correction_t(const VVfloat& corr_A, const VVfloat& corr_B, string Obs) {
+
+  distr_t_list corr_A_distr = corr_t( corr_A, "");
+  distr_t_list corr_B_distr = corr_t( corr_B, "");
+  return residue_correction_t(corr_A_distr, corr_B_distr, Obs);
+}
 
 
 

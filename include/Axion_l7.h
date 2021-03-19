@@ -12,6 +12,8 @@
 using namespace std;
 
 void Axion_l7_analysis() ;
+void Neutral_pi_TM();
+void Eta_TM();
 
 
 

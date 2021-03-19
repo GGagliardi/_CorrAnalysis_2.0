@@ -1,4 +1,4 @@
-1#include "../include/3pts_mes_gamma_W.h"
+#include "../include/3pts_mes_gamma_W.h"
 
 
 
@@ -17,9 +17,9 @@ int sm_lev=1;
 const double e_f1 = 2.0/3.0; //electric charge of u-type quark
 const double e_f2 = -1.0/3.0; //electric charge of d-type quark
 bool Include_k0_noise=0;
-bool Determine_contaminations=1;
+bool Determine_contaminations=0;
 int verbosity=0; //used in Fit Contaminations to print infos about minimization
-const string Meson="Ds";
+const string Meson="K";
 
 class ExpFit {
 
@@ -89,10 +89,10 @@ void Fit_contaminations(string W, distr_t_list& F, distr_t &F_fit, string Ens_ta
 
   double T_min, T_max_sx, T_min_dx, T_max;
   T_min=2;
-  if(W=="RV" || W=="FV") T_max= Nt/2 - 2;
+  if(W=="RV" || W=="FV") T_max= Nt/2 - 3;
   else T_max=Nt/2 -2;
   T_max_sx= (double)min(14, Nt/4);
-  T_min_dx= T_max_sx+5;
+  T_min_dx= T_max_sx+1;
   int ndof= (T_max -T_min - 5);
   //choose the t-interval
   auto ansatz_sx= [&](const Vfloat& par, double t) -> double { return par[0] +par[1]*exp(-1*par[2]*t);};
@@ -113,8 +113,8 @@ void Fit_contaminations(string W, distr_t_list& F, distr_t &F_fit, string Ens_ta
 
   //choose guess intervals depending on the observable
   //###############################################################
-  fit_interval_a3= make_pair(0.01, 0.8);
-  fit_interval_a5= make_pair(0.01, 0.8);
+  fit_interval_a3= make_pair(0.01, 1.0);
+  fit_interval_a5= make_pair(0.01, 1.0);
   if( (W=="RV" || W=="FV")) {
     if(smearing) {
       if(W=="FV") {
@@ -146,11 +146,11 @@ void Fit_contaminations(string W, distr_t_list& F, distr_t &F_fit, string Ens_ta
     else {
       if(smearing) {
 	sign_a2=1;
-	sign_a4=1;
+	sign_a4=-1;
       }
       else {
 	sign_a2=1;
-	sign_a4=1;
+	sign_a4=-1;
       }
     }
   }
@@ -158,10 +158,10 @@ void Fit_contaminations(string W, distr_t_list& F, distr_t &F_fit, string Ens_ta
 
   
   //SX_FIT
-  UniformMersenne  A2(5534,log(0.001), log(10.0));
-  UniformMersenne A4(756756,log(0.001), log(10.0));
-  UniformMersenne A3(9878,fit_interval_a3.first, fit_interval_a3.second);
-  UniformMersenne A5(353,fit_interval_a5.first, fit_interval_a5.second);
+  UniformMersenne  A2(6545534,log(0.001), log(10.0));
+  UniformMersenne A4(87756756,log(0.001), log(10.0));
+  UniformMersenne A3(659878,fit_interval_a3.first, fit_interval_a3.second);
+  UniformMersenne A5(546353,fit_interval_a5.first, fit_interval_a5.second);
   int its_sx=0;
   bool sx_min_found=false;
   while(!sx_min_found) {
@@ -171,7 +171,7 @@ void Fit_contaminations(string W, distr_t_list& F, distr_t &F_fit, string Ens_ta
     int ndof = (T_max_sx-T_min +1 - 3);
     double sx_1 = sign_a2*exp( A2());
     double sx_2 = A3();
-    fit_sx.add_pars({F_fit.ave(), sx_1, sx_2});
+    fit_sx.add_pars({a1_guess, sx_1, sx_2});
     fit_sx.add_par_errs({F_fit.err(), sx_1/10, sx_2/10});
     fit_t_res sx_fit_res = fit_sx.fit();
     if(sx_fit_res.chi2/ndof < 1) { cout<<"ch2_sx for OBS: "<<W<<" xg: "<<xg<<" ch2: "<<sx_fit_res.chi2/ndof<<"  ITs: "<<its_sx<<endl; a1_guess= sx_fit_res.pars[0];a2_guess= sx_fit_res.pars[1]; a3_guess=sx_fit_res.pars[2]; sx_min_found=true;}
@@ -253,7 +253,7 @@ void Fit_contaminations(string W, distr_t_list& F, distr_t &F_fit, string Ens_ta
 
   //prepare gaussian number generator
   GaussianMersenne GM(4355);
-  double F_resc=2.5;
+  double F_resc=3.0;
  
   //generate bootstrap sample
   for(int iboot=0;iboot<Nboots;iboot++) {
@@ -325,7 +325,7 @@ void Get_Tmin_Tmax(string corr_type, string Ens_tag, CorrAnalysis &corr, double 
 
   if(corr_type=="2pt") {
     corr.Tmax = corr.Nt/2 -4;
-    if(Ens_tag.substr(0,1) =="A" || Ens_tag.substr(0,1) == "C" || Ens_tag.substr(0,1) == "B" || Ens_tag.substr(0,1)== "G" || Ens_tag.substr(0,1)=="D" || Ens_tag.substr(0,1) =="E" ) corr.Tmin = 15;
+    if(Ens_tag.substr(0,1) =="A" || Ens_tag.substr(0,1) == "C" || Ens_tag.substr(0,1) == "B" || Ens_tag.substr(0,1)== "G" || Ens_tag.substr(0,1)=="D" || Ens_tag.substr(0,1) =="E" ) corr.Tmin = 13;
     else if(Ens_tag.substr(0,1) =="B") corr.Tmin = 16;
     else corr.Tmin = 19;
   }
@@ -422,6 +422,10 @@ void Get_Tmin_Tmax(string corr_type, string Ens_tag, CorrAnalysis &corr, double 
       }
       else crash("cannot find the ensemble");
     }
+    else if(Ens_tag.substr(0,6)=="A40.48") {
+      if(W=="A") { corr.Tmax=23; corr.Tmin=18;}
+      else if(W=="V") {corr.Tmax= 24; corr.Tmin=18;}
+    }
 
     
     else { corr.Tmin= 9; corr.Tmax=16;}
@@ -477,7 +481,9 @@ distr_t_list V_ave_unpolarized(vector<vector<distr_t_list>>& distr_mom_k, vector
   distr_t_list V_ave(UseJack, size, distr_size);
 
   Vfloat exp_Nt_t;
-  for(int t=0; t<Mom.Nt();t++) exp_Nt_t.push_back( exp( fabs((twall-t))*Mom.Egamma()));
+  double Egamma=Mom.Egamma();
+  double Egamma_T=sinh(Egamma)*(1-exp(-Egamma*Mom.Nt()));
+  for(int t=0; t<Mom.Nt();t++) exp_Nt_t.push_back( exp( fabs((twall-t))*Egamma));
   //for(int t=0;t<Mom.Nt(); t++) exp_Nt_t.push_back( exp( ((Mom.Nt()/2.0)-t)*Mom.Egamma()) - exp((t- Mom.Nt()/2.0)*Mom.Egamma()));
 
   bool is_mom_zero=false;
@@ -574,46 +580,81 @@ distr_t_list A_ave_unpolarized(vector<vector<distr_t_list>>& distr_mom_k) {
 }
 
 
-distr_t_list H_V(vector<vector<distr_t_list>>& distr_mom_k, vector<vector<distr_t_list>>& distr_mom_0, pt3_momenta& Mom) {
+distr_t_list H_2(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H03,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H03_0,pt3_momenta& Mom,const distr_t& m) {//valid for p=0, k= kz
 
+   auto Power = [&](const distr_t& A, int n) -> distr_t{
+    distr_t ret_val = A;
+    for(int i=1;i<=n;i++) ret_val= ret_val*A;
+    return ret_val;
+  };
 
-  VVfloat e(4);
-  e[0] = {0.0, 0.0, 0.0, 0.0};
-  e[3] = {0.0, 0.0, 0.0, 0.0};
-  e[1] = {0.0, -1.0/sqrt(2), -1.0/sqrt(2), 0.0};
-  e[2] = {0.0, 1.0/sqrt(2), -1.0/sqrt(2), 0.0};
+  double Eg= Mom.Egamma();
+  double kz= Mom.k()[2];
+  double ksq = pow(Mom.virt(),2);
   
-  if(distr_mom_k.size() != 4 || distr_mom_0.size() != 4) crash("V_ave_unpolarized called with a v<v<distr_t_list>> with size != alphas=4");
-  int size= distr_mom_k[0][0].size();
-  if(size==0) crash("In V_ave_unpolarized, distr_mom_k[0][0] has size zero, exiting....");
-  int distr_size = distr_mom_k[0][0].distr_list[0].size();
-  if(distr_size==0) crash("In V_ave_unpolarized, distr_mom_k[0][0] has zero distr_size, exiting....");
-  
-  
-  distr_t_list H_ave(UseJack, size, distr_size);
+  distr_t_list H30_sub = H30 - H11_0*(m-Eg)/( (2.0*m*Eg/kz) -(ksq/kz));
+  distr_t_list H11_sub = H11 - H11_0 ;
+  distr_t_list H03_sub = H03 - H11_0*(2.0*m -Eg)/(2.0*m*(Eg/kz) -(ksq/kz));
 
-  Vfloat exp_Nt_t;
-  for(int t=0; t<Mom.Nt();t++) exp_Nt_t.push_back( exp( fabs((Mom.Nt()/2.0-t))*Mom.Egamma()));
-  //for(int t=0;t<Mom.Nt(); t++) exp_Nt_t.push_back( exp( ((Mom.Nt()/2.0)-t)*Mom.Egamma()) - exp((t- Mom.Nt()/2.0)*Mom.Egamma()));
+  distr_t_list H_2 = -1.0*H03_sub*Eg/( (pow(Eg,2)-ksq)*kz*Power(m,2));
+  H_2 = H_2+ H30_sub*(1.0/(Eg*kz*Power(m,2)));
+  H_2 = H_2+ H11_sub*(1.0/( (pow(Eg,2)-ksq)*Power(m,2)));
+  return H_2;
 
-  
-  for(int alpha=1; alpha < 2; alpha ++) {
-   
-    if(distr_mom_k[alpha].size() != 4 || distr_mom_0[alpha].size() != 4) crash("V_ave_unpolarized called with a v<v<distr_t_list>> having an element with size != 4");
-    for(int mu=0; mu<4;mu++) {
-
-      if(mu != alpha) {
-    
-    
-	H_ave = H_ave+ e[1][mu]*(distr_mom_k[alpha][mu]*exp_Nt_t - ((double)Include_k0_noise)*distr_mom_0[alpha][mu]);
-
-	H_ave = H_ave+ e[2][mu]*(distr_mom_k[alpha][mu]*exp_Nt_t - ((double)Include_k0_noise)*distr_mom_0[alpha][mu]);
-
-      }
-    }
-  }
-  return H_ave;
 }
+
+
+distr_t_list H_1(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H03,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H03_0,pt3_momenta& Mom,const distr_t& m) //valid for p=0, k=kz
+{
+
+  auto Power = [&](const distr_t& A, int n) -> distr_t{
+    distr_t ret_val = A;
+    for(int i=1;i<=n;i++) ret_val= ret_val*A;
+    return ret_val;
+  };
+  
+  double Eg= Mom.Egamma();
+  double kz= Mom.k()[2];
+  double ksq = pow(Mom.virt(),2);
+  
+  distr_t_list H30_sub = H30 - H11_0*(m-Eg)/( (2.0*m*Eg/kz) -(ksq/kz));
+  distr_t_list H11_sub = H11 - H11_0 ;
+  distr_t_list H03_sub = H03 - H11_0*(2.0*m -Eg)/(2.0*m*(Eg/kz) -(ksq/kz));
+
+
+  distr_t_list H_1 = H03_sub*( (Eg-m)*(Eg*m -ksq))/(kz*Power(m,2)*(pow(Eg,2)-ksq));
+  H_1 = H_1+ H30_sub*(ksq-Eg*m)/(Eg*kz*Power(m,2));
+  H_1 = H_1+ H11_sub*(ksq + m*(m-2.0*Eg))/(Power(m,2)*(pow(Eg,2) -ksq));
+
+  
+  return H_1;
+
+
+
+}
+
+
+distr_t_list FA_off(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H03,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H03_0,pt3_momenta& Mom,const distr_t &m) //valid for p=0, k=kz
+{
+
+  double Eg= Mom.Egamma();
+  double kz= Mom.k()[2]; 
+  double ksq = pow(Mom.virt(),2);
+  
+  distr_t_list H30_sub = H30 - H11_0*(m-Eg)/( (2.0*m*Eg/kz) -(ksq/kz));
+  distr_t_list H11_sub = H11 - H11_0 ;
+  distr_t_list H03_sub = H03 - H11_0*(2.0*m -Eg)/(2.0*m*(Eg/kz) -(ksq/kz));
+
+  distr_t_list FA_off = H03_sub*(ksq*(m-Eg))/(kz*m*(pow(Eg,2)-ksq));
+  FA_off = FA_off+ H30_sub*ksq/(Eg*kz*m);
+  FA_off = FA_off+ H11_sub*(ksq-Eg*m)/(m*(pow(Eg,2)-ksq));
+ 
+ 
+  return FA_off;
+}
+
+
+
 
 
 
@@ -728,6 +769,9 @@ void Compute_form_factors() {
     P_head.open("../data/form_factors/"+Meson+"/FORM_FACTOR_LIST/axial_form_factors_list_"+Ens_tag[i_ens]+".dat");
     P_head<<"#xg"<<setw(20)<<"offsh"<<setw(20)<<"sm_lev"<<setw(20)<<"F"<<setw(20)<<"F_err"<<endl;
     P_head.close();
+    P_head.open("../data/form_factors/"+Meson+"/FORM_FACTOR_LIST/virtual_form_factors_list_"+Ens_tag[i_ens]+".dat");
+    P_head<<"#xg"<<setw(20)<<"offsh"<<setw(20)<<"sm_lev"<<setw(20)<<"H1"<<setw(20)<<"H1_err"<<setw(20)<<"H2"<<setw(20)<<"H2_err"<<setw(20)<<"FA_off"<<setw(20)<<"FA_off_err"<<setw(20)<<"FV_off"<<setw(20)<<"FV_off_err"<<endl;
+    P_head.close();
     //##########################################################
 
 
@@ -761,7 +805,7 @@ void Compute_form_factors() {
 	corr.Nt=Nt;
 
 
-	//DEFINE FUNCTIONS TO REMOVE EXPONENTIAL DEPENDENCE ON TIME FROM THE CORRELATORS
+	//DEFINE LAMBDA TO REMOVE EXPONENTIAL DEPENDENCE ON MESON ENERGY FROM THE CORRELATORS
 	//###############################################################################à
 	auto Exp_lat = [&] (double a, double b, double c) { return (b<c/2)?1.0/(exp(-a*b)):1.0/(exp(-a*(c-b)));};
 	//#############################################################################
@@ -841,6 +885,8 @@ void Compute_form_factors() {
 	  double Egamma = mom3_l.mom[i_ens][icomb3pt].Egamma();
 	  double xg = mom3_l.mom[i_ens][icomb3pt].x_gamma(m_fit_distr[pt2_k0p0]).ave();
 	  double offsh= mom3_l.mom[i_ens][icomb3pt].virt();
+	  double Egamma_T= sinh(Egamma)*(1.0-exp(-Egamma*Nt));
+	  
 	 
 	  	 
      
@@ -852,11 +898,15 @@ void Compute_form_factors() {
 	  cout<<"icomb_k0: "<<icomb_k0<<" th_t: "<<header_3pt.comb[icomb_k0].tht[2]<<endl;
 	  cout<<"icomb_symm: "<<symmetric_comb<<" th_t: "<<header_3pt.comb[symmetric_comb].tht[2]<<endl;
 	  cout<<"icomb_symm_k0: "<<symmetric_comb_k0<<" th_t: "<<header_3pt.comb[symmetric_comb_k0].tht[2]<<endl;
+	  cout<<"fp: "<<fp_fit_distr[pt2_k0p0].ave()<<"("<<fp_fit_distr[pt2_k0p0].err()<<")"<<endl;
+	  cout<<"k_z: "<<mom3_l.mom[i_ens][icomb3pt].k()[2]<<endl;
 	  cout<<"Egamma["<<icomb3pt<<"] :"<<Egamma<<endl;
+	  cout<<"EgammaT["<<icomb3pt<<"] :"<<Egamma_T<<endl;
 	  cout<<"Mass: "<<m_fit_distr[pt2_k0p0].ave()<<"("<<m_fit_distr[pt2_k0p0].err()<<")"<<endl;
 	  cout<<"x_gamma: "<<xg<<endl;
 	  cout<<"offshellness: "<<offsh<<endl;
 	  cout<<"##############"<<endl;
+	
 
 
 	  //####################################################
@@ -865,6 +915,7 @@ void Compute_form_factors() {
 	  //####################################################
 	  Vfloat exp_Nt_t;
 	  for(int t=0; t<Nt;t++) exp_Nt_t.push_back( exp( fabs((Nt/2-t))*Egamma));
+	  
 	  //####################################################
 
 
@@ -891,15 +942,18 @@ void Compute_form_factors() {
 	      //compute_axial_correlators C_A_alpha^\mu for each alpha and mu
 	      //######################################################################
 	      corr.Reflection_sign = 1;
-	  
-	      distr_no_symm_A[alpha][mu] = e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 0, icomb3pt, alpha, mu, "A", sm_lev), "");
-	      distr_no_symm_A_k0[alpha][mu] = e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt,0, icomb_k0, alpha, mu, "A", sm_lev), "");
-	      distr_A[alpha][mu] = distr_no_symm_A[alpha][mu]  - e_f2*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 0, symmetric_comb, alpha, mu, "A", sm_lev), "");
-	      distr_A_k0[alpha][mu] = distr_no_symm_A_k0[alpha][mu]   - e_f2*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 0, symmetric_comb_k0, alpha, mu, "A", sm_lev), "");
+	      int Im_Re= 0; double parity=1.0; double sign=1;
+	      if( (alpha==0 || mu==0) && (alpha != 0 || mu != 0)  ) {Im_Re=1; corr.Reflection_sign=-1;sign=1; parity=-1;}
+	      distr_no_symm_A[alpha][mu] = parity*e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, Im_Re, icomb3pt, alpha, mu, "A", sm_lev), "");
+	      distr_no_symm_A_k0[alpha][mu] =parity*e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt,Im_Re, icomb_k0, alpha, mu, "A", sm_lev), "");
+	      distr_A[alpha][mu] = distr_no_symm_A[alpha][mu]  - parity*sign*e_f2*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, Im_Re, symmetric_comb, alpha, mu, "A", sm_lev), "");
+	      distr_A_k0[alpha][mu] = distr_no_symm_A_k0[alpha][mu]   - parity*sign*e_f2*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, Im_Re, symmetric_comb_k0, alpha, mu, "A", sm_lev), "");
 
 	      //######################################################################
-
-
+	      corr.Reflection_sign= 1;
+	      sign=1;
+	      parity=1.0;
+	      
 
 	      //PRINT TO FILE THE TENSOR C_W_alpha^\mu
 	      Print_To_File({}, {distr_no_symm_A[alpha][mu].ave(), distr_no_symm_A[alpha][mu].err(), distr_no_symm_V[alpha][mu].ave(), distr_no_symm_V[alpha][mu].err()}, "../data/form_factors/"+Meson+"/C_"+Ens_tag[i_ens]+"/no_symm_icomb"+to_string(icomb3pt)+"_alpha"+to_string(alpha)+"_mu"+to_string(mu)+"_sm_lev_"+to_string(sm_lev)+".dat","", "#");
@@ -912,10 +966,10 @@ void Compute_form_factors() {
 	      //COMPUTE THE TENSOR H_W_alpha^\mu
 	      //########################################################################
 	 
-	      distr_t_list distr_no_symm_A_exp= (2.0*m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*(distr_no_symm_A[alpha][mu]*exp_Nt_t); 
-	      distr_t_list distr_no_symm_V_exp=  (2.0*m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*(distr_no_symm_V[alpha][mu]*exp_Nt_t);
-	      distr_t_list distr_A_exp= (2.0*m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*(distr_A[alpha][mu]*exp_Nt_t); 
-	      distr_t_list distr_V_exp=  (2.0*m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*(distr_V[alpha][mu]*exp_Nt_t);
+	      distr_t_list distr_no_symm_A_exp= (m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*(distr_no_symm_A[alpha][mu]*exp_Nt_t); 
+	      distr_t_list distr_no_symm_V_exp=  (m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*(distr_no_symm_V[alpha][mu]*exp_Nt_t);
+	      distr_t_list distr_A_exp= (m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*(distr_A[alpha][mu]*exp_Nt_t); 
+	      distr_t_list distr_V_exp=  (m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*(distr_V[alpha][mu]*exp_Nt_t);
 
 	      //PRINT TO FILE THE TENSOR H_alpha^mu
 	      Print_To_File({}, {distr_no_symm_A_exp.ave(), distr_no_symm_A_exp.err(), distr_no_symm_V_exp.ave(), distr_no_symm_V_exp.err()}, "../data/form_factors/"+Meson+"/H_"+Ens_tag[i_ens]+"/no_symm_icomb"+to_string(icomb3pt)+"_alpha"+to_string(alpha)+"_mu"+to_string(mu)+"_sm_lev_"+to_string(sm_lev)+".dat","", "#");
@@ -937,70 +991,150 @@ void Compute_form_factors() {
 	  if(icomb3pt < ncomb3pt/2.0) {
       
 	  //####################################################################################################################################
-      
-	  distr_t_list V_ave = V_ave_unpolarized(distr_V,distr_V_k0, m_fit_distr[pt2_p], mom3_l.mom[i_ens][icomb3pt],Nt/2);
-	  distr_t_list A_ave = A_ave_unpolarized(distr_A);
-	  distr_t_list A_ave_zero_mom = A_ave_unpolarized(distr_A_k0);  
-	  distr_t F_A_distr_factor= (2.0*fp_fit_distr[pt2_k0p0]/(m_fit_distr[pt2_k0p0]*mom3_l.mom[i_ens][icomb3pt].x_gamma(m_fit_distr[pt2_k0p0])));
-	  bar_R_A_distr=(exp_Nt_t*(A_ave/A_ave_zero_mom))-1.0;
-	  bar_R_V_distr= (V_ave/A_ave_zero_mom)*m_fit_distr[pt2_k0p0]*fp_fit_distr[pt2_k0p0];
-	  R_A_distr= (1.0*m_fit_distr[pt2_p]/(2.0*m_fit_distr[pt2_k0p0]))*(A_ave/sqrt_overlap_fit_distr[icomb3pt])*2.0*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*exp_Nt_t;
-	  R_V_distr= (m_fit_distr[pt2_p]*m_fit_distr[pt2_k0p0]/4.0)*(V_ave/sqrt_overlap_fit_distr[icomb3pt])*2.0*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt);
-	  distr_t_list F_A_distr = bar_R_A_distr*F_A_distr_factor;
-      
-	  //#####################################################################################################################################
+	    if(offsh == 0) {
+	      distr_t_list V_ave = V_ave_unpolarized(distr_V,distr_V_k0, m_fit_distr[pt2_p], mom3_l.mom[i_ens][icomb3pt],Nt/2);
+	      distr_t_list A_ave = A_ave_unpolarized(distr_A);
+	      distr_t_list A_ave_zero_mom = A_ave_unpolarized(distr_A_k0);  
+	      distr_t F_A_distr_factor= (2.0*fp_fit_distr[pt2_k0p0]/(m_fit_distr[pt2_k0p0]*mom3_l.mom[i_ens][icomb3pt].x_gamma(m_fit_distr[pt2_k0p0])));
+	      auto Exp_photon= [&](double a, int t) { return exp(fabs(corr.Nt/2-t)*a);};
 
-	  //FIT form factors and R estimators
-	  // #########################################
-	  Get_Tmin_Tmax("3pt", Ens_tag[i_ens], corr,xg , "V");
-	  int T_min_V= corr.Tmin;
-	  int T_max_V= corr.Tmax;
-	  distr_t fit_result_V = corr.Fit_distr(bar_R_V_distr);
-	  distr_t fit_result_R_V = corr.Fit_distr(R_V_distr);
-	  Get_Tmin_Tmax("3pt", Ens_tag[i_ens], corr,xg , "A");
-	  int T_min_A= corr.Tmin;
-	  int T_max_A=corr.Tmax;
-	  distr_t fit_result_A = corr.Fit_distr(F_A_distr);
-	  distr_t fit_result_R_A = corr.Fit_distr(R_A_distr);
-	  // #####################################
-      
-
-      
-	  //PRINT R-estimators and form factors to file
-	  //###############################################################################
-	  VVfloat To_print_bar_R({bar_R_A_distr.ave(), bar_R_A_distr.err(), bar_R_V_distr.ave(), bar_R_V_distr.err(), R_A_distr.ave(), R_A_distr.err(), R_V_distr.ave(), R_V_distr.err()});
-      
-	  Print_To_File({}, To_print_bar_R, "../data/form_factors/"+Meson+"/R_"+Ens_tag[i_ens]+"_"+mom3_l.mom[i_ens][icomb3pt].name()+"_smlev_"+to_string(sm_lev)+"_k0_noise_"+to_string(Include_k0_noise)+".dat", "", "#t       bar_RA    bar_RA_err     bar_RV      bar_RV_err    RA      RA_err        RV      RV_err");
-	  Print_To_File({}, {F_A_distr.ave(), F_A_distr.err(), bar_R_V_distr.ave(), bar_R_V_distr.err() } , "../data/form_factors/"+Meson+"/F_"+Ens_tag[i_ens]+"_"+mom3_l.mom[i_ens][icomb3pt].name()+"_smlev_"+to_string(sm_lev)+"_k0_noise_"+to_string(Include_k0_noise)+".dat", "", "#t       FA    FA_err     FV      FV_err");
-	  if(xg > 0) { //print form factors only for xg > 0
-	  ofstream Print_Fitted_form_factors("../data/form_factors/"+Meson+"/FORM_FACTOR_LIST/axial_form_factors_list_"+Ens_tag[i_ens]+".dat",ofstream::app);
-	  Print_Fitted_form_factors<<xg<<setw(20)<<offsh<<setw(20)<<sm_lev<<setw(20)<<fit_result_A.ave()<<setw(20)<<fit_result_A.err()<<endl;
-	  Print_Fitted_form_factors.close();
-	  Print_Fitted_form_factors.open("../data/form_factors/"+Meson+"/FORM_FACTOR_LIST/vector_form_factors_list_"+Ens_tag[i_ens]+".dat",ofstream::app);
-	  Print_Fitted_form_factors<<xg<<setw(20)<<offsh<<setw(20)<<sm_lev<<setw(20)<<fit_result_V.ave()<<setw(20)<<fit_result_V.err()<<endl;
-	  Print_Fitted_form_factors.close();
-	  }
-	  //###############################################################################
+	      distr_t_list eff_photon_energy= corr.effective_mass_t( A_ave_zero_mom/A_ave,"");
+	      
+	      //bar_R_A_distr=(distr_t_list::f_of_distr_list(Exp_photon, eff_photon_energy)*A_ave/A_ave_zero_mom);
+	      bar_R_A_distr=(exp_Nt_t*A_ave/A_ave_zero_mom);
+	      cout<<"Eff photon energy: "<<corr.Fit_distr(eff_photon_energy).ave()<<" "<<corr.Fit_distr(eff_photon_energy).err()<<endl;
+	      bar_R_V_distr= (V_ave/A_ave_zero_mom)*m_fit_distr[pt2_k0p0]*fp_fit_distr[pt2_k0p0];
+	      R_A_distr= (-1.0*m_fit_distr[pt2_p]/(2.0*m_fit_distr[pt2_k0p0]))*(A_ave/sqrt_overlap_fit_distr[icomb3pt])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*exp_Nt_t;
+	      R_V_distr= (m_fit_distr[pt2_p]*m_fit_distr[pt2_k0p0]/4.0)*(V_ave/sqrt_overlap_fit_distr[icomb3pt])*2.0*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt);
+	      distr_t_list F_A_distr = (bar_R_A_distr-1.0)*F_A_distr_factor;
+	      
+	      //#####################################################################################################################################
+	      
+	      //FIT form factors and R estimators
+	      // #########################################
+	      Get_Tmin_Tmax("3pt", Ens_tag[i_ens], corr,xg , "V");
+	      int T_min_V= corr.Tmin;
+	      int T_max_V= corr.Tmax;
+	      distr_t fit_result_V = corr.Fit_distr(bar_R_V_distr);
+	      distr_t fit_result_R_V = corr.Fit_distr(R_V_distr);
+	      Get_Tmin_Tmax("3pt", Ens_tag[i_ens], corr,xg , "A");
+	      int T_min_A= corr.Tmin;
+	      int T_max_A=corr.Tmax;
+	      distr_t fit_result_A = corr.Fit_distr(F_A_distr);
+	      distr_t fit_result_R_A = corr.Fit_distr(R_A_distr);
+	      // #####################################
       
 
-	  //plot form factors
-	  //##################################################################################################
-	  if(xg > 0) { //plot only if xg > 0
-	    Plot_form_factors("V", bar_R_V_distr, fit_result_V, T_min_V, T_max_V, Nt, Ens_tag[i_ens], xg, offsh, sm_lev);
-	    Plot_form_factors("A", F_A_distr, fit_result_A, T_min_A, T_max_A, Nt, Ens_tag[i_ens], xg, offsh, sm_lev);
-	  }
-	  //##################################################################################################
+      
+	      //PRINT R-estimators and form factors to file
+	      //###############################################################################
+	      VVfloat To_print_bar_R({bar_R_A_distr.ave(), bar_R_A_distr.err(), bar_R_V_distr.ave(), bar_R_V_distr.err(), R_A_distr.ave(), R_A_distr.err(), R_V_distr.ave(), R_V_distr.err()});
+	       
+	     
+	      Print_To_File({}, To_print_bar_R, "../data/form_factors/"+Meson+"/R_"+Ens_tag[i_ens]+"_"+mom3_l.mom[i_ens][icomb3pt].name()+"_smlev_"+to_string(sm_lev)+"_k0_noise_"+to_string(Include_k0_noise)+".dat", "", "#t       bar_RA    bar_RA_err     bar_RV      bar_RV_err    RA      RA_err        RV      RV_err");
+	      Print_To_File({}, {F_A_distr.ave(), F_A_distr.err(), bar_R_V_distr.ave(), bar_R_V_distr.err() } , "../data/form_factors/"+Meson+"/F_"+Ens_tag[i_ens]+"_"+mom3_l.mom[i_ens][icomb3pt].name()+"_smlev_"+to_string(sm_lev)+"_k0_noise_"+to_string(Include_k0_noise)+".dat", "", "#t       FA    FA_err     FV      FV_err");
+	      if(xg > 0) { //print form factors only for xg > 0
+		ofstream Print_Fitted_form_factors("../data/form_factors/"+Meson+"/FORM_FACTOR_LIST/axial_form_factors_list_"+Ens_tag[i_ens]+".dat",ofstream::app);
+		Print_Fitted_form_factors<<xg<<setw(20)<<offsh<<setw(20)<<sm_lev<<setw(20)<<fit_result_A.ave()<<setw(20)<<fit_result_A.err()<<endl;
+		Print_Fitted_form_factors.close();
+		Print_Fitted_form_factors.open("../data/form_factors/"+Meson+"/FORM_FACTOR_LIST/vector_form_factors_list_"+Ens_tag[i_ens]+".dat",ofstream::app);
+		Print_Fitted_form_factors<<xg<<setw(20)<<offsh<<setw(20)<<sm_lev<<setw(20)<<fit_result_V.ave()<<setw(20)<<fit_result_V.err()<<endl;
+		Print_Fitted_form_factors.close();
+	      }
+	      //###############################################################################
+      
+	      
+	      //plot form factors
+	      //##################################################################################################
+	      if(xg > 1.0e-8) { //plot only if xg > 0
+		Plot_form_factors("V", bar_R_V_distr, fit_result_V, T_min_V, T_max_V, Nt, Ens_tag[i_ens], xg, offsh, sm_lev);
+		Plot_form_factors("A", F_A_distr, fit_result_A, T_min_A, T_max_A, Nt, Ens_tag[i_ens], xg, offsh, sm_lev);
+	      }
+	      //##################################################################################################
       
 
-	  //FIT EXPONENTIAL CONTAMINATIONS FROM R and bar_R 
-	  if(Determine_contaminations && xg > 0) { //fit contaminations only if xg > 0
+	      //FIT EXPONENTIAL CONTAMINATIONS FROM R and bar_R 
+	      if(Determine_contaminations && xg > 1.0e-8) { //fit contaminations only if xg > 0
 	   
-	    Fit_contaminations("FA", F_A_distr, fit_result_A, Ens_tag[i_ens], Nt, xg, offsh, sm_lev);
-	    Fit_contaminations("FV", bar_R_V_distr, fit_result_V, Ens_tag[i_ens], Nt, xg, offsh, sm_lev);
-	    Fit_contaminations("RA", R_A_distr, fit_result_R_A, Ens_tag[i_ens], Nt, xg, offsh, sm_lev);
-	    Fit_contaminations("RV", R_V_distr, fit_result_R_V, Ens_tag[i_ens],  Nt, xg, offsh, sm_lev); 
-	  }
-	  
+		Fit_contaminations("FA", F_A_distr, fit_result_A, Ens_tag[i_ens], Nt, xg, offsh, sm_lev);
+		Fit_contaminations("FV", bar_R_V_distr, fit_result_V, Ens_tag[i_ens], Nt, xg, offsh, sm_lev);
+		Fit_contaminations("RA", R_A_distr, fit_result_R_A, Ens_tag[i_ens], Nt, xg, offsh, sm_lev);
+		Fit_contaminations("RV", R_V_distr, fit_result_R_V, Ens_tag[i_ens],  Nt, xg, offsh, sm_lev); 
+	      }
+	    }
+
+	    //determine form_factors H1 H2 e FA_offsh (only valid if meson at rest and k=kx)
+	    if( xg > 1.0e-8 && mom3_l.mom[i_ens][icomb3pt].k()[2] !=  0) { //only if xg, kz != 0
+	      //distr_t_list H_resc= (m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*exp_Nt_t;
+	      //distr_t_list H_resc_0 = (m_fit_distr[pt2_k0p0]/sqrt_overlap_fit_distr[pt2_k0p0])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_k0p0], Nt);
+	      distr_t_list H1 = H_1(distr_A[0][3]*exp_Nt_t, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][0]*exp_Nt_t, distr_A_k0[0][3], 0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][0], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
+	      distr_t_list H2 = H_2(distr_A[0][3]*exp_Nt_t, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][0]*exp_Nt_t, distr_A_k0[0][3], 0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][0], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
+	      distr_t_list FAoff = FA_off(distr_A[0][3]*exp_Nt_t, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][0]*exp_Nt_t, distr_A_k0[0][3], 0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][0], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
+	      //print to file
+	      distr_t_list FVoff = (V_ave_unpolarized(distr_V,distr_V_k0, m_fit_distr[pt2_p], mom3_l.mom[i_ens][icomb3pt],Nt/2)/A_ave_unpolarized(distr_A_k0))*m_fit_distr[pt2_k0p0]*fp_fit_distr[pt2_k0p0];
+	      Print_To_File({}, {H1.ave(), H1.err(), H2.ave(), H2.err(), FAoff.ave(), FAoff.err(), FVoff.ave(), FVoff.err()}, "../data/form_factors/"+Meson+"/FH_off_"+Ens_tag[i_ens]+"_"+mom3_l.mom[i_ens][icomb3pt].name()+"_smlev_"+to_string(sm_lev)+"_k0_noise_"+to_string(Include_k0_noise)+".dat", "", "#t       H1    H1_err     H2      H2_err    FA_off      FA_off_err     FV_off     FV_off_err ");
+	      //fit in time interval
+	      corr.Tmin=12;
+	      corr.Tmax=18;
+	      distr_t H1_fit = corr.Fit_distr(H1);
+	      corr.Tmin=10;
+	      corr.Tmax=15;
+	      distr_t H2_fit = corr.Fit_distr(H2);
+	      corr.Tmax=15;
+	      distr_t FAoff_fit = corr.Fit_distr(FAoff);
+	      corr.Tmin=8;
+	      corr.Tmax=14;
+	      distr_t FVoff_fit = corr.Fit_distr(FVoff);
+	      //save in file
+	       if(xg > 1.0e-8) { //print form factors only for xg > 0
+		ofstream Print_virtual_form_factors("../data/form_factors/"+Meson+"/FORM_FACTOR_LIST/virtual_form_factors_list_"+Ens_tag[i_ens]+".dat",ofstream::app);
+		Print_virtual_form_factors<<xg<<setw(20)<<offsh<<setw(20)<<sm_lev<<setw(20)<<H1_fit.ave()<<setw(20)<<H1_fit.err()<<setw(20)<<H2_fit.ave()<<setw(20)<<H2_fit.err()<<setw(20)<<FAoff_fit.ave()<<setw(20)<<FAoff_fit.err()<<setw(20)<<FVoff_fit.ave()<<setw(20)<<FVoff_fit.err()<<endl;
+		Print_virtual_form_factors.close();
+
+
+		//print subtracted hadronic tensor
+		auto Power = [&](const distr_t& A, int n) -> distr_t{
+		  distr_t ret_val = A;
+		  for(int i=1;i<=n;i++) ret_val= ret_val*A;
+		  return ret_val;
+		};
+		
+		double Eg= mom3_l.mom[i_ens][icomb3pt].Egamma();
+		double kz= mom3_l.mom[i_ens][icomb3pt].k()[2];
+		double ksq = pow(mom3_l.mom[i_ens][icomb3pt].virt(),2);
+		distr_t m=m_fit_distr[pt2_k0p0];
+		distr_t_list H_resc_0 = (m_fit_distr[pt2_k0p0]/sqrt_overlap_fit_distr[pt2_k0p0])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_k0p0], Nt);
+		distr_t_list H_resc= (m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p], Nt)*exp_Nt_t;
+
+		distr_t_list H30_sub = distr_A[0][3]*H_resc - distr_A_k0[1][1]*H_resc_0*(m-Eg)/( (2.0*m*Eg/kz) -(ksq/kz));
+		distr_t_list H11_sub = distr_A[1][1]*H_resc - distr_A_k0[1][1]*H_resc_0;
+		distr_t_list H33_sub = distr_A[3][3]*H_resc -distr_A_k0[3][3]*H_resc_0*(2.0*m*Eg -ksq -pow(kz,2))/(2.0*m*Eg - ksq);
+		distr_t_list H03_sub = distr_A[3][0]*H_resc - distr_A_k0[1][1]*H_resc_0*(2.0*m -Eg)/(2.0*m*(Eg/kz) -(ksq/kz));
+		distr_t_list H00_sub = distr_A[0][0]*H_resc - distr_A_k0[0][0]*H_resc_0*(2.0*m -Eg + pow(Eg,2)/m -ksq/m)/(2.0*m -ksq/Eg);
+
+		Print_To_File({}, {H30_sub.ave(), H30_sub.err(), H11_sub.ave(), H11_sub.err(), H33_sub.ave(), H33_sub.err(), H03_sub.ave(), H03_sub.err(), H00_sub.ave(), H00_sub.err()},  "../data/form_factors/"+Meson+"/Hadr_tens_subtracted_"+Ens_tag[i_ens]+"_"+mom3_l.mom[i_ens][icomb3pt].name()+"_smlev_"+to_string(sm_lev)+"_k0_noise_"+to_string(Include_k0_noise)+".dat", "", "#t     H30         H30_err        H11        H11_err     H33       H33_err       H03         H03_err            H00               H00_err");
+        
+		
+	       }
+
+	      
+	    
+	    }
+
+	    if(icomb3pt==0) {
+	      //print fp determined from various matrix elements of the hadronic tensor
+	      distr_t_list H_resc_0 = (m_fit_distr[pt2_k0p0]/sqrt_overlap_fit_distr[pt2_k0p0])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_k0p0], Nt);
+	      distr_t_list fp1= -1.0*distr_A[3][0]*H_resc_0;
+	      distr_t_list fp2= -2.0*distr_A[0][3]*H_resc_0;
+	      distr_t_list fp3= -1.0*distr_A[1][1]*H_resc_0;
+	      distr_t_list fp4= -1.0*distr_A[3][3]*H_resc_0;
+
+	     
+	      Print_To_File({}, {fp1.ave(), fp1.err(), fp2.ave(),fp2.err(),fp3.ave(),fp3.err(),fp4.ave(),fp4.err()},"../data/form_factors/"+Meson+"/fp_3pt_"+Ens_tag[i_ens]+"_sm_"+to_string(sm_lev)+".dat", "", "#t     fp1       fp1_err     fp2       fp2_err         fp3        fp3_err            fp4              fp4_err");
+	      
+	      
+	    }
+	   
 	  }
 	}
       }

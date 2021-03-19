@@ -226,6 +226,7 @@ class Jackknife {
     ReturnBlockSizeMax=0;
     }
   distr_t DoJack(int , ...);
+  distr_t DoJack(function<double(const Vfloat&)> F, int Nobs, ... );
 
   
 
@@ -253,6 +254,7 @@ class Bootstrap {
     
   }
   distr_t DoBoot(int Nobs, ...);
+  distr_t DoBoot(function<double(const Vfloat&)> F, int Nobs, ... );
  
   
   int Nboots;

@@ -154,21 +154,27 @@ double FTAN_SYMM(double x1,  int t, int NT) {
 
 double Root_Brent(double R, int nt, int NT) {
 
-
   
-
+   
+  //cout<<"R: "<<R<<" t:"<<nt<<" T: "<<NT<<endl;
+  if( R < 1 && nt < NT/2) return log(fabs(R)) ;
+  if( R > 1 && nt >= NT/2) return log(1.0/R);
+  
   if(NT%2 != 0) crash("Temporal lattice extent is not divisible by two!");
   NT= NT/2; //it is what enter the expression of the effective mass
   int alpha = nt-NT;
-  double Precision = 1e-10;
+  if(alpha==0 && R<= 1) return acosh(1.0/R);
+  double Precision = 1e-9;
   double delta = 0.001;
   //solve the equation cosh(meff(alpha+1))*corr_ratio = cosh(meff*alpha) using the Brent method!
   //initialize iteration
   double b=0;
-  double a= min(fabs(1./(alpha+1)),fabs(1./alpha));
+  double a;
+  a= min(fabs(1./(alpha+1)),fabs(1./alpha));
 
   while (F(a,R,alpha)*F(b,R,alpha) > 0) {a  +=  min(fabs(1./(alpha+1)),fabs(1./alpha));}
-
+ 
+ 
 
 
 
@@ -179,8 +185,11 @@ double Root_Brent(double R, int nt, int NT) {
   double s=b;
   double d=0;
 
-  while(F(s,R,alpha) !=0 && fabs(b-a)>= Precision*fabs((double)(b+a)/2.0)) {
+  
+  
+  while(F(s,R,alpha) !=0 && fabs(b-a)>= Precision*fabs((double)(b+a)/2.0) ) {
 
+  
     if((F(a,R,alpha) != F(c,R,alpha)) && (F(b,R,alpha) != F(c,R,alpha))) {//inverse quadratic interpolation
       s= a*F(b,R,alpha)*F(c,R,alpha)/((F(a,R,alpha)-F(b,R,alpha))*(F(a,R,alpha)-F(c,R,alpha))) + b*F(a,R,alpha)*F(c,R,alpha)/((F(b,R,alpha)-F(a,R,alpha))*(F(b,R,alpha)-F(c,R,alpha))) + c*F(a,R,alpha)*F(b,R,alpha)/((F(c,R,alpha)-F(a,R,alpha))*(F(c,R,alpha)-F(b,R,alpha)));
     }
@@ -203,6 +212,7 @@ double Root_Brent(double R, int nt, int NT) {
 
     if(fabs(F(a,R,alpha)) < fabs(F(b,R,alpha))) {double atemp=a; a=b; b=atemp;}
 
+   
   }
 
   
@@ -225,7 +235,7 @@ double DoConstantFit(Vfloat &data, Vfloat &err) {
     printV(err, "err", 1);
     crash("Abort.");
   }
-
+  
   for(unsigned int k=0; k<data.size(); k++) {result += pow(1.0/err[k],2)*data[k]; weight += pow(1.0/err[k],2);}
 
   if(isnan(result) || isnan(weight)) { //fit without errors
