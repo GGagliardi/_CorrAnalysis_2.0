@@ -117,3 +117,44 @@ void data_t::Read() {
   }
 
 }
+
+
+
+void file_t::Read() {
+
+  ifstream Read(path);
+
+  if(!Read.is_open()) crash("In File_t Read() unable to open file: "+path);
+  string ReadLine="";
+  int it=0;
+  int ncols_old;
+  int Ncols;
+  do {
+  do {getline(Read, ReadLine);} while(ReadLine=="" && !Read.eof());
+  int ncols=0;
+  stringstream s(ReadLine);
+  double tmp=0;
+  while(s>>tmp) ncols++; 
+  if(ncols != ncols_old && it!=0 && !Read.eof() && ReadLine.find(SC) == string::npos) {
+    cout<<"Number of columns in file: "+path+" is not constant over configs"<<endl;
+    cout<<"ncols_old: "<<ncols_old<<" ncols: "<<ncols<<endl;
+    crash("Exiting...");
+  }
+  if(it==0) data.resize(ncols);
+  if(!Read.eof() && ReadLine.find(SC) == string::npos) {
+    Ncols=ncols;
+    ncols_old=ncols;
+    it++;
+    nrows++;
+  }
+  if(!Read.eof() && ReadLine.find(SC) == string::npos) {
+    stringstream ss(ReadLine);
+    double tmp2;
+    int c=0;
+    while(ss>>tmp2) {data[c].push_back(tmp2);c++;} 
+
+  }
+  } while( !Read.eof());
+
+   return;
+}

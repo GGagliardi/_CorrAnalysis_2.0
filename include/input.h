@@ -37,6 +37,31 @@ class data_t {
   string SC;
 };
 
+class file_t {
+
+ public:
+
+ file_t() : nrows(0), path(""), SC("#"), raw_data(0) {} 
+ file_t(string file_path) : nrows(0), path(file_path), SC("#"), raw_data(0) {}
+
+
+  void Read();
+  void Read(string file_path) { path=file_path; Read();};
+
+  Vfloat col(int icol) { return data[icol];}
+
+
+  double nrows;
+  string path;
+  string SC;
+  vector<string> raw_data;
+  VVfloat data;
+ 
+
+
+
+};
+
 
 
 

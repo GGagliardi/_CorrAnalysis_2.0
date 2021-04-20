@@ -31,7 +31,7 @@ distr_t_list  CorrAnalysis::corr_t(const VVfloat &corr_A, string Obs) {
   }
  
   if(UseJack) {
-    Jackknife J(100, Njacks);
+    Jackknife J(10000, Njacks);
   
     
     for(int t=0; t<Nt;t++) 
@@ -70,7 +70,7 @@ distr_t_list CorrAnalysis::effective_mass_t(const VVfloat &corr_A, string Obs) {
  
 
   if(UseJack) { //use jackknife
-    Jackknife J(100, Njacks);
+    Jackknife J(10000, Njacks);
     distr_t_list JackDistr_t(UseJack);
     for(int t=0; t<Nt;t++) JackDistr_t.distr_list.push_back(J.DoJack(1,ASymm(corr_A,t))); 
     
@@ -149,7 +149,7 @@ distr_t_list CorrAnalysis::effective_slope_t(const VVfloat &corr_A, const VVfloa
 
  
   if(UseJack) {
-    Jackknife J(100, Njacks);
+    Jackknife J(10000, Njacks);
     distr_t_list DM_Jack_t(UseJack), M_Jack_t(UseJack);
     for(int t=0; t<Nt;t++) {
       DM_Jack_t.distr_list.push_back( J.DoJack(1,ASymm(corr_A,t)));
@@ -245,57 +245,75 @@ distr_t_list CorrAnalysis::effective_slope_t(const distr_t_list &corr_A_distr, c
   return effective_slope_t;
 }
 
-distr_t_list CorrAnalysis::effective_slope_t_fit_t2(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr,const distr_t_list& corr_C_distr, string Obs) {
+
+
+distr_t CorrAnalysis::effective_slope_t_tanh_fit(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr, string Obs) {
 
   
-  distr_t effective_slope_t_fit_t2(corr_A_distr.UseJack);
+  distr_t effective_slope_t_tanh(corr_A_distr.UseJack);
+
+  distr_t intercept(corr_A_distr.UseJack);
+
+  int t_steps=200;
+  distr_t_list Fit_func(corr_A_distr.UseJack, t_steps);
+  Vfloat times;
 
   double Mj=0;
+  auto anz = [&](const Vfloat &par, double t) -> double { return par[0] +  par[1]*(Nt/2 -t)*tanh( (Nt/2-t)*Mj);};
 
   distr_t m_eff = Fit_distr(effective_mass_t(corr_B_distr,""));
 
-  distr_t z(corr_A_distr.UseJack);
 
  
-
-
  
   if(corr_A_distr.size() != corr_B_distr.size()) crash("Call to  distr_t_list effective_slope_t_fit_t2 is invalid, the  distributions list do not have same size");
-  if(corr_A_distr.size() != corr_C_distr.size()) crash("Call to  distr_t_list effective_slope_t_fit_t2 is invalid, the  distributions list do not have same size");
 
 
   distr_t_list ratio_A = corr_A_distr/corr_B_distr;
-  distr_t_list ratio_C = corr_C_distr/corr_B_distr;
 
-  Vfloat Y_conn_err, Y_disc_err;
+  Vfloat Y_err;
 
-  for(int t=10;t<=Nt/2;t++) { Y_conn_err.push_back(ratio_A.err()[t]); Y_disc_err.push_back(ratio_C.err()[t]);}
+  for(int t=Tmin ;t<=Tmax;t++) { Y_err.push_back(ratio_A.err()[t]);}
 
   for(int is=0;is<corr_A_distr.distr_list[0].size();is++) {
-    Vfloat X, Y_conn, Y_disc ;
-    for(int t=10;t<=Nt/2;t++) {
+    Vfloat X, Y;
+    for(int t=Tmin;t<=Tmax;t++) {
       if(corr_A_distr.distr_list[t].size() != corr_A_distr.distr_list[0].size()) crash("In CorrAnalysis::effective_slope_t_fit_t2 jackknife samples in corr_A are not valid");
-      if(corr_C_distr.distr_list[t].size() != corr_A_distr.distr_list[0].size()) crash("In CorrAnalysis::effective_slope_t_fit_t2 jackknife samples in corr_C are not valid");
       X.push_back(t);
-      Y_conn.push_back( ratio_A.distr_list[t].distr[is]);
-      Y_disc.push_back( ratio_C.distr_list[t].distr[is]);
+      Y.push_back( ratio_A.distr_list[t].distr[is]);
     }
     
     
     Mj = m_eff.distr[is];
-    auto anz = [&](const Vfloat &par, double t) -> double { return par[0] + par[1]*pow((Nt/2 -t),2) + par[2]*(Nt/2 -t)*tanh( (Nt/2-t)*Mj);};
-    T_fit conn(X,Y_conn, Y_conn_err);    
-    conn.ansatz = anz;
-    T_fit disc(X, Y_disc, Y_disc_err);
-    disc.ansatz = anz;
-    conn.add_pars({10,-50,100});
-    disc.add_pars({10,-50,100});
-    fit_t_res conn_res= conn.fit();
-    fit_t_res disc_res= disc.fit();
-    z.distr.push_back( conn_res.pars[1]/disc_res.pars[1]);
+    
+    T_fit th_fit(X,Y, Y_err);    
+    th_fit.ansatz = anz;
+    th_fit.add_pars({ratio_A.distr_list[ratio_A.size()-1].distr[is], 0.1 });
+    fit_t_res res= th_fit.fit();
+    effective_slope_t_tanh.distr.push_back(res.pars[1]);
+    intercept.distr.push_back(res.pars[0]);
   }
 
-  return effective_slope_t( corr_A_distr- z*corr_C_distr, corr_B_distr, Obs);
+  //evaluate fit function
+ 
+  for(int tt=0;tt<t_steps;tt++) {
+    times.push_back( ((double)ratio_A.size()/2.0)*1.0*tt/(double)t_steps);
+    for(int is=0;is<corr_A_distr.distr_list[0].size();is++) {
+      Mj= m_eff.distr[is];
+      Fit_func.distr_list[tt].distr.push_back( anz({intercept.distr[is], effective_slope_t_tanh.distr[is]}, times[tt]));
+    }
+  }
+
+   if(Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for(int tt=0; tt<(signed)times.size(); tt++) Print<<times[tt]<<setw(20)<<Fit_func.ave()[tt]<<setw(20)<<Fit_func.err()[tt]<<endl;
+    Print.close();
+  }
+   
+
+  
+  return -1.0*effective_slope_t_tanh;
 
 
 }
@@ -355,7 +373,7 @@ distr_t_list CorrAnalysis::effective_slope2_t(const VVfloat &corr_A, const VVflo
 
   
   if(UseJack) {
-    Jackknife J(100, Njacks);
+    Jackknife J(10000, Njacks);
     distr_t_list DM_Jack_t(UseJack), M_Jack_t(UseJack);
     for(int t=0; t<Nt;t++) {
       DM_Jack_t.distr_list.push_back( J.DoJack(1,ASymm(corr_A,t)));

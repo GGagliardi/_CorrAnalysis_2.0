@@ -82,6 +82,32 @@ void LatticeInfo::LatInfo(string S) {
     else if(CURRENT_TYPE=="CONSERVED") {Zv=1.0; Zv_err=1.0;  Zv_M2=1.0; Zv_M2_err=1.0;}
     else crash("CURRENT_TYPE: "+CURRENT_TYPE+" not yet implemented");
   }
+
+   else if(S=="a" || S=="b") {
+    Beta= 2.10;
+    ZP= 0.733207;
+    ZP_err=0.00152823;
+    //ZP=1.0;
+    //ZP_err= 0.0000001;
+    ZS=1.0;
+    ZS_err=0.00000;
+    a = 0.0619;
+    a_err = 0.0018;
+    if(CURRENT_TYPE=="LOCAL") {
+      Zv= 0.655 ;
+      Zv_err=0.003;
+      Zv_M2 = 0.657;
+      Zv_M2_err = 0.002;
+      Za = 0.762;
+      Za_err = 0.004;
+      Za_M2 = 0.752;
+      Za_M2_err = 0.002;
+    }
+    else if(CURRENT_TYPE=="CONSERVED") {Zv=1.0; Zv_err=1.0;  Zv_M2=1.0; Zv_M2_err=1.0;}
+    else crash("CURRENT_TYPE: "+CURRENT_TYPE+" not yet implemented");
+  }
+
+  
   else crash("Simulation point: "+S+" is not defined");
 
   return;

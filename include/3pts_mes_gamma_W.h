@@ -12,6 +12,7 @@
 #include "header_file_virph.h"
 #include "LatInfo.h"
 #include "T_min.h"
+#include "input.h"
 
 
 
@@ -66,6 +67,7 @@ class pt3_momenta {
     return 2.0*asinh(sqrt(e + pow(2*sinh( this->virt()/2.0)  ,2) )/2.0);
   }
 
+
   double k_mod() {
     double mod=0;
     for(auto kx: k()) mod += pow(kx,2);
@@ -82,6 +84,12 @@ class pt3_momenta {
     distr_t xg(Mass.UseJack);
     double pk= Compute_scalar_product(this->k(),this->p());
     return 2.0*(this->Egamma()/Mass) -2.0*pk/(Mass*Mass);
+  }
+
+  distr_t x_gamma_off(distr_t& Mass) {
+    distr_t xg(Mass.UseJack);
+    double pk= Compute_scalar_product(this->k(),this->p());
+    return 2.0*(this->Egamma()/Mass) -2.0*pk/(Mass*Mass) -this->virt()*this->virt()/(Mass*Mass);
   }
 
   distr_t E(distr_t& Mass) {
@@ -254,10 +262,13 @@ distr_t_list V_ave_unpolarized(vector<vector<distr_t_list>>& distr_mom_k, vector
 distr_t_list A_ave_unpolarized(vector<vector<distr_t_list>>& distr_mom_k);
 
 
-distr_t_list H_2(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H03,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H03_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= kz
-distr_t_list H_1(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H03,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H03_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k=kz
-distr_t_list FA_off(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H03,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H03_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k=kz
+distr_t_list H_2(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= kz
+distr_t_list H_1(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k=kz
+distr_t_list FA_off(const distr_t_list& H30,const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H30_0,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k=kz
 
+distr_t_list H_1_impr(const distr_t_list & H30, const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= kz
+distr_t_list H_2_impr(const distr_t_list & H30, const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= k
+distr_t_list FA_off_impr(const distr_t_list & H30, const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= k
 
 void Compute_form_factors();
 
@@ -267,6 +278,10 @@ void Add_to_mom_list(pt2_momenta_list &M, struct header_virph &header, double& L
 
 void Plot_form_factors(string W, distr_t_list& F, distr_t &F_fit, int Tmin, int Tmax, int Nt, string Ens_tag, double xg, double offsh, int smearing);
 
-void Fit_contaminations(string W, distr_t_list& F, distr_t &F_fit, string Ens_tag, int Nt, double xg, double offsh, int smearing); 
+void Fit_contaminations(string W, distr_t_list& F, distr_t &F_fit, string Ens_tag, int Nt, double xg, double offsh, int smearing);
+
+void Fit_contaminations_from_derivative(string W, distr_t_list& F, distr_t &F_fit, string Ens_tag, int Nt, double xg, double offsh, int smearing);
+
+void Regge();
 
 #endif

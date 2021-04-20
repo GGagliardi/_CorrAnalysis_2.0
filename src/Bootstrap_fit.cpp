@@ -28,10 +28,10 @@ Pfloat Boot_ave_err(Vfloat& A) {
   double err=0;
 
 
-  for(auto &el: A) { res+=el/A.size(); err+= el*el/A.size();}
+  for(auto &el: A) { res+=el/(double)A.size(); err+= el*el/(double)A.size();}
 
 
-  err = (err - res*res)*(A.size())/(A.size() -1);
+  err = (err - res*res)*((double)A.size())/((double)A.size() -1);
 
   return make_pair(res, sqrt(err));
 
@@ -45,10 +45,10 @@ double Boot_err(Vfloat& A) {
   double err=0;
 
 
-  for(auto &el: A) { res+=el/A.size(); err+= el*el/A.size();}
+  for(auto &el: A) { res+=el/(double)A.size(); err+= el*el/(double)A.size();}
 
 
-  err = (err - res*res)*(A.size())/(A.size() -1);
+  err = (err - res*res)*((double)A.size())/((double)A.size() -1);
 
   return sqrt(err);
 
