@@ -103,7 +103,7 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
     }
     else if(m_data.Tag[i].substr(0,1) =="B") Corr.Tmin = 13;
     else Corr.Tmin= 21;
-    if(m_data.Tag[i].substr(0,1)=="D") Corr.Tmax = m_data.nrows[i]/2 -6;
+    if(m_data.Tag[i].substr(0,1)=="D") Corr.Tmax = m_data.nrows[i]/2 -4;
     else Corr.Tmax= m_data.nrows[i]/2 -4;
     Corr.Nt = m_data.nrows[i];
     boost::filesystem::create_directory("../data");
@@ -132,9 +132,11 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
     
     distr_t_list Exch_distr =  Corr.corr_t(dm_exch_data.col(0)[i], "");
  
-    distr_t_list Dm_exch_eff_distr = Corr.effective_slope_t(Exch_distr, Pi_iso_distr, "../data/Mpi_twisted/"+p+"/dm_exch."+m_data.Tag[i]);
+    distr_t_list Dm_exch_eff_distr = Corr.effective_slope_t(Exch_distr, Pi_iso_distr, "");
 
-    cout<<m_data.Tag[i]<<" "<<Corr.Fit_distr(Dm_exch_eff_distr).ave()<<" "<<Corr.Fit_distr(Dm_exch_eff_distr).err()<<endl;
+    distr_t_list Dm_exch_eff_distr_ren= Corr.effective_slope_t(Za_distr*Za_distr*Exch_distr, Pi_iso_distr, "../data/Mpi_twisted/"+p+"/dm_exch."+m_data.Tag[i]);
+
+    cout<<"exch: "<<m_data.Tag[i]<<" "<<Corr.Fit_distr(Dm_exch_eff_distr_ren).ave()<<" "<<Corr.Fit_distr(Dm_exch_eff_distr_ren).err()<<endl;
    
    
     distr_t_list Dm_hand_eff_distr, Mpi_eff_hand_run_distr, Hand_distr, Pi_iso_distr_hand_run;
@@ -142,10 +144,40 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
       Mpi_eff_hand_run_distr= Corr.effective_mass_t(m_data_hand_run.col(0)[i], "");
       Pi_iso_distr_hand_run = Corr.corr_t(m_data_hand_run.col(0)[i],"");
       Hand_distr = Corr.corr_t(dm_hand_data.col(0)[i], "");
-      Dm_hand_eff_distr= Corr.effective_slope_t(dm_hand_data.col(0)[i], m_data_hand_run.col(0)[i], "../data/Mpi_twisted/"+p+"/dm_hand."+m_data.Tag[i]);
+      Dm_hand_eff_distr= Corr.effective_slope_t(Za_distr*Za_distr*Hand_distr, Pi_iso_distr, "../data/Mpi_twisted/"+p+"/dm_hand."+m_data.Tag[i]);
       distr_t_list Dm2_hand_eff_distr = Dm_hand_eff_distr*2.0*Mpi_eff_distr;
       Print_To_File({}, {Dm2_hand_eff_distr.ave(),Dm2_hand_eff_distr.err()}, "../data/Mpi_twisted/"+p+"/dm2_hand."+m_data.Tag[i], "", "");
-      cout<<m_data.Tag[i]<<" "<<Corr.Fit_distr(Dm_hand_eff_distr).ave()<<" "<<Corr.Fit_distr(Dm_hand_eff_distr).err()<<endl;
+      cout<<"disc: "<<m_data.Tag[i]<<" "<<Corr.Fit_distr(Dm_hand_eff_distr).ave()<<" "<<Corr.Fit_distr(Dm_hand_eff_distr).err()<<endl;
+
+
+
+      
+      if(m_data.Tag[i] == "A40.24_48") {
+
+
+      if(IncludeDisconnected) {
+      data_t m_data_stoch, dm_hand_data_stoch;
+      m_data_stoch.Read("../A40.24_48_gen_data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
+      dm_hand_data_stoch.Read("../A40.24_48_gen_data", "handcuffs", "P5P5");
+      CorrAnalysis Corr_stoch(UseJack,Njacks,Nboots);
+      Corr_stoch.Tmin=12;
+      Corr_stoch.Tmax= m_data_stoch.nrows[0]/2 -4;
+      Corr_stoch.Nt = m_data_stoch.nrows[0];
+      distr_t_list Mpi = Corr_stoch.corr_t(m_data_stoch.col(0)[0], "");
+      distr_t_list Dm_hand = Corr_stoch.corr_t(dm_hand_data_stoch.col(0)[0],"");
+      distr_t_list ratio= Za_distr*Za_distr*Dm_hand/Mpi;
+
+      
+      distr_t_list Dm_hand_non_stoch= Corr.corr_t(dm_hand_data.col(0)[i], "");
+      distr_t_list ratio_non_stoch = Za_distr*Za_distr*Dm_hand_non_stoch/Pi_iso_distr;
+      cout<<"stoch:"<<endl;
+      for (int t=0;t<Corr_stoch.Nt;t++) cout<<t<<"  "<<(e2/2.0)*ratio.ave()[t]<<" "<<(e2/2.0)*ratio.err()[t]<<endl;
+      cout<<"non_stoch:"<<endl;
+      for (int t=0; t<Corr.Nt;t++) cout<<t<<"  "<<(e2/2.0)*ratio_non_stoch.ave()[t]<<"  "<<(e2/2.0)*ratio_non_stoch.err()[t]<<endl;
+      cout<<"Handcuff diagram from stochastic photon computed!"<<endl;
+      }
+      }
+      
     }
 
     if(IncludeDisconnected) {
@@ -202,7 +234,7 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
   //Fix some parameters to make test
   bf.Fix_par("F_m",0.0);
   //bf.Fix_par("F_a",0.0);
-  //bf.Fix_par("Dm",0.0);
+  bf.Fix_par("Dm",0.0);
   bf.Fix_par("D",0.0);
   bf.Fix_par("lg_a", 0.0);
   bf.Fix_par("A_2", 0.0);

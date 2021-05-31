@@ -140,9 +140,9 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
       distr_t_list Dm_hand_non_stoch= Corr.corr_t(dm_hand_data.col(0)[i], "");
       distr_t_list ratio_non_stoch = Dm_hand_non_stoch/Mpi_non_stoch;
       cout<<"stoch:"<<endl;
-      for (int t=0;t<Corr_stoch.Nt;t++) cout<<t<<"  "<<ratio.ave()[t]<<" "<<ratio.err()[t]<<endl;
+      for (int t=0;t<Corr_stoch.Nt;t++) cout<<t<<"  "<<(e2/2.0)*ratio.ave()[t]<<" "<<(e2/2.0)*ratio.err()[t]<<endl;
       cout<<"non_stoch:"<<endl;
-      for (int t=0; t<Corr.Nt;t++) cout<<t<<"  "<<ratio_non_stoch.ave()[t]<<"  "<<ratio_non_stoch.err()[t]<<endl;
+      for (int t=0; t<Corr.Nt;t++) cout<<t<<"  "<<(e2/2.0)*ratio_non_stoch.ave()[t]<<"  "<<(e2/2.0)*ratio_non_stoch.err()[t]<<endl;
       cout<<"Handcuff diagram from stochastic photon computed!"<<endl;
       }
       
@@ -296,10 +296,10 @@ void Pion_mass_analysis(string CURRENT_TYPE, bool IncludeDisconnected) {
     
   //Fix some parameters to make test
   bf.Fix_par("F_m",0.0);
-  bf.Fix_par("Dm",0.0);
+  //bf.Fix_par("Dm",0.0);
   // bf.Fix_par("D",0.0);
   bf.Fix_par("log_a", 0.0);
-  bf.Fix_par("A_2", 0.0);
+  //bf.Fix_par("A_2", 0.0);
   //bf.Fix_par("log", 0.0);
 
   //Add List of parameters to be released after first minimization

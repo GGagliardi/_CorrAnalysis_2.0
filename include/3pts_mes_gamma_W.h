@@ -270,6 +270,11 @@ distr_t_list H_1_impr(const distr_t_list & H30, const distr_t_list& H03, const d
 distr_t_list H_2_impr(const distr_t_list & H30, const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= k
 distr_t_list FA_off_impr(const distr_t_list & H30, const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= k
 
+distr_t_list H_1_mixed_diag(const distr_t_list & H30, const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= kz
+distr_t_list H_2_mixed_diag(const distr_t_list & H30, const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= k
+distr_t_list FA_off_mixed_diag(const distr_t_list & H30, const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H11_0,const distr_t_list& H33_0,pt3_momenta& Mom,const distr_t& m); //valid for p=0, k= k
+
+
 void Compute_form_factors();
 
 void Add_to_mom_list(pt3_momenta_list &M, struct header_virph &header, double& L); 
