@@ -76,6 +76,11 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
   else if(Analysis_Mode=="VMD") {
     //do nothing
   }
+
+  else if(Analysis_Mode=="GM2") {
+    //do nothing
+
+  }
   
   
   else crash("Analysis_Mode: "+Analysis_Mode+" not found");
@@ -114,6 +119,12 @@ void MasterClass_analysis::Analysis_manager() {
 
   if(Analysis_Mode == "VMD") {
     Regge();
+  }
+
+  if(Analysis_Mode == "GM2") {
+
+    Gm2();
+
   }
   return;
 

@@ -24,10 +24,20 @@ class LatticeInfo {
   double Za_err;
   double Za_M2;
   double Za_M2_err;
-  double a;
-  double a_err;
+  double a; //fm
+  double a_err;  //fm
   double Beta;
   string CURRENT_TYPE;
+  double ainv; //GeV
+  double ainv_err; //GeV
+  double Za_fact;
+  double Zm_fact;
+  double Za_fact_err;
+  double Zm_fact_err;
+  double Za_fact_M2;
+  double Zm_fact_M2;
+  double Za_fact_M2_err;
+  double Zm_fact_M2_err;
   Pfloat Retrieve_Zv(string S, int ibranch) {
     LatInfo(S);
     if(ibranch<4) {return make_pair(Zv,Zv_err);}

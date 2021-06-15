@@ -6,6 +6,7 @@
 #include "PionMassAnalysis.h"
 #include "Axion_l7.h"
 #include "PionMassAnalysis_twisted.h"
+#include "gm2.h"
 
 using namespace std;
 

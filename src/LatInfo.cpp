@@ -23,6 +23,17 @@ void LatticeInfo::LatInfo(string S) {
     ZS_err=0.012;
     a = 0.0885;
     a_err = 0.0036;
+    ainv= 2.224;
+    ainv_err= 0.068;
+    Zm_fact=1.629;
+    Zm_fact_err= 0.041;
+    Za_fact=0.859;
+    Za_fact_err=0.015;
+    Zm_fact_M2= 1.637;
+    Zm_fact_M2_err=0.014;
+    Za_fact_M2= 0.990;
+    Za_fact_M2_err=0.009;
+    
     if(CURRENT_TYPE=="LOCAL") {
       Zv = 0.587;
       Zv_err=0.004;
@@ -35,7 +46,7 @@ void LatticeInfo::LatInfo(string S) {
       
     }
     else if (CURRENT_TYPE=="CONSERVED") {Zv= 1.0; Zv_err=1.0; Zv_M2=1.0; Zv_M2_err=1.0;}
-      else crash("CURRENT_TYPE: "+CURRENT_TYPE+" not yet implemented");
+    else crash("CURRENT_TYPE: "+CURRENT_TYPE+" not yet implemented");
   }
   else if(S=="B") {
     Beta= 1.95;
@@ -45,6 +56,16 @@ void LatticeInfo::LatInfo(string S) {
     ZS_err=0.009;
     a = 0.0815;
     a_err = 0.0030;
+    ainv= 2.416;
+    ainv_err= 0.063;
+    Zm_fact=1.514;
+    Zm_fact_err= 0.033;
+    Za_fact=0.873;
+    Za_fact_err=0.013;
+    Zm_fact_M2= 1.585;
+    Zm_fact_M2_err=0.012;
+    Za_fact_M2= 0.980;
+    Za_fact_M2_err=0.008;
     if(CURRENT_TYPE=="LOCAL") {
       Zv=0.603;
       Zv_err=0.003;
@@ -69,6 +90,16 @@ void LatticeInfo::LatInfo(string S) {
     ZS_err=0.006;
     a = 0.0619;
     a_err = 0.0018;
+    ainv= 3.184;
+    ainv_err= 0.059;
+    Zm_fact=1.459;
+    Zm_fact_err= 0.017;
+    Za_fact=0.909;
+    Za_fact_err=0.006;
+    Zm_fact_M2= 1.462;
+    Zm_fact_M2_err=0.006;
+    Za_fact_M2= 0.958;
+    Za_fact_M2_err=0.003;
     if(CURRENT_TYPE=="LOCAL") {
       Zv= 0.655 ;
       Zv_err=0.003;

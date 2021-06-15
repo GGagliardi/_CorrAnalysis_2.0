@@ -209,7 +209,6 @@ void Transpose_VV(vector<vector<T>> &A) {
 
 
   A=B;
-
   return;
 
 
