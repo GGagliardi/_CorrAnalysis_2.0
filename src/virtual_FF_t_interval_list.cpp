@@ -53,7 +53,7 @@ void Get_virtual_ff_fit_interval(string W, double off, double tht, int &Tmin, in
     else if( (tht > 0.2756 -eps(3)) && (tht < 0.2756 + eps(3)) && (off > 0.1687 - eps(3)) && (off < 0.1687 + eps(3))) {  Tmin= 14; Tmax=19;     }
     else if( (tht > 0.3603 -eps(3)) && (tht < 0.3603 + eps(3)) && (off > 0.1687 - eps(3)) && (off < 0.1687 + eps(3))) {  Tmin= 13; Tmax=18;     }
     else if( (tht > 0.2975 -eps(3)) && (tht < 0.2975 + eps(3)) && (off > 0.1370 - eps(3)) && (off < 0.1370 + eps(3))) {  Tmin= 14; Tmax=18;     }
-    else if( (tht > 0.4064 -eps(3)) && (tht < 0.4064 + eps(3)) && (off > 0.1370 - eps(3)) && (off < 0.1370 + eps(3))) {  Tmin= 12; Tmax=16;     } //doubt!
+    else if( (tht > 0.4064 -eps(3)) && (tht < 0.4064 + eps(3)) && (off > 0.1370 - eps(3)) && (off < 0.1370 + eps(3))) {  Tmin= 13; Tmax=17;     } //doubt!
     else if( (tht > 0.4620 -eps(3)) && (tht < 0.4620 + eps(3)) && (off > 0.1370 - eps(3)) && (off < 0.1370 + eps(3))) {  Tmin= 12; Tmax=16;     } //doubt!
     else if( (tht > 0.3005 -eps(3)) && (tht < 0.3005 + eps(3)) && (off > 0.1054 - eps(3)) && (off < 0.1054 + eps(3))) {  Tmin= 8; Tmax=13;     }
     else if( (tht > 0.4234 -eps(3)) && (tht < 0.4234 + eps(3)) && (off > 0.1054 - eps(3)) && (off < 0.1054 + eps(3))) {  Tmin= 8; Tmax=13;     }

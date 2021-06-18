@@ -93,6 +93,7 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
 
 
   distr_t_list Mpi_distr_list(UseJack), Dm2_tot_distr_list(UseJack), ratio_disc_exch_mass_distr_list(UseJack), ratio_disc_exch_mass_vol_sub_distr_list(UseJack);
+  distr_t_list Dm2_disc_ov_Mpi2(UseJack), Dm2_disc_ov_Mpi2log(UseJack), Dm2_disc(UseJack);
   vector<Eigen::MatrixXd> CovMatrixPion(Nens);
 
   for(int i=0; i < Nens; i++) {
@@ -131,6 +132,10 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
 
     
     distr_t_list Exch_distr =  Corr.corr_t(dm_exch_data.col(0)[i], "");
+
+    distr_t_list fp_distr= Corr.decay_constant_t(m_data.col(0)[i], "");
+
+    distr_t fp_fit= Corr.Fit_distr(fp_distr);
  
     distr_t_list Dm_exch_eff_distr = Corr.effective_slope_t(Exch_distr, Pi_iso_distr, "");
 
@@ -184,6 +189,10 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
       ratio_disc_exch_mass_distr_list.distr_list.push_back(Corr.Fit_distr(Dm_hand_eff_distr/Dm_exch_eff_distr));
       distr_t_list univ_sub_ratio = Za_distr*Za_distr*e2*Mpi_eff_distr*Dm_hand_eff_distr/(e2*Za_distr*Za_distr*Mpi_eff_distr*Dm_exch_eff_distr + (kappa*alpha/ll)*( Mpi_eff_distr + 2.0/ll));
       ratio_disc_exch_mass_vol_sub_distr_list.distr_list.push_back(Corr.Fit_distr(univ_sub_ratio));
+      Dm2_disc_ov_Mpi2.distr_list.push_back(Corr.Fit_distr(Za_distr*Za_distr*e2*Dm_hand_eff_distr/Mpi_eff_distr));
+      auto mlog= [](double x, double y) -> double { return log(x);};
+      Dm2_disc_ov_Mpi2log.distr_list.push_back(Corr.Fit_distr(Za_distr*Za_distr*e2*Dm_hand_eff_distr/(Mpi_eff_distr*distr_t_list::f_of_distr_list(mlog, (Mpi_eff_distr*Mpi_eff_distr/(16.0*M_PI*M_PI*fp_distr*fp_distr))))));
+      Dm2_disc.distr_list.push_back(Corr.Fit_distr(Za_distr*Za_distr*e2*Mpi_eff_distr*Dm_hand_eff_distr));
       cout<<m_data.Tag[i]<<" L: "<<ll<<" "<<Corr.Fit_distr(e2*Mpi_eff_distr*Dm_exch_eff_distr).ave()<<"   "<<Corr.Fit_distr(e2*Mpi_eff_distr*Dm_exch_eff_distr).err()<<"  "<<Corr.Fit_distr(e2*Mpi_eff_distr*Dm_exch_eff_distr + (1.0/(Za_distr*Za_distr))*(kappa*alpha/ll)*( Mpi_eff_distr + 2.0/ll)).ave()<<"  "<<Corr.Fit_distr(e2*Mpi_eff_distr*Dm_exch_eff_distr +  (1.0/(Za_distr*Za_distr))*(kappa*alpha/ll)*( Mpi_eff_distr + 2.0/ll)).err()<<endl;
     }
     
@@ -235,7 +244,7 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
   bf.Fix_par("F_m",0.0);
   //bf.Fix_par("F_a",0.0);
   bf.Fix_par("Dm",0.0);
-  bf.Fix_par("D",0.0);
+  //bf.Fix_par("D",0.0);
   bf.Fix_par("lg_a", 0.0);
   bf.Fix_par("A_2", 0.0);
   //bf.Fix_par("log", 0.0);
@@ -647,6 +656,10 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
 
   if(IncludeDisconnected) {
     Print_To_File(m_data.Tag, {MMP, ratio_disc_exch_mass_distr_list.ave(), ratio_disc_exch_mass_distr_list.err(), ratio_disc_exch_mass_vol_sub_distr_list.ave(), ratio_disc_exch_mass_vol_sub_distr_list.err()}, "../data/Mpi_twisted/"+print_path+"/ratio_disc_exch.data","","#Ens   Mp   ratio    ratio_err   ratio_UNIV_SUB   ratio_UNIV_SUB_err        ");
+
+    Print_To_File(m_data.Tag, {MMP, Dm2_disc_ov_Mpi2.ave(), Dm2_disc_ov_Mpi2.err()}, "../data/Mpi_twisted/"+print_path+"/Dm2_disc_ov_Mpi2.data","","#Ens   Mp   val err    ");
+    Print_To_File(m_data.Tag, {MMP, Dm2_disc_ov_Mpi2log.ave(), Dm2_disc_ov_Mpi2log.err()}, "../data/Mpi_twisted/"+print_path+"/Dm2_disc_ov_Mpi2log.data","","#Ens   Mp   val err    ");
+    Print_To_File(m_data.Tag, {MMP, Dm2_disc.ave(), Dm2_disc.err()}, "../data/Mpi_twisted/"+print_path+"/dm2_disc.data","","#Ens   Mp   val err    ");
 
   }
   

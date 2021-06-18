@@ -147,6 +147,71 @@ void LatticeInfo::LatInfo(string S) {
 }
 
 
+void LatticeInfo::LatInfo_new_ens(string Tag) {
+
+  if(Tag.substr(1,1)=="A") {
+    a= 0.09471;
+    a_err= 0.00039;
+    a_nucleon=0.09295;
+    a_nucleon_err=0.00047;
+  }
+
+  else if(Tag.substr(1,1)=="B") {
+    a= 0.08161;
+    a_err= 0.00030;
+    a_nucleon=0.07975;
+    a_nucleon_err=0.00032;
+  }
+
+  else if(Tag.substr(1,1)=="C") {
+    a= 0.06942;
+    a_err= 0.00026;
+    a_nucleon=0.06860;
+    a_nucleon_err=0.00020;
+  }
+
+  else crash("In LatticeInfo::LatInfo_new_ens Ensemble: "+Tag+" not found");
+
+  if(Tag=="cA211.53.24") {
+    L=24; T=48; ml=0.00530;
+  }
+  else if(Tag=="cA211.53.24") {
+    L=24; T=48; ml=0.00400;
+  }
+  else if(Tag=="cA211.53.24") {
+    L=32; T=64; ml=0.00300;
+  }
+  else if(Tag=="cA211.53.24") {
+    L=48; T=96; ml=0.00120;
+  }
+  else if(Tag=="cA211.53.24") {
+    L=32; T=64; ml=0.00250;
+  }
+  else if(Tag=="cA211.53.24") {
+    L=48; T=96; ml=0.00250;
+  }
+  else if(Tag=="cA211.53.24") {
+    L=64; T=128; ml=0.00140;
+  }
+  else if(Tag=="cA211.53.24") {
+    L=64; T=128; ml=0.00072;
+  }
+  else if(Tag=="cA211.53.24") {
+    L=48; T=96; ml=0.00200;
+  }
+  else if(Tag=="cA211.53.24") {
+    L=80; T=160; ml=0.00060;
+  }
+  else crash("In LatticeInfo::LatInfo_new_ens Ensemble: "+Tag+" not found");
+  
+   
+
+
+
+  return;
+}
+
+
 
 
 void Read_pars_from_ensemble_tag(vector<string>& Ens_vec, Vfloat& m_lat, Vfloat& L, Vfloat& T) {

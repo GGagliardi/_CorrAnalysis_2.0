@@ -11,7 +11,7 @@
 using namespace std;
 
 
-void gm2() ;
+void Gm2() ;
 
 
 

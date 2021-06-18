@@ -1200,15 +1200,6 @@ distr_t_list FA_off_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, 
 
 
 
-
-
-
-
-
-
-
-
-
 void Compute_form_factors() {
 
 
@@ -1622,7 +1613,7 @@ void Compute_form_factors() {
 
 	      corr.Reflection_sign = -1;
    
-	      distr_no_symm_V[alpha][mu] = e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 1, icomb3pt, alpha, mu, "V", sm_lev), "");
+	      distr_no_symm_V[alpha][mu] =e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 1, icomb3pt, alpha, mu, "V", sm_lev), "");
 	      distr_no_symm_V_k0[alpha][mu] =e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 1,icomb_k0, alpha, mu, "V", sm_lev), "");
 	      distr_V[alpha][mu] = distr_no_symm_V[alpha][mu] + e_f2*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 1, symmetric_comb, alpha, mu, "V", sm_lev), "");
 	      distr_V_k0[alpha][mu] = distr_no_symm_V_k0[alpha][mu]  + e_f2*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 1, symmetric_comb_k0, alpha, mu, "V", sm_lev), "");

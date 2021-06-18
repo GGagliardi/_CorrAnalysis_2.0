@@ -12,6 +12,7 @@ class LatticeInfo {
   LatticeInfo() {};
   LatticeInfo(string CURRENT_TYPE) { this->CURRENT_TYPE = CURRENT_TYPE;}
   void LatInfo(string S);
+  void LatInfo_new_ens(string Tag);
   double ZP;
   double ZP_err;
   double ZS;
@@ -27,6 +28,10 @@ class LatticeInfo {
   double a; //fm
   double a_err;  //fm
   double Beta;
+  int L,T;
+  double a_nucleon;
+  double a_nucleon_err;
+  double ml;
   string CURRENT_TYPE;
   double ainv; //GeV
   double ainv_err; //GeV

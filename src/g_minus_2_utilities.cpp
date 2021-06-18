@@ -40,9 +40,9 @@ double Gamma_rpp(double omega, double g_rho_pipi, double Mpi) {
 double Gamma_rpp_der(double omega, double g_rho_pipi, double Mpi) {
 
   double k= sqrt( pow(omega,2)/4.0 - pow(Mpi,2));
-  return 2*k*( (8*pow(Mpi,2) + pow(omega,2))/(4*pow(omega,3)))*pow(g_rho_pipi,2)/(6.0*M_PI)
+  return 2*k*( (8*pow(Mpi,2) + pow(omega,2))/(4*pow(omega,3)))*pow(g_rho_pipi,2)/(6.0*M_PI);
   
-    }
+}
 
 double h(double omega, double g_rho_pipi, double Mpi) {
 
@@ -104,7 +104,7 @@ double cot_d_11(double k, double m_rho, double g_rho_pipi, double Mpi) {
 double d_11(double k, double m_rho, double g_rho_pipi, double Mpi) {
 
 
-  return acot( cot_d_11(k, m_rho, g_rho_pipi, Mpi));
+  return atan( 1.0/cot_d_11(k, m_rho, g_rho_pipi, Mpi));
 
 }
 
@@ -152,10 +152,10 @@ int degeneracy(int m) {
 
   for(int x=xmin;x<=xmax;x++) {
     int dif = ipow(m,2) - ipow(x,2);
-    int ymax;
+    int ymax,ymin;
     if(ceil((double)sqrt(dif)) == floor((double)sqrt(dif))) {
       //dif is a perfect square
-      ymax= floor((double)sqrt(df));
+      ymax= floor((double)sqrt(dif));
     }
     else  ymax= (int)sqrt( pow(m,2) -pow(x,2));
 
@@ -166,7 +166,6 @@ int degeneracy(int m) {
     else ymin= (int)sqrt( (pow(m,2)-pow(x,2))/2.0) +1;
 
     
-    int ymin;
 
     for(int y=ymin;y<=ymax;y++) {
 
@@ -234,7 +233,7 @@ double Zeta_function_laplacian(double z) {
 
   for(int m=1;m<=max_m;m++) {
 
-    new_val = degeneracy(m)*F3(m);
+    new_val = degeneracy(m)*F2(m);
     if(new_val<= relerr*series_val) return series_val+val;
     else series_val += new_val;
   }
@@ -253,21 +252,23 @@ double tan_phi(double z) {
 
 double phi_der(double z) {
 
-  auto f = [&](double t) { return phi(t);}
+  auto f = [&](double t) { return phi(t);};
 
   double x=z;
 
-  return boost::math::tools::finite_difference_derivative(f,x);
+  return boost::math::differentiation::finite_difference_derivative(f,x);
 
 
 }
+
+double phi(double z) { return atan(tan_phi(z));}
 
 double Amplitude(double k, int L, double m_rho, double g_rho_pipi, double Mpi) {
 
 
   double omega= 2*sqrt( pow(k,2)+pow(Mpi,2));
 
-  return ((2.0*pow(k,5)/(3.0*M_PI*pow(omega,2))))*pow(F_pi_GS_mod(omega, m_rho,g_rho_pipi,Mpi),2)/(k*d11_der(k, m_rho, g_rho_pipi,Mpi) + (k*L/(2.0*M_PI))*phi_der(k*L/(2.0*M_PI)));
+  return ((2.0*pow(k,5)/(3.0*M_PI*pow(omega,2))))*pow(F_pi_GS_mod(omega, m_rho,g_rho_pipi,Mpi),2)/(k*d_11_der(k, m_rho, g_rho_pipi,Mpi) + (k*L/(2.0*M_PI))*phi_der(k*L/(2.0*M_PI)));
 
 }
 
@@ -350,7 +351,7 @@ double V_pipi(double t, int L, double m_rho, double g_rho_pipi, double Mpi) {
 
   for(int i_lev=1;i_lev<=Nresonances;i_lev++) {
 
-    double k_n= Find_pipi_energy_lev(int L, int i_lev, double m_rho, double g_rho_pipi, double Mpi);
+    double k_n= Find_pipi_energy_lev(L,i_lev, m_rho, g_rho_pipi, Mpi);
 
     double omega_n = 2.0*sqrt( pow(Mpi,2) + pow(k_n,2));
     ret_val += Amplitude(k_n, L, m_rho, g_rho_pipi, Mpi)*exp(-omega_n*t);
@@ -367,7 +368,7 @@ double V_pipi_infL(double t, double m_rho_infL, double g_rho_pipi_infL, double M
 
 
   auto Integrand = [&](double omega) -> double {
-    return (1.0/(48.0*pow(M_PI,2)))*pow(omega,2)*pow(1.0- pow(2.0*Mpi_infL/omega,2), 3.0/2.0)*exp(-omega*t)*F_pi_GS_mod(omega, m_rho_infL, g_rho_pipi_infL,Mpi_infl);};
+    return (1.0/(48.0*pow(M_PI,2)))*pow(omega,2)*pow(1.0- pow(2.0*Mpi_infL/omega,2), 3.0/2.0)*exp(-omega*t)*F_pi_GS_mod(omega, m_rho_infL, g_rho_pipi_infL,Mpi_infL);};
 
 
   return boost::math::quadrature::gauss_kronrod<double, 15>::integrate(Integrand, 2*Mpi_infL, numeric_limits<double>::infinity(), 5, relerr)  ;

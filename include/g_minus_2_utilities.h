@@ -10,7 +10,7 @@
 #include "T_min.h"
 #include "input.h"
 #include <boost/math/quadrature/gauss_kronrod.hpp>
-#include <boost/math/tools/numerical_differentiation.hpp>
+#include <boost/math/differentiation/finite_difference.hpp>
 
 
 using namespace std;
@@ -34,7 +34,7 @@ double d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi);
 int degeneracy(int m);
 double Zeta_function_laplacian(double z);
 double tan_phi(double z);
-double phi(double z) { return atan(tan_phi(z));}
+double phi(double z);
 double phi_der(double z);
 double Find_pipi_energy_lev(int L, int n, double m_rho, double g_rho_pipi, double Mpi);
 double V_pipi(double t, int L, double m_rho, double g_rho_pipi, double Mpi);
