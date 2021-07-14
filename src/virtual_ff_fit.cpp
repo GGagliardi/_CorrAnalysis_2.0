@@ -149,9 +149,9 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   //add prior 
   for(int ijack=0;ijack<njacks;ijack++) {
      bf.ib= &ijack;
-     bf.Append_to_prior("rk", rk_guess_A, rk_guess_A );
-     if(W=="A")  { bf.Append_to_prior("rq", rq_guess_A, rq_guess_A ); bf.Append_to_prior("Za_ov_Zv", 1.0, 1.0);}
-     else if(W=="V") { bf.Append_to_prior("rq", rq_guess_V, rq_guess_V ) ; bf.Append_to_prior("Za_ov_Zv", Za_ov_Zv.distr[ijack], Za_ov_Zv.err());}
+     bf.Append_to_prior("rk", rk_guess_A, 0.5*rk_guess_A );
+     if(W=="A")  { bf.Append_to_prior("rq", rq_guess_A, 0.5*rq_guess_A ); bf.Append_to_prior("Za_ov_Zv", 1.0, 1.0);}
+     else if(W=="V") { bf.Append_to_prior("rq", rq_guess_V, 0.5*rq_guess_V ) ; bf.Append_to_prior("Za_ov_Zv", Za_ov_Zv.distr[ijack], Za_ov_Zv.err());}
      else crash("string W: "+W+" is not axial nor vector");
   }
 
@@ -159,6 +159,25 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   //fit
   bf.Append_to_input_par(data);
   Bt_fit =bf.Perform_bootstrap_fit();
+
+
+  //print fitted params
+  Vfloat a0_boot, ampl_boot, rk_boot, rq_boot;
+  for (auto &p: Bt_fit.par) {
+    a0_boot.push_back(p.a0);
+    ampl_boot.push_back(p.ampl);
+    rk_boot.push_back(p.rk);
+    rq_boot.push_back(p.rq);
+  }
+
+  cout<<"########PRINTING FIT PARAMS VMD FIT OF "<<ff_type<<"###########"<<endl;
+  cout<<"A: "<<Boot_ave(a0_boot)<<"("<<Boot_err(a0_boot)<<")"<<endl;
+  cout<<"B: "<<Boot_ave(ampl_boot)<<"("<<Boot_err(ampl_boot)<<")"<<endl;
+  cout<<"C: "<<Boot_ave(rk_boot)<<"("<<Boot_err(rk_boot)<<")"<<endl;
+  cout<<"D: "<<Boot_ave(rq_boot)<<"("<<Boot_err(rq_boot)<<")"<<endl;
+  cout<<"##########FIT PARAMS PRINTED###########"<<endl;
+
+  //params printed
 
 
   //define lambda functions
@@ -293,6 +312,27 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
   //fit
   bf.Append_to_input_par(data);
   Bt_fit =bf.Perform_bootstrap_fit();
+
+
+   //print fitted params
+  Vfloat a0_boot, ak_boot, aq_boot, akq_boot, a2kq_boot;
+  for (auto &p: Bt_fit.par) {
+    a0_boot.push_back(p.a0);
+    ak_boot.push_back(p.ak);
+    aq_boot.push_back(p.aq);
+    akq_boot.push_back(p.akq);
+    a2kq_boot.push_back(p.a2kq);
+  }
+
+  cout<<"########PRINTING FIT PARAMS CHPT FIT OF "<<ff_type<<"###########"<<endl;
+  cout<<"a0: "<<Boot_ave(a0_boot)<<"("<<Boot_err(a0_boot)<<")"<<endl;
+  cout<<"ak: "<<Boot_ave(ak_boot)<<"("<<Boot_err(ak_boot)<<")"<<endl;
+  cout<<"aq: "<<Boot_ave(aq_boot)<<"("<<Boot_err(aq_boot)<<")"<<endl;
+  cout<<"akq: "<<Boot_ave(akq_boot)<<"("<<Boot_err(akq_boot)<<")"<<endl;
+  cout<<"a2kq: "<<Boot_ave(a2kq_boot)<<"("<<Boot_err(a2kq_boot)<<")"<<endl;
+  cout<<"##########FIT PARAMS PRINTED###########"<<endl;
+
+  //params printed
 
 
   //define lambda functions

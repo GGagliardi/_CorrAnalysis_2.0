@@ -15,8 +15,8 @@
 
 using namespace std;
 
-
-double kernel_K(double t);
+bool Is_perfect_square(int x);
+double kernel_K(double t,double MV, string channel);
 double Vdual(double t, double m_rho, double Edual, double Rdual);
 double Gamma_rpp(double omega, double g_rho_pipi, double Mpi);
 double Gamma_rpp_der(double omega, double g_rho_pipi, double Mpi);
@@ -33,6 +33,7 @@ double cot_d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi);
 double d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi);
 int degeneracy(int m);
 double Zeta_function_laplacian(double z);
+double Zeta_function_laplacian_Luscher(double z);
 double tan_phi(double z);
 double phi(double z);
 double phi_der(double z);

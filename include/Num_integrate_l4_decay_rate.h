@@ -49,6 +49,8 @@ class Decay_Rate_Integration_Result {
 };
 
 
+double MonteCarlo_integration_extended_phase_space(const function<double(double,double)> &H1, const function<double(double,double)> &H2, const function<double(double,double)> &FA, const function<double(double,double)> &FV, double prec,string channel);
+
 Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(const vector<function<double(double, double)>> &H1, const vector<function<double(double, double)>> &H2  , const vector<function<double(double, double)>> &FA, const vector<function<double(double, double)>> &FV, distr_t &m_distr, distr_t & fp_distr, bool UseJack);
 
 

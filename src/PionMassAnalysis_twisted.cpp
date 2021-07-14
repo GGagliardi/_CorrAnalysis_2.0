@@ -243,8 +243,8 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
   //Fix some parameters to make test
   bf.Fix_par("F_m",0.0);
   //bf.Fix_par("F_a",0.0);
-  bf.Fix_par("Dm",0.0);
-  //bf.Fix_par("D",0.0);
+  //bf.Fix_par("Dm",0.0);
+  bf.Fix_par("D",0.0);
   bf.Fix_par("lg_a", 0.0);
   bf.Fix_par("A_2", 0.0);
   //bf.Fix_par("log", 0.0);

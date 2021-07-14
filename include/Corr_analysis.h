@@ -31,6 +31,7 @@ class CorrAnalysis {
   distr_t_list residue_correction_t(const distr_t_list& corr_A_distr, const distr_t_list& corr_B_distr, string Obs); //returns jackknife or bootstrap distribution of the leading order correction to the residue
   distr_t_list residue_correction_t(const VVfloat& corr_A, const VVfloat& corr_B, string Obs); //function overload
   Vfloat ASymm(const VVfloat& data, int t );
+ 
 
 
   bool UseJack;

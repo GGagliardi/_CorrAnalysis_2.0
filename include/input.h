@@ -23,7 +23,13 @@ class data_t {
     if(it == data.end()) crash("In class data_t, column: "+to_string(icol)+" is indefined");
     return it->second;
   }
-  
+  int Get_iens_from_tag(string T) {
+    for(unsigned int iens=0;iens< Tag.size();iens++) {
+      if(T==Tag[iens]) return iens;
+    }
+    crash("Cannot find Ensemble Tag: "+T+" in Tag list");
+    return 0;
+  }
 
   vector<string> Tag;
   map<int, VVVfloat> data; //corr<col, [ens][t][conf]

@@ -154,6 +154,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00039;
     a_nucleon=0.09295;
     a_nucleon_err=0.00047;
+    Za=0.724;
+    Za_err=0.009;
   }
 
   else if(Tag.substr(1,1)=="B") {
@@ -161,6 +163,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00030;
     a_nucleon=0.07975;
     a_nucleon_err=0.00032;
+    Za=0.746;
+    Za_err=0.008;
   }
 
   else if(Tag.substr(1,1)=="C") {
@@ -168,38 +172,43 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00026;
     a_nucleon=0.06860;
     a_nucleon_err=0.00020;
+    Za=0.761;
+    Za_err=0.008;
   }
 
-  else crash("In LatticeInfo::LatInfo_new_ens Ensemble: "+Tag+" not found");
+  else crash("In LatticeInfo::LatInfo_new_ens Ensemble: "+Tag+" not found while reading lattice spacing");
 
-  if(Tag=="cA211.53.24") {
+  if(Tag=="cA211a.53.24") {
     L=24; T=48; ml=0.00530;
   }
-  else if(Tag=="cA211.53.24") {
+  else if(Tag=="cA211a.40.24") {
     L=24; T=48; ml=0.00400;
   }
-  else if(Tag=="cA211.53.24") {
+  else if(Tag=="cA211ab.30.32") {
     L=32; T=64; ml=0.00300;
   }
-  else if(Tag=="cA211.53.24") {
+  else if(Tag=="cA211a.12.48") {
     L=48; T=96; ml=0.00120;
   }
-  else if(Tag=="cA211.53.24") {
+  else if(Tag=="cB211a.25.24") {
+    L=24; T=48; ml=0.00250;
+  }
+  else if(Tag=="cB211a.25.32") {
     L=32; T=64; ml=0.00250;
   }
-  else if(Tag=="cA211.53.24") {
+  else if(Tag=="cB211a.25.48") {
     L=48; T=96; ml=0.00250;
   }
-  else if(Tag=="cA211.53.24") {
+  else if(Tag=="cB211a.14.64") {
     L=64; T=128; ml=0.00140;
   }
-  else if(Tag=="cA211.53.24") {
+  else if(Tag=="cB211b.072.64") {
     L=64; T=128; ml=0.00072;
   }
-  else if(Tag=="cA211.53.24") {
+  else if(Tag=="cC211a.20.48") {
     L=48; T=96; ml=0.00200;
   }
-  else if(Tag=="cA211.53.24") {
+  else if(Tag=="cC211a.06.80") {
     L=80; T=160; ml=0.00060;
   }
   else crash("In LatticeInfo::LatInfo_new_ens Ensemble: "+Tag+" not found");

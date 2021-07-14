@@ -59,12 +59,14 @@ void data_t::Read() {
 	stringstream s(ReadLine);
 	double tmp=0;
 	while(s>>tmp) ncols++;
-	if(ncols != ncols_old && it!=0 && !Read.eof()) {
+	if(ncols != ncols_old && it!=0 && !Read.eof() && (ReadLine.find(SC) == string::npos)) {
 	  cout<<"Number of columns in file: "+File_name+", obs: "+Obs_name+" is not constant over configs"<<endl;
 	  cout<<"ncols_old: "<<ncols_old<<" ncols: "<<ncols<<endl;
+	  cout<<"Ens tag: "<<ens<<", conf_path: "<<conf_path<<endl;
+	  cout<<"iteration: "<<it<<endl;
 	  crash("Exiting...");
 	}
-	if(!Read.eof()) {
+	if(!Read.eof() && (ReadLine.find(SC) == string::npos)) {
 	  Ncols=ncols;
 	  ncols_old=ncols;
 	  it++;
@@ -117,6 +119,8 @@ void data_t::Read() {
   }
 
 }
+
+
 
 
 

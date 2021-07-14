@@ -13,9 +13,44 @@ const double eps_mumu= 1e-10;
 const double eps_ee = 1e-10;
 const double MkPh=  0.493677; //GeV
 const double fkPh = 0.155 ;//GeV
+const string MODE= "TOTAL";
 double cut =  pow(0.140/MkPh,2); //pow(0.020/MkPh,2); //pow(0.140/MkPh,2); //pow(0.020/MkPh,2); //0.001; // 
 double error_goal_MC_ee = 1000*1.0e-2*(Gamma/pow(Gf*Vus*alpha,2))*8.0*1.0e-8;
 double error_goal_MC_mumu= 1000*1.0e-2*(Gamma/pow(Gf*Vus*alpha,2))*1.0e-8;
+
+
+double MonteCarlo_integration_extended_phase_space(const function<double(double,double)> &H1, const function<double(double,double)> &H2, const function<double(double,double)> &FA, const function<double(double,double)> &FV, double prec,string channel) {
+
+
+  double m=MkPh;
+  double f= fkPh;
+  double rll,rl;
+  if(channel=="e+e-") {
+    rll= r_el;
+    rl=  r_el;
+  }
+  else if(channel=="mu+mu-") {
+    rll=r_mu;
+    rl= r_mu;
+  }
+  else crash("In Montecarlo_integration_extended_phase_space channel: "+channel+" not yet implemented");
+
+  //define lambda function to define energies and momenta in terms of the 5 integration variables, xk, xq, y12, y34 and phi. All dimensionful quantities are normalized over the Kaon Mass
+
+  auto lambda = [&](double xk, double xq) -> double { return sqrt( pow((1.0 -pow(xk,2)-pow(xq,2)),2) -4.0*pow(xk*xq,2));};
+
+  auto l_12 = [&](double xk) -> double { return sqrt( 1-4.0*rll/pow(xk,2));};
+
+  auto l_34 = [&](double xq) -> double { return 1-(rl/pow(xq,2));};
+
+  auto delta= [&](double xk, double xq) -> double { return pow(xk,2) -pow(xq,2);};
+
+  auto delta_34 = [&](double xq) -> double {return - rl/pow(xq,2);};
+
+  
+  
+
+}
 
 
 Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(const vector<function<double(double, double)>> &H1, const vector<function<double(double, double)>> &H2  , const vector<function<double(double, double)>> &FA, const vector<function<double(double, double)>> &FV, distr_t &m_distr, distr_t & fp_distr, bool UseJack) {
@@ -40,17 +75,20 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(const vector<function<dou
 
     double m= m_distr.distr[ijack];
     double fp= fp_distr.distr[ijack];
-    //set to physical to make test
-    m=MkPh;
-    fp=fkPh;
+
     
 
     //define double differential decay rate
     auto Rt_diff = [&](double xk, double xq, double l, double ll) -> double {
 
-      double Int= ptrate(xk,xq, l, ll, m, fp) + H1[ijack](xk,xq)*kern1(xk, xq, l, ll, m,fp) + H2[ijack](xk,xq)*kern2(xk, xq, l, ll, m,fp) + FA[ijack](xk,xq)*kernA(xk,xq,l,ll,m,fp) + FV[ijack](xk,xq)*kernV(xk,xq,l,ll,m,fp) + pow(H1[ijack](xk,xq),2)*kern11(xk,xq,l,ll,m) + pow(H2[ijack](xk,xq),2)*kern22(xk,xq,l,ll,m) + pow(FA[ijack](xk,xq),2)*kernAA(xk,xq,l,ll,m) + pow(FV[ijack](xk,xq),2)*kernVV(xk,xq,l,ll,m) + H1[ijack](xk,xq)*H2[ijack](xk,xq)*kern12(xk,xq,l,ll,m) + H1[ijack](xk,xq)*FA[ijack](xk,xq)*kernA1(xk,xq,l,ll,m);
-      double jacobian= 4.0*xk*xq;
-      return Int*jacobian;
+		     double Int= ptrate(xk,xq, l, ll, m, fp);
+		     double interference= H1[ijack](xk,xq)*kern1(xk, xq, l, ll, m,fp) + H2[ijack](xk,xq)*kern2(xk, xq, l, ll, m,fp) + FA[ijack](xk,xq)*kernA(xk,xq,l,ll,m,fp) + FV[ijack](xk,xq)*kernV(xk,xq,l,ll,m,fp);
+		     double quadratic= pow(H1[ijack](xk,xq),2)*kern11(xk,xq,l,ll,m) + pow(H2[ijack](xk,xq),2)*kern22(xk,xq,l,ll,m) + pow(FA[ijack](xk,xq),2)*kernAA(xk,xq,l,ll,m) + pow(FV[ijack](xk,xq),2)*kernVV(xk,xq,l,ll,m) + H1[ijack](xk,xq)*H2[ijack](xk,xq)*kern12(xk,xq,l,ll,m) + H1[ijack](xk,xq)*FA[ijack](xk,xq)*kernA1(xk,xq,l,ll,m);
+		     double jacobian= 4.0*xk*xq;
+		     if(MODE=="PT") return Int*jacobian*pow(MkPh/m,5);
+		     else if(MODE=="INTERFERENCE") return interference*jacobian*pow(MkPh/m,5);
+		     else if(MODE=="QUADRATIC") return quadratic*jacobian*pow(MkPh/m,5);
+		     return (Int+interference+quadratic)*jacobian*pow(MkPh/m,5);
     };
 
     cout<<"#####Quad integration#####"<<endl;
@@ -59,24 +97,7 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(const vector<function<dou
     double rl=r_mu;
     double rll=r_el;
 
-    /*
-    for(double xk=2*sqrt(rll);xk<1-sqrt(rl); xk+=0.001)
-      for(double xq=sqrt(rl);xq<1-xk;xq+=0.001) {
-	cout<<"kern1("<<xk<<","<<xq<<"): "<<kern1(xk,xq,rl,rll,m,fp)<<endl;
-	cout<<"kern2("<<xk<<","<<xq<<"): "<<kern2(xk,xq,rl,rll,m,fp)<<endl;
-	cout<<"kernA("<<xk<<","<<xq<<"): "<<kernA(xk,xq,rl,rll,m,fp)<<endl;
-	cout<<"kernV("<<xk<<","<<xq<<"): "<<kernV(xk,xq,rl,rll,m,fp)<<endl;
-	cout<<"kern11("<<xk<<","<<xq<<"): "<<kern11(xk,xq,rl,rll,m)<<endl;
-	cout<<"kern22("<<xk<<","<<xq<<"): "<<kern22(xk,xq,rl,rll,m)<<endl;
-	cout<<"kernAA("<<xk<<","<<xq<<"): "<<kernAA(xk,xq,rl,rll,m)<<endl;
-	cout<<"kernVV("<<xk<<","<<xq<<"): "<<kernVV(xk,xq,rl,rll,m)<<endl;
-	cout<<"kern12("<<xk<<","<<xq<<"): "<<kern12(xk,xq,rl,rll,m)<<endl;
-	cout<<"kernA1("<<xk<<","<<xq<<"): "<<kernA1(xk,xq,rl,rll,m)<<endl;
-	cout<<"log+("<<xk<<","<<xq<<"): "<<logplus(xk,xq,rl)<<endl;
-	cout<<"log-("<<xk<<","<<xq<<"): "<<logminus(xk,xq,rl)<<endl;
-
-      }
-    */
+  
     eps=eps_ee;
 
     auto Fxk= [&](double xk) -> double {

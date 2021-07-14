@@ -2067,8 +2067,8 @@ void Compute_form_factors() {
 	  */
 	  
 	 
-	  distr_t f_p_temp= f_p[0]*ainv[0];
-	  distr_t m_p_temp= m_p[0]*ainv[0];
+	  distr_t f_p_temp= f_p[0];
+	  distr_t m_p_temp= m_p[0];
 	  Decay_Rate_Integration_Result RATE_VMD = Num_Integrate_Decay_Rate(H1_VMD, H2_VMD, FA_off_VMD, FV_off_VMD, m_p_temp, f_p_temp, UseJack);
 	  cout<<"####COMPUTATION OF THE RATE USING ChPT ANSATZ#####"<<endl;
 	  Decay_Rate_Integration_Result RATE_ChPT= Num_Integrate_Decay_Rate(H1_ChPT, H2_ChPT, FA_off_ChPT, FV_off_ChPT, m_p_temp, f_p_temp, UseJack);
