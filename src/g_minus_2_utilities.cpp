@@ -5,42 +5,322 @@ using namespace std;
 
 const double m_muon= 0.10565837;
 const double relerr= 1e-12;
-const double Nresonances=4;
 
 
 
-bool Is_perfect_square(int x) {
-
-  int sqrt_x = sqrt(x);
-  if (sqrt_x*sqrt_x == x) return true;
-  else return false;
-}
 
 
-double kernel_K(double t, double MV, string channel) {
 
-  double m_muon_MV;
-  if(channel=="l") {
-    m_muon_MV= m_muon;
-  }
-  else if(channel == "s") m_muon_MV= m_muon/1.0195;
-  else if(channel == "c") m_muon_MV= m_muon/3.0969;
-  else crash("In kernel_K channel: "+channel+" is not implemented");
 
-  auto F = [=](double x) -> double {
 
-    if (x<eps(16)) return 0;
-    return (4.0/pow(m_muon_MV*MV,2))*(1.0/sqrt(4.0 + pow(x,2)))*pow(  (sqrt(4.0+pow(x,2))-x)/(sqrt(4.0+pow(x,2))+x),2)*( (cos(m_muon_MV*MV*t*x)-1)/pow(x,2) + (1.0/2.0)*pow(t*m_muon_MV*MV,2));
+
+double kernel_K(double t, double MV) {
+
+  double m_mu= m_muon;
+
+  auto F = [&](double x) -> double {
+
+    if (x<1e-40) return 0;
+    return (4.0/pow(m_mu*MV,2))*(1.0/sqrt(4.0 + pow(x,2)))*pow(  (sqrt(4.0+pow(x,2))-x)/(sqrt(4.0+pow(x,2))+x),2)*( (cos(m_mu*MV*t*x)-1)/pow(x,2) + (1.0/2.0)*pow(t*m_mu*MV,2));
   };
 
 
   double err;
-  return boost::math::quadrature::gauss_kronrod<double,20>::integrate(F, 0.0, numeric_limits<double>::infinity() , 5, relerr, &err);
+  double tol_kernel= 1e-14;
+  return boost::math::quadrature::gauss_kronrod<double,61>::integrate(F, 0.0, numeric_limits<double>::infinity() , 5, tol_kernel, &err);
 
 
 }
 
-double Vdual(double t, double m_rho, double Edual, double Rdual) {
+
+double Zeta_function_laplacian_Luscher(double z) {
+
+
+  
+  double inf = 1e-20;
+  double tol_zeta= 1e-10;
+
+  assert(z>= 0) ;
+
+  //compute Zeta_function using Luscher parametrization
+
+  double z2= pow(z,2);
+
+  //l2 is cutoff
+  int l2= z2 + 2;
+  // if(degeneracy(l2) == 0) l2++;
+
+  
+  int thresh = l2+ 10;
+
+  double t0= z2>2.0?M_PI/z2:0.5*M_PI;
+
+  //t0=1.0;
+  
+
+  //sum first terms
+  double val=0;
+  double sum0=0.0;
+  for(int m=0; m < l2; m++) {
+    if(degeneracy(m) > 0 ) {
+      sum0 += (1.0/sqrt(4*M_PI))*degeneracy(m)*(1.0/(m-z2));
+    }
+  }
+
+
+  auto F2 = [&](double t) -> double {
+
+	      double sum_t=0.0;
+	      double exp_t= exp(-t);
+	      double exp_qt= exp(-pow(M_PI,2)/t);
+	      for(int m=0; m<l2;m++) sum_t += (1.0/sqrt(4.0*M_PI))*degeneracy(m)*(1.0/pow(2.0*M_PI,3))*pow(exp_t,m);
+	      
+	      double heat_kernel_red= (exp(t*z2)-1.0)/(pow(4.0*M_PI,2)*pow(t,1.5)); //m=0 term
+	      for(int m=1; m<= thresh;m++) {
+		heat_kernel_red += ( exp(t*z2)*(1.0/sqrt(4*M_PI)))*degeneracy(m)*( 1.0/pow(4.0*M_PI*t,3.0/2.0))*pow(exp_qt,m);
+	      }
+	      
+	      double res= pow(2.0*M_PI,3)*(heat_kernel_red -exp(t*z2 + log(sum_t)));
+
+	     
+	      if( isnan(res)) crash("In integral repr. Zeta function_1 t: "+to_string_with_precision(t,3)+" m: "+to_string_with_precision(z2, 3)+" , integrand is nan");
+	    
+	      return res;
+
+	      
+	    };
+    
+  auto F = [&](double t) -> double {
+	     
+	     double heat_kernel_red=0;
+	     double exp_t= exp(-t);
+	     for(int m=l2;m<=thresh; m++) {
+	       heat_kernel_red += (1.0/pow(2.0*M_PI,3))*degeneracy(m)*pow(exp_t,m);
+	     }
+	     
+	     
+	     double res= pow(2.0*M_PI,3)*(1.0/sqrt(4*M_PI))*exp(t*z2 + log(heat_kernel_red));
+
+	     
+	     if( isnan(res)) crash("In integral repr. Zeta function_2 t: "+to_string_with_precision(t,3)+" m: "+to_string_with_precision(z2, 3)+" , integrand is nan");
+	    
+	     return res;
+	   };
+
+
+  double int_val_2= boost::math::quadrature::gauss_kronrod<double, 15>::integrate(F, t0, 30.0 , 5, tol_zeta);
+  double int_val_1= boost::math::quadrature::gauss_kronrod<double, 15>::integrate(F2, inf, t0 , 5, tol_zeta);
+
+  double int_val = int_val_2 + int_val_1 + sum0 -M_PI/sqrt(t0);
+
+  if( isnan( int_val)) crash("integral in Generalized zeta is nan");
+  return int_val;
+}
+
+
+double tan_phi(double z) {
+
+  int n2= (int)pow(z,2); //check whether is integer.
+  int n2_p= n2+1;
+  if(  (fabs( pow(z,2) - n2) < 1e-18 && degeneracy(n2*n2) > 0) ||  (fabs(pow(z,2) - n2_p) < 1e-18 && degeneracy(n2_p*n2_p) > 0) ) return 0.0;
+
+  return -1.0*pow(M_PI, 1.5)*z/Zeta_function_laplacian_Luscher(z);
+
+}
+
+double tan_phi_der(double z) {
+
+  auto tf = [&](double t) { return tan_phi(t);};
+
+  //double x=z;
+
+  double result, err;
+
+  gsl_function_pp<decltype(tf)> Fp(tf);
+
+  gsl_function *G = static_cast<gsl_function*>(&Fp);
+  if(z < 2e-3) {
+     gsl_deriv_forward(G, z, 1e-3, &result, &err);
+  }
+  else {
+  gsl_deriv_central(G, z, 1e-3, &result, &err);
+  }
+
+  //double result= boost::math::differentiation::finite_difference_derivative(tf,x, &err);
+
+  if(err/result > 1.0e-1) crash("numerical derivative in tan_phi'(z) has reached a low level of accuracy in phi_der. z: "+to_string_with_precision(z,10)+" rel_err: "+to_string_with_precision(err/result,10));
+
+
+  if(isnan(result)) crash("Function tan_phi_der(z) returned nan");
+
+  return result;
+
+}
+
+double phi_der(double z) {
+
+  auto tf = [&](double t) { return tan_phi(t);};
+
+  //double x=z;
+
+  double result, err;
+
+  gsl_function_pp<decltype(tf)> Fp(tf);
+
+  gsl_function *G = static_cast<gsl_function*>(&Fp);
+  if(z < 2e-3) {
+     gsl_deriv_forward(G, z, 1e-3, &result, &err);
+  }
+  else {
+  gsl_deriv_central(G, z, 1e-3, &result, &err);
+  }
+
+  //double result= boost::math::differentiation::finite_difference_derivative(tf,x, &err);
+
+  if(err/result > 1.0e-1) crash("numerical derivative in phi'(z) has reached a low level of accuracy in phi_der. z: "+to_string_with_precision(z,10)+" rel_err: "+to_string_with_precision(err/result,10));
+
+  double res= result/(1.0+ pow(tan_phi(z),2));
+
+  if(isnan(res)) crash("Function phi_der(z) returned nan");
+
+  return res;
+
+}
+
+double phi_der_for_back(double z, int mode) {
+
+  auto tf = [&](double t) { return phi(t);};
+
+  //double x=z;
+
+  double result, err;
+
+  gsl_function_pp<decltype(tf)> Fp(tf);
+
+  gsl_function *G = static_cast<gsl_function*>(&Fp);
+  if(mode==1)  gsl_deriv_forward(G, z, 1e-3, &result, &err);
+  else if(mode==-1)  gsl_deriv_backward(G, z, 1e-3, &result, &err);
+  else crash("mode: "+to_string( mode)+" not yet implemented");
+
+  //double result= boost::math::differentiation::finite_difference_derivative(tf,x, &err);
+
+  if(err/result > 1.0e-2) crash("numerical for_back derivative in phi'(z) has reached a low level of accuracy in phi_der. z: "+to_string_with_precision(z,10)+" rel_err: "+to_string_with_precision(err/result,10));
+
+
+  if(isnan(result)) crash("Function phi_der_for_back(z) returned nan");
+
+  return result;
+
+}
+
+void Zeta_function_zeroes(int Nzeros, Vfloat &res) { //using Newton method
+
+  res.clear();
+
+  auto F = [&](double z) -> double {
+
+	     return Zeta_function_laplacian_Luscher(sqrt(z));
+
+	   };
+
+  auto dF = [&](double z) -> double {
+
+	      auto tf = [&](double t) {return Zeta_function_laplacian_Luscher(sqrt(t));};
+	      double der, err_der;
+	      gsl_function_pp<decltype(tf)> Fp2(tf);
+
+	      gsl_function *G = static_cast<gsl_function*>(&Fp2);
+	      gsl_deriv_forward(G, z, 1e-5, &der, &err_der);
+	      return der;
+	     
+
+	   };
+
+  auto fdF = [&](double z, double* f, double *df) -> void {
+	       *f = F(z);
+	       *df = dF(z);
+	       return;
+	     };
+
+
+  double Precision= 1e-10;
+  double offset = 1e-10;
+
+  int N2old=0;
+  
+  for(int izero=0; izero<Nzeros;izero++) {
+
+    int status;   
+    int iter = 0, max_iter = 100;
+    const gsl_root_fdfsolver_type *TT;
+    gsl_root_fdfsolver *ss;
+    double x0,x;
+
+    if(izero==0) x= offset;
+    else {
+      int temp=N2old+1;
+      while(degeneracy(temp) == 0) temp++;
+      x= temp + offset;
+      N2old=temp;
+    }
+
+    
+    gsl_function_fdf_pp<decltype(F), decltype(dF), decltype(fdF)> Fp(F, dF, fdF);
+    
+    gsl_function_fdf *FDF = static_cast<gsl_function_fdf*>(&Fp);
+
+    
+
+    
+    TT = gsl_root_fdfsolver_newton;
+    ss = gsl_root_fdfsolver_alloc (TT);
+    gsl_root_fdfsolver_set(ss, FDF, x);
+
+    
+    do
+    {
+      iter++;
+      status = gsl_root_fdfsolver_iterate(ss);
+      x0 = x;
+      x = gsl_root_fdfsolver_root (ss);
+      status = gsl_root_test_delta (x, x0, 0, Precision);
+
+           
+    }
+    while (status == GSL_CONTINUE && iter < max_iter);
+
+    if(status != GSL_SUCCESS) {
+
+      cout<<"gsl_root_fdf_solver_newton was unable to find zero of the Luscher zeta function for  izero: "<<izero<<endl;
+      crash("Aborting...");
+    }
+
+    gsl_root_fdfsolver_free(ss);
+
+    res.push_back(x);
+  }
+
+  
+
+  return;
+}
+
+double phi(double z) {
+
+  int n2= (int)pow(z,2); //check whether is integer.
+  int n2_p= n2+1;
+  if( (fabs( pow(z,2) - n2) < 1e-16 && degeneracy(n2*n2) > 0) || ( fabs(pow(z,2) - n2_p) < 1e-16 && degeneracy(n2_p*n2_p) > 0) ) return 0.0;
+  double sum= Zeta_function_laplacian_Luscher(z);
+
+  double res= atan( -1.0*pow(M_PI,1.5)*z/sum);
+
+  if(isnan(res)) crash("Function phi(z) returned nan");
+  
+  return res;
+
+}
+
+double LL_functions::Vdual(double t, double m_rho, double Edual, double Rdual) {
 
 
   return (5.0/(18.0*pow(M_PI,2)))*(Rdual/pow(t,3))*exp(-(m_rho+Edual)*t)*( 1.0 + (m_rho+Edual)*t + 0.5*pow( (m_rho+Edual)*t,2));
@@ -48,26 +328,30 @@ double Vdual(double t, double m_rho, double Edual, double Rdual) {
 }
 
 
-double Gamma_rpp(double omega, double g_rho_pipi, double Mpi) {
+double LL_functions::Gamma_rpp(double omega, double g_rho_pipi, double Mpi) {
 
   double k= sqrt( pow(omega,2)/4.0 - pow(Mpi,2));
   return pow(g_rho_pipi,2)*pow(k,3)/(6.0*M_PI*pow(omega,2));  
 }
 
-double Gamma_rpp_der(double omega, double g_rho_pipi, double Mpi) {
+double LL_functions::Gamma_rpp_der(double omega, double g_rho_pipi, double Mpi) {
 
   double k= sqrt( pow(omega,2)/4.0 - pow(Mpi,2));
-  return 2*k*( (8*pow(Mpi,2) + pow(omega,2))/(4*pow(omega,3)))*pow(g_rho_pipi,2)/(6.0*M_PI);
+
+  double dk_domega = omega/(4.0*k);
+
+  return (pow(g_rho_pipi,2)/(6.0*M_PI))*( -2.0*pow(k,3)/pow(omega,3) + 3.0*pow(k,2)*dk_domega/pow(omega,2));
+  //return 2*k*( (8*pow(Mpi,2) + pow(omega,2))/(4*pow(omega,3)))*pow(g_rho_pipi,2)/(6.0*M_PI);
   
 }
 
-double h(double omega, double g_rho_pipi, double Mpi) {
+double LL_functions::h(double omega, double g_rho_pipi, double Mpi) {
   double k= sqrt( pow(omega,2)/4.0 - pow(Mpi,2));
   return pow(g_rho_pipi,2)*pow(k,3)*(2.0/(omega*6.0*pow(M_PI,2)))*log( (omega + 2*k)/(2.0*Mpi));
 
 }
 
-double h_prime(double omega, double g_rho_pipi, double Mpi) {
+double LL_functions::h_prime(double omega, double g_rho_pipi, double Mpi) {
 
   double k= sqrt( pow(omega,2)/4.0 - pow(Mpi,2));
   return pow(g_rho_pipi,2)*pow(k,2)*(1.0/(6.0*pow(M_PI,2)*omega))*( 1.0 + (1.0+ 2.0*pow(Mpi/omega,2))*(omega/k)*log( (omega+2*k)/(2.0*Mpi)));
@@ -76,31 +360,31 @@ double h_prime(double omega, double g_rho_pipi, double Mpi) {
 
 
 
-double A_pipi_0(double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::A_pipi_0(double m_rho, double g_rho_pipi, double Mpi) {
 
   return h(m_rho,g_rho_pipi, Mpi) - (m_rho/2.0)*h_prime(m_rho, g_rho_pipi, Mpi) + pow(g_rho_pipi,2)*pow(Mpi,2)/(6.0*pow(M_PI,2));  
 
 }
 
 
-double Re_A_pipi(double omega, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::Re_A_pipi(double omega, double m_rho, double g_rho_pipi, double Mpi) {
 
   return h(m_rho, g_rho_pipi, Mpi) + (pow(omega,2)- pow(m_rho,2))*(h_prime(m_rho, g_rho_pipi,Mpi)/(2.0*m_rho)) - h(omega, g_rho_pipi,Mpi);
 }
 
-double Im_A_pipi(double omega, double g_rho_pipi, double Mpi) {
+double LL_functions::Im_A_pipi(double omega, double g_rho_pipi, double Mpi) {
 
   return omega*Gamma_rpp(omega,g_rho_pipi,Mpi);
 
 }
 
-Pfloat A_pipi(double omega, double m_rho, double g_rho_pipi, double Mpi) {
+Pfloat LL_functions::A_pipi(double omega, double m_rho, double g_rho_pipi, double Mpi) {
 
   return make_pair(Re_A_pipi(omega, m_rho, g_rho_pipi,Mpi), Im_A_pipi(omega, g_rho_pipi,Mpi));
 
 }
 
-double F_pi_GS_mod(double omega, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::F_pi_GS_mod(double omega, double m_rho, double g_rho_pipi, double Mpi) {
 
   double Re = pow(m_rho,2) -pow(omega,2) - Re_A_pipi(omega,m_rho, g_rho_pipi,Mpi);
   double Im = -1.0*Im_A_pipi(omega, g_rho_pipi, Mpi);
@@ -108,24 +392,38 @@ double F_pi_GS_mod(double omega, double m_rho, double g_rho_pipi, double Mpi) {
 
 }
 
-double cot_d_11(double k, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::cot_d_11(double k, double m_rho, double g_rho_pipi, double Mpi) {
 
 
   double omega= 2.0*sqrt( pow(Mpi,2) + pow(k,2));
 
-  return  ( pow(m_rho,2) -pow(omega,2) - h(m_rho, g_rho_pipi,Mpi) -(pow(omega,2) - pow(m_rho,2))*(h_prime(m_rho,g_rho_pipi,Mpi)/(2.0*m_rho)) + h(omega, g_rho_pipi,Mpi))/Im_A_pipi(omega, g_rho_pipi, Mpi);
+  double Im_a_pipi= Im_A_pipi(omega, g_rho_pipi, Mpi);
+
+  double res=  ( pow(m_rho,2) -pow(omega,2) - h(m_rho, g_rho_pipi,Mpi) -(pow(omega,2) - pow(m_rho,2))*(h_prime(m_rho,g_rho_pipi,Mpi)/(2.0*m_rho)) + h(omega, g_rho_pipi,Mpi))/Im_a_pipi;
+  
+  return res;
 
 }
 
-double d_11(double k, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::d_11(double k, double m_rho, double g_rho_pipi, double Mpi) {
 
 
-  return atan( 1.0/cot_d_11(k, m_rho, g_rho_pipi, Mpi));
+  double d_11=  cot_d_11(k, m_rho, g_rho_pipi, Mpi);
+  
+  //double sgn= 1.0;
+
+  //if(d_11 < 0.0) sgn = -1.0;
+
+  double ret_val = atan(1.0/d_11);
+  
+  //ret_val=  asin( sgn/sqrt(1.0 + pow(d_11,2)));
+
+  return ret_val;
 
 }
 
 
-double cot_d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::cot_d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi) {
 
 
   double omega = 2.0*sqrt( pow(Mpi,2) + pow(k,2));
@@ -136,338 +434,240 @@ double cot_d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi) {
 
   double den = Im_A_pipi(omega, g_rho_pipi, Mpi);
 
-  double num_der = (-2.0*omega -2.0*omega*(h_prime(m_rho, g_rho_pipi,Mpi)/(2.0*m_rho)) + h_prime(m_rho,g_rho_pipi,Mpi))*d_omega_d_k;
+  double num_der = (-2.0*omega -2.0*omega*(h_prime(m_rho, g_rho_pipi,Mpi)/(2.0*m_rho)) + h_prime(omega,g_rho_pipi,Mpi))*d_omega_d_k;
 
   
-  double den_der = Gamma_rpp(omega, g_rho_pipi, Mpi) + omega*Gamma_rpp_der(omega, g_rho_pipi, Mpi);
+  double den_der = (Gamma_rpp(omega, g_rho_pipi, Mpi) + omega*Gamma_rpp_der(omega, g_rho_pipi, Mpi))*d_omega_d_k;
 
-  return d_omega_d_k*( num_der/den - num*den_der/pow(den,2));
+  double res_1 = num_der/den - num*den_der/pow(den,2);
 
+  double res_2 = cot_d_11(k, m_rho, g_rho_pipi,Mpi)*( num_der/num - den_der/den);
+
+  if( res_1/res_2 > 1 + 1e-8 || res_1/res_2 < 1 - 1e-8) crash("error in cot_d_11_der res1= "+to_string_with_precision(res_1,10)+" res2= "+to_string_with_precision(res_2,10));
+
+  return res_2;
 
 
 }
 
 
-double d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi) {
 
 
-  return -1.0*pow(sin(d_11(k,m_rho, g_rho_pipi,Mpi)),2)*cot_d_11_der(k, m_rho, g_rho_pipi, Mpi);
 
-}
-
-int degeneracy(int m) {
-
-  if(m==0) return 1;
-  int deg_val=0;
-
-  //return number of lattice sites with distance m>0 from origin.
-  assert(m > 0);
-
-  int x2_max= m;
-  int x2_min;
-  if(m%3==0) x2_min=m/3;
-  else x2_min= floor( m/3 + 1) ;
-  
-
-  
-
-  for(int x2=x2_min;x2<=x2_max;x2++) {
-    if(Is_perfect_square(x2)) {  //x2 is a perfect square
-      
-      int y2_max= m-x2;
-      int y2_min;
-      if( (m-x2)%2 == 0) y2_min= (m-x2)/2;
-      else y2_min = floor( (m-x2)/2 +1);
-      
-      
-      for(int y2=y2_min;y2<=y2_max;y2++) {
-	
-	if(y2<=x2 && Is_perfect_square(y2))  { //y2 is a perfect square
-	
-	  int z2 = m -x2 - y2;
-	
-	  if (Is_perfect_square(z2) && z2<=y2) { // z2 is a perfect square
-	      if(z2==0 && y2==0) deg_val += 6;
-	      else if(z2==0 && y2!= 0) {
-		if(x2==y2) deg_val += 3*4;
-		else deg_val+=3*4*2;
-	      
-	      }
-	      else {  // x, y, z > 0
-		if(z2==y2 && y2==x2) deg_val += 2*2*2;
-		else if(z2==y2 && y2 != x2) deg_val += 3*2*4;
-		else if(x2==y2 && z2 != y2) deg_val += 3*2*4;
-		else deg_val += 6*2*2*2;
-	      
-	      }
-	  }
-	}
-      }
-    }
-  }
-  
-  
-  
-  return deg_val;
-  
-}
-
-double Zeta_function_laplacian(double z) {
-
-  assert(z> 0);
-
-  double val= -M_PI -(1.0/sqrt(4.0*M_PI))*exp(pow(z,2))/pow(z,2);
-
-  cout<<"z: "<<z<<endl;
-  cout<<endl<<"val0: "<<val<<endl;
-
-  auto F1 = [&](double t) -> double {
-	      if(t<eps(10)) return 0.0;
-	      else return (M_PI/2.0)*(exp(t*pow(z,2))-1.0)/(pow(t,3.0/2.0));
-	    };
-
-  val += boost::math::quadrature::gauss_kronrod<double, 15>::integrate(F1, 0, 1, 5, relerr);
-
-  cout<<endl<<"val1: "<<val<<endl;
-
-  auto F2 = [&](int m) {
-
-    double x=z;
-    int y = m;
-    auto F3 = [&](double t) -> double {
-		if(t<eps(10)) return 0.0;
-		else return (M_PI/2.0)*exp(t*x*x -pow(M_PI,2)*((double)y)/t)/(pow(t,3.0/2.0));
-	      };
-
-    double ret_val= boost::math::quadrature::gauss_kronrod<double, 15>::integrate(F3, 0, 1, 5, relerr)  ;
-    ret_val += (1.0/sqrt(4*M_PI))*exp(-(y-pow(x,2)))/(y-pow(x,2));
-    return ret_val;
-  };
-
-
-  //compute sum m   nu(m)F2(m)
-
-  double relerr_laplacian= 1.0e-7;
-  double series_val=0;
-
-  int max_m= 1000;
-  double new_val;
-
-  for(int m=1;m<=max_m;m++) {
-
-    new_val = degeneracy(m)*F2(m);
-    if(new_val<= relerr_laplacian*series_val) return series_val+val;
-    else series_val += new_val;
-  }
-
-  crash("Unable to evaluate Zeta function laplacian to required accuracy. m_max: "+to_string(max_m)+", Series_val: "+to_string_with_precision(series_val,6)+" , last term: "+to_string_with_precision(new_val,6));
-
-  return 0.0;
-}
-
-double Zeta_function_laplacian_Luscher(double z) {
-
-
-  
-  double inf = 1e-20;
-
-  assert(z>= 0) ;
-
-  //compute Zeta_function using Luscher parametrization
-
-
-  //l2 is cutoff
-  int l2= (int)pow(z,2) + 1;
-  int thresh = l2+ 10;
-
-  double t0= pow(z,2)>2.0?M_PI/pow(z,2):M_PI/2.0;
-  
-
-  //sum first terms
-  double val=0;
-  for(int m=0; m < l2; m++) val += (1.0/sqrt(4*M_PI))*degeneracy(m)*(1.0/(m-pow(z,2)));
-
-  auto F = [&](double t) -> double {
-
-	     bool mode = t>t0;
-	     double heat_kernel_red=0;
-	     if(mode) {
-	       for(int m=l2;m<=thresh; m++)
-
-		 heat_kernel_red += (1.0/pow(2.0*M_PI,3))*degeneracy(m)*exp(-t*m);
-	     }
-	     else {
-	       for(int m=0; m<= thresh;m++) {
-		 if(m<l2) {
-		   heat_kernel_red += degeneracy(m)*(( 1.0/pow(4.0*M_PI*t,3.0/2.0))*exp(-(pow(M_PI,2)/t)*m)-(1.0/pow(2.0*M_PI,3))*exp(-t*m)  );
-		   
-		 }
-		 else {
-		   heat_kernel_red += degeneracy(m)*( 1.0/pow(4.0*M_PI*t,3.0/2.0))*exp(-(pow(M_PI,2)/t)*m);
-		 }
-
-	       }
-	       
-	     }
-	     
-	     double res= pow(2.0*M_PI,3)*( exp(t*pow(z,2))*(1.0/sqrt(4*M_PI))*heat_kernel_red - 1.0/(pow(4.0*M_PI,2)*pow(t,3.0/2.0)));
-
-	     
-	     if( isnan(res)) crash("In integral repr. Zeta function t: "+to_string_with_precision(t,3)+" m: "+to_string_with_precision(pow(z,2), 3)+" , integrand is nan");
-	    
-	     return res;
-	   };
-
-
-  double int_val= boost::math::quadrature::gauss_kronrod<double, 15>::integrate(F, inf, 20.0 , 5, relerr);
-
-  if( isnan( int_val)) crash("integral in Generalized zeta is nan");
-  return val + int_val;
-}
-
-
-double tan_phi(double z) {
-
-  int n2= (int)pow(z,2); //check whether is integer.
-  int n2_p= n2+1;
-  if( pow(z,2) < 1e-8) return 0.0;
-  if( fabs( pow(z,2) - n2) < 1e-8 ||  fabs(pow(z,2) - n2_p) < 1e-8 ) return 0.0;
-
-  return -1.0*pow(M_PI, 3.0/2.0)*z/Zeta_function_laplacian_Luscher(z);
+  return -1.0*(1.0/(1.0 + pow(cot_d_11(k,m_rho,g_rho_pipi,Mpi),2)))*cot_d_11_der(k, m_rho, g_rho_pipi, Mpi);
 
 }
 
-double phi_der(double z) {
+double LL_functions::d_11_der_num(double k, double m_rho, double g_rho_pipi, double Mpi) {
 
-  auto tf = [&](double t) { return tan_phi(t);};
+  auto F = [&](double x) { return d_11(x, m_rho, g_rho_pipi,Mpi);};
 
-  double x=z;
-  double err;
+  //double x=z;
 
-  double result= boost::math::differentiation::finite_difference_derivative(tf,x, &err);
+  double result, err;
 
-  if(err/result > 1.0e-6) crash("boost::math::differentiation::finite_difference_derivative has reached a low level of accuracy in phi_der(double). rel_err: "+to_string_with_precision(err/result,4));
+  gsl_function_pp<decltype(F)> Fp(F);
 
-  return result/(1.0+ pow(tan_phi(z),2));
+  gsl_function *G = static_cast<gsl_function*>(&Fp);
 
-}
+  gsl_deriv_central(G, k, 1e-3, &result, &err);
 
-double phi(double z) {
 
-  int n2= (int)pow(z,2); //check whether is integer.
-  int n2_p= n2+1;
-  if( pow(z,2) < 1e-8) return 0.0;
-  if( fabs( pow(z,2) - n2) < 1e-8 ||  fabs(pow(z,2) - n2_p) < 1e-8 ) return 0.0;
-  double sum= Zeta_function_laplacian_Luscher(z);
-  if( fabs(sum) < 1e-8) return 0.0;
+  if(err/result > 1.0e-5) crash("numerical derivative in d11'(z) has reached a low level of accuracy in d_11_der_num. rel_err: "+to_string_with_precision(err/result,4));
 
-  return atan( -1.0*pow(M_PI, 3.0/2.0)*z/sum);
+  return result;
 
-}
-
-double Amplitude(double k, int L, double m_rho, double g_rho_pipi, double Mpi) {
-
-  
-  double omega= 2*sqrt( pow(k,2)+pow(Mpi,2));
-
-  //cout<<endl<<"d_11_der: "<<d_11_der(k, m_rho, g_rho_pipi,Mpi)<<endl;
-  //cout<<"phi_der("<<k*L/(2.0*M_PI)<<"): "<<phi_der(k*L/(2.0*M_PI))<<endl;
-
-  return ((2.0*pow(k,5)/(3.0*M_PI*pow(omega,2))))*pow(F_pi_GS_mod(omega, m_rho,g_rho_pipi,Mpi),2)/(k*d_11_der(k, m_rho, g_rho_pipi,Mpi) + (k*L/(2.0*M_PI))*phi_der(k*L/(2.0*M_PI)));
 
 }
 
 
 
-double Find_pipi_energy_lev(int L, int n, double m_rho, double g_rho_pipi, double Mpi) {
+
+
+double LL_functions::Amplitude(double k, double L, double m_rho, double g_rho_pipi, double Mpi) {
+
+  
+  double omega= 2.0*sqrt( pow(k,2)+pow(Mpi,2));
+
+
+  return ((2.0*pow(k,5)/(3.0*M_PI*pow(omega,2))))*pow(F_pi_GS_mod(omega, m_rho,g_rho_pipi,Mpi),2)/(k*d_11_der(k, m_rho, g_rho_pipi,Mpi) + (k*L/(2.0*M_PI))*phi_der_spline(k*L/(2.0*M_PI)));
+
+}
+
+
+
+void LL_functions::Find_pipi_energy_lev(double L, double m_rho, double g_rho_pipi, double Mpi, Vfloat &res) {
 
   //find energy level n of pi-pi bound state
 
-  assert(n>=0);
+  Vfloat divergent_levels= Luscher_zeroes;
 
-  double Precision = 1e-8;
-  double delta = 0.001;
- 
- 
-  double a,b;
-
-  double b_min= (n-0.15)*2.0*M_PI/L;
-  b_min= (b_min >=0)?b_min:0.;
-  double a_min= (n+0.15)*2.0*M_PI/L;
-
-  auto F = [&](double k) -> double { return d_11(k, m_rho, g_rho_pipi, Mpi) + phi(k*L/(2.0*M_PI));};
-  a=a_min;
-  b=b_min;
-
-  /*
-  cout<<"n: "<<n<<endl;
-  cout<<"m_rho: "<<m_rho<<endl;
-  cout<<"g_rho_pipi: "<<g_rho_pipi<<endl;
-  cout<<"M_pi: "<<Mpi<<endl;
-  cout<<"d11(a): "<<d_11(a,m_rho,g_rho_pipi,Mpi)<<endl;
-  cout<<"d11(b): "<<d_11(b,m_rho,g_rho_pipi, Mpi)<<endl;
-  cout<<"phi(a): "<<phi(a*L/(2.0*M_PI))<<endl;
-  cout<<"F(a): "<<F(a)<<endl;
-  cout<<"F(b): "<<F(b)<<endl;
-  */
-
-  while (F(a)*F(b) > 0) { a+=0.15*2.0*M_PI/L;  b -= 0.15*2.0*M_PI/L; }
- 
+  double z_crit = (L/(2.0*M_PI))*sqrt( pow(m_rho,2)/4 - pow(Mpi,2));
+  double z2_crit= z_crit*z_crit;
 
 
+  //add z2_crit to divergent_levels
+  divergent_levels.push_back(z2_crit);
+  sort(divergent_levels.begin(), divergent_levels.end());
 
-  if(fabs(F(a)) < fabs(F(b))) {double atemp=a; a=b; b=atemp;}
+
+  res.clear();
+
+  auto F = [&](double k) -> double {
+	     return d_11(k, m_rho, g_rho_pipi, Mpi) + phi_spline(k*L/(2.0*M_PI));
+	   };
+
+  auto F_exact = [&](double k) -> double {
+	     return d_11(k, m_rho, g_rho_pipi, Mpi) + phi(k*L/(2.0*M_PI));
+	   };
+
+  auto dF = [&](double k) -> double {
+
+	      return -cot_d_11_der(k, m_rho, g_rho_pipi, Mpi)/pow(cot_d_11(k, m_rho, g_rho_pipi, Mpi),2) + (L/(2.0*M_PI))*tan_phi_der(k*L/(2.0*M_PI));
+	   };
+
+  auto fdF = [&](double k, double* f, double *df) -> void {
+	       *f = F(k);
+	       *df = dF(k);
+	       return;
+	     };
 
 
-  double c=a;
-  bool FLAG = true;
-  double s=b;
-  double d=0;
+  double Precision = 1e-4;
 
   
+  for(int ilev=1; ilev<=Nres;ilev++) {
   
-  while(F(s) !=0 && fabs(b-a)>= Precision*fabs((double)(b+a)/2.0) ) {
-
+    int status;
+    int iter = 0, max_iter = 100;
+    // const gsl_root_fdfsolver_type *T;
+    const gsl_root_fsolver_type *T_Br;
+    //gsl_root_fdfsolver *s;
+    gsl_root_fsolver *s_Br;
+    double x0,x;
   
-    if((F(a) != F(c)) && (F(b) != F(c))) {//inverse quadratic interpolation
-      s= a*F(b)*F(c)/((F(a)-F(b))*(F(a)-F(c))) + b*F(a)*F(c)/((F(b)-F(a))*(F(b)-F(c))) + c*F(a)*F(b)/((F(c)-F(a))*(F(c)-F(b)));
-    }
-    else s= b-(F(b)*(b-a)/(F(b)-F(a)));
-
-    double s1= (double)(3*a+b/4.0);
-    if( (s < s1 || s> b) || (FLAG==true && fabs(s-b) >= (double)fabs(b-c)/2) || (FLAG==false && fabs(s-b) >= (double)fabs(c-d)/2) || (FLAG==true && fabs(b-c) < delta) || (FLAG==false && fabs(c-d) < delta)) {
-      
-      FLAG=true;
-      s= (a+b)/2.0;
-      
-    }
     
-    else FLAG= false;
-
-    d= c;
-    c= b;
-    if (F(a)*F(s)<0) b=s;
-    else a=s;
-
-    if(fabs(F(a)) < fabs(F(b))) {double atemp=a; a=b; b=atemp;}
-
+    // gsl_function_fdf_pp<decltype(F), decltype(dF), decltype(fdF)> Fp(F, dF, fdF);
+    gsl_function_pp<decltype(F)> Fp_Brent(F);
+    gsl_function_pp<decltype(F_exact)> Fp_Brent_exact(F_exact);
+    
+    // gsl_function_fdf *FDF = static_cast<gsl_function_fdf*>(&Fp);
+    gsl_function *F_Brent = static_cast<gsl_function*>(&Fp_Brent);
+    gsl_function *F_Brent_exact = static_cast<gsl_function*>(&Fp_Brent_exact);
+    
+ 
+    
+    //   T = gsl_root_fdfsolver_newton;
+    // s = gsl_root_fdfsolver_alloc (T);
+    T_Br= gsl_root_fsolver_brent;
+    s_Br= gsl_root_fsolver_alloc(T_Br);
    
+
+    double XL= (2.0*M_PI/L)*sqrt(divergent_levels[ilev-1]);
+    double XH= (2.0*M_PI/L)*sqrt(divergent_levels[ilev]);
+    double XL_start= XL;
+    double XH_start = XH;
+    double DX= (XH -XL)*1e-3;
+    XL+=(XH-XL)*1e-6;
+    XH-=(XH-XL)*1e-6;
+
+  
+    gsl_set_error_handler_off();
+    int Brent_status=gsl_root_fsolver_set(s_Br,F_Brent, XL, XH);
+
+    //gsl_root_fdfsolver_set(s, FDF, x);
+    
+    while(Brent_status != GSL_SUCCESS) {
+      XL+=DX;
+      XH-=DX;
+      Brent_status= gsl_root_fsolver_set(s_Br,F_Brent, XL, XH);
+     
+
+      
+      if(XL > XH){
+	cout.precision(16);
+	cout<<"Brent algo is not able to bracket the root"<<endl;
+	cout<<"status: "<<Brent_status<<endl;
+	cout<<"PRINTING INFO: "<<endl;
+	cout<<"Mrho: "<<m_rho<<endl;
+	cout<<"Mpi: "<<Mpi<<endl;
+	cout<<"g: "<<g_rho_pipi<<endl;
+	cout<<"L: "<<L<<endl;
+	cout<<"ilev: "<<ilev<<endl;
+	cout<<"Bracketing values: "<<XL<<" "<<XH<<endl;
+	cout<<"Starting bracketing values: "<<XL_start<<" "<<XH_start<<endl;
+	cout<<"Values of F at bracketing values (spline) : "<<F(XL)<<" "<<F(XH)<<endl;
+	cout<<"Values of F at bracketing values (exact) : "<<F_exact(XL)<<" "<<F_exact(XH)<<endl;
+	cout<<"Values of F at starting bracketing values (spline) : "<<F(XL_start)<<" "<<F(XH_start)<<endl;
+	cout<<"Values of F at starting bracketing values (exact) : "<<F_exact(XL_start)<<" "<<F_exact(XH_start)<<endl;
+	printV(divergent_levels, "Printing diverging levels....", 1);
+	cout<<"rho resonance divergence is at z^2: "<<z2_crit<<endl;
+	crash("Exiting....");
+      }
+    }
+
+    double x_lo,x_hi;
+    
+    do
+    {
+      iter++;
+      status = gsl_root_fsolver_iterate(s_Br);
+      //x0 = x;
+      x = gsl_root_fsolver_root (s_Br);
+      //status = gsl_root_test_delta (x, x0, 0, Precision);
+
+      x_lo = gsl_root_fsolver_x_lower(s_Br);
+      x_hi = gsl_root_fsolver_x_upper(s_Br);
+      status = gsl_root_test_interval (x_lo, x_hi, 0.0, Precision);
+      
+    }
+    while (status == GSL_CONTINUE && iter < max_iter);
+
+    if(status != GSL_SUCCESS) {
+
+      cout<<"gsl_root_solver was unable to find a solution to the Luscher quantization equation for ilev: "<<ilev<<endl;
+      cout<<"Printing info: "<<endl;
+      cout<<"L: "<<L<<endl;
+      cout<<"Mrho: "<<m_rho<<endl;
+      cout<<"g: "<<g_rho_pipi<<endl;
+      cout<<"Mpi: "<<Mpi<<endl;
+      cout<<"Last root position: "<<x<<endl;
+      cout<<"divergent level position 1: "<<(2.0*M_PI/L)*sqrt(divergent_levels[ilev-1]+2e-2)<<endl;
+      cout<<"divergent level position 2: "<<(2.0*M_PI/L)*sqrt(divergent_levels[ilev]+2e-2)<<endl;
+      crash("Aborting...");
+    }
+
+
+    //if(switch_to_exact_function) {
+    //cout.precision(12);
+    // cout<<"ilev: "<<ilev<<" switched to exact function evaluation"<<endl;
+    // cout<<"root(approximate): "<<z_failed<<" root exact: "<<x<<endl;
+    //}
+
+    //if(!switch_to_exact_function) { root_found= F_exact(x_lo)*F_exact(x_hi) <= 0; z_failed=x;}
+    //if(!root_found) switch_to_exact_function=true;
+    
+    // gsl_root_fdfsolver_free (s);
+    gsl_root_fsolver_free(s_Br);
+
+    res.push_back(x);
+
   }
 
   
-  return s;
+
+  return;
   
-
-
-
-
 }
 
 
-double V_pipi(double t, int L, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::V_pipi(double t, double L, double m_rho, double g_rho_pipi, double Mpi, Vfloat &Knpp) {
 
   double ret_val=0;
 
+ 
+  /*
   cout<<"Entering V_pipi"<<endl;
   cout<<"########parameters#########"<<endl;
   cout<<"L: "<<L<<endl;
@@ -475,33 +675,36 @@ double V_pipi(double t, int L, double m_rho, double g_rho_pipi, double Mpi) {
   cout<<"Mpi: "<<Mpi<<endl;
   cout<<"g_rho: "<<g_rho_pipi<<endl;
   cout<<"#################"<<endl;
-  cout<<"n        k        omega    ampl"<<endl;
+  cout<<"n        k        omega"<<endl;
+  for(int i_lev=0;i_lev<Nres;i_lev++)  cout<<i_lev+1<<"   "<<Knpp[i_lev]<<"    "<<2.0*sqrt(pow(Mpi,2)+pow(Knpp[i_lev],2))<<endl;
+
+  */
   
-  for(int i_lev=1;i_lev<=Nresonances;i_lev++) {
-    double k_n= Find_pipi_energy_lev(L,i_lev, m_rho, g_rho_pipi, Mpi);
-    
+  for(int i_lev=0;i_lev<Nres;i_lev++) {
+    double k_n= Knpp[i_lev];  
     double omega_n = 2.0*sqrt( pow(Mpi,2) + pow(k_n,2));
     double Ampl= Amplitude(k_n, L, m_rho, g_rho_pipi, Mpi);
     ret_val += Ampl*exp(-omega_n*t);
-    cout<<i_lev<<"   "<<k_n<<"    "<<omega_n<<"     "<<Ampl<<endl;
+   
 
   }
-  cout<<"Exiting V_pipi"<<endl;
+  // cout<<"Exiting V_pipi"<<endl;
 
   return ret_val;
 
 }
 
 
-double V_pipi_infL(double t, double m_rho_infL, double g_rho_pipi_infL, double Mpi_infL) {
+double LL_functions::V_pipi_infL(double t, double m_rho_infL, double g_rho_pipi_infL, double Mpi_infL) {
 
+  double tol_infL= 1e-14;
 
 
   auto Integrand = [&](double omega) -> double {
-    return (1.0/(48.0*pow(M_PI,2)))*pow(omega,2)*pow(1.0- pow(2.0*Mpi_infL/omega,2), 3.0/2.0)*exp(-omega*t)*F_pi_GS_mod(omega, m_rho_infL, g_rho_pipi_infL,Mpi_infL);};
+		     return (1.0/(48.0*pow(M_PI,2)))*pow(omega,2)*pow(1.0- pow(2.0*Mpi_infL/omega,2), 3.0/2.0)*exp(-omega*t)*pow(F_pi_GS_mod(omega, m_rho_infL, g_rho_pipi_infL,Mpi_infL),2);};
 
 
-  return boost::math::quadrature::gauss_kronrod<double, 15>::integrate(Integrand, 2*Mpi_infL, numeric_limits<double>::infinity(), 5, relerr)  ;
+  return boost::math::quadrature::gauss_kronrod<double, 61>::integrate(Integrand, 2*Mpi_infL, numeric_limits<double>::infinity(), 5, tol_infL)  ;
 
 
   

@@ -23,6 +23,8 @@
 #include <ctime>
 #include <iomanip>
 #include <math.h>
+#include <omp.h>
+#include <boost/math/special_functions/bessel.hpp>
 #include <boost/random/linear_congruential.hpp>
 #include <boost/random/uniform_int.hpp>
 #include <boost/random/uniform_real.hpp>
@@ -38,6 +40,7 @@
 #include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/triangular.hpp>
 #include <boost/numeric/ublas/lu.hpp>
+#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <Minuit2/FCNBase.h>
@@ -46,6 +49,21 @@
 #include <Minuit2/MnMigrad.h>
 #include <Minuit2/MnMinos.h>
 #include <Minuit2/MnMinimize.h>
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_monte.h>
+#include <gsl/gsl_monte_plain.h>
+#include <gsl/gsl_monte_miser.h>
+#include <gsl/gsl_monte_vegas.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_deriv.h>
+#include <gsl/gsl_roots.h>
+#include <gsl/gsl_errno.h>
+#include <boost/math/quadrature/gauss_kronrod.hpp>
+#include <boost/math/quadrature/naive_monte_carlo.hpp>
+#include <boost/math/differentiation/finite_difference.hpp>
+#include <complex>
+
 
 using namespace std;
 
@@ -68,6 +86,65 @@ typedef vector<vector<vector<vector<pair<double,double>>>>> VVVVPfloat;
 
 
 
+
+//wrapper for lambdas with capture to gsl_monte_function
+template< typename F >  class gsl_monte_function_pp : public gsl_monte_function {
+public:
+  gsl_monte_function_pp(const F& func) : _func(func) {
+    f = &gsl_monte_function_pp::invoke;
+    params=this;
+    dim= 5;
+  }
+private:
+  const F& _func;
+  static double invoke(double x[], size_t dim, void *params) {
+    vector<double> xv;
+    for(int i=0; i<(signed)dim;i++) xv.push_back(x[i]);
+    return static_cast<gsl_monte_function_pp*>(params)->_func(xv);
+  }
+};
+
+
+//wrapper for lambdas with capture to gsl_function
+template< typename F >  class gsl_function_pp : public gsl_function {
+public:
+  gsl_function_pp(const F& func) : _func(func) {
+    function = &gsl_function_pp::invoke;
+    params=this;
+  }
+private:
+  const F& _func;
+  static double invoke(double x,void *params) {
+    return static_cast<gsl_function_pp*>(params)->_func(x);
+  }
+};
+
+//wrapper for lambdas with capture to gsl_function_fdf
+template< typename F, typename F2, typename fdF >  class gsl_function_fdf_pp : public gsl_function_fdf {
+public:
+  gsl_function_fdf_pp(const F& func, const F2& df_func, const fdF& fdf_func) : _func(func), _df_func(df_func), _fdf_func(fdf_func) {
+    f = &gsl_function_fdf_pp::invoke;
+    df = &gsl_function_fdf_pp::invoke_df;
+    fdf= &gsl_function_fdf_pp::invoke_fdf;
+    params=this;
+  }
+private:
+  const F& _func;
+  const F2& _df_func;
+  const fdF& _fdf_func;
+  static double invoke(double x,void *params) {
+    return static_cast<gsl_function_fdf_pp*>(params)->_func(x);
+  }
+   static double invoke_df(double x,void *params) {
+    return static_cast<gsl_function_fdf_pp*>(params)->_df_func(x);
+  }
+  static void invoke_fdf(double x, void *params, double* f, double *df) {
+    return static_cast<gsl_function_fdf_pp*>(params)->_fdf_func(x,f,df);
+  }
+};
+
+
+
 void D(int k);
 long long int ipow(int a,int n);
 double fpow(double a, int n);
@@ -81,6 +158,7 @@ void derivative(Vfloat &RES, Vfloat &INPUT, string MODE);
 double FTAN(double x1, int t, int NT);
 double FTAN_SYMM(double x1, int t, int NT);
 double Root_Brent(double R, int nt, int NT);
+double Root_Brent_sinh(double R, int nt, int NT);
 double DoConstantFit(Vfloat &data, Vfloat &err);
 void Print_To_File(const vector<string>& row_id, const VVfloat &data, string Path, string MODE, string Header);
 
@@ -250,12 +328,95 @@ vector<T> external_prod( const vector<T> &arr1, const vector<T> &arr2) {
 
 };
 
+template <typename T>
+T Kahan_sum(const vector<T> &input) {
+
+  T sum= 0.;
+  T c = 0.;
+
+  for (auto & val: input) {
+    T y = val- c;
+    T t = sum + y;
+    c =(t-sum) -y;
+    sum = t;
+  }
+   
+  return sum;
+
+};
+
 
 
 void cascade_resize( vector<vector<double>>& arr, const Vint& A ); 
 void cascade_resize( vector<vector<vector<double>>>& arr,const Vint &A);
 void cascade_resize( vector<vector<vector<vector<double>>>>& arr,const Vint &A);
 void cascade_resize( vector<vector<vector<vector<vector<double>>>>>& arr,const Vint &A);
+bool Is_perfect_square(int x);
+int degeneracy(int m);
+
+
+
+//define special functions
+auto g1_l = [](double x) -> double {
+
+		      double n_max= 40;
+
+		      double res=0.0;
+
+		      //double res_asympt=0.0;
+
+		      //for(int n=1;n<=n_max;n++) res_asympt += 4.0*sqrt(M_PI/2.0)*degeneracy(n)*exp(-sqrt(n)*x)/pow(sqrt(n)*x,1.5);
+
+		      //return res_asympt;
+
+		      for(int n=1; n<=n_max;n++) {
+			
+			res += (4.0*degeneracy(n)/(sqrt(n)*x))*boost::math::cyl_bessel_k(1, sqrt(n)*x);
+			
+		      }
+		     
+		      return res;
+		    };
+
+
+auto g2_l = [](double x) -> double {
+
+		      double n_max= 40;
+
+		      double res=0.0;
+
+		      //double res_asympt=0.0;
+
+		      //for(int n=1;n<=n_max;n++) res_asympt += 4.0*sqrt(M_PI/2.0)*degeneracy(n)*exp(-sqrt(n)*x)/pow(sqrt(n)*x,1.5);
+
+		      //return res_asympt;
+
+		      for(int n=1; n<=n_max;n++) {
+			
+			res += (4.0*degeneracy(n)/(pow(sqrt(n)*x,2)))*boost::math::cyl_bessel_k(2, sqrt(n)*x);
+			
+		      }
+		     
+		      return res;
+		    };
+
+
+
+//CDH FORMULAE FOR Mpi and fpi
+auto Cf1 = [](double l1, double l2, double l3, double l4) { return -(7.0/9.0) + 2.0*l1 + (4.0/3.0)*l2 - 3.0*l4;};
+auto Cf2 = [](double l1, double l2, double l3, double l4) { return  112.0/9.0 - (8.0/3.0)*l1 - (32.0/3.0)*l2;};
+auto Cm1 = [](double l1, double l2, double l3, double l4) { return (-55.0/18.0) + 4.0*l1 +(8.0/3.0)*l2 - (5.0/2.0)*l3 -2.0*l4;};
+auto Cm2 = [](double l1, double l2, double l3, double l4) {return (112.0/9.0) - (8.0/3.0)*l1 -(32.0/3.0)*l2;};
+auto Sf1 = [](double s0, double s1, double s2, double s3) { return (4.0/3.0)*s0 - (13.0/6.0)*s1;};
+auto Sf2 = [](double s0, double s1, double s2, double s3) { return -(40.0/3.0)*s0 +4.0*s1 +(8.0/3.0)*s2 + (13.0/3.0)*s3;};
+auto Sm1 = [](double s0, double s1, double s2, double s3) { return s0*13.0/3.0;};
+auto Sm2 = [](double s0, double s1, double s2, double s3) { return -(40.0/3.0)*s0 - (32.0/3.0)*s1 - (26.0/3.0)*s2;};
+
+auto Cf1_log = []() { return 2.0 + 4.0/3.0 - 3.0;};
+auto Cf2_log = []() { return -8.0/3.0 -32.0/3.0;};
+auto Cm1_log = []() { return 4.0 + 8.0/3.0 - 5.0/2.0 - 2.0;};
+auto Cm2_log = []() { return -8.0/3.0 -32.0/3.0;}; 
+   
 
 
 #endif

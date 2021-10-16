@@ -220,6 +220,75 @@ double Root_Brent(double R, int nt, int NT) {
 }
 
 
+
+double Root_Brent_sinh(double R, int nt, int NT) {
+
+
+ 
+  
+   
+  if(NT%2 != 0) crash("Temporal lattice extent is not divisible by two!");
+  NT= NT/2; //it is what enter the expression of the effective mass
+  int alpha = nt-NT;
+  if(alpha==-1) return 0.0;
+
+  auto F=[&](double x) {return R- sinh(x*alpha)/sinh(x*(alpha+1)); };
+  double Precision = 1e-9;
+  double delta = 0.001;
+  //solve the equation sinh(meff(alpha+1))*corr_ratio = sinh(meff*alpha) using the Brent method!
+  //initialize iteration
+  double b=1e-8;
+  double a;
+  a= min(fabs(1./(alpha+1)),fabs(1./alpha));
+
+  while (F(a)*F(b) > 0) {a  +=  min(fabs(1./(alpha+1)),fabs(1./alpha));}
+ 
+ 
+
+
+
+  if(fabs(F(a)) < fabs(F(b))) {double atemp=a; a=b; b=atemp;}
+
+  double c=a;
+  bool FLAG = true;
+  double s=b;
+  double d=0;
+
+  
+  
+  while(F(s) !=0 && fabs(b-a)>= Precision*fabs((double)(b+a)/2.0) ) {
+
+  
+    if((F(a) != F(c)) && (F(b) != F(c))) {//inverse quadratic interpolation
+      s= a*F(b)*F(c)/((F(a)-F(b))*(F(a)-F(c))) + b*F(a)*F(c)/((F(b)-F(a))*(F(b)-F(c))) + c*F(a)*F(b)/((F(c)-F(a))*(F(c)-F(b)));
+    }
+    else s= b-(F(b)*(b-a)/(F(b)-F(a)));
+
+    double s1= (double)(3*a+b/4.0);
+    if( (s < s1 || s> b) || (FLAG==true && fabs(s-b) >= (double)fabs(b-c)/2) || (FLAG==false && fabs(s-b) >= (double)fabs(c-d)/2) || (FLAG==true && fabs(b-c) < delta) || (FLAG==false && fabs(c-d) < delta)) {
+      
+      FLAG=true;
+      s= (a+b)/2.0;
+      
+    }
+    
+    else FLAG= false;
+
+    d= c;
+    c= b;
+    if (F(a)*F(s)<0) b=s;
+    else a=s;
+
+    if(fabs(F(a)) < fabs(F(b))) {double atemp=a; a=b; b=atemp;}
+
+   
+  }
+
+  
+  return s;
+}
+
+
 double DoConstantFit(Vfloat &data, Vfloat &err) {
 
   double result=0;
@@ -325,4 +394,69 @@ void cascade_resize( vector<vector<vector<vector<vector<double>>>>>& arr,const V
 
 
   return;
+}
+
+bool Is_perfect_square(int x) {
+
+  int sqrt_x = sqrt(x);
+  if (sqrt_x*sqrt_x == x) return true;
+  else return false;
+}
+
+
+int degeneracy(int m) {
+
+  if(m==0) return 1;
+  int deg_val=0;
+
+  //return number of lattice sites with distance m>0 from origin.
+  assert(m > 0);
+
+  int x2_max= m;
+  int x2_min;
+  if(m%3==0) x2_min=m/3;
+  else x2_min= floor( m/3 + 1) ;
+  
+
+  
+
+  for(int x2=x2_min;x2<=x2_max;x2++) {
+    if(Is_perfect_square(x2)) {  //x2 is a perfect square
+      
+      int y2_max= m-x2;
+      int y2_min;
+      if( (m-x2)%2 == 0) y2_min= (m-x2)/2;
+      else y2_min = floor( (m-x2)/2 +1);
+      
+      
+      for(int y2=y2_min;y2<=y2_max;y2++) {
+	
+	if(y2<=x2 && Is_perfect_square(y2))  { //y2 is a perfect square
+	
+	  int z2 = m -x2 - y2;
+	
+	  if (Is_perfect_square(z2) && z2<=y2) { // z2 is a perfect square
+	      if(z2==0 && y2==0) deg_val += 6;
+	      else if(z2==0 && y2!= 0) {
+		if(x2==y2) deg_val += 3*4;
+		else deg_val+=3*4*2;
+	      
+	      }
+	      else {  // x, y, z > 0
+		if(z2==y2 && y2==x2) deg_val += 2*2*2;
+		else if(z2==y2 && y2 != x2) deg_val += 3*2*4;
+		else if(x2==y2 && z2 != y2) deg_val += 3*2*4;
+		else deg_val += 6*2*2*2;
+	      
+	      }
+	  }
+	}
+      }
+    }
+  }
+  
+  
+  
+  return deg_val;
+  
 }

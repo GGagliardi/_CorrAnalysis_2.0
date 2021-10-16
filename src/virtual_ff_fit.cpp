@@ -8,7 +8,8 @@ double rk_guess_V = pow(493.677/775.4,2)  ; //Mk^2 /Mrho^2
 double rq_guess_V = pow(493.677/892 , 2); //Mk^2/Mk*^2(892)
 double rk_guess_A = pow(493.677/775.4,2) ; //Mk^2/Mrho^2
 double rq_guess_A = pow(493.677/1253 ,2); //Mk^2/Mk*^2(1270)
-
+double phi2_mass_ratio = pow(493.677/1019,2);
+const bool PURE_VMD=0;
 
 class Yff{
 
@@ -83,39 +84,66 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
 
   bf.Set_number_of_measurements(FF.size());
   bf.Set_verbosity(verbose);
+  //bf.set_warmup_lev(3);
   
 
   //Add parameters
   double a0, a0_err;
   if(ff_type=="H1" || ff_type == "H2") {a0=0.2; a0_err=0.01;} 
-  else if(ff_type=="FA")  {a0=0.03; a0_err=0.003;} 
+  else if(ff_type=="FA")  {a0=0.05; a0_err=0.003;} 
   else if(ff_type=="FV") {a0=0.08*Za_ov_Zv.ave(); a0_err=0.002*Za_ov_Zv.ave();}
   else crash("string : "+ff_type+" does not name a form factor");
   bf.Add_par("a0",a0, a0_err);
   if(W != "H2") bf.Add_par("ampl",a0/100  , a0_err/100);
   else bf.Add_par("ampl",-a0/100  , -a0_err/100);
   if(W=="A") {
-  bf.Add_prior_par("rk", rk_guess_A, rk_guess_A/10);
-  bf.Add_prior_par("rq", rq_guess_A, rq_guess_A/10);
+  bf.Add_prior_par("rk", rk_guess_A, rk_guess_A);
+  bf.Add_prior_par("rq", rq_guess_A, rq_guess_A);
   }
   else if(W=="V") {
     
-    bf.Add_prior_par("rk", rk_guess_V, rk_guess_V/10);
-    bf.Add_prior_par("rq", rq_guess_V, rq_guess_V/10);
+    bf.Add_prior_par("rk", rk_guess_V, rk_guess_V);
+    bf.Add_prior_par("rq", rq_guess_V, rq_guess_V);
   }
   else crash("string W: "+W+" is not axial or vector");
 
 
-    //fix n release
+  //fix n release
+  //#######################################################################
   bf.Add_prior_par("Za_ov_Zv", Za_ov_Zv.ave(), Za_ov_Zv.err());
   if(W != "V") bf.Fix_par("Za_ov_Zv", 1.0);
+
+  if(!PURE_VMD) {
   bf.Fix_n_release("rk");
   bf.Fix_n_release("rq");
+  }
   if(W=="V") bf.Fix_n_release("Za_ov_Zv");
+
+
+  if(PURE_VMD) {
+    if(ff_type != "H2") bf.Fix_par("a0",0.0);
+    if(ff_type =="H2") bf.Set_limits("a0", 0,3.0);
+    if(W=="V") {
+      bf.Fix_par("rk", rk_guess_V);
+      bf.Fix_par("rq", rq_guess_V);
+    }
+    else {
+    bf.Fix_par("rk", rk_guess_A);
+    bf.Fix_par("rq", rq_guess_A);
+    }
+  }
+
+  //fix params to make test
+  if(ff_type=="FV" || ff_type=="FA" ||  ff_type=="H1")   bf.Fix_par("a0",0.0);
+ 
+ 
 
   
   bf.ansatz =  [=](const Xff_VMD &p, const Yff &ip) -> double {
-    return  p.a0 + p.ampl/((1.0-pow(ip.xk,2)*p.rk)*(1.0- pow(ip.xq,2)*p.rq));
+		 double val =  p.a0 + p.ampl/((1.0-pow(ip.xk,2)*p.rk)*(1.0- pow(ip.xq,2)*p.rq));
+		 if(ff_type=="H2") val = p.a0+ 0.0*(2.0*ip.fp/ip.Mpi)*(  1.0/(1.0 -pow(ip.xk,2)*p.rk) -1.0)/pow(ip.xk,2)    + (p.ampl)*(1.0-pow(ip.xq,2))/(( 1.0-pow(ip.xk,2)*p.rk)*(1.0 -pow(ip.xq,2)*p.rq));
+		 if(ff_type=="H2") val =  (2.0*ip.fp/(ip.Mpi*pow(ip.xk,2)))*p.a0*(1.0/(1-pow(ip.xk,2)*p.rk)-1.0) + (1.0/pow(ip.xk,2))*p.ampl*(1.0-pow(ip.xq,2))/((1-pow(ip.xk,2)*p.rk)*(1.0 -pow(ip.xq,2)*p.rq));
+		 return val;
   };
   bf.measurement = [=](const Xff_VMD& p,const Yff& ip) -> double {
     return p.Za_ov_Zv*ip.ff;
@@ -145,15 +173,16 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
    
  
 
-
-  //add prior 
-  for(int ijack=0;ijack<njacks;ijack++) {
-     bf.ib= &ijack;
-     bf.Append_to_prior("rk", rk_guess_A, 0.5*rk_guess_A );
-     if(W=="A")  { bf.Append_to_prior("rq", rq_guess_A, 0.5*rq_guess_A ); bf.Append_to_prior("Za_ov_Zv", 1.0, 1.0);}
-     else if(W=="V") { bf.Append_to_prior("rq", rq_guess_V, 0.5*rq_guess_V ) ; bf.Append_to_prior("Za_ov_Zv", Za_ov_Zv.distr[ijack], Za_ov_Zv.err());}
-     else crash("string W: "+W+" is not axial nor vector");
-  }
+  
+  //add prior
+      for(int ijack=0;ijack<njacks;ijack++) {
+	bf.ib= &ijack;
+        bf.Append_to_prior("rk", rk_guess_A, 0.3*rk_guess_A );
+	if(W=="A")  { bf.Append_to_prior("rq", rq_guess_A, rq_guess_A ); bf.Append_to_prior("Za_ov_Zv", 1.0, 1.0);}
+	else if(W=="V") {bf.Append_to_prior("rq", rq_guess_V, rq_guess_V ); bf.Append_to_prior("Za_ov_Zv", Za_ov_Zv.distr[ijack], Za_ov_Zv.err());}
+	else crash("string W: "+W+" is not axial nor vector");
+      }
+    
 
 
   //fit
@@ -171,10 +200,10 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   }
 
   cout<<"########PRINTING FIT PARAMS VMD FIT OF "<<ff_type<<"###########"<<endl;
-  cout<<"A: "<<Boot_ave(a0_boot)<<"("<<Boot_err(a0_boot)<<")"<<endl;
-  cout<<"B: "<<Boot_ave(ampl_boot)<<"("<<Boot_err(ampl_boot)<<")"<<endl;
-  cout<<"C: "<<Boot_ave(rk_boot)<<"("<<Boot_err(rk_boot)<<")"<<endl;
-  cout<<"D: "<<Boot_ave(rq_boot)<<"("<<Boot_err(rq_boot)<<")"<<endl;
+  cout<<"A: "<<Boot_ave(a0_boot)<<" +- "<<Boot_err(a0_boot,UseJack)<<endl;
+  cout<<"B: "<<Boot_ave(ampl_boot)<<" +- "<<Boot_err(ampl_boot,UseJack)<<endl;
+  cout<<"C: "<<Boot_ave(rk_boot)<<" +- "<<Boot_err(rk_boot,UseJack)<<endl;
+  cout<<"D: "<<Boot_ave(rq_boot)<<" +- "<<Boot_err(rq_boot,UseJack)<<endl;
   cout<<"##########FIT PARAMS PRINTED###########"<<endl;
 
   //params printed
@@ -182,14 +211,31 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
 
   //define lambda functions
   for(int ijack=0;ijack<njacks;ijack++) {
-    auto F = [=](double xk, double xq) -> double { return Bt_fit.par[ijack].a0 + Bt_fit.par[ijack].ampl/((1.0-pow(xk,2)*Bt_fit.par[ijack].rk)*(1.0 -pow(xq,2)*Bt_fit.par[ijack].rq));};
+    auto F = [=](double xk, double xq) -> double {
+	       double val= Bt_fit.par[ijack].a0 + Bt_fit.par[ijack].ampl/((1.0-pow(xk,2)*Bt_fit.par[ijack].rk)*(1.0 -pow(xq,2)*Bt_fit.par[ijack].rq));
+	       if(ff_type=="H2") val= Bt_fit.par[ijack].a0+  0.0*(2.0*f_p.distr[ijack]/m_p.distr[ijack])*(  1.0/(1.0 -pow(xk,2)*Bt_fit.par[ijack].rk) -1.0)/pow(xk,2)    + Bt_fit.par[ijack].ampl*(1.0-pow(xq,2))/(( 1.0-pow(xk,2)*Bt_fit.par[ijack].rk)*(1.0 -pow(xq,2)*Bt_fit.par[ijack].rq));
+	       if(ff_type=="H2") val = (2.0*f_p.distr[ijack]/(m_p.distr[ijack]*pow(xk,2)))*Bt_fit.par[ijack].a0*(1.0/(1-pow(xk,2)*Bt_fit.par[ijack].rk) -1.0) + (1.0/pow(xk,2))*Bt_fit.par[ijack].ampl*(1.0-pow(xq,2))/((1-pow(xk,2)*Bt_fit.par[ijack].rk)*(1.0 -pow(xq,2)*Bt_fit.par[ijack].rq));
+	       return val;
+	     };
+    
     fit_func.push_back(F);
   }
 
+
+  
+  //compute form factors from ChPT
+  function<double(double,double)> ChPT_H1,ChPT_H2,ChPT_FA,ChPT_FV,F_to_Print;
+  Compute_ChPT_form_factors(ChPT_H1,ChPT_H2, ChPT_FA, ChPT_FV);
+  if(ff_type=="FA") F_to_Print= ChPT_FA;
+  else if(ff_type=="FV") F_to_Print= ChPT_FV;
+  else if(ff_type=="H1") F_to_Print=ChPT_H1;
+  else if(ff_type=="H2") F_to_Print=ChPT_H2;
+  else crash("cannot interpret form factor type: "+ff_type);
+  
   //print data
   //set a grid in the xk, xq plane
 
-  Vfloat xk_list, xq_list, FF_list, FF_err_list;
+  Vfloat xk_list, xq_list, FF_list, FF_err_list, FF_ChPT_list;
   for(int dxk=0; dxk < nsteps; dxk++) {
     for(int dxq=0; dxq < nsteps; dxq++) {
       double xxk = step_size*dxk;
@@ -202,6 +248,7 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
       xq_list.push_back(xxq);
       FF_list.push_back(func.ave());
       FF_err_list.push_back(func.err());
+      FF_ChPT_list.push_back(F_to_Print(xxk,xxq));
     }
   }
 
@@ -209,9 +256,9 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
  
   boost::filesystem::create_directory("../data/form_factors/"+Meson+"/virtual_FF_fit_VMD_"+Ens_tag);
   if(ConstFit) {
-  Print_To_File( {}, {xk_list, xq_list, FF_list, FF_err_list}, "../data/form_factors/"+Meson+"/virtual_FF_fit_VMD_"+Ens_tag+"/"+ff_type+".dat", "", "#xk   xq  val    err" );
+    Print_To_File( {}, {xk_list, xq_list, FF_list, FF_err_list, FF_ChPT_list}, "../data/form_factors/"+Meson+"/virtual_FF_fit_VMD_"+Ens_tag+"/"+ff_type+".dat", "", "#xk   xq  val    err   ChPT pred" );
   }
-  else  Print_To_File( {}, {xk_list, xq_list, FF_list, FF_err_list}, "../data/form_factors/"+Meson+"/virtual_FF_fit_VMD_"+Ens_tag+"/"+ff_type+"time_"+to_string(t_fit)+".dat", "", "#xk   xq  val    err" );
+  else  Print_To_File( {}, {xk_list, xq_list, FF_list, FF_err_list, FF_ChPT_list}, "../data/form_factors/"+Meson+"/virtual_FF_fit_VMD_"+Ens_tag+"/"+ff_type+"time_"+to_string(t_fit)+".dat", "", "#xk   xq  val    err    ChPT_pred" );
   
   
  
@@ -254,12 +301,14 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
   else if(ff_type=="FV") {bf.Add_par("a0",0.074*Za_ov_Zv.ave(), 0.001*Za_ov_Zv.ave()); bf.Add_par("ak",0.045*Za_ov_Zv.ave() ,0.0001*Za_ov_Zv.ave()); bf.Add_par("aq",0.02*Za_ov_Zv.ave() ,0.001*Za_ov_Zv.ave());}
   else crash("string : "+ff_type+" does not name a form factor");
   bf.Add_par("akq", 0.1, 0.01);
-  bf.Add_par("a2kq",0.1,0.01);
+  bf.Add_par("a2kq",0.3,0.01);
   bf.Fix_par("akq",0.0);
   //bf.Fix_par("akq", 0.0);
   //bf.Fix_par("aq",0.0);
   //bf.Fix_par("akq",0.0);
   //bf.Fix_par("ak",0.0);
+
+  //if(ff_type =="H2") bf.Fix_par("a2kq",0.0);
 
   //fix n release Za/Zv
   bf.Add_prior_par("Za_ov_Zv", Za_ov_Zv.ave(), Za_ov_Zv.err());
@@ -325,11 +374,11 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
   }
 
   cout<<"########PRINTING FIT PARAMS CHPT FIT OF "<<ff_type<<"###########"<<endl;
-  cout<<"a0: "<<Boot_ave(a0_boot)<<"("<<Boot_err(a0_boot)<<")"<<endl;
-  cout<<"ak: "<<Boot_ave(ak_boot)<<"("<<Boot_err(ak_boot)<<")"<<endl;
-  cout<<"aq: "<<Boot_ave(aq_boot)<<"("<<Boot_err(aq_boot)<<")"<<endl;
-  cout<<"akq: "<<Boot_ave(akq_boot)<<"("<<Boot_err(akq_boot)<<")"<<endl;
-  cout<<"a2kq: "<<Boot_ave(a2kq_boot)<<"("<<Boot_err(a2kq_boot)<<")"<<endl;
+  cout<<"a0: "<<Boot_ave(a0_boot)<<" +- "<<Boot_err(a0_boot,UseJack)<<endl;
+  cout<<"ak: "<<Boot_ave(ak_boot)<<" +- "<<Boot_err(ak_boot,UseJack)<<endl;
+  cout<<"aq: "<<Boot_ave(aq_boot)<<" +- "<<Boot_err(aq_boot,UseJack)<<endl;
+  cout<<"akq: "<<Boot_ave(akq_boot)<<" +- "<<Boot_err(akq_boot,UseJack)<<endl;
+  cout<<"a2kq: "<<Boot_ave(a2kq_boot)<<" +- "<<Boot_err(a2kq_boot,UseJack)<<endl;
   cout<<"##########FIT PARAMS PRINTED###########"<<endl;
 
   //params printed
@@ -341,10 +390,21 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
     fit_func.push_back(F);
   }
 
+
+  //compute form factors from ChPT
+  function<double(double,double)> ChPT_H1,ChPT_H2,ChPT_FA,ChPT_FV,F_to_Print;
+  Compute_ChPT_form_factors(ChPT_H1,ChPT_H2, ChPT_FA, ChPT_FV);
+  if(ff_type=="FA") F_to_Print= ChPT_FA;
+  else if(ff_type=="FV") F_to_Print= ChPT_FV;
+  else if(ff_type=="H1") F_to_Print=ChPT_H1;
+  else if(ff_type=="H2") F_to_Print=ChPT_H2;
+  else crash("cannot interpret form factor type: "+ff_type);
+  
   //print data
   //set a grid in the xk, xq plane
+ 
 
-  Vfloat xk_list, xq_list, FF_list, FF_err_list;
+  Vfloat xk_list, xq_list, FF_list, FF_err_list, FF_ChPT_list;
   for(int dxk=0; dxk < nsteps; dxk++) {
     for(int dxq=0; dxq < nsteps; dxq++) {
       double xxk = step_size*dxk;
@@ -357,6 +417,7 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
       xq_list.push_back(xxq);
       FF_list.push_back(func.ave());
       FF_err_list.push_back(func.err());
+      FF_ChPT_list.push_back(F_to_Print(xxk,xxq));
     }
   }
 
@@ -364,9 +425,9 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
   boost::filesystem::create_directory("../data/form_factors/"+Meson+"/virtual_FF_fit_ChPT_"+Ens_tag);
    
   if(ConstFit) {
-  Print_To_File( {}, {xk_list, xq_list, FF_list, FF_err_list}, "../data/form_factors/"+Meson+"/virtual_FF_fit_ChPT_"+Ens_tag+"/"+ff_type+".dat", "", "#xk   xq  val    err" );
+    Print_To_File( {}, {xk_list, xq_list, FF_list, FF_err_list, FF_ChPT_list}, "../data/form_factors/"+Meson+"/virtual_FF_fit_ChPT_"+Ens_tag+"/"+ff_type+".dat", "", "#xk   xq  val    err     ChPT_pred" );
   }
-  else  Print_To_File( {}, {xk_list, xq_list, FF_list, FF_err_list}, "../data/form_factors/"+Meson+"/virtual_FF_fit_ChPT_"+Ens_tag+"/"+ff_type+"time_"+to_string(t_fit)+".dat", "", "#xk   xq  val    err" );
+  else  Print_To_File( {}, {xk_list, xq_list, FF_list, FF_err_list, FF_ChPT_list}, "../data/form_factors/"+Meson+"/virtual_FF_fit_ChPT_"+Ens_tag+"/"+ff_type+"time_"+to_string(t_fit)+".dat", "", "#xk   xq  val    err     ChPT_pred" );
   
  
 

@@ -10,13 +10,17 @@ using namespace std;
 class data_t {
 
  public:
-  data_t() {Directory=""; Obs_name=""; File_name=""; SC="#";}
-  data_t(string A, string B, string C) : Directory(A), File_name(B), Obs_name(C) {SC ="#"; }
-  data_t(string A, string B, string C, string D) : Directory(A), File_name(B), Obs_name(C), SC(D) {}
+  data_t() {Directory=""; Obs_name=""; File_name=""; SC="#"; sort_Custom=false; CustomSorting= [](string A, string B) -> bool { return A<B;};}
+  data_t(string A, string B, string C) : Directory(A), File_name(B), Obs_name(C) {SC ="#";  sort_Custom=false; CustomSorting= [](string A, string B) -> bool { return A<B;};}
+  data_t(string A, string B, string C, string D) : Directory(A), File_name(B), Obs_name(C), SC(D) {sort_Custom=false; CustomSorting= [](string A, string B) -> bool { return A<B;};}
+  data_t(string A, string B, string C,const  function<bool(string A, string B)> &F)  : Directory(A), File_name(B), Obs_name(C) {SC="#"; sort_Custom=true; CustomSorting=F;} 
+  data_t(string A, string B, string C, string D, const function<bool(string A, string B)> &F)  : Directory(A), File_name(B), Obs_name(C), SC(D) { sort_Custom=true; CustomSorting=F;} 
 
   void Read();
   void Read(string A, string B, string C) { Directory=A; File_name=B; Obs_name=C; Read();}
   void Read(string A, string B, string C, string D) { Directory=A; File_name=B; Obs_name=C; SC=D; Read(); }
+  void Read(string A, string B, string C,const function<bool(string A, string B)> &F) {Directory=A; File_name=B; Obs_name=C; sort_Custom=true; CustomSorting=F; Read();}
+  void Read(string A, string B, string C, string D,const  function<bool(string A, string B)> &F) {Directory=A; File_name=B; Obs_name=C;SC=D; sort_Custom=true; CustomSorting=F; Read();}
   VVVfloat col(int icol) {
     map<int, VVVfloat>::iterator it;
     it= data.find(icol);
@@ -41,6 +45,8 @@ class data_t {
   string File_name;
   string Obs_name;
   string SC;
+  bool sort_Custom;
+  function<bool(string A,string B)> CustomSorting;
 };
 
 class file_t {

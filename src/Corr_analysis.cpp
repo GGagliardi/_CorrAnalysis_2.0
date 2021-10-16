@@ -76,7 +76,12 @@ distr_t_list CorrAnalysis::effective_mass_t(const VVfloat &corr_A, string Obs) {
     
     for(int t=0; t<Nt;t++) {
       effective_mass_t.distr_list.emplace_back(UseJack);
-      for(int ijack=0; ijack<Njacks;ijack++) effective_mass_t.distr_list[t].distr.push_back( Root_Brent( JackDistr_t.distr_list[t].distr[ijack]/JackDistr_t.distr_list[(t+1)%Nt].distr[ijack], t, Nt));
+      for(int ijack=0; ijack<Njacks;ijack++) {
+	if(Reflection_sign==1) {
+	effective_mass_t.distr_list[t].distr.push_back( Root_Brent( JackDistr_t.distr_list[t].distr[ijack]/JackDistr_t.distr_list[(t+1)%Nt].distr[ijack], t, Nt));
+	}
+	else effective_mass_t.distr_list[t].distr.push_back( Root_Brent_sinh( JackDistr_t.distr_list[t].distr[ijack]/JackDistr_t.distr_list[(t+1)%Nt].distr[ijack], t, Nt));
+      }
     }
   }
   
@@ -87,7 +92,12 @@ distr_t_list CorrAnalysis::effective_mass_t(const VVfloat &corr_A, string Obs) {
     for( int t=0; t<Nt; t++) BootDistr_t.distr_list.push_back(B.DoBoot(1,ASymm(corr_A,t)));
     for(int t=0; t<Nt; t++) {
       effective_mass_t.distr_list.emplace_back(UseJack);
-      for(int iboot=0; iboot<Nboots; iboot++) effective_mass_t.distr_list[t].distr.push_back( Root_Brent( BootDistr_t.distr_list[t].distr[iboot]/BootDistr_t.distr_list[(t+1)%Nt].distr[iboot], t, Nt));
+      for(int iboot=0; iboot<Nboots; iboot++) {
+	if(Reflection_sign==1) {
+	effective_mass_t.distr_list[t].distr.push_back( Root_Brent( BootDistr_t.distr_list[t].distr[iboot]/BootDistr_t.distr_list[(t+1)%Nt].distr[iboot], t, Nt));
+	}
+	else effective_mass_t.distr_list[t].distr.push_back( Root_Brent_sinh( BootDistr_t.distr_list[t].distr[iboot]/BootDistr_t.distr_list[(t+1)%Nt].distr[iboot], t, Nt));
+      }
     }
   }
     
@@ -119,7 +129,12 @@ distr_t_list CorrAnalysis::effective_mass_t(const distr_t_list &corr_A_distr, st
     if(corr_A_distr.distr_list[t].size() != corr_A_distr.distr_list[(t+1)%corr_A_distr.size()].size()) crash("Call to distr_t_list effective_mass_t(distr_t_list&) is invalid, distributions in distr_t_list do not have same size");
     
     for(int is=0; is<corr_A_distr.distr_list[t].size();is++) {
+      if(Reflection_sign==1) {
       effective_mass_t.distr_list[t].distr.push_back( Root_Brent( corr_A_distr.distr_list[t].distr[is]/corr_A_distr.distr_list[(t+1)%corr_A_distr.size()].distr[is], t, corr_A_distr.size()));
+      }
+      else {
+      effective_mass_t.distr_list[t].distr.push_back( Root_Brent_sinh( corr_A_distr.distr_list[t].distr[is]/corr_A_distr.distr_list[(t+1)%corr_A_distr.size()].distr[is], t, corr_A_distr.size()));
+      }
     }
    
   }

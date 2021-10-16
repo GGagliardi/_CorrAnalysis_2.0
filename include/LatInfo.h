@@ -50,7 +50,7 @@ class LatticeInfo {
   }
   Pfloat Retrieve_Za(string S, int ibranch) {
     LatInfo(S);
-    if(ibranch<4) {return make_pair(Za, Za_err);}
+    if(ibranch<4) {return make_pair(Za_M2, Za_M2_err);}
     else return make_pair(Za_M2, Za_M2_err);
   }
 
@@ -63,7 +63,6 @@ void Read_pars_from_ensemble_tag(string, double&, double&, double&);
 void ReadBranch(int k, Eigen::MatrixXd& CovMatrixInput, Eigen::VectorXd& Ave_input_parameters);
 
   
-
 
 
 

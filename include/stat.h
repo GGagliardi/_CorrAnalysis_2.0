@@ -24,10 +24,10 @@ void Compute_correlation_matrix(bool UseJack, Eigen::MatrixXd& Corr, int nargs,.
 class distr_t {
 
  public:
- distr_t()  {}
- distr_t(bool a) : UseJack(a) {}
- distr_t(bool a, Vfloat b) : UseJack(a), distr(b) {}
- distr_t(bool a, int size) : UseJack(a), distr(size,0.0) {}
+  distr_t()  {UseJack = 1;}
+  distr_t(bool a) : UseJack(a) {}
+  distr_t(bool a, Vfloat b) : UseJack(a), distr(b) {}
+  distr_t(bool a, int size) : UseJack(a), distr(size,0.0) {}
 
  //////////////////////////////////////////
 
@@ -140,6 +140,42 @@ class distr_t_list {
 
    return RET;
  }
+
+  static distr_t_list derivative(const distr_t_list& D_List, int mode) {
+    
+    int NT= D_List.size();
+    distr_t_list RET(D_List.UseJack, NT);
+    for(int t=0; t<RET.size();t++) {
+      for(int k=0;k< D_List.distr_list[t].size();k++) {
+	double der_value;
+	int t_plus = (t+1)%NT;
+	int t_minus = (t-1+NT)%NT;
+	double D_plus = D_List.distr_list[t_plus].distr[k];
+	double D_0 = D_List.distr_list[t].distr[k];
+	double D_minus = D_List.distr_list[t_minus].distr[k];
+
+	if(mode==0) { //central derivative
+	  der_value = (D_plus-D_minus)/2.0;
+	}
+	else if(mode==1) { //forward derivative
+	  der_value = D_plus-D_0;
+	}
+
+	else if(mode==-1) { //backward derivative
+	  der_value = D_0 - D_minus;
+	}
+
+	else crash("In static distr_t_list::derivative mode: "+to_string(mode)+" not yet implemented");
+
+	RET.distr_list[t].distr.push_back(der_value);
+
+      }
+
+
+    }
+
+    return RET;
+  }
  
 
 

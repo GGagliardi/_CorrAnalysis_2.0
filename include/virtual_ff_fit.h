@@ -12,6 +12,7 @@
 #include "LatInfo.h"
 #include "T_min.h"
 #include "pt3_momenta.h"
+#include "ChPT_form_factors.h"
 
 
 void Fit_virtual_FF_VMD(vector<function<double(double, double)>> &fit_func, const vector<distr_t> &FF, distr_t &f_p, distr_t &m_p, distr_t &Za_ov_Zv, vector<pt3_momenta> &mom, string ff_type, string W, string Ens_tag,string Meson, bool UseJack, bool ConstFit, int t_fit);

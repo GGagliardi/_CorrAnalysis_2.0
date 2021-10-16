@@ -15,7 +15,7 @@ const int Njacks=15;
 int sm_lev=1;
 const double e_f1 = 2.0/3.0; //electric charge of u-type quark
 const double e_f2 = -1.0/3.0; //electric charge of d-type quark
-bool Include_k0_noise=0;
+bool Include_k0_noise=1;
 bool VIRTUAL_RUN=1;
 bool Determine_contaminations=0;
 int SUB_ZERO_MOMENTUM_VIRTUAL_INT= 1;
@@ -696,7 +696,7 @@ void Get_Tmin_Tmax(string corr_type, string Ens_tag, CorrAnalysis &corr, double 
 
     if(corr_type=="2pt") {
       corr.Tmax = 20;
-      if(Ens_tag.substr(0,1) =="A" || Ens_tag.substr(0,1) == "C" || Ens_tag.substr(0,1) == "B" || Ens_tag.substr(0,1)=="D" || Ens_tag.substr(0,1) =="E" ) corr.Tmin = 15;
+      if(Ens_tag.substr(0,1) =="A" || Ens_tag.substr(0,1) == "C" || Ens_tag.substr(0,1) == "B" || Ens_tag.substr(0,1)=="D" || Ens_tag.substr(0,1) =="E" ) corr.Tmin = 13;
 
     }
 
@@ -1147,7 +1147,7 @@ distr_t_list H_1_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
 
   distr_t_list H_1 = H30_sub*(ksq - Eg*m)/(Eg*kz*Power(m,2));
   H_1 = H_1 +H33_sub*kz*kz*(-2.0*pow(Eg,2)*m -ksq*m+Eg*(ksq+3.0*Power(m,2)))/den;
-  H_1 = H_1+ H11_sub*(ksq*(2.0*ksq+pow(kz,2))*m -3*pow(Eg,3)*Power(m,2)+2.0*pow(Eg,2)*m*(3.0*ksq+pow(kz,2)+2.0*Power(m,2))-Eg*(2.0*pow(ksq,2)+3.0*pow(kz,2)*Power(m,2)+ksq*(pow(kz,2)+6.0*Power(m,2))))/den;
+  H_1 = H_1+ H11_sub*(ksq*(2.0*ksq+pow(kz,2))*m -4*pow(Eg,3)*Power(m,2)+2.0*pow(Eg,2)*m*(3.0*ksq+pow(kz,2)+2.0*Power(m,2))-Eg*(2.0*pow(ksq,2)+3.0*pow(kz,2)*Power(m,2)+ksq*(pow(kz,2)+6.0*Power(m,2))))/den;
 
   
   return H_1*m;
@@ -1805,15 +1805,18 @@ void Compute_form_factors() {
 	      //###############IMPROVED ESTIMATORS###################################################à
 	      
 	      distr_t_list H1_impr = H_1_impr(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
+
+
+	      
 	      distr_t_list H2_impr = H_2_impr(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_k0[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
 	      distr_t_list FAoff_impr = FA_off_impr(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_k0[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
 	      
 	      //######################################################################################
 
 
-	       //###############MIXED 11 AND 33 ESTIMATORS###################################################à
+	       //###############MIXED 11 AND 33 ESTIMATORS###################################################
 	      
-	      distr_t_list H1_mixed_diag = H_1_mixed_diag(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], -1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( 0.5*(distr_A_kz0_k2[1][1]+ distr_A_kz0_k2[2][2] )*exp_Nt_t_k0- 0.5*(distr_A_k0[1][1]+distr_A_k0[2][2])- distr_A_kz0_k2[3][3]*exp_Nt_t_k0+ distr_A_k0[3][3]), mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
+	      distr_t_list H1_mixed_diag = H_1_mixed_diag(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], -1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( 0.5*(distr_A_kz0_k2[1][1]+ distr_A_kz0_k2[2][2] )*exp_Nt_t_k0 -0.5*(distr_A_k0[1][1]+distr_A_k0[2][2])- distr_A_kz0_k2[3][3]*exp_Nt_t_k0+ distr_A_k0[3][3]), mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
 	      distr_t_list H2_mixed_diag = H_2_mixed_diag(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], -1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( 0.5*(distr_A_kz0_k2[1][1]+ distr_A_kz0_k2[2][2] )*exp_Nt_t_k0- 0.5*(distr_A_k0[1][1]+distr_A_k0[2][2])- distr_A_kz0_k2[3][3]*exp_Nt_t_k0+ distr_A_k0[3][3]), mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
 	      distr_t_list FAoff_mixed_diag = FA_off_mixed_diag(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], -1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( 0.5*(distr_A_kz0_k2[1][1]+ distr_A_kz0_k2[2][2] )*exp_Nt_t_k0- 0.5*(distr_A_k0[1][1]+distr_A_k0[2][2])- distr_A_kz0_k2[3][3]*exp_Nt_t_k0+ distr_A_k0[3][3]), mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
 	      
@@ -1865,7 +1868,7 @@ void Compute_form_factors() {
 		  FA_off_const_fit_list[i_ens].push_back(FAoff_impr_fit);
 		}
 		else if(VIRTUAL_ESTIMATOR_SET==2) {
-		  H1_list[i_ens].push_back(H1_mixed_diag);
+		  H1_list[i_ens].push_back(H1_impr);
 		  H2_list[i_ens].push_back(H2_mixed_diag);
 		  FA_off_list[i_ens].push_back(FAoff_mixed_diag);
 		  H1_const_fit_list[i_ens].push_back(H1_mixed_diag_fit);
@@ -1875,9 +1878,9 @@ void Compute_form_factors() {
 
 		else if(VIRTUAL_ESTIMATOR_SET==3) {
 		   H2_list[i_ens].push_back(H2_mixed_diag);
-		   H1_list[i_ens].push_back(H1_impr);
+		   H1_list[i_ens].push_back(H1_mixed_diag);
 		   FA_off_list[i_ens].push_back(FAoff_impr);
-		   H1_const_fit_list[i_ens].push_back(H1_impr_fit);
+		   H1_const_fit_list[i_ens].push_back(H1_mixed_diag_fit);
 		   H2_const_fit_list[i_ens].push_back(H2_mixed_diag_fit);
 		   FA_off_const_fit_list[i_ens].push_back(FAoff_impr_fit);
 		}
@@ -1902,7 +1905,7 @@ void Compute_form_factors() {
 	      Print_Fitted_virtual_form_factors<<xk<<setw(20)<<xq<<setw(20)<<H1_mixed_diag_fit.ave()<<setw(20)<<H1_mixed_diag_fit.err()<<setw(20)<<H2_mixed_diag_fit.ave()<<setw(20)<<H2_mixed_diag_fit.err()<<setw(20)<<FAoff_mixed_diag_fit.ave()<<setw(20)<<FAoff_mixed_diag_fit.err()<<setw(20)<<FVoff_fit.ave()<<setw(20)<<FVoff_fit.err()<<endl;
 	      Print_Fitted_virtual_form_factors.close();
 
-	   
+          
 	     
 	      Print_To_File({}, {H1.ave(), H1.err(), H2.ave(), H2.err(), FAoff.ave(), FAoff.err(), FVoff.ave(), FVoff.err()}, "../data/form_factors/"+Meson+"/FH_off_"+Ens_tag[i_ens]+"_"+mom3_l.mom[i_ens][icomb3pt].name()+"_smlev_"+to_string(sm_lev)+"_k0_noise_"+to_string(Include_k0_noise)+".dat", "", "#t       H1    H1_err     H2      H2_err    FA_off      FA_off_err     FV_off     FV_off_err ");
 	      Print_To_File({}, {H1_impr.ave(), H1_impr.err(), H2_impr.ave(), H2_impr.err(), FAoff_impr.ave(), FAoff_impr.err(), FVoff.ave(), FVoff.err()}, "../data/form_factors/"+Meson+"/FH_off_impr_"+Ens_tag[i_ens]+"_"+mom3_l.mom[i_ens][icomb3pt].name()+"_smlev_"+to_string(sm_lev)+"_k0_noise_"+to_string(Include_k0_noise)+".dat", "", "#t       H1    H1_err     H2      H2_err    FA_off      FA_off_err     FV_off     FV_off_err ");
@@ -1962,6 +1965,8 @@ void Compute_form_factors() {
 
     Vfloat MC_ee_ChPT, MC_mumu_ChPT, QUAD_ee_ChPT, QUAD_mumu_ChPT,MC_ee_VMD, MC_mumu_VMD, QUAD_ee_VMD, QUAD_mumu_VMD;
     Vfloat MC_ee_ChPT_err, MC_mumu_ChPT_err, QUAD_ee_ChPT_err, QUAD_mumu_ChPT_err,MC_ee_VMD_err, MC_mumu_VMD_err, QUAD_ee_VMD_err, QUAD_mumu_VMD_err;
+    Vfloat MC_eee_ChPT, MC_mumumu_ChPT, MC_eee_VMD, MC_mumumu_VMD;
+    Vfloat MC_eee_ChPT_err, MC_mumumu_ChPT_err, MC_eee_VMD_err, MC_mumumu_VMD_err;
     Vfloat times;
 
     if(H1_list.size() == 0 || H2_list.size() == 0 || FA_off_list.size() == 0 || FV_off_list.size() == 0 || f_p.size() == 0 || m_p.size() == 0) crash("At least one between ff,m_p,f_p list has size zero. Exiting...");
@@ -2044,6 +2049,7 @@ void Compute_form_factors() {
 	Fit_virtual_FF_ChPT(FV_off_ChPT,FV_off_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "FV", "V", Tag, Meson, UseJack,  USE_FITTED_FF, t);// CHPT FIT
 
 
+	
 	if(COMPUTE_l4_DECAY_RATE) {
 	  cout<<"#####STARTING RATE COMPUTATION#####"<<endl;
 	  cout<<"USE_FITTED_FF: "<<USE_FITTED_FF;
@@ -2054,17 +2060,20 @@ void Compute_form_factors() {
 
 	  
 	  auto zero_func= [](double xk, double xq) -> double {return 0.0;};
-	  auto id_func = [](double xk, double xq) -> double {return 2.0;};
+	  auto id_func = [](double xk, double xq) -> double {return 1.0;};
 	  auto id_func2 = [](double xk, double xq) -> double {return 20.0;};
-	  /*
+
+
+	  
+	  /* only to make tests
 	  for(unsigned int i=0;i<H1_VMD.size();i++) {
 	    H1_VMD[i]= zero_func;
 	    H2_VMD[i]= zero_func;
 	    FA_off_VMD[i]= zero_func;
-	    FV_off_VMD[i]= zero_func;
+	    FV_off_VMD[i]= id_func;
 	   
 	  }
-	  */
+	  only to make tests */ 
 	  
 	 
 	  distr_t f_p_temp= f_p[0];
@@ -2076,8 +2085,18 @@ void Compute_form_factors() {
 	  cout<<"####FINAL RATE ESTIMATES:####"<<endl;
 	  cout<<"e+e- (ChPT) : (Quad) "<<RATE_ChPT.Int_Quad_val_ee<<"("<<RATE_ChPT.Int_Quad_err_ee<<"),  (MC) "<<RATE_ChPT.Int_MonteCarlo_val_ee<<"("<<RATE_ChPT.Int_MonteCarlo_err_ee<<")"<<endl;
           cout<<"mu+mu- (ChPT) : (Quad) "<<RATE_ChPT.Int_Quad_val_mumu<<"("<<RATE_ChPT.Int_Quad_err_mumu<<"),  (MC) "<<RATE_ChPT.Int_MonteCarlo_val_mumu<<"("<<RATE_ChPT.Int_MonteCarlo_err_mumu<<")"<<endl;
-	   cout<<"e+e- (VMD) : (Quad) "<<RATE_VMD.Int_Quad_val_ee<<"("<<RATE_VMD.Int_Quad_err_ee<<"),  (MC) "<<RATE_VMD.Int_MonteCarlo_val_ee<<"("<<RATE_VMD.Int_MonteCarlo_err_ee<<")"<<endl;
+	  cout<<"e+e-e+ (ChPT) : (MC) "<<RATE_ChPT.Int_MonteCarlo_val_eee<<"("<<RATE_ChPT.Int_MonteCarlo_err_eee<<")"<<endl;
+          cout<<"mu+mu-mu+ (ChPT) : (MC) "<<RATE_ChPT.Int_MonteCarlo_val_mumumu<<"("<<RATE_ChPT.Int_MonteCarlo_err_mumumu<<")"<<endl;
+
+	  
+	  cout<<"e+e- (VMD) : (Quad) "<<RATE_VMD.Int_Quad_val_ee<<"("<<RATE_VMD.Int_Quad_err_ee<<"),  (MC) "<<RATE_VMD.Int_MonteCarlo_val_ee<<"("<<RATE_VMD.Int_MonteCarlo_err_ee<<")"<<endl;
           cout<<"mu+mu- (VMD) : (Quad) "<<RATE_VMD.Int_Quad_val_mumu<<"("<<RATE_VMD.Int_Quad_err_mumu<<"),  (MC) "<<RATE_VMD.Int_MonteCarlo_val_mumu<<"("<<RATE_VMD.Int_MonteCarlo_err_mumu<<")"<<endl;
+
+	  
+	  cout<<"e+e-e+e- (VMD) : (MC) "<<RATE_VMD.Int_MonteCarlo_val_eee<<"("<<RATE_VMD.Int_MonteCarlo_err_eee<<")"<<endl;
+          cout<<"mu+mu-mu- (VMD) : (MC) "<<RATE_VMD.Int_MonteCarlo_val_mumumu<<"("<<RATE_VMD.Int_MonteCarlo_err_mumumu<<")"<<endl;
+
+	  
 	  if(!USE_FITTED_FF) {
 	    //val
 	    QUAD_ee_ChPT.push_back( RATE_ChPT.Int_Quad_val_ee);
@@ -2088,6 +2107,10 @@ void Compute_form_factors() {
 	    QUAD_mumu_VMD.push_back( RATE_VMD.Int_Quad_val_mumu);
 	    MC_ee_VMD.push_back( RATE_VMD.Int_MonteCarlo_val_ee);
 	    MC_mumu_VMD.push_back( RATE_VMD.Int_MonteCarlo_val_mumu);
+	    MC_eee_ChPT.push_back(RATE_ChPT.Int_MonteCarlo_val_eee);
+	    MC_mumumu_ChPT.push_back(RATE_ChPT.Int_MonteCarlo_val_mumumu);
+	    MC_eee_VMD.push_back(RATE_VMD.Int_MonteCarlo_val_eee);
+	    MC_mumumu_VMD.push_back(RATE_VMD.Int_MonteCarlo_val_mumumu);
 
 	    //errors
 	    QUAD_ee_ChPT_err.push_back( RATE_ChPT.Int_Quad_err_ee);
@@ -2098,6 +2121,10 @@ void Compute_form_factors() {
 	    QUAD_mumu_VMD_err.push_back( RATE_VMD.Int_Quad_err_mumu);
 	    MC_ee_VMD_err.push_back( RATE_VMD.Int_MonteCarlo_err_ee);
 	    MC_mumu_VMD_err.push_back( RATE_VMD.Int_MonteCarlo_err_mumu);
+	    MC_eee_ChPT_err.push_back(RATE_ChPT.Int_MonteCarlo_err_eee);
+	    MC_mumumu_ChPT_err.push_back(RATE_ChPT.Int_MonteCarlo_err_mumumu);
+	    MC_eee_VMD_err.push_back(RATE_VMD.Int_MonteCarlo_err_eee);
+	    MC_mumumu_VMD_err.push_back(RATE_VMD.Int_MonteCarlo_err_mumumu);
 	    times.push_back((double)t);
 	  }
 
@@ -2109,7 +2136,7 @@ void Compute_form_factors() {
       
     }
     if(!USE_FITTED_FF) {   //print rates
-      Print_To_File({}, {times, QUAD_ee_ChPT, QUAD_ee_ChPT_err, QUAD_ee_VMD, QUAD_ee_VMD_err, MC_ee_ChPT, MC_ee_ChPT_err, MC_ee_VMD, MC_ee_VMD_err, QUAD_mumu_ChPT, QUAD_mumu_ChPT_err, QUAD_mumu_VMD, QUAD_mumu_VMD_err, MC_mumu_ChPT, MC_mumu_ChPT_err, MC_mumu_VMD, MC_mumu_VMD_err} , "../data/form_factors/"+Meson+"/decay_rate_plateaux_"+Tag+".dat", "", "#times, QUAD_ee_ChPT, QUAD_ee_ChPT_err, QUAD_ee_VMD, QUAD_ee_VMD_err, MC_ee_ChPT, MC_ee_ChPT_err, MC_ee_VMD, MC_ee_VMD_err, QUAD_mumu_ChPT, QUAD_mumu_ChPT_err, QUAD_mumu_VMD, QUAD_mumu_VMD_err, MC_mumu_ChPT, MC_mumu_ChPT_err, MC_mumu_VMD, MC_mumu_VMD_err");
+      Print_To_File({}, {times, QUAD_ee_ChPT, QUAD_ee_ChPT_err, QUAD_ee_VMD, QUAD_ee_VMD_err, MC_ee_ChPT, MC_ee_ChPT_err, MC_ee_VMD, MC_ee_VMD_err, QUAD_mumu_ChPT, QUAD_mumu_ChPT_err, QUAD_mumu_VMD, QUAD_mumu_VMD_err, MC_mumu_ChPT, MC_mumu_ChPT_err, MC_mumu_VMD, MC_mumu_VMD_err, MC_eee_ChPT, MC_eee_ChPT_err, MC_eee_VMD, MC_eee_VMD_err, MC_mumumu_ChPT, MC_mumumu_ChPT_err, MC_mumumu_VMD, MC_mumu_VMD_err} , "../data/form_factors/"+Meson+"/decay_rate_plateaux_"+Tag+".dat", "", "#times, QUAD_ee_ChPT, QUAD_ee_ChPT_err, QUAD_ee_VMD, QUAD_ee_VMD_err, MC_ee_ChPT, MC_ee_ChPT_err, MC_ee_VMD, MC_ee_VMD_err, QUAD_mumu_ChPT, QUAD_mumu_ChPT_err, QUAD_mumu_VMD, QUAD_mumu_VMD_err, MC_mumu_ChPT, MC_mumu_ChPT_err, MC_mumu_VMD, MC_mumu_VMD_err, MC_eee_ChPT, MC_eee_ChPT_err, MC_eee_VMD, MC_eee_VMD_err, MC_mumumu_ChPT, MC_mumumu_ChPT_err, MC_mumumu_VMD, MC_mumumu_VMD_err");
     }
   }
   

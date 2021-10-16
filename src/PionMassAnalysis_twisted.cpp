@@ -9,6 +9,7 @@ const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
 const double e2 = alpha*4.0*M_PI;
 const double r0 = pow(0.672/0.197,2);
+const double fpi_phys = 0.1304;
 const int Nbranches = 8;
 const int nboots= 200;
 const bool Use_JB_distribution= false;
@@ -52,7 +53,7 @@ public:
     }
     for(int ibeta=0; ibeta<3;ibeta++) {
       this->Za[ibeta] = par[13+ibeta];
-    }
+   }
   }
   X_t() : ainv(3), Za(3) {}
   vector<double> ainv;
@@ -73,11 +74,11 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
   if (CURRENT_TYPE=="LOCAL") { //current is local
     // m_data.Read("../datasets", "mes_contr_00", "P5P5");
     //dm_exch_data.Read("../datasets", "mes_contr_LL", "P5P5");
-    m_data.Read("../datasetslocal_twisted", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
-    dm_exch_data.Read("../datasetslocal_twisted", "mes_contr_M0_R0_F_M0_R0_F", "P5P5");
+    m_data.Read("../datasetslocal_twisted/data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
+    dm_exch_data.Read("../datasetslocal_twisted/data", "mes_contr_M0_R0_F_M0_R0_F", "P5P5");
     if(IncludeDisconnected) {
-      m_data_hand_run.Read("../datasetslocal_twisted", "mes_contr_M0_R0_0_M0_R0_0_handcuffs", "P5P5");
-      dm_hand_data.Read("../datasetslocal_twisted", "handcuffs", "P5P5");
+      m_data_hand_run.Read("../datasetslocal_twisted/data", "mes_contr_M0_R0_0_M0_R0_0_handcuffs", "P5P5");
+      dm_hand_data.Read("../datasetslocal_twisted/data", "handcuffs", "P5P5");
     }
   }
   else crash("CURRENT_TYPE: "+CURRENT_TYPE+ " not yet implemented. Exiting...");
@@ -93,7 +94,9 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
 
 
   distr_t_list Mpi_distr_list(UseJack), Dm2_tot_distr_list(UseJack), ratio_disc_exch_mass_distr_list(UseJack), ratio_disc_exch_mass_vol_sub_distr_list(UseJack);
+  distr_t_list Mpi_distr_dim_list(UseJack);
   distr_t_list Dm2_disc_ov_Mpi2(UseJack), Dm2_disc_ov_Mpi2log(UseJack), Dm2_disc(UseJack);
+  distr_t_list Dm2_tot_ov_fp2_distr_list(UseJack), fp_fit_distr_list(UseJack),  Dm2_tot_ov_fp2_ren_FSEs_distr_list(UseJack);
   vector<Eigen::MatrixXd> CovMatrixPion(Nens);
 
   for(int i=0; i < Nens; i++) {
@@ -119,6 +122,7 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
     LL.LatInfo(m_data.Tag[i].substr(0,1));
     double Za = LL.Za;
     double Za_e = LL.Za_err;
+    double lat_spacing_inv = LL.ainv;
     GaussianMersenne G(444363);
     distr_t Za_distr(UseJack);
     for(int nj=0;nj<Njacks;nj++) Za_distr.distr.push_back( Za + G()*Za_e/sqrt(Njacks-1));
@@ -135,7 +139,9 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
 
     distr_t_list fp_distr= Corr.decay_constant_t(m_data.col(0)[i], "");
 
-    distr_t fp_fit= Corr.Fit_distr(fp_distr);
+    distr_t fp_fit= 2.0*mm*Corr.Fit_distr(fp_distr);
+
+ 
  
     distr_t_list Dm_exch_eff_distr = Corr.effective_slope_t(Exch_distr, Pi_iso_distr, "");
 
@@ -199,6 +205,7 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
     
     
     Mpi_distr_list.distr_list.push_back(Corr.Fit_distr( Mpi_eff_distr));
+    Mpi_distr_dim_list.distr_list.push_back( lat_spacing_inv*Corr.Fit_distr(Mpi_eff_distr));
     distr_t_list Dm_tot_eff_distr=Dm_exch_eff_distr;
     
     //if(IncludeDisconnected) Dm_tot_eff_distr= Dm_exch_eff_distr-Dm_hand_eff_distr;
@@ -207,6 +214,9 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
       distr_t_list Dm_tot_eff_distr_renorm= Corr.effective_slope_t(Za_distr*Za_distr*(Exch_distr-Hand_distr), Pi_iso_distr, "../data/Mpi_twisted/"+p+"/dm_tot_renorm."+m_data.Tag[i]);
     }
     Dm2_tot_distr_list.distr_list.push_back ( 2.0*Corr.Fit_distr(Dm_tot_eff_distr*Mpi_eff_distr));
+    Dm2_tot_ov_fp2_distr_list.distr_list.push_back(fpi_phys*fpi_phys*e2*Corr.Fit_distr(Dm_tot_eff_distr*Mpi_eff_distr)/(fp_fit*fp_fit));
+    Dm2_tot_ov_fp2_ren_FSEs_distr_list.distr_list.push_back( fpi_phys*fpi_phys*(e2*Corr.Fit_distr(Za_distr*Za_distr*Dm_tot_eff_distr*Mpi_eff_distr)  + (kappa*alpha/ll)*( Corr.Fit_distr(Mpi_eff_distr) + 2.0/ll)   )/(fp_fit*fp_fit));
+    fp_fit_distr_list.distr_list.push_back(fp_fit);
    
     if(!Use_JB_distribution) { //resample from Gaussian distribution
       Compute_covariance_matrix(UseJack, CovMatrixPion[i],2, Mpi_distr_list.distr_list[i].distr, Dm2_tot_distr_list.distr_list[i].distr);
@@ -233,18 +243,18 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
   bf.Add_par("A_1", -5.7, 0.02);
   bf.Add_par("D", 2e-3, 1e-5);
   bf.Add_par("Dm", 0.5, 1e-3);
-  bf.Add_par("F_a", 2.5, 0.1);
+  bf.Add_par("F_a", 1, 0.1);
   bf.Add_par("lg_a", 0.1, 1e-3);
-  bf.Add_par("F_m", 2.5, 0.1);
+  bf.Add_par("F_m", 3.0, 0.1);
   bf.Add_par("A_2", 1.0, 0.01);
   bf.Add_prior_par("f0", 0.121, 1e-3);
   bf.Add_prior_pars({"ainv0", "ainv1", "ainv2","Za0", "Za1", "Za2"});
     
   //Fix some parameters to make test
-  bf.Fix_par("F_m",0.0);
-  //bf.Fix_par("F_a",0.0);
-  //bf.Fix_par("Dm",0.0);
-  bf.Fix_par("D",0.0);
+  //bf.Fix_par("F_m",0.0);
+  bf.Fix_par("F_a",0.0);
+  bf.Fix_par("Dm",0.0);
+  //bf.Fix_par("D",0.0);
   bf.Fix_par("lg_a", 0.0);
   bf.Fix_par("A_2", 0.0);
   //bf.Fix_par("log", 0.0);
@@ -268,17 +278,22 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
 
 
     double ainv = p.ainv[ip.ibeta];
-    double L = ip.L;
+    double Lfr = ip.L;
 
      
     double Mp = ainv*ip.Mpi;
     double Mp2 = pow(Mp,2);
 
+    double aMpi = ip.Mpi;
+
+    double a=1.0/ainv;
+
+    double L = ip.L/ainv;
      
-    double SD_FVE = (L>0.0)?(e2/3.0)*ip.Mpi*(1.0/pow(L/ainv,3))*r0*(1 + p.F_m+ p.F_a/(pow(ainv,2))):0.0;
+    double SD_FVE = (L>0.0)?(e2/3.0)*Mp*r0/pow(L,3)*(p.F_m+ p.F_a*(pow(a,2))):0.0;
 
      
-    double FVE_universal = (L>0.0)?(kappa*alpha/L)*( ip.Mpi + 2.0/L):0.0;
+    double FVE_universal = (L>0.0)?(kappa*alpha/Lfr)*( ip.Mpi + 2.0/Lfr):0.0;
 
     double log_par= p.log;
      
@@ -423,7 +438,7 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
   };
 
   auto SD_FVE = [](double L, double Mp, double ainv,  double F_a, double F_m) {
-    double SDE =(e2/3.0)*Mp*(1.0/pow(L,3))*pow( ainv,3)*r0*(1 +F_m +  F_a*(1.0/pow(ainv,2)));
+    double SDE =(e2/3.0)*Mp*(1.0/pow(L,3))*pow( ainv,4)*r0*(F_m +  F_a*(1.0/pow(ainv,2)));
     return SDE/pow(ainv,2);
   };
 
@@ -464,7 +479,6 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
   raw_data_adim= raw_data;
 
   
-
   
   for(int ibranch=0; ibranch<Nbranches;ibranch++) {
     for(int iboot=0; iboot<nboots;iboot++) {
@@ -601,31 +615,39 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
   
  
  
-
    
  
-
+  /*
   plt::clf();
   plt::figure_size(1200*1.2, 780*1.2);
   plt::xlim(0.0, MP[MP.size()-1]);
+  D(2);
   plt::xlabel("$M_{\pi}$   $(GeV)$");
   plt::ylabel("$ \Delta M_{pi}^{2}$    $(GeV^{2})$");
+  D(3);
   plt::plot(MP, Fitted_func_dim_val[0],  { {"c", "red"}, {"marker", "."} , {"ls" , "-"}, {"label", "A"}});
+  D(4);
   plt::plot(MP, Fitted_func_dim_val[1],  { {"c", "blue"}, {"marker", "."} , {"ls" , "-"}, {"label", "B"}});
   plt::plot(MP, Fitted_func_dim_val[2],  { {"c", "green"}, {"marker", "."} , {"ls" , "-"}, {"label", "C"}});
   plt::errorbar(MP, Fitted_func_dim_val[3], Fitted_func_dim_err[3], { {"c", "yellow"}, {"marker", "."} , {"ls" , "-"}, {"label", "continuum"}});
   plt::errorbar(MMP, SD_subtracted_dim_val, SD_subtracted_dim_err, { {"c", "black"}, {"marker", "o"}, {"ls", ""}, {"label", "Lattice data, all FVE subtracted"}});
   //plt::errorbar(Vfloat{MPiPhys}, Vfloat{1137.0*1e-6}, Vfloat{63.0*1e-6}, {{"c", "red"}, {"marker", "o"}, {"ls", ""}, {"label", "phys from 1707"}});
+  D(3);
   plt::plot(MP, Vfloat(MP.size(), 1261.2*1e-6), { {"c","grey"}, {"label", "exp."}});
   plt::errorbar(Vfloat{MPiPhys}, Vfloat{  Boot_ave(Physical_point)}, Vfloat{Boot_err(Physical_point)}, { {"c", "black"}, {"marker", "D"}, {"ls", "" }, {"label", "Physical value"}}); 
 
   plt::legend();
+
+  D(5);
 
   figure_path="../plots/Mpi_twisted/fit_"+print_path+"_"+exch_or_tot;
   plt::save(figure_path.c_str());
 
  
 
+  D(6);
+
+  */
 
   plt::clf();
   plt::xlim(0.0, vols[0]);
@@ -638,7 +660,7 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
   figure_path = "../plots/Mpi_twisted/A40_slice_"+print_path+"_"+exch_or_tot;
   plt::save(figure_path.c_str());
 
-  
+   
   //save data in files
   boost::filesystem::create_directory("../data");
   boost::filesystem::create_directory("../data/Mpi_twisted/"+print_path);
@@ -646,9 +668,9 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
  
   Print_To_File({}, {MP, Fitted_func_adim_val[0], Fitted_func_adim_err[0],  Fitted_func_adim_val[1], Fitted_func_adim_err[1], Fitted_func_adim_val[2], Fitted_func_adim_err[2]} , "../data/Mpi_twisted/"+print_path+"/Fitted_func_adim_"+exch_or_tot+".dat", "OUT", "#MP     beta=1.90      beta=1.95      beta=2.10");
  
-  Print_To_File(m_data.Tag, { MMP, SD_subtracted_val, SD_subtracted_err, SD_subtracted_dim_val, SD_subtracted_dim_err}, "../data/Mpi_twisted/"+print_path+"/sd_subtracted_data_"+exch_or_tot+".dat", "", "#Ens        #Mpi        #Mpi^2_+ - Mpi^2_0      #err");
+  Print_To_File(m_data.Tag, { Mpi_distr_dim_list.ave(), SD_subtracted_val, SD_subtracted_err, SD_subtracted_dim_val, SD_subtracted_dim_err}, "../data/Mpi_twisted/"+print_path+"/sd_subtracted_data_"+exch_or_tot+".dat", "", "#Ens        #Mpi        #Mpi^2_+ - Mpi^2_0      #err");
  
-  Print_To_File(m_data.Tag, { MMP, Univ_subtracted_dim_val, Univ_subtracted_dim_err, raw_data_dim_val, raw_data_dim_err, Univ_subtracted_val, Univ_subtracted_err, raw_data_adim_val, raw_data_adim_err  }, "../data/Mpi_twisted/"+print_path+"/data_"+exch_or_tot+".dat", "", "#Ens      MP     Univ_sub_data_dim       Raw_data_dim       Univ_sub_data_admin       Raw_data_adim");
+  Print_To_File(m_data.Tag, { Mpi_distr_dim_list.ave(), Univ_subtracted_dim_val, Univ_subtracted_dim_err, raw_data_dim_val, raw_data_dim_err, Univ_subtracted_val, Univ_subtracted_err, raw_data_adim_val, raw_data_adim_err  }, "../data/Mpi_twisted/"+print_path+"/data_"+exch_or_tot+".dat", "", "#Ens      MP     Univ_sub_data_dim       Raw_data_dim       Univ_sub_data_admin       Raw_data_adim");
  
   Print_To_File({}, {vol_A40, meas_A40, err_meas_A40, A40_raw_val, A40_raw_err}, "../data/Mpi_twisted/"+print_path+"/A40_"+exch_or_tot+".dat","", "#1/L         univ_meas            univ_err       raw_meas      raw_err");
   string command = "echo "+to_string_with_precision(MPiPhys,8)+"\t\t"+to_string_with_precision(Boot_ave(Physical_point),8)+"\t\t"+to_string_with_precision(Boot_err(Physical_point),8)+" > ../data/Mpi_twisted/"+print_path.c_str()+"/Phys_val_"+exch_or_tot+".dat";
@@ -660,6 +682,7 @@ void Pion_mass_analysis_twisted(string CURRENT_TYPE, bool IncludeDisconnected) {
     Print_To_File(m_data.Tag, {MMP, Dm2_disc_ov_Mpi2.ave(), Dm2_disc_ov_Mpi2.err()}, "../data/Mpi_twisted/"+print_path+"/Dm2_disc_ov_Mpi2.data","","#Ens   Mp   val err    ");
     Print_To_File(m_data.Tag, {MMP, Dm2_disc_ov_Mpi2log.ave(), Dm2_disc_ov_Mpi2log.err()}, "../data/Mpi_twisted/"+print_path+"/Dm2_disc_ov_Mpi2log.data","","#Ens   Mp   val err    ");
     Print_To_File(m_data.Tag, {MMP, Dm2_disc.ave(), Dm2_disc.err()}, "../data/Mpi_twisted/"+print_path+"/dm2_disc.data","","#Ens   Mp   val err    ");
+    Print_To_File(m_data.Tag, {MMP, fp_fit_distr_list.ave(), fp_fit_distr_list.err(),  Dm2_tot_ov_fp2_distr_list.ave(), Dm2_tot_ov_fp2_distr_list.err(),  Dm2_tot_ov_fp2_ren_FSEs_distr_list.ave(),  Dm2_tot_ov_fp2_ren_FSEs_distr_list.err() }, "../data/Mpi_twisted/"+print_path+"/dm2_tot_ov_fp2.data", "", "#Ens  Mp fp fp_err val err  val_ren_UFSES_sub   err");
 
   }
   

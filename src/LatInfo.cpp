@@ -13,6 +13,7 @@ void LatticeInfo::LatInfo(string S) {
   Za_err=1.0;
   Za_M2=0.0;
   Za_M2_err= 1.0;
+  double resc=1.0;
 
 
   if(S=="A") {
@@ -39,10 +40,10 @@ void LatticeInfo::LatInfo(string S) {
       Zv_err=0.004;
       Zv_M2=0.608;
       Zv_M2_err=0.003;
-      Za = 0.731;
-      Za_err = 0.008;
-      Za_M2 = 0.703;
-      Za_M2_err = 0.002;
+      Za = 0.731*resc;
+      Za_err = 0.008*resc;
+      Za_M2 = 0.703*resc;
+      Za_M2_err = 0.002*resc;
       
     }
     else if (CURRENT_TYPE=="CONSERVED") {Zv= 1.0; Zv_err=1.0; Zv_M2=1.0; Zv_M2_err=1.0;}
@@ -71,10 +72,10 @@ void LatticeInfo::LatInfo(string S) {
       Zv_err=0.003;
       Zv_M2 = 0.614;
       Zv_M2_err = 0.002;
-      Za = 0.737;
-      Za_err = 0.005;
-      Za_M2 = 0.714;
-      Za_M2_err = 0.002;
+      Za = 0.737*resc;
+      Za_err = 0.005*resc;
+      Za_M2 = 0.714*resc;
+      Za_M2_err = 0.002*resc;
       
     }
     else if(CURRENT_TYPE=="CONSERVED") {Zv= 1.0; Zv_err=1.0;  Zv_M2=1.0; Zv_M2_err=1.0;}
@@ -105,10 +106,10 @@ void LatticeInfo::LatInfo(string S) {
       Zv_err=0.003;
       Zv_M2 = 0.657;
       Zv_M2_err = 0.002;
-      Za = 0.762;
-      Za_err = 0.004;
-      Za_M2 = 0.752;
-      Za_M2_err = 0.002;
+      Za = 0.762*resc;
+      Za_err = 0.004*resc;
+      Za_M2 = 0.752*resc;
+      Za_M2_err = 0.002*resc;
     }
     else if(CURRENT_TYPE=="CONSERVED") {Zv=1.0; Zv_err=1.0;  Zv_M2=1.0; Zv_M2_err=1.0;}
     else crash("CURRENT_TYPE: "+CURRENT_TYPE+" not yet implemented");
@@ -156,6 +157,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_nucleon_err=0.00047;
     Za=0.724;
     Za_err=0.009;
+    Zv=0.6960;;
+    Zv_err=0.0007;
   }
 
   else if(Tag.substr(1,1)=="B") {
@@ -165,6 +168,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_nucleon_err=0.00032;
     Za=0.746;
     Za_err=0.008;
+    Zv=0.7131;
+    Zv_err=0.0006;
   }
 
   else if(Tag.substr(1,1)=="C") {
@@ -174,6 +179,22 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_nucleon_err=0.00020;
     Za=0.761;
     Za_err=0.008;
+    Zv=0.7310;
+    Zv_err=0.0005;
+  }
+
+  else if(Tag.substr(1,1)=="D") {
+    a= 0.0577;
+    a_err= 0.0002; 
+    a_nucleon= 0.05777; //fakeeee
+    a_nucleon_err= 0.0002; //fakeeee
+    Za= 0.76217;
+    Za_err=0.00024;
+    Zv= 0.746599;
+    Zv_err = 0.000005; 
+
+
+
   }
 
   else crash("In LatticeInfo::LatInfo_new_ens Ensemble: "+Tag+" not found while reading lattice spacing");
@@ -205,16 +226,21 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   else if(Tag=="cB211b.072.64") {
     L=64; T=128; ml=0.00072;
   }
+  else if(Tag=="cB211b.072.96") {
+    L=96; T=192; ml=0.00072;
+  }
   else if(Tag=="cC211a.20.48") {
     L=48; T=96; ml=0.00200;
   }
   else if(Tag=="cC211a.06.80") {
     L=80; T=160; ml=0.00060;
   }
+  else if(Tag=="cD211a.054.96") {
+    L=96; T=192; ml=0.00054;
+  }
   else crash("In LatticeInfo::LatInfo_new_ens Ensemble: "+Tag+" not found");
   
    
-
 
 
   return;
