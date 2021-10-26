@@ -358,18 +358,28 @@ double LL_functions::h_prime(double omega, double g_rho_pipi, double Mpi) {
 
 }
 
+double LL_functions::h_second(double omega, double g_rho_pipi, double Mpi) {
 
+   double k= sqrt( pow(omega,2)/4.0 - pow(Mpi,2));
 
-double LL_functions::A_pipi_0(double m_rho, double g_rho_pipi, double Mpi) {
-
-  return h(m_rho,g_rho_pipi, Mpi) - (m_rho/2.0)*h_prime(m_rho, g_rho_pipi, Mpi) + pow(g_rho_pipi,2)*pow(Mpi,2)/(6.0*pow(M_PI,2));  
+   return (1.0/6.0)*pow(g_rho_pipi/M_PI,2)*(3.0/4.0 + 2.0*pow(Mpi/omega,2) + (1.0-2.0*pow(Mpi/omega,2))*(k/omega)*log( (omega + 2.0*k)/(2.0*Mpi)));
 
 }
 
 
-double LL_functions::Re_A_pipi(double omega, double m_rho, double g_rho_pipi, double Mpi) {
 
-  return h(m_rho, g_rho_pipi, Mpi) + (pow(omega,2)- pow(m_rho,2))*(h_prime(m_rho, g_rho_pipi,Mpi)/(2.0*m_rho)) - h(omega, g_rho_pipi,Mpi);
+double LL_functions::A_pipi_0(double m_rho, double g_rho_pipi, double Mpi, double kappa) {
+
+  return h(m_rho,g_rho_pipi, Mpi) - (m_rho/2.0)*h_prime(m_rho, g_rho_pipi, Mpi) + pow(g_rho_pipi,2)*pow(Mpi,2)/(6.0*pow(M_PI,2)) + kappa*(pow(m_rho,2)/8.0)*(h_second(m_rho, g_rho_pipi, Mpi) - h_prime(m_rho, g_rho_pipi, Mpi)/m_rho) ;  
+
+}
+
+
+double LL_functions::Re_A_pipi(double omega, double m_rho, double g_rho_pipi, double Mpi, double kappa) {
+
+  return h(m_rho, g_rho_pipi, Mpi) + (pow(omega,2)- pow(m_rho,2))*(h_prime(m_rho, g_rho_pipi,Mpi)/(2.0*m_rho)) - h(omega, g_rho_pipi,Mpi) + (kappa/2.0)*pow((pow(omega,2)-pow(m_rho,2)),2)*(1.0/(pow(2.0*m_rho,2)))*( h_second(m_rho,g_rho_pipi,Mpi) - (1.0/m_rho)*h_prime(m_rho, g_rho_pipi,Mpi));
+
+  
 }
 
 double LL_functions::Im_A_pipi(double omega, double g_rho_pipi, double Mpi) {
@@ -378,37 +388,37 @@ double LL_functions::Im_A_pipi(double omega, double g_rho_pipi, double Mpi) {
 
 }
 
-Pfloat LL_functions::A_pipi(double omega, double m_rho, double g_rho_pipi, double Mpi) {
+Pfloat LL_functions::A_pipi(double omega, double m_rho, double g_rho_pipi, double Mpi, double kappa) {
 
-  return make_pair(Re_A_pipi(omega, m_rho, g_rho_pipi,Mpi), Im_A_pipi(omega, g_rho_pipi,Mpi));
+  return make_pair(Re_A_pipi(omega, m_rho, g_rho_pipi,Mpi, kappa), Im_A_pipi(omega, g_rho_pipi,Mpi));
 
 }
 
-double LL_functions::F_pi_GS_mod(double omega, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::F_pi_GS_mod(double omega, double m_rho, double g_rho_pipi, double Mpi, double kappa) {
 
-  double Re = pow(m_rho,2) -pow(omega,2) - Re_A_pipi(omega,m_rho, g_rho_pipi,Mpi);
+  double Re = pow(m_rho,2) -pow(omega,2) - Re_A_pipi(omega,m_rho, g_rho_pipi,Mpi, kappa);
   double Im = -1.0*Im_A_pipi(omega, g_rho_pipi, Mpi);
-  return fabs((pow(m_rho,2) - A_pipi_0(m_rho, g_rho_pipi,Mpi)))/( sqrt( pow(Re,2)+ pow(Im,2))); 
+  return fabs((pow(m_rho,2) - A_pipi_0(m_rho, g_rho_pipi,Mpi, kappa)))/( sqrt( pow(Re,2)+ pow(Im,2))); 
 
 }
 
-double LL_functions::cot_d_11(double k, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::cot_d_11(double k, double m_rho, double g_rho_pipi, double Mpi, double kappa) {
 
 
   double omega= 2.0*sqrt( pow(Mpi,2) + pow(k,2));
 
   double Im_a_pipi= Im_A_pipi(omega, g_rho_pipi, Mpi);
 
-  double res=  ( pow(m_rho,2) -pow(omega,2) - h(m_rho, g_rho_pipi,Mpi) -(pow(omega,2) - pow(m_rho,2))*(h_prime(m_rho,g_rho_pipi,Mpi)/(2.0*m_rho)) + h(omega, g_rho_pipi,Mpi))/Im_a_pipi;
-  
+  double res = (pow(m_rho,2) - pow(omega,2) - Re_A_pipi(omega, m_rho, g_rho_pipi,Mpi, kappa))/Im_a_pipi;
+
   return res;
 
 }
 
-double LL_functions::d_11(double k, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::d_11(double k, double m_rho, double g_rho_pipi, double Mpi, double kappa) {
 
 
-  double d_11=  cot_d_11(k, m_rho, g_rho_pipi, Mpi);
+  double d_11=  cot_d_11(k, m_rho, g_rho_pipi, Mpi, kappa);
   
   //double sgn= 1.0;
 
@@ -423,27 +433,27 @@ double LL_functions::d_11(double k, double m_rho, double g_rho_pipi, double Mpi)
 }
 
 
-double LL_functions::cot_d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::cot_d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi, double kappa) {
 
 
   double omega = 2.0*sqrt( pow(Mpi,2) + pow(k,2));
 
   double d_omega_d_k = 4.0*k/omega;
 
-  double num= ( pow(m_rho,2) -pow(omega,2) - h(m_rho, g_rho_pipi,Mpi) -(pow(omega,2) - pow(m_rho,2))*(h_prime(m_rho,g_rho_pipi,Mpi)/(2.0*m_rho)) + h(omega, g_rho_pipi,Mpi));
+  double num= ( pow(m_rho,2) -pow(omega,2) - Re_A_pipi(omega, m_rho, g_rho_pipi, Mpi, kappa));
 
-  double den = Im_A_pipi(omega, g_rho_pipi, Mpi);
 
-  double num_der = (-2.0*omega -2.0*omega*(h_prime(m_rho, g_rho_pipi,Mpi)/(2.0*m_rho)) + h_prime(omega,g_rho_pipi,Mpi))*d_omega_d_k;
+   double den = Im_A_pipi(omega, g_rho_pipi, Mpi);
+
+   double num_der = (-2.0*omega -2.0*omega*(h_prime(m_rho, g_rho_pipi,Mpi)/(2.0*m_rho)) + h_prime(omega,g_rho_pipi,Mpi)    -(2.0*kappa*omega*( pow(omega,2) -pow(m_rho,2)   ))*(1.0/(pow(2.0*m_rho,2)))*( h_second(m_rho,g_rho_pipi,Mpi) - (1.0/m_rho)*h_prime(m_rho, g_rho_pipi,Mpi)))*d_omega_d_k;
 
   
   double den_der = (Gamma_rpp(omega, g_rho_pipi, Mpi) + omega*Gamma_rpp_der(omega, g_rho_pipi, Mpi))*d_omega_d_k;
 
-  double res_1 = num_der/den - num*den_der/pow(den,2);
+ 
+  double res_2 = cot_d_11(k, m_rho, g_rho_pipi,Mpi, kappa)*( num_der/num - den_der/den);
 
-  double res_2 = cot_d_11(k, m_rho, g_rho_pipi,Mpi)*( num_der/num - den_der/den);
-
-  if( res_1/res_2 > 1 + 1e-8 || res_1/res_2 < 1 - 1e-8) crash("error in cot_d_11_der res1= "+to_string_with_precision(res_1,10)+" res2= "+to_string_with_precision(res_2,10));
+ 
 
   return res_2;
 
@@ -451,17 +461,17 @@ double LL_functions::cot_d_11_der(double k, double m_rho, double g_rho_pipi, dou
 }
 
 
-double LL_functions::d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::d_11_der(double k, double m_rho, double g_rho_pipi, double Mpi, double kappa) {
 
 
 
-  return -1.0*(1.0/(1.0 + pow(cot_d_11(k,m_rho,g_rho_pipi,Mpi),2)))*cot_d_11_der(k, m_rho, g_rho_pipi, Mpi);
+  return -1.0*(1.0/(1.0 + pow(cot_d_11(k,m_rho,g_rho_pipi,Mpi, kappa),2)))*cot_d_11_der(k, m_rho, g_rho_pipi, Mpi, kappa);
 
 }
 
-double LL_functions::d_11_der_num(double k, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::d_11_der_num(double k, double m_rho, double g_rho_pipi, double Mpi, double kappa) {
 
-  auto F = [&](double x) { return d_11(x, m_rho, g_rho_pipi,Mpi);};
+  auto F = [&](double x) { return d_11(x, m_rho, g_rho_pipi,Mpi, kappa);};
 
   //double x=z;
 
@@ -485,19 +495,19 @@ double LL_functions::d_11_der_num(double k, double m_rho, double g_rho_pipi, dou
 
 
 
-double LL_functions::Amplitude(double k, double L, double m_rho, double g_rho_pipi, double Mpi) {
+double LL_functions::Amplitude(double k, double L, double m_rho, double g_rho_pipi, double Mpi, double kappa) {
 
   
   double omega= 2.0*sqrt( pow(k,2)+pow(Mpi,2));
 
 
-  return ((2.0*pow(k,5)/(3.0*M_PI*pow(omega,2))))*pow(F_pi_GS_mod(omega, m_rho,g_rho_pipi,Mpi),2)/(k*d_11_der(k, m_rho, g_rho_pipi,Mpi) + (k*L/(2.0*M_PI))*phi_der_spline(k*L/(2.0*M_PI)));
+  return ((2.0*pow(k,5)/(3.0*M_PI*pow(omega,2))))*pow(F_pi_GS_mod(omega, m_rho,g_rho_pipi,Mpi, kappa),2)/(k*d_11_der(k, m_rho, g_rho_pipi,Mpi, kappa) + (k*L/(2.0*M_PI))*phi_der_spline(k*L/(2.0*M_PI)));
 
 }
 
 
 
-void LL_functions::Find_pipi_energy_lev(double L, double m_rho, double g_rho_pipi, double Mpi, Vfloat &res) {
+void LL_functions::Find_pipi_energy_lev(double L, double m_rho, double g_rho_pipi, double Mpi, double kappa,  Vfloat &res) {
 
   //find energy level n of pi-pi bound state
 
@@ -515,16 +525,16 @@ void LL_functions::Find_pipi_energy_lev(double L, double m_rho, double g_rho_pip
   res.clear();
 
   auto F = [&](double k) -> double {
-	     return d_11(k, m_rho, g_rho_pipi, Mpi) + phi_spline(k*L/(2.0*M_PI));
+	     return d_11(k, m_rho, g_rho_pipi, Mpi, kappa) + phi_spline(k*L/(2.0*M_PI));
 	   };
 
   auto F_exact = [&](double k) -> double {
-	     return d_11(k, m_rho, g_rho_pipi, Mpi) + phi(k*L/(2.0*M_PI));
+		   return d_11(k, m_rho, g_rho_pipi, Mpi,kappa) + phi(k*L/(2.0*M_PI));
 	   };
 
   auto dF = [&](double k) -> double {
 
-	      return -cot_d_11_der(k, m_rho, g_rho_pipi, Mpi)/pow(cot_d_11(k, m_rho, g_rho_pipi, Mpi),2) + (L/(2.0*M_PI))*tan_phi_der(k*L/(2.0*M_PI));
+	      return -cot_d_11_der(k, m_rho, g_rho_pipi, Mpi,kappa)/pow(cot_d_11(k, m_rho, g_rho_pipi, Mpi,kappa),2) + (L/(2.0*M_PI))*tan_phi_der(k*L/(2.0*M_PI));
 	   };
 
   auto fdF = [&](double k, double* f, double *df) -> void {
@@ -593,6 +603,7 @@ void LL_functions::Find_pipi_energy_lev(double L, double m_rho, double g_rho_pip
 	cout<<"Mrho: "<<m_rho<<endl;
 	cout<<"Mpi: "<<Mpi<<endl;
 	cout<<"g: "<<g_rho_pipi<<endl;
+	cout<<"kappa: "<<kappa<<endl;
 	cout<<"L: "<<L<<endl;
 	cout<<"ilev: "<<ilev<<endl;
 	cout<<"Bracketing values: "<<XL<<" "<<XH<<endl;
@@ -632,6 +643,7 @@ void LL_functions::Find_pipi_energy_lev(double L, double m_rho, double g_rho_pip
       cout<<"Mrho: "<<m_rho<<endl;
       cout<<"g: "<<g_rho_pipi<<endl;
       cout<<"Mpi: "<<Mpi<<endl;
+      cout<<"kappa: "<<kappa<<endl;
       cout<<"Last root position: "<<x<<endl;
       cout<<"divergent level position 1: "<<(2.0*M_PI/L)*sqrt(divergent_levels[ilev-1]+2e-2)<<endl;
       cout<<"divergent level position 2: "<<(2.0*M_PI/L)*sqrt(divergent_levels[ilev]+2e-2)<<endl;
@@ -662,7 +674,7 @@ void LL_functions::Find_pipi_energy_lev(double L, double m_rho, double g_rho_pip
 }
 
 
-double LL_functions::V_pipi(double t, double L, double m_rho, double g_rho_pipi, double Mpi, Vfloat &Knpp) {
+double LL_functions::V_pipi(double t, double L, double m_rho, double g_rho_pipi, double Mpi, double kappa,  Vfloat &Knpp) {
 
   double ret_val=0;
 
@@ -683,7 +695,7 @@ double LL_functions::V_pipi(double t, double L, double m_rho, double g_rho_pipi,
   for(int i_lev=0;i_lev<Nres;i_lev++) {
     double k_n= Knpp[i_lev];  
     double omega_n = 2.0*sqrt( pow(Mpi,2) + pow(k_n,2));
-    double Ampl= Amplitude(k_n, L, m_rho, g_rho_pipi, Mpi);
+    double Ampl= Amplitude(k_n, L, m_rho, g_rho_pipi, Mpi,kappa);
     ret_val += Ampl*exp(-omega_n*t);
    
 
@@ -695,13 +707,13 @@ double LL_functions::V_pipi(double t, double L, double m_rho, double g_rho_pipi,
 }
 
 
-double LL_functions::V_pipi_infL(double t, double m_rho_infL, double g_rho_pipi_infL, double Mpi_infL) {
+double LL_functions::V_pipi_infL(double t, double m_rho_infL, double g_rho_pipi_infL, double Mpi_infL, double kappa_infL) {
 
   double tol_infL= 1e-14;
 
 
   auto Integrand = [&](double omega) -> double {
-		     return (1.0/(48.0*pow(M_PI,2)))*pow(omega,2)*pow(1.0- pow(2.0*Mpi_infL/omega,2), 3.0/2.0)*exp(-omega*t)*pow(F_pi_GS_mod(omega, m_rho_infL, g_rho_pipi_infL,Mpi_infL),2);};
+		     return (1.0/(48.0*pow(M_PI,2)))*pow(omega,2)*pow(1.0- pow(2.0*Mpi_infL/omega,2), 3.0/2.0)*exp(-omega*t)*pow(F_pi_GS_mod(omega, m_rho_infL, g_rho_pipi_infL,Mpi_infL,kappa_infL),2);};
 
 
   return boost::math::quadrature::gauss_kronrod<double, 61>::integrate(Integrand, 2*Mpi_infL, numeric_limits<double>::infinity(), 5, tol_infL)  ;

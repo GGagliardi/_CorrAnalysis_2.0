@@ -8,28 +8,29 @@ const double MPiPhys= 0.134977;
 const double alpha = 1.0/137.04;
 const double e2 = alpha*4.0*M_PI;
 const double fpi_phys = 0.1304;
-const double r0 = pow(0.672/0.197,2);
+const double r0 = pow(0.659/0.1975,2);
 const double f0 = 0.121;
 const bool Enable_f0 = 0;
 const double csi_phys = pow(MPiPhys,2)/pow(4.0*M_PI*(Enable_f0?f0:fpi_phys),2);
 const double xi_phys = pow(fpi_phys*pow(MPiPhys,4),1.0/5);
 const int Nbranches = 8;
 const int nboots= 100;
-const bool Use_JB_distribution= false;
+const bool Use_JB_distribution= true;
 const bool UseJack=1;
 const int Njacks=15;
+const double Rerr= Use_JB_distribution?sqrt((double)Njacks-1.0):1.0;
 const int Nboots=200;
 const bool verbose=1;
 const bool CDH_correct_FVE=1;
 const bool GL_correct_FVE =CDH_correct_FVE?0:0;
 const bool Use_Xp=0;
 const bool Use_fp=1;
-const bool USE_RATIONAL_FUNCTION=false;
-const bool use_tailored_interval=false;
+const bool use_tailored_interval=true;
 const bool Use_A2_Dm_prior=true;
+const bool Use_Fa_prior=false;
 const double X_phys_val= Use_Xp?1e+3*pow(xi_phys,1)/(2.0):(1e+3*(Use_fp?pow(fpi_phys,2)/(2.0*MPiPhys):pow(MPiPhys,2)/(2*MPiPhys)));
 const double l1ph= -0.4; //-0.4
-const double l2ph= 3.3; //4.3
+const double l2ph= 4.3; //4.3
 const double l3ph= 3.2; //3.2
 const double l4ph= 4.4; //4.4
 const double s0= 2.0-M_PI/2.0;
@@ -51,7 +52,7 @@ class X_t_M {
 
 public:
   X_t_M(const Vfloat &par) : ainv(3), Za(3) {
-    if(par.size() != 15) {
+    if(par.size() != 16) {
       cout<<"In class X_t_M, invalid call to constructor"<<endl;
       crash("par_size: +"+to_string(par.size()));
     }
@@ -59,22 +60,23 @@ public:
     this->log=par[1];
     this->A_1=par[2];
     this->D=par[3];
-    this->F_a=par[4];
-    this->log_a=par[5];
-    this->F_m = par[6];
-    this->Dm=par[7];
-    this->A_2=par[8];
+    this->log_a=par[4];
+    this->F_m = par[5];
+    this->F_4 = par[6];
+    this->F_a=par[7];
+    this->Dm=par[8];
+    this->A_2=par[9];
     for(int ibeta=0;ibeta<3;ibeta++) {
-      this->ainv[ibeta] = par[9+ibeta];
+      this->ainv[ibeta] = par[10+ibeta];
     }
     for(int ibeta=0; ibeta<3;ibeta++) {
-      this->Za[ibeta] = par[12+ibeta];
+      this->Za[ibeta] = par[13+ibeta];
    }
   }
   X_t_M() : ainv(3), Za(3) {}
   vector<double> ainv;
   vector<double> Za;
-  double D, chir, log, log_a, A_1, F_a, F_m, Dm, A_2;
+  double D, chir, log, log_a, A_1, F_a, F_m, F_4, Dm, A_2;
 };
 
 
@@ -82,104 +84,138 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
 
   if(Ensemble_tag=="A30.32_64") {
     if(OBS == "fp") { Tmin=14; Tmax=24;     }
-    else if (OBS=="Mpi") { Tmin=14; Tmax=24;        }
+    else if (OBS=="Mpi") { Tmin=19; Tmax=30;        }
     else if (OBS == "Dm") { Tmin=15; Tmax=24;        }
+    else if (OBS == "Dm_exch") {   Tmin=15; Tmax=27;               }
+    else if (OBS == "Dm_hand") {   Tmin=15; Tmax=27;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
   else if(Ensemble_tag=="A40.24_48") {
     if(OBS == "fp") { Tmin=12; Tmax=20;         }
     else if (OBS=="Mpi") {  Tmin=12; Tmax=20;       }
     else if (OBS == "Dm") {  Tmin=12; Tmax=19;       }
+    else if (OBS == "Dm_exch") {   Tmin=12; Tmax=20;               }
+    else if (OBS == "Dm_hand") {   Tmin=10; Tmax=22;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
   else if(Ensemble_tag=="A40.32_64") {
     if(OBS == "fp") {   Tmin=14; Tmax=28;       }
-    else if (OBS=="Mpi") { Tmin=14; Tmax=25;        }
-    else if (OBS == "Dm") {  Tmin=13; Tmax=24;       }
+    else if (OBS=="Mpi") { Tmin=14; Tmax=26;        } //20-30
+    else if (OBS == "Dm") {  Tmin=14; Tmax=27;       } 
+    else if (OBS == "Dm_exch") {   Tmin=14; Tmax=27;               } //14-30
+    else if (OBS == "Dm_hand") {   Tmin=14; Tmax=27;                } //14-27
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A40.40_80") {
-     if(OBS == "fp") {  Tmin=14; Tmax=30;        }
-     else if (OBS=="Mpi") {  Tmin=19; Tmax=35;       }
-     else if (OBS == "Dm") {  Tmin=15; Tmax=30;       }
+     if(OBS == "fp") {  Tmin=18; Tmax=30;        }
+     else if (OBS=="Mpi") {  Tmin=18; Tmax=30;       }
+     else if (OBS == "Dm") {  Tmin=14; Tmax=30;       }
+     else if (OBS == "Dm_exch") {   Tmin=14; Tmax=31;               } //14-30
+     else if (OBS == "Dm_hand") {   Tmin=11; Tmax=32;                } //11-32
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A40.48_96") {
      if(OBS == "fp") {   Tmin=15; Tmax=35;       }
-     else if (OBS=="Mpi") {  Tmin=24; Tmax=40;       }
-     else if (OBS == "Dm") {  Tmin=13; Tmax=36;       }
+     else if (OBS=="Mpi") {  Tmin=16; Tmax=39;       }
+     else if (OBS == "Dm") {  Tmin=15; Tmax=42;       }                //15-42
+     else if (OBS == "Dm_exch") {   Tmin=17; Tmax=40;               }  //17-40
+     else if (OBS == "Dm_hand") {   Tmin=14; Tmax=40;                } //17-42
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A50.32_64") {
-     if(OBS == "fp") {  Tmin=14; Tmax=28;        }
-     else if (OBS=="Mpi") {  Tmin=14;Tmax=28;       }
-     else if (OBS == "Dm") { Tmin=16; Tmax=27;        }
+     if(OBS == "fp") {  Tmin=15; Tmax=30;        }
+     else if (OBS=="Mpi") {  Tmin=15;Tmax=30;       }
+     else if (OBS == "Dm") { Tmin=16; Tmax=28;        }
+     else if (OBS == "Dm_exch") {   Tmin=17; Tmax=26;               }
+     else if (OBS == "Dm_hand") {   Tmin=16; Tmax=30;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A60.24_48") {
-     if(OBS == "fp") {  Tmin=14; Tmax=22;        }
-     else if (OBS=="Mpi") { Tmin=13; Tmax=22;         }
-     else if (OBS == "Dm") {  Tmin=12;Tmax=18;       }
+     if(OBS == "fp") {  Tmin=13; Tmax=22;        }
+     else if (OBS=="Mpi") { Tmin=12; Tmax=21;         }
+     else if (OBS == "Dm") {  Tmin=11;Tmax=22;       }
+     else if (OBS == "Dm_exch") {   Tmin=12; Tmax=22;               }
+     else if (OBS == "Dm_hand") {   Tmin=13; Tmax=21;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A80.24_48") {
-     if(OBS == "fp") {    Tmin=16; Tmax=23;      }
+     if(OBS == "fp") {    Tmin=12; Tmax=23;      }
      else if (OBS=="Mpi") { Tmin=12;Tmax=22;        }
      else if (OBS == "Dm") { Tmin=14; Tmax=20;        }
+     else if (OBS == "Dm_exch") {   Tmin=16; Tmax=23;               }
+     else if (OBS == "Dm_hand") {   Tmin=13; Tmax=22;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A100.24_48") {
-     if(OBS == "fp") {   Tmin=14; Tmax=22;       }
-     else if (OBS=="Mpi") {   Tmin=15; Tmax=21;      }
-     else if (OBS == "Dm") {  Tmin=12; Tmax=20;       }
+     if(OBS == "fp") {   Tmin=15; Tmax=22;       }
+     else if (OBS=="Mpi") {   Tmin=15; Tmax=22;      }
+     else if (OBS == "Dm") {  Tmin=12; Tmax=22;       }
+     else if (OBS == "Dm_exch") {   Tmin=13; Tmax=22;               }
+     else if (OBS == "Dm_hand") {   Tmin=11; Tmax=22;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="B25.32_64") {
      if(OBS == "fp") {   Tmin=17; Tmax=30;       }
      else if (OBS=="Mpi") {  Tmin=16; Tmax=26;       }
      else if (OBS == "Dm") {  Tmin=10; Tmax=28;       }
-    else crash("OBS :"+OBS+" not yet implemented");
+     else if (OBS == "Dm_exch") {   Tmin=13; Tmax=25;               }
+     else if (OBS == "Dm_hand") {   Tmin=15; Tmax=29;                }
+    else crash("OBS :"+OBS+" not yet implemented for Ensemble: "+Ensemble_tag);
   }
    else if(Ensemble_tag=="B35.32_64") {
      if(OBS == "fp") {    Tmin=17; Tmax=30;      }
-     else if (OBS=="Mpi") {  Tmin=14; Tmax=26;       }
-     else if (OBS == "Dm") {  Tmin=11; Tmax=29;       }
+     else if (OBS=="Mpi") {  Tmin=21; Tmax=28;       }
+     else if (OBS == "Dm") {  Tmin=15; Tmax=28;       } //also Tmin=15 ?
+     else if (OBS == "Dm_exch") {   Tmin=17; Tmax=28;               }
+     else if (OBS == "Dm_hand") {   Tmin=14; Tmax=29;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="B55.32_64") {
      if(OBS == "fp") {  Tmin=17; Tmax=30;        }
-     else if (OBS=="Mpi") {  Tmin=14; Tmax=26;       }
-     else if (OBS == "Dm") { Tmin=16; Tmax=24;        }
+     else if (OBS=="Mpi") {  Tmin=15; Tmax=30;       }
+     else if (OBS == "Dm") { Tmin=15; Tmax=24;        }
+     else if (OBS == "Dm_exch") {   Tmin=15; Tmax=24;               }
+     else if (OBS == "Dm_hand") {   Tmin=12; Tmax=29;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="B75.32_64") {
      if(OBS == "fp") {  Tmin=14; Tmax=30;        }
-     else if (OBS=="Mpi") { Tmin=19; Tmax=28;        }
-     else if (OBS == "Dm") {  Tmin=12; Tmax=28;       }
+     else if (OBS=="Mpi") { Tmin=18; Tmax=27;        }
+     else if (OBS == "Dm") {  Tmin=19; Tmax=30;       }
+     else if (OBS == "Dm_exch") {   Tmin=19; Tmax=30;               }
+     else if (OBS == "Dm_hand") {   Tmin=12; Tmax=30;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="B85.24_48") {
      if(OBS == "fp") {  Tmin=14; Tmax=22;        }
-     else if (OBS=="Mpi") {  Tmin=14; Tmax=22;       }
-     else if (OBS == "Dm") {  Tmin=11; Tmax=19;       }
+     else if (OBS=="Mpi") {  Tmin=15; Tmax=22;       }
+     else if (OBS == "Dm") {  Tmin=11; Tmax=21;       }
+     else if (OBS == "Dm_exch") {   Tmin=12; Tmax=21;               }
+     else if (OBS == "Dm_hand") {   Tmin=12; Tmax=22;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="D15.48_96") {
      if(OBS == "fp") { Tmin=20; Tmax=40;         }
-     else if (OBS=="Mpi") { Tmin=21; Tmax=36;        }
-     else if (OBS == "Dm") { Tmin=21; Tmax=35;        }
+     else if (OBS=="Mpi") { Tmin=21; Tmax=42;        }
+     else if (OBS == "Dm") { Tmin=21; Tmax=40;        }
+     else if (OBS == "Dm_exch") {   Tmin=26; Tmax=40;               }
+     else if (OBS == "Dm_hand") {   Tmin=19; Tmax=42;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="D20.48_96") {
-     if(OBS == "fp") {  Tmin=21; Tmax=40;        }
-     else if (OBS=="Mpi") { Tmin=21; Tmax=42;        }
-     else if (OBS == "Dm") {  Tmin=15; Tmax=30;       }
+     if(OBS == "fp") {  Tmin=20; Tmax=40;        }
+     else if (OBS=="Mpi") { Tmin=16; Tmax=40;        }
+     else if (OBS == "Dm") {  Tmin=24; Tmax=38;       }
+     else if (OBS == "Dm_exch") {   Tmin=26; Tmax=37;               }   
+     else if (OBS == "Dm_hand") {   Tmin=17; Tmax=40;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="D30.48_96") {
-     if(OBS == "fp") { Tmin=21; Tmax=40;         }
-     else if (OBS=="Mpi") { Tmin=21; Tmax=43;        }
-     else if (OBS == "Dm") {  Tmin=21; Tmax=35;       }
+     if(OBS == "fp") { Tmin=23; Tmax=42;         }
+     else if (OBS=="Mpi") { Tmin=23; Tmax=42;        }
+     else if (OBS == "Dm") {  Tmin=20; Tmax=35;       }
+     else if (OBS == "Dm_exch") {   Tmin=20; Tmax=35;               } 
+     else if (OBS == "Dm_hand") {   Tmin=21; Tmax=44;                }
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else crash("Ensemble: "+Ensemble_tag+" not found in Get_plateaux");
@@ -199,13 +235,13 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
   if (CURRENT_TYPE=="LOCAL") { //current is local
     // m_data.Read("../datasets", "mes_contr_00", "P5P5");
     //dm_exch_data.Read("../datasets", "mes_contr_LL", "P5P5");
-    m_data.Read("../datasetslocal_twisted/data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
-    //m_data_conserved.Read("../datasetslocal_twisted/data", "mes_contr_00_conserved", "P5P5");
+    m_data.Read("../datasets_RTM_QED/data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
+    m_data_conserved.Read("../datasets_RTM_QED/data", "mes_contr_00_conserved", "P5P5");
     //PAY ATTENTION TO WHAT 2pt YOU ARE LOADING
-    dm_exch_data.Read("../datasetslocal_twisted/data", "mes_contr_M0_R0_F_M0_R0_F", "P5P5");
+    dm_exch_data.Read("../datasets_RTM_QED/data", "mes_contr_M0_R0_F_M0_R0_F", "P5P5");
     if(IncludeDisconnected) {
-      m_data_hand_run.Read("../datasetslocal_twisted/data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");        //PAY ATTENTION TO WHAT 2pt YOU ARE LOADING
-      dm_hand_data.Read("../datasetslocal_twisted/data", "handcuffs", "P5P5");
+      m_data_hand_run.Read("../datasets_RTM_QED/data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");        //PAY ATTENTION TO WHAT 2pt YOU ARE LOADING
+      dm_hand_data.Read("../datasets_RTM_QED/data", "handcuffs", "P5P5");
     }
   }
   else crash("CURRENT_TYPE: "+CURRENT_TYPE+ " not yet implemented. Exiting...");
@@ -300,24 +336,41 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     
     distr_t_list Pi_iso_correlated_distr = Corr.corr_t(m_data.col(0)[i], "");
    
-    distr_t_list Pi_iso_distr = Corr.corr_t(m_data.col(0)[i], "");
+    distr_t_list Pi_iso_distr = Corr.corr_t(m_data_conserved.col(0)[i], "");
 
     distr_t_list Mpi_eff_distr = Corr.effective_mass_t(Pi_iso_distr,  "../data/Mpi_twisted_ov_X/"+p+"/mass."+m_data.Tag[i]);
+
+    distr_t_list Mpi_eff_distr_corr= Corr.effective_mass_t(Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/mass_corr."+m_data.Tag[i]);
+
+    
+    if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Mpi",Corr.Tmin,Corr.Tmax);
 
     
     distr_t_list Exch_distr =  Corr.corr_t(dm_exch_data.col(0)[i], "");
 
     distr_t_list fp_distr= Corr.decay_constant_t(pow(2.0*mm,2)*Pi_iso_distr, "../data/Mpi_twisted_ov_X/"+p+"/fp."+m_data.Tag[i]);
 
+    distr_t_list fp_distr_corr= Corr.decay_constant_t(pow(2.0*mm,2)*Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/fp_corr."+m_data.Tag[i]);
+
+    
+
+   
+
 
 
     if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "fp",Corr.Tmin,Corr.Tmax);
   
     distr_t fp_fit= Corr.Fit_distr(fp_distr);
+    distr_t fp_fit_naive = fp_fit;
+    distr_t fp_fit_naive_corr = Corr.Fit_distr(fp_distr_corr);
+    distr_t fp_fit_corr = fp_fit_naive_corr;
 
     if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Mpi",Corr.Tmin,Corr.Tmax);
   
     distr_t Mpi_fit = Corr.Fit_distr(Mpi_eff_distr);
+    distr_t Mpi_fit_naive= Mpi_fit;
+    distr_t Mpi_fit_naive_corr = Corr.Fit_distr(Mpi_eff_distr_corr);
+    distr_t Mpi_fit_corr = Mpi_fit_naive_corr;
 
     auto F_15 = [](double x) { return pow(x,1.0/5);};
     auto LOG = [](double x) { return log(x);};
@@ -326,16 +379,26 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
 
     //############# CORRECT Fpi and Mpi   Usi G&L and CDH formulae ################
-    distr_t fp_fit_GL, fp_fit_CDH, Mpi_fit_GL, Mpi_fit_CDH;
+    distr_t fp_fit_GL, fp_fit_CDH, Mpi_fit_GL, Mpi_fit_CDH, fp_fit_corr_GL, fp_fit_corr_CDH, Mpi_fit_corr_GL, Mpi_fit_corr_CDH;
     distr_t csi_L = Mpi_fit*Mpi_fit/(pow(4.0*M_PI,2)*fp_fit*fp_fit);
     distr_t g1 = distr_t::f_of_distr(g1_l, Mpi_fit*ll);
     distr_t g2 = distr_t::f_of_distr(g2_l, Mpi_fit*ll);
     distr_t log_l = log(csi_phys) - distr_t::f_of_distr(LOG, csi_L);
 
+    distr_t csi_L_C = Mpi_fit_corr*Mpi_fit_corr/(pow(4.0*M_PI,2)*fp_fit_corr*fp_fit_corr);
+    distr_t g1_C = distr_t::f_of_distr(g1_l, Mpi_fit_corr*ll);
+    distr_t g2_C = distr_t::f_of_distr(g2_l, Mpi_fit_corr*ll);
+    distr_t log_l_C = log(csi_phys) - distr_t::f_of_distr(LOG, csi_L_C);
+
     fp_fit_GL = fp_fit/(1.0-1.2*2.0*csi_L*g1);
     Mpi_fit_GL = Mpi_fit/(1.0 + 1.2*0.5*csi_L*g1);
     fp_fit_CDH = fp_fit/(1.0 -2.0*csi_L*g1 +2.0*csi_L*csi_L*( (Cf1(l1ph,l2ph,l3ph,l4ph) + Sf1(s0,s1,s2,s3) + Cf1_log()*log_l)*g1 + (Cf2(l1ph,l2ph,l3ph,l4ph) + Sf2(s0,s1,s2,s3) + Cf2_log()*log_l)*g2));
     Mpi_fit_CDH = Mpi_fit/(1.0 + 0.5*csi_L*g1 - csi_L*csi_L*( (Cm1(l1ph,l2ph,l3ph,l4ph) + Sm1(s0,s1,s2,s3) + Cm1_log()*log_l)*g1 + (Cm2(l1ph,l2ph,l3ph,l4ph) + Sm2(s0,s1,s2,s3) + Cm2_log()*log_l)*g2));
+
+    fp_fit_corr_GL = fp_fit_corr/(1.0-1.2*2.0*csi_L_C*g1_C);
+    Mpi_fit_corr_GL = Mpi_fit_corr/(1.0 + 1.2*0.5*csi_L_C*g1_C);
+    fp_fit_corr_CDH = fp_fit_corr/(1.0 -2.0*csi_L_C*g1_C +2.0*csi_L_C*csi_L_C*( (Cf1(l1ph,l2ph,l3ph,l4ph) + Sf1(s0,s1,s2,s3) + Cf1_log()*log_l_C)*g1_C + (Cf2(l1ph,l2ph,l3ph,l4ph) + Sf2(s0,s1,s2,s3) + Cf2_log()*log_l_C)*g2_C));
+    Mpi_fit_corr_CDH = Mpi_fit_corr/(1.0 + 0.5*csi_L_C*g1_C - csi_L_C*csi_L_C*( (Cm1(l1ph,l2ph,l3ph,l4ph) + Sm1(s0,s1,s2,s3) + Cm1_log()*log_l_C)*g1_C + (Cm2(l1ph,l2ph,l3ph,l4ph) + Sm2(s0,s1,s2,s3) + Cm2_log()*log_l_C)*g2_C));
 
 
     //#################### STORE NAIVE, GL and CDH corrected data######################
@@ -351,8 +414,8 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     //############ CHOOSE WHICH ONE TO USE IN THE FIT ############################
 
     if(GL_correct_FVE || CDH_correct_FVE) {
-      if(CDH_correct_FVE) { fp_fit = fp_fit_CDH; Mpi_fit = Mpi_fit_CDH;}
-      else { fp_fit = fp_fit_GL; Mpi_fit = Mpi_fit_GL;} 
+      if(CDH_correct_FVE) { fp_fit = fp_fit_CDH; Mpi_fit = Mpi_fit_CDH; fp_fit_corr= fp_fit_corr_CDH; Mpi_fit_corr= Mpi_fit_corr_CDH;}
+      else { fp_fit = fp_fit_GL; Mpi_fit = Mpi_fit_GL; fp_fit_corr= fp_fit_GL; Mpi_fit_corr = Mpi_fit_corr_GL;} 
     }
 
   
@@ -363,8 +426,11 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
     
     distr_t_list Dm_exch_eff_distr = Corr.effective_slope_t(Exch_distr, Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch."+m_data.Tag[i]);
+    distr_t_list Dm_exch_eff_distr_uncorr= Corr.effective_slope_t(Exch_distr, Pi_iso_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch_uncorr."+m_data.Tag[i]);
 
-    distr_t_list Dm_exch_eff_distr_ren= Corr.effective_slope_t(Za_distr*Za_distr*Exch_distr, Pi_iso_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch_ren."+m_data.Tag[i]);
+    //if(m_data.Tag[i] == "D20.48_96") Dm_exch_eff_distr = Dm_exch_eff_distr_uncorr;
+
+    distr_t_list Dm_exch_eff_distr_ren= Corr.effective_slope_t(Za_distr*Za_distr*Exch_distr, Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch_ren."+m_data.Tag[i]);
 
     if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm",Corr.Tmin,Corr.Tmax);
     distr_t Dm_exch_fit = Corr.Fit_distr(Dm_exch_eff_distr_ren);
@@ -379,7 +445,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
       Dm_hand_fit = Corr.Fit_distr(Dm_hand_eff_distr);
       distr_t_list Dm2_hand_eff_distr = Dm_hand_eff_distr*2.0*Mpi_eff_distr;
       Print_To_File({}, {Dm2_hand_eff_distr.ave(),Dm2_hand_eff_distr.err()}, "../data/Mpi_twisted_ov_X/"+p+"/dm2_hand."+m_data.Tag[i], "", "");
-      Dm2_disc.distr_list.push_back(Corr.Fit_distr(Za_distr*Za_distr*e2*Mpi_eff_distr*Dm_hand_eff_distr));
+      Dm2_disc.distr_list.push_back(Corr.Fit_distr(Za_distr*Za_distr*e2*Mpi_eff_distr*Dm_hand_eff_distr*LL.ainv*LL.ainv));
     }
     
 
@@ -389,22 +455,35 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     fp_fit_distr_list.distr_list.push_back(fp_fit);
     
     distr_t_list Dm_tot_eff_distr=Dm_exch_eff_distr;
+    distr_t_list Dm_tot_eff_distr_uncorr(UseJack);
 
     
   
-    distr_t_list Dm_tot_eff_distr_renorm= Corr.effective_slope_t(Za_distr*Za_distr*Exch_distr , Pi_iso_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch_renorm_univ_sub."+m_data.Tag[i]);
+    distr_t_list Dm_tot_eff_distr_renorm= Corr.effective_slope_t(Za_distr*Za_distr*Exch_distr , Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch_renorm_univ_sub."+m_data.Tag[i]);
     if(IncludeDisconnected) {
-      Dm_tot_eff_distr = Corr.effective_slope_t(Exch_distr-Hand_distr, Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_tot."+m_data.Tag[i]);
-      Dm_tot_eff_distr_renorm= Corr.effective_slope_t(Za_distr*Za_distr*(Exch_distr-Hand_distr) , Pi_iso_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_tot_renorm_univ_sub."+m_data.Tag[i]);
+      Dm_tot_eff_distr = Corr.effective_slope_t(Exch_distr-Hand_distr, Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_tot_corr."+m_data.Tag[i]);
+      Dm_tot_eff_distr_uncorr = Corr.effective_slope_t(Exch_distr- Hand_distr, Pi_iso_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_tot."+m_data.Tag[i]);
+      distr_t_list Dm2_tot_distr_corr= Corr.effective_slope_t( Mpi_fit_naive_corr*(Exch_distr-Hand_distr), Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm2_tot_corr."+m_data.Tag[i]);
+      distr_t_list Dm2_tot_distr = Corr.effective_slope_t( Mpi_fit_naive*(Exch_distr-Hand_distr), Pi_iso_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm2_tot."+m_data.Tag[i]);
+      Dm_tot_eff_distr_renorm= Corr.effective_slope_t(Za_distr*Za_distr*(Exch_distr-Hand_distr) , Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_tot_renorm_univ_sub."+m_data.Tag[i]);
     }
 
 
-    if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm",Corr.Tmin,Corr.Tmax);
-    distr_t Dm_tot_fit(UseJack);
-    if(IncludeDisconnected) Dm_tot_fit=  Corr.Fit_distr(Dm_exch_eff_distr)- Corr.Fit_distr(Dm_hand_eff_distr);
-    else Dm_tot_fit = Corr.Fit_distr(Dm_exch_eff_distr);
+    if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm_exch",Corr.Tmin,Corr.Tmax);
+    distr_t Dm_tot_fit(UseJack), Dm_tot_fit_exch(UseJack), Dm_tot_fit_hand(UseJack);
+    Dm_tot_fit_exch= Corr.Fit_distr(Dm_exch_eff_distr);
+    Dm_tot_fit=Dm_tot_fit_exch;
+    if(IncludeDisconnected) {
+      if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm_hand",Corr.Tmin,Corr.Tmax);
+      Dm_tot_fit_hand= Corr.Fit_distr(Dm_hand_eff_distr);
+      Dm_tot_fit = Dm_tot_fit_exch- Dm_tot_fit_hand;
+    }
 
-    Dm_tot_fit = Corr.Fit_distr(Dm_tot_eff_distr);
+    //if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm",Corr.Tmin,Corr.Tmax);
+    //Dm_tot_fit = Corr.Fit_distr(Dm_tot_eff_distr);
+
+    distr_t Dm2_ov_X_corr= 2.0*Dm_tot_fit/(Use_fp?(fp_fit_corr*fp_fit_corr/Mpi_fit_corr):Mpi_fit_corr);
+    distr_t Dm2_ov_X = 2.0*Dm_tot_fit/(Use_fp?(fp_fit*fp_fit/Mpi_fit):Mpi_fit);
      
     
     if(Use_Xp) {
@@ -434,25 +513,28 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
     cout<<"################### ANALYZED ENSEMBLE : "<<m_data.Tag[i]<<" ############################ "<<endl;
     cout<<"PRINTING INFO: "<<endl;
-    cout<<"Mpi: "<<Mpi_fit.ave()<<" +- "<<Mpi_fit.err()<<endl;
-    cout<<"Mpi (dim) : "<<(lat_spacing_inv*Mpi_fit).ave()<<" +- "<<(lat_spacing_inv*Mpi_fit).err()<<endl;
-    cout<<"Mpi*L :"<<Mpi_fit.ave()*ll<<endl;
+    cout<<"Mpi: "<<Mpi_fit_naive.ave()<<" +- "<<Mpi_fit_naive.err()<<endl;
+    cout<<"Mpi (dim) : "<<(lat_spacing_inv*Mpi_fit_naive).ave()<<" +- "<<(lat_spacing_inv*Mpi_fit_naive).err()<<endl;
+    cout<<"Mpi*L :"<<Mpi_fit_naive.ave()*ll<<endl;
     cout<<"L/a: "<<ll<<endl;
-    cout<<"fp: "<<fp_fit.ave()<<" +- "<<fp_fit.err()<<endl;
+    cout<<"fp: "<<fp_fit_naive.ave()<<" +- "<<fp_fit_naive.err()<<endl;
     cout<<"X_pi: "<<X_pi_fit.ave()<<" +- "<<X_pi_fit.err()<<endl;
     cout<<"ainv (GeV-1): "<<lat_spacing_inv<<endl;
     cout<<"Dm(exchange, renormalized): "<<Dm_exch_fit.ave()<<" +- "<<Dm_exch_fit.err()<<endl;
     cout<<"Dm(handcuffs, renormalized): "<<Dm_hand_fit.ave()<<" +-"<<Dm_hand_fit.err()<<endl;
+    cout<<"Dm(exchange, bare): "<<Dm_tot_fit_exch.ave()<<" +. "<<Dm_tot_fit_exch.err()<<endl;
+    cout<<"Dm(hand, bare): "<<Dm_tot_fit_hand.ave()<<" +. "<<Dm_tot_fit_hand.err()<<endl;
     cout<<"Dm(tot, bare): "<<Dm_tot_fit.ave()<<" +- "<<Dm_tot_fit.err()<<endl;
+    cout<<"Dm2/X: (using correlated 2pt): "<<Dm2_ov_X_corr.ave()<<" +- "<<Dm2_ov_X_corr.err()<<endl;
+    cout<<"Dm2/X: (using 64hits 2pt): "<<Dm2_ov_X.ave()<<" +- "<<Dm2_ov_X.err()<<endl;
     cout<<"#########################################################################################################"<<endl;
   }
-
-  
+ 
   //everything is set up. Start fitting!
   LatticeInfo L_info(CURRENT_TYPE);
-  
+
   bootstrap_fit<X_t_M,Y_t_M> bf(nboots);
-  bf.set_warmup_lev(3);
+  bf.set_warmup_lev(1);
   bf.Set_number_of_measurements(Nens);
   bf.Set_verbosity(verbose);
   
@@ -461,25 +543,34 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
   bf.Add_par("log", 3.0 , 0.2);
   bf.Add_par("A_1", -1.0, 0.02);
   bf.Add_par("D", 2e-3, 1e-5);
-  bf.Add_par("F_a", 1, 0.1);
   bf.Add_par("lg_a", 0.1, 1e-3);
   bf.Add_par("F_m", 3.0, 0.1);
-  if( !Use_A2_Dm_prior) {   bf.Add_par("Dm", 0.5, 1e-3); bf.Add_par("A_2", 1.0,0.01);  bf.Add_prior_pars({"ainv0", "ainv1", "ainv2","Za0", "Za1", "Za2"});}
-  else {bf.Add_prior_pars({"Dm", "A_2", "ainv0", "ainv1", "ainv2","Za0", "Za1", "Za2"});}
+  bf.Add_par("F_4", 1.0, 0.1);
+  if(!Use_Fa_prior) bf.Add_par("F_a", 1, 0.1);
+  else bf.Add_prior_pars({"F_a"});
+  if(!Use_A2_Dm_prior)  {bf.Add_par("Dm", 0.5, 1e-3); bf.Add_par("A_2", 1.0,0.01); }
+  else bf.Add_prior_pars({"Dm", "A_2"});
+
+  bf.Add_prior_pars({ "ainv0", "ainv1", "ainv2","Za0", "Za1", "Za2"    });
+
  
   //Fix some parameters to make test
-  bf.Fix_par("F_m",1.0);
-  //bf.Fix_par("F_a",0.0);
+  //bf.Fix_par("F_m",1.0);
+  bf.Fix_par("F_a",0.0);
+  bf.Fix_par("F_4",0.0);
   bf.Fix_par("Dm",0.0);
   //bf.Fix_par("D",0.0);
   bf.Fix_par("lg_a", 0.0);
   bf.Fix_par("A_2", 0.0);
   //bf.Fix_par("A_1",0.0);
-  if(Use_fp || !Enable_f0) bf.Fix_par("log", 3.0);
+  if((Use_fp || !Enable_f0)) bf.Fix_par("log", 3.0);
+
 
 
   //Add List of parameters to be released after first minimization
-  bf.Fix_n_release({"ainv0", "ainv1", "ainv2", "Za0", "Za1", "Za2"}); 
+  bf.Fix_n_release({"ainv0", "ainv1", "ainv2", "Za0", "Za1", "Za2"});
+
+  double Npars= bf.Get_number_of_fit_pars();
 
 
    
@@ -516,10 +607,12 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
     double Mp2 = Mp*Mp;
 
+    double Mp3= Mp*Mp*Mp;
+
     double ML = ip.Mpi*ip.L;
 
          
-    double SD_FVE = (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_a*(pow(a,2))):0.0;
+    double SD_FVE = (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_4/ML+ (3.0/r0)*p.F_a*(pow(a,2))):0.0;
 
     double FVE_universal =  (L>0.0)?(scale_fve*(kappa*alpha/ML)*( 1.0 + 2.0/ML)):0.0;
 
@@ -594,6 +687,8 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     }
   }
 
+  //store the chi2 evaluated over mean values
+  Vfloat chi2_MV;
  
   for(int ibranch=0; ibranch < Nbranches; ibranch++) {
 
@@ -611,26 +706,52 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     for(int iboot=0; iboot<nboots; iboot++) {
       bf.ib= &iboot;
       Vfloat lat_input = Covariate(CovMatrixInput, Ave_input_parameters, GM);
-      //double Za0= gauss(L_info.Retrieve_Za("A", ibranch).first, (1.0/sqrt(Njacks-1))*L_info.Retrieve_Za("A",ibranch).second,GM);
-      //double Za1= gauss(L_info.Retrieve_Za("B", ibranch).first, (1.0/sqrt(Njacks-1))*L_info.Retrieve_Za("B",ibranch).second,GM);
-      //double Za2= gauss(L_info.Retrieve_Za("D", ibranch).first, (1.0/sqrt(Njacks-1))*L_info.Retrieve_Za("D",ibranch).second,GM);
-      double Za0= gauss(L_info.Retrieve_Za("A", ibranch),GM);
-      double Za1= gauss(L_info.Retrieve_Za("B", ibranch),GM);
-      double Za2= gauss(L_info.Retrieve_Za("D", ibranch) ,GM);
-      //push_back f0
-      double f0_resampled = lat_input[2];
+      if(iboot==0) for(unsigned int i=0; i<lat_input.size();i++)  lat_input[i] = Ave_input_parameters[i];
+      if(Use_JB_distribution && iboot != 0) {
+	for(int icov=0;icov<(signed)Ave_input_parameters.size();icov++) {
+	  lat_input[icov] = Ave_input_parameters[icov] + (lat_input[icov]-Ave_input_parameters[icov])/sqrt(Njacks-1.0);
+	}
+      }
+    
+     
+      double f0_resampled= lat_input[2];
+      double Za0 = L_info.Retrieve_Za("A",ibranch).first;
+      double Za1 = L_info.Retrieve_Za("B",ibranch).first;
+      double Za2 = L_info.Retrieve_Za("D", ibranch).first;
+
+      if(iboot != 0) {
+	if(!Use_JB_distribution) {
+	Za0= gauss(L_info.Retrieve_Za("A", ibranch),GM);
+	Za1= gauss(L_info.Retrieve_Za("B", ibranch),GM);
+	Za2= gauss(L_info.Retrieve_Za("D", ibranch) ,GM);
+	}
+	else {
+	  Za0= gauss(L_info.Retrieve_Za("A", ibranch).first, (1.0/sqrt(Njacks-1))*L_info.Retrieve_Za("A",ibranch).second,GM);
+	  Za1= gauss(L_info.Retrieve_Za("B", ibranch).first, (1.0/sqrt(Njacks-1))*L_info.Retrieve_Za("B",ibranch).second,GM);
+	  Za2= gauss(L_info.Retrieve_Za("D", ibranch).first, (1.0/sqrt(Njacks-1))*L_info.Retrieve_Za("D",ibranch).second,GM);
+	}
+      }
+      if(Use_Fa_prior) bf.Append_to_prior("F_a", 0.0,10);
       if(Use_A2_Dm_prior){ bf.Append_to_prior("Dm", 0.0, 10);  bf.Append_to_prior("A_2", 0.0, 10);} //prior on A_2 and Dm
       bf.Append_to_prior("ainv0", lat_input[3], sqrt(CovMatrixInput(3,3)));
       bf.Append_to_prior("ainv1", lat_input[4], sqrt(CovMatrixInput(4,4)));
       bf.Append_to_prior("ainv2", lat_input[5], sqrt(CovMatrixInput(5,5)));
-      bf.Append_to_prior("Za0", Za0, 3.0*L_info.Retrieve_Za("A", ibranch).second);
-      bf.Append_to_prior("Za1", Za1, 3.0*L_info.Retrieve_Za("B", ibranch).second);
-      bf.Append_to_prior("Za2", Za2, 3.0*L_info.Retrieve_Za("D", ibranch).second);
+      bf.Append_to_prior("Za0", Za0, L_info.Retrieve_Za("A", ibranch).second);
+      bf.Append_to_prior("Za1", Za1, L_info.Retrieve_Za("B", ibranch).second);
+      bf.Append_to_prior("Za2", Za2, L_info.Retrieve_Za("D", ibranch).second);
 
 
       int k= RM();
       for(int imeas=0; imeas <Nens; imeas++) {
-	if(!Use_JB_distribution) {
+	if(iboot==0) {
+	    all_ens[ibranch][iboot][imeas].Mpi= Mpi_distr_list.ave(imeas);
+	    all_ens[ibranch][iboot][imeas].Dm_ov_X_val = Dm_ov_X_distr_list.ave(imeas);
+	    all_ens[ibranch][iboot][imeas].fp = fp_fit_distr_list.ave(imeas);
+	    all_ens[ibranch][iboot][imeas].f0 = Ave_input_parameters[2];
+	    all_ens[ibranch][iboot][imeas].csi = pow(Mpi_distr_list.ave(imeas),2)/pow(4.0*M_PI*(Enable_f0?Ave_input_parameters[2]:fp_fit_distr_list.ave(imeas)),2);
+
+	}
+	else if(!Use_JB_distribution) {
 	  Eigen::VectorXd vec(CovMatrixPion[imeas].rows());
 	 
 	  vec<<Mpi_distr_list.ave(imeas),Dm_ov_X_distr_list.ave(imeas),fp_fit_distr_list.ave(imeas);
@@ -657,11 +778,13 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 	  
 	}
       }
-
+      
     }
     
     bf.Append_to_input_par(all_ens[ibranch]);
     Bt_fit.push_back(bf.Perform_bootstrap_fit());
+
+    chi2_MV.push_back( Bt_fit[ibranch].chi2[0]);
     
   }
   
@@ -676,11 +799,13 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 	       return resc*X_phys_val*(kappa*alpha/ML)*( 1.0 + 2.0/ML);
   };
 
-  auto SD_FVE = [=](double ML, double M, double FP, double ainv,  double F_a, double F_m) {
+  auto SD_FVE = [=](double ML, double M, double FP, double ainv,  double F_a, double F_m, double F_4) {
 
 		  double resc= Use_fp?pow(M/FP,2):1.0;
-		  double Mp2 = M*M*ainv*ainv;
-		  double SDE =(e2/3.0)*(Mp2/pow(ML,3))*r0*(F_m +  F_a*(1.0/pow(ainv,2)));
+		  double Mp= M*ainv;
+		  double Mp2 = Mp*Mp;
+		  double Mp3 = Mp*Mp*Mp;
+		  double SDE =(e2/3.0)*(Mp2/pow(ML,3))*r0*(F_m + F_4/ML +  (3.0/r0)*F_a*(1.0/pow(ainv,2)));
 		  return X_phys_val*SDE*resc;
   };
 
@@ -718,10 +843,12 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
     double Mp2 = Mp*Mp;
 
+    double Mp3= Mp*Mp*Mp;
+
     double ML = ip.Mpi*ip.L;
 
          
-    double SD_FVE = (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_a*(pow(a,2))):0.0;
+    double SD_FVE= (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_4/ML + (3.0/r0)*p.F_a*(pow(a,2))):0.0;
 
     double FVE_universal =  (L>0.0)?(scale_fve*(kappa*alpha/ML)*( 1.0 + 2.0/ML)):0.0;
 
@@ -757,13 +884,13 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
   Vfloat vols(1000);
   for(unsigned int m=0; m<Csi.size();m++) Csi[m] = 0.0001*m+ 0.0002;
   for(unsigned int vol=0;vol<vols.size();vol++) vols[vol] = 10 +vol*0.5;
-  VVVfloat SD_subtracted_data, Csi_measured, raw_data;
+  VVVfloat SD_subtracted_data, Csi_measured, raw_data, Dm2_raw_data;
   VVVfloat Univ_subtracted_data, Dm2_Univ_subtracted_data;
   VVVfloat Dm2_A40_slice;
   VVVVfloat Fitted_func;
   VVfloat Physical_point;
   VVVfloat A40_slice;
-  VVfloat C,LOG,A1,A2,K,Fa,D, Dm, Ainv0, Ainv1, Ainv2,  Za0, Za1, Za2;
+  VVfloat C,LOG,A1,A2,K,F_4, Fa,D, Dm, Ainv0, Ainv1, Ainv2,  Za0, Za1, Za2;
   cascade_resize(SD_subtracted_data, Vint{bf.Get_number_of_measurements(), Nbranches, nboots});
   cascade_resize(Univ_subtracted_data, Vint{bf.Get_number_of_measurements(), Nbranches, nboots});
   cascade_resize(Dm2_Univ_subtracted_data, Vint{bf.Get_number_of_measurements(), Nbranches, nboots});
@@ -773,11 +900,13 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
   cascade_resize(A40_slice, Vint{ (int)vols.size(), Nbranches,nboots});
   cascade_resize(Dm2_A40_slice, Vint{ (int)vols.size(), Nbranches,nboots});
   cascade_resize(raw_data, Vint{bf.Get_number_of_measurements(), Nbranches, nboots});
+  cascade_resize(Dm2_raw_data, Vint{bf.Get_number_of_measurements(), Nbranches, nboots});
   cascade_resize(C, Vint{Nbranches, nboots});
   cascade_resize(LOG, Vint{Nbranches, nboots});
   cascade_resize(A1, Vint{Nbranches, nboots});
   cascade_resize(A2, Vint{Nbranches, nboots});
   cascade_resize(K, Vint{Nbranches, nboots});
+  cascade_resize(F_4, Vint{Nbranches, nboots});
   cascade_resize(Fa, Vint{Nbranches, nboots});
   cascade_resize(D, Vint{Nbranches, nboots});
   cascade_resize(Dm, Vint{Nbranches, nboots});
@@ -799,6 +928,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
       A1[ibranch][iboot] =P.A_1;
       A2[ibranch][iboot]= P.A_2;
       K[ibranch][iboot]= P.F_m;
+      F_4[ibranch][iboot] = P.F_4;
       Fa[ibranch][iboot] =P.F_a;
       D[ibranch][iboot]= P.D;
       Dm[ibranch][iboot] =P.Dm;
@@ -830,16 +960,17 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 	double csi_A40 = pow(new_p.Mpi/(4.0*M_PI*new_p.fp),2);
 	new_p.csi = Enable_f0?pow(new_p.Mpi,2)/pow(4.0*M_PI*f0_boot,2):csi_A40;
 	//new_p.fp = new_p.Mpi/(4.0*M_PI*sqrt(new_p.csi));
-	A40_slice[ivol][ibranch][iboot] = cont_ansatz(P,csi_A40) + Artifacts( P, csi_A40, 0)  + SD_FVE(vols[ivol]*new_p.Mpi, new_p.Mpi, new_p.fp, P.ainv[0], P.F_a, P.F_m);
+	A40_slice[ivol][ibranch][iboot] = cont_ansatz(P,csi_A40) + Artifacts( P, csi_A40, 0)  + SD_FVE(vols[ivol]*new_p.Mpi, new_p.Mpi, new_p.fp, P.ainv[0], P.F_a, P.F_m, P.F_4);
 	Dm2_A40_slice[ivol][ibranch][iboot] = pow(new_p.fp/fpi_phys,2)*A40_slice[ivol][ibranch][iboot];
       }
       
       for(int imeas=0; imeas< bf.Get_number_of_measurements(); imeas ++) {
 	Y_t_M E = all_ens[ibranch][iboot][imeas];
 	double fval = Enable_f0?(E.f0/P.ainv[E.ibeta]):E.fp;
-	SD_subtracted_data[imeas][ibranch][iboot] = bf.measurement(P, E) + FVE(E.L*E.Mpi, E.fp, E.Mpi) - SD_FVE(E.L*E.Mpi, E.Mpi, E.fp, P.ainv[E.ibeta], P.F_a, P.F_m);
+	SD_subtracted_data[imeas][ibranch][iboot] = bf.measurement(P, E) + FVE(E.L*E.Mpi, E.fp, E.Mpi) - SD_FVE(E.L*E.Mpi, E.Mpi, E.fp, P.ainv[E.ibeta], P.F_a, P.F_m, P.F_4);
 	Univ_subtracted_data[imeas][ibranch][iboot] = bf.measurement(P,E)+ FVE(E.L*E.Mpi, E.fp, E.Mpi);
 	Dm2_Univ_subtracted_data[imeas][ibranch][iboot] = pow(E.fp/fpi_phys,2)*bf.measurement(P,E)+ pow(E.fp/fpi_phys,2)*FVE(E.L*E.Mpi, E.fp, E.Mpi);
+	Dm2_raw_data[imeas][ibranch][iboot] = pow(E.fp/fpi_phys,2)*bf.measurement(P,E);
 	raw_data[imeas][ibranch][iboot] = bf.measurement(P,E);
 	Csi_measured[imeas][ibranch][iboot] = pow(E.Mpi,2)/pow(4.0*M_PI*fval,2);
       }
@@ -875,17 +1006,19 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
   Vfloat SD_subtracted_val, SD_subtracted_err, CSI, raw_data_val, raw_data_err;
   Vfloat Univ_subtracted_val, Univ_subtracted_err;
-  Vfloat Dm2_Univ_subtracted_val, Dm2_Univ_subtracted_err;
+  Vfloat Dm2_Univ_subtracted_val, Dm2_Univ_subtracted_err, Dm2_raw_data_val, Dm2_raw_data_err;
   for(int imeas=0;imeas<bf.Get_number_of_measurements();imeas++) {
     SD_subtracted_val.push_back( Boot_ave(SD_subtracted_data[imeas]));
-    SD_subtracted_err.push_back( Boot_err(SD_subtracted_data[imeas]));
+    SD_subtracted_err.push_back( Boot_err(SD_subtracted_data[imeas], Rerr,1));
     Univ_subtracted_val.push_back(Boot_ave(Univ_subtracted_data[imeas]));
-    Univ_subtracted_err.push_back(Boot_err(Univ_subtracted_data[imeas]));
-
+    Univ_subtracted_err.push_back(Boot_err(Univ_subtracted_data[imeas], Rerr,1));
+    
     Dm2_Univ_subtracted_val.push_back(Boot_ave(Dm2_Univ_subtracted_data[imeas]));
-    Dm2_Univ_subtracted_err.push_back(Boot_err(Dm2_Univ_subtracted_data[imeas]));
+    Dm2_Univ_subtracted_err.push_back(Boot_err(Dm2_Univ_subtracted_data[imeas],Rerr,1));
+    Dm2_raw_data_val.push_back(Boot_ave(Dm2_raw_data[imeas]));
+    Dm2_raw_data_err.push_back(Boot_err(Dm2_raw_data[imeas], Rerr,1));
     raw_data_val.push_back(Boot_ave(raw_data[imeas]));
-    raw_data_err.push_back(Boot_err(raw_data[imeas]));
+    raw_data_err.push_back(Boot_err(raw_data[imeas], Rerr,1));
     CSI.push_back( Boot_ave(Csi_measured[imeas]));
   }
   
@@ -901,23 +1034,23 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     for(unsigned int m=0; m<Csi.size();m++) {
 	
 	Fitted_func_val[ibeta][m] = Boot_ave(Fitted_func[ibeta][m]);
-	Fitted_func_err[ibeta][m] = Boot_err(Fitted_func[ibeta][m]);
+	Fitted_func_err[ibeta][m] = Boot_err(Fitted_func[ibeta][m], Rerr, 1);
 
     }
   }
 
   for(auto &A40_boot : A40_slice) {
     A40_slice_val.push_back( Boot_ave(A40_boot));
-    A40_slice_err.push_back( Boot_err(A40_boot));
+    A40_slice_err.push_back(Boot_err(A40_boot, Rerr,1));
   }
 
   for(auto &Dm2_A40_boot : Dm2_A40_slice) {
     Dm2_A40_slice_val.push_back(Boot_ave(Dm2_A40_boot));
-    Dm2_A40_slice_err.push_back(Boot_err(Dm2_A40_boot));
+    Dm2_A40_slice_err.push_back(Boot_err(Dm2_A40_boot, Rerr,1));
   }
   //plot the result
 
-  Vfloat Mpi_L_A40, meas_A40, err_meas_A40, vol_A40;
+  Vfloat Mpi_L_A40, meas_A40, err_meas_A40, vol_A40, Dm2_A40_raw_val, Dm2_A40_raw_err, meas_Dm2_A40, err_meas_Dm2_A40;
   for(int iens=0; iens<Nens;iens++)
     if(m_data.Tag[iens].substr(0,3)=="A40") {
       vol_A40.push_back( L[iens]);
@@ -926,6 +1059,10 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
       err_meas_A40.push_back(Univ_subtracted_err[iens]);
       A40_raw_val.push_back(raw_data_val[iens]);
       A40_raw_err.push_back(raw_data_err[iens]);
+      meas_Dm2_A40.push_back(Dm2_Univ_subtracted_val[iens]);
+      err_meas_Dm2_A40.push_back(Dm2_Univ_subtracted_err[iens]);
+      Dm2_A40_raw_val.push_back(Dm2_raw_data_val[iens]);
+      Dm2_A40_raw_err.push_back(Dm2_raw_data_err[iens]);
     }
 
 
@@ -952,7 +1089,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
   Print_To_File(m_data.Tag, { CSI, Mpi_distr_dim_list.ave(), L, (Mpi_distr_list*L).ave(), ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_distr_list).ave(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_distr_list).err(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_M1_distr_list).ave(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_M1_distr_list).err(),   ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*diff_Dm2_ren_univ_sub_M1_M2_distr_list).ave(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*diff_Dm2_ren_univ_sub_M1_M2_distr_list).err()  , ((X_phys_val*e2/2.0)*Dm_ov_X_ren_univ_sub_distr_list).ave(), ((X_phys_val*e2/2.0)*Dm_ov_X_ren_univ_sub_distr_list).err()  }, "../data/Mpi_twisted_ov_X/"+print_path+"/data_wo_fit_"+exch_or_tot+".dat", "", "#Ens      Csi   #Mpi   #L/a   #Mpi*L  Dm2_univ_sub_M2  Dm2_univ_sub_M1 diff_Dm2_univ_sub_M1_M2      X_univ_sub  ");
  
-  Print_To_File({}, {vol_A40, Mpi_L_A40,  meas_A40, err_meas_A40, A40_raw_val, A40_raw_err}, "../data/Mpi_twisted_ov_X/"+print_path+"/A40_"+exch_or_tot+".dat","", " #L    #Mpi*L         univ_meas            univ_err       raw_meas      raw_err");
+  Print_To_File({}, {vol_A40, Mpi_L_A40,  meas_A40, err_meas_A40, A40_raw_val, A40_raw_err, meas_Dm2_A40, err_meas_Dm2_A40, Dm2_A40_raw_val, Dm2_A40_raw_err}, "../data/Mpi_twisted_ov_X/"+print_path+"/A40_"+exch_or_tot+".dat","", " #L    #Mpi*L         univ_meas            univ_err       raw_meas      raw_err         univ meas(Dm2)    univ_err(Dm2)    raw(Dm2)    err_raw(Dm2)");
   //print A40 prediction for
   Print_To_File({},{vols, A40_slice_val, A40_slice_err, Dm2_A40_slice_val, Dm2_A40_slice_err},"../data/Mpi_twisted_ov_X/"+print_path+"/A40_pred_"+exch_or_tot+".dat","", "#L   Mpi/X    Dm2   ");
 
@@ -961,7 +1098,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
   Print_To_File(m_data.Tag, {L, (Mpi_distr_list*L).ave(),  fp_fit_naive_list.ave(), fp_fit_naive_list.err(), fp_fit_GL_list.ave(), fp_fit_GL_list.err(), fp_fit_CDH_list.ave(), fp_fit_CDH_list.err(), Ratio_CDH_naive_fp.ave(), Ratio_CDH_naive_fp.err()}, "../data/Mpi_twisted_ov_X/"+print_path+"/FVE_fp.dat", "", "#Ens #L  #Mpi*L   #fp_naive #fp_GL #fp_CDH     ratio_CDH_naive");
 
   
-  string command = "echo "+to_string_with_precision(csi_phys,8)+"\t\t"+to_string_with_precision(Boot_ave(Physical_point),8)+"\t\t"+to_string_with_precision(Boot_err(Physical_point),8)+" > ../data/Mpi_twisted_ov_X/"+print_path.c_str()+"/Phys_val_"+exch_or_tot+".dat";
+  string command = "echo "+to_string_with_precision(csi_phys,8)+"\t\t"+to_string_with_precision(Boot_ave(Physical_point),8)+"\t\t"+to_string_with_precision(Boot_err(Physical_point, Rerr,1),8)+" > ../data/Mpi_twisted_ov_X/"+print_path.c_str()+"/Phys_val_"+exch_or_tot+".dat";
   system(command.c_str());
 
   if(IncludeDisconnected) {
@@ -972,9 +1109,9 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
    
 
-  cout<<"Physical Pion mass difference: "<< Boot_ave(Physical_point)<<"  +-  "<<Boot_err(Physical_point)<<" [ MeV ]"<<endl;
+  cout<<"Physical Pion mass difference: "<< Boot_ave(Physical_point)<<"  +-  "<<Boot_err(Physical_point, Rerr,1)<<" [ MeV ]"<<endl;
   cout<<"On single branches: "<<endl;
-  for(int ibr=0; ibr<Nbranches;ibr++) cout<<"Branch: "<<ibr<<": "<<Boot_ave(Physical_point[ibr])<<" +-  "<<Boot_err(Physical_point[ibr])<<" [ MeV ]"<<endl;
+  for(int ibr=0; ibr<Nbranches;ibr++) cout<<"Branch: "<<ibr<<": "<<Boot_ave(Physical_point[ibr])<<" +-  "<<Rerr*Boot_err(Physical_point[ibr])<<" [ MeV ]"<<endl;
   cout<<"Average chi2:"<<endl;
   double tot_ch2=0.0;
   for(int ibr=0;ibr<Nbranches;ibr++) {
@@ -983,18 +1120,23 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     cout<<"Branch: "<<ibr<<" chi2 = "<<ch2_ibr<<endl;
   }
   cout<<"Average over branches: "<<tot_ch2/Nbranches<<endl;
+
+  
+  cout<<"Chi2 fitting over mean values: "<<accumulate(chi2_MV.begin(), chi2_MV.end(),0.0)/Nbranches<<endl;
+  
   
 
   //print averaged parameters
   cout<<"Printing averaged params: "<<endl;
-  cout<<"C: "<<Boot_ave(C)<<" +- "<<Boot_err(C)<<endl;
-  cout<<"log: "<<Boot_ave(LOG)<<" +- "<<Boot_err(LOG)<<endl;
-  cout<<"A1: "<<Boot_ave(A1)<<" +- "<<Boot_err(A1)<<endl;
-  cout<<"A2: "<<Boot_ave(A2)<<" +- "<<Boot_err(A2)<<endl;
-  cout<<"K: "<<Boot_ave(K)<<" +- "<<Boot_err(K)<<endl;
-  cout<<"F_a: "<<Boot_ave(Fa)<<" +- "<<Boot_err(Fa)<<endl;
-  cout<<"D: "<<Boot_ave(D)<<" +- "<<Boot_err(D)<<endl;
-  cout<<"Dm: "<<Boot_ave(Dm)<<" +- "<<Boot_err(Dm)<<endl;
+  cout<<"C: "<<Boot_ave(C)<<" +- "<<Boot_err(C, Rerr,1)<<endl;
+  cout<<"log: "<<Boot_ave(LOG)<<" +- "<<Boot_err(LOG, Rerr,1)<<endl;
+  cout<<"A1: "<<Boot_ave(A1)<<" +- "<<Boot_err(A1, Rerr,1)<<endl;
+  cout<<"A2: "<<Boot_ave(A2)<<" +- "<<Boot_err(A2, Rerr,1)<<endl;
+  cout<<"K: "<<Boot_ave(K)<<" +- "<<Boot_err(K, Rerr,1)<<endl;
+  cout<<"F_4: "<<Boot_ave(F_4)<<" +- "<<Boot_err(F_4, Rerr,1)<<endl;
+  cout<<"F_a: "<<Boot_ave(Fa)<<" +- "<<Boot_err(Fa, Rerr,1)<<endl;
+  cout<<"D: "<<Boot_ave(D)<<" +- "<<Boot_err(D, Rerr,1)<<endl;
+  cout<<"Dm: "<<Boot_ave(Dm)<<" +- "<<Boot_err(Dm, Rerr,1)<<endl;
  
 
   cout<<"############# PRINTING LATTICE SPACING INFOS #################"<<endl;
@@ -1002,22 +1144,29 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
   Eigen::MatrixXd Cov(9,9); //covariance matrix of input parameters
   Eigen::VectorXd Ave(9);
   ReadBranch(0, Cov, Ave );
-  cout<<"ainv0 branch 0: "<<Boot_ave(Ainv0[0])<<" +- "<<Boot_err(Ainv0[0])<<" Original from branch nr. 0: "<<Ave[3] <<" +- "<<sqrt(Cov(3,3))<<endl;
-  cout<<"ainv1 branch 0: "<<Boot_ave(Ainv1[0])<<" +- "<<Boot_err(Ainv1[0])<<" Original from branch nr. 0: "<<Ave[4] <<" +- "<<sqrt(Cov(4,4))<<endl;
-  cout<<"ainv2 branch 0: "<<Boot_ave(Ainv2[0])<<" +- "<<Boot_err(Ainv2[0])<<" Original from branch nr. 0: "<<Ave[5] <<" +- "<<sqrt(Cov(5,5))<<endl;
+  cout<<"ainv0 branch 0: "<<Boot_ave(Ainv0[0])<<" +- "<<Rerr*Boot_err(Ainv0[0])<<" Original from branch nr. 0: "<<Ave[3] <<" +- "<<sqrt(Cov(3,3))<<endl;
+  cout<<"ainv1 branch 0: "<<Boot_ave(Ainv1[0])<<" +- "<<Rerr*Boot_err(Ainv1[0])<<" Original from branch nr. 0: "<<Ave[4] <<" +- "<<sqrt(Cov(4,4))<<endl;
+  cout<<"ainv2 branch 0: "<<Boot_ave(Ainv2[0])<<" +- "<<Rerr*Boot_err(Ainv2[0])<<" Original from branch nr. 0: "<<Ave[5] <<" +- "<<sqrt(Cov(5,5))<<endl;
 
   cout<<"##############ZA INFO############"<<endl;
   cout<<"beta = 1.90"<<endl;
-  cout<<"Za0 branch 0: "<<Boot_ave(Za0[0])<<" +- "<<Boot_err(Za0[0])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("A", 0).first<<" +- "<<L_info.Retrieve_Za("A",0).second<<endl;
-  cout<<"Za0 branch 1: "<<Boot_ave(Za0[4])<<" +- "<<Boot_err(Za0[4])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("A", 4).first<<" +- "<<L_info.Retrieve_Za("A",4).second<<endl;
+  cout<<"Za0 branch 0: "<<Boot_ave(Za0[0])<<" +- "<<Rerr*Boot_err(Za0[0])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("A", 0).first<<" +- "<<L_info.Retrieve_Za("A",0).second<<endl;
+  cout<<"Za0 branch 1: "<<Boot_ave(Za0[4])<<" +- "<<Rerr*Boot_err(Za0[4])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("A", 4).first<<" +- "<<L_info.Retrieve_Za("A",4).second<<endl;
   cout<<"beta = 1.95"<<endl;
-  cout<<"Za0 branch 0: "<<Boot_ave(Za1[0])<<" +- "<<Boot_err(Za1[0])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("B", 0).first<<" +- "<<L_info.Retrieve_Za("B",0).second<<endl;
-  cout<<"Za0 branch 1: "<<Boot_ave(Za1[4])<<" +- "<<Boot_err(Za1[4])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("B", 4).first<<" +- "<<L_info.Retrieve_Za("B",4).second<<endl;
+  cout<<"Za0 branch 0: "<<Boot_ave(Za1[0])<<" +- "<<Rerr*Boot_err(Za1[0])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("B", 0).first<<" +- "<<L_info.Retrieve_Za("B",0).second<<endl;
+  cout<<"Za0 branch 1: "<<Boot_ave(Za1[4])<<" +- "<<Rerr*Boot_err(Za1[4])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("B", 4).first<<" +- "<<L_info.Retrieve_Za("B",4).second<<endl;
   cout<<"beta = 2.10"<<endl;
-  cout<<"Za0 branch 0: "<<Boot_ave(Za2[0])<<" +- "<<Boot_err(Za2[0])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("D", 0).first<<" +- "<<L_info.Retrieve_Za("D",0).second<<endl;
-  cout<<"Za0 branch 1: "<<Boot_ave(Za2[4])<<" +- "<<Boot_err(Za2[4])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("D", 4).first<<" +- "<<L_info.Retrieve_Za("D",4).second<<endl;
+  cout<<"Za0 branch 0: "<<Boot_ave(Za2[0])<<" +- "<<Rerr*Boot_err(Za2[0])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("D", 0).first<<" +- "<<L_info.Retrieve_Za("D",0).second<<endl;
+  cout<<"Za0 branch 1: "<<Boot_ave(Za2[4])<<" +- "<<Rerr*Boot_err(Za2[4])<<" Original from branch nr. 0: "<<L_info.Retrieve_Za("D", 4).first<<" +- "<<L_info.Retrieve_Za("D",4).second<<endl;
 
-  
+
+  //print infos to file
+
+  ofstream Print_Info("../data/Mpi_twisted_ov_X/"+print_path+"/fit_result.dat", ofstream::app);
+  double ch2_ave= accumulate(chi2_MV.begin(),chi2_MV.end(),0.0)/Nbranches;
+  double Akaike_weight = exp(-(ch2_ave/2.0 + Npars));
+  Print_Info<< Akaike_weight<<"  "<<Boot_ave(Physical_point)<<" "<<Boot_err(Physical_point,Rerr,1)<<" "<<ch2_ave<<"  "<<Npars<<endl;
+  Print_Info.close();
   
 
     

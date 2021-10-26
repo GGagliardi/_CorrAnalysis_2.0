@@ -13,7 +13,6 @@ const double e2 = alpha*4.0*M_PI;
 const double r0 = pow(0.672/0.197,2);
 const int Nbranches = 8;
 const int nboots= 200;
-const bool Use_JB_distribution= false;
 const bool UseJack=1;
 const int Njacks=30;
 const int Nboots=200;
@@ -29,7 +28,7 @@ const bool verbosity=1;
 const double Nresonances=12;
 const int Luscher_num_zeroes= 30;
 const int npts_spline= 1000;
-bool Use_OS_vector_current=true;
+bool Use_OS_vector_current=false;
 bool Use_Mpi_OS=false;
 bool Include_light_disco= false;
 bool Combined_fit_disco=false;
@@ -51,6 +50,7 @@ public:
   double Mp, Mp_OS;
   double t,  L;
   double V_light, V_light_err;
+  double fp;
    
 
 
@@ -61,15 +61,17 @@ class fit_par {
 public:
   fit_par() {}
   fit_par(const Vfloat &par) {
-    if((signed)par.size() != 5) crash("In class fit_par in fitting analytic representation of V(t)_light, class constructor Vfloat par has size != 5");
+    if((signed)par.size() != 6) crash("In class fit_par in fitting analytic representation of V(t)_light, class constructor Vfloat par has size != 5");
     Rd=par[0];
     Ed=par[1];
     Mrho=par[2];
     gpi=par[3];
-    Z=par[4];
+    kappa= par[4];
+    Z=par[5];
+    
   }
 
-  double Rd,Ed, Mrho, gpi,Z;
+  double Rd,Ed, Mrho, gpi,kappa, Z;
 
 
 
@@ -129,8 +131,25 @@ void Gm2() {
   cout<<"####Spline for phi(x) and phi'(x) successfully generated!"<<endl;
 
 
- 
+  
 
+  ///////   TEST //////////////
+
+  double MR= 7.75260e-01;
+  double gr= 5.90;
+  double M = 0.134980;
+  double ka = -3;
+  double domega = 0.1;
+  double omega_max = 10.0;
+  double omega_start = 0.3;
+  int nsteps = (int)omega_max/domega;
+
+  for(int istep=0; istep<nsteps;istep++) {
+    double omega_n = omega_start + istep*domega;
+    cout<<"omega (GeV): "<<omega_n<<" "<<"  F_pi: "<<LL.F_pi_GS_mod(omega_n, MR, gr , M, ka)<<" V_pipi(L = \infty, t=1/omega):  "<< Qfact*LL.V_pipi_infL(1.0/omega_n, MR, gr, M, ka) <<endl;
+  }
+  exit(-1);
+  
   
   
  
@@ -205,7 +224,7 @@ void Gm2() {
 
   //define distr_t_list to be used in chiral+continuum analysis
 
-  distr_t_list agm2_strange(UseJack), agm2_charm(UseJack), agm2_light(UseJack), agm2_light_fit(UseJack), agm2_light_2L_fit(UseJack), agm2_light_infL_fit(UseJack), agm2_light_W(UseJack);
+  distr_t_list agm2_strange(UseJack), agm2_charm(UseJack), agm2_light(UseJack), agm2_light_fit(UseJack), agm2_light_2L_fit(UseJack), agm2_light_Lprime_fit(UseJack)  , agm2_light_infL_fit(UseJack), agm2_light_W(UseJack);
   vector<vector<fit_par>> par_list_anal_repr;//only used for light quark contribution
 
   distr_t_list MV_fit_light(UseJack), MV_fit_strange(UseJack), MV_fit_charm(UseJack);
@@ -213,6 +232,7 @@ void Gm2() {
   distr_t_list Mpi_fit(UseJack), Mpi_OS_fit(UseJack),  fp_fit(UseJack);
   distr_t_list Zv_fit(UseJack), Za_fit(UseJack), Zp_ov_Zs_fit(UseJack);
   Vfloat L_list, a_list, ml_list;
+  distr_t_list a_distr_list(UseJack);
   Vfloat L_strange_list, a_strange_list, ml_strange_list;
   Vfloat L_charm_list, a_charm_list, ml_charm_list;
 
@@ -744,7 +764,7 @@ void Gm2() {
   bf.Add_par("Ed", 2.5, 0.2);
   bf.Set_limits("Ed", 0.7, 5.0);
   bf.Add_par("Mrho",5.5, 0.1);
-  bf.Set_limits("Mrho", 4.0, 7.0);
+  bf.Set_limits("Mrho", 3.0, 7.0);
   }
   else {
   bf.Add_par("Ed", 1.3, 0.2);
@@ -752,14 +772,18 @@ void Gm2() {
   bf.Add_par("Mrho",3.0, 0.1);
   bf.Set_limits("Mrho", 2.2, 5);
   }
-  bf.Add_par("gpi", 5.9, 0.2);
-  bf.Set_limits("gpi",5.0, 7.0);
+  bf.Add_prior_par("gpi", 1.0, 0.01);
+  bf.Add_prior_par("kappa", -3.0, 0.1);
+  //bf.Set_limits("gpi",0.75, 1.5);
+  //bf.Set_limits("kappa", -5.0, 1.0);
   if(!Use_OS_vector_current)  bf.Add_prior_par("Z", Za.ave(), Za.err());
   else bf.Add_prior_par("Z", Zv.ave(), Zv.err());
   bf.Fix_n_release("Z");
 
+  bf.Fix_par("gpi",1.0);
+  bf.Fix_par("kappa", -3.0);
 
-  map<pair<pair<double,double>, double>,Vfloat> Energy_lev_list;
+  map<pair<pair<double,double>, pair<double,double>>,Vfloat> Energy_lev_list;
   
 
   bf.ansatz =  [&](const fit_par &p, const ipar &ip) -> double {
@@ -767,19 +791,21 @@ void Gm2() {
 
 		 double Pi_M = Use_Mpi_OS?ip.Mp_OS:ip.Mp;
 
+		 double GPI = p.gpi*p.Mrho*Pi_M/ip.fp;
 		 Vfloat Knpp;
 		 pair<double,double> Mass_par= make_pair(p.Mrho*Pi_M, Pi_M);
-		 pair< pair<double,double>,double> input_pars = make_pair( Mass_par, p.gpi);
-		 map<pair<pair<double,double>, double>,Vfloat>::iterator it;
+		 pair<double,double> Couplings = make_pair(GPI, p.kappa);
+		 pair< pair<double,double>,pair<double, double>> input_pars = make_pair( Mass_par, Couplings);
+		 map<pair<pair<double,double>, pair<double, double>>,Vfloat>::iterator it;
 		 it= Energy_lev_list.find(input_pars);
 		 if(it != Energy_lev_list.end()) Knpp= it->second;
 		 else {
-		   LL.Find_pipi_energy_lev(ip.L,p.Mrho*Pi_M, p.gpi, Pi_M, Knpp);
+		   LL.Find_pipi_energy_lev(ip.L,p.Mrho*Pi_M, GPI, Pi_M, p.kappa, Knpp);
 		   //add to Energy_lev_list
 		   Energy_lev_list.insert( make_pair(input_pars, Knpp));
 		 }
 		
-		 return Qfact*LL.V_pipi(ip.t, ip.L, p.Mrho*Pi_M, p.gpi, Pi_M, Knpp) + LL.Vdual(ip.t, p.Mrho*Pi_M, p.Ed*Pi_M, p.Rd);
+		 return Qfact*LL.V_pipi(ip.t, ip.L, p.Mrho*Pi_M, GPI, Pi_M, p.kappa, Knpp) + LL.Vdual(ip.t, p.Mrho*Pi_M, p.Ed*Pi_M, p.Rd);
   };
   bf.measurement = [&](const fit_par& p,const ipar& ip) -> double {
 		     return pow(p.Z,2)*ip.V_light;
@@ -806,14 +832,16 @@ void Gm2() {
 	data[ijack][tt].Mp = Mpi.distr[ijack];
 	data[ijack][tt].Mp_OS = Mpi_OS.distr[ijack];
 	data[ijack][tt].t = t;
+	data[ijack][tt].fp = fp.distr[ijack];
       } 
     }
 
     
-
     //add prior values
     for(int ijack=0;ijack<Njacks;ijack++) {
      bf.ib= &ijack;
+     bf.Append_to_prior("gpi", 1.0, 0.2);
+     bf.Append_to_prior("kappa", -3.0, 3.0);
      bf.Append_to_prior("Z", Use_OS_vector_current?Zv.distr[ijack]:Za.distr[ijack], Use_OS_vector_current?Zv.err():Za.err());
     }
 
@@ -846,6 +874,7 @@ void Gm2() {
       for(int ijack=0;ijack<Njacks;ijack++) {
 	my_ipar.Mp=Mpi.distr[ijack];
 	my_ipar.Mp_OS=Mpi_OS.distr[ijack];
+	my_ipar.fp = fp.distr[ijack];
 	func.distr_list[istep].distr.push_back( bf.ansatz( Bt_fit.par[ijack], my_ipar )/pow(Bt_fit.par[ijack].Z,2));
       }
     }
@@ -873,7 +902,7 @@ void Gm2() {
 
 
   cout<<"####### Reconstructing agm2_light using fit paramters Ed, Rd, Mrho, gpi....."<<endl;
-  distr_t_list Edual(UseJack), Rdual(UseJack), Mrho(UseJack), gpi(UseJack);
+  distr_t_list Edual(UseJack), Rdual(UseJack), Mrho(UseJack), gpi(UseJack), Kappa(UseJack);
   for(int i_ens=0; i_ens<Nens_light;i_ens++) {
     cout<<"######### ENSEMBLE: "<<V_light_1.Tag[i_ens]<<endl;
     LatticeInfo L_info;
@@ -881,7 +910,7 @@ void Gm2() {
   
 
     
-  distr_t Ed(UseJack), Rd(UseJack), Mr(UseJack), g(UseJack), agm2_dual(UseJack), mp(UseJack), agm2_2L_dual(UseJack), agm2_infL_dual(UseJack), a_distr;
+    distr_t Ed(UseJack), Rd(UseJack), Mr(UseJack), g(UseJack), kap(UseJack), agm2_dual(UseJack), mp(UseJack), agm2_2L_dual(UseJack), agm2_infL_dual(UseJack), agm2_Lprime_dual(UseJack) ,  a_distr(UseJack);
     for(int ijack=0;ijack<Njacks;ijack++) {
     //retrieve fit_parameters
     fit_par my_fit_par = par_list_anal_repr[i_ens][ijack];
@@ -889,13 +918,14 @@ void Gm2() {
     Rd.distr.push_back(my_fit_par.Rd);
     Mr.distr.push_back(my_fit_par.Mrho);
     g.distr.push_back(my_fit_par.gpi);
+    kap.distr.push_back(my_fit_par.kappa);
     a_distr.distr.push_back( fm_to_inv_Gev*(L_info.a + GM()*L_info.a_err*(1.0/sqrt(Njacks-1.0))));
 
    
 
     double Mp,fp, csi;
     double L= 1.0*L_list[i_ens];
-    // fp= fp_fit [i_ens].distr[ijack];
+    fp= fp_fit[i_ens].distr[ijack];
     //double csi = pow(Mp,2)/pow(4.0*M_PI*fp,2);
     if(!Use_Mpi_OS) Mp=Mpi_fit.distr_list[i_ens].distr[ijack];
     else Mp=Mpi_OS_fit.distr_list[i_ens].distr[ijack];
@@ -904,13 +934,22 @@ void Gm2() {
     
     Vfloat Elev;
     
-    LL.Find_pipi_energy_lev(L,my_fit_par.Mrho*Mp, my_fit_par.gpi, Mp, Elev);
+    LL.Find_pipi_energy_lev(L,my_fit_par.Mrho*Mp, my_fit_par.gpi*(my_fit_par.Mrho*Mp/fp), Mp, my_fit_par.kappa, Elev);
 
     //Find energy levs corresponding to 2L;
 
     Vfloat Elev_2L;
 
-    LL.Find_pipi_energy_lev(1.5*L, my_fit_par.Mrho*Mp, my_fit_par.gpi, Mp, Elev_2L);
+    LL.Find_pipi_energy_lev(1.5*L, my_fit_par.Mrho*Mp, my_fit_par.gpi*(my_fit_par.Mrho*Mp/fp), Mp, my_fit_par.kappa, Elev_2L);
+
+
+    Vfloat Elev_MpiL_4dot2;
+
+    double Lprime= 4.2/(!Use_Mpi_OS?Mpi_fit.ave(i_ens):Mpi_OS_fit.ave(i_ens));
+
+    LL.Find_pipi_energy_lev(Lprime, my_fit_par.Mrho*Mp, my_fit_par.gpi*(my_fit_par.Mrho*Mp/fp), Mp, my_fit_par.kappa, Elev_MpiL_4dot2);
+
+    
 
 
 
@@ -918,11 +957,11 @@ void Gm2() {
 
 
 		  
-		  double kern_val = 4.0*pow(alpha,2)*sqrt(m_rho*a_distr.distr[ijack]/(my_fit_par.Mrho*Mp))*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
+		  //double kern_val = 4.0*pow(alpha,2)*sqrt(m_rho*a_distr.distr[ijack]/(my_fit_par.Mrho*Mp))*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
 		  
-		  //double kern_val = 4.0*pow(alpha,2)*kernel_K(t, a_distr.distr[ijack] );
+		  double kern_val = 4.0*pow(alpha,2)*kernel_K(t, a_distr.distr[ijack] );
 		  //double kern_val= 4.0*pow(alpha,2)*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
-		  double func_val =  Qfact*LL.V_pipi(t, L, my_fit_par.Mrho*Mp, my_fit_par.gpi, Mp, Elev)+ LL.Vdual(t, my_fit_par.Mrho*Mp, my_fit_par.Ed*Mp, my_fit_par.Rd);
+		  double func_val =  Qfact*LL.V_pipi(t, L, my_fit_par.Mrho*Mp, my_fit_par.gpi*(my_fit_par.Mrho*Mp/fp), Mp, my_fit_par.kappa, Elev)+ LL.Vdual(t, my_fit_par.Mrho*Mp, my_fit_par.Ed*Mp, my_fit_par.Rd);
 
 		  double F_int_val = kern_val*func_val;
         
@@ -933,11 +972,25 @@ void Gm2() {
 
     auto F_int_2L = [&](double t) {
 
-		      double kern_val = 4.0*pow(alpha,2)*sqrt(m_rho*a_distr.distr[ijack]/(my_fit_par.Mrho*Mp))*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
+		      //double kern_val = 4.0*pow(alpha,2)*sqrt(m_rho*a_distr.distr[ijack]/(my_fit_par.Mrho*Mp))*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
 		  
-		      //double kern_val = 4.0*pow(alpha,2)*kernel_K(t, a_distr.distr[ijack] );
+		      double kern_val = 4.0*pow(alpha,2)*kernel_K(t, a_distr.distr[ijack] );
 		      //double kern_val= 4.0*pow(alpha,2)*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
-		      double func_val =  Qfact*LL.V_pipi(t, 1.5*L, my_fit_par.Mrho*Mp, my_fit_par.gpi, Mp, Elev_2L)+ LL.Vdual(t, my_fit_par.Mrho*Mp, my_fit_par.Ed*Mp, my_fit_par.Rd);
+		      double func_val =  Qfact*LL.V_pipi(t, 1.5*L, my_fit_par.Mrho*Mp, my_fit_par.gpi*(my_fit_par.Mrho*Mp/fp), Mp, my_fit_par.kappa, Elev_2L)+ LL.Vdual(t, my_fit_par.Mrho*Mp, my_fit_par.Ed*Mp, my_fit_par.Rd);
+
+		      double F_int_val = kern_val*func_val;
+        
+
+		      return F_int_val;
+		};
+
+    auto F_int_Lprime = [&](double t) {
+
+			  //  double kern_val = 4.0*pow(alpha,2)*sqrt(m_rho*a_distr.distr[ijack]/(my_fit_par.Mrho*Mp))*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
+		  
+		      double kern_val = 4.0*pow(alpha,2)*kernel_K(t, a_distr.distr[ijack] );
+		      // double kern_val= 4.0*pow(alpha,2)*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
+		      double func_val =  Qfact*LL.V_pipi(t, Lprime, my_fit_par.Mrho*Mp, my_fit_par.gpi*(my_fit_par.Mrho*Mp/fp), Mp, my_fit_par.kappa,  Elev_MpiL_4dot2)+ LL.Vdual(t, my_fit_par.Mrho*Mp, my_fit_par.Ed*Mp, my_fit_par.Rd);
 
 		      double F_int_val = kern_val*func_val;
         
@@ -947,12 +1000,12 @@ void Gm2() {
 
     auto F_infL = [&](double t) {
 
-		    double kern_val = 4.0*pow(alpha,2)*sqrt(m_rho*a_distr.distr[ijack]/(my_fit_par.Mrho*Mp))*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
+		    //double kern_val = 4.0*pow(alpha,2)*sqrt(m_rho*a_distr.distr[ijack]/(my_fit_par.Mrho*Mp))*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
 		  
-		    //double kern_val = 4.0*pow(alpha,2)*kernel_K(t, a_distr.distr[ijack] );
+		    double kern_val = 4.0*pow(alpha,2)*kernel_K(t, a_distr.distr[ijack] );
 		    //double kern_val= 4.0*pow(alpha,2)*kernel_K(t, my_fit_par.Mrho*Mp/m_rho);
 
-		    double func_val =  Qfact*LL.V_pipi_infL(t, my_fit_par.Mrho*Mp, my_fit_par.gpi, Mp)+ LL.Vdual(t, my_fit_par.Mrho*Mp, my_fit_par.Ed*Mp, my_fit_par.Rd);
+		    double func_val =  Qfact*LL.V_pipi_infL(t, my_fit_par.Mrho*Mp, my_fit_par.gpi*(my_fit_par.Mrho*Mp/fp), Mp, my_fit_par.kappa)+ LL.Vdual(t, my_fit_par.Mrho*Mp, my_fit_par.Ed*Mp, my_fit_par.Rd);
 
 		    double F_int_val = kern_val*func_val;
         
@@ -969,6 +1022,7 @@ void Gm2() {
     double agm2_summ=0.0;
     double agm2_2L_summ=0.0;
     double agm2_infL_summ=0.0;
+    double agm2_Lprime_summ=0.0;
     double Nterms = 2000;
     double Nterms_2L= 2000;
     
@@ -980,12 +1034,20 @@ void Gm2() {
     agm2_dual.distr.push_back(agm2_summ);
    
 
-    //2L volume
+    //1.5L volume
     for(int iterm=1;iterm<Nterms_2L;iterm++) {
       double F_n_2L = F_int_2L((double)iterm);
       //Sum Series 
       agm2_2L_summ += F_n_2L;}
     agm2_2L_dual.distr.push_back(agm2_2L_summ);
+
+
+     //Mpi*L=4.2 volume
+    for(int iterm=1;iterm<Nterms_2L;iterm++) {
+      double F_n_Lprime = F_int_Lprime((double)iterm);
+      //Sum Series 
+      agm2_Lprime_summ += F_n_Lprime;}
+    agm2_Lprime_dual.distr.push_back(agm2_Lprime_summ);
     
 
     //inf volume
@@ -1000,6 +1062,8 @@ void Gm2() {
     
 
     }
+
+    a_distr_list.distr_list.push_back(a_distr);
     
 
     //push_back
@@ -1007,20 +1071,26 @@ void Gm2() {
     Rdual.distr_list.push_back(Rd);
     Mrho.distr_list.push_back(Mr);
     gpi.distr_list.push_back(g);
+    Kappa.distr_list.push_back(kap);
     agm2_light_fit.distr_list.push_back(agm2_dual);
     agm2_light_2L_fit.distr_list.push_back(agm2_2L_dual);
     agm2_light_infL_fit.distr_list.push_back(agm2_infL_dual);
+    agm2_light_Lprime_fit.distr_list.push_back(agm2_Lprime_dual);
     cout<<"Edual/Mpi: "<<(Ed).ave()<<" +- "<<(Ed).err()<<endl;
     cout<<"Edual: "<<(Ed*mp).ave()<<" +- "<<(Ed*mp).err()<<endl;
     cout<<"Rdual: "<<Rd.ave()<<" +- "<<Rd.err()<<endl;
     cout<<"Mrho/Mpi: "<<(Mr).ave()<<" +- "<<(Mr).err()<<endl;
-    cout<<"Mrho: "<<(Mr*mp).ave()<<" +- "<<(Mr*mp).err()<<endl;
+    cout<<"Mrho (lattice units): "<<(Mr*mp).ave()<<" +- "<<(Mr*mp).err()<<endl;
+    cout<<"Mrho (GeV): "<<(Mr*mp/a_distr).ave()<<" +- "<<(Mr*mp/a_distr).err()<<endl;
+    cout<<"Mrho/fp: "<<(Mr*mp/fp_fit[i_ens]).ave()<<" +- "<<(Mr*mp/fp_fit[i_ens]).err()<<endl;
     cout<<"gpi: "<<g.ave()<<" +- "<<g.err()<<endl;
+    cout<<"kappa: "<<kap.ave()<<" +- "<<kap.err()<<endl;
     cout<<"Mpi: "<<mp.ave()<<" +- "<<mp.err()<<endl;
     cout<<"Mpi*L : "<<mp.ave()*L_list[i_ens]<<" +- "<<mp.err()*L_list[i_ens]<<endl;
     cout<<"L: "<<L_list[i_ens]<<endl;
     cout<<"agm2 pp+dual (L): "<<agm2_dual.ave()<<" +- "<<agm2_dual.err()<<endl;
     cout<<"agm2 pp+dual (1.5*L): "<<agm2_2L_dual.ave()<<" +- "<<agm2_2L_dual.err()<<endl;
+    cout<<"agm2 pp+dual (Mpi*L=4.2): "<<agm2_Lprime_dual.ave()<<" +- "<<agm2_Lprime_dual.err()<<endl;
     cout<<"agm2 pp+dual (L -> infty): "<<agm2_infL_dual.ave()<<" +- "<<agm2_infL_dual.err()<<endl; 
     cout<<"#######################################"<<endl;
     
@@ -1051,13 +1121,15 @@ void Gm2() {
   Print_To_File(V_light_1.Tag, {ZV_fit_light.ave(), ZV_fit_light.err(), MV_fit_light.ave(), MV_fit_light.err()}, "../data/gm2/light/"+light_suff+"/ZV_MV_fitted.list", "", "#Ens ZV MV");
 
  
-  //print fitted pars for all ensemble
-  Print_To_File(V_light_1.Tag, {L_list, a_list, ml_list, Mpi_fit.ave(), Mpi_fit.err(), Mpi_OS_fit.ave(), Mpi_OS_fit.err(),  fp_fit.ave(), fp_fit.err(), Zv_fit.ave(), Zv_fit.err(), Za_fit.ave(), Za_fit.err(), Zp_ov_Zs_fit.ave(), Zp_ov_Zs_fit.err(), Edual.ave(), Edual.err(), Rdual.ave(), Rdual.err(), Mrho.ave(), Mrho.err(), gpi.ave(), gpi.err()}, "../data/gm2/light/"+light_suff+"/fit_pars.list", "", "#ENS L a ml  Mpi_tm  Mpi_OS fp  Zv   Za   Zp/Zs  Edual Rdual Mrho g");
+  //print fitted pars for all ensembles
+  Print_To_File(V_light_1.Tag, {L_list, a_list, ml_list, Mpi_fit.ave(), Mpi_fit.err(), Mpi_OS_fit.ave(), Mpi_OS_fit.err(),  fp_fit.ave(), fp_fit.err(), Zv_fit.ave(), Zv_fit.err(), Za_fit.ave(), Za_fit.err(), Zp_ov_Zs_fit.ave(), Zp_ov_Zs_fit.err(), Edual.ave(), Edual.err(), Rdual.ave(), Rdual.err(), Mrho.ave(), Mrho.err(), (Mrho*Mpi_fit/a_distr_list).ave(), (Mrho*Mpi_fit/a_distr_list).err(), gpi.ave(), gpi.err()}, "../data/gm2/light/"+light_suff+"/fit_pars.list", "", "#ENS L a ml  Mpi_tm  Mpi_OS fp  Zv   Za   Zp/Zs  Edual Rdual Mrho g");
+
+ 
 
 
   
   //tm and OS pion mass, decay constant, RCs and agm2
-  Print_To_File(V_light_1.Tag, {L_list, a_list, ml_list, Mpi_fit.ave(), Mpi_fit.err(), Mpi_OS_fit.ave(), Mpi_OS_fit.err(),  fp_fit.ave(), fp_fit.err(), Zv_fit.ave(), Zv_fit.err(), Za_fit.ave(), Za_fit.err(), Zp_ov_Zs_fit.ave(), Zp_ov_Zs_fit.err(), agm2_light_fit.ave(), agm2_light_fit.err()}, "../data/gm2/light/"+light_suff+"/agm2_fit.list", "", "#ENS L a ml  Mpi_tm  Mpi_OS fp  Zv   Za   Zp/Zs    agm2_fit");
+  Print_To_File(V_light_1.Tag, {L_list, a_list, ml_list, Mpi_fit.ave(), Mpi_fit.err(), Mpi_OS_fit.ave(), Mpi_OS_fit.err(),  fp_fit.ave(), fp_fit.err(), Zv_fit.ave(), Zv_fit.err(), Za_fit.ave(), Za_fit.err(), Zp_ov_Zs_fit.ave(), Zp_ov_Zs_fit.err(), agm2_light_fit.ave(), agm2_light_fit.err(), agm2_light_2L_fit.ave(), agm2_light_2L_fit.err(), agm2_light_Lprime_fit.ave(), agm2_light_Lprime_fit.err()   , agm2_light_infL_fit.ave(), agm2_light_infL_fit.err()}, "../data/gm2/light/"+light_suff+"/agm2_fit.list", "", "#ENS L a ml  Mpi_tm  Mpi_OS fp  Zv   Za   Zp/Zs    agm2(L)    agm2(1.5L) agm2(Mpi*L=4.2)   agm2(infL)");
 
  
    

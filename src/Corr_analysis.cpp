@@ -519,6 +519,7 @@ distr_t_list CorrAnalysis::residue_t(const distr_t_list &corr_A_distr, string Ob
 
 
 
+
 distr_t_list CorrAnalysis::decay_constant_t(const VVfloat &corr_A, string Obs) {
 
   distr_t_list decay_constant_t(UseJack,Nt);

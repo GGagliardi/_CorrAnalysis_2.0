@@ -3,7 +3,7 @@
 using namespace std;
 
 
-const double r_mu = pow(0.10565837/0.493677,2); //0.046 //squared ratio m_mu / m_K
+const double r_mu =  pow(0.10565837/0.493677,2); //0.046 //squared ratio m_mu / m_K
 const double r_el = pow( 0.000510998950/0.493677,2); //1.1e-6 //squared ratio m_el / mK
 const double Gf = 1.1663787*1e-5; //Fermi constant in GeV^-2
 const double Vus=  0.2245; //0.220; //  0.2245; //Vus CKM matrix element
@@ -12,7 +12,7 @@ const double alpha = 1/137.036; //alpha constant
 const double eps_mumu= 1e-15;
 const double eps_ee = 1e-15;
 const double MkPh=  0.493677; //GeV
-const double fkPh =0.155;// 0.1136*sqrt(2); //0.155 ;//GeV
+const double fkPh =0.155; // 0.155;// 0.1136*sqrt(2); //0.155 ;//GeV
 const string MODE= "TOTAL";
 double cut = pow(0.140/MkPh,2); //pow(0.140/MkPh,2); //pow(0.050/MkPh,2); //  //4.0*r_el; // //0.001; // // pow(0.020/MkPh,2); 0.001; // 
 double error_goal_MC_ee = 100*1.0e-2*(Gamma/pow(Gf*Vus*alpha,2))*8.0*1.0e-8;
@@ -23,7 +23,7 @@ double error_goal_MC_mumumu= 0.5e-6*(1.2/F_same_lepton)*1e-8;
 double error_goal_MC_ee_extended= 0.1e-8*(8.5/F_same_lepton)*1e-8; 
 double error_goal_MC_mumu_extended = 0.5e-8*(0.8/F_same_lepton)*1e-8;
 bool USE_CHPT_FORM_FACTORS=false;
-const int SEED_VAL= 20543432;
+const int SEED_VAL= 366432;
 
 
 void display_results(char *title, double result, double error)

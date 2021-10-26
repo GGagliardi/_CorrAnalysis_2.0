@@ -74,6 +74,7 @@ public:
   void Fix_n_release(string A, double val) {this->To_release.insert(make_pair(A, val));}
   void Fix_n_release(string A) {Fix_n_release(A, nan("1"));}
   void Fix_n_release(const vector<string> &A) { for( auto &p:A) Fix_n_release(p);}
+  int Get_number_of_fit_pars() { return PNames.size()  - Fixed_pars.size() -To_release.size();}
   void Set_limits(string Name, double val_1, double val_2) {
 
     PList.SetLimits(Name, val_1,val_2);
@@ -179,6 +180,7 @@ void bootstrap_fit<T1,T2>::Append_to_prior(string Name, double val, double err) 
   
 
 }
+
 
 
 template <class T1, class T2> 
@@ -369,9 +371,11 @@ double Boot_err(Vfloat& A) ;
 double Boot_err(Vfloat& A, bool mode);
 Pfloat Boot_ave_err(VVfloat& A) ;
 Pfloat Boot_ave_err(VVfloat& A, bool mode);
+Pfloat Boot_ave_err(VVfloat& A, double resc, bool mode);
 double Boot_ave(VVfloat& A) ;
 double Boot_err(VVfloat& A);
 double Boot_err(VVfloat& A, bool mode);
+double Boot_err(VVfloat& A, double resc, bool mode);
 
 
 

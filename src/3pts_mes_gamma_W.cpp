@@ -1,6 +1,5 @@
 #include "../include/3pts_mes_gamma_W.h"
 
-
 using namespace std;
 namespace plt = matplotlibcpp;
 
@@ -1624,6 +1623,7 @@ void Compute_form_factors() {
 	      //compute_axial_correlators C_A_alpha^\mu for each alpha and mu
 	      //######################################################################
 	      corr.Reflection_sign = 1;
+	  
 	      int Im_Re= 0; double parity=1.0; double sign=1;
 	      if( (alpha==0 || mu==0) && (alpha != 0 || mu != 0)  ) {Im_Re=1; corr.Reflection_sign=-1;sign=1; parity=-1;}
 	      distr_no_symm_A[alpha][mu] = parity*e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, Im_Re, icomb3pt, alpha, mu, "A", sm_lev), "");

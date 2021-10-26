@@ -9,7 +9,9 @@ double rq_guess_V = pow(493.677/892 , 2); //Mk^2/Mk*^2(892)
 double rk_guess_A = pow(493.677/775.4,2) ; //Mk^2/Mrho^2
 double rq_guess_A = pow(493.677/1253 ,2); //Mk^2/Mk*^2(1270)
 double phi2_mass_ratio = pow(493.677/1019,2);
-const bool PURE_VMD=0;
+const bool PURE_VMD=1;
+double rk2_Mk2= 1.9540;
+double fk_mk= 0.3140;
 
 class Yff{
 
@@ -84,26 +86,35 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
 
   bf.Set_number_of_measurements(FF.size());
   bf.Set_verbosity(verbose);
-  //bf.set_warmup_lev(3);
+  //bf.set_warmup_lev(1);
   
 
   //Add parameters
   double a0, a0_err;
   if(ff_type=="H1" || ff_type == "H2") {a0=0.2; a0_err=0.01;} 
-  else if(ff_type=="FA")  {a0=0.05; a0_err=0.003;} 
+  else if(ff_type=="FA")  {a0=0.03; a0_err=0.003;} 
   else if(ff_type=="FV") {a0=0.08*Za_ov_Zv.ave(); a0_err=0.002*Za_ov_Zv.ave();}
   else crash("string : "+ff_type+" does not name a form factor");
   bf.Add_par("a0",a0, a0_err);
-  if(W != "H2") bf.Add_par("ampl",a0/100  , a0_err/100);
-  else bf.Add_par("ampl",-a0/100  , -a0_err/100);
+  bf.Add_par("ampl",0.2  , 0.03);
   if(W=="A") {
-  bf.Add_prior_par("rk", rk_guess_A, rk_guess_A);
-  bf.Add_prior_par("rq", rq_guess_A, rq_guess_A);
+    //bf.Add_prior_par("rk", rk_guess_A, rk_guess_A/10);   //COMMENT TO AVOID PRIOR ON RK RQ
+    //bf.Add_prior_par("rq", rq_guess_A, rq_guess_A/10);   //COMMENT TO AVOID PRIOR ON RK RQ
+    bf.Add_par("rk", rk_guess_A, rk_guess_A/10);
+    bf.Add_par("rq", rq_guess_A, rq_guess_A/10);
+  
+    if(ff_type=="H2") {  bf.Set_limits("rk", 0.0, 0.95);  bf.Set_limits("rq", -0.5, 1.0); }
+    else  { bf.Set_limits("rk", 0.0, 3.0*rk_guess_A); bf.Set_limits("rq", 0.0, 4.0*rq_guess_A);}
   }
   else if(W=="V") {
     
-    bf.Add_prior_par("rk", rk_guess_V, rk_guess_V);
-    bf.Add_prior_par("rq", rq_guess_V, rq_guess_V);
+    //bf.Add_prior_par("rk", rk_guess_V, rk_guess_V/10);  //COMMENT TO AVOID PRIOR ON RK RQ
+    //bf.Add_prior_par("rq", rq_guess_V, rq_guess_V/10);  //COMMENT TO AVOID PRIOR ON RK RQ
+    bf.Add_par("rk", rk_guess_V, rk_guess_V/10);
+    bf.Add_par("rq", rq_guess_V, rq_guess_V/10);
+    bf.Set_limits("rk", 0.0, 3.0*rk_guess_V);
+    bf.Set_limits("rq", 0.0, 3.0*rq_guess_V);
+    
   }
   else crash("string W: "+W+" is not axial or vector");
 
@@ -114,15 +125,14 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   if(W != "V") bf.Fix_par("Za_ov_Zv", 1.0);
 
   if(!PURE_VMD) {
-  bf.Fix_n_release("rk");
-  bf.Fix_n_release("rq");
+    //bf.Fix_n_release("rk");        //COMMENT TO AVOID PRIOR ON RK RQ
+    //bf.Fix_n_release("rq");        //COMMENT TO AVOID PRIOR ON RK RQ
   }
   if(W=="V") bf.Fix_n_release("Za_ov_Zv");
 
 
   if(PURE_VMD) {
     if(ff_type != "H2") bf.Fix_par("a0",0.0);
-    if(ff_type =="H2") bf.Set_limits("a0", 0,3.0);
     if(W=="V") {
       bf.Fix_par("rk", rk_guess_V);
       bf.Fix_par("rq", rq_guess_V);
@@ -134,15 +144,16 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   }
 
   //fix params to make test
-  if(ff_type=="FV" || ff_type=="FA" ||  ff_type=="H1")   bf.Fix_par("a0",0.0);
+  if(ff_type=="FV" || ff_type=="FA" ||  ff_type =="H1" || ff_type == "H2")   bf.Fix_par("a0",0.0);
+  
  
- 
+
 
   
   bf.ansatz =  [=](const Xff_VMD &p, const Yff &ip) -> double {
 		 double val =  p.a0 + p.ampl/((1.0-pow(ip.xk,2)*p.rk)*(1.0- pow(ip.xq,2)*p.rq));
-		 if(ff_type=="H2") val = p.a0+ 0.0*(2.0*ip.fp/ip.Mpi)*(  1.0/(1.0 -pow(ip.xk,2)*p.rk) -1.0)/pow(ip.xk,2)    + (p.ampl)*(1.0-pow(ip.xq,2))/(( 1.0-pow(ip.xk,2)*p.rk)*(1.0 -pow(ip.xq,2)*p.rq));
-		 if(ff_type=="H2") val =  (2.0*ip.fp/(ip.Mpi*pow(ip.xk,2)))*p.a0*(1.0/(1-pow(ip.xk,2)*p.rk)-1.0) + (1.0/pow(ip.xk,2))*p.ampl*(1.0-pow(ip.xq,2))/((1-pow(ip.xk,2)*p.rk)*(1.0 -pow(ip.xq,2)*p.rq));
+        
+		 if(ff_type=="H2") val = 1.0*p.ampl*(1.0/((1-pow(ip.xk,2)*p.rk)))*((1.0 - p.a0/(1.0-pow(ip.xq,2)*p.rq)))      ;
 		 return val;
   };
   bf.measurement = [=](const Xff_VMD& p,const Yff& ip) -> double {
@@ -177,9 +188,15 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   //add prior
       for(int ijack=0;ijack<njacks;ijack++) {
 	bf.ib= &ijack;
-        bf.Append_to_prior("rk", rk_guess_A, 0.3*rk_guess_A );
-	if(W=="A")  { bf.Append_to_prior("rq", rq_guess_A, rq_guess_A ); bf.Append_to_prior("Za_ov_Zv", 1.0, 1.0);}
-	else if(W=="V") {bf.Append_to_prior("rq", rq_guess_V, rq_guess_V ); bf.Append_to_prior("Za_ov_Zv", Za_ov_Zv.distr[ijack], Za_ov_Zv.err());}
+        //bf.Append_to_prior("rk", rk_guess_A, rk_guess_A );            //COMMENT TO AVOID PRIOR ON RK RQ
+	if(W=="A")  {
+	  //bf.Append_to_prior("rq", rq_guess_A, rq_guess_A );          //COMMENT TO AVOID PRIOR ON RK RQ
+	  bf.Append_to_prior("Za_ov_Zv", 1.0, 1.0);
+	}
+	else if(W=="V") {
+	  //bf.Append_to_prior("rq", rq_guess_V, rq_guess_V );          //COMMENT TO AVOID PRIOR ON RK RQ
+	  bf.Append_to_prior("Za_ov_Zv", Za_ov_Zv.distr[ijack], Za_ov_Zv.err());
+	}
 	else crash("string W: "+W+" is not axial nor vector");
       }
     
@@ -213,8 +230,7 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   for(int ijack=0;ijack<njacks;ijack++) {
     auto F = [=](double xk, double xq) -> double {
 	       double val= Bt_fit.par[ijack].a0 + Bt_fit.par[ijack].ampl/((1.0-pow(xk,2)*Bt_fit.par[ijack].rk)*(1.0 -pow(xq,2)*Bt_fit.par[ijack].rq));
-	       if(ff_type=="H2") val= Bt_fit.par[ijack].a0+  0.0*(2.0*f_p.distr[ijack]/m_p.distr[ijack])*(  1.0/(1.0 -pow(xk,2)*Bt_fit.par[ijack].rk) -1.0)/pow(xk,2)    + Bt_fit.par[ijack].ampl*(1.0-pow(xq,2))/(( 1.0-pow(xk,2)*Bt_fit.par[ijack].rk)*(1.0 -pow(xq,2)*Bt_fit.par[ijack].rq));
-	       if(ff_type=="H2") val = (2.0*f_p.distr[ijack]/(m_p.distr[ijack]*pow(xk,2)))*Bt_fit.par[ijack].a0*(1.0/(1-pow(xk,2)*Bt_fit.par[ijack].rk) -1.0) + (1.0/pow(xk,2))*Bt_fit.par[ijack].ampl*(1.0-pow(xq,2))/((1-pow(xk,2)*Bt_fit.par[ijack].rk)*(1.0 -pow(xq,2)*Bt_fit.par[ijack].rq));
+	       if(ff_type=="H2") val =  Bt_fit.par[ijack].ampl*( 1.0/((1-pow(xk,2)*Bt_fit.par[ijack].rk)))*(1.0- Bt_fit.par[ijack].a0/(1.0-pow(xq,2)*Bt_fit.par[ijack].rq));
 	       return val;
 	     };
     
