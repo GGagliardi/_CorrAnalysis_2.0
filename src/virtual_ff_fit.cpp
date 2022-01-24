@@ -7,9 +7,10 @@ const double step_size= 1.0/(double)nsteps;
 double rk_guess_V = pow(493.677/775.4,2)  ; //Mk^2 /Mrho^2
 double rq_guess_V = pow(493.677/892 , 2); //Mk^2/Mk*^2(892)
 double rk_guess_A = pow(493.677/775.4,2) ; //Mk^2/Mrho^2
+double rq_guess_H2 = 1.0;
 double rq_guess_A = pow(493.677/1253 ,2); //Mk^2/Mk*^2(1270)
 double phi2_mass_ratio = pow(493.677/1019,2);
-const bool PURE_VMD=1;
+const bool PURE_VMD=0;
 double rk2_Mk2= 1.9540;
 double fk_mk= 0.3140;
 
@@ -86,7 +87,7 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
 
   bf.Set_number_of_measurements(FF.size());
   bf.Set_verbosity(verbose);
-  //bf.set_warmup_lev(1);
+  bf.set_warmup_lev(1);
   
 
   //Add parameters
@@ -101,10 +102,13 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
     //bf.Add_prior_par("rk", rk_guess_A, rk_guess_A/10);   //COMMENT TO AVOID PRIOR ON RK RQ
     //bf.Add_prior_par("rq", rq_guess_A, rq_guess_A/10);   //COMMENT TO AVOID PRIOR ON RK RQ
     bf.Add_par("rk", rk_guess_A, rk_guess_A/10);
+    if(ff_type != "H2") {
     bf.Add_par("rq", rq_guess_A, rq_guess_A/10);
+    }
+    else bf.Add_par("rq", rq_guess_A, rq_guess_A/10);
   
-    if(ff_type=="H2") {  bf.Set_limits("rk", 0.0, 0.95);  bf.Set_limits("rq", -0.5, 1.0); }
-    else  { bf.Set_limits("rk", 0.0, 3.0*rk_guess_A); bf.Set_limits("rq", 0.0, 4.0*rq_guess_A);}
+    if(ff_type=="H2") {  bf.Set_limits("rk", 0.0, 1.0);  bf.Set_limits("rq", -0.5, 2.0*rq_guess_A); }
+    else  { bf.Set_limits("rk", 0.0, 3.0*rk_guess_A); bf.Set_limits("rq", -0.3, 4.0*rq_guess_A);}
   }
   else if(W=="V") {
     
@@ -132,7 +136,7 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
 
 
   if(PURE_VMD) {
-    if(ff_type != "H2") bf.Fix_par("a0",0.0);
+    bf.Fix_par("a0",0.0);
     if(W=="V") {
       bf.Fix_par("rk", rk_guess_V);
       bf.Fix_par("rq", rq_guess_V);
@@ -144,7 +148,7 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   }
 
   //fix params to make test
-  if(ff_type=="FV" || ff_type=="FA" ||  ff_type =="H1" || ff_type == "H2")   bf.Fix_par("a0",0.0);
+  if(ff_type=="FV" || ff_type=="FA" ||  ff_type =="H1" || ff_type =="H2")   bf.Fix_par("a0",0.0);
   
  
 
@@ -153,7 +157,7 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   bf.ansatz =  [=](const Xff_VMD &p, const Yff &ip) -> double {
 		 double val =  p.a0 + p.ampl/((1.0-pow(ip.xk,2)*p.rk)*(1.0- pow(ip.xq,2)*p.rq));
         
-		 if(ff_type=="H2") val = 1.0*p.ampl*(1.0/((1-pow(ip.xk,2)*p.rk)))*((1.0 - p.a0/(1.0-pow(ip.xq,2)*p.rq)))      ;
+		 if(ff_type=="H2") val =p.a0 + p.ampl*(1.0/((1.0-pow(ip.xk,2)*p.rk)*(1.0-pow(ip.xq,2)*p.rq)))     ;
 		 return val;
   };
   bf.measurement = [=](const Xff_VMD& p,const Yff& ip) -> double {
@@ -230,7 +234,7 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   for(int ijack=0;ijack<njacks;ijack++) {
     auto F = [=](double xk, double xq) -> double {
 	       double val= Bt_fit.par[ijack].a0 + Bt_fit.par[ijack].ampl/((1.0-pow(xk,2)*Bt_fit.par[ijack].rk)*(1.0 -pow(xq,2)*Bt_fit.par[ijack].rq));
-	       if(ff_type=="H2") val =  Bt_fit.par[ijack].ampl*( 1.0/((1-pow(xk,2)*Bt_fit.par[ijack].rk)))*(1.0- Bt_fit.par[ijack].a0/(1.0-pow(xq,2)*Bt_fit.par[ijack].rq));
+	       if(ff_type=="H2") val = Bt_fit.par[ijack].a0+  Bt_fit.par[ijack].ampl*(1.0/((1.0 -pow(xk,2)*Bt_fit.par[ijack].rk)*(1.0 -pow(xq,2)*Bt_fit.par[ijack].rq)));
 	       return val;
 	     };
     
@@ -302,7 +306,6 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
 
  
 
-
   bootstrap_fit<Xff_ChPT,Yff> bf(njacks);
 
 
@@ -323,9 +326,9 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
   //bf.Fix_par("aq",0.0);
   //bf.Fix_par("akq",0.0);
   //bf.Fix_par("ak",0.0);
+  if(ff_type != "H1") bf.Fix_par("a2kq",0.0);                                    //                    YOU FIX HERE TO ZERO THE PARAMETER a2kq
 
-  //if(ff_type =="H2") bf.Fix_par("a2kq",0.0);
-
+ 
   //fix n release Za/Zv
   bf.Add_prior_par("Za_ov_Zv", Za_ov_Zv.ave(), Za_ov_Zv.err());
   if(W != "V") bf.Fix_par("Za_ov_Zv", 1.0);

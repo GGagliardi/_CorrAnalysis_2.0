@@ -19,6 +19,12 @@ public:
     cout<<"average bootstrap chi2: "<<ch2<<" +- "<<sqrt( ((N-1.0)/N)*(err_ch2- ch2*ch2))<<endl;
     return;
   }
+  double get_ch2_ave() {
+    double ch2=0.0;
+    double N= (double)chi2.size();
+    for(auto &c :chi2) ch2+=c/N;
+    return ch2;
+  }
   Vfloat chi2;
   Vfloat EDM;
   Vfloat N_it;
@@ -83,6 +89,7 @@ public:
   int P(string A) const ;
   void set_warmup() {warm_up=true;};
   void set_warmup_lev(int ilev) {if(ilev <0) crash("cannot set warm up lev to negative number");warm_up=ilev;}
+  void Set_print_path(string A) { this->PATH = A;}
 
 
   

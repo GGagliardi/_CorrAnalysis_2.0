@@ -126,6 +126,11 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
     //do nothing
 
   }
+
+  else if(Analysis_Mode=="Spectral") {
+    //do nothing
+
+  }
   
   
   else crash("Analysis_Mode: "+Analysis_Mode+" not found");
@@ -182,6 +187,11 @@ void MasterClass_analysis::Analysis_manager() {
 
     Gm2();
 
+  }
+
+  if(Analysis_Mode == "Spectral") {
+
+    Spectral_tests();
   }
   return;
 

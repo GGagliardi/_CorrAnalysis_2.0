@@ -13,8 +13,9 @@ const double eps_mumu= 1e-15;
 const double eps_ee = 1e-15;
 const double MkPh=  0.493677; //GeV
 const double fkPh =0.155; // 0.155;// 0.1136*sqrt(2); //0.155 ;//GeV
-const string MODE= "TOTAL";
-double cut = pow(0.140/MkPh,2); //pow(0.140/MkPh,2); //pow(0.050/MkPh,2); //  //4.0*r_el; // //0.001; // // pow(0.020/MkPh,2); 0.001; // 
+string MODE= "TOTAL";
+double cut = pow(0.140/MkPh,2); //pow(0.140/MkPh,2); //pow(0.050/MkPh,2); //  //4.0*r_el; // //0.001; // // pow(0.020/MkPh,2); 0.001; //
+double cut_mumu= 4.0*r_mu;
 double error_goal_MC_ee = 100*1.0e-2*(Gamma/pow(Gf*Vus*alpha,2))*8.0*1.0e-8;
 double error_goal_MC_mumu= 100*1.0e-2*(Gamma/pow(Gf*Vus*alpha,2))*1.0e-8;
 double F_same_lepton= pow(Gf*Vus*alpha,2)*(1.0/Gamma)*(1.0/(pow(M_PI,4)*pow(2.0,12)));
@@ -34,7 +35,7 @@ void display_results(char *title, double result, double error)
 }
 
 
-double MonteCarlo_integration_extended_phase_space(const function<double(double,double)> &H1, const function<double(double,double)> &H2, const function<double(double,double)> &FA, const function<double(double,double)> &FV,double mk, double fk, string channel, bool same_lepton, int MySeed) {
+double MonteCarlo_integration_extended_phase_space(const function<double(double,double)> &H1, const function<double(double,double)> &H2, const function<double(double,double)> &FA, const function<double(double,double)> &FV,double mk, double fk, string channel, double xk_inf,  bool same_lepton, int MySeed, string mode) {
 
   VPfloat bounds;
   double bound_l[5];
@@ -50,9 +51,9 @@ double MonteCarlo_integration_extended_phase_space(const function<double(double,
       rll=r_el;
     }
     error_goal= error_goal_MC_eee;
-    bounds = VPfloat{ { sqrt(cut),1-sqrt(rl)}, {sqrt(rl), 1.0}, {-1.0, 1.0}, {-1.0,1.0}, {0.0, 2.0*M_PI}};
+    bounds = VPfloat{ { xk_inf,1-sqrt(rl)}, {sqrt(rl), 1.0}, {-1.0, 1.0}, {-1.0,1.0}, {0.0, 2.0*M_PI}};
 
-    bound_l[0] = sqrt(cut);
+    bound_l[0] = xk_inf;
     bound_l[1]= sqrt(rl);
     bound_l[2] = -1.0;
     bound_l[3] = -1.0;
@@ -76,7 +77,7 @@ double MonteCarlo_integration_extended_phase_space(const function<double(double,
       rll=r_mu;
     }
     error_goal= error_goal_MC_mumumu;
-    bound_l[0] = 2.0*sqrt(rll);
+    bound_l[0] = xk_inf; //2.0*sqrt(rll);
     bound_l[1]= sqrt(rl);
     bound_l[2] = -1.0;
     bound_l[3] = -1.0;
@@ -86,7 +87,7 @@ double MonteCarlo_integration_extended_phase_space(const function<double(double,
     bound_u[2] = 1.0;
     bound_u[3] = 1.0;
     bound_u[4] = 2.0*M_PI;
-    bounds = VPfloat{ { 2.0*sqrt(rll),1-sqrt(rl)}, {sqrt(rl), 1.0}, {-1.0, 1.0}, {-1.0,1.0}, {0.0, 2.0*M_PI} };
+    bounds = VPfloat{ { xk_inf,1-sqrt(rl)}, {sqrt(rl), 1.0}, {-1.0, 1.0}, {-1.0,1.0}, {0.0, 2.0*M_PI} };
 
     
     //bounds = VPfloat{ { 4.0*rll, pow(1.0-sqrt(rl),2)}, {rl, 1.0}, {-1.0,1.0}, {-1.0,1.0}, {0.0, 2.0*M_PI}};
@@ -151,26 +152,13 @@ double MonteCarlo_integration_extended_phase_space(const function<double(double,
 
 			    
 			     double xk= par[0];
-			     //xk= sqrt(xk);
-			     //double xq= par[1]*sqrt(rl) + (1.0-par[1])*(1.0-xk);
-			     //xq = par[1]*rl + (1.0-par[1])*pow(1.0- xk,2);
-			     //xq = sqrt(xq);
 			     double xq= par[1];
 			     if(xq > 1.0-xk) return 0.0;
-			     //xq= sqrt(xq);
 			     double y12= par[2]*l_12(xk);
 			     double y34= par[3]*l_34(xq);
 			     double phi=par[4];
 
-			     
-			     //y12= par[2];
-			     //y34= par[3];
-			     
-			   
-			     //if( fabs(y12) > l_12(xk) || fabs(y34) > l_34(xq)) return 0.0;
-
-
-			     // cout<<channel<<" xk: "<<xk<<" xq: "<<xq<<endl<<flush;
+			
 			     
 			     double a= A(xk,xq, y12, y34, phi);
 			     double b= B(xk,xq, y12, y34, phi);
@@ -182,8 +170,8 @@ double MonteCarlo_integration_extended_phase_space(const function<double(double,
 			     if(xk_prime < 2.0*sqrt(rll) && same_lepton) crash("invalid xk_prime generated");
 			     if(xk < 2.0*sqrt(rll)) crash("invalid xk generated");
 
-			     if(channel=="e+e-" && xk_prime < sqrt(cut) && same_lepton) return 0.0;
-			  
+			     if(xk_prime < xk_inf && same_lepton) return 0.0;
+			  			  
 			 
 			     double jacobian= 4.0*xk*xq;
 
@@ -202,22 +190,22 @@ double MonteCarlo_integration_extended_phase_space(const function<double(double,
 				crash("v1 and v2 do not match");
 			      }
 			       */
-			      square_ampl= Compute_square_amplitude_extended_v2(H1(xk,xq), H2(xk,xq), FA(xk,xq), FV(xk,xq), H1(xk_prime,xq_prime), H2(xk_prime, xq_prime), FA(xk_prime, xq_prime), FV(xk_prime,xq_prime), mk, fk,rl,xk, xq, a,b,Y, MODE )*(jacobian*l_12(xk)*l_34(xq)*lambda(xk,xq)/mk)*pow(MkPh/mk,5);
+			      square_ampl= Compute_square_amplitude_extended_v2(H1(xk,xq), H2(xk,xq), FA(xk,xq), FV(xk,xq), H1(xk_prime,xq_prime), H2(xk_prime, xq_prime), FA(xk_prime, xq_prime), FV(xk_prime,xq_prime), mk, fk,rl,xk, xq, a,b,Y, mode )*(jacobian*l_12(xk)*l_34(xq)*lambda(xk,xq)/mk)*pow(MkPh/mk,5);
 
 			     }
 
 			     else {
-			       /*
+			       
 			       long double amplitude_v1 = Compute_square_amplitude_different_lepton(H1(xk,xq), H2(xk,xq), FA(xk,xq), FV(xk,xq), mk, fk,rl,rll,xk, xq, a,b,Y, MODE );
 			       long double amplitude_v2 = Compute_square_amplitude_different_lepton_v2(H1(xk,xq), H2(xk,xq), FA(xk,xq), FV(xk,xq), mk, fk,rl,rll,xk, xq, a,b,Y, MODE );
-			       if( amplitude_v1/amplitude_v2 < 1 -1e-4 || amplitude_v1/amplitude_v2 > 1+ 1e-4) {
+			       if( amplitude_v1/amplitude_v2 < 1 -1e-6 || amplitude_v1/amplitude_v2 > 1+ 1e-6) {
 				cout.precision(10);
 				cout<<"v1: "<<amplitude_v1<<endl;
 				cout<<"v2: "<<amplitude_v2<<endl;
 				crash("v1 and v2 do not match");
 			       }
-			       */
-			       square_ampl = 2.0*(jacobian*l_12(xk)*l_34(xq)*lambda(xk,xq)/mk)*pow(MkPh/mk,5)*Compute_square_amplitude_different_lepton(H1(xk,xq), H2(xk,xq), FA(xk,xq), FV(xk,xq), mk, fk,rl,rll,xk, xq, a,b,Y, MODE );
+			       
+			       square_ampl = 2.0*(jacobian*l_12(xk)*l_34(xq)*lambda(xk,xq)/mk)*pow(MkPh/mk,5)*Compute_square_amplitude_different_lepton(H1(xk,xq), H2(xk,xq), FA(xk,xq), FV(xk,xq), mk, fk,rl,rll,xk, xq, a,b,Y, mode );
 
 			     }
 			     
@@ -229,7 +217,7 @@ double MonteCarlo_integration_extended_phase_space(const function<double(double,
     //VEGAS GLS INTEGRATION
 
     double res_vegas, err_vegas;
-    size_t calls = 1000000;
+    size_t calls = 500000; //old was 1000000; 
 
     const gsl_rng_type *T;
      gsl_rng *r;
@@ -250,15 +238,13 @@ double MonteCarlo_integration_extended_phase_space(const function<double(double,
 
     // G.f = #c function
 
- 
-
-
 
 
     gsl_monte_vegas_state *s = gsl_monte_vegas_alloc(5);
 
+    int warmup_calls= 50000; //old was 100000;
 
-    gsl_monte_vegas_integrate (G, bound_l, bound_u, 5, 100000, r, s,
+    gsl_monte_vegas_integrate (G, bound_l, bound_u, 5, warmup_calls, r, s,
                                &res_vegas, &err_vegas);
 
     //display_results ("vegas warm-up", res_vegas, err_vegas);
@@ -288,7 +274,7 @@ double MonteCarlo_integration_extended_phase_space(const function<double(double,
 }
 
 
-Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(double, double)>> &H1, vector<function<double(double, double)>> &H2  , vector<function<double(double, double)>> &FA,  vector<function<double(double, double)>> &FV, distr_t &m_distr, distr_t & fp_distr, bool UseJack) {
+Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(double, double)>> &H1, vector<function<double(double, double)>> &H2  , vector<function<double(double, double)>> &FA,  vector<function<double(double, double)>> &FV, distr_t &m_distr, distr_t & fp_distr, bool UseJack, string Meson, bool Print_rate) {
 
 
   
@@ -309,6 +295,49 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
   //relative accuracy in integration
   Res.eps_rel_mumu= eps_mumu;
   Res.eps_rel_ee = eps_ee;
+
+
+  //define distr_t_list to store the differential rate (unequal leptons decay)
+  int Npoints_d=100;
+  double off_d_e = 2.0*sqrt(r_el);
+  double step_p_d_e= 1e-2;
+  double step_p_d_e_2 = 3e-6;
+  double off_d_mu = 2.0*sqrt(r_mu);
+  double step_p_d_mu = (1.0-sqrt(r_mu) - 2.0*sqrt(r_mu))/Npoints_d;
+  double step_p_d_mu_2 = step_p_d_mu/1000;
+  Vfloat p_list_d_e;
+  Vfloat p_list_d_mu;
+  for(int ip=0;ip<Npoints_d;ip++) p_list_d_e.push_back( off_d_e + ip*step_p_d_e_2);
+  for(int ip=1;ip<Npoints_d;ip++) p_list_d_e.push_back( off_d_e + ip*step_p_d_e);
+  for(int ip=0;ip<Npoints_d;ip++) p_list_d_mu.push_back( off_d_mu + ip*step_p_d_mu_2);
+  for(int ip=1;ip<Npoints_d;ip++) p_list_d_mu.push_back( off_d_mu + ip*step_p_d_mu);
+  distr_t_list Plot_diff_rate_ee_tot(UseJack, (signed)p_list_d_e.size() );
+  distr_t_list Plot_diff_rate_ee_SD(UseJack, (signed)p_list_d_e.size() );
+  distr_t_list Plot_diff_rate_ee_pt(UseJack, (signed)p_list_d_e.size() );
+  distr_t_list Plot_diff_rate_ee_Q(UseJack, (signed)p_list_d_e.size());
+  distr_t_list Plot_diff_rate_ee_int(UseJack, (signed)p_list_d_e.size());
+  distr_t_list Plot_diff_rate_mumu_tot(UseJack, (signed)p_list_d_mu.size());
+  distr_t_list Plot_diff_rate_mumu_SD(UseJack, (signed)p_list_d_mu.size());
+  distr_t_list Plot_diff_rate_mumu_pt(UseJack, (signed)p_list_d_mu.size());
+  distr_t_list Plot_diff_rate_mumu_Q(UseJack, (signed)p_list_d_mu.size());
+  distr_t_list Plot_diff_rate_mumu_int(UseJack, (signed)p_list_d_mu.size());
+
+  //define distr_t_list to store the total rate as a function of the lower cut
+  int Npoints_c= 20;
+  double off_c_e = 3.5e-2;
+  double step_p_c_e = 3.5e-2;
+  double off_c_mu = 2.0*sqrt(r_mu);
+  double step_p_c_mu = (0.67 -2.0*sqrt(r_mu))/Npoints_c;
+  Vfloat p_list_c_e;
+  Vfloat p_list_c_mu;
+  for(int ip=0; ip<Npoints_c;ip++) p_list_c_e.push_back( off_c_e + ip*step_p_c_e);
+  for(int ip=0; ip<Npoints_c;ip++) p_list_c_mu.push_back( off_c_mu + ip*step_p_c_mu);
+  distr_t_list Plot_cut_rate_eee_tot(UseJack, Npoints_c );
+  distr_t_list Plot_cut_rate_eee_SD(UseJack, Npoints_c );
+  distr_t_list Plot_cut_rate_eee_pt(UseJack, Npoints_c );
+  distr_t_list Plot_cut_rate_mumumu_tot(UseJack, Npoints_c);
+  distr_t_list Plot_cut_rate_mumumu_SD(UseJack, Npoints_c);
+  distr_t_list Plot_cut_rate_mumumu_pt(UseJack, Npoints_c);
 
   //loop over jackknives
   for(int ijack=0; ijack< Njacks; ijack++) {
@@ -333,8 +362,7 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
     //fp=fkPh;
 
     
-
-    
+ 
 
     
 
@@ -342,13 +370,14 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
     auto Rt_diff = [&](double xk, double xq, double l, double ll) -> double {
 
 		     double Int= ptrate(xk,xq, l, ll, m, fp);
-		     double interference= H1[ijack](xk,xq)*kern1(xk, xq, l, ll, m,fp) + H2[ijack](xk,xq)*kern2(xk, xq, l, ll, m,fp) + FA[ijack](xk,xq)*kernA(xk,xq,l,ll,m,fp) + FV[ijack](xk,xq)*kernV(xk,xq,l,ll,m,fp);
+		     double interference= H1[ijack](xk,xq)*kern1(xk, xq, l, ll, m,fp) + H2[ijack](xk,xq)*kern2(xk, xq, l, ll, m,fp) + FA[ijack](xk,xq)*kernA(xk,xq,l,ll,m,fp) +FV[ijack](xk,xq)*kernV(xk,xq,l,ll,m,fp);
 		     double quadratic= pow(H1[ijack](xk,xq),2)*kern11(xk,xq,l,ll,m) + pow(H2[ijack](xk,xq),2)*kern22(xk,xq,l,ll,m) + pow(FA[ijack](xk,xq),2)*kernAA(xk,xq,l,ll,m) + pow(FV[ijack](xk,xq),2)*kernVV(xk,xq,l,ll,m) + H1[ijack](xk,xq)*H2[ijack](xk,xq)*kern12(xk,xq,l,ll,m) + H1[ijack](xk,xq)*FA[ijack](xk,xq)*kernA1(xk,xq,l,ll,m);
 		     double jacobian= 4.0*xk*xq;
 		     
 		     if(MODE=="PT") return Int*jacobian*pow(MkPh/m,5);
 		     else if(MODE=="INTERFERENCE") return interference*jacobian*pow(MkPh/m,5);
 		     else if(MODE=="QUADRATIC") return quadratic*jacobian*pow(MkPh/m,5);
+		     else if(MODE=="SD") return (quadratic+interference)*jacobian*pow(MkPh/m,5);
 		     else if(MODE=="TOTAL") return (Int+interference+quadratic)*jacobian*pow(MkPh/m,5);
 		     else crash(" In Rt_diff MODE: "+MODE+" not yet implemented");
     };
@@ -359,7 +388,7 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
     double rl=r_mu;
     double rll=r_el;
 
-  
+ 
     eps=eps_ee;
 
     auto Fxk= [&](double xk) -> double {
@@ -377,7 +406,34 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
     cout<<"Relative error achieved in Quad e+e- for jack: "<<ijack<<" is: "<<(pow(alpha*Gf*Vus,2)/Gamma)*error_ee<<endl;
     cout<<"Branching ratio Quad e+e-: "<<res_ee<<endl;
     cout<<"################"<<endl;
+
+    //compute diff rate e+e- for plotting
+
     
+    if(Print_rate) {
+      string OLD_MODE= MODE;
+      for(int ip=0; ip<(signed)p_list_d_e.size(); ip++) {
+	double xk_p= p_list_d_e[ip];
+	MODE= "TOTAL";
+	Plot_diff_rate_ee_tot.distr_list[ip].distr.push_back( Fxk(xk_p)*pow(alpha*Gf*Vus,2)/Gamma);
+	MODE= "SD";
+	Plot_diff_rate_ee_SD.distr_list[ip].distr.push_back( Fxk(xk_p)*pow(alpha*Gf*Vus,2)/Gamma);
+	MODE= "QUADRATIC";
+	Plot_diff_rate_ee_Q.distr_list[ip].distr.push_back( Fxk(xk_p)*pow(alpha*Gf*Vus,2)/Gamma);
+	MODE= "PT";
+	Plot_diff_rate_ee_pt.distr_list[ip].distr.push_back( Fxk(xk_p)*pow(alpha*Gf*Vus,2)/Gamma);
+	MODE="INTERFERENCE";
+	Plot_diff_rate_ee_int.distr_list[ip].distr.push_back( Fxk(xk_p)*pow(alpha*Gf*Vus,2)/Gamma);
+      }
+      //restore old mode
+      MODE=OLD_MODE;
+    }
+
+    
+
+      
+    
+   
     //mu+mu-
 
     rl=r_el;
@@ -393,6 +449,33 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
     cout<<"################"<<endl;
     //perform MonteCarlo Integration
     cout<<"#####Monte Carlo integration#####"<<endl;
+
+    //compute diff rate mu+mu- for plotting
+
+    if(Print_rate) {
+    string OLD_MODE= MODE;
+    for(int ip=0; ip<(signed)p_list_d_mu.size(); ip++) {
+	double xk_p= p_list_d_mu[ip];
+	MODE= "TOTAL";
+	Plot_diff_rate_mumu_tot.distr_list[ip].distr.push_back( Fxk(xk_p)*pow(alpha*Gf*Vus,2)/Gamma);
+	MODE= "SD";
+	Plot_diff_rate_mumu_SD.distr_list[ip].distr.push_back( Fxk(xk_p)*pow(alpha*Gf*Vus,2)/Gamma);
+	MODE= "QUADRATIC";
+	Plot_diff_rate_mumu_Q.distr_list[ip].distr.push_back( Fxk(xk_p)*pow(alpha*Gf*Vus,2)/Gamma);
+	MODE= "PT";
+	Plot_diff_rate_mumu_pt.distr_list[ip].distr.push_back( Fxk(xk_p)*pow(alpha*Gf*Vus,2)/Gamma);
+	MODE="INTERFERENCE";
+	Plot_diff_rate_mumu_int.distr_list[ip].distr.push_back( Fxk(xk_p)*pow(alpha*Gf*Vus,2)/Gamma);
+      }
+      //restore old mode
+      MODE=OLD_MODE;
+
+    }
+  
+
+
+
+
     
     //define lambda function for Monte Carlo Integration
 
@@ -467,7 +550,7 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
     
     
 
-    double res_eee_MC = MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "e+e-", 1, RM());
+    double res_eee_MC = MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "e+e-", sqrt(cut),1,  RM(), MODE);
 
     Res.Jack_Distr_Int_MonteCarlo_eee.distr.push_back(res_eee_MC);
     Res.Stat_err_MonteCarlo_eee.push_back(error_goal_MC_eee/res_eee_MC);
@@ -476,11 +559,31 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
     cout<<"################"<<endl;
 
 
+    //store total rate eee as a function of the inf cut for eee
+    if(Print_rate) {
+      for(int ip=0; ip<Npoints_c;ip++) {
+	double xk_cut = off_c_e+ ip*step_p_c_e;
+	string MODE_NEW="TOTAL";
+	cout<<"computing  e+e-e+ for xk_cut: "<<xk_cut<<" MODE: "<<MODE_NEW<<endl;
+	double res_eee_tot_MC = MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "e+e-", xk_cut, 1, RM(), MODE_NEW);
+	Plot_cut_rate_eee_tot.distr_list[ip].distr.push_back(res_eee_tot_MC);
+	MODE_NEW="PT";
+	cout<<"computing e+e-e+ for xk_cut: "<<xk_cut<<" MODE: "<<MODE_NEW<<endl;
+	double res_eee_pt_MC = MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "e+e-", xk_cut, 1, RM(), MODE_NEW);
+	Plot_cut_rate_eee_pt.distr_list[ip].distr.push_back(res_eee_pt_MC);
+	//MODE_NEW="SD";
+	//cout<<"computing  e+e-e+ for xk_cut: "<<xk_cut<<" MODE: "<<MODE_NEW<<endl;
+	//double res_eee_SD_MC = MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "e+e-", xk_cut, 1, RM(), MODE_NEW);
+	Plot_cut_rate_eee_SD.distr_list[ip].distr.push_back(res_eee_tot_MC-res_eee_pt_MC);
+      }
+    }
+
+
 
     
     //redo e+e-
 
-    double res_ee_MC_extended= MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "e+e-", 0, RM());
+    double res_ee_MC_extended= MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "e+e-", sqrt(cut), 0, RM(), MODE);
     cout<<"Relative error achieved in Monte Carlo e+e- (Extended) for jack: "<<ijack<<" is: "<<F_same_lepton*error_goal_MC_ee_extended/res_ee_MC_extended<<endl;
     cout<<"Branching ratio Monte Carlo e+e- (Extended): "<<res_ee_MC_extended<<endl;
     cout<<"################"<<endl;
@@ -494,7 +597,7 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
 
     //mu+mu-mu+
 
-    double res_mumumu_MC = MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "mu+mu-", 1, RM());
+    double res_mumumu_MC = MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "mu+mu-", sqrt(cut_mumu), 1, RM(), MODE);
 
     Res.Jack_Distr_Int_MonteCarlo_mumumu.distr.push_back(res_mumumu_MC);
     Res.Stat_err_MonteCarlo_mumumu.push_back(error_goal_MC_mumumu/res_mumumu_MC);
@@ -502,11 +605,33 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
     cout<<"Branching ratio Monte Carlo mu+mu-mu+: "<<res_mumumu_MC<<endl;
     cout<<"################"<<endl;
 
+
+    
+    //store total rate mumumu as a function of the inf cut for eee
+    if(Print_rate) {
+      for(int ip=0; ip<Npoints_c;ip++) {
+	double xk_cut = off_c_mu+ ip*step_p_c_mu;
+	string MODE_NEW="TOTAL";
+	cout<<"computing mu+mu-mu+ for xk_cut: "<<xk_cut<<" MODE: "<<MODE_NEW<<endl;
+	double res_mumumu_tot_MC = MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "mu+mu-", xk_cut, 1, RM(), MODE_NEW);
+	Plot_cut_rate_mumumu_tot.distr_list[ip].distr.push_back(res_mumumu_tot_MC);
+	MODE_NEW="PT";
+	cout<<"computing mu+mu-mu+ for xk_cut: "<<xk_cut<<" MODE: "<<MODE_NEW<<endl;
+	double res_mumumu_pt_MC = MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "mu+mu-", xk_cut, 1, RM(), MODE_NEW);
+	Plot_cut_rate_mumumu_pt.distr_list[ip].distr.push_back(res_mumumu_pt_MC);
+	//MODE_NEW="SD";
+	//cout<<"computing mu+mu-mu+ for xk_cut: "<<xk_cut<<" MODE: "<<MODE_NEW<<endl;
+	//double res_mumumu_SD_MC = MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "mu+mu-", xk_cut, 1, RM(), MODE_NEW);
+	Plot_cut_rate_mumumu_SD.distr_list[ip].distr.push_back(res_mumumu_tot_MC- res_mumumu_pt_MC);
+      }
+    }
+
+
     
 
     //redo mu+mu-
 
-    double res_mumu_MC_extended= MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "mu+mu-", 0, RM());
+    double res_mumu_MC_extended= MonteCarlo_integration_extended_phase_space(H1[ijack], H2[ijack], FA[ijack], FV[ijack], m, fp, "mu+mu-", sqrt(cut_mumu), 0, RM(), MODE);
     cout<<"Relative error achieved in Monte Carlo mu+mu- (Extended) for jack: "<<ijack<<" is: "<<F_same_lepton*error_goal_MC_mumu_extended/res_mumu_MC_extended<<endl;
     cout<<"Branching ratio Monte Carlo mu+mu- (Extended): "<<res_mumu_MC_extended<<endl;
     cout<<"################"<<endl;
@@ -534,6 +659,24 @@ Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(do
   Res.Int_MonteCarlo_val_mumumu = Res.Jack_Distr_Int_MonteCarlo_mumumu.ave();
   Res.Int_MonteCarlo_err_eee = Res.Jack_Distr_Int_MonteCarlo_eee.err();
   Res.Int_MonteCarlo_err_mumumu = Res.Jack_Distr_Int_MonteCarlo_mumumu.err();
+
+
+ 
+  //plot diff rate for e+e- and mu+mu-
+  if(Print_rate) {
+  boost::filesystem::create_directory("../data/form_factors/"+Meson+"/diff_rate");
+  Print_To_File({}, {p_list_d_e, Plot_diff_rate_ee_tot.ave(), Plot_diff_rate_ee_tot.err(), Plot_diff_rate_ee_SD.ave(), Plot_diff_rate_ee_SD.err(), Plot_diff_rate_ee_Q.ave(), Plot_diff_rate_ee_Q.err(), Plot_diff_rate_ee_pt.ave(), Plot_diff_rate_ee_pt.err(), Plot_diff_rate_ee_int.ave(), Plot_diff_rate_ee_int.err()}, "../data/form_factors/"+Meson+"/diff_rate/diff_rate_ee.dat", "", "#xk    tot    sd  quadratic   pt     int");
+  Print_To_File({}, {p_list_d_mu, Plot_diff_rate_mumu_tot.ave(), Plot_diff_rate_mumu_tot.err(), Plot_diff_rate_mumu_SD.ave(), Plot_diff_rate_mumu_SD.err(), Plot_diff_rate_mumu_Q.ave(), Plot_diff_rate_mumu_Q.err(), Plot_diff_rate_mumu_pt.ave(), Plot_diff_rate_mumu_pt.err(), Plot_diff_rate_mumu_int.ave(), Plot_diff_rate_mumu_int.err()}, "../data/form_factors/"+Meson+"/diff_rate/diff_rate_mumu.dat", "", "#xk   tot    sd  quadratic   pt    int");
+  }
+
+
+   if(Print_rate) {
+  //plot total rate for e+e-e+ and mu+mu-mu+ as a function of the lower cut
+   boost::filesystem::create_directory("../data/form_factors/"+Meson+"/tot_rate_lcut");
+   Print_To_File({}, {p_list_c_e, Plot_cut_rate_eee_tot.ave(), Plot_cut_rate_eee_tot.err(), Plot_cut_rate_eee_SD.ave(), Plot_cut_rate_eee_SD.err(), Plot_cut_rate_eee_pt.ave(), Plot_cut_rate_eee_pt.err()}, "../data/form_factors/"+Meson+"/tot_rate_lcut/rate_eee.dat", "", "#xk    tot    sd     pt");
+   Print_To_File({}, {p_list_c_mu, Plot_cut_rate_mumumu_tot.ave(), Plot_cut_rate_mumumu_tot.err(), Plot_cut_rate_mumumu_SD.ave(), Plot_cut_rate_mumumu_SD.err(), Plot_cut_rate_mumumu_pt.ave(), Plot_cut_rate_mumumu_pt.err()}, "../data/form_factors/"+Meson+"/tot_rate_lcut/rate_mumumu.dat", "", "#xk   tot    sd     pt");
+   }
+  
 
 
   return Res;

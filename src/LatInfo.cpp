@@ -159,6 +159,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Za_err=0.009;
     Zv=0.6960;;
     Zv_err=0.0007;
+    ms_L=0.02050; ms_M=0.02300; ms_H= 0.02550;
+    mc_L= 0.24000; mc_M=0.26500; mc_H=0.29000;
   }
 
   else if(Tag.substr(1,1)=="B") {
@@ -168,8 +170,22 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_nucleon_err=0.00032;
     Za=0.746;
     Za_err=0.008;
+    if(Tag == "cB211b.072.64") {
+      Za_WI = 0.71403 ;
+      Za_WI_err = 0.00077 ;
+      Zv_WI = 0.709932 ;
+      Zv_WI_err = 0.000007;
+    }
+    else if (Tag == "cB211b.072.96") {
+      Za_WI = 0.71577 ;
+      Za_WI_err = 0.00035 ;
+      Zv_WI = 0.709950 ;
+      Zv_WI_err = 0.000005;
+    }
     Zv=0.7131;
     Zv_err=0.0006;
+    ms_L=0.019; ms_M=0.021; ms_H=0.02150;
+    mc_L= 0.21000; mc_M=0.23000; mc_H=0.25000;
   }
 
   else if(Tag.substr(1,1)=="C") {
@@ -179,8 +195,14 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_nucleon_err=0.00020;
     Za=0.761;
     Za_err=0.008;
+    Za_WI = 0.73803 ;
+    Za_WI_err = 0.00047 ;
     Zv=0.7310;
     Zv_err=0.0005;
+    Zv_WI = 0.728477 ;
+    Zv_WI_err = 0.000005;
+    ms_L= 0.01600; ms_M= 0.01800; ms_H=0.01950;
+    mc_L=0.17500; mc_M=0.19500; mc_H=0.21500;
   }
 
   else if(Tag.substr(1,1)=="D") {
@@ -190,8 +212,14 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_nucleon_err= 0.0002; //fakeeee
     Za= 0.76217;
     Za_err=0.00024;
+    Za_WI = 0.76134 ;
+    Za_WI_err = 0.00027 ;
+    Zv_WI = 0.746595 ;
+    Zv_WI_err = 0.000005;
     Zv= 0.746599;
-    Zv_err = 0.000005; 
+    Zv_err = 0.000005;
+    ms_L= 0.014; ms_M= 0.015; ms_H=0.01950; //ms_H is fake
+    mc_L=0.17500; mc_M=0.19500; mc_H=0.21500; //mc_H must be retuned
 
 
 
@@ -200,10 +228,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   else crash("In LatticeInfo::LatInfo_new_ens Ensemble: "+Tag+" not found while reading lattice spacing");
 
   if(Tag=="cA211a.53.24") {
-    L=24; T=48; ml=0.00530;
+    L=24; T=48; ml=0.00530; 
   }
   else if(Tag=="cA211a.40.24") {
-    L=24; T=48; ml=0.00400;
+    L=24; T=48; ml=0.00400; 
   }
   else if(Tag=="cA211ab.30.32") {
     L=32; T=64; ml=0.00300;
@@ -221,7 +249,7 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     L=48; T=96; ml=0.00250;
   }
   else if(Tag=="cB211a.14.64") {
-    L=64; T=128; ml=0.00140;
+    L=64; T=128; ml=0.00140; 
   }
   else if(Tag=="cB211b.072.64") {
     L=64; T=128; ml=0.00072;
@@ -233,7 +261,7 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     L=48; T=96; ml=0.00200;
   }
   else if(Tag=="cC211a.06.80") {
-    L=80; T=160; ml=0.00060;
+    L=80; T=160; ml=0.00060; 
   }
   else if(Tag=="cD211a.054.96") {
     L=96; T=192; ml=0.00054;

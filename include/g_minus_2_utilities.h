@@ -18,6 +18,7 @@ using namespace std;
 
 
 double kernel_K(double t,double MV);
+void Plot_kernel_K(int Npoints);
 double Zeta_function_laplacian_Luscher(double z);
 void Zeta_function_zeroes(int Nzeros, Vfloat &res);
 double tan_phi(double z);
@@ -25,6 +26,8 @@ double phi(double z);
 double tan_phi_der(double z);
 double phi_der(double z);
 double phi_der_for_back(double z, int mode);
+void Compute_SD_window_Free();
+void Compute_clogSD_free(int scale_max);
 
 class LL_functions{
 

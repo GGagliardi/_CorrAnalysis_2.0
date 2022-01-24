@@ -28,10 +28,14 @@ class LatticeInfo {
   double a; //fm
   double a_err;  //fm
   double Beta;
+  double Za_WI, Za_WI_err;
+  double Zv_WI, Zv_WI_err;
   int L,T;
   double a_nucleon;
   double a_nucleon_err;
   double ml;
+  double ms_L, ms_M, ms_H;
+  double mc_L, mc_M, mc_H;
   string CURRENT_TYPE;
   double ainv; //GeV
   double ainv_err; //GeV

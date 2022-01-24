@@ -10,7 +10,7 @@ const int Nbranches = 8;
 const int Nboots= 100;
 bool UseJack=1;
 const int nboots=150;
-const int Njacks=15;
+const int Njacks=24;
 int sm_lev=1;
 const double e_f1 = 2.0/3.0; //electric charge of u-type quark
 const double e_f2 = -1.0/3.0; //electric charge of d-type quark
@@ -122,9 +122,9 @@ void Fit_contaminations(string W, distr_t_list& F, distr_t &F_fit, string Ens_ta
   T_min_dx= T_max_sx+1;
   int ndof= (T_max -T_min+1 - 5);
   //choose the t-interval
-  auto ansatz_sx= [&](const Vfloat& par, double t) -> double { return par[0] +par[1]*exp(-1*par[2]*t);};
-  auto ansatz_dx= [&](const Vfloat& par, double t) -> double { return par[0] +par[1]*exp(-1*par[2]*(Nt/2-t));};
-  auto ansatz_tot=[&](const Vfloat& par, double t) -> double { return par[0] +par[1]*exp(-1*par[2]*t) + par[3]*exp(-1*par[4]*(Nt/2-t));};
+  auto ansatz_sx= [&](const Vfloat& par, double t, int imeas) -> double { return par[0] +par[1]*exp(-1*par[2]*t);};
+  auto ansatz_dx= [&](const Vfloat& par, double t, int imeas) -> double { return par[0] +par[1]*exp(-1*par[2]*(Nt/2-t));};
+  auto ansatz_tot=[&](const Vfloat& par, double t, int imeas) -> double { return par[0] +par[1]*exp(-1*par[2]*t) + par[3]*exp(-1*par[4]*(Nt/2-t));};
   auto ansatz = [=](const ExpFit& par, const Val& val) -> double {return par.a1 + par.a2*exp(-1*par.a3*val.t) +  par.a4*exp(-1*par.a5*(Nt/2-val.t));};
   Vfloat T_dx, T_sx, Y_dx, Y_sx, Y_err_dx, Y_err_sx, Y_dx_sx;
   for(int t=T_min;t<=T_max_sx;t++) {T_sx.push_back(t); Y_sx.push_back( F.ave()[t]); Y_err_sx.push_back( F.err()[t]);}
@@ -457,9 +457,9 @@ void Fit_contaminations_from_derivative(string W, distr_t_list& F, distr_t &F_fi
   T_min_dx= T_max_sx+1;
   int ndof= (T_max -T_min+1 - 5);
   //choose the t-interval
-  auto ansatz_sx= [&](const Vfloat& par, double t) -> double { return par[0]*exp(-1*par[1]*t);};
-  auto ansatz_dx= [&](const Vfloat& par, double t) -> double { return par[0]*exp(-1*par[1]*(Nt/2-t));};
-  auto ansatz_tot=[&](const Vfloat& par, double t) -> double { return par[0]*exp(-1*par[1]*t) + par[2]*exp(-1*par[3]*(Nt/2-t));};
+  auto ansatz_sx= [&](const Vfloat& par, double t, int imeas) -> double { return par[0]*exp(-1*par[1]*t);};
+  auto ansatz_dx= [&](const Vfloat& par, double t, int imeas) -> double { return par[0]*exp(-1*par[1]*(Nt/2-t));};
+  auto ansatz_tot=[&](const Vfloat& par, double t, int imeas) -> double { return par[0]*exp(-1*par[1]*t) + par[2]*exp(-1*par[3]*(Nt/2-t));};
   auto ansatz = [=](const ExpFit_der& par, const Val& val) -> double {return par.a2*exp(-1*par.a3*val.t) +  par.a4*exp(-1*par.a5*(Nt/2-val.t));};
   Vfloat T_dx, T_sx, Y_dx, Y_sx, Y_err_dx, Y_err_sx, Y_dx_sx;
   for(int t=T_min;t<=T_max_sx;t++) {T_sx.push_back(t); Y_sx.push_back( F_der.ave()[t]); Y_err_sx.push_back( F_der.err()[t]);}
@@ -658,7 +658,7 @@ void Fit_contaminations_from_derivative(string W, distr_t_list& F, distr_t &F_fi
 	double a4 = Fit_output.par[ijack].a4/Fit_output.par[ijack].a5;
 	double a5 = Fit_output.par[ijack].a5;
 
-	F_sub.distr_list[t].distr.push_back( ansatz_tot({a2,a3,a4,a5}, t));
+	F_sub.distr_list[t].distr.push_back( ansatz_tot({a2,a3,a4,a5}, t, 0));
       }
     }
 
@@ -1015,16 +1015,47 @@ distr_t_list H_2_impr(const distr_t_list& H30,const distr_t_list& H03, const dis
   double kz= Mom.k()[2];
   double ksq = pow(Mom.virt(),2);
 
+ distr_t_list H30_n = H30/H11_0;
+ distr_t_list H03_n = H03/H11_0;
+ distr_t_list H11_n = H11/H11_0;
+ distr_t_list H33_n = H33/H11_0;
+ distr_t_list H11_0_n = H11_0/H11_0;
+ distr_t_list H33_0_n = H33_0/H11_0;
+
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
-  distr_t_list H30_sub = H30 - H03*(m-Eg)/(2.0*m-Eg);
-  distr_t_list H11_sub = H11 - H11_0 ;
-  distr_t_list H33_sub = H33 - H33_0*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H11_sub = H11_n - H11_0_n ;
+  distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
 
   distr_t_list H_2 = +1.0*H30_sub/(Eg*kz*Power(m,2));
   H_2 = H_2 + H33_sub*( (pow(Eg,2)+ksq)*m - Eg*ksq)/den;
   H_2 = H_2+ H11_sub*( Eg*(ksq+pow(kz,2))-1.0*(pow(Eg,2)+ ksq+pow(kz,2))*m)/den;
-  return -1.0*m*H_2*(2.0*m*Eg-ksq  );;
+
+
+  
+  CorrAnalysis C;
+  C.Nt = 64;
+  Get_virtual_ff_fit_interval("H2", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+  distr_t_list contr_1 = (H30_sub/(Eg*kz*Power(m,2)));
+  distr_t_list contr_2 = (H33_sub*( (pow(Eg,2)+ksq)*m - Eg*ksq)/den);
+  distr_t_list contr_3 = (H11_sub*( Eg*(ksq+pow(kz,2))-1.0*(pow(Eg,2)+ ksq+pow(kz,2))*m)/den);
+  distr_t_list contr_11_33 = ( ((pow(Eg,2)+ksq)*m - Eg*ksq)/den   +   ( Eg*(ksq+pow(kz,2))-1.0*(pow(Eg,2)+ ksq+pow(kz,2))*m)/den      )*(H33_sub + H11_sub)/2.0;
+  distr_t_list contr_33_m_11 =    ( ((pow(Eg,2)+ksq)*m - Eg*ksq)/den   -   ( Eg*(ksq+pow(kz,2))-1.0*(pow(Eg,2)+ ksq+pow(kz,2))*m)/den      )*(H33_sub - H11_sub)/2.0;
+  distr_t_list total= H_2;
+  cout<<"########## H2 impr infos: "<<endl;
+  cout<<"contr 30: "<<C.Fit_distr(contr_1).ave()<<" +- "<<C.Fit_distr(contr_1).err()<<endl;
+  cout<<"contr 33: "<<C.Fit_distr(contr_2).ave()<<" +- "<<C.Fit_distr(contr_2).err()<<endl;
+  cout<<"contr 11: "<<C.Fit_distr(contr_3).ave()<<" +- "<<C.Fit_distr(contr_3).err()<<endl;
+  cout<<"contr 33+11: "<<C.Fit_distr(contr_11_33).ave()<<" +- "<<C.Fit_distr(contr_11_33).err()<<endl;
+  cout<<"contr 33-11: "<<C.Fit_distr(contr_33_m_11).ave()<<" +- "<<C.Fit_distr(contr_33_m_11).err()<<endl;
+  cout<<"total: "<<C.Fit_distr(total).ave()<<" +- "<<C.Fit_distr(total).err()<<endl;
+  cout<<"########## END H2 impr infos "<<endl;
+
+
+
+  
+  return -1.0*m*H_2*(2.0*m*Eg-ksq  );
 
 }
 
@@ -1042,18 +1073,43 @@ distr_t_list H_1_impr(const distr_t_list& H30,const distr_t_list& H03, const dis
     return ret_val;
   };
 
-
+  distr_t_list H30_n = H30/H11_0;
+  distr_t_list H03_n = H03/H11_0;
+  distr_t_list H11_n = H11/H11_0;
+  distr_t_list H33_n = H33/H11_0;
+  distr_t_list H11_0_n = H11_0/H11_0;
+  distr_t_list H33_0_n = H33_0/H11_0;
+  
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
   
-  distr_t_list H30_sub = H30 - H03*(m-Eg)/(2.0*m-Eg);
-  distr_t_list H11_sub = H11 - H11_0 ;
-  distr_t_list H33_sub = H33 - H33_0*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H11_sub = H11_n - H11_0_n ;
+  distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
 
 
   distr_t_list H_1 = H30_sub*(ksq - Eg*m)/(Eg*kz*Power(m,2));
   H_1 = H_1 -H33_sub*(Eg-m)*(Eg*m-ksq)*(-ksq+2.0*Eg*m)/den;
   H_1 = H_1+ H11_sub*(-1.0*ksq*m*(ksq +pow(kz,2)) + 2.0*pow(Eg,3)*Power(m,2) + Eg*(ksq+pow(kz,2))*(ksq+3.0*Power(m,2)) -pow(Eg,2)*m*(3.0*ksq + 2.0*(pow(kz,2)+Power(m,2))))/den;
+
+
+  CorrAnalysis C;
+  C.Nt = 64;
+  Get_virtual_ff_fit_interval("H1", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+  distr_t_list contr_1 = H30_sub*((ksq - Eg*m)/(Eg*kz*Power(m,2)));
+  distr_t_list contr_2 = (-1.0*H33_sub*(Eg-m)*(Eg*m-ksq)*(-ksq+2.0*Eg*m)/den);
+  distr_t_list contr_3 = (H11_sub*(-1.0*ksq*m*(ksq +pow(kz,2)) + 2.0*pow(Eg,3)*Power(m,2) + Eg*(ksq+pow(kz,2))*(ksq+3.0*Power(m,2)) -pow(Eg,2)*m*(3.0*ksq + 2.0*(pow(kz,2)+Power(m,2))))/den);
+  distr_t_list contr_11_33 = ( -1.0*(Eg-m)*(Eg*m-ksq)*(-ksq+2.0*Eg*m)/den  +  (-1.0*ksq*m*(ksq +pow(kz,2)) + 2.0*pow(Eg,3)*Power(m,2) + Eg*(ksq+pow(kz,2))*(ksq+3.0*Power(m,2)) -pow(Eg,2)*m*(3.0*ksq + 2.0*(pow(kz,2)+Power(m,2))))/den)*(H33_sub + H11_sub)/2.0;
+  distr_t_list contr_33_m_11 =   ( -1.0*(Eg-m)*(Eg*m-ksq)*(-ksq+2.0*Eg*m)/den -  (-1.0*ksq*m*(ksq +pow(kz,2)) + 2.0*pow(Eg,3)*Power(m,2) + Eg*(ksq+pow(kz,2))*(ksq+3.0*Power(m,2)) -pow(Eg,2)*m*(3.0*ksq + 2.0*(pow(kz,2)+Power(m,2))))/den)*(H33_sub - H11_sub)/2.0;
+  distr_t_list total= H_1;
+  cout<<"########## H1 impr infos: "<<endl;
+  cout<<"contr 30: "<<C.Fit_distr(contr_1).ave()<<" +- "<<C.Fit_distr(contr_1).err()<<endl;
+  cout<<"contr 33: "<<C.Fit_distr(contr_2).ave()<<" +- "<<C.Fit_distr(contr_2).err()<<endl;
+  cout<<"contr 11: "<<C.Fit_distr(contr_3).ave()<<" +- "<<C.Fit_distr(contr_3).err()<<endl;
+  cout<<"contr 33+11: "<<C.Fit_distr(contr_11_33).ave()<<" +- "<<C.Fit_distr(contr_11_33).err()<<endl;
+  cout<<"contr 33-11: "<<C.Fit_distr(contr_33_m_11).ave()<<" +- "<<C.Fit_distr(contr_33_m_11).err()<<endl;
+  cout<<"total: "<<C.Fit_distr(total).ave()<<" +- "<<C.Fit_distr(total).err()<<endl;
+  cout<<"########## END H1 impr infos "<<endl;
 
   
   return H_1*m;
@@ -1076,23 +1132,54 @@ distr_t_list FA_off_impr(const distr_t_list& H30,const distr_t_list& H03, const 
     return ret_val;
   };
 
+  distr_t_list H0_ave = (2.0*H11_0 + 1.0*H33_0)/3.0;
+
+  double xk = (Mom.virt()/m).ave();
+
+  distr_t_list H_to_use = (xk > 0.46)?H11_0:H33_0;
+
+  distr_t_list H30_n = H30/H11_0;
+  distr_t_list H03_n = H03/H11_0;
+  distr_t_list H11_n = H11/H11_0;
+  distr_t_list H33_n = H33/H11_0;
+  distr_t_list H11_0_n = H11_0/H11_0;
+  distr_t_list H33_0_n = H_to_use/H11_0;
+
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
    
-  distr_t_list H30_sub = H30 - H03*(m-Eg)/(2.0*m-Eg);
-  distr_t_list H11_sub = H11 - H11_0 ;
-  distr_t_list H33_sub = H33 - H33_0*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);  
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H11_sub = H11_n - H11_0_n ;
+  distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);  
 
 
   distr_t_list FA_off = H30_sub*ksq/(Eg*kz*m);
   FA_off = FA_off+ H33_sub*m*ksq*(m-Eg)*(ksq-2.0*Eg*m)/den;
   FA_off = FA_off+ H11_sub*m*( -ksq*m*(ksq+pow(kz,2)) -pow(Eg,2)*m*(2.0*ksq+pow(kz,2)) +Eg*(ksq + pow(kz,2))*(ksq+2.0*Power(m,2)))/den;
- 
+
+
+  CorrAnalysis C;
+  C.Nt = 64;
+  Get_virtual_ff_fit_interval("FA", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+  distr_t_list contr_1 = (H30_sub*ksq/(Eg*kz*m));
+  distr_t_list contr_2 = (H33_sub*m*ksq*(m-Eg)*(ksq-2.0*Eg*m)/den);
+  distr_t_list contr_3 = (H11_sub*m*( -ksq*m*(ksq+pow(kz,2)) -pow(Eg,2)*m*(2.0*ksq+pow(kz,2)) +Eg*(ksq + pow(kz,2))*(ksq+2.0*Power(m,2)))/den);
+  distr_t_list contr_11_33 = ((m*ksq*(m-Eg)*(ksq-2.0*Eg*m) + m*( -ksq*m*(ksq+pow(kz,2)) -pow(Eg,2)*m*(2.0*ksq+pow(kz,2)) +Eg*(ksq + pow(kz,2))*(ksq+2.0*Power(m,2))))/den)*(H33_sub + H11_sub)/2.0;
+  distr_t_list contr_33_m_11 =  ((m*ksq*(m-Eg)*(ksq-2.0*Eg*m) - 1.0*m*( -ksq*m*(ksq+pow(kz,2)) -pow(Eg,2)*m*(2.0*ksq+pow(kz,2)) +Eg*(ksq + pow(kz,2))*(ksq+2.0*Power(m,2))))/den)*(H33_sub - H11_sub)/2.0;
+  distr_t_list total= FA_off;
+  cout<<"########## FA impr infos: "<<endl;
+  cout<<"contr 30: "<<C.Fit_distr(contr_1).ave()<<" +- "<<C.Fit_distr(contr_1).err()<<endl;
+  cout<<"contr 33: "<<C.Fit_distr(contr_2).ave()<<" +- "<<C.Fit_distr(contr_2).err()<<endl;
+  cout<<"contr 11: "<<C.Fit_distr(contr_3).ave()<<" +- "<<C.Fit_distr(contr_3).err()<<endl;
+  cout<<"contr 33+11: "<<C.Fit_distr(contr_11_33).ave()<<" +- "<<C.Fit_distr(contr_11_33).err()<<endl;
+  cout<<"contr 33-11: "<<C.Fit_distr(contr_33_m_11).ave()<<" +- "<<C.Fit_distr(contr_33_m_11).err()<<endl;
+  cout<<"total: "<<C.Fit_distr(total).ave()<<" +- "<<C.Fit_distr(total).err()<<endl;
+  cout<<"########## END FA impr infos "<<endl;
  
   return FA_off;
 }
 
 
-distr_t_list H_2_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33, const distr_t_list& H11_0,const distr_t_list& H33_0, const distr_t_list& H_diag_kz_0, pt3_momenta& Mom,const distr_t& m) {//valid for p=0, k= kz
+distr_t_list H_2_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33, const distr_t_list& H11_0,const distr_t_list& H33_0, const distr_t_list& H33_kz0, const distr_t_list& H11_kz0, pt3_momenta& Mom,const distr_t& m) {//valid for p=0, k= kz
 
   auto Power = [&](const distr_t& A, int n) -> distr_t{
     distr_t ret_val = A;
@@ -1104,23 +1191,48 @@ distr_t_list H_2_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
   double kz= Mom.k()[2];
   double ksq = pow(Mom.virt(),2);
 
+  
+
+  distr_t_list H30_n = H30/H11_0;
+  distr_t_list H03_n = H03/H11_0;
+  distr_t_list H11_n = H11/H11_0;
+  distr_t_list H33_n = H33/H11_0;
+  distr_t_list H11_0_n = H11_0/H11_0;
+  distr_t_list H33_0_n = H33_0/H11_0;
+  distr_t_list H11_kz0_n = (H11_kz0 -H11_0)/H11_0;
+  distr_t_list H33_kz0_n = (H33_kz0 - H33_0)/H11_0;
+
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
-  distr_t_list H30_sub = H30 - H03*(m-Eg)/(2.0*m-Eg);
-  distr_t_list H11_sub_temp = H11 - H11_0 ;
-  distr_t_list H33_sub_temp = H33 - H33_0*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H11_sub_temp = H11_n - H11_0_n ;
+  distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
   distr_t_list H33_sub = (H11_sub_temp+H33_sub_temp)/2.0;
-  distr_t_list H11_sub = (H33_sub_temp-H11_sub_temp -H_diag_kz_0)/2.0;
+  distr_t_list H11_sub = (H33_sub_temp-H11_sub_temp -H33_kz0_n + H11_kz0_n)/2.0;
 
   distr_t_list H_2 = +1.0*H30_sub/(Eg*kz*Power(m,2));
   H_2 = H_2 + H33_sub*kz*kz*(Eg-m)/den;
   H_2 = H_2+ H11_sub*(-Eg*(2.0*ksq+pow(kz,2)) + 2.0*pow(Eg,2)*m +m*(2*ksq+pow(kz,2)))/den;
+
+  CorrAnalysis C;
+  C.Nt = 64;
+  Get_virtual_ff_fit_interval("H2", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+  distr_t_list contr_1 = (1.0*H30_sub/(Eg*kz*Power(m,2)));
+  distr_t_list contr_2 = (H33_sub*kz*kz*(Eg-m)/den);
+  distr_t_list contr_3 = (H11_sub*(-Eg*(2.0*ksq+pow(kz,2)) + 2.0*pow(Eg,2)*m +m*(2*ksq+pow(kz,2)))/den);
+  distr_t_list total= H_2;
+  cout<<"########## H2 mixed diag infos: "<<endl;
+  cout<<"contr 30: "<<C.Fit_distr(contr_1).ave()<<" +- "<<C.Fit_distr(contr_1).err()<<endl;
+  cout<<"contr 33+11: "<<C.Fit_distr(contr_2).ave()<<" +- "<<C.Fit_distr(contr_2).err()<<endl;
+  cout<<"contr 33-11: "<<C.Fit_distr(contr_3).ave()<<" +- "<<C.Fit_distr(contr_3).err()<<endl;
+  cout<<"total: "<<C.Fit_distr(total).ave()<<" +- "<<C.Fit_distr(total).err()<<endl;
+  cout<<"########## END H2 mixed diag infos "<<endl;
   return -1.0*m*H_2*(2.0*m*Eg-ksq  );
 
 }
 
 
-distr_t_list H_1_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33, const distr_t_list& H11_0,const distr_t_list& H33_0, const distr_t_list& H_diag_kz_0, pt3_momenta& Mom,const distr_t& m) //valid for p=0, k=kz
+distr_t_list H_1_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33, const distr_t_list& H11_0,const distr_t_list& H33_0, const distr_t_list& H33_kz0, const distr_t_list& H11_kz0, pt3_momenta& Mom,const distr_t& m) //valid for p=0, k=kz
 {
   
   double Eg= Mom.Egamma();
@@ -1133,20 +1245,43 @@ distr_t_list H_1_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
     return ret_val;
   };
 
-
+  distr_t_list H30_n = H30/H11_0;
+  distr_t_list H03_n = H03/H11_0;
+  distr_t_list H11_n = H11/H11_0;
+  distr_t_list H33_n = H33/H11_0;
+  distr_t_list H11_0_n = H11_0/H11_0;
+  distr_t_list H33_0_n = H33_0/H11_0;
+  distr_t_list H11_kz0_n = (H11_kz0-H11_0)/H11_0;
+  distr_t_list H33_kz0_n = (H33_kz0-H33_0)/H11_0;
+  
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
   
-  distr_t_list H30_sub = H30 - H03*(m-Eg)/(2.0*m-Eg);
-  distr_t_list H11_sub_temp = H11 - H11_0 ;
-  distr_t_list H33_sub_temp = H33 - H33_0*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H11_sub_temp = H11_n - H11_0_n ;
+  distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
   distr_t_list H33_sub = (H11_sub_temp+H33_sub_temp)/2.0;
-  distr_t_list H11_sub = (H33_sub_temp-H11_sub_temp-H_diag_kz_0)/2.0;
+  distr_t_list H11_sub = (H33_sub_temp-H11_sub_temp-H33_kz0_n + H11_kz0_n)/2.0;
 
 
   distr_t_list H_1 = H30_sub*(ksq - Eg*m)/(Eg*kz*Power(m,2));
   H_1 = H_1 +H33_sub*kz*kz*(-2.0*pow(Eg,2)*m -ksq*m+Eg*(ksq+3.0*Power(m,2)))/den;
   H_1 = H_1+ H11_sub*(ksq*(2.0*ksq+pow(kz,2))*m -4*pow(Eg,3)*Power(m,2)+2.0*pow(Eg,2)*m*(3.0*ksq+pow(kz,2)+2.0*Power(m,2))-Eg*(2.0*pow(ksq,2)+3.0*pow(kz,2)*Power(m,2)+ksq*(pow(kz,2)+6.0*Power(m,2))))/den;
+
+
+  CorrAnalysis C;
+  C.Nt = 64;
+  Get_virtual_ff_fit_interval("H1", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+  distr_t_list contr_1 = (H30_sub*(ksq - Eg*m)/(Eg*kz*Power(m,2)));
+  distr_t_list contr_2 = (H33_sub*kz*kz*(-2.0*pow(Eg,2)*m -ksq*m+Eg*(ksq+3.0*Power(m,2)))/den);
+  distr_t_list contr_3 = (H11_sub*(ksq*(2.0*ksq+pow(kz,2))*m -4*pow(Eg,3)*Power(m,2)+2.0*pow(Eg,2)*m*(3.0*ksq+pow(kz,2)+2.0*Power(m,2))-Eg*(2.0*pow(ksq,2)+3.0*pow(kz,2)*Power(m,2)+ksq*(pow(kz,2)+6.0*Power(m,2))))/den);
+  distr_t_list total= H_1;
+  cout<<"########## H1 mixed_diag infos: "<<endl;
+  cout<<"contr 30: "<<C.Fit_distr(contr_1).ave()<<" +- "<<C.Fit_distr(contr_1).err()<<endl;
+  cout<<"contr 33+11: "<<C.Fit_distr(contr_2).ave()<<" +- "<<C.Fit_distr(contr_2).err()<<endl;
+  cout<<"contr 33-11: "<<C.Fit_distr(contr_3).ave()<<" +- "<<C.Fit_distr(contr_3).err()<<endl;
+  cout<<"total: "<<C.Fit_distr(total).ave()<<" +- "<<C.Fit_distr(total).err()<<endl;
+  cout<<"########## END H1 mixed_diag infos "<<endl;
 
   
   return H_1*m;
@@ -1156,7 +1291,7 @@ distr_t_list H_1_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
 }
 
 
-distr_t_list FA_off_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H11_0,const distr_t_list& H33_0, const distr_t_list& H_diag_kz_0, pt3_momenta& Mom,const distr_t &m) //valid for p=0, k=kz
+distr_t_list FA_off_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, const distr_t_list& H11,const distr_t_list& H33,const distr_t_list& H11_0,const distr_t_list& H33_0, const distr_t_list& H33_kz0, const distr_t_list& H11_kz0, pt3_momenta& Mom,const distr_t &m) //valid for p=0, k=kz
 {
 
   double Eg= Mom.Egamma();
@@ -1170,17 +1305,43 @@ distr_t_list FA_off_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, 
   };
 
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
+
+  distr_t_list H0_ave = (2.0*H11_0 + 1.0*H33_0)/3.0;
+
+  distr_t_list H30_n = H30/H11_0;
+  distr_t_list H03_n = H03/H11_0;
+  distr_t_list H11_n = H11/H11_0;
+  distr_t_list H33_n = H33/H11_0;
+  distr_t_list H11_0_n = H11_0/H11_0;
+  distr_t_list H33_0_n = H33_0/H11_0;
+  distr_t_list H11_kz0_n = (H11_kz0-H11_0)/H11_0;
+  distr_t_list H33_kz0_n = (H33_kz0-H33_0)/H11_0;
    
-  distr_t_list H30_sub = H30 - H03*(m-Eg)/(2.0*m-Eg);
-  distr_t_list H11_sub_temp = H11 - H11_0 ;
-  distr_t_list H33_sub_temp = H33 - H33_0*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H11_sub_temp = H11_n - H11_0_n ;
+  distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
   distr_t_list H33_sub = (H11_sub_temp+H33_sub_temp)/2.0;
-  distr_t_list H11_sub = (H33_sub_temp-H11_sub_temp-H_diag_kz_0)/2.0;
+  distr_t_list H11_sub = (H33_sub_temp-H11_sub_temp-H33_kz0_n+H11_kz0_n)/2.0;
 
 
   distr_t_list FA_off = H30_sub*ksq/(Eg*kz*m);
   FA_off = FA_off+ H33_sub*m*kz*kz*(-pow(Eg,2)*m -ksq*m +Eg*(ksq+2.0*Power(m,2)))/den;
   FA_off = FA_off+ H11_sub*m*(ksq*(2.0*ksq+pow(kz,2))*m+ pow(Eg,2)*(4*ksq+pow(kz,2))*m -Eg*(2.0*pow(ksq,2)+2.0*pow(kz,2)*Power(m,2)+ksq*(pow(kz,2)+4.0*Power(m,2))) )/den;
+
+
+  CorrAnalysis C;
+  C.Nt = 64;
+  Get_virtual_ff_fit_interval("FA", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+  distr_t_list contr_1 = (H30_sub*ksq/(Eg*kz*m));
+  distr_t_list contr_2 = (H33_sub*m*kz*kz*(-pow(Eg,2)*m -ksq*m +Eg*(ksq+2.0*Power(m,2)))/den);
+  distr_t_list contr_3 = (H11_sub*m*(ksq*(2.0*ksq+pow(kz,2))*m+ pow(Eg,2)*(4*ksq+pow(kz,2))*m -Eg*(2.0*pow(ksq,2)+2.0*pow(kz,2)*Power(m,2)+ksq*(pow(kz,2)+4.0*Power(m,2))) )/den);
+  distr_t_list total= FA_off;
+  cout<<"########## FA mixed_diag infos: "<<endl;
+  cout<<"contr 30: "<<C.Fit_distr(contr_1).ave()<<" +- "<<C.Fit_distr(contr_1).err()<<endl;
+  cout<<"contr 33+11: "<<C.Fit_distr(contr_2).ave()<<" +- "<<C.Fit_distr(contr_2).err()<<endl;
+  cout<<"contr 33-11: "<<C.Fit_distr(contr_3).ave()<<" +- "<<C.Fit_distr(contr_3).err()<<endl;
+  cout<<"total: "<<C.Fit_distr(total).ave()<<" +- "<<C.Fit_distr(total).err()<<endl;
+  cout<<"########## END FA mixed_diag infos "<<endl;
  
  
   return FA_off;
@@ -1235,7 +1396,7 @@ void Compute_form_factors() {
   vector<vector<distr_t_list>> H2_list;
   vector<vector<distr_t_list>> FA_off_list;
   vector<vector<distr_t_list>> FV_off_list;
-  vector<distr_t> f_p, m_p, Za_ov_Zv;
+  vector<distr_t> f_p, m_p, Za_ov_Zv, Zv_distr;
   vector<vector<distr_t>> H1_const_fit_list;
   vector<vector<distr_t>> H2_const_fit_list;
   vector<vector<distr_t>> FA_off_const_fit_list;
@@ -1479,20 +1640,24 @@ void Compute_form_factors() {
 	    Za_err= L_info.Retrieve_Za("A",0).second;
 	    //define Za_ov_Zv distr
 	    distr_t Za_ov_Zv_distr(UseJack);
+	    distr_t Zv_fake_distr(UseJack);
 	    
 	    if(UseJack) {
 	      for(int ijack=0;ijack<m_fit_distr[0].size();ijack++) {
 		Za_ov_Zv_distr.distr.push_back( (Za + (1.0/sqrt( m_fit_distr[0].size() -1))*Za_err*Gauss_RC())/(Zv+(1.0/sqrt(m_fit_distr[0].size()-1))*Zv_err*Gauss_RC()));
 		//Za_ov_Zv_distr.distr.push_back( 1 + 0.0001*Gauss_RC());
+		Zv_fake_distr.distr.push_back( (Zv + Zv_err*Gauss_RC()/(sqrt(m_fit_distr[0].size() -1))));
 	      }
 	    }
 	    else { //using bootstrap
 	      for(int iboot=0;iboot<m_fit_distr[0].size();iboot++) {
 			Za_ov_Zv_distr.distr.push_back( (Za + Za_err*Gauss_RC())/(Zv+Zv_err*Gauss_RC()));
+			Zv_fake_distr.distr.push_back( (Zv + Zv_err*Gauss_RC()));
 	      }
 	    }
 	    
 	    Za_ov_Zv.push_back(Za_ov_Zv_distr);
+	    Zv_distr.push_back(Zv_fake_distr);
 	  }
 	  
 	  auto sq= [](double x)->double {return sqrt(x);};
@@ -1561,6 +1726,8 @@ void Compute_form_factors() {
 	  cout<<"###BEG###"<<endl;
 	  cout<<"icomb: "<<icomb3pt<<" th_t: "<<c.tht[2]<<endl;
 	  cout<<"nconfs: "<<Get_number_of_configs_3pt(stream_3pt, header_3pt)<<endl;
+	  cout<<"c.mu1: "<<c.mu1<<endl;
+	  cout<<"c.mu2: "<<c.mu2<<endl;
 	  cout<<"icomb_k0: "<<icomb_k0<<" th_t: "<<header_3pt.comb[icomb_k0].tht[2]<<endl;
 	  if(VIRTUAL_RUN) {
 	  cout<<"icomb_kz0_k2: "<<icomb_kz0_k2<<" th_t: "<<header_3pt.comb[icomb_kz0_k2].tht[2]<<", off: "<<header_3pt.comb[icomb_kz0_k2].off<<endl;
@@ -1575,6 +1742,7 @@ void Compute_form_factors() {
 	  cout<<"Egamma["<<icomb3pt<<"] :"<<Egamma<<endl;
 	  cout<<"EgammaT["<<icomb3pt<<"] :"<<Egamma_T<<endl;
 	  cout<<"Mass: "<<meson_mass<<"("<<m_fit_distr[pt2_k0p0].err()<<")"<<endl;
+	  cout<<"fp^3pt*Mp: "<<(fp_fit_distr[pt2_k0p0]*(1.0/Zv_distr[0])*m_fit_distr[pt2_k0p0]).ave()<<" +- "<<(fp_fit_distr[pt2_k0p0]*(1.0/Zv_distr[0])*m_fit_distr[pt2_k0p0]).err()<<endl;
 	  cout<<"x_gamma: "<<xg<<endl;
 	  cout<<"x_gamma_off: "<<xg_off<<endl;
 	  cout<<"xk: "<<xk<<endl;
@@ -1672,9 +1840,9 @@ void Compute_form_factors() {
 
 	      distr_t_list distr_no_symm_A_exp= (m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p],Nt)*(distr_no_symm_A[alpha][mu]*exp_Nt_t); 
 	      distr_t_list distr_no_symm_V_exp=  (m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p],Nt)*(distr_no_symm_V[alpha][mu]*exp_Nt_t);
-	      distr_A_exp[alpha][mu] = (1.0*m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p],Nt)*(distr_A[alpha][mu]*exp_Nt_t);
+	      distr_A_exp[alpha][mu] = (2.0*m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p],Nt)*(distr_A[alpha][mu]*exp_Nt_t);
 	      distr_A_exp_k0[alpha][mu] = (1.0*m_fit_distr[pt2_k0p0]/sqrt_overlap_fit_distr[pt2_k0p0])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_k0p0],Nt)*(distr_A_k0[alpha][mu]); 
-	      distr_V_exp[alpha][mu] =  (1.0*m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p],Nt)*(distr_V[alpha][mu]*exp_Nt_t);
+	      distr_V_exp[alpha][mu] =  (2.0*m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p],Nt)*(distr_V[alpha][mu]*exp_Nt_t);
 
 	      //PRINT TO FILE THE TENSOR H_alpha^mu
 	      Print_To_File({}, {distr_no_symm_A_exp.ave(), distr_no_symm_A_exp.err(), distr_no_symm_V_exp.ave(), distr_no_symm_V_exp.err()}, "../data/form_factors/"+Meson+"/H_"+Ens_tag[i_ens]+"/no_symm_icomb"+to_string(icomb3pt)+"_alpha"+to_string(alpha)+"_mu"+to_string(mu)+"_sm_lev_"+to_string(sm_lev)+".dat","", "#");
@@ -1804,27 +1972,25 @@ void Compute_form_factors() {
 
 	      //###############IMPROVED ESTIMATORS###################################################à
 	      
-	      distr_t_list H1_impr = H_1_impr(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
+	      distr_t_list H1_impr = H_1_impr(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-1.0*fp_fit_distr[pt2_k0p0]);
 
-
-	      
-	      distr_t_list H2_impr = H_2_impr(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_k0[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
-	      distr_t_list FAoff_impr = FA_off_impr(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_k0[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
+      
+	      distr_t_list H2_impr = H_2_impr(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-1.0*fp_fit_distr[pt2_k0p0]);
+	      distr_t_list FAoff_impr = FA_off_impr(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*((distr_A_kz0_k2[0][3])*exp_Nt_t_k0), distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*((distr_A_kz0_k2[3][0])*exp_Nt_t_k0), 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-1.0*fp_fit_distr[pt2_k0p0]);
 	      
 	      //######################################################################################
 
 
 	       //###############MIXED 11 AND 33 ESTIMATORS###################################################
 	      
-	      distr_t_list H1_mixed_diag = H_1_mixed_diag(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], -1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( 0.5*(distr_A_kz0_k2[1][1]+ distr_A_kz0_k2[2][2] )*exp_Nt_t_k0 -0.5*(distr_A_k0[1][1]+distr_A_k0[2][2])- distr_A_kz0_k2[3][3]*exp_Nt_t_k0+ distr_A_k0[3][3]), mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
-	      distr_t_list H2_mixed_diag = H_2_mixed_diag(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], -1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( 0.5*(distr_A_kz0_k2[1][1]+ distr_A_kz0_k2[2][2] )*exp_Nt_t_k0- 0.5*(distr_A_k0[1][1]+distr_A_k0[2][2])- distr_A_kz0_k2[3][3]*exp_Nt_t_k0+ distr_A_k0[3][3]), mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
-	      distr_t_list FAoff_mixed_diag = FA_off_mixed_diag(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], -1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( 0.5*(distr_A_kz0_k2[1][1]+ distr_A_kz0_k2[2][2] )*exp_Nt_t_k0- 0.5*(distr_A_k0[1][1]+distr_A_k0[2][2])- distr_A_kz0_k2[3][3]*exp_Nt_t_k0+ distr_A_k0[3][3]), mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-2.0*fp_fit_distr[pt2_k0p0]/(distr_A_k0[1][1]+distr_A_k0[2][2]));
+	      distr_t_list H1_mixed_diag = H_1_mixed_diag(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], 1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( distr_A_kz0_k2[3][3]*exp_Nt_t_k0),  1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( 0.5*(distr_A_kz0_k2[1][1]+ distr_A_kz0_k2[2][2] )*exp_Nt_t_k0), mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-1.0*fp_fit_distr[pt2_k0p0]);
+	      distr_t_list H2_mixed_diag = H_2_mixed_diag(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]),distr_A_k0[3][3], 1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( distr_A_kz0_k2[3][3]*exp_Nt_t_k0),  1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( 0.5*(distr_A_kz0_k2[1][1]+ distr_A_kz0_k2[2][2] )*exp_Nt_t_k0) , mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-1.0*fp_fit_distr[pt2_k0p0]);
+	      distr_t_list FAoff_mixed_diag = FA_off_mixed_diag(distr_A[0][3]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[0][3]*exp_Nt_t_k0, distr_A[3][0]*exp_Nt_t-SUB_ZERO_MOMENTUM_VIRTUAL*distr_A_kz0_k2[3][0]*exp_Nt_t_k0, 0.5*(distr_A[1][1]+distr_A[2][2])*exp_Nt_t, distr_A[3][3]*exp_Nt_t,  0.5*(distr_A_k0[1][1]+distr_A_k0[2][2]), distr_A_k0[3][3], 1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( distr_A_kz0_k2[3][3]*exp_Nt_t_k0),  1.0*SUB_ZERO_MOMENTUM_VIRTUAL*( 0.5*(distr_A_kz0_k2[1][1]+ distr_A_kz0_k2[2][2] )*exp_Nt_t_k0) , mom3_l.mom[i_ens][icomb3pt], m_fit_distr[pt2_k0p0])*(-1.0*fp_fit_distr[pt2_k0p0]);
 	      
 	     
 	      distr_t_list FVoff = (V_ave_unpolarized(distr_V,distr_V_k0, m_fit_distr[pt2_p], mom3_l.mom[i_ens][icomb3pt],Nt/2)/A_ave_unpolarized(distr_A_k0))*m_fit_distr[pt2_k0p0]*fp_fit_distr[pt2_k0p0];
 
 	      //###########################################
-
 
 	      //fit virtual FF
 	      Get_virtual_ff_fit_interval("H1", offsh, c.tht[2], corr.Tmin, corr.Tmax);
@@ -1961,6 +2127,8 @@ void Compute_form_factors() {
     fclose(stream_2pt);
   }
 
+ 
+
   if(FIT_VIRTUAL_FF) {
 
     Vfloat MC_ee_ChPT, MC_mumu_ChPT, QUAD_ee_ChPT, QUAD_mumu_ChPT,MC_ee_VMD, MC_mumu_VMD, QUAD_ee_VMD, QUAD_mumu_VMD;
@@ -2078,9 +2246,12 @@ void Compute_form_factors() {
 	 
 	  distr_t f_p_temp= f_p[0];
 	  distr_t m_p_temp= m_p[0];
-	  Decay_Rate_Integration_Result RATE_VMD = Num_Integrate_Decay_Rate(H1_VMD, H2_VMD, FA_off_VMD, FV_off_VMD, m_p_temp, f_p_temp, UseJack);
 	  cout<<"####COMPUTATION OF THE RATE USING ChPT ANSATZ#####"<<endl;
-	  Decay_Rate_Integration_Result RATE_ChPT= Num_Integrate_Decay_Rate(H1_ChPT, H2_ChPT, FA_off_ChPT, FV_off_ChPT, m_p_temp, f_p_temp, UseJack);
+	  Decay_Rate_Integration_Result RATE_ChPT= Num_Integrate_Decay_Rate(H1_ChPT, H2_ChPT, FA_off_ChPT, FV_off_ChPT, m_p_temp, f_p_temp, UseJack, Meson, true);
+	  exit(-1);
+	  cout<<"####COMPUTATION OF THE RATE USING ChPT ANSATZ#####"<<endl;
+	  Decay_Rate_Integration_Result RATE_VMD = Num_Integrate_Decay_Rate(H1_VMD, H2_VMD, FA_off_VMD, FV_off_VMD, m_p_temp, f_p_temp, UseJack, Meson, false);
+	  
 	  cout<<"####END RATE COMPUTATION####"<<endl;
 	  cout<<"####FINAL RATE ESTIMATES:####"<<endl;
 	  cout<<"e+e- (ChPT) : (Quad) "<<RATE_ChPT.Int_Quad_val_ee<<"("<<RATE_ChPT.Int_Quad_err_ee<<"),  (MC) "<<RATE_ChPT.Int_MonteCarlo_val_ee<<"("<<RATE_ChPT.Int_MonteCarlo_err_ee<<")"<<endl;

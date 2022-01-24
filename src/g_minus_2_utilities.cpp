@@ -3,7 +3,7 @@
 
 using namespace std;
 
-const double m_muon= 0.10565837;
+const double m_muon= 0.10565837;  //1.7768 ;
 const double relerr= 1e-12;
 
 
@@ -29,6 +29,27 @@ double kernel_K(double t, double MV) {
   double tol_kernel= 1e-14;
   return boost::math::quadrature::gauss_kronrod<double,61>::integrate(F, 0.0, numeric_limits<double>::infinity() , 5, tol_kernel, &err);
 
+
+}
+
+void Plot_kernel_K(int npoints) {
+
+  double tmin=0.0;
+  double tmax= 50*5.0; //time is in fermi
+
+  Vfloat pts;
+  Vfloat val;
+
+  for(int i=0; i<=npoints;i++) {
+    double pt = tmin + i*(tmax-tmin)/npoints;
+    pts.push_back(pt);
+    val.push_back( kernel_K( pt/0.1975, 1.0));
+  }
+
+  Print_To_File({}, {pts, val}, "../data/gm2/light/kernel.dat", "", "");
+
+  
+  return;
 
 }
 
@@ -320,6 +341,411 @@ double phi(double z) {
 
 }
 
+void Compute_clogSD_free(int scale_max) {
+
+  auto C_cont = [](double t) -> double { return 1.0/(2.0*M_PI*M_PI*t*t*t);};
+  double t0= 0.4; //fm
+  double Q= pow(2.0/3.0,2)+ pow(1.0/3.0,2);
+  double Delta = 0.15; //fm
+  double Alpha=1.0/137.04;
+  auto SD_th = [&t0, &Delta](double t) ->double { return 1.0- 1.0/(1.0 + exp(-2.0*(t-t0)/Delta));};
+  double Nc=3; //three colors
+  double r= 1.0;
+  double mu2=0.0;
+  double a=0.2;
+  double resc=0.2;
+ 
+
+  auto VkVk_b = [&](double z0, double q0, double p1, double p2, double p3) -> double {
+
+		  double VkVk= (4*Nc*(mu2*a*a -r*(4 - cos(z0) - cos(p1) - cos(p2) - cos(p3))*(4 - cos(p1) - cos(p2) - cos(p3) - cos(q0)) + 
+					(pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2))/3.0 + sin(z0)*sin(q0)))/
+		     ((mu2*a*a + pow(4 - cos(z0) - cos(p1) - cos(p2) - cos(p3),2) + pow(sin(z0),2) + pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2))*
+		      (mu2*a*a + pow(4 - cos(p1) - cos(p2) - cos(p3) - cos(q0),2) + pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2) + pow(sin(q0),2)));
+
+		  /* double VkVk_p0 = (4*Nc*(mu2*a*a -r*(4 - cos(q0) - cos(p1) - cos(p2) - cos(p3))*(4 - cos(p1) - cos(p2) - cos(p3) - cos(q0)) + 
+					(pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2))/3.0 + sin(q0)*sin(q0)))/
+		     ((mu2*a*a + pow(4 - cos(q0) - cos(p1) - cos(p2) - cos(p3),2) + pow(sin(q0),2) + pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2))*
+		      (mu2*a*a + pow(4 - cos(p1) - cos(p2) - cos(p3) - cos(q0),2) + pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2) + pow(sin(q0),2)));
+
+
+		      if(VkVk + VkVk_p0< 0) crash("VkVk > VkVk_p0"); */
+		  return VkVk;
+		};
+  
+  auto VkVk_FT = [&](vector<double> const &par) -> double {
+
+		   double pt = par[0];
+		   double p0 = par[1];
+		   double p1 = par[2];
+		   double p2 = par[3];
+		   double p3 = par[4];
+		   double fact= pow(1.0/(2.0*M_PI),5);
+		   double VkVk=  2.0*(VkVk_b(p0+pt,p0,p1,p2,p3) + VkVk_b(p0-pt,p0,p1,p2,p3));
+		   VkVk += 2.0*( VkVk_b(M_PI-p0+pt,M_PI-p0,p1,p2,p3) + VkVk_b(M_PI-p0-pt, M_PI-p0, p1,p2,p3));
+		   double VkVk_ref = 2.0*( VkVk_b(p0 +(M_PI-pt), p0,p1,p2,p3) + VkVk_b(p0- (M_PI-pt), p0,p1,p2,p3));
+		   VkVk_ref += 2.0*( VkVk_b(M_PI-p0+(M_PI-pt),M_PI-p0,p1,p2,p3) + VkVk_b(M_PI-p0-(M_PI-pt), M_PI-p0, p1,p2,p3));
+		   double res_prod= pow(2.0,3)*fact*(1.0/a/a/a)*VkVk;
+		   double res_prod_ref = pow(2.0,3)*fact*(1.0/a/a/a)*VkVk_ref;
+		   double SD_fact_1 = 0.0;
+		   double SD_fact_2 =0.0;
+		   for(int it=1; it<(int)2.0*t0/a;it++) {
+		     double tt=it*a;
+		     SD_fact_1+= cos(tt*pt/a)*SD_th(tt)*pow(tt,4)*pow(m_muon,2);
+		     SD_fact_2+= cos(tt*(M_PI-pt)/a)*SD_th(tt)*pow(tt,4)*pow(m_muon,2);
+		     } 
+		   return a*4.0*pow(Alpha,2)*(res_prod*SD_fact_1 + res_prod_ref*SD_fact_2);
+	      };
+
+  auto VkVk_FT_summed= [&](vector<double> const & par) -> double {
+			  double pt = par[0];
+			  double p0 = par[1];
+			  double p1 = par[2];
+			  double p2 = par[3];
+			  double p3 = par[4];
+
+			 
+			  Vfloat par2({ M_PI/2 -pt, p0,p1,p2,p3});
+			  Vfloat par3({ pt,M_PI/2- p0,p1,p2,p3});
+			  Vfloat par4({ M_PI/2 -pt, M_PI/2 -p0,p1,p2,p3});
+	        
+
+
+			  double res=  VkVk_FT(par) + VkVk_FT(par2) + VkVk_FT(par3)+ VkVk_FT(par4);
+
+
+			  return res;
+
+
+		       };
+
+  auto VkVk_FT_summed_p0 = [&](vector<double> const & par) -> double {
+
+
+			     double Vk_p0 = VkVk_b(par[1],par[1], par[2], par[3], par[4]);
+			     if(Vk_p0<0) crash("Vk_pt0: "+to_string_with_precision(Vk_p0,10));
+			     return VkVk_FT_summed(par);
+
+			   };
+
+  auto Int_SD_cont = [&](double t) ->double {
+
+		       return 4.0*pow(Alpha,2)*C_cont(t)*SD_th(t)*pow(t,4)*pow(m_muon,2);
+
+		     };
+
+  //compute SD window in the continuum
+  double error_amu_cont;
+  double eps_cont = 1.0e-10;
+  double a_mu_SD_cont= boost::math::quadrature::gauss_kronrod<double,15>::integrate(Int_SD_cont, 0.0, numeric_limits<double>::infinity() , 5, eps_cont, &error_amu_cont);
+
+
+ 
+
+
+   //VEGAS GLS INTEGRATION
+
+  auto display_results = [](char *title, double result, double error) ->void
+			 {
+			   printf ("%s ==================\n", title);
+			   printf ("result = % .16f\n", result);
+			   printf ("relative error  =  %.16f  %\n ", 100*error/result);
+			   return;
+			 };
+
+  
+    size_t calls = 5000000; //old was 1000000;
+    int warmup_calls= 50000; //old was 100000;
+
+    double bound_l[5];
+    bound_l[0] = 0.0;
+    bound_l[1] = 0.0;
+    bound_l[2] = 0.0;
+    bound_l[3] = 0.0;
+    bound_l[4] = 0.0;
+    double bound_u[5];
+    bound_u[0] = M_PI/4;
+    bound_u[1] = M_PI/4;
+    bound_u[2] = M_PI;
+    bound_u[3] = M_PI;
+    bound_u[4] = M_PI;
+
+
+    Vfloat res_r0, res_r1;
+    Vfloat err_r0, err_r1;
+
+    double a0=0.2; //starting value of the lattice spacing (does not make any sense absolute scale with massless fermions)
+
+    for(int ir=0;ir<2;ir++) {
+
+      if(ir==0) r=-1;
+      else r= 1;
+      
+     
+      for(int scale=0;scale<scale_max;scale++) {
+	a= a0/(1.0+resc*scale);
+	double a_mu_SD_lat=0.0;
+	double a_mu_SD_lat_err=0.0;
+	string r_tag= (ir==0)?"same_r":"opposite_r";
+	cout<<"Computing SD windows for a: "<<a<<" "<<r_tag<<endl;
+
+	double res_vegas, err_vegas;
+
+	
+	const gsl_rng_type *T;
+	gsl_rng *rr;
+
+	gsl_rng_env_setup();
+
+	T = gsl_rng_default;
+	rr = gsl_rng_alloc(T);
+
+   
+	//to enter a generic seed mySeed
+	gsl_rng_set(rr, 534543);
+
+	gsl_monte_function_pp<decltype(VkVk_FT_summed_p0)> Fp(VkVk_FT_summed_p0);
+    
+	gsl_monte_function *G = static_cast<gsl_monte_function*>(&Fp);
+
+
+
+	gsl_monte_vegas_state *s = gsl_monte_vegas_alloc(5);
+
+ 
+
+	gsl_monte_vegas_integrate (G, bound_l, bound_u, 5, warmup_calls, rr, s,
+                               &res_vegas, &err_vegas);
+
+
+
+	printf ("converging...\n");
+	int k=1;
+	do
+	  {
+	    int new_calls=calls*k;
+	    gsl_monte_vegas_integrate (G,bound_l, bound_u, 5, new_calls/5, rr, s,
+                                   &res_vegas, &err_vegas);
+	   
+	    cout<<"k: "<<k<<" err_vegas: "<<100*err_vegas/res_vegas<<endl;
+	    k*=3;
+       
+      }
+	while (fabs (100*err_vegas/res_vegas) > 0.1);
+
+	//display_results("vegas final", res_vegas, err_vegas);
+
+	gsl_monte_vegas_free(s);
+
+	gsl_rng_free(rr);
+
+	a_mu_SD_lat = res_vegas;
+        a_mu_SD_lat_err= Q*a_mu_SD_lat/(a*a*log(1/a));
+      
+	if(ir==0)  {res_r0.push_back( Q*(a_mu_SD_lat - a_mu_SD_cont)/(a*a*log(1/a))); err_r0.push_back( a_mu_SD_lat_err);}
+	else {res_r1.push_back( Q*(a_mu_SD_lat - a_mu_SD_cont)/(a*a*log(1/a))); err_r1.push_back( a_mu_SD_lat_err);}
+	cout<<"SD(lat): "<<Q*a_mu_SD_lat<<" SD(cont): "<<Q*a_mu_SD_cont<<endl;
+	cout<<"Done!"<<endl;
+      }
+    }
+  
+  
+    //print the result
+    cout<<"printing result (same r)"<<endl;
+    for(int i=0;i<(signed)res_r0.size();i++) {
+      cout<<"a: "<<a0/(1.0+resc*i)<<" C^log_SD: "<< res_r0[i]<<" +- "<<err_r0[i]<<endl;
+    }
+
+    cout<<"printing result (opposite r)"<<endl;
+    for(int i=0;i<(signed)res_r1.size();i++) {
+      cout<<"a: "<<a0/(1.0+resc*i)<<" C^log_SD: "<< res_r1[i]<<" +- "<<err_r1[i]<<endl;
+    }
+
+
+
+
+    return;
+}
+
+
+void Compute_SD_window_Free() {
+
+  VVfloat C_samer;
+  VVfloat C_opper;
+  VVfloat C_cons;
+
+   double t0= 0.4; //fm
+   double a0=1.0;
+   double Q= pow(2.0/3.0,2)+ pow(1.0/3.0,2);
+   double Delta = 0.15; //fm
+   double Alpha=1.0/137.04;
+   auto SD_th = [&t0, &Delta](double t) ->double { return 1.0- 1.0/(1.0 + exp(-2.0*(t-t0)/Delta));};
+   auto int_SD_cont = [&](double t) -> double { return 4.0*pow(Alpha,2)*(1.0/(2.0*M_PI*M_PI*t*t*t))*SD_th(t)*kernel_K(t,1.0);};
+
+   double error_amu_cont;
+   double eps_cont = 1.0e-10;
+   double a_mu_SD_cont= boost::math::quadrature::gauss_kronrod<double,15>::integrate(int_SD_cont, 0.0, numeric_limits<double>::infinity() , 5, eps_cont, &error_amu_cont);
+
+  for(int k=1;k<=15;k++) {
+    Vfloat rr= Read_From_File("../theo_RM123/VkVk_free_data/corr_r1_1_r2_1_L_48_T_96_mu_0.00000_scale_"+to_string(k), 1, 2);
+    Vfloat rmr= Read_From_File("../theo_RM123/VkVk_free_data/corr_r1_1_r2_0_L_48_T_96_mu_0.00000_scale_"+to_string(k), 1, 2);
+    Vfloat rcons= Read_From_File("../theo_RM123/VkVk_free_data/corr_r1_1_r2_2_L_48_T_96_mu_0.00000_scale_"+to_string(k), 1, 2);
+    C_samer.push_back(rr);
+    C_opper.push_back(rmr);
+    C_cons.push_back(rcons);
+  }
+
+  Vfloat a2_Corr_48_96_samer;
+  Vfloat a2_Corr_48_96_opper;
+
+  a2_Corr_48_96_samer= Read_From_File("../theo_RM123/VkVk_free_data/48_SAMER", 1, 2);
+  a2_Corr_48_96_opper= Read_From_File("../theo_RM123/VkVk_free_data/48_OPPOR", 1, 2);
+
+  Vfloat cont_lim_samer = Sum_vectors<double>(a2_Corr_48_96_samer, C_opper[0]);
+  Vfloat cont_lim_opper = Sum_vectors<double>(a2_Corr_48_96_opper, C_samer[0]);
+
+
+  for(int t=1; t< (signed)cont_lim_samer.size();t++) cont_lim_samer[t]*=2.0*M_PI*M_PI*t*t*t;
+  for(int t=1; t< (signed)cont_lim_opper.size();t++) cont_lim_opper[t]*=2.0*M_PI*M_PI*t*t*t;
+
+
+
+  Vfloat a2_coeff_samer, a2_coeff_opper, a2_coeff_cons;
+  Vfloat cont_samer, cont_opper, cont_cons;
+
+  //fit correlator for each t
+  for(int r=0;r<3;r++) {
+  for(int t=1;t<10;t++) {
+    
+
+    Vfloat X,Y,Z;
+    for(int i=5;i<15;i++) {X.push_back( a0/(1.0+i)); Y.push_back( (1.0/a0/a0/a0)*C_samer[i][t]); Z.push_back( (1.0/a0/a0/a0)*C_opper[i][t]);}
+    //glue Y and Z
+    Vfloat V=Y;
+    Vfloat Xd = X;
+    Vfloat Y_cons;
+    for(int i=5;i<15;i++) {Y_cons.push_back( (1.0/a0/a0/a0)*C_cons[i][t]);}
+    V.insert(V.end(), Z.begin(), Z.end());
+    Xd.insert(Xd.end(), Xd.begin(), Xd.end());
+    T_fit Fit_f((r==2)?X:Xd, (r==2)?Y_cons:V);
+    if(r==2) Fit_f.add_pars(3.0); //cont. lim
+    Fit_f.add_pars(2.5); //a^2 samer
+    if(r != 2) Fit_f.add_pars(2.5); //a^2 opper
+    //Fit_f.add_pars(1.0); //a^4 samer
+    //Fit_f.add_pars(1.0); //a^4 opper
+  
+
+    Fit_f.ansatz = [&](const Vfloat &ip, double x, int imeas) -> double {
+
+		     
+
+		     double tph = t*a0;
+		     double K= 1.0/(2.0*M_PI*M_PI*pow(tph,3));
+		     if(r==2) return (1.0/a0/a0/a0)*K*ip[0] + 1.0*K*(1.0/a0/a0/a0)*(x/tph)*(x/tph)*ip[1] + 0.0*K*(1.0/a0*a0*a0)*pow((x/tph),4);
+		     else return (1.0/a0/a0/a0)*K*(imeas<Y.size()?cont_lim_samer[t]:cont_lim_opper[t])  + 1.0*(imeas<Y.size()?ip[0]:ip[1])*K*(x/tph)*(x/tph) + 0.0*K*pow((x/tph),4);
+		   };
+
+    fit_t_res fit_result = Fit_f.fit();
+    if(r==0) {a2_coeff_samer.push_back(fit_result.pars[0]); cont_samer.push_back(fit_result.pars[0]);}
+    else if(r==1) {a2_coeff_opper.push_back(fit_result.pars[1]); cont_opper.push_back(fit_result.pars[0]);}
+    else {a2_coeff_cons.push_back( fit_result.pars[1]); cont_cons.push_back(fit_result.pars[0]);}
+
+   
+
+  }
+  }
+
+  cout<<"Printing a^2 fit coefficients (same r)"<<endl;
+  printV(a2_coeff_samer, "", 1);
+  cout<<"Printing a^2 fit coefficients (opposite r)"<<endl;
+  printV(a2_coeff_opper, "", 1);
+  cout<<"Printing a^2 fit coefficients conserved"<<endl;
+  printV(a2_coeff_cons, "", 1);
+  cout<<"Printing cont fit coefficients (same r)"<<endl;
+  printV(cont_samer, "", 1);
+  cout<<"Printing cont fit coefficients (opposite r)"<<endl;
+  printV(cont_opper, "", 1);
+  cout<<"Printing cont fit coefficients conserved"<<endl;
+  printV(cont_cons, "", 1);
+  
+
+  
+
+  
+  Vfloat alist, aSD_samer_list, aSD_opper_list;
+  Vfloat Clog_SD_samer_list, Clog_SD_opper_list;
+  //Compute_SD_window
+  for(int k=0;k<15;k++) {
+    double aSD_samer=0.0;
+    double aSD_opper=0.0;
+    double a= a0/(1.0+k);
+    for(int t=1; t< 30;t++) { aSD_samer += a0*(1.0/pow(a0,3))*4.0*pow(Alpha,2)*SD_th(t*a0)*C_samer[k][t]*kernel_K(t*a0,1.0);}
+    for(int t=1; t< 30;t++) { aSD_opper += a0*(1.0/pow(a0,3))*4.0*pow(Alpha,2)*SD_th(t*a0)*C_opper[k][t]*kernel_K(t*a0,1.0);}
+    alist.push_back(a);
+    aSD_samer_list.push_back(aSD_samer);
+    aSD_opper_list.push_back(aSD_opper);
+    Clog_SD_samer_list.push_back(aSD_samer/(a*a*log(1.0/a)));
+    Clog_SD_opper_list.push_back(aSD_opper/(a*a*log(1.0/a)));
+      
+
+  }
+
+  
+  
+  Vfloat cont_val(15,a_mu_SD_cont);
+ 
+
+
+   //fit SD window
+  Vfloat a2log_samer, a2log_opper, SD_cont_fit_samer, SD_cont_fit_opper;
+  for(int r=0;r<2;r++) {
+    
+
+    Vfloat X,Y,Z;
+    for(int i=3;i<15;i++) {X.push_back( a0/(1.0+i)); Y.push_back( aSD_samer_list[i]); Z.push_back( aSD_opper_list[i]);}
+    T_fit Fit_f_SD(X, r==0?Y:Z);
+    Fit_f_SD.add_pars(1.3); //cont. lim
+    Fit_f_SD.add_pars(0.5); //a^2*log(1/a)
+    Fit_f_SD.add_pars(1.0); //a^2
+
+    Fit_f_SD.ansatz = [&](const Vfloat &ip, double x, int imeas) -> double {
+
+			double K= cont_val[0];
+			double xd = x/a0;
+			return 1.0*ip[0]*K + 1.0*ip[1]*xd*xd*log(1/xd) + ip[2]*xd*xd;
+		   };
+
+    fit_t_res fit_result_SD = Fit_f_SD.fit();
+    if(r==0) {a2log_samer.push_back(fit_result_SD.pars[1]); SD_cont_fit_samer.push_back(fit_result_SD.pars[0]);}
+    else {a2log_opper.push_back(fit_result_SD.pars[1]); SD_cont_fit_opper.push_back(fit_result_SD.pars[0]);}
+  }
+
+  //print
+  cout<<"Printing a^2*log(1/a) fit coefficients (same r)"<<endl;
+  printV(a2log_samer, "", 1);
+  cout<<"Printing a^2*log(1/a) fit coefficients (opposite r)"<<endl;
+  printV(a2log_opper, "", 1);
+  cout<<"Printing cont fit SD (same r)"<<endl;
+  printV(SD_cont_fit_samer, "", 1);
+  cout<<"Printing cont fit SD (opposite r)"<<endl;
+  printV(SD_cont_fit_opper, "", 1);
+
+  VVfloat C_samer_swap= C_samer;
+  VVfloat C_opper_swap= C_opper;
+  Transpose_VV<double>(C_samer_swap);
+  Transpose_VV<double>(C_opper_swap);
+
+  for(int t=1;t<C_samer[0].size()/2;t++) { Print_To_File( {}, {alist, C_samer_swap[t], C_opper_swap[t]}, "../theo_RM123/VkVk_free_data/Corr_"+to_string(t)+".dat", "", "");}
+
+
+  Print_To_File({}, {alist, aSD_samer_list, aSD_opper_list, cont_val }, "../theo_RM123/VkVk_free_data/SD.out", "", "# a   SD(samer)   SD(opper)   Clog(samer)   Clog(opper)");
+
+  return;
+
+};
+
+
+
 double LL_functions::Vdual(double t, double m_rho, double Edual, double Rdual) {
 
 
@@ -596,7 +1022,7 @@ void LL_functions::Find_pipi_energy_lev(double L, double m_rho, double g_rho_pip
 
       
       if(XL > XH){
-	cout.precision(16);
+	cout.precision(15);
 	cout<<"Brent algo is not able to bracket the root"<<endl;
 	cout<<"status: "<<Brent_status<<endl;
 	cout<<"PRINTING INFO: "<<endl;

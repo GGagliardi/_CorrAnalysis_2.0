@@ -970,6 +970,7 @@ double sdh1he1 = 16*pow(MK,6)*(A + 2*rl)*pow(xk,2)*(-pow(rl,2) + A*(-1 + B + pow
  if(MODE=="PT") result= pt;
  else if(MODE=="INTERFERENCE") result= Int_Kernel;
  else if(MODE=="QUADRATIC") result= SD_Kernel;
+ else if(MODE=="SD") result = SD_Kernel+Int_Kernel;
  else {
    vector<double> summ_vector({pt, Int_Kernel, SD_Kernel});
    result=Kahan_sum(summ_vector);
@@ -1194,6 +1195,7 @@ long double Compute_square_amplitude_different_lepton(double h1, double h2, doub
  if(MODE=="PT") result= pt;
  else if(MODE=="INTERFERENCE") result= Int_Kernel;
  else if(MODE=="QUADRATIC") result= SD_Kernel;
+ else if(MODE=="SD") result = SD_Kernel+Int_Kernel;
  else {
     vector<double> summ_vector({pt, Int_Kernel, SD_Kernel});
     result=Kahan_sum(summ_vector);
@@ -2975,6 +2977,7 @@ long double Compute_square_amplitude_extended_v2( double h1, double h2, double f
  if(MODE=="PT") result= pt;
  else if(MODE=="INTERFERENCE") result= Int_Kernel;
  else if(MODE=="QUADRATIC") result= SD_Kernel;
+ else if(MODE=="SD") result = SD_Kernel+Int_Kernel;
  else {
    vector<double> summ_vector({pt, Int_Kernel, SD_Kernel});
    result=Kahan_sum(summ_vector);
@@ -3340,6 +3343,7 @@ long double Compute_square_amplitude_different_lepton_v2(double h1, double h2, d
  if(MODE=="PT") result= pt;
  else if(MODE=="INTERFERENCE") result= Int_Kernel;
  else if(MODE=="QUADRATIC") result= SD_Kernel;
+ else if(MODE=="SD") result = SD_Kernel+Int_Kernel;
  else {
     vector<double> summ_vector({pt, Int_Kernel, SD_Kernel});
     result=Kahan_sum(summ_vector);

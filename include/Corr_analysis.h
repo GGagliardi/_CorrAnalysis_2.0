@@ -24,6 +24,8 @@ class CorrAnalysis {
   distr_t_list corr_t(const VVfloat &corr, string Obs); //returns jackknife or bootstrap distribution of a correlator
   distr_t_list residue_t(const VVfloat &corr_A, string Obs); //returns jackknife or boostrap distribution of the residue of the pole "acts on data"
   distr_t_list residue_t(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of the residue of the pole "acts on distributions"
+  distr_t_list residue_t_wo_m_fit(const VVfloat &corr_A, string Obs); //returns jackknife or boostrap distribution of the residue of the pole wo fitting the effective mass "acts on data" 
+  distr_t_list residue_t_wo_m_fit(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of the residue of the pole wo fitting the effective mass "acts on distributions"
   distr_t_list decay_constant_t(const VVfloat &corr, string Obs); //returns jackknife or boostrap distribution of a decay constant "acts on data"
   distr_t_list decay_constant_t(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of a decay constant "acts on distribution"
  

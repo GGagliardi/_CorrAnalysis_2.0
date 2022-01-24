@@ -23,12 +23,11 @@ const int Nboots=200;
 const bool verbose=1;
 const bool CDH_correct_FVE=1;
 const bool GL_correct_FVE =CDH_correct_FVE?0:0;
-const bool Use_Xp=0;
 const bool Use_fp=1;
 const bool use_tailored_interval=true;
 const bool Use_A2_Dm_prior=true;
 const bool Use_Fa_prior=false;
-const double X_phys_val= Use_Xp?1e+3*pow(xi_phys,1)/(2.0):(1e+3*(Use_fp?pow(fpi_phys,2)/(2.0*MPiPhys):pow(MPiPhys,2)/(2*MPiPhys)));
+const double X_phys_val= (1e+3*(Use_fp?pow(fpi_phys,2)/(2.0*MPiPhys):pow(MPiPhys,2)/(2*MPiPhys)));
 const double l1ph= -0.4; //-0.4
 const double l2ph= 4.3; //4.3
 const double l3ph= 3.2; //3.2
@@ -37,6 +36,9 @@ const double s0= 2.0-M_PI/2.0;
 const double s1 = M_PI/4.0 - 0.5;
 const double s2 = 0.5 - M_PI/8.0;
 const double s3 = 3.0*M_PI/16.0 - 0.5;
+bool Use_M3=false;
+bool Use_Landau_Gauge=false;
+string LorF = Use_Landau_Gauge?"/Landau_gauge":"";
 
 class Y_t_M {
 
@@ -88,6 +90,18 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
     else if (OBS == "Dm") { Tmin=15; Tmax=24;        }
     else if (OBS == "Dm_exch") {   Tmin=15; Tmax=27;               }
     else if (OBS == "Dm_hand") {   Tmin=15; Tmax=27;                }
+    else if (OBS == "Dm_exch_untwist") {Tmin=15; Tmax=28;}
+    else if (OBS == "Dm_exch_cons") { Tmin= 14; Tmax=29;              }
+    else if (OBS == "Dm_exch_Land") {   Tmin=15; Tmax=25;               }
+    else if (OBS == "Dm_hand_Land") {   Tmin=15; Tmax=27;                }
+    else if (OBS == "Mpi_Z") { Tmin= 13; Tmax=27;}  
+    else if (OBS == "Mpi_OS_Z") { Tmin= 15; Tmax=25;}
+    else if (OBS == "Zp_ov_Zs") { Tmin= 14; Tmax=30;}
+    else if (OBS == "RV") { Tmin=16; Tmax=30;}
+    else if (OBS == "RA") { Tmin=9; Tmax=19;}
+    else if (OBS == "RV") { Tmin=8; Tmax=31;}
+    else if (OBS == "RA") { Tmin=12; Tmax=20;}
+    else if (OBS == "RA_bis") {Tmin=13; Tmax=24;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
   else if(Ensemble_tag=="A40.24_48") {
@@ -96,6 +110,16 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
     else if (OBS == "Dm") {  Tmin=12; Tmax=19;       }
     else if (OBS == "Dm_exch") {   Tmin=12; Tmax=20;               }
     else if (OBS == "Dm_hand") {   Tmin=10; Tmax=22;                }
+    else if (OBS == "Dm_exch_untwist") {Tmin=6; Tmax=19;}
+    else if (OBS == "Dm_exch_cons") { Tmin= 13; Tmax=17;              }
+    else if (OBS == "Dm_exch_Land") {   Tmin=13; Tmax=20;               }
+    else if (OBS == "Dm_hand_Land") {   Tmin=10; Tmax=22;                }
+    else if (OBS == "Mpi_Z") { Tmin= 16; Tmax=22;}  
+    else if (OBS == "Mpi_OS_Z") { Tmin= 11; Tmax=18;}
+    else if (OBS == "Zp_ov_Zs") { Tmin= 11; Tmax=18;}
+    else if (OBS == "RV") { Tmin=10; Tmax=22;}
+    else if (OBS == "RA") { Tmin=7; Tmax=18;}
+    else if (OBS == "RA_bis") {Tmin=5; Tmax=13;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
   else if(Ensemble_tag=="A40.32_64") {
@@ -104,14 +128,35 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
     else if (OBS == "Dm") {  Tmin=14; Tmax=27;       } 
     else if (OBS == "Dm_exch") {   Tmin=14; Tmax=27;               } //14-30
     else if (OBS == "Dm_hand") {   Tmin=14; Tmax=27;                } //14-27
+    else if (OBS == "Dm_exch_untwist") {Tmin=16; Tmax=28;}
+    else if (OBS == "Dm_exch_cons") { Tmin= 13; Tmax=26;              }
+    else if (OBS == "Dm_exch_Land") {   Tmin=14; Tmax=28;               } //14-30
+    else if (OBS == "Dm_hand_Land") {   Tmin=14; Tmax=27;                } //14-27
+    else if (OBS == "Mpi_Z") { Tmin= 15; Tmax=24;}  
+    else if (OBS == "Mpi_OS_Z") { Tmin= 17; Tmax=27;}
+    else if (OBS == "Zp_ov_Zs") { Tmin= 16; Tmax=29;}
+    else if (OBS == "RV") { Tmin=10; Tmax=28;}
+    else if (OBS == "RA") { Tmin=10; Tmax=25;}
+    else if (OBS == "RA_bis") {Tmin=5; Tmax=12;}
+
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A40.40_80") {
      if(OBS == "fp") {  Tmin=18; Tmax=30;        }
      else if (OBS=="Mpi") {  Tmin=18; Tmax=30;       }
      else if (OBS == "Dm") {  Tmin=14; Tmax=30;       }
-     else if (OBS == "Dm_exch") {   Tmin=14; Tmax=31;               } //14-30
-     else if (OBS == "Dm_hand") {   Tmin=11; Tmax=32;                } //11-32
+     else if (OBS == "Dm_exch") {   Tmin=21; Tmax=35;               } //14-30
+     else if (OBS == "Dm_hand") {   Tmin=11; Tmax=35;                } //11-32
+     else if (OBS == "Dm_exch_untwist") {Tmin=21; Tmax=29;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 15; Tmax=30;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=15; Tmax=32;               } //14-30
+     else if (OBS == "Dm_hand_Land") {   Tmin=21; Tmax=36;                } //11-32
+     else if (OBS == "Mpi_Z") { Tmin= 21; Tmax=37;}  
+     else if (OBS == "Mpi_OS_Z") { Tmin= 15; Tmax=24;}
+     else if (OBS == "Zp_ov_Zs") { Tmin= 15; Tmax=28;}
+     else if (OBS == "RV") { Tmin=11; Tmax=38;}
+     else if (OBS == "RA") { Tmin=13; Tmax=23;}
+     else if (OBS == "RA_bis") {Tmin=6; Tmax=12;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A40.48_96") {
@@ -120,6 +165,17 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") {  Tmin=15; Tmax=42;       }                //15-42
      else if (OBS == "Dm_exch") {   Tmin=17; Tmax=40;               }  //17-40
      else if (OBS == "Dm_hand") {   Tmin=14; Tmax=40;                } //17-42
+     else if (OBS == "Dm_exch_untwist") {Tmin=22; Tmax=40;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 16; Tmax=40;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=20; Tmax=40;               }  //17-40
+     else if (OBS == "Dm_hand_Land") {   Tmin=24; Tmax=39;                } //17-42
+     else if (OBS == "Mpi_Z") { Tmin= 25; Tmax=40;}  
+     else if (OBS == "Mpi_OS_Z") { Tmin= 12; Tmax=20;}
+     else if (OBS == "Mpi_OS_Z") { Tmin= 12; Tmax=17;} //not so good
+     else if (OBS == "Zp_ov_Zs") { Tmin= 10; Tmax=21;}
+     else if (OBS == "RV") { Tmin=10; Tmax=43;}
+     else if (OBS == "RA") { Tmin=11; Tmax=23;}
+     else if (OBS == "RA_bis") {Tmin=6; Tmax=11;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A50.32_64") {
@@ -128,6 +184,16 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") { Tmin=16; Tmax=28;        }
      else if (OBS == "Dm_exch") {   Tmin=17; Tmax=26;               }
      else if (OBS == "Dm_hand") {   Tmin=16; Tmax=30;                }
+     else if (OBS == "Dm_exch_untwist") {Tmin=14; Tmax=29;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 15; Tmax=27;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=12; Tmax=28;               }
+     else if (OBS == "Dm_hand_Land") {   Tmin=16; Tmax=30;                }
+     else if (OBS == "Mpi_Z") { Tmin= 16; Tmax=28;}  
+     else if (OBS == "Mpi_OS_Z") { Tmin= 12; Tmax=17;} //not so good
+     else if (OBS == "Zp_ov_Zs") { Tmin= 9; Tmax=18;}
+     else if (OBS == "RV") { Tmin=10; Tmax=31;}
+     else if (OBS == "RA") { Tmin=4; Tmax=11;}
+     else if (OBS == "RA_bis") {Tmin=13; Tmax=22;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A60.24_48") {
@@ -136,6 +202,16 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") {  Tmin=11;Tmax=22;       }
      else if (OBS == "Dm_exch") {   Tmin=12; Tmax=22;               }
      else if (OBS == "Dm_hand") {   Tmin=13; Tmax=21;                }
+     else if (OBS == "Dm_exch_untwist") {Tmin=15; Tmax=19;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 12; Tmax=22;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=12; Tmax=18;               }
+     else if (OBS == "Dm_hand_Land") {   Tmin=13; Tmax=21;                }
+     else if (OBS == "Mpi_Z") { Tmin= 16; Tmax=22;}  //not so good
+     else if (OBS == "Mpi_OS_Z") { Tmin= 14; Tmax=19;} //not so good
+     else if (OBS == "Zp_ov_Zs") { Tmin= 13; Tmax=21;}
+     else if (OBS == "RV") { Tmin=10; Tmax=23;}
+     else if (OBS == "RA") { Tmin=5; Tmax=14;}
+     else if (OBS == "RA_bis") {Tmin=9; Tmax=20;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A80.24_48") {
@@ -144,6 +220,16 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") { Tmin=14; Tmax=20;        }
      else if (OBS == "Dm_exch") {   Tmin=16; Tmax=23;               }
      else if (OBS == "Dm_hand") {   Tmin=13; Tmax=22;                }
+     else if (OBS == "Dm_exch_untwist") {Tmin=13; Tmax=20;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 12; Tmax=20;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=13; Tmax=22;               }
+     else if (OBS == "Dm_hand_Land") {   Tmin=11; Tmax=22;                }
+     else if (OBS == "Mpi_Z") { Tmin= 13; Tmax=21;}
+     else if (OBS == "Mpi_OS_Z") { Tmin= 15; Tmax=18;}  //terrible
+     else if (OBS == "Zp_ov_Zs") { Tmin= 14; Tmax=20;}
+     else if (OBS == "RV") { Tmin=10; Tmax=23;}
+     else if (OBS == "RA") { Tmin=8; Tmax=19;}
+     else if (OBS == "RA_bis") {Tmin=15; Tmax=19;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="A100.24_48") {
@@ -152,6 +238,16 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") {  Tmin=12; Tmax=22;       }
      else if (OBS == "Dm_exch") {   Tmin=13; Tmax=22;               }
      else if (OBS == "Dm_hand") {   Tmin=11; Tmax=22;                }
+     else if (OBS == "Dm_exch_untwist") {Tmin=10; Tmax=18;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 11; Tmax=22;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=12; Tmax=22;               }
+     else if (OBS == "Dm_hand_Land") {   Tmin=14; Tmax=22;                }
+     else if (OBS == "Mpi_Z") { Tmin= 11; Tmax=19;}
+     else if (OBS == "Mpi_OS_Z") { Tmin= 12; Tmax=18;}
+     else if (OBS == "Zp_ov_Zs") { Tmin= 12; Tmax=20;}
+     else if (OBS == "RV") { Tmin=12; Tmax=22;}
+     else if (OBS == "RA") { Tmin=8; Tmax=18;}
+     else if (OBS == "RA_bis") {Tmin=12; Tmax=18;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="B25.32_64") {
@@ -168,6 +264,16 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") {  Tmin=15; Tmax=28;       } //also Tmin=15 ?
      else if (OBS == "Dm_exch") {   Tmin=17; Tmax=28;               }
      else if (OBS == "Dm_hand") {   Tmin=14; Tmax=29;                }
+     else if (OBS == "Dm_exch_untwist") {Tmin=11; Tmax=26;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 15; Tmax=25;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=16; Tmax=29;               }
+     else if (OBS == "Dm_hand_Land") {   Tmin=14; Tmax=29;                }
+     else if (OBS == "Mpi_Z") { Tmin= 19; Tmax=29;}
+     else if (OBS == "Mpi_OS_Z") { Tmin= 14; Tmax=24;}
+     else if (OBS == "Zp_ov_Zs") { Tmin= 15; Tmax=24;}
+     else if (OBS == "RV") { Tmin=10; Tmax=30;}
+     else if (OBS == "RA") { Tmin=8; Tmax=26;}
+     else if (OBS == "RA_bis") {Tmin=5; Tmax=26;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="B55.32_64") {
@@ -176,6 +282,16 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") { Tmin=15; Tmax=24;        }
      else if (OBS == "Dm_exch") {   Tmin=15; Tmax=24;               }
      else if (OBS == "Dm_hand") {   Tmin=12; Tmax=29;                }
+     else if (OBS == "Dm_exch_untwist") {Tmin=15; Tmax=29;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 18; Tmax=28;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=13; Tmax=27;               }
+     else if (OBS == "Dm_hand_Land") {   Tmin=15; Tmax=30;                }
+     else if (OBS == "Mpi_Z") { Tmin= 14; Tmax=27;}
+     else if (OBS == "Mpi_OS_Z") { Tmin= 13; Tmax=22;}
+     else if (OBS == "Zp_ov_Zs") { Tmin= 12; Tmax=23;}
+     else if (OBS == "RV") { Tmin=11; Tmax=27;}
+     else if (OBS == "RA") { Tmin=13; Tmax=22;}
+     else if (OBS == "RA_bis") {Tmin=13; Tmax=21;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="B75.32_64") {
@@ -184,6 +300,16 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") {  Tmin=19; Tmax=30;       }
      else if (OBS == "Dm_exch") {   Tmin=19; Tmax=30;               }
      else if (OBS == "Dm_hand") {   Tmin=12; Tmax=30;                }
+     else if (OBS == "Dm_exch_untwist") {Tmin=11; Tmax=20;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 18; Tmax=30;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=18; Tmax=30;               }
+     else if (OBS == "Dm_hand_Land") {   Tmin=12; Tmax=25;                }
+     else if (OBS == "Mpi_Z") { Tmin= 22; Tmax=27;}
+     else if (OBS == "Mpi_OS_Z") { Tmin= 17; Tmax=26;}
+     else if (OBS == "Zp_ov_Zs") { Tmin= 14; Tmax=27;}
+     else if (OBS == "RV") { Tmin=10; Tmax=30;}
+     else if (OBS == "RA") { Tmin=11; Tmax=30;}
+     else if (OBS == "RA_bis") {Tmin=11; Tmax=25;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="B85.24_48") {
@@ -192,6 +318,16 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") {  Tmin=11; Tmax=21;       }
      else if (OBS == "Dm_exch") {   Tmin=12; Tmax=21;               }
      else if (OBS == "Dm_hand") {   Tmin=12; Tmax=22;                }
+     else if (OBS == "Dm_exch_untwist") {Tmin=13; Tmax=17;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 14; Tmax=21;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=15; Tmax=22;               }
+     else if (OBS == "Dm_hand_Land") {   Tmin=12; Tmax=22;                }
+     else if (OBS == "Mpi_Z") { Tmin= 15; Tmax=22;}
+     else if (OBS == "Mpi_OS_Z") { Tmin= 16; Tmax=21;}
+     else if (OBS == "Zp_ov_Zs") { Tmin= 10; Tmax=22;}
+     else if (OBS == "RV") { Tmin=11; Tmax=38;}
+     else if (OBS == "RA") { Tmin=11; Tmax=16;}
+     else if (OBS == "RA_bis") {Tmin=11; Tmax=19;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="D15.48_96") {
@@ -200,14 +336,34 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") { Tmin=21; Tmax=40;        }
      else if (OBS == "Dm_exch") {   Tmin=26; Tmax=40;               }
      else if (OBS == "Dm_hand") {   Tmin=19; Tmax=42;                }
+     else if (OBS == "Dm_exch_untwist") {Tmin=23; Tmax=44;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 17; Tmax=43;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=26; Tmax=40;               }
+     else if (OBS == "Dm_hand_Land") {   Tmin=19; Tmax=42;                }
+     else if (OBS == "Mpi_Z") { Tmin= 22; Tmax=40;}
+     else if (OBS == "Mpi_OS_Z") { Tmin= 22; Tmax=43;}
+     else if (OBS == "Zp_ov_Zs") { Tmin= 24; Tmax=48;}
+     else if (OBS == "RV") { Tmin=10; Tmax=47;}
+     else if (OBS == "RA") { Tmin=10; Tmax=36;}
+     else if (OBS == "RA_bis") {Tmin=10; Tmax=36;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="D20.48_96") {
      if(OBS == "fp") {  Tmin=20; Tmax=40;        }
-     else if (OBS=="Mpi") { Tmin=16; Tmax=40;        }
+     else if (OBS=="Mpi") { Tmin=24; Tmax=36;        }
      else if (OBS == "Dm") {  Tmin=24; Tmax=38;       }
-     else if (OBS == "Dm_exch") {   Tmin=26; Tmax=37;               }   
+     else if (OBS == "Dm_exch") {   Tmin=26; Tmax=38;               }   
      else if (OBS == "Dm_hand") {   Tmin=17; Tmax=40;                }
+     else if (OBS == "Dm_exch_untwist") {Tmin=20; Tmax=39;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 28; Tmax=39;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=20; Tmax=40;               }   
+     else if (OBS == "Dm_hand_Land") {   Tmin=15; Tmax=43;                }
+     else if (OBS == "Mpi_Z") { Tmin= 24; Tmax=38;}
+     else if (OBS == "Mpi_OS_Z") { Tmin= 25; Tmax=41;}
+     else if (OBS == "Zp_ov_Zs") { Tmin= 24; Tmax=48;}
+     else if (OBS == "RV") { Tmin=10; Tmax=47;}
+     else if (OBS == "RA") { Tmin=7; Tmax=28;}
+     else if (OBS == "RA_bis") {Tmin=19; Tmax=28;}
     else crash("OBS :"+OBS+" not yet implemented");
   }
    else if(Ensemble_tag=="D30.48_96") {
@@ -216,7 +372,17 @@ void Get_plateaux(string Ensemble_tag, string OBS, int &Tmin, int &Tmax) {
      else if (OBS == "Dm") {  Tmin=20; Tmax=35;       }
      else if (OBS == "Dm_exch") {   Tmin=20; Tmax=35;               } 
      else if (OBS == "Dm_hand") {   Tmin=21; Tmax=44;                }
-    else crash("OBS :"+OBS+" not yet implemented");
+     else if (OBS == "Dm_exch_untwist") { Tmin=20; Tmax=40;}
+     else if (OBS == "Dm_exch_cons") { Tmin= 20; Tmax=32;              }
+     else if (OBS == "Dm_exch_Land") {   Tmin=20; Tmax=39;               } 
+     else if (OBS == "Dm_hand_Land") {   Tmin=15; Tmax=44;                }
+     else if (OBS == "Mpi_Z") { Tmin= 21; Tmax=45;}
+     else if (OBS == "Mpi_OS_Z") { Tmin= 23; Tmax=32;}
+     else if (OBS == "Zp_ov_Zs") { Tmin= 20; Tmax=34;}
+     else if (OBS == "RV") { Tmin=9; Tmax=47;}
+     else if (OBS == "RA") { Tmin=11; Tmax=31;}
+     else if (OBS == "RA_bis") {Tmin=21; Tmax=30;}
+     else crash("OBS :"+OBS+" not yet implemented");
   }
    else crash("Ensemble: "+Ensemble_tag+" not found in Get_plateaux");
   
@@ -231,23 +397,65 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
   omp_set_num_threads(1);
   
-  data_t m_data, dm_exch_data, dm_hand_data, m_data_hand_run, m_twisted_data, m_data_conserved;
+  data_t m_data, dm_exch_data, dm_hand_data, m_data_hand_run, m_twisted_data, m_data_conserved, dm_exch_untwist_data, dm_exch_cons_data, m_data_c, m_data_l;
   if (CURRENT_TYPE=="LOCAL") { //current is local
     // m_data.Read("../datasets", "mes_contr_00", "P5P5");
     //dm_exch_data.Read("../datasets", "mes_contr_LL", "P5P5");
     m_data.Read("../datasets_RTM_QED/data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
     m_data_conserved.Read("../datasets_RTM_QED/data", "mes_contr_00_conserved", "P5P5");
+    m_data_c.Read("../datasets/data", "mes_contr_00", "P5P5");
+    m_data_l.Read("../datasetslocal/data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
     //PAY ATTENTION TO WHAT 2pt YOU ARE LOADING
     dm_exch_data.Read("../datasets_RTM_QED/data", "mes_contr_M0_R0_F_M0_R0_F", "P5P5");
+    dm_exch_untwist_data.Read( "../datasetslocal/data", "mes_contr_M0_R0_F_M0_R0_F", "P5P5"  );
+    dm_exch_cons_data.Read("../datasets/data", "mes_contr_LL", "P5P5");
     if(IncludeDisconnected) {
-      m_data_hand_run.Read("../datasets_RTM_QED/data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");        //PAY ATTENTION TO WHAT 2pt YOU ARE LOADING
+      m_data_hand_run.Read("../datasets_RTM_QED/data", "mes_contr_M0_R0_0_M0_R0_0_handcuffs", "P5P5");        //PAY ATTENTION TO WHAT 2pt YOU ARE LOADING
       dm_hand_data.Read("../datasets_RTM_QED/data", "handcuffs", "P5P5");
     }
   }
   else crash("CURRENT_TYPE: "+CURRENT_TYPE+ " not yet implemented. Exiting...");
+
+  
+  //#######################################################################################################
+  //load data from Landau gauge
+  data_t hand_Land,  exch_Land_tw, pt2_exch_Land, pt2_hand_Land;
+
+
+
+  hand_Land.Read("../Gauge_fix_m100_PionQed_bis/data/DISCO_LANDAU", "handcuffs", "P5P5");
+  exch_Land_tw.Read("../Gauge_fix_m100_PionQed_bis/data/CONN_LANDAU", "mes_contr_QED_6", "P5P5");
+  pt2_exch_Land.Read("../Gauge_fix_m100_PionQed_bis/data/CONN_LANDAU", "mes_contr_LO_1", "P5P5");
+  pt2_hand_Land.Read("../Gauge_fix_m100_PionQed_bis/data/DISCO_LANDAU", "mes_contr_hand_LO", "P5P5");
+  
+  //#######################################################################################################
+
+
+  //#######################################################################################################
+  //load data from galileo100
+  data_t hand_Land_Gal, hand_Land_Gal_new_norm;
+
+
+
+  hand_Land_Gal.Read("../test_disc_galileo/data", "handcuffs", "P5P5");
+  hand_Land_Gal_new_norm.Read("../test_disc_galileo/data_new_norm", "handcuffs", "P5P5");
   
   
-  //compute masses and effective masses
+
+  //#######################################################################################################
+  
+  
+  
+  //to compute ZV
+  data_t corr_A0P5, corr_P5P5;
+  //to compute ZA
+  data_t corr_A0P5_OS, corr_P5P5_OS;
+
+
+  corr_A0P5.Read("../ZaForPiQed/data", "mes_contr_M0_R0_0_M0_R0_0", "A0P5");
+  corr_P5P5.Read("../ZaForPiQed/data", "mes_contr_M0_R0_0_M0_R0_0", "P5P5");
+  corr_A0P5_OS.Read("../ZaForPiQed/data", "mes_contr_M0_R0_0_M0_R1_0", "A0P5");
+  corr_P5P5_OS.Read("../ZaForPiQed/data", "mes_contr_M0_R0_0_M0_R1_0", "P5P5");
 
   
   
@@ -258,8 +466,10 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
   distr_t_list Mpi_distr_list(UseJack), Dm_ov_X_distr_list(UseJack), X_pi_distr_list(UseJack), Dm2_ren_univ_sub_distr_list(UseJack),  Dm_ov_X_ren_univ_sub_distr_list(UseJack),
     Dm2_ren_univ_sub_M1_distr_list(UseJack), diff_Dm2_ren_univ_sub_M1_M2_distr_list(UseJack);
+  distr_t_list  ratio_exch_tw_untw(UseJack), ratio_exch_loc_cons(UseJack), ratio_exch_tw_cons(UseJack);
   distr_t_list Mpi_distr_dim_list(UseJack);
   distr_t_list Dm2_disc(UseJack);
+  distr_t_list Dm2_disc_Landau(UseJack);
   distr_t_list fp_fit_distr_list(UseJack);
   distr_t_list fp_fit_naive_list(UseJack);
   distr_t_list fp_fit_GL_list(UseJack);
@@ -270,21 +480,22 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
   distr_t_list Ratio_CDH_naive_fp(UseJack);
   distr_t_list Ratio_CDH_naive_Mpi(UseJack);
   vector<Eigen::MatrixXd> CovMatrixPion(Nens);
+  distr_t_list ratio_LF_exch(Nens), ratio_LF_hand(Nens), ratio_LF_tot(Nens);
+  distr_t_list ratio_LF_exch_Univ_sub(Nens), ratio_LF_tot_Univ_sub(Nens);
+
+  Vfloat a_list;
 
   for(int i=0; i < Nens; i++) {
+
+    if(dm_exch_data.Tag[i] != dm_exch_untwist_data.Tag[i]) crash("twisted and untwisted ens do not coincide");
+
+    if(dm_exch_data.Tag[i] != dm_exch_cons_data.Tag[i]) crash("local twisted and conserved ens do not coincide");
+
+    if(dm_exch_data.Tag[i] != corr_P5P5.Tag[i]) crash("local twisted and RCs ens do not coincide");
    
     CorrAnalysis Corr(UseJack, Njacks,Nboots);
 
-    /*
-    if(m_data.Tag[i].substr(0,1) == "A") {
-      Corr.Tmin = 13;
-    }
-    else if(m_data.Tag[i].substr(0,1) =="B") Corr.Tmin = 15;
-    else Corr.Tmin= 21;
-    if(m_data.Tag[i].substr(0,1)=="D") Corr.Tmax = 35;
-    else Corr.Tmax= m_data.nrows[i]/2 -5;
-    */
-
+ 
     double ll, mm, tt;
     Read_pars_from_ensemble_tag(m_data.Tag[i], mm, ll, tt);
 
@@ -316,27 +527,46 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     boost::filesystem::create_directory("../data/Mpi_twisted_ov_X");
     string p= "local";
     boost::filesystem::create_directory("../data/Mpi_twisted_ov_X/"+p);
+    boost::filesystem::create_directory("../data/Mpi_twisted_ov_X/"+p+LorF+"/");
 
    
-    //read Za
+    //read Za from RI-MOM
     LatticeInfo LL("LOCAL");
     LL.LatInfo(m_data.Tag[i].substr(0,1));
     double Za = LL.Za_M2;
     double Za_e = LL.Za_M2_err;
     double Za_M1 = LL.Za;
     double Za_M1_e= LL.Za_err;
+    double Zv = LL.Zv_M2;
+    double Zv_e = LL.Zv_M2_err;
+    double Zv_M1 = LL.Zv;
+    double Zv_M1_e = LL.Zv_err;
     double lat_spacing_inv = LL.ainv;
+    a_list.push_back(1.0/lat_spacing_inv);
+    distr_t ainv_distr(UseJack);
     GaussianMersenne G(444363);
     distr_t Za_distr(UseJack);
     distr_t Za_distr_M1(UseJack);
-    for(int nj=0;nj<Njacks;nj++) Za_distr_M1.distr.push_back( Za_M1 + 0.0*G()*Za_M1_e/sqrt(Njacks-1));
-    for(int nj=0;nj<Njacks;nj++) Za_distr.distr.push_back( Za + 0.0*G()*Za_e/sqrt(Njacks-1));
+    distr_t Zv_distr(UseJack);
+    distr_t Zv_distr_M1(UseJack);
+    for(int nj=0;nj<Njacks;nj++) Za_distr_M1.distr.push_back( Za_M1 + G()*Za_M1_e/sqrt(Njacks-1));
+    for(int nj=0;nj<Njacks;nj++) Za_distr.distr.push_back( Za + G()*Za_e/sqrt(Njacks-1));
+    for(int nj=0;nj<Njacks;nj++) Zv_distr_M1.distr.push_back( Zv_M1 + 0.0*G()*Zv_M1_e/sqrt(Njacks-1));
+    for(int nj=0;nj<Njacks;nj++) Zv_distr.distr.push_back( Zv + G()*Zv_e/sqrt(Njacks-1));
+
+
+    //generate fake Jack-distribution of inverse lattice spacing
+    for(int nj=0; nj<Njacks;nj++) ainv_distr.distr.push_back( LL.ainv  + G()*LL.ainv_err/sqrt(Njacks -1.0));
     
 
     
     distr_t_list Pi_iso_correlated_distr = Corr.corr_t(m_data.col(0)[i], "");
    
     distr_t_list Pi_iso_distr = Corr.corr_t(m_data_conserved.col(0)[i], "");
+
+    distr_t_list Pi_iso_c = Corr.corr_t(m_data_c.col(0)[i], "");
+
+    distr_t_list Pi_iso_l = Corr.corr_t(m_data_l.col(0)[i], "");
 
     distr_t_list Mpi_eff_distr = Corr.effective_mass_t(Pi_iso_distr,  "../data/Mpi_twisted_ov_X/"+p+"/mass."+m_data.Tag[i]);
 
@@ -347,6 +577,14 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
     
     distr_t_list Exch_distr =  Corr.corr_t(dm_exch_data.col(0)[i], "");
+
+ 
+    distr_t_list Exch_untwist_distr = Corr.corr_t(dm_exch_untwist_data.col(0)[i], "");
+
+    distr_t_list Exch_cons_distr = Corr.corr_t(dm_exch_cons_data.col(0)[i], "");
+
+   
+    
 
     distr_t_list fp_distr= Corr.decay_constant_t(pow(2.0*mm,2)*Pi_iso_distr, "../data/Mpi_twisted_ov_X/"+p+"/fp."+m_data.Tag[i]);
 
@@ -424,34 +662,159 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     //############ END FVE CORRECTIONS ON Fpi and Mpi #############################
 
 
+
+    //########################## COMPUTE ZA AND ZV USING HADRONIC DEFINITION  (method M3)   #######################################
+
+    //define lambdas
+    auto sqr= [=](double a, double b) {return sqrt(a);};
+    auto SINH= [](double m) -> double  {return sinh(m);};
+    auto SINH2 = [](double m, double t) -> double {return sinh(m);};
+  
+
+
+    distr_t_list P5P5_distr, overlap_P5P5_distr, overlap_P5P5_OS_distr;
+    distr_t_list A0P5_distr, A0P5_OS_distr;
+    distr_t_list P5P5_OS_distr,  RV, RA, ratio_P5P5_overlap_OS_tm, Zp_ov_Zs_distr, RA_bis, Zp_ov_Zs_distr_bis;
+    distr_t_list Mpi_OS_distr_Z, Mpi_distr_Z;
+    distr_t Zv_M3, Za_M3, Zp_ov_Zs, Mpi_OS_fit_Z, Mpi_fit_Z, Za_M4;
+
+    //tm pion sector
+    P5P5_distr= Corr.corr_t(corr_P5P5.col(0)[i], "");
+
+    Get_plateaux(m_data.Tag[i], "Mpi_Z", Corr.Tmin, Corr.Tmax);
+    Mpi_distr_Z= Corr.effective_mass_t(P5P5_distr, "../data/Mpi_twisted_ov_X/"+p+"/Mpi_Z."+m_data.Tag[i]);
+    Mpi_fit_Z=Corr.Fit_distr(Mpi_distr_Z);
+    overlap_P5P5_distr = Corr.residue_t(P5P5_distr, "");
+
+    //OS sector
+    P5P5_OS_distr = Corr.corr_t(corr_P5P5_OS.col(0)[i], "");
+    Get_plateaux(m_data.Tag[i], "Mpi_OS_Z", Corr.Tmin, Corr.Tmax);
+    Mpi_OS_distr_Z= Corr.effective_mass_t(P5P5_OS_distr, "../data/Mpi_twisted_ov_X/"+p+"/Mpi_OS_Z."+m_data.Tag[i]);
+    Mpi_OS_fit_Z= Corr.Fit_distr(Mpi_OS_distr_Z);
+    overlap_P5P5_OS_distr= Corr.residue_t(P5P5_OS_distr, "");
+
+    //take ratio between OS and tm pion amplitude to compute Zp/Zs RC.
+    ratio_P5P5_overlap_OS_tm= overlap_P5P5_OS_distr/overlap_P5P5_distr;
+    Zp_ov_Zs_distr = distr_t_list::f_of_distr_list(sqr, ratio_P5P5_overlap_OS_tm);
+    Zp_ov_Zs_distr_bis = distr_t_list::f_of_distr_list(sqr, Corr.residue_t_wo_m_fit(P5P5_OS_distr,"")/Corr.residue_t_wo_m_fit(P5P5_distr, ""));
+
+
+    //antysymmetrize A0P5 correlators
+    Corr.Reflection_sign = -1;
+    A0P5_distr= Corr.corr_t(corr_A0P5.col(0)[i], "");
+    A0P5_OS_distr = Corr.corr_t(corr_A0P5_OS.col(0)[i], "");
+    //restore symmetrization
+    Corr.Reflection_sign = 1;
+
+  
+    Get_plateaux(m_data.Tag[i], "Zp_ov_Zs", Corr.Tmin, Corr.Tmax);
+    Zp_ov_Zs = Corr.Fit_distr(Zp_ov_Zs_distr);
+    Get_plateaux(m_data.Tag[i], "RV", Corr.Tmin, Corr.Tmax);
+    RV= 2.0*mm*P5P5_distr/distr_t_list::derivative(A0P5_distr, 0);
+    Zv_M3= Corr.Fit_distr(RV);
+    Get_plateaux(m_data.Tag[i], "RA", Corr.Tmin, Corr.Tmax);
+    RA = 2.0*mm*(P5P5_OS_distr/distr_t_list::derivative(A0P5_OS_distr, 0))*(Mpi_OS_fit_Z/Mpi_fit_Z)*(distr_t::f_of_distr(SINH, Mpi_OS_fit_Z)/distr_t::f_of_distr(SINH, Mpi_fit_Z))*(1.0/Zp_ov_Zs);
+    Za_M3 = Corr.Fit_distr(RA);
+    RA_bis = 2.0*mm*(P5P5_OS_distr/distr_t_list::derivative(A0P5_OS_distr, 0))*(Mpi_OS_distr_Z/Mpi_distr_Z)*(distr_t_list::f_of_distr_list(SINH2, Mpi_OS_distr_Z)/distr_t_list::f_of_distr_list(SINH2, Mpi_distr_Z))*(1.0/Zp_ov_Zs_distr_bis);
+    Get_plateaux(m_data.Tag[i], "RA_bis", Corr.Tmin, Corr.Tmax);
+    Za_M4 = Corr.Fit_distr(RA_bis);
+    
+
+
+    //print Ra, Rv, Zp_ov_Zs
+
+    Print_To_File({}, {RA_bis.ave(), RA_bis.err()}, "../data/Mpi_twisted_ov_X/"+p+"/RA."+m_data.Tag[i]+".t", "", "");
+    Print_To_File({}, {RV.ave(), RV.err()}, "../data/Mpi_twisted_ov_X/"+p+"/RV."+m_data.Tag[i]+".t", "", "");
+    Print_To_File({}, {Zp_ov_Zs_distr.ave(), Zp_ov_Zs_distr.err()}, "../data/Mpi_twisted_ov_X/"+p+"/Zp_ov_Zs."+m_data.Tag[i]+".t", "", "");
+
+    
+
+    //############################# COMPUTATION IN LANDAU GAUGE ################################################
+    //#########################################################################################################//
+    //LOAD LANDAU GAUGE
+    //load 2pts
+    if(pt2_exch_Land.Tag[i] != m_data.Tag[i] || hand_Land.Tag[i] != m_data.Tag[i] || exch_Land_tw.Tag[i] != m_data.Tag[i] || pt2_hand_Land.Tag[i] != m_data.Tag[i]) crash("Ordering of ensembles in Landau and Feynman Gauge is not the same");
+    distr_t_list Land_2pt_exch = Corr.corr_t(pt2_exch_Land.col(0)[i], "");
+    distr_t_list Land_2pt_hand = Corr.corr_t(pt2_hand_Land.col(0)[i], "");
+    distr_t_list Land_Mpi_exch = Corr.effective_mass_t(Land_2pt_exch, "../data/Mpi_twisted_ov_X/"+p+"/Landau_gauge/mass_Landau."+m_data.Tag[i]);
+          
+    //load exchange diagrams
+
+    distr_t_list Exch_Land_tw = Corr.corr_t(exch_Land_tw.col(0)[i], "");
+
+
+    
+    distr_t_list Hand_Land(UseJack); 
+    //compute effective slopes
+    distr_t_list eff_slope_exch_Land_tw = Corr.effective_slope_t(Exch_Land_tw, Land_2pt_exch, "../data/Mpi_twisted_ov_X/"+p+"/Landau_gauge/dm_exch_Landau_tw."+m_data.Tag[i]);
+    distr_t_list eff_slope_hand_Land;
+    if(IncludeDisconnected) {
+      Hand_Land= Corr.corr_t(hand_Land.col(0)[i], "../data/Mpi_twisted_ov_X/"+p+"/Landau_gauge/corr_hand_Landau_tw."+m_data.Tag[i]);
+      eff_slope_hand_Land= Corr.effective_slope_t(Hand_Land, Land_2pt_exch, "../data/Mpi_twisted_ov_X/"+p+"/Landau_gauge/dm_hand_Landau_tw."+m_data.Tag[i]);
+      if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm_hand_Land",Corr.Tmin,Corr.Tmax);
+      Dm2_disc_Landau.distr_list.push_back(Za_distr*Za_distr*e2*Mpi_fit*LL.ainv*LL.ainv*Corr.Fit_distr(eff_slope_hand_Land));
+      distr_t_list Dm2_hand_eff_distr_Landau= eff_slope_hand_Land*2.0*Mpi_eff_distr;
+      Print_To_File({}, {Dm2_hand_eff_distr_Landau.ave(),Dm2_hand_eff_distr_Landau.err()}, "../data/Mpi_twisted_ov_X/"+p+"/Landau_gauge/dm2_hand."+m_data.Tag[i], "", "");
+    }
+
+    //##############################################################################################################
+    
+          
+     
+
+
+    //############################################################################################################################
+
+   
+
     
     distr_t_list Dm_exch_eff_distr = Corr.effective_slope_t(Exch_distr, Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch."+m_data.Tag[i]);
     distr_t_list Dm_exch_eff_distr_uncorr= Corr.effective_slope_t(Exch_distr, Pi_iso_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch_uncorr."+m_data.Tag[i]);
+    distr_t_list Dm_exch_untwist_eff_distr = Corr.effective_slope_t(Exch_untwist_distr, Pi_iso_l, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch_untwist."+m_data.Tag[i]);
+    distr_t_list Dm_exch_cons_eff_distr = Corr.effective_slope_t(Exch_cons_distr, Pi_iso_c, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch_cons."+m_data.Tag[i]);
 
-    //if(m_data.Tag[i] == "D20.48_96") Dm_exch_eff_distr = Dm_exch_eff_distr_uncorr;
+    
 
     distr_t_list Dm_exch_eff_distr_ren= Corr.effective_slope_t(Za_distr*Za_distr*Exch_distr, Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch_ren."+m_data.Tag[i]);
+    distr_t_list Dm_exch_untwist_eff_distr_ren = Corr.effective_slope_t(Zv_M3*Zv_M3*Exch_untwist_distr, Pi_iso_l, "../data/Mpi_twisted_ov_X/"+p+"/dm_exch_untwist_ren."+m_data.Tag[i]);
 
-    if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm",Corr.Tmin,Corr.Tmax);
-    distr_t Dm_exch_fit = Corr.Fit_distr(Dm_exch_eff_distr_ren);
+
+
+
+    Get_plateaux(m_data.Tag[i], "Dm_exch", Corr.Tmin, Corr.Tmax);
+    distr_t Dm_exch_fit_Feyn = Corr.Fit_distr(Dm_exch_eff_distr_ren) +(kappa/(4.0*M_PI))*(1.0/ll)*( 1.0 + 2.0/(Mpi_fit*ll)) ;
+    Get_plateaux(m_data.Tag[i], "Dm_exch_untwist", Corr.Tmin, Corr.Tmax);
+    distr_t Dm_exch_untwist_fit_Feyn = Corr.Fit_distr(Dm_exch_untwist_eff_distr_ren)  +(kappa/(4.0*M_PI))*(1.0/ll)*( 1.0 + 2.0/(Mpi_fit*ll));
+    Get_plateaux(m_data.Tag[i], "Dm_exch_cons", Corr.Tmin, Corr.Tmax);
+    distr_t Dm_cons_fit = Corr.Fit_distr(Dm_exch_cons_eff_distr)  +(kappa/(4.0*M_PI))*(1.0/ll)*( 1.0 + 2.0/(Mpi_fit*ll));
+   
   
     distr_t Dm_hand_fit(UseJack);
     distr_t_list Dm_hand_eff_distr(UseJack), Mpi_eff_hand_run_distr(UseJack), Hand_distr(UseJack), Pi_iso_distr_hand_run(UseJack);
     if(IncludeDisconnected) {
-      Mpi_eff_hand_run_distr= Corr.effective_mass_t(m_data_hand_run.col(0)[i], "");
-      Pi_iso_distr_hand_run = Corr.corr_t(m_data_hand_run.col(0)[i],"");
+      Get_plateaux(m_data.Tag[i], "Dm_hand", Corr.Tmin, Corr.Tmax);
       Hand_distr = Corr.corr_t(dm_hand_data.col(0)[i], "");
-      Dm_hand_eff_distr= Corr.effective_slope_t(Hand_distr, Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_hand."+m_data.Tag[i]);
+      distr_t_list Mpi_hand_run = Corr.corr_t(m_data_hand_run.col(0)[i], "");
+      distr_t_list ratio_Hand_Pi = Hand_distr/Pi_iso_correlated_distr;
+      distr_t_list ratio_Hand_Pi_hand_run = Hand_distr/Mpi_hand_run;
+      Print_To_File({}, {ratio_Hand_Pi.ave(), ratio_Hand_Pi.err()} ,"../data/Mpi_twisted_ov_X/"+p+"/ratio_Hand_pi."+m_data.Tag[i]+".dat", "", "");
+      Print_To_File({}, {ratio_Hand_Pi_hand_run.ave(), ratio_Hand_Pi_hand_run.err()} ,"../data/Mpi_twisted_ov_X/"+p+"/ratio_Hand_pi_hand_run."+m_data.Tag[i]+".dat", "", "");
+      Dm_hand_eff_distr= Corr.effective_slope_t(Hand_distr, Pi_iso_correlated_distr, "../data/Mpi_twisted_ov_X/"+p+"/dm_hand."+m_data.Tag[i]);   
       Dm_hand_fit = Corr.Fit_distr(Dm_hand_eff_distr);
       distr_t_list Dm2_hand_eff_distr = Dm_hand_eff_distr*2.0*Mpi_eff_distr;
       Print_To_File({}, {Dm2_hand_eff_distr.ave(),Dm2_hand_eff_distr.err()}, "../data/Mpi_twisted_ov_X/"+p+"/dm2_hand."+m_data.Tag[i], "", "");
-      Dm2_disc.distr_list.push_back(Corr.Fit_distr(Za_distr*Za_distr*e2*Mpi_eff_distr*Dm_hand_eff_distr*LL.ainv*LL.ainv));
+      Dm2_disc.distr_list.push_back(Za_distr*Za_distr*e2*Mpi_fit*LL.ainv*LL.ainv*Dm_hand_fit);
+
+      //print to file the difference between LANDAU and FEYNMAN hand eff slope
+      Print_To_File({}, {(Dm_hand_eff_distr-eff_slope_hand_Land ).ave(), (Dm_hand_eff_distr-eff_slope_hand_Land).err()},"../data/Mpi_twisted_ov_X/"+p+"/Landau_gauge/dm_hand_LF_diff."+m_data.Tag[i], "", "");
     }
     
 
     
+   
+    
     Mpi_distr_list.distr_list.push_back(Mpi_fit);
-    Mpi_distr_dim_list.distr_list.push_back( lat_spacing_inv*Mpi_fit);
+    Mpi_distr_dim_list.distr_list.push_back( ainv_distr*Mpi_fit);
     fp_fit_distr_list.distr_list.push_back(fp_fit);
     
     distr_t_list Dm_tot_eff_distr=Dm_exch_eff_distr;
@@ -469,35 +832,72 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     }
 
 
-    if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm_exch",Corr.Tmin,Corr.Tmax);
-    distr_t Dm_tot_fit(UseJack), Dm_tot_fit_exch(UseJack), Dm_tot_fit_hand(UseJack);
-    Dm_tot_fit_exch= Corr.Fit_distr(Dm_exch_eff_distr);
-    Dm_tot_fit=Dm_tot_fit_exch;
-    if(IncludeDisconnected) {
-      if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm_hand",Corr.Tmin,Corr.Tmax);
-      Dm_tot_fit_hand= Corr.Fit_distr(Dm_hand_eff_distr);
-      Dm_tot_fit = Dm_tot_fit_exch- Dm_tot_fit_hand;
-    }
-
-    //if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm",Corr.Tmin,Corr.Tmax);
-    //Dm_tot_fit = Corr.Fit_distr(Dm_tot_eff_distr);
-
-    distr_t Dm2_ov_X_corr= 2.0*Dm_tot_fit/(Use_fp?(fp_fit_corr*fp_fit_corr/Mpi_fit_corr):Mpi_fit_corr);
-    distr_t Dm2_ov_X = 2.0*Dm_tot_fit/(Use_fp?(fp_fit*fp_fit/Mpi_fit):Mpi_fit);
+   
+    distr_t Dm_tot_fit_Feyn(UseJack), Dm_tot_fit_exch_Feyn(UseJack), Dm_tot_fit_hand_Feyn(UseJack), Dm2_ov_X_Feyn(UseJack);
+    distr_t Dm_tot_fit_Land(UseJack), Dm_tot_fit_exch_Land(UseJack), Dm_tot_fit_hand_Land(UseJack), Dm2_ov_X_Land(UseJack);
+    distr_t Dm_tot_fit(UseJack);
      
-    
-    if(Use_Xp) {
-      Dm_ov_X_distr_list.distr_list.push_back ( 2.0*Dm_tot_fit/(X_pi_fit));
-      Dm_ov_X_ren_univ_sub_distr_list.distr_list.push_back( (2.0*Mpi_fit*Za_distr*Za_distr*Dm_tot_fit + (kappa/(2.0*M_PI))*(1.0/ll)*( Mpi_fit + 2.0/ll))/(X_pi_fit*Mpi_fit));
+    //FEYNMAN FIT
+    if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm_exch",Corr.Tmin,Corr.Tmax);
+    Dm_tot_fit_exch_Feyn= Corr.Fit_distr(Dm_exch_eff_distr);
+    Dm_tot_fit_Feyn=Dm_tot_fit_exch_Feyn;
+    //LANDAU FIT
+    if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm_exch_Land",Corr.Tmin,Corr.Tmax);
+    Dm_tot_fit_exch_Land = Corr.Fit_distr(eff_slope_exch_Land_tw);
+    Dm_tot_fit_Land = Dm_tot_fit_exch_Land;
+    if(IncludeDisconnected) {
+      //FEYNMAN
+      if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm_hand",Corr.Tmin,Corr.Tmax);
+      Dm_tot_fit_hand_Feyn= Corr.Fit_distr(Dm_hand_eff_distr);
+      Dm_tot_fit_Feyn = Dm_tot_fit_exch_Feyn- Dm_tot_fit_hand_Feyn;    
+      //LANDAU
+      if(use_tailored_interval) Get_plateaux(m_data.Tag[i], "Dm_hand_Land",Corr.Tmin,Corr.Tmax);
+      Dm_tot_fit_hand_Land = Corr.Fit_distr(eff_slope_hand_Land);
+      Dm_tot_fit_Land = Dm_tot_fit_exch_Land- Dm_tot_fit_hand_Land;
+     
     }
-    else {
-    Dm_ov_X_distr_list.distr_list.push_back ( 2.0*Dm_tot_fit/(Use_fp?(fp_fit*fp_fit/Mpi_fit):Mpi_fit));
+
+    ratio_LF_exch.distr_list.push_back( Dm_tot_fit_exch_Land/Dm_tot_fit_exch_Feyn);
+    ratio_LF_hand.distr_list.push_back( Dm_tot_fit_hand_Land/Dm_tot_fit_hand_Feyn);
+    ratio_LF_tot.distr_list.push_back( Dm_tot_fit_Land/Dm_tot_fit_Feyn);
+    distr_t FSE_fact = (1.0/Mpi_fit)*(kappa/(2.0*M_PI))*(1.0/ll)*(Mpi_fit+ 2.0/ll);
+    ratio_LF_exch_Univ_sub.distr_list.push_back( (Za_distr*Za_distr*Dm_tot_fit_exch_Land + FSE_fact)/(Za_distr*Za_distr*Dm_tot_fit_exch_Feyn + FSE_fact));
+    ratio_LF_tot_Univ_sub.distr_list.push_back( (Za_distr*Za_distr*Dm_tot_fit_Land + FSE_fact)/(Za_distr*Za_distr*Dm_tot_fit_Feyn + FSE_fact));
+
+    Dm2_ov_X_Feyn = 2.0*Dm_tot_fit_Feyn/(Use_fp?(fp_fit*fp_fit/Mpi_fit):Mpi_fit);
+    Dm2_ov_X_Land = 2.0*Dm_tot_fit_Land/(Use_fp?(fp_fit*fp_fit/Mpi_fit):Mpi_fit);
+    Dm_tot_fit = (Use_Landau_Gauge?Dm_tot_fit_Land:Dm_tot_fit_Feyn);
+
+    //compute ratios between twisted, untwisted and conserved in Feynman Gauge
+    ratio_exch_tw_untw.distr_list.push_back( (Dm_exch_fit_Feyn)/Dm_exch_untwist_fit_Feyn);
+    ratio_exch_loc_cons.distr_list.push_back( Dm_exch_untwist_fit_Feyn/Dm_cons_fit);
+    ratio_exch_tw_cons.distr_list.push_back( (Dm_exch_fit_Feyn)/Dm_cons_fit);
+
+  
+
+    //if A40.48 load disc on galileo
+    if(m_data.Tag[i] == "A40.48_96") {
+      distr_t_list Hand_Land_gal= Corr.corr_t(hand_Land_Gal.col(0)[0], "");
+      //distr_t_list Hand_Land_gal_new_norm= Corr.corr_t(hand_Land_Gal_new_norm.col(0)[0],"");
+      distr_t_list Dm_Land_gal_eff_slope= Corr.effective_slope_t(Hand_Land_gal, Pi_iso_correlated_distr , "../data/Mpi_twisted_ov_X/"+p+"/Landau_gauge/dm_gal_hand."+m_data.Tag[i]);
+      //distr_t_list Dm_Land_gal_eff_slope_new_norm= Corr.effective_slope_t(Hand_Land_gal_new_norm, Pi_iso_correlated_distr , "../data/Mpi_twisted_ov_X/"+p+"/Landau_gauge/dm_gal_hand_new_norm."+m_data.Tag[i]);
+    }
+
+    
+    //choose the RC to be used
+    distr_t RC = Use_M3?Za_M4*Za_M4:(Za_M4/Za_M4);
+     
+
+    //push_back the results for Dm2/X  and Dm2 depending on whether Landau or Feynman gauge is used!
+    Dm_ov_X_distr_list.distr_list.push_back( (2.0*RC*Dm_tot_fit*Mpi_fit  + (Use_M3?1.0:0.0)*((kappa/(2.0*M_PI))*(1.0/ll)*( Mpi_fit + 2.0/ll)))/(Use_fp?(fp_fit*fp_fit):(Mpi_fit*Mpi_fit))) ;
     Dm_ov_X_ren_univ_sub_distr_list.distr_list.push_back( (2.0*Mpi_fit*Za_distr*Za_distr*Dm_tot_fit + (kappa/(2.0*M_PI))*(1.0/ll)*( Mpi_fit + 2.0/ll))/(Use_fp?(fp_fit*fp_fit):(Mpi_fit*Mpi_fit)));
-    }
-    
     Dm2_ren_univ_sub_distr_list.distr_list.push_back( (2.0*Mpi_fit*Za_distr*Za_distr*Dm_tot_fit + (kappa/(2.0*M_PI))*(1.0/ll)*( Mpi_fit + 2.0/ll)));
     Dm2_ren_univ_sub_M1_distr_list.distr_list.push_back( (2.0*Mpi_fit*Za_distr_M1*Za_distr_M1*Dm_tot_fit + (kappa/(2.0*M_PI))*(1.0/ll)*( Mpi_fit + 2.0/ll)));
     diff_Dm2_ren_univ_sub_M1_M2_distr_list.distr_list.push_back( 2.0*Mpi_fit*(Za_distr_M1*Za_distr_M1-Za_distr*Za_distr)*Dm_tot_fit);
+
+
+
+    //push_back X_pi
     X_pi_distr_list.distr_list.push_back(X_pi_fit );
    
 
@@ -511,7 +911,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
       
     }
 
-    cout<<"################### ANALYZED ENSEMBLE : "<<m_data.Tag[i]<<" ############################ "<<endl;
+    cout<<"################### ANALYZING ENSEMBLE : "<<m_data.Tag[i]<<" ############################ "<<endl;
     cout<<"PRINTING INFO: "<<endl;
     cout<<"Mpi: "<<Mpi_fit_naive.ave()<<" +- "<<Mpi_fit_naive.err()<<endl;
     cout<<"Mpi (dim) : "<<(lat_spacing_inv*Mpi_fit_naive).ave()<<" +- "<<(lat_spacing_inv*Mpi_fit_naive).err()<<endl;
@@ -520,19 +920,35 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     cout<<"fp: "<<fp_fit_naive.ave()<<" +- "<<fp_fit_naive.err()<<endl;
     cout<<"X_pi: "<<X_pi_fit.ave()<<" +- "<<X_pi_fit.err()<<endl;
     cout<<"ainv (GeV-1): "<<lat_spacing_inv<<endl;
-    cout<<"Dm(exchange, renormalized): "<<Dm_exch_fit.ave()<<" +- "<<Dm_exch_fit.err()<<endl;
-    cout<<"Dm(handcuffs, renormalized): "<<Dm_hand_fit.ave()<<" +-"<<Dm_hand_fit.err()<<endl;
-    cout<<"Dm(exchange, bare): "<<Dm_tot_fit_exch.ave()<<" +. "<<Dm_tot_fit_exch.err()<<endl;
-    cout<<"Dm(hand, bare): "<<Dm_tot_fit_hand.ave()<<" +. "<<Dm_tot_fit_hand.err()<<endl;
-    cout<<"Dm(tot, bare): "<<Dm_tot_fit.ave()<<" +- "<<Dm_tot_fit.err()<<endl;
-    cout<<"Dm2/X: (using correlated 2pt): "<<Dm2_ov_X_corr.ave()<<" +- "<<Dm2_ov_X_corr.err()<<endl;
-    cout<<"Dm2/X: (using 64hits 2pt): "<<Dm2_ov_X.ave()<<" +- "<<Dm2_ov_X.err()<<endl;
+    cout<<"%%%%%%%%%  RCs info  %%%%%%%%%"<<endl;
+    cout<<"------------    ZV  ---------------"<<endl;
+    cout<<"Zv (M1): "<<Zv_M1<<" +- "<<Zv_M1_e<<endl;
+    cout<<"Zv (M2): "<<Zv<<" +- "<<Zv_e<<endl;
+    cout<<"Zv (M3): "<<Zv_M3.ave()<<" +- "<<Zv_M3.err()<<endl;
+    cout<<"------------    ZA  ---------------"<<endl;
+    cout<<"Za (M1): "<<Za_M1<<" +- "<<Za_M1_e<<endl;
+    cout<<"Za (M2): "<<Za<<" +- "<<Za_e<<endl;
+    cout<<"Za (M3): "<<Za_M3.ave()<<" +- "<<Za_M3.err()<<endl;
+    cout<<"Za (M3-bis): "<<Za_M4.ave()<<" +- "<<Za_M4.err()<<endl;
+    cout<<"-----------    Zp/Zs  -------------"<<endl;
+    cout<<"Zp/Zs (M3): "<<Zp_ov_Zs.ave()<<" +- "<<Zp_ov_Zs.err()<<endl;
+    cout<<"%%%%%%%%% END Rcs info %%%%%%%%"<<endl;
+    cout<<"%%%%%%%%% Feynman Gauge%%%%%%%%%"<<endl;
+    cout<<"Dm(exchange, bare): "<<Dm_tot_fit_exch_Feyn.ave()<<" +- "<<Dm_tot_fit_exch_Feyn.err()<<endl;
+    cout<<"Dm(hand, bare): "<<Dm_tot_fit_hand_Feyn.ave()<<" +- "<<Dm_tot_fit_hand_Feyn.err()<<endl;
+    cout<<"Dm(tot, bare): "<<Dm_tot_fit_Feyn.ave()<<" +- "<<Dm_tot_fit_Feyn.err()<<endl;
+    cout<<"Dm2/X: "<<Dm2_ov_X_Feyn.ave()<<" +- "<<Dm2_ov_X_Feyn.err()<<endl;
+    cout<<"%%%%%%%%% Landau Gauge%%%%%%%%%"<<endl;
+    cout<<"Dm(exchange, bare): "<<Dm_tot_fit_exch_Land.ave()<<" +- "<<Dm_tot_fit_exch_Land.err()<<endl;
+    cout<<"Dm(hand, bare): "<<Dm_tot_fit_hand_Land.ave()<<" +- "<<Dm_tot_fit_hand_Land.err()<<endl;
+    cout<<"Dm(tot, bare): "<<Dm_tot_fit_Land.ave()<<" +- "<<Dm_tot_fit_Land.err()<<endl;
+    cout<<"Dm2/X: "<<Dm2_ov_X_Land.ave()<<" +- "<<Dm2_ov_X_Land.err()<<endl;
     cout<<"#########################################################################################################"<<endl;
   }
  
   //everything is set up. Start fitting!
   LatticeInfo L_info(CURRENT_TYPE);
-
+  
   bootstrap_fit<X_t_M,Y_t_M> bf(nboots);
   bf.set_warmup_lev(1);
   bf.Set_number_of_measurements(Nens);
@@ -559,7 +975,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
   bf.Fix_par("F_a",0.0);
   bf.Fix_par("F_4",0.0);
   bf.Fix_par("Dm",0.0);
-  //bf.Fix_par("D",0.0);
+  bf.Fix_par("D",0.0);
   bf.Fix_par("lg_a", 0.0);
   bf.Fix_par("A_2", 0.0);
   //bf.Fix_par("A_1",0.0);
@@ -568,7 +984,14 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
 
   //Add List of parameters to be released after first minimization
-  bf.Fix_n_release({"ainv0", "ainv1", "ainv2", "Za0", "Za1", "Za2"});
+  if(!Use_M3)  bf.Fix_n_release({"ainv0", "ainv1", "ainv2", "Za0", "Za1", "Za2"});
+
+  else  {
+    bf.Fix_n_release({"ainv0", "ainv1", "ainv2"});
+    bf.Fix_par("Za0", 1.0);
+    bf.Fix_par("Za1", 1.0);
+    bf.Fix_par("Za2", 1.0);
+  }
 
   double Npars= bf.Get_number_of_fit_pars();
 
@@ -612,9 +1035,9 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     double ML = ip.Mpi*ip.L;
 
          
-    double SD_FVE = (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_4/ML+ (3.0/r0)*p.F_a*(pow(a,2))):0.0;
+    double SD_FVE = (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_4/(ML)+ (3.0/r0)*p.F_a*(pow(a,2))):0.0;
 
-    double FVE_universal =  (L>0.0)?(scale_fve*(kappa*alpha/ML)*( 1.0 + 2.0/ML)):0.0;
+    double FVE_universal =  (Use_M3?0.0:((L>0.0)?(scale_fve*(kappa*alpha/ML)*( 1.0 + 2.0/ML)):0.0));
 
 
     double fitted_value = scale*(e2/pow(4.0*M_PI,2))*( p.chir/csi_val -p.log*log(csi_val) + p.A_1 + p.A_2*csi_val + (p.D/(csi_val))*a*a + p.Dm*a*a);
@@ -731,6 +1154,8 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 	  Za2= gauss(L_info.Retrieve_Za("D", ibranch).first, (1.0/sqrt(Njacks-1))*L_info.Retrieve_Za("D",ibranch).second,GM);
 	}
       }
+      
+      if(Use_M3) { Za0 =1.0; Za1= 1.0; Za2= 1.0;}
       if(Use_Fa_prior) bf.Append_to_prior("F_a", 0.0,10);
       if(Use_A2_Dm_prior){ bf.Append_to_prior("Dm", 0.0, 10);  bf.Append_to_prior("A_2", 0.0, 10);} //prior on A_2 and Dm
       bf.Append_to_prior("ainv0", lat_input[3], sqrt(CovMatrixInput(3,3)));
@@ -795,6 +1220,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
   auto FVE = [=](double ML, double fp, double mp) {
 
+	       if(Use_M3) return 0.0;
 	       double resc= Use_fp?pow(mp/fp,2):1.0;
 	       return resc*X_phys_val*(kappa*alpha/ML)*( 1.0 + 2.0/ML);
   };
@@ -805,7 +1231,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 		  double Mp= M*ainv;
 		  double Mp2 = Mp*Mp;
 		  double Mp3 = Mp*Mp*Mp;
-		  double SDE =(e2/3.0)*(Mp2/pow(ML,3))*r0*(F_m + F_4/ML +  (3.0/r0)*F_a*(1.0/pow(ainv,2)));
+		  double SDE =(e2/3.0)*(Mp2/pow(ML,3))*r0*(F_m + F_4/(ML) +  (3.0/r0)*F_a*(1.0/pow(ainv,2)));
 		  return X_phys_val*SDE*resc;
   };
 
@@ -848,7 +1274,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     double ML = ip.Mpi*ip.L;
 
          
-    double SD_FVE= (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_4/ML + (3.0/r0)*p.F_a*(pow(a,2))):0.0;
+    double SD_FVE= (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_4/(ML) + (3.0/r0)*p.F_a*(pow(a,2))):0.0;
 
     double FVE_universal =  (L>0.0)?(scale_fve*(kappa*alpha/ML)*( 1.0 + 2.0/ML)):0.0;
 
@@ -951,7 +1377,17 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 		break;
 	      }
 	}
-	if(!Tag_found) crash("Cannot find ensemble A40.48_96 in the ensemble list");
+	if(!Tag_found) {
+	  for(int im=0;im<Nens;im++) {
+	    if(m_data.Tag[im]=="A40.40_80")
+	      {
+		Tag_A40_48 = im;
+		Tag_found=true;
+		break;
+	      }
+	  }
+	}
+	if(!Tag_found)  crash("Cannot find ensemble A40.48_96 in the ensemble list");
 	double f0_boot = all_ens[ibranch][iboot][0].f0/P.ainv[0];
 	new_p.ibeta=0;
 	new_p.Mpi= all_ens[ibranch][iboot][Tag_A40_48].Mpi;  //pion mass of A40.XX in lattice units
@@ -1078,33 +1514,44 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
   //save data in files
   boost::filesystem::create_directory("../data");
   boost::filesystem::create_directory("../data/Mpi_twisted_ov_X/"+print_path);
-  Print_To_File({}, {Csi, Fitted_func_val[0], Fitted_func_err[0],  Fitted_func_val[1], Fitted_func_err[1], Fitted_func_val[2], Fitted_func_err[2], Fitted_func_val[3], Fitted_func_err[3]} , "../data/Mpi_twisted_ov_X/"+print_path+"/Fitted_func_"+exch_or_tot+".dat", "OUT", "#Csi     beta=1.90      beta=1.95      beta=2.10           cont");
+  Print_To_File({}, {Csi, Fitted_func_val[0], Fitted_func_err[0],  Fitted_func_val[1], Fitted_func_err[1], Fitted_func_val[2], Fitted_func_err[2], Fitted_func_val[3], Fitted_func_err[3]} , "../data/Mpi_twisted_ov_X/"+print_path+LorF+"/Fitted_func_"+exch_or_tot+".dat", "OUT", "#Csi     beta=1.90      beta=1.95      beta=2.10           cont");
  
   
-  Print_To_File(m_data.Tag, { CSI, Mpi_distr_dim_list.ave(), L, (Mpi_distr_list*L).ave(),  SD_subtracted_val, SD_subtracted_err}, "../data/Mpi_twisted_ov_X/"+print_path+"/sd_subtracted_data_"+exch_or_tot+".dat", "", "#Ens   #Csi     #Mpi #L/a  #Mpi L   #Mpi^2_+ - Mpi^2_0      #err");
+  Print_To_File(m_data.Tag, { CSI, Mpi_distr_dim_list.ave(), L, (Mpi_distr_list*L).ave(),  SD_subtracted_val, SD_subtracted_err}, "../data/Mpi_twisted_ov_X/"+print_path+LorF+"/sd_subtracted_data_"+exch_or_tot+".dat", "", "#Ens   #Csi     #Mpi #L/a  #Mpi L   #Mpi^2_+ - Mpi^2_0      #err");
 
   Print_To_File(m_data.Tag, { CSI, Mpi_distr_dim_list.ave(), L, (Mpi_distr_list*L).ave(), X_pi_distr_list.ave(), X_pi_distr_list.err(), Mpi_distr_list.ave(), Mpi_distr_list.err(), fp_fit_distr_list.ave(), fp_fit_distr_list.err()}, "../data/Mpi_twisted_ov_X/"+print_path+"/Xi_pi_"+exch_or_tot+".dat", "", "#Ens   #Csi     #Mpi #L/a     #Mpi*L       #Xi     #Mpi    #fp");
  
-  Print_To_File(m_data.Tag, { CSI, Mpi_distr_dim_list.ave(), L, (Mpi_distr_list*L).ave(), Dm2_Univ_subtracted_val, Dm2_Univ_subtracted_err,  Univ_subtracted_val, Univ_subtracted_err, raw_data_val, raw_data_err, ((X_phys_val*e2/2.0)*Dm_ov_X_distr_list).ave(), ( (X_phys_val*e2/2.0)*Dm_ov_X_distr_list).err()}, "../data/Mpi_twisted_ov_X/"+print_path+"/data_"+exch_or_tot+".dat", "", "#Ens      Csi   #Mpi   #L/a   #Mpi*L Dm2_univ_sub(resampled)  X_univ_sub(resampled)      X(resampled)     X(bare)");
+  Print_To_File(m_data.Tag, { CSI, Mpi_distr_dim_list.ave(), Mpi_distr_dim_list.err(),  L, (Mpi_distr_list*L).ave(), Dm2_Univ_subtracted_val, Dm2_Univ_subtracted_err,  Univ_subtracted_val, Univ_subtracted_err, raw_data_val, raw_data_err, ((X_phys_val*e2/2.0)*Dm_ov_X_distr_list).ave(), ( (X_phys_val*e2/2.0)*Dm_ov_X_distr_list).err()}, "../data/Mpi_twisted_ov_X/"+print_path+LorF+"/data_"+exch_or_tot+".dat", "", "#Ens      Csi   #Mpi #Mpi_err   #L/a   #Mpi*L Dm2_univ_sub(resampled)  X_univ_sub(resampled)      X(resampled)     X(bare)");
 
-  Print_To_File(m_data.Tag, { CSI, Mpi_distr_dim_list.ave(), L, (Mpi_distr_list*L).ave(), ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_distr_list).ave(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_distr_list).err(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_M1_distr_list).ave(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_M1_distr_list).err(),   ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*diff_Dm2_ren_univ_sub_M1_M2_distr_list).ave(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*diff_Dm2_ren_univ_sub_M1_M2_distr_list).err()  , ((X_phys_val*e2/2.0)*Dm_ov_X_ren_univ_sub_distr_list).ave(), ((X_phys_val*e2/2.0)*Dm_ov_X_ren_univ_sub_distr_list).err()  }, "../data/Mpi_twisted_ov_X/"+print_path+"/data_wo_fit_"+exch_or_tot+".dat", "", "#Ens      Csi   #Mpi   #L/a   #Mpi*L  Dm2_univ_sub_M2  Dm2_univ_sub_M1 diff_Dm2_univ_sub_M1_M2      X_univ_sub  ");
+  Print_To_File(m_data.Tag, { CSI, Mpi_distr_dim_list.ave(), L, (Mpi_distr_list*L).ave(), ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_distr_list).ave(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_distr_list).err(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_M1_distr_list).ave(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*Dm2_ren_univ_sub_M1_distr_list).err(),   ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*diff_Dm2_ren_univ_sub_M1_M2_distr_list).ave(),  ((e2/2.0)*(1.0/(1e-3*2.0*MPiPhys))*diff_Dm2_ren_univ_sub_M1_M2_distr_list).err()  , ((X_phys_val*e2/2.0)*Dm_ov_X_ren_univ_sub_distr_list).ave(), ((X_phys_val*e2/2.0)*Dm_ov_X_ren_univ_sub_distr_list).err()  }, "../data/Mpi_twisted_ov_X/"+print_path+LorF+"/data_wo_fit_"+exch_or_tot+".dat", "", "#Ens      Csi   #Mpi   #L/a   #Mpi*L  Dm2_univ_sub_M2  Dm2_univ_sub_M1 diff_Dm2_univ_sub_M1_M2      X_univ_sub  ");
  
-  Print_To_File({}, {vol_A40, Mpi_L_A40,  meas_A40, err_meas_A40, A40_raw_val, A40_raw_err, meas_Dm2_A40, err_meas_Dm2_A40, Dm2_A40_raw_val, Dm2_A40_raw_err}, "../data/Mpi_twisted_ov_X/"+print_path+"/A40_"+exch_or_tot+".dat","", " #L    #Mpi*L         univ_meas            univ_err       raw_meas      raw_err         univ meas(Dm2)    univ_err(Dm2)    raw(Dm2)    err_raw(Dm2)");
+  Print_To_File({}, {vol_A40, Mpi_L_A40,  meas_A40, err_meas_A40, A40_raw_val, A40_raw_err, meas_Dm2_A40, err_meas_Dm2_A40, Dm2_A40_raw_val, Dm2_A40_raw_err}, "../data/Mpi_twisted_ov_X/"+print_path+LorF+"/A40_"+exch_or_tot+".dat","", " #L    #Mpi*L         univ_meas            univ_err       raw_meas      raw_err         univ meas(Dm2)    univ_err(Dm2)    raw(Dm2)    err_raw(Dm2)");
   //print A40 prediction for
-  Print_To_File({},{vols, A40_slice_val, A40_slice_err, Dm2_A40_slice_val, Dm2_A40_slice_err},"../data/Mpi_twisted_ov_X/"+print_path+"/A40_pred_"+exch_or_tot+".dat","", "#L   Mpi/X    Dm2   ");
+  Print_To_File({},{vols, A40_slice_val, A40_slice_err, Dm2_A40_slice_val, Dm2_A40_slice_err},"../data/Mpi_twisted_ov_X/"+print_path+LorF+"/A40_pred_"+exch_or_tot+".dat","", "#L   Mpi/X    Dm2   ");
 
   Print_To_File(m_data.Tag, {L, (Mpi_distr_list*L).ave(),  Mpi_fit_naive_list.ave(), Mpi_fit_naive_list.err(), Mpi_fit_GL_list.ave(), Mpi_fit_GL_list.err(), Mpi_fit_CDH_list.ave(), Mpi_fit_CDH_list.err(), Ratio_CDH_naive_Mpi.ave(), Ratio_CDH_naive_Mpi.err()}, "../data/Mpi_twisted_ov_X/"+print_path+"/FVE_Mpi.dat", "", "#Ens #L  #Mpi*L   #Mpi_naive #Mpi_GL #Mpi_CDH    ratio_CDH_naive");
 
   Print_To_File(m_data.Tag, {L, (Mpi_distr_list*L).ave(),  fp_fit_naive_list.ave(), fp_fit_naive_list.err(), fp_fit_GL_list.ave(), fp_fit_GL_list.err(), fp_fit_CDH_list.ave(), fp_fit_CDH_list.err(), Ratio_CDH_naive_fp.ave(), Ratio_CDH_naive_fp.err()}, "../data/Mpi_twisted_ov_X/"+print_path+"/FVE_fp.dat", "", "#Ens #L  #Mpi*L   #fp_naive #fp_GL #fp_CDH     ratio_CDH_naive");
 
+  Print_To_File(m_data.Tag, { CSI, Mpi_fit_naive_list.ave(), ratio_LF_exch.ave(), ratio_LF_exch.err(), ratio_LF_hand.ave(), ratio_LF_hand.err(), ratio_LF_tot.ave(), ratio_LF_tot.err(), a_list}, "../data/Mpi_twisted_ov_X/"+print_path+"/Landau_gauge/ratio_LF.dat", "", "#Ens #Csi #Mpi  #exch  #disc  #tot #a_list");
+
+  Print_To_File(m_data.Tag, { CSI, Mpi_fit_naive_list.ave(), ratio_LF_exch_Univ_sub.ave(), ratio_LF_exch_Univ_sub.err(), ratio_LF_tot_Univ_sub.ave(), ratio_LF_tot_Univ_sub.err(), a_list}, "../data/Mpi_twisted_ov_X/"+print_path+"/Landau_gauge/ratio_LF_Univ_sub.dat", "", "#Ens #Csi #Mpi  #exch  #tot #a_list");
+  
   
   string command = "echo "+to_string_with_precision(csi_phys,8)+"\t\t"+to_string_with_precision(Boot_ave(Physical_point),8)+"\t\t"+to_string_with_precision(Boot_err(Physical_point, Rerr,1),8)+" > ../data/Mpi_twisted_ov_X/"+print_path.c_str()+"/Phys_val_"+exch_or_tot+".dat";
   system(command.c_str());
 
   if(IncludeDisconnected) {
-    Print_To_File(m_data.Tag, {CSI,Mpi_distr_dim_list.ave(), Dm2_disc.ave(), Dm2_disc.err()}, "../data/Mpi_twisted_ov_X/"+print_path+"/dm2_disc.data","","#Ens Csi   Mp   val err    ");
+    Print_To_File(m_data.Tag, {CSI,Mpi_distr_dim_list.ave(), L, (Mpi_distr_list*L).ave(),  Dm2_disc.ave(), Dm2_disc.err()}, "../data/Mpi_twisted_ov_X/"+print_path+"/dm2_disc.data","","#Ens Csi   Mp L   val err    ");
+    Print_To_File(m_data.Tag, {CSI,Mpi_distr_dim_list.ave(), L, (Mpi_distr_list*L).ave(),   Dm2_disc_Landau.ave(), Dm2_disc_Landau.err()}, "../data/Mpi_twisted_ov_X/"+print_path+"/Landau_gauge/dm2_disc.data","","#Ens Csi   Mp L Mpi*L   val err    ");
   }
-  
+
+
+  //print ratio exch twisted and untwisted
+  Print_To_File(m_data.Tag,{CSI, Mpi_distr_dim_list.ave(),a_list, L, (Mpi_distr_list*L).ave(), ratio_exch_tw_untw.ave(), ratio_exch_tw_untw.err(), ratio_exch_loc_cons.ave(), ratio_exch_loc_cons.err(), ratio_exch_tw_cons.ave(), ratio_exch_tw_cons.err()}, "../data/Mpi_twisted_ov_X/"+print_path+"/ratio_exch_tw_untw.data"  , "", "#ENS Csi Mpi a L Mpi*L twist/untwist   loc/cons     twist_loc/cons");
+
+
+
   
 
    

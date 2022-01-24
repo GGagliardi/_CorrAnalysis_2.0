@@ -10,6 +10,7 @@
 #include "PionMassAnalysis_twisted_ov_X.h"
 #include "PionMassAnalysis_ov_X.h"
 #include "gm2.h"
+#include "Spectral_tests.h"
 
 using namespace std;
 

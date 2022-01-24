@@ -52,9 +52,9 @@ class Decay_Rate_Integration_Result {
 
 void display_results (char *title, double result, double error);
 
-double MonteCarlo_integration_extended_phase_space(const function<double(double,double)> &H1, const function<double(double,double)> &H2, const function<double(double,double)> &FA, const function<double(double,double)> &FV, double mk, double fk,string channel, bool same_lepton, int MySeed);
+double MonteCarlo_integration_extended_phase_space(const function<double(double,double)> &H1, const function<double(double,double)> &H2, const function<double(double,double)> &FA, const function<double(double,double)> &FV, double mk, double fk,string channel, double xk_inf,  bool same_lepton, int MySeed, string mode);
 
-Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(double, double)>> &H1, vector<function<double(double, double)>> &H2  , vector<function<double(double, double)>> &FA, vector<function<double(double, double)>> &FV, distr_t &m_distr, distr_t & fp_distr, bool UseJack);
+Decay_Rate_Integration_Result Num_Integrate_Decay_Rate(vector<function<double(double, double)>> &H1, vector<function<double(double, double)>> &H2  , vector<function<double(double, double)>> &FA, vector<function<double(double, double)>> &FV, distr_t &m_distr, distr_t & fp_distr, bool UseJack, string Meson, bool Print);
 
 
 

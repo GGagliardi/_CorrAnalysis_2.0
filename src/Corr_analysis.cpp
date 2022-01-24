@@ -274,7 +274,7 @@ distr_t CorrAnalysis::effective_slope_t_tanh_fit(const distr_t_list& corr_A_dist
   Vfloat times;
 
   double Mj=0;
-  auto anz = [&](const Vfloat &par, double t) -> double { return par[0] +  par[1]*(Nt/2 -t)*tanh( (Nt/2-t)*Mj);};
+  auto anz = [&](const Vfloat &par, double t, int imeas) -> double { return par[0] +  par[1]*(Nt/2 -t)*tanh( (Nt/2-t)*Mj);};
 
   distr_t m_eff = Fit_distr(effective_mass_t(corr_B_distr,""));
 
@@ -315,7 +315,7 @@ distr_t CorrAnalysis::effective_slope_t_tanh_fit(const distr_t_list& corr_A_dist
     times.push_back( ((double)ratio_A.size()/2.0)*1.0*tt/(double)t_steps);
     for(int is=0;is<corr_A_distr.distr_list[0].size();is++) {
       Mj= m_eff.distr[is];
-      Fit_func.distr_list[tt].distr.push_back( anz({intercept.distr[is], effective_slope_t_tanh.distr[is]}, times[tt]));
+      Fit_func.distr_list[tt].distr.push_back( anz({intercept.distr[is], effective_slope_t_tanh.distr[is]}, times[tt], 0));
     }
   }
 
@@ -516,6 +516,86 @@ distr_t_list CorrAnalysis::residue_t(const distr_t_list &corr_A_distr, string Ob
 
 
 }
+
+
+
+
+distr_t_list CorrAnalysis::residue_t_wo_m_fit(const VVfloat &corr_A, string Obs) {
+
+  distr_t_list residue(UseJack);
+  VPfloat result;
+  if((signed)corr_A.size() != Nt) crash("residue_t in CorrAnalysis called with vector of size != Nt");
+
+  distr_t_list corr_distr = corr_t(corr_A, "");
+  
+  distr_t_list effective_mass_distr= effective_mass_t(corr_distr, "");
+  
+
+  distr_t_list analytic_factor(UseJack,Nt);
+  for(int t=0;t<Nt;t++) {
+    for(int is=0; is < effective_mass_distr.distr_list[t].size(); is++) {
+      double el = effective_mass_distr.distr_list[t].distr[is];
+      analytic_factor.distr_list[t].distr.push_back( (exp(-el*t) +Reflection_sign*exp(-el*(Nt-t)))/(2*el));
+    }
+  }
+
+  
+  residue = corr_distr/analytic_factor;
+
+  result = residue.ave_err();
+
+  if(Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for(unsigned int t=0; t<corr_A.size(); t++) Print<<t<<setw(20)<<result[t].first<<setw(20)<<result[t].second<<endl;
+    Print.close();
+  }
+
+  return residue;
+}
+
+
+
+//overloading function residue_t_wo_m_fit
+
+distr_t_list CorrAnalysis::residue_t_wo_m_fit(const distr_t_list &corr_A_distr, string Obs) {
+
+  distr_t_list residue(corr_A_distr.UseJack, corr_A_distr.size());
+  distr_t_list effective_mass_distr = effective_mass_t(corr_A_distr, "");
+
+
+  VPfloat result;
+
+  distr_t_list analytic_factor(UseJack,Nt);
+  for(int t=0;t<Nt;t++) {
+    for(int is=0; is < effective_mass_distr.distr_list[t].size(); is++) {
+      double el = effective_mass_distr.distr_list[t].distr[is];
+      analytic_factor.distr_list[t].distr.push_back( (exp(-el*t) +Reflection_sign*exp(-el*(Nt-t)))/(2*el));
+    }
+  }
+
+  residue = corr_A_distr/analytic_factor;
+
+  
+
+  result = residue.ave_err();
+
+  if(Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for( int t=0; t<corr_A_distr.size(); t++) Print<<t<<setw(20)<<result[t].first<<setw(20)<<result[t].second<<endl;
+    Print.close();
+  }
+
+
+  
+  return residue;
+ 
+
+
+}
+
+
 
 
 

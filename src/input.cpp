@@ -164,3 +164,31 @@ void data_t::Read() {
 
     return;
   }
+
+
+
+
+Vfloat Read_From_File(string path, int icol, int ncols) {
+
+  ifstream Read(path);
+  Vfloat res;
+
+  if(!boost::filesystem::is_regular_file(path)) crash("In Read_From_File cannot open file name: "+path);
+  
+  do {
+
+    Vfloat Col_read;
+
+    if(!Read.eof()) { 
+    for(int i=0;i<ncols;i++) { double a; Read>>a; Col_read.push_back(a);}
+    }
+
+    if(!Read.eof())  res.push_back( Col_read[icol]);
+
+  } while(!Read.eof());
+
+
+  // printV(res,path,1);
+  return res;
+
+}
