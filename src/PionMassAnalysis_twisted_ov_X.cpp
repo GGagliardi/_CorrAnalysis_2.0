@@ -971,9 +971,9 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 
  
   //Fix some parameters to make test
-  //bf.Fix_par("F_m",1.0);
+  bf.Fix_par("F_m",1.0);
   bf.Fix_par("F_a",0.0);
-  bf.Fix_par("F_4",0.0);
+  //bf.Fix_par("F_4",0.0);
   bf.Fix_par("Dm",0.0);
   bf.Fix_par("D",0.0);
   bf.Fix_par("lg_a", 0.0);
@@ -1035,7 +1035,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     double ML = ip.Mpi*ip.L;
 
          
-    double SD_FVE = (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_4/(ML)+ (3.0/r0)*p.F_a*(pow(a,2))):0.0;
+    double SD_FVE = (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_4/(ML)+ (3.0/r0)*p.F_a*(pow(a,2))):0.0;  //in p.F4 ML -> Mp2
 
     double FVE_universal =  (Use_M3?0.0:((L>0.0)?(scale_fve*(kappa*alpha/ML)*( 1.0 + 2.0/ML)):0.0));
 
@@ -1231,7 +1231,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
 		  double Mp= M*ainv;
 		  double Mp2 = Mp*Mp;
 		  double Mp3 = Mp*Mp*Mp;
-		  double SDE =(e2/3.0)*(Mp2/pow(ML,3))*r0*(F_m + F_4/(ML) +  (3.0/r0)*F_a*(1.0/pow(ainv,2)));
+		  double SDE =(e2/3.0)*(Mp2/pow(ML,3))*r0*(F_m + F_4/(ML) +  (3.0/r0)*F_a*(1.0/pow(ainv,2))); //in F_4 ML -> Mp2
 		  return X_phys_val*SDE*resc;
   };
 
@@ -1274,7 +1274,7 @@ void Pion_mass_analysis_twisted_ov_X(string CURRENT_TYPE, bool IncludeDisconnect
     double ML = ip.Mpi*ip.L;
 
          
-    double SD_FVE= (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_4/(ML) + (3.0/r0)*p.F_a*(pow(a,2))):0.0;
+    double SD_FVE= (L>0.0)?(e2/3.0)*scale_fve*r0*(Mp2/pow(ML,3))*(p.F_m+ p.F_4/(ML) + (3.0/r0)*p.F_a*(pow(a,2))):0.0;   //in p.F_4 ML -> Mp2
 
     double FVE_universal =  (L>0.0)?(scale_fve*(kappa*alpha/ML)*( 1.0 + 2.0/ML)):0.0;
 

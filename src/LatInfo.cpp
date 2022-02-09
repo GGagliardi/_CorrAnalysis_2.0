@@ -159,7 +159,7 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Za_err=0.009;
     Zv=0.6960;;
     Zv_err=0.0007;
-    ms_L=0.02050; ms_M=0.02300; ms_H= 0.02550;
+    ms_L=0.02050; ms_M=0.02300;
     mc_L= 0.24000; mc_M=0.26500; mc_H=0.29000;
   }
 
@@ -184,7 +184,7 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     }
     Zv=0.7131;
     Zv_err=0.0006;
-    ms_L=0.019; ms_M=0.021; ms_H=0.02150;
+    ms_L=0.019; ms_M=0.021;
     mc_L= 0.21000; mc_M=0.23000; mc_H=0.25000;
   }
 
@@ -201,15 +201,15 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_err=0.0005;
     Zv_WI = 0.728477 ;
     Zv_WI_err = 0.000005;
-    ms_L= 0.01600; ms_M= 0.01800; ms_H=0.01950;
+    ms_L= 0.01600; ms_M= 0.01800;
     mc_L=0.17500; mc_M=0.19500; mc_H=0.21500;
   }
 
   else if(Tag.substr(1,1)=="D") {
     a= 0.0577;
     a_err= 0.0002; 
-    a_nucleon= 0.05777; //fakeeee
-    a_nucleon_err= 0.0002; //fakeeee
+    a_nucleon= 0.05777; //fake
+    a_nucleon_err= 0.0002; //fake
     Za= 0.76217;
     Za_err=0.00024;
     Za_WI = 0.76134 ;
@@ -218,8 +218,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_WI_err = 0.000005;
     Zv= 0.746599;
     Zv_err = 0.000005;
-    ms_L= 0.014; ms_M= 0.015; ms_H=0.01950; //ms_H is fake
-    mc_L=0.17500; mc_M=0.19500; mc_H=0.21500; //mc_H must be retuned
+    ms_L= 0.014; ms_M= 0.015;
+    mc_L=0.165; mc_M=0.175; mc_H=0.175; //mc_H is fake 
 
 
 

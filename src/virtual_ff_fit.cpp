@@ -305,7 +305,6 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
   //perform bootstrap fit
 
  
-
   bootstrap_fit<Xff_ChPT,Yff> bf(njacks);
 
 
@@ -326,7 +325,7 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
   //bf.Fix_par("aq",0.0);
   //bf.Fix_par("akq",0.0);
   //bf.Fix_par("ak",0.0);
-  if(ff_type != "H1") bf.Fix_par("a2kq",0.0);                                    //                    YOU FIX HERE TO ZERO THE PARAMETER a2kq
+  bf.Fix_par("a2kq",0.0);                                    //                    YOU FIX HERE TO ZERO THE PARAMETER a2kq
 
  
   //fix n release Za/Zv

@@ -4,6 +4,8 @@
 #include <mpfr.h>
 #include "numerics.h"
 
+using namespace std;
+
 /// Undef this to disable actual usage of the high preceision
 //#define FAKE_HP
 
@@ -432,8 +434,6 @@ using PrecVect=
 using PrecMatr=
   Eigen::Matrix<PrecFloat,Eigen::Dynamic,Eigen::Dynamic>;
 
-/////////////////////////////////////////////////////////////////
-
 /// Integrate the passed function f with the double exponential
 /// transformation of eq.1.16 of
 /// https://core.ac.uk/download/pdf/82080804.pdf
@@ -457,13 +457,14 @@ using PrecMatr=
 /// The iterative procedure is stopped when the result is stable
 /// within attainable precisione
 template <typename F>
-PrecFloat integrateBetween0andInfinite(F&& f,const double& xMin=0.0)
+PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
 {
   /// We compute up to the highest precision possible, which needs to
   /// be adjusted in terms of the number of iterations (maybe it might
   /// be enough to increase with the square root?)
   PrecFloat maxAttainableStability=
     PrecFloat::getEpsilon()*10;
+
   
   const PrecFloat piHalf=
     precPi()/2;
@@ -543,6 +544,7 @@ PrecFloat integrateBetween0andInfinite(F&& f,const double& xMin=0.0)
   
   return sum;
 }
+
 
 #ifdef MAIN
 int PrecFloat::_defaultPrecision;
