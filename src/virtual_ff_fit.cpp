@@ -108,7 +108,7 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
     else bf.Add_par("rq", rq_guess_A, rq_guess_A/10);
   
     if(ff_type=="H2") {  bf.Set_limits("rk", 0.0, 1.0);  bf.Set_limits("rq", -0.5, 2.0*rq_guess_A); }
-    else  { bf.Set_limits("rk", 0.0, 3.0*rk_guess_A); bf.Set_limits("rq", -0.3, 4.0*rq_guess_A);}
+    else  { bf.Set_limits("rk", 0.0, 3.0*rk_guess_A); bf.Set_limits("rq", -0.3, 6.0*rq_guess_A);} //4.0*rq_guess_A;
   }
   else if(W=="V") {
     

@@ -7,7 +7,7 @@ double lambda= INCLUDE_ERRORS?0.9:0.0;
 bool FIND_OPTIMAL_LAMBDA= true;
 string COV_MATRIX_MODE = "";
 const int Nmoms=2;
-const int alpha=2;
+const int alpha=0;
 const bool Use_balance_condition = true;
 
 
@@ -399,15 +399,15 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
   //bisection search
   PrecFloat l_low =0;
   PrecFloat l_up = 1;
-  PrecFloat diff= l_up-l_low;
-  PrecFloat l_start= 0.9;
+  PrecFloat diff;
+  PrecFloat l_start=1.0;
   int Nit=0;
   int Nit_Ag0=0;
   double lambda_Ag0;
   double lambda_balance;
   bool lambda_found_Ag_A0=false;
   bool lambda_balance_found=false;
-  PrecFloat Ag_ov_A0_target = 1e-7;
+  PrecFloat Ag_ov_A0_target = 0.5e-7;
 
   cout<<"Finding lambda corresponding to A[g]/A[0] = "<<Ag_ov_A0_target<<endl;
   
@@ -417,6 +417,7 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
 
     //evaluate the minimum at midpoint
     PrecFloat lambda_mid = (Nit_Ag0==0)?l_start:(l_up+l_low)/2;
+    //if(MODE != "SANF") lambda_mid +=  + 0.98*(l_up-lambda_mid);
     PrecMatr C = Atr*(1-lambda_mid)/M2 + B*lambda_mid/(MODE=="SANF"?M2:1);
     PrecMatr C_inv = C.inverse();
     PrecVect ft_l = ft*(1-lambda_mid)/M2;
@@ -484,13 +485,12 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
    
 
       if(A1_val > Ag_ov_A0_target) { // lambda_mid is new l_low
-	l_up =lambda_mid;
+          l_up =lambda_mid;
       }
       else { //lambda_mid is new l_up
 	l_low = lambda_mid;
       }
       
-      diff = l_up-l_low;
       lambda_Ag0= lambda_mid.get();
       Nit_Ag0++;
       if(A1_val < Ag_ov_A0_target && A1_val > 0.95*Ag_ov_A0_target ) lambda_found_Ag_A0=true;
@@ -503,6 +503,7 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
   cout<<"Finding lambda from balance condition A=B..."<<endl;
   l_up=1.0;
   l_low =0.0;
+  diff= l_up-l_low;
 
   //bisection search for condition A = B
   while( !lambda_balance_found ) {
@@ -557,11 +558,11 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
       PrecFloat B1_val = B1(gm, lambda_mid);
 
 
-   
+      double mult = (MODE=="SANF")?0.000001:1;
       
   
      
-      if(B1_val > A1_val) { // lambda_mid is new l_low
+      if(mult*B1_val > A1_val) { // lambda_mid is new l_low
 	l_low =lambda_mid;
       }
       else { //lambda_mid is new l_up

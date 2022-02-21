@@ -25,6 +25,7 @@ bool USE_FITTED_FF=1;
 bool COMPUTE_l4_DECAY_RATE=1;
 int VIRTUAL_ESTIMATOR_SET=3;
 const string Meson="K";
+const bool Include_FSES=true;
 
 class ExpFit {
 
@@ -1015,6 +1016,29 @@ distr_t_list H_2_impr(const distr_t_list& H30,const distr_t_list& H03, const dis
   double kz= Mom.k()[2];
   double ksq = pow(Mom.virt(),2);
 
+  CorrAnalysis C;
+  C.Nt = 64;
+  
+  
+  distr_t pole_corr;
+  
+  for(int ijack=0;ijack<Njacks;ijack++) pole_corr.distr.push_back( 0.5*( 1 + (m.distr[ijack] - Eg)/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+
+  distr_t corr_3003;
+  for(int ijack=0;ijack < Njacks;ijack++) corr_3003.distr.push_back( -0.5*(kz*m.distr[ijack]/(2*m.distr[ijack] - Eg))*(1.0/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+  distr_t_list resc_FSES;
+  distr_t mk_k;
+  for(int ijack=0;ijack<Njacks;ijack++) mk_k.distr.push_back(  2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))) + Eg - m.distr[ijack]);
+  auto exp_M= [](double mass, double t, double N) { return exp( -mass*t);};
+  distr_t_list exp_mk = distr_t_list::f_of_distr(exp_M, mk_k, C.Nt);
+  resc_FSES= 1- pole_corr*(1.0*Include_FSES)*exp_mk;
+
+  
+
+
+
  distr_t_list H30_n = H30/H11_0;
  distr_t_list H03_n = H03/H11_0;
  distr_t_list H11_n = H11/H11_0;
@@ -1022,21 +1046,20 @@ distr_t_list H_2_impr(const distr_t_list& H30,const distr_t_list& H03, const dis
  distr_t_list H11_0_n = H11_0/H11_0;
  distr_t_list H33_0_n = H33_0/H11_0;
 
-  distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
+ distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
-  distr_t_list H11_sub = H11_n - H11_0_n ;
-  distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
-
-  distr_t_list H_2 = +1.0*H30_sub/(Eg*kz*Power(m,2));
-  H_2 = H_2 + H33_sub*( (pow(Eg,2)+ksq)*m - Eg*ksq)/den;
-  H_2 = H_2+ H11_sub*( Eg*(ksq+pow(kz,2))-1.0*(pow(Eg,2)+ ksq+pow(kz,2))*m)/den;
+ distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk ;
+ distr_t_list H11_sub = H11_n - H11_0_n ;
+ distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);
+ 
+ distr_t_list H_2 = +1.0*H30_sub/(Eg*kz*Power(m,2));
+ H_2 = H_2 + H33_sub*( (pow(Eg,2)+ksq)*m - Eg*ksq)/den;
+ H_2 = H_2+ H11_sub*( Eg*(ksq+pow(kz,2))-1.0*(pow(Eg,2)+ ksq+pow(kz,2))*m)/den;
 
 
   
-  CorrAnalysis C;
-  C.Nt = 64;
-  Get_virtual_ff_fit_interval("H2", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+ 
+  Get_virtual_ff_fit_interval_v1("H2", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
   distr_t_list contr_1 = (H30_sub/(Eg*kz*Power(m,2)));
   distr_t_list contr_2 = (H33_sub*( (pow(Eg,2)+ksq)*m - Eg*ksq)/den);
   distr_t_list contr_3 = (H11_sub*( Eg*(ksq+pow(kz,2))-1.0*(pow(Eg,2)+ ksq+pow(kz,2))*m)/den);
@@ -1050,6 +1073,7 @@ distr_t_list H_2_impr(const distr_t_list& H30,const distr_t_list& H03, const dis
   cout<<"contr 33+11: "<<C.Fit_distr(contr_11_33).ave()<<" +- "<<C.Fit_distr(contr_11_33).err()<<endl;
   cout<<"contr 33-11: "<<C.Fit_distr(contr_33_m_11).ave()<<" +- "<<C.Fit_distr(contr_33_m_11).err()<<endl;
   cout<<"total: "<<C.Fit_distr(total).ave()<<" +- "<<C.Fit_distr(total).err()<<endl;
+  
   cout<<"########## END H2 impr infos "<<endl;
 
 
@@ -1073,6 +1097,23 @@ distr_t_list H_1_impr(const distr_t_list& H30,const distr_t_list& H03, const dis
     return ret_val;
   };
 
+  
+  CorrAnalysis C;
+  C.Nt = 64;
+
+  distr_t pole_corr;
+  for(int ijack=0;ijack<Njacks;ijack++) pole_corr.distr.push_back( 0.5*( 1 + (m.distr[ijack] - Eg)/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+  distr_t corr_3003;
+  for(int ijack=0;ijack < Njacks;ijack++) corr_3003.distr.push_back( -0.5*(kz*m.distr[ijack]/(2*m.distr[ijack] - Eg))*(1.0/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+  distr_t_list resc_FSES;
+  distr_t mk_k;
+  for(int ijack=0;ijack<Njacks;ijack++) mk_k.distr.push_back(  2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))) + Eg -m.distr[ijack]);
+  auto exp_M= [](double mass, double t, double N) { return exp( -mass*t);};
+  distr_t_list exp_mk = distr_t_list::f_of_distr(exp_M, mk_k, C.Nt);
+  resc_FSES= 1-pole_corr*(1.0*Include_FSES)*exp_mk;
+
   distr_t_list H30_n = H30/H11_0;
   distr_t_list H03_n = H03/H11_0;
   distr_t_list H11_n = H11/H11_0;
@@ -1083,9 +1124,9 @@ distr_t_list H_1_impr(const distr_t_list& H30,const distr_t_list& H03, const dis
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
   
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk;
   distr_t_list H11_sub = H11_n - H11_0_n ;
-  distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
+  distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);
 
 
   distr_t_list H_1 = H30_sub*(ksq - Eg*m)/(Eg*kz*Power(m,2));
@@ -1093,9 +1134,7 @@ distr_t_list H_1_impr(const distr_t_list& H30,const distr_t_list& H03, const dis
   H_1 = H_1+ H11_sub*(-1.0*ksq*m*(ksq +pow(kz,2)) + 2.0*pow(Eg,3)*Power(m,2) + Eg*(ksq+pow(kz,2))*(ksq+3.0*Power(m,2)) -pow(Eg,2)*m*(3.0*ksq + 2.0*(pow(kz,2)+Power(m,2))))/den;
 
 
-  CorrAnalysis C;
-  C.Nt = 64;
-  Get_virtual_ff_fit_interval("H1", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+  Get_virtual_ff_fit_interval_v1("H1", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
   distr_t_list contr_1 = H30_sub*((ksq - Eg*m)/(Eg*kz*Power(m,2)));
   distr_t_list contr_2 = (-1.0*H33_sub*(Eg-m)*(Eg*m-ksq)*(-ksq+2.0*Eg*m)/den);
   distr_t_list contr_3 = (H11_sub*(-1.0*ksq*m*(ksq +pow(kz,2)) + 2.0*pow(Eg,3)*Power(m,2) + Eg*(ksq+pow(kz,2))*(ksq+3.0*Power(m,2)) -pow(Eg,2)*m*(3.0*ksq + 2.0*(pow(kz,2)+Power(m,2))))/den);
@@ -1132,6 +1171,23 @@ distr_t_list FA_off_impr(const distr_t_list& H30,const distr_t_list& H03, const 
     return ret_val;
   };
 
+  
+  CorrAnalysis C;
+  C.Nt = 64;
+
+  distr_t pole_corr;
+  for(int ijack=0;ijack<Njacks;ijack++) pole_corr.distr.push_back( 0.5*( 1 + (m.distr[ijack] - Eg)/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+  distr_t corr_3003;
+  for(int ijack=0;ijack < Njacks;ijack++) corr_3003.distr.push_back( -0.5*(kz*m.distr[ijack]/(2*m.distr[ijack] - Eg))*(1.0/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+  distr_t_list resc_FSES;
+  distr_t mk_k;
+  for(int ijack=0;ijack<Njacks;ijack++) mk_k.distr.push_back(  2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))) + Eg - m.distr[ijack]);
+  auto exp_M= [](double mass, double t, double N) { return exp( -mass*t);};
+  distr_t_list exp_mk = distr_t_list::f_of_distr(exp_M, mk_k, C.Nt);
+  resc_FSES= 1-pole_corr*(1.0*Include_FSES)*exp_mk;
+
   distr_t_list H0_ave = (2.0*H11_0 + 1.0*H33_0)/3.0;
 
   double xk = (Mom.virt()/m).ave();
@@ -1147,9 +1203,9 @@ distr_t_list FA_off_impr(const distr_t_list& H30,const distr_t_list& H03, const 
 
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
    
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk;
   distr_t_list H11_sub = H11_n - H11_0_n ;
-  distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);  
+  distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);  
 
 
   distr_t_list FA_off = H30_sub*ksq/(Eg*kz*m);
@@ -1157,9 +1213,8 @@ distr_t_list FA_off_impr(const distr_t_list& H30,const distr_t_list& H03, const 
   FA_off = FA_off+ H11_sub*m*( -ksq*m*(ksq+pow(kz,2)) -pow(Eg,2)*m*(2.0*ksq+pow(kz,2)) +Eg*(ksq + pow(kz,2))*(ksq+2.0*Power(m,2)))/den;
 
 
-  CorrAnalysis C;
-  C.Nt = 64;
-  Get_virtual_ff_fit_interval("FA", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+ 
+  Get_virtual_ff_fit_interval_v1("FA", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
   distr_t_list contr_1 = (H30_sub*ksq/(Eg*kz*m));
   distr_t_list contr_2 = (H33_sub*m*ksq*(m-Eg)*(ksq-2.0*Eg*m)/den);
   distr_t_list contr_3 = (H11_sub*m*( -ksq*m*(ksq+pow(kz,2)) -pow(Eg,2)*m*(2.0*ksq+pow(kz,2)) +Eg*(ksq + pow(kz,2))*(ksq+2.0*Power(m,2)))/den);
@@ -1191,6 +1246,23 @@ distr_t_list H_2_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
   double kz= Mom.k()[2];
   double ksq = pow(Mom.virt(),2);
 
+  CorrAnalysis C;
+  C.Nt = 64;
+
+  distr_t pole_corr;
+  for(int ijack=0;ijack<Njacks;ijack++) pole_corr.distr.push_back( 0.5*( 1 + (m.distr[ijack] - Eg)/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+  distr_t corr_3003;
+  for(int ijack=0;ijack < Njacks;ijack++) corr_3003.distr.push_back( -0.5*(kz*m.distr[ijack]/(2*m.distr[ijack] - Eg))*(1.0/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+
+  distr_t_list resc_FSES;
+  distr_t mk_k;
+  for(int ijack=0;ijack<Njacks;ijack++) mk_k.distr.push_back( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))) + Eg - m.distr[ijack]);
+  auto exp_M= [](double mass, double t, double N) { return exp( -mass*t);};
+  distr_t_list exp_mk = distr_t_list::f_of_distr(exp_M, mk_k, C.Nt);
+  resc_FSES= 1-pole_corr*(1.0*Include_FSES)*exp_mk;
+
   
 
   distr_t_list H30_n = H30/H11_0;
@@ -1204,9 +1276,9 @@ distr_t_list H_2_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
 
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk;
   distr_t_list H11_sub_temp = H11_n - H11_0_n ;
-  distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
+  distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);
   distr_t_list H33_sub = (H11_sub_temp+H33_sub_temp)/2.0;
   distr_t_list H11_sub = (H33_sub_temp-H11_sub_temp -H33_kz0_n + H11_kz0_n)/2.0;
 
@@ -1214,9 +1286,8 @@ distr_t_list H_2_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
   H_2 = H_2 + H33_sub*kz*kz*(Eg-m)/den;
   H_2 = H_2+ H11_sub*(-Eg*(2.0*ksq+pow(kz,2)) + 2.0*pow(Eg,2)*m +m*(2*ksq+pow(kz,2)))/den;
 
-  CorrAnalysis C;
-  C.Nt = 64;
-  Get_virtual_ff_fit_interval("H2", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+ 
+  Get_virtual_ff_fit_interval_v1("H2", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
   distr_t_list contr_1 = (1.0*H30_sub/(Eg*kz*Power(m,2)));
   distr_t_list contr_2 = (H33_sub*kz*kz*(Eg-m)/den);
   distr_t_list contr_3 = (H11_sub*(-Eg*(2.0*ksq+pow(kz,2)) + 2.0*pow(Eg,2)*m +m*(2*ksq+pow(kz,2)))/den);
@@ -1245,6 +1316,26 @@ distr_t_list H_1_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
     return ret_val;
   };
 
+  
+  CorrAnalysis C;
+  C.Nt = 64;
+
+  distr_t pole_corr;
+  for(int ijack=0;ijack<Njacks;ijack++) pole_corr.distr.push_back( 0.5*( 1 + (m.distr[ijack] - Eg)/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+  distr_t corr_3003;
+  for(int ijack=0;ijack < Njacks;ijack++) corr_3003.distr.push_back( -0.5*(kz*m.distr[ijack]/(2*m.distr[ijack] - Eg))*(1.0/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+  distr_t_list resc_FSES;
+  distr_t mk_k, mk_k_no_lat1;
+  for(int ijack=0;ijack<Njacks;ijack++) {
+    mk_k.distr.push_back( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))) + Eg - m.distr[ijack]);
+    mk_k_no_lat1.distr.push_back( sqrt( kz*kz + m.distr[ijack]*m.distr[ijack]));
+  }
+  auto exp_M= [](double mass, double t, double N) { return exp( -mass*t);};
+  distr_t_list exp_mk = distr_t_list::f_of_distr(exp_M, mk_k, C.Nt);
+  resc_FSES= 1-pole_corr*(1.0*Include_FSES)*exp_mk;
+
   distr_t_list H30_n = H30/H11_0;
   distr_t_list H03_n = H03/H11_0;
   distr_t_list H11_n = H11/H11_0;
@@ -1257,9 +1348,9 @@ distr_t_list H_1_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
   
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk;
   distr_t_list H11_sub_temp = H11_n - H11_0_n ;
-  distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
+  distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);
   distr_t_list H33_sub = (H11_sub_temp+H33_sub_temp)/2.0;
   distr_t_list H11_sub = (H33_sub_temp-H11_sub_temp-H33_kz0_n + H11_kz0_n)/2.0;
 
@@ -1269,9 +1360,7 @@ distr_t_list H_1_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
   H_1 = H_1+ H11_sub*(ksq*(2.0*ksq+pow(kz,2))*m -4*pow(Eg,3)*Power(m,2)+2.0*pow(Eg,2)*m*(3.0*ksq+pow(kz,2)+2.0*Power(m,2))-Eg*(2.0*pow(ksq,2)+3.0*pow(kz,2)*Power(m,2)+ksq*(pow(kz,2)+6.0*Power(m,2))))/den;
 
 
-  CorrAnalysis C;
-  C.Nt = 64;
-  Get_virtual_ff_fit_interval("H1", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+  Get_virtual_ff_fit_interval_v1("H1", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
   distr_t_list contr_1 = (H30_sub*(ksq - Eg*m)/(Eg*kz*Power(m,2)));
   distr_t_list contr_2 = (H33_sub*kz*kz*(-2.0*pow(Eg,2)*m -ksq*m+Eg*(ksq+3.0*Power(m,2)))/den);
   distr_t_list contr_3 = (H11_sub*(ksq*(2.0*ksq+pow(kz,2))*m -4*pow(Eg,3)*Power(m,2)+2.0*pow(Eg,2)*m*(3.0*ksq+pow(kz,2)+2.0*Power(m,2))-Eg*(2.0*pow(ksq,2)+3.0*pow(kz,2)*Power(m,2)+ksq*(pow(kz,2)+6.0*Power(m,2))))/den);
@@ -1304,6 +1393,22 @@ distr_t_list FA_off_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, 
     return ret_val;
   };
 
+  CorrAnalysis C;
+  C.Nt = 64;
+
+  distr_t pole_corr;
+  for(int ijack=0;ijack<Njacks;ijack++) pole_corr.distr.push_back( 0.5*( 1 + (m.distr[ijack] - Eg)/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+  distr_t corr_3003;
+  for(int ijack=0;ijack < Njacks;ijack++) corr_3003.distr.push_back( -0.5*(kz*m.distr[ijack]/(2*m.distr[ijack] - Eg))*(1.0/( 2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))))));
+
+  distr_t_list resc_FSES;
+  distr_t mk_k;
+  for(int ijack=0;ijack<Njacks;ijack++) mk_k.distr.push_back(  2*asinh( 0.5*sqrt(  kz*kz + pow( 2*sinh(m.distr[ijack]/2),2))) + Eg - m.distr[ijack]);
+  auto exp_M= [](double mass, double t, double N) { return exp( -mass*t);};
+  distr_t_list exp_mk = distr_t_list::f_of_distr(exp_M, mk_k, C.Nt);
+  resc_FSES= 1-pole_corr*(1.0*Include_FSES)*exp_mk;
+
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
 
   distr_t_list H0_ave = (2.0*H11_0 + 1.0*H33_0)/3.0;
@@ -1317,9 +1422,9 @@ distr_t_list FA_off_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, 
   distr_t_list H11_kz0_n = (H11_kz0-H11_0)/H11_0;
   distr_t_list H33_kz0_n = (H33_kz0-H33_0)/H11_0;
    
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg);
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk;
   distr_t_list H11_sub_temp = H11_n - H11_0_n ;
-  distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-pow(kz,2))/(2.0*m*Eg -ksq);
+  distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);
   distr_t_list H33_sub = (H11_sub_temp+H33_sub_temp)/2.0;
   distr_t_list H11_sub = (H33_sub_temp-H11_sub_temp-H33_kz0_n+H11_kz0_n)/2.0;
 
@@ -1329,9 +1434,8 @@ distr_t_list FA_off_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, 
   FA_off = FA_off+ H11_sub*m*(ksq*(2.0*ksq+pow(kz,2))*m+ pow(Eg,2)*(4*ksq+pow(kz,2))*m -Eg*(2.0*pow(ksq,2)+2.0*pow(kz,2)*Power(m,2)+ksq*(pow(kz,2)+4.0*Power(m,2))) )/den;
 
 
-  CorrAnalysis C;
-  C.Nt = 64;
-  Get_virtual_ff_fit_interval("FA", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
+
+  Get_virtual_ff_fit_interval_v1("FA", Mom.virt(), Mom.Theta(2)[2], C.Tmin, C.Tmax);
   distr_t_list contr_1 = (H30_sub*ksq/(Eg*kz*m));
   distr_t_list contr_2 = (H33_sub*m*kz*kz*(-pow(Eg,2)*m -ksq*m +Eg*(ksq+2.0*Power(m,2)))/den);
   distr_t_list contr_3 = (H11_sub*m*(ksq*(2.0*ksq+pow(kz,2))*m+ pow(Eg,2)*(4*ksq+pow(kz,2))*m -Eg*(2.0*pow(ksq,2)+2.0*pow(kz,2)*Power(m,2)+ksq*(pow(kz,2)+4.0*Power(m,2))) )/den);
@@ -1993,19 +2097,19 @@ void Compute_form_factors() {
 	      //###########################################
 
 	      //fit virtual FF
-	      Get_virtual_ff_fit_interval("H1", offsh, c.tht[2], corr.Tmin, corr.Tmax);
+	      Get_virtual_ff_fit_interval_v1("H1", offsh, c.tht[2], corr.Tmin, corr.Tmax);
 	      distr_t H1_fit = corr.Fit_distr(H1);
 	      distr_t H1_impr_fit = corr.Fit_distr(H1_impr);
 	      distr_t H1_mixed_diag_fit= corr.Fit_distr(H1_mixed_diag);
-	      Get_virtual_ff_fit_interval("H2", offsh, c.tht[2], corr.Tmin, corr.Tmax);
+	      Get_virtual_ff_fit_interval_v1("H2", offsh, c.tht[2], corr.Tmin, corr.Tmax);
 	      distr_t H2_fit = corr.Fit_distr(H2);
 	      distr_t H2_impr_fit = corr.Fit_distr(H2_impr);
 	      distr_t H2_mixed_diag_fit= corr.Fit_distr(H2_mixed_diag);
-	      Get_virtual_ff_fit_interval("FA", offsh, c.tht[2], corr.Tmin, corr.Tmax);
+	      Get_virtual_ff_fit_interval_v1("FA", offsh, c.tht[2], corr.Tmin, corr.Tmax);
 	      distr_t FAoff_fit = corr.Fit_distr(FAoff);
 	      distr_t FAoff_impr_fit = corr.Fit_distr(FAoff_impr);
 	      distr_t FAoff_mixed_diag_fit= corr.Fit_distr(FAoff_mixed_diag);
-	      Get_virtual_ff_fit_interval("FV", offsh, c.tht[2], corr.Tmin, corr.Tmax);
+	      Get_virtual_ff_fit_interval_v1("FV", offsh, c.tht[2], corr.Tmin, corr.Tmax);
 	      distr_t FVoff_fit = corr.Fit_distr(FVoff);
 
 	   

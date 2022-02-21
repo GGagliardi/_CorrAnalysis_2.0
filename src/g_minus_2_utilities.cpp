@@ -341,230 +341,166 @@ double phi(double z) {
 
 }
 
-void Compute_clogSD_free(int scale_max) {
+void Generate_free_corr_data() {
 
-  auto C_cont = [](double t) -> double { return 1.0/(2.0*M_PI*M_PI*t*t*t);};
-  double t0= 0.4; //fm
-  double Q= pow(2.0/3.0,2)+ pow(1.0/3.0,2);
-  double Delta = 0.15; //fm
-  double Alpha=1.0/137.04;
-  auto SD_th = [&t0, &Delta](double t) ->double { return 1.0- 1.0/(1.0 + exp(-2.0*(t-t0)/Delta));};
-  double Nc=3; //three colors
-  double r= 1.0;
-  double mu2=0.0;
-  double a=0.2;
-  double resc=0.2;
- 
+  //generate pairs
 
-  auto VkVk_b = [&](double z0, double q0, double p1, double p2, double p3) -> double {
+  vector<pair<double, int>> amu_Tmax;
 
-		  double VkVk= (4*Nc*(mu2*a*a -r*(4 - cos(z0) - cos(p1) - cos(p2) - cos(p3))*(4 - cos(p1) - cos(p2) - cos(p3) - cos(q0)) + 
-					(pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2))/3.0 + sin(z0)*sin(q0)))/
-		     ((mu2*a*a + pow(4 - cos(z0) - cos(p1) - cos(p2) - cos(p3),2) + pow(sin(z0),2) + pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2))*
-		      (mu2*a*a + pow(4 - cos(p1) - cos(p2) - cos(p3) - cos(q0),2) + pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2) + pow(sin(q0),2)));
+  //charm
 
-		  /* double VkVk_p0 = (4*Nc*(mu2*a*a -r*(4 - cos(q0) - cos(p1) - cos(p2) - cos(p3))*(4 - cos(p1) - cos(p2) - cos(p3) - cos(q0)) + 
-					(pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2))/3.0 + sin(q0)*sin(q0)))/
-		     ((mu2*a*a + pow(4 - cos(q0) - cos(p1) - cos(p2) - cos(p3),2) + pow(sin(q0),2) + pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2))*
-		      (mu2*a*a + pow(4 - cos(p1) - cos(p2) - cos(p3) - cos(q0),2) + pow(sin(p1),2) + pow(sin(p2),2) + pow(sin(p3),2) + pow(sin(q0),2)));
+  // A ensembles
+  /*
+  amu_Tmax.push_back( make_pair( 0.240, 24));
+  amu_Tmax.push_back( make_pair( 0.240, 32));
+  amu_Tmax.push_back( make_pair( 0.240, 48));
+  amu_Tmax.push_back( make_pair( 0.265, 24));
+  amu_Tmax.push_back( make_pair( 0.265, 32));
+  amu_Tmax.push_back( make_pair( 0.265, 48));
+  amu_Tmax.push_back( make_pair( 0.290, 24));
+  amu_Tmax.push_back( make_pair( 0.290, 32));
+  amu_Tmax.push_back( make_pair( 0.290, 48));
+
+  //B ensembles
+  amu_Tmax.push_back( make_pair( 0.21, 48));
+  amu_Tmax.push_back( make_pair( 0.21, 64));
+  amu_Tmax.push_back( make_pair( 0.23, 48));
+  amu_Tmax.push_back( make_pair( 0.23, 64));
+  amu_Tmax.push_back( make_pair( 0.25, 48));
+  amu_Tmax.push_back( make_pair( 0.25, 64));
+
+  //C ensembles
+  amu_Tmax.push_back( make_pair( 0.175, 80));
+  amu_Tmax.push_back( make_pair( 0.195, 80));
+  amu_Tmax.push_back( make_pair( 0.215, 80));
 
 
-		      if(VkVk + VkVk_p0< 0) crash("VkVk > VkVk_p0"); */
-		  return VkVk;
-		};
+  //D ensembles
+  amu_Tmax.push_back( make_pair( 0.165, 96));
+  amu_Tmax.push_back( make_pair( 0.175, 96));
+
+  */
+
+  //strange
+
+  //B ensembles
+  amu_Tmax.push_back( make_pair(2*0.019, 64));
+  amu_Tmax.push_back( make_pair(2*0.019, 96));
+  amu_Tmax.push_back( make_pair(2*0.021, 64));
+  amu_Tmax.push_back( make_pair(2*0.021, 96));
+  //C ensembles
+  amu_Tmax.push_back( make_pair(2*0.016, 80));
+  amu_Tmax.push_back( make_pair(2*0.018, 80));
+  //D ensembles
+  amu_Tmax.push_back( make_pair( 2*0.014, 96));
+  amu_Tmax.push_back( make_pair( 2*0.015, 96));
   
-  auto VkVk_FT = [&](vector<double> const &par) -> double {
+  
 
-		   double pt = par[0];
-		   double p0 = par[1];
-		   double p1 = par[2];
-		   double p2 = par[3];
-		   double p3 = par[4];
-		   double fact= pow(1.0/(2.0*M_PI),5);
-		   double VkVk=  2.0*(VkVk_b(p0+pt,p0,p1,p2,p3) + VkVk_b(p0-pt,p0,p1,p2,p3));
-		   VkVk += 2.0*( VkVk_b(M_PI-p0+pt,M_PI-p0,p1,p2,p3) + VkVk_b(M_PI-p0-pt, M_PI-p0, p1,p2,p3));
-		   double VkVk_ref = 2.0*( VkVk_b(p0 +(M_PI-pt), p0,p1,p2,p3) + VkVk_b(p0- (M_PI-pt), p0,p1,p2,p3));
-		   VkVk_ref += 2.0*( VkVk_b(M_PI-p0+(M_PI-pt),M_PI-p0,p1,p2,p3) + VkVk_b(M_PI-p0-(M_PI-pt), M_PI-p0, p1,p2,p3));
-		   double res_prod= pow(2.0,3)*fact*(1.0/a/a/a)*VkVk;
-		   double res_prod_ref = pow(2.0,3)*fact*(1.0/a/a/a)*VkVk_ref;
-		   double SD_fact_1 = 0.0;
-		   double SD_fact_2 =0.0;
-		   for(int it=1; it<(int)2.0*t0/a;it++) {
-		     double tt=it*a;
-		     SD_fact_1+= cos(tt*pt/a)*SD_th(tt)*pow(tt,4)*pow(m_muon,2);
-		     SD_fact_2+= cos(tt*(M_PI-pt)/a)*SD_th(tt)*pow(tt,4)*pow(m_muon,2);
-		     } 
-		   return a*4.0*pow(Alpha,2)*(res_prod*SD_fact_1 + res_prod_ref*SD_fact_2);
+  for(auto &p: amu_Tmax) { cout<<"Executing amu: "<<p.first<<" Tmax: "<<p.second<<endl; Compute_free_corr(p.first, p.second);}
+
+  
+  return;
+}
+
+void Compute_free_corr(double am, int Tmax) {
+
+ 
+  double Nc=3; //three colors
+
+  auto C_cont = [&Nc, &am](int t) -> double {
+
+		  double tolerance=1e-14;
+		  double err;
+
+		  auto f = [&am, &t, &Nc](double x) {  return (Nc*2.0/pow(M_PI,2))*exp(-2.0*t*sqrt( pow(x,2) + pow(am,2)))*pow(x,2)*( 1.0/3 + pow(am,2)/( 6.0*( pow(am,2) + pow(x,2))));};
+
+		  return boost::math::quadrature::gauss_kronrod<double, 15>::integrate( f, 0, numeric_limits<double>::infinity(), 5,tolerance, &err);
+		  
+		};
+
+  auto ptm2 = [](double p1,double p2, double p3) { return pow(sin(p1),2)+ pow(sin(p2),2)+ pow(sin(p3),2);};
+  auto phm2 = [](double p1,double p2, double p3) { return pow(2*sin(p1/2),2) + pow(2*sin(p2/2),2) + pow(2*sin(p3/2),2);};
+  auto fa = [&phm2](double p1, double p2, double p3) { return 1.0 + 0.5*phm2(p1,p2,p3);};
+  auto fb = [&phm2](double p1, double p2, double p3) { return phm2(p1,p2,p3) + 0.5*( pow(2*sin(p1/2),2)*(pow(2*sin(p2/2),2)+pow(2*sin(p3/2),2)) + pow(2*sin(p2/2),2)*pow(2*sin(p3/2),2));};
+  auto D2 = [&am, &fa, &fb](double p1,double p2, double p3) { return ( fb(p1,p2,p3) + pow(am,2))*( 4*fa(p1,p2,p3) + fb(p1,p2,p3) + pow(am,2));};
+  auto W = [&am, &phm2, &fa, &fb](double p1, double p2, double p3) { return 0.25*pow( phm2(p1,p2,p3) - (fb(p1,p2,p3) + pow(am,2))/fa(p1,p2,p3)  ,2);};
+  auto shaEp2 = [&am, &fa, &fb](double p1,double p2, double p3) { return pow( (fb(p1,p2,p3) + pow(am,2))/(2*fa(p1,p2,p3)),2) + (fb(p1,p2,p3)+pow(am,2))/fa(p1,p2,p3);};
+  auto shaEp =[&shaEp2](double p1,double p2, double p3) { return sqrt(shaEp2(p1,p2,p3));};
+  auto Ep =[&shaEp](double p1,double p2, double p3) {return asinh(shaEp(p1,p2,p3));};
+
+  auto corr = [&am, &Nc, &ptm2, &D2, &W, &shaEp2, &Ep](double p1,double p2,double p3, double t, int r) -> double {
+
+		return (32.0*Nc/(pow(2.0*M_PI,3)))*exp(-2*Ep(p1,p2,p3)*t)*( shaEp2(p1,p2,p3) +(1.0/3.0)*ptm2(p1,p2,p3) +pow(am,2)+ r*W(p1,p2,p3))/D2(p1,p2,p3);
 	      };
 
-  auto VkVk_FT_summed= [&](vector<double> const & par) -> double {
-			  double pt = par[0];
-			  double p0 = par[1];
-			  double p1 = par[2];
-			  double p2 = par[3];
-			  double p3 = par[4];
+  vector<double> corr_pert_res_tm(2*Tmax,0.0);
+  vector<double> corr_pert_res_OS(2*Tmax, 0.0);
 
-			 
-			  Vfloat par2({ M_PI/2 -pt, p0,p1,p2,p3});
-			  Vfloat par3({ pt,M_PI/2- p0,p1,p2,p3});
-			  Vfloat par4({ M_PI/2 -pt, M_PI/2 -p0,p1,p2,p3});
-	        
+  for(int i=0;i<2;i++) { //loop over r
 
+    int r= 2*i-1; //set Wilson parameter 
 
-			  double res=  VkVk_FT(par) + VkVk_FT(par2) + VkVk_FT(par3)+ VkVk_FT(par4);
-
-
-			  return res;
-
-
-		       };
-
-  auto VkVk_FT_summed_p0 = [&](vector<double> const & par) -> double {
-
-
-			     double Vk_p0 = VkVk_b(par[1],par[1], par[2], par[3], par[4]);
-			     if(Vk_p0<0) crash("Vk_pt0: "+to_string_with_precision(Vk_p0,10));
-			     return VkVk_FT_summed(par);
-
-			   };
-
-  auto Int_SD_cont = [&](double t) ->double {
-
-		       return 4.0*pow(Alpha,2)*C_cont(t)*SD_th(t)*pow(t,4)*pow(m_muon,2);
-
-		     };
-
-  //compute SD window in the continuum
-  double error_amu_cont;
-  double eps_cont = 1.0e-10;
-  double a_mu_SD_cont= boost::math::quadrature::gauss_kronrod<double,15>::integrate(Int_SD_cont, 0.0, numeric_limits<double>::infinity() , 5, eps_cont, &error_amu_cont);
-
-
- 
-
-
-   //VEGAS GLS INTEGRATION
-
-  auto display_results = [](char *title, double result, double error) ->void
-			 {
-			   printf ("%s ==================\n", title);
-			   printf ("result = % .16f\n", result);
-			   printf ("relative error  =  %.16f  %\n ", 100*error/result);
-			   return;
-			 };
-
-  
-    size_t calls = 5000000; //old was 1000000;
-    int warmup_calls= 50000; //old was 100000;
-
-    double bound_l[5];
-    bound_l[0] = 0.0;
-    bound_l[1] = 0.0;
-    bound_l[2] = 0.0;
-    bound_l[3] = 0.0;
-    bound_l[4] = 0.0;
-    double bound_u[5];
-    bound_u[0] = M_PI/4;
-    bound_u[1] = M_PI/4;
-    bound_u[2] = M_PI;
-    bound_u[3] = M_PI;
-    bound_u[4] = M_PI;
-
-
-    Vfloat res_r0, res_r1;
-    Vfloat err_r0, err_r1;
-
-    double a0=0.2; //starting value of the lattice spacing (does not make any sense absolute scale with massless fermions)
-
-    for(int ir=0;ir<2;ir++) {
-
-      if(ir==0) r=-1;
-      else r= 1;
-      
-     
-      for(int scale=0;scale<scale_max;scale++) {
-	a= a0/(1.0+resc*scale);
-	double a_mu_SD_lat=0.0;
-	double a_mu_SD_lat_err=0.0;
-	string r_tag= (ir==0)?"same_r":"opposite_r";
-	cout<<"Computing SD windows for a: "<<a<<" "<<r_tag<<endl;
-
-	double res_vegas, err_vegas;
-
-	
-	const gsl_rng_type *T;
-	gsl_rng *rr;
-
-	gsl_rng_env_setup();
-
-	T = gsl_rng_default;
-	rr = gsl_rng_alloc(T);
-
-   
-	//to enter a generic seed mySeed
-	gsl_rng_set(rr, 534543);
-
-	gsl_monte_function_pp<decltype(VkVk_FT_summed_p0)> Fp(VkVk_FT_summed_p0);
+    int time;
+    double tol = 1e-13;
     
-	gsl_monte_function *G = static_cast<gsl_monte_function*>(&Fp);
+    for(int t=1;t<=Tmax;t++) { //loop over time
+
+      cout<<"r: "<<r<<" t: "<<t<<endl;
+      time =t;
+    
+      auto corrp1= [&corr, &time, &r, &tol](double p1) -> double {  //boost only performs 1d integrals. 
+     
+		     auto corrp2 = [&corr, &p1, &time, &r, &tol](double p2) {
+
+				     auto corrp3 = [&corr, &p1, &p2, &time, &r](double p3) {
+						     return corr(p1, p2, p3, time,r);
+						   };
+				     return boost::math::quadrature::gauss_kronrod<double, 15>::integrate( corrp3, 0, M_PI, 5,tol);
+				   };
+		     return boost::math::quadrature::gauss_kronrod<double, 15>::integrate( corrp2, 0, M_PI, 5,tol);
+		   };
+  
+      if(r==1)  corr_pert_res_OS[t] = boost::math::quadrature::gauss_kronrod<double, 15>::integrate(corrp1, 0, M_PI, 5, tol);
+      else if(r==-1) corr_pert_res_tm[t] = boost::math::quadrature::gauss_kronrod<double, 15>::integrate(corrp1, 0, M_PI, 5, tol);
+      else crash("Wilson parameter r: "+to_string(r)+" not recognized");
+
+    }
+
+  }
 
 
+  //compute correlator in the continuum limit
+  vector<double> corr_pert_cont(2*Tmax,0.0);
+  for(int t=1;t<=Tmax;t++) corr_pert_cont[t] = C_cont(t);
 
-	gsl_monte_vegas_state *s = gsl_monte_vegas_alloc(5);
 
+  //take difference between corr_pert_cont and corr_pert_res_tm(OS)
+  vector<double> a2corr_pert_res_tm(2*Tmax,0.0);
+  vector<double> a2corr_pert_res_OS(2*Tmax,0.0);
+  
+  for(int t=0;t<2*Tmax;t++) {
+    a2corr_pert_res_tm[t] = corr_pert_cont[t] - corr_pert_res_tm[t];
+    a2corr_pert_res_OS[t] = corr_pert_cont[t] - corr_pert_res_OS[t];
+  }
  
+  //Print the result
 
-	gsl_monte_vegas_integrate (G, bound_l, bound_u, 5, warmup_calls, rr, s,
-                               &res_vegas, &err_vegas);
+  //create directory
+  boost::filesystem::create_directory("../Vkvk_cont");
+  boost::filesystem::create_directory("../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,3));
 
 
-
-	printf ("converging...\n");
-	int k=1;
-	do
-	  {
-	    int new_calls=calls*k;
-	    gsl_monte_vegas_integrate (G,bound_l, bound_u, 5, new_calls/5, rr, s,
-                                   &res_vegas, &err_vegas);
-	   
-	    cout<<"k: "<<k<<" err_vegas: "<<100*err_vegas/res_vegas<<endl;
-	    k*=3;
-       
-      }
-	while (fabs (100*err_vegas/res_vegas) > 0.1);
-
-	//display_results("vegas final", res_vegas, err_vegas);
-
-	gsl_monte_vegas_free(s);
-
-	gsl_rng_free(rr);
-
-	a_mu_SD_lat = res_vegas;
-        a_mu_SD_lat_err= Q*a_mu_SD_lat/(a*a*log(1/a));
-      
-	if(ir==0)  {res_r0.push_back( Q*(a_mu_SD_lat - a_mu_SD_cont)/(a*a*log(1/a))); err_r0.push_back( a_mu_SD_lat_err);}
-	else {res_r1.push_back( Q*(a_mu_SD_lat - a_mu_SD_cont)/(a*a*log(1/a))); err_r1.push_back( a_mu_SD_lat_err);}
-	cout<<"SD(lat): "<<Q*a_mu_SD_lat<<" SD(cont): "<<Q*a_mu_SD_cont<<endl;
-	cout<<"Done!"<<endl;
-      }
-    }
+  Print_To_File({}, {a2corr_pert_res_tm, corr_pert_res_tm, corr_pert_cont}, "../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,3)+"/OPPOR", "" , "");
+  Print_To_File({}, {a2corr_pert_res_OS, corr_pert_res_OS, corr_pert_cont}, "../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,3)+"/SAMER", "" , "");
   
+
   
-    //print the result
-    cout<<"printing result (same r)"<<endl;
-    for(int i=0;i<(signed)res_r0.size();i++) {
-      cout<<"a: "<<a0/(1.0+resc*i)<<" C^log_SD: "<< res_r0[i]<<" +- "<<err_r0[i]<<endl;
-    }
 
-    cout<<"printing result (opposite r)"<<endl;
-    for(int i=0;i<(signed)res_r1.size();i++) {
-      cout<<"a: "<<a0/(1.0+resc*i)<<" C^log_SD: "<< res_r1[i]<<" +- "<<err_r1[i]<<endl;
-    }
+  
 
 
-
-
-    return;
+  return;
 }
 
 

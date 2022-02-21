@@ -64,7 +64,7 @@ public:
 
 
 
-void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS, const distr_t &a_A, const distr_t &a_B, const distr_t &a_C, const distr_t &a_D, Vfloat &L_list,const distr_t_list &a_distr_list, const distr_t_list &Mpi_fit, const distr_t_list &fp_fit, vector<string> &Ens_Tag, bool UseJack, int Njacks, int Nboots,  string W_type, string channel, vector<string> &Inc_a2_list, vector<string> &Inc_FSEs_list, vector<string> &Inc_a4_list, vector<string> &Inc_mass_extr_list, vector<string> &Inc_single_fit_list, VPfloat &Inc_log_corr_list,double cont_guess ) {
+void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS, const distr_t &a_A, const distr_t &a_B, const distr_t &a_C, const distr_t &a_D, Vfloat &L_list,const distr_t_list &a_distr_list, const distr_t_list &Mpi_fit, const distr_t_list &fp_fit, vector<string> &Ens_Tag, bool UseJack, int Njacks, int Nboots,  string W_type, string channel, vector<string> &Inc_a2_list, vector<string> &Inc_FSEs_list, vector<string> &Inc_a4_list, vector<string> &Inc_mass_extr_list, vector<string> &Inc_single_fit_list, VPfloat &Inc_log_corr_list, bool allow_a4_and_log, int vol_mult, int mass_mult, double cont_guess ) {
 
 
   //lambda functions to be used later
@@ -100,20 +100,23 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
   //Contains the info on the continuum/thermodynamic and physical point extrapolated results for all fits
   Vfloat val, err;
 
-  Vint m_single;
-  Vint n_single;
+
 
 
   //store info about the allowed fits
-  vector<string> FSEs_list, a4_list, mass_extr_list, sin_fit_list;
+  vector<string> FSEs_list, a2_list, a4_list, mass_extr_list, sin_fit_list;
   VPfloat n_m_list;
   for (auto &t_a2: Inc_a2_list)
-  for(auto &t_FSEs : Inc_FSEs_list)
-    for(auto &t_a4: Inc_a4_list)
-      for(auto &t_mass: Inc_mass_extr_list)
-	for(auto &t_sin_fit: Inc_single_fit_list)
-	  for( auto& n_m_pair: Inc_log_corr_list) {
+    for(auto &t_FSEs : Inc_FSEs_list)
+      for(auto &t_a4: Inc_a4_list)
+	for(auto &t_mass: Inc_mass_extr_list)
+	  for(auto &t_sin_fit: Inc_single_fit_list) {
 
+	    Vint m_single;
+	    Vint n_single;
+	      
+	    for( auto& n_m_pair: Inc_log_corr_list) {
+	      
 
 	   	    
 	    bool Fit_allowed= true; 
@@ -123,7 +126,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 	       WE DO NOT ALLOW:
 	     
-	       1) t_a4 != "off" if (n,m) != (0,0)
+	       1) t_a4 != "off" if (n,m) != (0,0) if allow_a4_and_log = false
 
 	       2) If single fit = "tm" (resp. "OS"), then a4 must be also also "tm" (resp. "OS") or  "off"
 
@@ -133,9 +136,15 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 	       5) Npars >= Nmeas
 
-	       6) If single fit = "tm" (resp."OS") and FSEs = "off" then Nmeas --
+	       6) If single fit = "tm" (resp."OS") and FSEs = "off" then change Nmeas avoiding double counting of ensembles differing only by lattice volume
 
-	       7) If single fit = "off" and FSEs = "off" then Nmeas -2
+	       7) If single fit = "off" and FSEs = "off" then change Nmeas avoiding double counting of ensembles differing only by lattice volume
+
+	       13) If single fit = "off" and FSEs = "tm" or "OS" then change Nmeas avoiding double counting of ensembles differing only by lattice volume
+
+	       14) If single fit = "tm" (resp."OS") and t_mass = "off" then change Nmeas avoiding double counting of ensembles differing only by pion mass
+
+	       15) If single fit = "off" (resp."OS") and t_mass = "off" then change Nmeas avoiding double counting of ensembles differing only by pion mass
 
 	       8) if t_a2 = "off" && t_a4 != "off" 
 
@@ -143,7 +152,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 	       10) if t_a2 = "tm" (resp. OS) && t_a4 = "OS" (resp. "tm")  || t_a4 = "on" 
 
-	       11) if t_a2 = "tm" (resp. OS) && n != 0 (resp. m != 0)
+	       11) if single_fit=="off" &&  t_a2 = "tm" (resp. OS) && m != 0 (resp. n != 0)
 
 	       12) if single fit = "tm" (resp. "OS"), then a2 must be also "tm" (resp. "OS") or "off"
 
@@ -152,7 +161,9 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 
 	    //RULE 1
+	    if(!allow_a4_and_log) {
 	    if( t_a4 != "off" && ( n_m_pair.first != 0 || n_m_pair.second != 0)) Fit_allowed=false;
+	    }
 
 	    //RULE 2
 	    if( t_sin_fit == "tm" && ( t_a4 != "tm" && t_a4 != "off")) Fit_allowed=false;
@@ -163,8 +174,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 	    if( t_sin_fit == "OS" && t_FSEs == "tm") Fit_allowed=false;
 
 	    //RULE 4 
-	    if( t_sin_fit == "tm" && (find(n_single.begin(), n_single.end(), n_m_pair.first) != n_single.end())) Fit_allowed = false;
-	    if( t_sin_fit == "OS" && (find(m_single.begin(), m_single.end(), n_m_pair.second) != m_single.end())) Fit_allowed = false;
+	    if( t_sin_fit == "tm" && (find(n_single.begin(), n_single.end(), n_m_pair.first) != n_single.end())) Fit_allowed = false; //sbagliata
+	    if( t_sin_fit == "OS" && (find(m_single.begin(), m_single.end(), n_m_pair.second) != m_single.end())) Fit_allowed = false; //sbagliata
 
 	    //RULE 8
 	    if(t_a2 == "off" && t_a4 != "off") Fit_allowed=false;
@@ -178,8 +189,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 	    if( t_a2 == "OS" && (t_a4 == "tm" || t_a4 == "on")) Fit_allowed=false;
 
 	    //RULE 11
-	    if( t_a2=="tm" && n_m_pair.first != 0) Fit_allowed=false;
-	    if( t_a2=="OS" && n_m_pair.second != 0) Fit_allowed=false;
+	    if( t_sin_fit=="off" && (  t_a2=="tm" && n_m_pair.second != 0  )) Fit_allowed=false;
+	    if( t_sin_fit=="off" && (  t_a2=="OS" && n_m_pair.first != 0   )) Fit_allowed=false;
 
 	    //RULE 12
 	    if(t_sin_fit=="tm" && (t_a2 != "tm" && t_a2 != "off")) Fit_allowed=false;
@@ -189,8 +200,12 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 	    //RULE 5
 	    int Nmeas = (t_sin_fit != "off")?Nens:2*Nens;
 	    int Tot_Nmeas = Nmeas;
-	    if(t_sin_fit != "off" && t_FSEs == "off") Nmeas --;  //RULE 6
-	    if(t_sin_fit == "off" && t_FSEs == "off") Nmeas -=2; //RULE 7
+	    if(t_sin_fit != "off" && t_FSEs == "off") Nmeas -= vol_mult;  //RULE 6
+	    if(t_sin_fit == "off" && t_FSEs == "off") Nmeas -=2*vol_mult; //RULE 7
+	    if(t_sin_fit == "off" && (t_FSEs == "tm" || t_FSEs == "OS")) Nmeas -=vol_mult; //RULE 13
+	    if(t_sin_fit != "on" && t_mass == "off") Nmeas -= mass_mult; //RULE 14
+	    if(t_sin_fit == "off" && (t_mass == "off")) Nmeas -= 2*mass_mult; //RULE 15
+	    
 	    int npars= 1; //for the continuum extrapolated value
 	    if( t_sin_fit != "off") {
 	      npars += (t_a2 != "off"); //O(a^2)
@@ -220,6 +235,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 	      if(t_sin_fit =="tm") n_single.push_back(n_m_pair.first);
 	      if(t_sin_fit =="OS") m_single.push_back(n_m_pair.second);
 	      FSEs_list.push_back(t_FSEs);
+	      a2_list.push_back(t_a2);
 	      a4_list.push_back(t_a4);
 	      mass_extr_list.push_back(t_mass);
 	      sin_fit_list.push_back(t_sin_fit);
@@ -261,8 +277,6 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 	      if(  (t_a2 != "on" && t_a2 != "OS") || t_sin_fit == "tm") bf.Fix_par("D_OS", 0.0);
 	      if( (t_a4 != "on" && t_a4 != "tm") || t_sin_fit == "OS") bf.Fix_par("D4_tm", 0.0);
 	      if( (t_a4 != "on" && t_a4 != "OS") || t_sin_fit == "tm") bf.Fix_par("D4_OS", 0.0);
-	      if(t_sin_fit == "tm") bf.Fix_par("D_OS",0.0);
-	      if(t_sin_fit == "OS") bf.Fix_par("D_tm", 0.0);
 	      bf.Fix_par("n", n_m_pair.first);
 	      bf.Fix_par("m", n_m_pair.second);
 
@@ -500,6 +514,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 	      Nfits++;
 	    }
+	    }
 	  }
   //########################## End correct lattice data for FSEs and physical point extrapolation  ###################
 
@@ -527,9 +542,9 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 
   ofstream Print_table("../data/gm2/"+channel+"/fit_summary_tables/"+W_type+"_Nfits_"+to_string(Nfits)+".tab");
-  Print_table<<"FSEs   a4   Mass   single_fit n  m  Ch2  Npars  Ndof  Akaike   Akaike_reduced"<<endl;
+  Print_table<<"FSEs a2  a4   Mass   single_fit n  m  Ch2  Npars  Ndof  Akaike   Akaike_reduced"<<endl;
   for(int ifit=0;ifit<Nfits;ifit++)
-    Print_table<<FSEs_list[ifit]<<"\t"<<a4_list[ifit]<<"\t"<<mass_extr_list[ifit]<<"\t"<<sin_fit_list[ifit]<<"\t"<<n_m_list[ifit].first<<"\t"<<n_m_list[ifit].second<<"\t"<<Ch2[ifit]<<"\t"<<Npars[ifit]<<"\t"<<Ndof[ifit]<<"\t"<<Aka_weight[ifit]/total_aka_weight<<"\t"<<Aka_weight_red[ifit]/total_aka_weight_red<<endl;
+    Print_table<<FSEs_list[ifit]<<"\t"<<a2_list[ifit]<<"\t"<<a4_list[ifit]<<"\t"<<mass_extr_list[ifit]<<"\t"<<sin_fit_list[ifit]<<"\t"<<n_m_list[ifit].first<<"\t"<<n_m_list[ifit].second<<"\t"<<Ch2[ifit]<<"\t"<<Npars[ifit]<<"\t"<<Ndof[ifit]<<"\t"<<Aka_weight[ifit]/total_aka_weight<<"\t"<<Aka_weight_red[ifit]/total_aka_weight_red<<endl;
 
   Print_table.close();
 	    
@@ -585,6 +600,28 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
   //#############################################################################################
 
 
+  //find smallest ch2, smallest reduced ch2, and largest Akaike weight (not reduced)
+  int largest_Aka_id=0;
+  int smallest_ch2_id=0;
+  int smallest_ch2_red_id=0;
+  double largest_Aka, smallest_ch2, smallest_ch2_red;
+
+  for(int ifit=0;ifit<Nfits;ifit++) {
+    if(ifit == 0 ) {
+      largest_Aka = Aka_weight[ifit];
+      smallest_ch2 = Ch2[ifit];
+      smallest_ch2_red = Ch2[ifit]/Ndof[ifit];
+    }
+    else {
+      if( Aka_weight[ifit] > largest_Aka) { largest_Aka = Aka_weight[ifit]; largest_Aka_id = ifit;}
+      if( Ch2[ifit] < smallest_ch2) { smallest_ch2 = Ch2[ifit]; smallest_ch2_id = ifit;}
+      if( Ch2[ifit]/Ndof[ifit] < smallest_ch2_red) { smallest_ch2_red = Ch2[ifit]/Ndof[ifit];  smallest_ch2_red_id = ifit;}
+
+    }
+
+  }
+
+
   //print the result
 
   cout<<"################# FINAL ERROR BUDGET ###################"<<endl;
@@ -593,6 +630,41 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
   cout<<"(M1): ("<<fin_W_val<<" +- ["<<sqrt(fin_W_stat)<<"]_stat["<<sqrt(fin_W_sist)<<"]_sist)xe-10 = ("<<fin_W_val<<" +- "<<sqrt(fin_W_stat + fin_W_sist)<<")xe-10"<<endl;
   cout<<"(M2): ("<<fin_W_val_red<<" +- ["<<sqrt(fin_W_stat_red)<<"]_stat["<<sqrt(fin_W_sist_red)<<"]_sist)xe-10 = ("<<fin_W_val_red<<" +- "<<sqrt(fin_W_stat_red + fin_W_sist_red)<<")xe-10"<<endl;
   cout<<"(M3): ("<<fin_W_val_flat<<" +- ["<<sqrt(fin_W_stat_flat)<<"]_stat["<<sqrt(fin_W_sist_flat)<<"]_sist)xe-10 = ("<<fin_W_val_flat<<" +- "<<sqrt(fin_W_stat_flat + fin_W_sist_flat)<<")xe-10"<<endl;
+
+  
+  cout<<"# LARGEST AKAIKE WEIGHT OBTAINED: "<<largest_Aka/total_aka_weight<<endl;
+  cout<<"# CORRESPONDING TO: "<<endl;
+  cout<<"single fit: "<<sin_fit_list[largest_Aka_id]<<endl;
+  cout<<"FSEs mode: "<<FSEs_list[largest_Aka_id]<<endl;
+  cout<<"a2 mode: "<<a2_list[largest_Aka_id]<<endl;
+  cout<<"a4 mode: "<<a4_list[largest_Aka_id]<<endl;
+  cout<<"mass extrapolation mode: "<<mass_extr_list[largest_Aka_id]<<endl;
+  cout<<"(n,m): ("<<n_m_list[largest_Aka_id].first<<","<<n_m_list[largest_Aka_id].second<<")"<<endl;
+  cout<<"Ndof: "<<Ndof[largest_Aka_id]<<endl;
+  cout<<"Npars: "<<Npars[largest_Aka_id]<<endl;
+  cout<<"Result: "<<val[largest_Aka_id]<<" +- "<<err[largest_Aka_id]<<endl;
+  cout<<"# SMALLEST ch2 OBTAINED: "<<smallest_ch2<<endl;
+  cout<<"# CORRESPONDING TO: "<<endl;
+  cout<<"single fit: "<<sin_fit_list[smallest_ch2_id]<<endl;
+  cout<<"FSEs mode: "<<FSEs_list[smallest_ch2_id]<<endl;
+  cout<<"a2 mode: "<<a2_list[smallest_ch2_id]<<endl;
+  cout<<"a4 mode: "<<a4_list[smallest_ch2_id]<<endl;
+  cout<<"mass extrapolation mode: "<<mass_extr_list[smallest_ch2_id]<<endl;
+  cout<<"(n,m): ("<<n_m_list[smallest_ch2_id].first<<","<<n_m_list[smallest_ch2_id].second<<")"<<endl;
+  cout<<"Ndof: "<<Ndof[smallest_ch2_id]<<endl;
+  cout<<"Npars: "<<Npars[smallest_ch2_id]<<endl;
+  cout<<"Result: "<<val[smallest_ch2_id]<<" +- "<<err[smallest_ch2_id]<<endl;
+  cout<<"# SMALLEST REDUCED ch2 OBTAINED: "<<smallest_ch2_red<<endl;
+  cout<<"# CORRESPONDING TO: "<<endl;
+  cout<<"single fit: "<<sin_fit_list[smallest_ch2_red_id]<<endl;
+  cout<<"FSEs mode: "<<FSEs_list[smallest_ch2_red_id]<<endl;
+  cout<<"a2 mode: "<<a2_list[smallest_ch2_red_id]<<endl;
+  cout<<"a4 mode: "<<a4_list[smallest_ch2_red_id]<<endl;
+  cout<<"mass extrapolation mode: "<<mass_extr_list[smallest_ch2_red_id]<<endl;
+  cout<<"(n,m): ("<<n_m_list[smallest_ch2_red_id].first<<","<<n_m_list[smallest_ch2_red_id].second<<")"<<endl;
+  cout<<"Ndof: "<<Ndof[smallest_ch2_red_id]<<endl;
+  cout<<"Npars: "<<Npars[smallest_ch2_red_id]<<endl;
+  cout<<"Result: "<<val[smallest_ch2_red_id]<<" +- "<<err[smallest_ch2_red_id]<<endl;
   cout<<"####################### Bye! ###########################"<<endl;
   
   return;  

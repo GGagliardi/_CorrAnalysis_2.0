@@ -151,14 +151,18 @@ void LatticeInfo::LatInfo(string S) {
 void LatticeInfo::LatInfo_new_ens(string Tag) {
 
   if(Tag.substr(1,1)=="A") {
-    a= 0.09471;
+    a= 0.09471;          //real is 0.09471 let us change it by 1.5 sigma
     a_err= 0.00039;
     a_nucleon=0.09295;
     a_nucleon_err=0.00047;
     Za=0.724;
     Za_err=0.009;
+    Za_WI = 0.724;
+    Za_WI_err= 0.009;
     Zv=0.6960;;
     Zv_err=0.0007;
+    Zv_WI =0.689;
+    Zv_WI_err = 0.001;
     ms_L=0.02050; ms_M=0.02300;
     mc_L= 0.24000; mc_M=0.26500; mc_H=0.29000;
   }
