@@ -81,6 +81,40 @@ void Compute_correlation_matrix(bool UseJack, Eigen::MatrixXd& Corr, int nargs,.
   return;
 }
 
+
+void Compute_autocorrelation_time(const Vfloat &data, string Path, string Tag) {
+
+  //compute empirical autocorrelation function
+
+  int N = (signed)data.size();
+
+  Vfloat rho_E(N, 0.0);
+
+  for(int t=0; t< N;t++) {
+
+    double bar_x_t=0;
+    double bar_y_t=0;
+    double num=0;
+    double den=0;
+    double den1=0;
+    double den2=0;
+    for(int i=0;i< N-t;i++) bar_x_t += (1.0/(double)(N-t))*data[i];
+    for(int i=0;i< N-t;i++) bar_y_t += (1.0/(double)(N-t))*data[t+i];
+    for(int i=0;i< N-t;i++) num += (data[i] - bar_x_t)*(data[t+i]-bar_y_t);
+    for(int i=0;i< N-t;i++) {den1 += pow( data[i] - bar_x_t, 2); den2 += pow( data[t+i]-bar_y_t,2);}
+    den = sqrt( den1*den2);
+    rho_E[t] = num/den;
+
+
+  }
+
+  Print_To_File({}, {rho_E}, Path+"/autocorr_"+Tag+".dat", "", "");
+
+
+
+  return;
+}
+
 distr_t Jackknife::DoJack(function<double(const Vfloat&)> F, int Nobs,...) {
 
 

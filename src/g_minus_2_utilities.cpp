@@ -384,6 +384,7 @@ void Generate_free_corr_data() {
   //strange
 
   //B ensembles
+  /*
   amu_Tmax.push_back( make_pair(2*0.019, 64));
   amu_Tmax.push_back( make_pair(2*0.019, 96));
   amu_Tmax.push_back( make_pair(2*0.021, 64));
@@ -394,6 +395,22 @@ void Generate_free_corr_data() {
   //D ensembles
   amu_Tmax.push_back( make_pair( 2*0.014, 96));
   amu_Tmax.push_back( make_pair( 2*0.015, 96));
+  */
+
+  //A ensembles
+  /*amu_Tmax.push_back( make_pair( 2*0.0205, 24));
+  amu_Tmax.push_back( make_pair( 2*0.023, 24));
+  amu_Tmax.push_back( make_pair( 2*0.0205, 32));
+  amu_Tmax.push_back( make_pair( 2*0.023, 32));
+  amu_Tmax.push_back( make_pair( 0.0205, 24));
+  amu_Tmax.push_back( make_pair( 0.023, 24));
+  amu_Tmax.push_back( make_pair( 0.0205, 32));
+  amu_Tmax.push_back( make_pair( 0.023, 32));
+  */
+  amu_Tmax.push_back(make_pair( 2*0.300, 24));
+  amu_Tmax.push_back(make_pair( 0.300, 24));
+  amu_Tmax.push_back(make_pair( 2*0.300, 32));
+  amu_Tmax.push_back(make_pair( 0.300, 32));
   
   
 

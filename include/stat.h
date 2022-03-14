@@ -15,6 +15,7 @@ Pfloat JackAve(const Vfloat &JackDistr);
 double Compute_jack_cov(const Vfloat&,const Vfloat&);
 void Compute_covariance_matrix(bool UseJack, Eigen::MatrixXd& Cov, int nargs,...);
 void Compute_correlation_matrix(bool UseJack, Eigen::MatrixXd& Corr, int nargs,...);
+void Compute_autocorrelation_time(const Vfloat& data, string Path, string Tag);
   
 
 
@@ -272,6 +273,7 @@ class Jackknife {
   int Verbose_jack;
   int Njacks;
   bool ReturnBlockSizeMax;
+  bool Enable_fractional_jackknife;
 
 
 } ;

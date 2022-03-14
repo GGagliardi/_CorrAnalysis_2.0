@@ -12,7 +12,7 @@
 
 using namespace std;
 
-
+double w(int t);
 void Gm2() ;
 
 

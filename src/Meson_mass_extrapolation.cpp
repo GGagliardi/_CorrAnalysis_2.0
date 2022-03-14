@@ -2,7 +2,7 @@
 
 const bool verb=true;
 using namespace std;
-const string EXTRAPOLATION_MODE= "SPLINE";
+
 
 class Ov {
 
@@ -28,11 +28,12 @@ public:
 
 
 
-distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op, double Op_phys, string Print_dir, string Tag, bool UseJack) {
+distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op, double Op_phys, string Print_dir, string Tag, bool UseJack, string EXTRAPOLATION_MODE) {
 
   //Get number of jackknives
   double Njacks= Meas[0].size();
   double Nmeas = Meas.size();
+  if(Nmeas != Op.size()) crash("Meas and Op size do not coincide");
   cout<<"Njacks: "<<Njacks<<endl;
   cout<<"Nmeas: "<<Nmeas<<endl;
   cout<<"Print directory: "<<Print_dir<<endl;
@@ -55,7 +56,7 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
   bf.Add_par("D", -1.0e-1, 1e-3);
 
   bf.ansatz =  [&](const fpar &p, const Ov &ip) -> double {
-		 return p.a0*(1.0 + p.D*(ip.X - Op_phys));
+		 return p.a0*(1.0) + (p.D*(ip.X - Op_phys));
 	       };
 
   bf.measurement = [&](const fpar &p, const Ov &ip) ->double {
@@ -112,24 +113,28 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
       Yerr.push_back( Meas[imeas].err());
       Extr_val.push_back(0);
     }
-   
+
+    double der_val = D_fit.ave();
+    double der_err = D_fit.err();
     X.push_back(Op_phys);
     Xerr.push_back(0.0);
     Y.push_back(a0_fit.ave());
     Yerr.push_back(a0_fit.err());
     Extr_val.push_back(1);
 
-    Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_fit_extr.meas", "", "# X Xerr Y Yerr Extr_id");
+    Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_fit_extr.meas", "", "# X Xerr Y Yerr Extr_id,  Derivative: "+to_string_with_precision(der_val, 6)+" +- "+to_string_with_precision(der_err,6));
 
     //print fitting function
+    Vfloat ave_ops;
+    for(auto & op: Op) ave_ops.push_back( op.ave());
     int Npoints = 300;
-    double xmin= 0.5*Op_phys;
-    double xmax= 1.5*Op_phys;
+    double xmin= min(0.5*Op_phys, 0.5*(*min_element(ave_ops.begin(), ave_ops.end())));
+    double xmax= max(1.5*Op_phys, 1.5*(*max_element(ave_ops.begin(), ave_ops.end())));
     Vfloat Xpoints;
     distr_t_list Fit_func;
     for(int ipoint=0;ipoint<Npoints;ipoint++) {
       double xp= xmin+ ipoint*(xmax-xmin)/((double)Npoints);
-      Fit_func.distr_list.push_back(a0_fit*(1.0 + D_fit*(xp-Op_phys)));
+      Fit_func.distr_list.push_back(a0_fit*(1.0) + (D_fit*(xp-Op_phys)));
       Xpoints.push_back(xp);
     }
 
@@ -198,13 +203,18 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
       Y.push_back(a0_fit.ave());
       Yerr.push_back(a0_fit.err());
       Extr_val.push_back(1);
+
+      double der_val= D_fit.ave();
+      double der_err= D_fit.err();
       
-      Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_spline_extr.meas", "", "# X Xerr Y Yerr Extr_id");
+      Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_spline_extr.meas", "", "# X Xerr Y Yerr Extr_id, derivative: "+to_string_with_precision(der_val,6)+" +- "+to_string_with_precision(der_err,6));
       
       //print fitting function
+      Vfloat ave_ops;
+      for(auto & op: Op) ave_ops.push_back( op.ave());
       int Npoints = 300;
-      double xmin= 0.5*Op_phys;
-      double xmax= 1.5*Op_phys;
+      double xmin= min(0.5*Op_phys, 0.5*(*min_element(ave_ops.begin(), ave_ops.end())));
+      double xmax= max(1.5*Op_phys, 1.5*(*max_element(ave_ops.begin(), ave_ops.end())));
       Vfloat Xpoints;
       distr_t_list Fit_func;
       for(int ipoint=0;ipoint<Npoints;ipoint++) {
@@ -231,11 +241,12 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
 
 
 
-distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op, distr_t  &Op_phys, string Print_dir, string Tag, bool UseJack) {
+distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op, distr_t  &Op_phys, string Print_dir, string Tag, bool UseJack, string EXTRAPOLATION_MODE) {
 
   //Get number of jackknives
   double Njacks= Meas[0].size();
   double Nmeas = Meas.size();
+  if(Nmeas != Op.size()) crash("Meas and Op size do not coincide");
   cout<<"Njacks: "<<Njacks<<endl;
   cout<<"Nmeas: "<<Nmeas<<endl;
   cout<<"Print directory: "<<Print_dir<<endl;
@@ -258,7 +269,7 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
   bf.Add_par("D", -1.0e-1, 1e-3);
 
   bf.ansatz =  [&](const fpar &p, const Ov &ip) -> double {
-		 return p.a0*(1.0 + p.D*(ip.X - ip.X_phys));
+		 return p.a0*(1.0) + p.D*(ip.X - ip.X_phys);
 	       };
 
   bf.measurement = [&](const fpar &p, const Ov &ip) ->double {
@@ -323,17 +334,22 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
     Yerr.push_back(a0_fit.err());
     Extr_val.push_back(1);
 
-    Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_fit_extr.meas", "", "# X Xerr Y Yerr Extr_id");
+    double der_val = D_fit.ave();
+    double der_err= D_fit.err();
+
+    Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_fit_extr.meas", "", "# X Xerr Y Yerr Extr_id, derivative: "+to_string_with_precision(der_val,6)+" +- "+to_string_with_precision(der_err,6));
 
     //print fitting function
+    Vfloat ave_ops;
+    for(auto & op: Op) ave_ops.push_back( op.ave());
     int Npoints = 300;
-    double xmin= 0.5*Op_phys.ave();
-    double xmax= 1.5*Op_phys.ave();
+    double xmin= min(0.5*Op_phys.ave(), 0.5*(*min_element(ave_ops.begin(), ave_ops.end())));
+    double xmax= max(1.5*Op_phys.ave(), 1.5*(*max_element(ave_ops.begin(), ave_ops.end())));
     Vfloat Xpoints;
     distr_t_list Fit_func;
     for(int ipoint=0;ipoint<Npoints;ipoint++) {
       double xp= xmin+ ipoint*(xmax-xmin)/((double)Npoints);
-      Fit_func.distr_list.push_back(a0_fit*(1.0 + D_fit*(xp-Op_phys)));
+      Fit_func.distr_list.push_back(a0_fit*(1.0) + D_fit*(xp-Op_phys));
       Xpoints.push_back(xp);
     }
 
@@ -400,19 +416,24 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
       Y.push_back(a0_fit.ave());
       Yerr.push_back(a0_fit.err());
       Extr_val.push_back(1);
+
+      double der_val= D_fit.ave();
+      double der_err= D_fit.err();
       
-      Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_spline_extr.meas", "", "# X Xerr Y Yerr Extr_id");
+      Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_spline_extr.meas", "", "# X Xerr Y Yerr Extr_id, derivative: "+to_string_with_precision(der_val,6)+" +- "+to_string_with_precision(der_err,6));
       
       //print fitting function
+      Vfloat ave_ops;
+      for(auto & op: Op) ave_ops.push_back( op.ave());
       int Npoints = 300;
-      double xmin= 0.5*Op_phys.ave();
-      double xmax= 1.5*Op_phys.ave();
+      double xmin= min(0.5*Op_phys.ave(), 0.5*(*min_element(ave_ops.begin(), ave_ops.end())));
+      double xmax= max(1.5*Op_phys.ave(), 1.5*(*max_element(ave_ops.begin(), ave_ops.end())));
       Vfloat Xpoints;
       distr_t_list Fit_func;
       for(int ipoint=0;ipoint<Npoints;ipoint++) {
 	double xp= xmin+ ipoint*(xmax-xmin)/((double)Npoints);
-	if(Nmeas==2) { Fit_func.distr_list.push_back(a0_fit + D_fit*(xp-Op_phys)) ;}
-	else if(Nmeas==3)  { Fit_func.distr_list.push_back(a0_fit + D_fit*(xp-Op_phys) + D2_fit*(xp-Op_phys)*(xp-Op_phys)  );}
+	if(Nmeas==2) { Fit_func.distr_list.push_back(a0_fit + D_fit*(xp-Op_phys.ave())) ;}
+	else if(Nmeas==3)  { Fit_func.distr_list.push_back(a0_fit + D_fit*(xp-Op_phys.ave()) + D2_fit*(xp-Op_phys.ave())*(xp-Op_phys.ave())  );}
 	else crash("In Meson_mass_extrapolation.cpp: SPLINATOR called with Nmeas: "+to_string(Nmeas));
 	Xpoints.push_back(xp);
       }
