@@ -6,14 +6,22 @@ const bool INCLUDE_ERRORS= true;
 double lambda= INCLUDE_ERRORS?0.9:0.0;
 bool FIND_OPTIMAL_LAMBDA= true;
 string COV_MATRIX_MODE = "";
-const int Nmoms=2;
-const int alpha=0;
+const int Nmoms=1;
+const int alpha=2;
 const bool Use_balance_condition = true;
 
 
 using namespace std;
 
 
+double Get_exact_gauss(const double &E, const double &m , const double &s, const double &E0) {
+
+ double e= exp(-0.5*(E-m)*(E-m)/(s*s));
+ double norm= s*( 2.0 + 0.0*erf( (m-E0)/(s*sqrt(2))))*sqrt(M_PI/2) ;
+
+ return e/norm;
+
+}
 
 PrecFloat Get_exact_gauss(const PrecFloat &E,const PrecFloat &m,const PrecFloat &s,const PrecFloat &E0) {
   PrecFloat e = exp( -0.5*(E-m)*(E-m)/(s*s));
@@ -362,12 +370,14 @@ void Compute_covariance_matrix(PrecMatr &B,const PrecMatr &Atr, const distr_t_li
 }
 
 
-void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft,const PrecVect &Rt,const PrecFloat & M2,const double &mean, const double &sigma, const double &Estart,  double& lambda_opt, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, vector<PrecVect> Rt_n, const PrecVect &M_n ,const distr_t_list & corr,int T, int tmin, int tmax,   string MODE, string curr_type, string SMEARING_FUNC, string CORR_NAME) {
+void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft,const PrecVect &Rt,const PrecFloat & M2,const double &mean, const double &sigma, const double &Estart,  double& lambda_opt, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, vector<PrecVect> Rt_n, const PrecVect &M_n ,const distr_t_list & corr,int T, int tmin, int tmax,const double mult,  string MODE, string curr_type, string SMEARING_FUNC, string CORR_NAME, string FLAV) {
 
 
 
   //create print directory
   boost::filesystem::create_directory("../data/spectral_reconstruction/smearing/lambda_stability");
+
+  int MAX_Iters = 1000;
 
  
   string out_path = MODE+"_"+CORR_NAME+"_"+curr_type+"_"+SMEARING_FUNC+"_E*_"+to_string_with_precision(mean,3)+"_sigma_"+to_string_with_precision(sigma,3)+"_E0_"+to_string_with_precision(Estart,3)+"_T_"+to_string(T)+"_tmax_"+to_string(tmax);
@@ -407,18 +417,62 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
   double lambda_balance;
   bool lambda_found_Ag_A0=false;
   bool lambda_balance_found=false;
-  PrecFloat Ag_ov_A0_target = 0.5e-7;
+  PrecFloat Ag_ov_A0_target=1e-4;
+  if(FLAV=="fake") {
+    if(MODE=="SANF") {
+      if(mean < 0.2) Ag_ov_A0_target = 5e-3 ;
+      else if(mean < 0.3) Ag_ov_A0_target = 5e-3   ;
+      else if(mean < 0.4) Ag_ov_A0_target = 5e-3  ;
+      else Ag_ov_A0_target = 5e-3   ;
+
+    }
+    if(MODE=="TANT") {
+       if(mean < 0.2) Ag_ov_A0_target = 5e-3 ;
+      else if(mean < 0.3) Ag_ov_A0_target = 5e-3   ;
+      else if(mean < 0.4) Ag_ov_A0_target = 5e-3  ;
+      else Ag_ov_A0_target = 5e-3   ;
+
+    }
+    
+  }
+  if(FLAV=="light") {
+    Ag_ov_A0_target = (MODE=="TANT")?1.0e-3:1.0e-6;
+  }
+  else if (FLAV=="strange") {
+    Ag_ov_A0_target = (MODE=="TANT")?1.0e-3:1.0e-6;
+  }
+  else if(FLAV=="charm") {
+    Ag_ov_A0_target = (MODE=="TANT")?1.0e-4:1.0e-9;
+  }
 
   cout<<"Finding lambda corresponding to A[g]/A[0] = "<<Ag_ov_A0_target<<endl;
+
+  vector<PrecFloat> lambdas({0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85});
+  double Nfs_L= 50;
+  double Nfs_S= 100;
+  double Nfs_SSS= 100;
+  double Nfs_SSSS= 100;
+  double Nfs_SSSSS= 100;
+  double Nfs_LL = 100;
+  double Nfs_SS=100;
+  for(int i=0; i < Nfs_SSSSS; i++) lambdas.push_back( PrecFloat( 0.0000001 + i*0.000001/Nfs_SSSSS));
+  for(int i=0; i < Nfs_SSSS; i++) lambdas.push_back( PrecFloat( 0.000001 + i*0.00001/Nfs_SSSS));
+  for(int i=0; i < Nfs_SSS; i++) lambdas.push_back( PrecFloat( 0.00001 + i*0.0001/Nfs_SSS));
+  for(int i=0; i < Nfs_SS; i++) lambdas.push_back( PrecFloat( 0.0001 + i*0.001/Nfs_S));
+  for(int i=0; i < Nfs_S; i++) lambdas.push_back( PrecFloat( 0.001 + i*0.01/Nfs_S));
+  for(int i=0;i< Nfs_L;i++) lambdas.push_back( PrecFloat( 0.90 + i*0.1/50));
+  for(int i=0;i< Nfs_LL;i++) lambdas.push_back( PrecFloat( 0.99 + i*0.01/100));
+
+  
+  
   
   //bisection search for given A[g]/A[0]
   while( !lambda_found_Ag_A0 ) {
 
-
-    //evaluate the minimum at midpoint
-    PrecFloat lambda_mid = (Nit_Ag0==0)?l_start:(l_up+l_low)/2;
-    //if(MODE != "SANF") lambda_mid +=  + 0.98*(l_up-lambda_mid);
-    PrecMatr C = Atr*(1-lambda_mid)/M2 + B*lambda_mid/(MODE=="SANF"?M2:1);
+    PrecFloat lambda_mid;
+    if(Nit_Ag0 < (signed)lambdas.size()) lambda_mid = lambdas[Nit_Ag0];
+    else  lambda_mid =  (Nit_Ag0==(signed)lambdas.size())?l_start:(l_up+l_low)/2;
+    PrecMatr C = Atr*(1-lambda_mid)/M2 + B*lambda_mid/(MODE=="SANF"?M2:1.0);
     PrecMatr C_inv = C.inverse();
     PrecVect ft_l = ft*(1-lambda_mid)/M2;
     PrecVect M_tilde_n;
@@ -463,6 +517,12 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
 
       PrecFloat A1_val = A1(gm, lambda_mid);
       PrecFloat B1_val = B1(gm, lambda_mid);
+      PrecFloat W_val = (1-lambda_mid)*A1_val + lambda_mid*B1_val/(MODE=="SANF"?M2:1.0);
+
+      cout.precision(10);
+      //cout<<"lambda : "<<lambda_mid.get()<<" A[g]/A[0] : "<<A1_val<<endl;
+
+      if(Nit_Ag0 >= MAX_Iters) crash("After "+to_string(Nit_Ag0)+" iterations, target A[g]/A[0] cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+". Actual A[g]/A[0]: "+to_string_with_precision( A1_val.get(), 10) );
 
 
       //##########################################################################################
@@ -478,10 +538,11 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
 	R_E_lambda.distr.push_back( spec_lambda_d_jack.get());
       }
 
-      Print_R_at_lambda<<"lambda: "<<lambda_mid<<" A[g]/A[0]: "<<A1_val<<" B[g]: "<<B1_val<<" R: "<<R_E_lambda.ave()<<" +- "<<R_E_lambda.err()<<" 0"<<endl;
+      Print_R_at_lambda<<"lambda: "<<lambda_mid<<" A[g]/A[0]: "<<A1_val<<" B[g]: "<<B1_val<<" W[g]/A[g]/A[0]: "<<W_val/A1_val<<" R: "<<R_E_lambda.ave()<<" +- "<<R_E_lambda.err()<<" 0"<<endl;
 
       //##########################################################################################
-      
+
+      if(Nit_Ag0 >= (signed)lambdas.size()) {
    
 
       if(A1_val > Ag_ov_A0_target) { // lambda_mid is new l_low
@@ -490,24 +551,29 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
       else { //lambda_mid is new l_up
 	l_low = lambda_mid;
       }
+
+      }
       
       lambda_Ag0= lambda_mid.get();
       Nit_Ag0++;
-      if(A1_val < Ag_ov_A0_target && A1_val > 0.95*Ag_ov_A0_target ) lambda_found_Ag_A0=true;
+      if( (A1_val < 1.1*Ag_ov_A0_target && A1_val > 0.90*Ag_ov_A0_target) &&  (Nit_Ag0 >= (signed)lambdas.size() ) ) lambda_found_Ag_A0=true;
    
   }
 
+  cout.precision(20);
   cout<<"lambda(A[g]/A[0] ="<<Ag_ov_A0_target<<") = : "<<lambda_Ag0<<endl;
+  
 
-
-  cout<<"Finding lambda from balance condition A=B..."<<endl;
+  cout<<"Finding lambda from balance condition A=mult*B..."<<endl;
   l_up=1.0;
   l_low =0.0;
   diff= l_up-l_low;
 
+ 
   //bisection search for condition A = B
   while( !lambda_balance_found ) {
 
+    if(Nit > MAX_Iters) crash("After "+to_string(Nit)+" iterations, balance condition A = mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", mult = "+to_string_with_precision( mult, 8));
 
     //evaluate the minimum at midpoint
     PrecFloat lambda_mid = (Nit==0)?l_start:(l_up+l_low)/2;
@@ -556,11 +622,13 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
 
       PrecFloat A1_val = A1(gm, lambda_mid);
       PrecFloat B1_val = B1(gm, lambda_mid);
-
-
-      double mult = (MODE=="SANF")?0.000001:1;
+      PrecFloat W_val = (1-lambda_mid)*A1_val + lambda_mid*B1_val/(MODE=="SANF"?M2:1.0);
       
-  
+
+
+    
+      
+ 
      
       if(mult*B1_val > A1_val) { // lambda_mid is new l_low
 	l_low =lambda_mid;
@@ -572,7 +640,7 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
       diff = l_up-l_low;
       lambda_balance= lambda_mid.get();
       Nit++;
-      if(diff/(l_up+l_low) < 0.001) lambda_balance_found=true;
+      if(diff/(l_up+l_low) < 0.01) lambda_balance_found=true;
 
 
       //##########################################################################################
@@ -588,7 +656,7 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
 	R_E_lambda.distr.push_back( spec_lambda_d_jack.get());
       }
 
-      Print_R_at_lambda<<"lambda: "<<lambda_mid<<" A[g]/A[0]: "<<A1_val<<" B[g]: "<<B1_val<<" R: "<<R_E_lambda.ave()<<" +- "<<R_E_lambda.err()<<" "<<lambda_balance_found<<endl;
+      Print_R_at_lambda<<"lambda: "<<lambda_mid<<" A[g]/A[0]: "<<A1_val<<" B[g]: "<<B1_val<<" W[g]/A[g]/A[0]: "<<W_val/A1_val<<" R: "<<R_E_lambda.ave()<<" +- "<<R_E_lambda.err()<<" "<<lambda_balance_found<<endl;
 
       //##########################################################################################
     
@@ -610,7 +678,7 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
 }
 
 
-distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, const distr_t_list &corr, double &syst, double rc, double& lambda_ret, string MODE, string cur_type, string CORR_NAME) {
+distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string cur_type, string CORR_NAME, string FLAV) {
 
 
   if(MODE != "TANT" && MODE != "SANF") crash("MODE: "+MODE+" not recognized");
@@ -664,7 +732,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
   double lambda_opt= lambda;
 
-  if(INCLUDE_ERRORS && FIND_OPTIMAL_LAMBDA) Get_optimal_lambda(Atr, B, ft, Rt, M2, mean, sigma, Estart, lambda_opt , f, Rt_n, M_n, corr, T , 1 , tmax,  MODE, cur_type, SMEARING_FUNC,  CORR_NAME);
+  if(INCLUDE_ERRORS && FIND_OPTIMAL_LAMBDA) Get_optimal_lambda(Atr, B, ft, Rt, M2, mean, sigma, Estart, lambda_opt , f, Rt_n, M_n, corr, T , 1 , tmax, mult,  MODE, cur_type, SMEARING_FUNC,  CORR_NAME, FLAV);
 
 
     							         

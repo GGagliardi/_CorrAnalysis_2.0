@@ -5,6 +5,8 @@ using namespace std;
 bool print_par_info=1;
 const bool verb=0;
 const double Mp_phys=0.135;
+const double Mrho_phys =  0.775;
+const double g_rho_pipi_phys = 5.95;
 const double fp_phys= 0.1304;
 const double csi_phys= pow(Mp_phys/(4.0*M_PI*fp_phys),2);
 const double l1ph= -0.4; //-0.4
@@ -16,11 +18,19 @@ const double s1 = M_PI/4.0 - 0.5;
 const double s2 = 0.5 - M_PI/8.0;
 const double s3 = 3.0*M_PI/16.0 - 0.5;
 const double w0_scale= 1.0/0.294;
+const double BMW_FSEs_light_W = -283.0;   //with error this would be 283(8)
+const double fm_to_iGev= 1.0/0.197327;
+const double t0_W = 0.4*fm_to_iGev;
+const double t1_W = 1.0*fm_to_iGev;
+const double Delta_W= 0.15*fm_to_iGev;
+const double Qfact_iso = 10.0/9.0;
+const double alpha_em =  1.0/137.035999;
+
 
 class W_ipar {
 
 public:
-  W_ipar() : w_val(0.0), w_err(0.0){}
+  W_ipar() : w_val(0.0), w_err(0.0), GS_FSEs(0.0), GS_FSEs_der(0.0) {}
 
   
   double Mp, Mp_OS;
@@ -30,7 +40,8 @@ public:
   double ibeta;
   double a;
   bool Is_tm;
-   
+  double GS_FSEs;
+  double GS_FSEs_der; 
 };
 
 class W_fpar {
@@ -64,7 +75,12 @@ public:
 
 
 
-void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS, const distr_t &a_A, const distr_t &a_B, const distr_t &a_C, const distr_t &a_D, Vfloat &L_list,const distr_t_list &a_distr_list, const distr_t_list &Mpi_fit, const distr_t_list &fp_fit, vector<string> &Ens_Tag, bool UseJack, int Njacks, int Nboots,  string W_type, string channel, vector<string> &Inc_a2_list, vector<string> &Inc_FSEs_list, vector<string> &Inc_a4_list, vector<string> &Inc_mass_extr_list, vector<string> &Inc_single_fit_list, VPfloat &Inc_log_corr_list, bool allow_a4_and_log, bool allow_only_finest, int vol_mult, int mass_mult, double cont_guess ) {
+void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS, const distr_t &a_A, const distr_t &a_B, const distr_t &a_C, const distr_t &a_D, Vfloat &L_list,const distr_t_list &a_distr_list, const distr_t_list &Mpi_fit, const distr_t_list &fp_fit, vector<string> &Ens_Tag, bool UseJack, int Njacks, int Nboots,  string W_type, string channel, vector<string> &Inc_a2_list, vector<string> &Inc_FSEs_list, vector<string> &Inc_a4_list, vector<string> &Inc_mass_extr_list, vector<string> &Inc_single_fit_list, VPfloat &Inc_log_corr_list, bool allow_a4_and_log, bool allow_only_finest, int vol_mult, int mass_mult, double cont_guess, LL_functions &LL, double tmin_SD ) {
+
+
+
+  //init Gaussian number generator
+  GaussianMersenne GM(7654335);
 
 
   //lambda functions to be used later
@@ -79,6 +95,13 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
   cout<<"Fitting with Nens: "<<Nens<<endl;
 
 
+  distr_t corr_fact_FSEs(UseJack);
+
+  for(int ijack=0;ijack<Njacks;ijack++) corr_fact_FSEs.distr.push_back( 1.25 + 0.25*GM()/sqrt(Njacks -1.0));
+
+  
+
+
   //compute CDH corrections to Mpi and fpi
   for(int iens=0; iens<Nens;iens++) {
     //GL and CDH correction for Mpi and fp
@@ -90,6 +113,167 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
     Mpi_CDH.distr_list.push_back(Mpi_fit.distr_list[iens]/(1.0 + 0.5*csi_L*g1 - csi_L*csi_L*( (Cm1(l1ph,l2ph,l3ph,l4ph) + Sm1(s0,s1,s2,s3) + Cm1_log()*log_l)*g1 + (Cm2(l1ph,l2ph,l3ph,l4ph) + Sm2(s0,s1,s2,s3) + Cm2_log()*log_l)*g2)));
     Csi_CDH.distr_list.push_back( Mpi_CDH.distr_list[iens]*Mpi_CDH.distr_list[iens]/(16.0*M_PI*M_PI*fp_CDH.distr_list[iens]*fp_CDH.distr_list[iens]));
   }
+
+
+  //distr_t_list gs_FSEs(UseJack);
+
+  Vfloat gs_FSEs(Nens,0.0);
+  Vfloat gs_FSEs_der(Nens,0.0);
+  //compute GS_FSEs if Inc_FSEs_list contains comb_GS
+  if( (find(Inc_FSEs_list.begin(), Inc_FSEs_list.end(), "comb_GS") != Inc_FSEs_list.end()) && (W_type.substr(0,5) == "W_win" || W_type.substr(0,6) == "SD_win") && channel == "light") {
+    for(int iens=0;iens< Nens;iens++) {
+      distr_t lat_GeV = a_distr_list.distr_list[iens];
+      Vfloat En_lev;
+      double L= (L_list[iens]*lat_GeV).ave();
+      double Mpi = (Mpi_fit.distr_list[iens]/lat_GeV).ave();
+      double ml = (Mpi_fit.distr_list[iens]*L_list[iens]).ave() ;
+      LL.Find_pipi_energy_lev(ml/Mpi , Mrho_phys, g_rho_pipi_phys, Mpi, 0.0, En_lev);
+      //print energies and prefactor for each of the states
+      cout<<"Printing energy and prefactors of GS-parametrization for Ens:" <<Ens_Tag[iens]<<endl;
+      for(unsigned int k=0; k<En_lev.size();k++) { cout<<"En: "<<2.0*sqrt( pow(En_lev[k],2) + pow(Mpi,2))<<" A: "<<LL.Amplitude(En_lev[k], L, Mrho_phys, g_rho_pipi_phys, Mpi, 0.0)<<endl;}
+      auto FSEs_W_SD= [&En_lev, &ml, &LL, &iens, &lat_GeV, &Mpi, &W_type](double t) -> double {
+		      
+		      double res_V_pipi = LL.V_pipi(t, ml/Mpi, Mrho_phys, g_rho_pipi_phys, Mpi, 0.0, En_lev);
+		      double res_V_pipi_infL =  LL.V_pipi_infL(t, Mrho_phys, g_rho_pipi_phys, Mpi, 0.0);
+		      double smearing_theta=0;
+		      if(W_type.substr(0,5) == "W_win") smearing_theta = (  1.0/(1.0 + exp(-2.0*(t-t0_W)/Delta_W)) -  1.0/(1.0 + exp(-2.0*(t-t1_W)/Delta_W)));
+		      else if(W_type.substr(0,6) == "SD_win") smearing_theta = 1.0 - 1.0/(1.0 + exp(-2.0*(t-t0_W)/Delta_W));
+		      else crash("When computing GS_FSEs, W_type is not W_win or SD_win");
+		      return 1e10*Qfact_iso*4.0*pow(alpha_em,2)*(res_V_pipi_infL - res_V_pipi)*kernel_K(t, 1.0)*smearing_theta;
+		     };
+
+      auto Win_GS_inf_L = [&LL, &iens, &lat_GeV, &Mpi, &W_type](double t) -> double {
+			      double res_V_pipi_infL =  LL.V_pipi_infL(t, Mrho_phys, g_rho_pipi_phys, Mpi, 0.0);
+			      double smearing_theta=0.0;
+			      if(W_type.substr(0,5) == "W_win") smearing_theta = (  1.0/(1.0 + exp(-2.0*(t-t0_W)/Delta_W)) -  1.0/(1.0 + exp(-2.0*(t-t1_W)/Delta_W)));
+			      else if(W_type.substr(0,6) == "SD_win") smearing_theta = 1.0 - 1.0/(1.0 + exp(-2.0*(t-t0_W)/Delta_W));
+			      else crash("When computing GS_FSEs, W_type is not W_win or SD_win");
+			      return 1e10*Qfact_iso*4.0*pow(alpha_em,2)*res_V_pipi_infL*kernel_K(t, 1.0)*smearing_theta;
+			      
+			    };
+
+      auto Integrate_W_SD = [&ml, &LL, &L,  &iens, &lat_GeV, &W_type, &tmin_SD](double M) {
+
+			      Vfloat En_lev;
+			      LL.Find_pipi_energy_lev(L , Mrho_phys, g_rho_pipi_phys, M, 0.0, En_lev);
+
+			      auto Integrand = [&ml, &LL, &L,  &iens, &lat_GeV, &W_type, &M, &tmin_SD, &En_lev](double t) { 
+			      
+			      double res_V_pipi = LL.V_pipi(t, L, Mrho_phys, g_rho_pipi_phys, M, 0.0, En_lev);
+			      double res_V_pipi_infL =  LL.V_pipi_infL(t, Mrho_phys, g_rho_pipi_phys, M, 0.0);
+			      double smearing_theta=0;
+			      if(W_type.substr(0,5) == "W_win") smearing_theta = (  1.0/(1.0 + exp(-2.0*(t-t0_W)/Delta_W)) -  1.0/(1.0 + exp(-2.0*(t-t1_W)/Delta_W)));
+			      else if(W_type.substr(0,6) == "SD_win") smearing_theta = 1.0 - 1.0/(1.0 + exp(-2.0*(t-t0_W)/Delta_W));
+			      else crash("When computing GS_FSEs, W_type is not W_win or SD_win");
+			      return 1e10*Qfact_iso*4.0*pow(alpha_em,2)*(res_V_pipi_infL - res_V_pipi)*kernel_K(t, 1.0)*smearing_theta;
+					       };
+
+
+			      double val, err;
+
+			      gsl_function_pp<decltype(Integrand)> F_FSEs(Integrand);
+			      gsl_integration_workspace * w_FSEs = gsl_integration_workspace_alloc(10000);
+			      gsl_function *G_FSEs = static_cast<gsl_function*>(&F_FSEs);
+			      gsl_integration_qagiu(G_FSEs, tmin_SD, 0.0, 1e-6, 10000, w_FSEs, &val, &err);
+			      gsl_integration_workspace_free (w_FSEs);
+			      if( err/val > 5e-6) crash("In Integrate_W_SD, cannot reach target accuracy "+to_string_with_precision(5e-6,10)+" not reached. Current accuracy: "+to_string_with_precision( err/val,10));
+			      
+			      return val;
+
+			    };
+
+      /*
+      auto FSEs_der = [&En_lev, &L, &LL, &iens, &lat_GeV, &Mpi, &W_type](double t) -> double {
+
+			  auto f_V_infL = [&LL, &lat_GeV, &t](double M) { return LL.V_pipi_infL(t, Mrho_phys, g_rho_pipi_phys, M, 0.0); };
+			  auto f_V =  [&L, &LL, &t](double M) {
+
+					Vfloat En;
+					LL.Find_pipi_energy_lev(L, Mrho_phys, g_rho_pipi_phys, M, 0.0, En);
+					return LL.V_pipi(t, L, Mrho_phys, g_rho_pipi_phys, M, 0.0, En);
+
+				      };
+
+			  //compute derivatives of f_V_infL and f_V
+			  gsl_function_pp<decltype(f_V_infL)> F_infL(f_V_infL);
+			  gsl_function *G_infL = static_cast<gsl_function*>(&F_infL);
+			  gsl_function_pp<decltype(f_V)> F(f_V);
+			  gsl_function *G = static_cast<gsl_function*>(&F);
+
+			  double der_infL, der;
+			  double der_infL_err, der_err;
+
+			  gsl_deriv_forward(G_infL, Mpi, 1e-3, &der_infL, &der_infL_err);
+			  gsl_deriv_forward(G, Mpi, 1e-2, &der, &der_err);
+
+			  if( fabs(der_infL_err/der_infL) > 0.01) crash("gsl_deriv_central unable to compute infL derivative of GS-correlator with target accuracy of 0.1%: val: "+to_string_with_precision(der_infL,5)+" err: "+to_string_with_precision(der_infL_err,5));
+
+			  if( fabs(der_err/der) > 0.01) crash("gsl_deriv_central unable to compute derivative of GS-correlator with target accuracy of 10%: val: "+to_string_with_precision(der,10)+" err: "+to_string_with_precision(der_err,10));
+
+			  double smearing_theta=0;
+			  if(W_type.substr(0,5) == "W_win") smearing_theta = (  1.0/(1.0 + exp(-2.0*(t-t0_W)/Delta_W)) -  1.0/(1.0 + exp(-2.0*(t-t1_W)/Delta_W)));
+			  else if(W_type.substr(0,6) == "SD_win") smearing_theta = 1.0 - 1.0/(1.0 + exp(-2.0*(t-t0_W)/Delta_W));
+			  else crash("When computing GS_FSEs, W_type is not W_win or SD_win");
+
+
+			  return 1e10*Qfact_iso*4.0*pow(alpha_em,2)*(der_infL- der)*kernel_K(t, 1.0)*smearing_theta;
+			  
+			  
+			};
+			
+      */
+
+      double FSEs_from_GS, FSEs_der_from_GS;
+      double tol= 1e-6;
+      double FSEs_from_GS_err, FSEs_der_from_GS_err;
+
+      //GS-FSEs
+      gsl_function_pp<decltype(FSEs_W_SD)> F_FSEs(FSEs_W_SD);
+      gsl_integration_workspace * w_FSEs = gsl_integration_workspace_alloc(10000);
+      gsl_function *G_FSEs = static_cast<gsl_function*>(&F_FSEs);
+      gsl_integration_qagiu(G_FSEs, tmin_SD, 0.0, tol, 10000, w_FSEs, &FSEs_from_GS, &FSEs_from_GS_err);
+      gsl_integration_workspace_free (w_FSEs);
+      if( FSEs_from_GS_err/fabs(FSEs_from_GS) > 5*tol) crash("In determining GS-FSEs, cannot reach target accuracy "+to_string_with_precision(10*tol,10)+" not reached. Current accuracy: "+to_string_with_precision( FSEs_from_GS_err/fabs(FSEs_from_GS),10));
+
+      //GS-FSEs der
+      gsl_function_pp<decltype(Integrate_W_SD)> FINT(Integrate_W_SD);
+      gsl_function *GINT = static_cast<gsl_function*>(&FINT);
+      gsl_deriv_forward(GINT, Mpi, 1e-4, &FSEs_der_from_GS, &FSEs_der_from_GS_err);
+
+      if(FSEs_der_from_GS_err/fabs(FSEs_der_from_GS) > 0.01) {
+
+	cout.precision(10);
+	cout<<"val: "<<FSEs_der_from_GS<<endl;
+	cout<<"err: "<<FSEs_der_from_GS_err<<endl;
+	crash("Cannot evaluate numerical derivative of GS-parametrization with target accuracy of 0.1. Current precision: "+to_string_with_precision( FSEs_der_from_GS_err/fabs(FSEs_der_from_GS),10));
+
+      }
+
+      /*
+      gsl_function_pp<decltype(FSEs_der)> F_FSEs_der(FSEs_der);
+      gsl_integration_workspace * w_FSEs_der = gsl_integration_workspace_alloc(10000);
+      gsl_function *G_FSEs_der = static_cast<gsl_function*>(&F_FSEs_der);
+      gsl_integration_qagiu(G_FSEs_der, tmin_SD, 0.0, tol, 10000, w_FSEs_der, &FSEs_der_from_GS, &FSEs_der_from_GS_err);
+      gsl_integration_workspace_free (w_FSEs_der);
+      if( FSEs_der_from_GS_err/fabs(FSEs_der_from_GS) > 5*tol) crash("In determining GS-FSEs derivative, cannot reach target accuracy "+to_string_with_precision(10*tol,10)+" not reached. Current accuracy: "+to_string_with_precision( FSEs_der_from_GS_err/fabs(FSEs_der_from_GS),10));
+      */
+
+      
+      //double FSEs_from_GS = boost::math::quadrature::gauss_kronrod<double, 61>::integrate(FSEs_W, 0.0, numeric_limits<double>::infinity(), 5, 1e-16);
+      //double FSEs_der_from_GS = boost::math::quadrature::gauss_kronrod<double, 61>::integrate(FSEs_W_der, 0.0, numeric_limits<double>::infinity(), 5, 1e-16);
+
+      
+      gs_FSEs[iens]= FSEs_from_GS; 
+      gs_FSEs_der[iens] =FSEs_der_from_GS;
+      
+    }
+
+    Print_To_File(Ens_Tag, {Mpi_fit.ave(), gs_FSEs,  gs_FSEs_der}, "../data/gm2/gs_"+W_type+".val", "", "#Mpi F_GS   F'_GS");
+  }
+
+
+
+  
 
  
   
@@ -178,8 +362,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		if( t_sin_fit == "OS" && ( t_a4 != "OS" && t_a4 != "off")) Fit_allowed=false;
 
 		//RULE 3
-		if( t_sin_fit == "tm" && t_FSEs == "OS") Fit_allowed=false;
-		if( t_sin_fit == "OS" && t_FSEs == "tm") Fit_allowed=false;
+		if( t_sin_fit == "tm" && (t_FSEs == "OS" || t_FSEs == "comb")) Fit_allowed=false;
+		if( t_sin_fit == "OS" && (t_FSEs == "tm" || t_FSEs == "comb")) Fit_allowed=false;
 
 		//RULE 4 
 		if( t_sin_fit == "tm" && (find(n_single.begin(), n_single.end(), n_m_pair.first) != n_single.end())) Fit_allowed = false; 
@@ -228,7 +412,11 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		  npars += (t_mass == "on"); //(Mpi_dep)
 		  npars += 2*(t_a4=="on"); //O(a^4) on both tm and OS
 		  npars += (t_a4=="tm" || t_a4=="OS"); //O(a^4) on either tm or OS
-		  npars += (t_FSEs != "off"); //FSEs; 
+		  if(t_FSEs == "on" || t_FSEs == "tm" || t_FSEs == "OS") npars++;
+		  else if(t_FSEs == "comb") npars +=3;
+		  else if(t_FSEs == "comb_GS") npars +=2;
+		  else if(t_FSEs == "off") npars= npars; 
+		  else crash("t_FSEs: "+t_FSEs+" not allowed");
 		}
 		if(npars >= Nmeas) Fit_allowed= false;
 
@@ -237,8 +425,9 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 		if(Fit_allowed) {
 
-	    
 
+
+		
 		  //push_back info about the allowed fit
 		  //#####################################
 		  if(t_sin_fit =="tm") n_single.push_back(n_m_pair.first);
@@ -266,8 +455,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		  bf.Add_par("Am", -3.0, 0.1);
 		  bf.Add_par("Plog", -1.0, 0.1);
 		  bf.Add_par("Al1", 1.0, 10);
-		  bf.Add_par("Al2_tm", -500.0, 10);
-		  bf.Add_par("Al2_OS", -500.0, 10);
+		  bf.Add_par("Al2_tm", +1.0, 0.1);
+		  bf.Add_par("Al2_OS", -1.0, 0.1);
 		  bf.Add_par("D_tm", -1.0, 0.1);
 		  bf.Add_par("D_OS", 1.0, 0.1);
 		  bf.Add_par("n", 3.0, 0.1);
@@ -280,9 +469,10 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
  
 		  bf.Fix_par("Plog", 0.0); //we never fit log corrections xi*log(xi)
 		  if(t_mass == "off") bf.Fix_par("Am", 0.0);
-		  if(t_FSEs != "on") bf.Fix_par("Al1", 0.0);
-		  if(t_FSEs != "tm" || t_sin_fit == "OS") bf.Fix_par("Al2_tm", 0.0);
-		  if(t_FSEs != "OS" || t_sin_fit == "tm") bf.Fix_par("Al2_OS", 0.0);
+		  if(t_FSEs != "on" && t_FSEs != "comb" && t_FSEs != "comb_GS") bf.Fix_par("Al1", 0.0);
+		  if(t_FSEs == "comb_GS") bf.Fix_par("Al1", 0.0);
+		  if( (t_FSEs != "tm" && t_FSEs != "comb" && t_FSEs != "comb_GS") || (t_sin_fit == "OS") || (t_sin_fit == "tm" && (t_FSEs != "comb_GS" && t_FSEs != "tm"))) bf.Fix_par("Al2_tm", 0.0);
+		  if( (t_FSEs != "OS" && t_FSEs != "comb" && t_FSEs != "comb_GS") || (t_sin_fit == "tm") || (t_sin_fit == "OS" && (t_FSEs != "comb_GS" && t_FSEs != "OS"))) bf.Fix_par("Al2_OS", 0.0);
 		  if( (t_a2 != "on" && t_a2 != "tm") || t_sin_fit == "OS") bf.Fix_par("D_tm", 0.0);
 		  if(  (t_a2 != "on" && t_a2 != "OS") || t_sin_fit == "tm") bf.Fix_par("D_OS", 0.0);
 		  if( (t_a4 != "on" && t_a4 != "tm") || t_sin_fit == "OS") bf.Fix_par("D4_tm", 0.0);
@@ -306,12 +496,22 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			       MpL= Y.a==0?40.0:Y.Mp*Y.L; //if a=0 MpL is set to 40 (which ~ corresponds to thermodynamic limit)
 			       double art;
 			       if(n_val >=0) art = Y.a==0?0:pow(Y.a,2)/pow(log(w0_scale/Y.a),n_val);
-			       else if(n_val == -1) art = Y.a==0?0:pow(Y.a,2)*log( fabs( log( pow(Y.a,2))));
+			       else if(n_val == -1) art = Y.a==0?0:pow(Y.a,2)*log( fabs( log( Y.a/w0_scale)));
 			       else crash("log-parameter n: "+to_string(n_val)+" is not allowed");
 			       double par_art = Y.Is_tm?X.D_tm:X.D_OS;
 			       double par_art_a4 = Y.Is_tm?X.D4_tm:X.D4_OS;
 			       double par_vol_art = Y.Is_tm?X.Al2_tm:X.Al2_OS;
-			       return X.w0*(1.0 + X.Am*(Mp_dim-Mp_phys) + X.Plog*csi*log(csi/csi_phys)+ par_art*art + par_art_a4*pow(Y.a,4))*(1.0  + (X.Al1 +par_vol_art*pow(Y.a,2))*csi*(1.0/pow(MpL,1.5))*exp(-MpL)); // pion mass Y.Mp is in [GeV]
+			       double res_w0_FSEs = X.w0*(1.0 + X.Am*(Mp_dim-Mp_phys) + X.Plog*csi*log(csi/csi_phys)+ par_art*art + par_art_a4*pow(Y.a,4)); // pion mass Y.Mp is in [GeV]
+			       double res=0.0;
+			       
+			       if(t_FSEs == "comb_GS") {
+				 double FSEs = (Y.GS_FSEs + par_vol_art*pow(Y.a,2)*Y.GS_FSEs_der)/X.w0;
+				 res = res_w0_FSEs*(1.0 - FSEs);
+			       }
+			       else {
+				 res= res_w0_FSEs*(1.0  + (X.Al1 +par_vol_art*pow(Y.a,2))*csi*(1.0/pow(MpL,1.5))*exp(-MpL));
+			       }
+			       return res;
 			     };
 		  bf.measurement = [=](const W_fpar& X, const W_ipar& Y) {
 				     return Y.w_val;
@@ -328,7 +528,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		  for(int iens=0; iens<Nens;iens++) {  
 		    for(int ijack=0;ijack<(UseJack?Njacks:Nboots);ijack++) {
 		      //tm_data
-		      if(t_sin_fit != "OS" && (which_lat != "three_finest" || Ens_Tag[iens].substr(1,1) != "A") ) {
+		      if(t_sin_fit != "OS" && (which_lat != "three_finest" || Ens_Tag[iens].substr(1,1) != "A")) {
 			if(Ens_Tag[iens].substr(1,1) == "A") {ipar_all_ens[ijack][id_obs].ibeta=0; ipar_all_ens[ijack][id_obs].a= a_A.distr[ijack];}
 			else if(Ens_Tag[iens].substr(1,1) == "B") {ipar_all_ens[ijack][id_obs].ibeta=1; ipar_all_ens[ijack][id_obs].a= a_B.distr[ijack];}
 			else if(Ens_Tag[iens].substr(1,1) == "C") {ipar_all_ens[ijack][id_obs].ibeta=2; ipar_all_ens[ijack][id_obs].a = a_C.distr[ijack];}
@@ -340,6 +540,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			ipar_all_ens[ijack][id_obs].Is_tm = true;
 			ipar_all_ens[ijack][id_obs].w_val = 1.0e10*meas_tm.distr_list[iens].distr[ijack];
 			ipar_all_ens[ijack][id_obs].w_err = 1.0e10*meas_tm.err(iens);
+			ipar_all_ens[ijack][id_obs].GS_FSEs = gs_FSEs[iens]*(corr_fact_FSEs.distr[ijack]);
+			ipar_all_ens[ijack][id_obs].GS_FSEs_der = gs_FSEs_der[iens]*(corr_fact_FSEs.distr[ijack]);
 		   
 		      }
 		    }
@@ -361,6 +563,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			ipar_all_ens[ijack][id_obs].Is_tm = false;
 			ipar_all_ens[ijack][id_obs].w_val = 1.0e10*meas_OS.distr_list[iens].distr[ijack];
 			ipar_all_ens[ijack][id_obs].w_err = 1.0e10*meas_OS.err(iens);
+			ipar_all_ens[ijack][id_obs].GS_FSEs = gs_FSEs[iens]*(corr_fact_FSEs.distr[ijack]);
+			ipar_all_ens[ijack][id_obs].GS_FSEs_der = gs_FSEs_der[iens]*(corr_fact_FSEs.distr[ijack]);
 		  
 		      }
 		    }
@@ -401,6 +605,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		    cout<<"########  fit parameter for Obs: "<<W_type<<" channel: "<<channel<<" ##########"<<endl;
 		    cout<<"single fit: "<<t_sin_fit<<endl;
 		    cout<<"only_finest: "<<only_fin_tag<<endl;
+		    cout<<"FSEs mode: "<<t_FSEs<<endl;
 		    cout<<"w0: ("<<w0.ave()<<" +- "<<w0.err()<<") x e-10"<<endl;
 		    cout<<"Am: "<<Am.ave()<<" +- "<<Am.err()<<endl;
 		    cout<<"Al1: "<<Al1.ave()<<" +- "<<Al1.err()<<endl;
@@ -463,6 +668,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			  Yi.a = al;
 			  Yi.fp = al*fp_phys;
 			  Yi.Is_tm = ir;
+			  Yi.GS_FSEs = 0.0;
+			  Yi.GS_FSEs_der = 0.0;
 			  for(int ijack=0;ijack<(UseJack?Njacks:Nboots);ijack++) {
 			    W_fpar Xi;
 			    Xi.w0 = w0.distr[ijack];
@@ -503,9 +710,16 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		    distr_t MpiL = Mpi_CDH.distr_list[iens]*L_list[iens];
 		    distr_t a_iens = a_distr_list.distr_list[iens];
 		    distr_t Mpi_dim = Mpi_CDH.distr_list[iens]/a_distr_list.distr_list[iens];
+		    distr_t GS = gs_FSEs[iens]*corr_fact_FSEs;
+		    distr_t GS_der = gs_FSEs_der[iens]*corr_fact_FSEs;
     
-		    if(t_sin_fit != "OS") data_extr_TM.distr_list.push_back((meas_tm.distr_list[iens]/(1.0 + (Al1 + Al2_tm*a_iens*a_iens)*csi*distr_t::f_of_distr(FVE, MpiL))-1.0e-10*w0*Am*(Mpi_dim-Mp_phys)));
-		    if(t_sin_fit != "tm") data_extr_OS.distr_list.push_back((meas_OS.distr_list[iens]/(1.0 + (Al1 + Al2_OS*a_iens*a_iens)*csi*distr_t::f_of_distr(FVE, MpiL))-1.0e-10*w0*Am*(Mpi_dim-Mp_phys)));
+		    if(t_sin_fit != "OS") {
+		      if(t_FSEs != "comb_GS")  data_extr_TM.distr_list.push_back((meas_tm.distr_list[iens]/(1.0 + (Al1 + Al2_tm*a_iens*a_iens)*csi*distr_t::f_of_distr(FVE, MpiL))-1.0e-10*w0*Am*(Mpi_dim-Mp_phys)));
+		      else data_extr_TM.distr_list.push_back((meas_tm.distr_list[iens]/(1.0 - (GS + Al2_tm*a_iens*a_iens*GS_der)/w0)-1.0e-10*w0*Am*(Mpi_dim-Mp_phys)));
+		    }
+		    if(t_sin_fit != "tm")
+		      if(t_FSEs != "comb_GS") data_extr_OS.distr_list.push_back((meas_OS.distr_list[iens]/(1.0 + (Al1 + Al2_OS*a_iens*a_iens)*csi*distr_t::f_of_distr(FVE, MpiL))-1.0e-10*w0*Am*(Mpi_dim-Mp_phys)));
+		      else  data_extr_OS.distr_list.push_back((meas_OS.distr_list[iens]/(1.0 - (GS + Al2_OS*a_iens*a_iens*GS_der)/w0)-1.0e-10*w0*Am*(Mpi_dim-Mp_phys)));
 		  }
 
 		  //#################################################################################################################

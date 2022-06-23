@@ -86,7 +86,6 @@ typedef vector<vector<vector<vector<pair<double,double>>>>> VVVVPfloat;
 
 
 
-
 //wrapper for lambdas with capture to gsl_monte_function
 template< typename F >  class gsl_monte_function_pp : public gsl_monte_function {
 public:
@@ -160,7 +159,9 @@ double FTAN_SYMM(double x1, int t, int NT);
 double Root_Brent(double R, int nt, int NT);
 double Root_Brent_sinh(double R, int nt, int NT);
 double DoConstantFit(Vfloat &data, Vfloat &err);
+double quad_interpolator(double y1, double y2, double y3, double Dx1, double Dx2, double Dx3, double Dx);
 void Print_To_File(const vector<string>& row_id, const VVfloat &data, string Path, string MODE, string Header);
+double w(int t, int Simps_ord);
 
 
 

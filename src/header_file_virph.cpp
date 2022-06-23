@@ -304,7 +304,7 @@ VVfloat Get_obs_3pt(FILE *stream, struct header_virph &header, int ire, int icom
 
   if(smearing_level >= header.nqsml) crash("In Get_obs_3pt: smearing level: "+to_string(smearing_level)+" not yet present. Aborting. ");
 
-  if(icomb >= header.ncomb) crash("In Get_obs_2pt: icomb > ncomb");
+  if(icomb >= header.ncomb) crash("In Get_obs_3pt: icomb > ncomb");
 
   fseek(stream, 0, SEEK_END);
   int file_size_bytes = ftell(stream);

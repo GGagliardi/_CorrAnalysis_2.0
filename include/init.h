@@ -11,6 +11,9 @@
 #include "PionMassAnalysis_ov_X.h"
 #include "gm2.h"
 #include "Spectral_tests.h"
+#include "Spectral_test_Vittorio.h"
+#include "vph_Nissa.h"
+#include "tau_decay.h"
 
 using namespace std;
 

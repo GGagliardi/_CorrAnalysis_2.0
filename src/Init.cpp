@@ -83,7 +83,7 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
     ReadInput >> IncludeDisconnected;
   }
 
-   else if(Analysis_Mode=="Meson_masses_twisted_ov_X") {
+  else if(Analysis_Mode=="Meson_masses_twisted_ov_X") {
     do {getline(ReadInput, ReadLine);} while(ReadLine=="" || ReadInput.eof());
     if(ReadLine != "#Init_description_meson_masses") crash("Error in input file. Expected: #Init_description_meson_masses, obtained: "+ReadLine);
     ReadInput>>ReadLine;
@@ -95,6 +95,11 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
     ReadInput >> ReadLine;
     if(ReadLine != "#Include_disconnected?:") crash("Error in input file. Expected: #Include_disconnected?, obtained: "+ReadLine);
     ReadInput >> IncludeDisconnected;
+  }
+
+
+  else if(Analysis_Mode =="Form_factors_Nissa") {
+    //do nothing
   }
 
 
@@ -131,6 +136,21 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
     //do nothing
 
   }
+
+  else if(Analysis_Mode=="Fake_spectral") {
+
+
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode=="tau_decay") {
+
+
+    //do nothing
+
+  }
+
   
   
   else crash("Analysis_Mode: "+Analysis_Mode+" not found");
@@ -147,6 +167,8 @@ void MasterClass_analysis::Analysis_manager() {
 
   if(Analysis_Mode=="Form_factors") Compute_form_factors();
 
+  if(Analysis_Mode=="Form_factors_Nissa") Compute_form_factors_Nissa();
+
   if(Analysis_Mode=="Meson_masses") {
     if(Meson_to_analyze =="PI") Pion_mass_analysis(this->CURRENT_TYPE, this->IncludeDisconnected);
   }
@@ -160,12 +182,12 @@ void MasterClass_analysis::Analysis_manager() {
   }
   
   if(Analysis_Mode=="Meson_masses_twisted_adim") {
-  if(Meson_to_analyze =="PI") Pion_mass_analysis_twisted_adim(this->CURRENT_TYPE, this->IncludeDisconnected);
-   }
+    if(Meson_to_analyze =="PI") Pion_mass_analysis_twisted_adim(this->CURRENT_TYPE, this->IncludeDisconnected);
+  }
 
   if(Analysis_Mode=="Meson_masses_twisted_ov_X") {
-  if(Meson_to_analyze =="PI") Pion_mass_analysis_twisted_ov_X(this->CURRENT_TYPE, this->IncludeDisconnected);
-   }
+    if(Meson_to_analyze =="PI") Pion_mass_analysis_twisted_ov_X(this->CURRENT_TYPE, this->IncludeDisconnected);
+  }
 
   if(Analysis_Mode == "Axion_l7") {
     Axion_l7_analysis();
@@ -193,6 +215,17 @@ void MasterClass_analysis::Analysis_manager() {
 
     Spectral_tests();
   }
+
+  if(Analysis_Mode == "Fake_spectral") {
+
+    Spectral_test_Vittorio();
+  }
+
+  if(Analysis_Mode == "tau_decay") {
+
+    Compute_tau_decay_width();
+  }
+  
   return;
 
 

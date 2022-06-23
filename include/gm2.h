@@ -6,13 +6,14 @@
 #include "gm2_fits.h"
 #include "Meson_mass_extrapolation.h"
 #include "Bootstrap_fit.h"
+#include "scale_setting.h"
 
 
 
 
 using namespace std;
 
-double w(int t);
+
 void Gm2() ;
 
 

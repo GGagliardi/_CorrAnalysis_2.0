@@ -18,16 +18,56 @@ double kernel_K(double t, double MV) {
 
   double m_mu= m_muon;
 
+  if(t < 1e-18) return 0.0; 
+
   auto F = [&](double x) -> double {
 
-    if (x<1e-40) return 0;
+    if (x<1e-10) return 0;
     return (4.0/pow(m_mu*MV,2))*(1.0/sqrt(4.0 + pow(x,2)))*pow(  (sqrt(4.0+pow(x,2))-x)/(sqrt(4.0+pow(x,2))+x),2)*( (cos(m_mu*MV*t*x)-1)/pow(x,2) + (1.0/2.0)*pow(t*m_mu*MV,2));
   };
 
+  double prec= 1e-8;
+  if ( t*MV*m_mu < 5e-4) prec= 1e-6;
+
+  if( t*MV*m_mu < 1e-4) prec= 5e-5;
+
+  auto F2 = [&](double x) -> double {
+
+	      double z= t*MV*m_mu;
+
+	      double y= 0.5*z*x/sqrt(1.0-x);
+
+	      if( z < 8e-6) { cout<<"Warning: kernel function evaluated at too small value of the argument and has been set to zero"<<endl; return 0.0;}
+
+	      return (1.0/pow(m_mu*MV,2))*z*z*(1.0-x)*(1.0- pow(sin(y)/y,2));
+
+	    };
 
   double err;
-  double tol_kernel= 1e-14;
-  return boost::math::quadrature::gauss_kronrod<double,61>::integrate(F, 0.0, numeric_limits<double>::infinity() , 5, tol_kernel, &err);
+  //double tol_kernel= 1e-16;
+  //double result= boost::math::quadrature::gauss_kronrod<double,61>::integrate(F, 0.0, numeric_limits<double>::infinity() , 5, tol_kernel, &err);
+
+
+  gsl_function_pp<decltype(F2)> Fp(F2);
+
+ 
+  gsl_integration_workspace * w = gsl_integration_workspace_alloc (100000);
+
+
+  gsl_function *G = static_cast<gsl_function*>(&Fp);
+  double res_GSL, err_GSL;
+ 
+
+  gsl_integration_qags(G, 0.0, 1.0, 0.0, prec, 100000, w, &res_GSL, &err_GSL);
+  gsl_integration_workspace_free (w);
+  if(err_GSL/fabs(res_GSL) > prec*5 && err_GSL/fabs(res_GSL) > 1e-5) crash("GSL integrator did not achieve target precision: "+to_string_with_precision(prec,10)+". prec achieved: "+to_string_with_precision( err_GSL/fabs(res_GSL), 7)+"at time t: "+to_string_with_precision(t,8));
+  if(res_GSL < 0) crash("kernel_K < 0, for t: "+to_string_with_precision(t,5)+" K(t): "+to_string_with_precision(res_GSL, 13));
+
+  return res_GSL;
+
+  //if(result < 0) crash("kernel_K < 0, for t: "+to_string_with_precision(t,5)+" K(t): "+to_string_with_precision(result, 13));
+
+  //return result;
 
 
 }
@@ -43,7 +83,7 @@ void Plot_kernel_K(int npoints) {
   for(int i=0; i<=npoints;i++) {
     double pt = tmin + i*(tmax-tmin)/npoints;
     pts.push_back(pt);
-    val.push_back( kernel_K( pt/0.1975, 1.0));
+    val.push_back( kernel_K( pt/0.197327, 1.0));
   }
 
   Print_To_File({}, {pts, val}, "../data/gm2/light/kernel.dat", "", "");
@@ -58,7 +98,7 @@ double Zeta_function_laplacian_Luscher(double z) {
 
 
   
-  double inf = 1e-20;
+  double inf = 1e-6;
   double tol_zeta= 1e-10;
 
   assert(z>= 0) ;
@@ -72,7 +112,7 @@ double Zeta_function_laplacian_Luscher(double z) {
   // if(degeneracy(l2) == 0) l2++;
 
   
-  int thresh = l2+ 10;
+  int thresh = l2+20;  //l2+ 10;
 
   double t0= z2>2.0?M_PI/z2:0.5*M_PI;
 
@@ -129,10 +169,56 @@ double Zeta_function_laplacian_Luscher(double z) {
 	   };
 
 
-  double int_val_2= boost::math::quadrature::gauss_kronrod<double, 15>::integrate(F, t0, 30.0 , 5, tol_zeta);
-  double int_val_1= boost::math::quadrature::gauss_kronrod<double, 15>::integrate(F2, inf, t0 , 5, tol_zeta);
+  double int_val_2, int_err_2, int_val_1, int_err_1;
+  double int_val_3= 0;
+  double int_err_3=0;
 
-  double int_val = int_val_2 + int_val_1 + sum0 -M_PI/sqrt(t0);
+ 
+  gsl_function_pp<decltype(F2)> F_1(F2);
+  gsl_integration_workspace * w_1 = gsl_integration_workspace_alloc (10000);
+  gsl_function *G_1 = static_cast<gsl_function*>(&F_1);
+  gsl_integration_qags(G_1, inf, t0, 0.0, 1e-6, 10000, w_1, &int_val_1, &int_err_1);
+  gsl_integration_workspace_free (w_1);
+
+
+  gsl_function_pp<decltype(F2)> F_3(F2);
+  gsl_integration_workspace * w_3 = gsl_integration_workspace_alloc (100000);
+  gsl_function *G_3 = static_cast<gsl_function*>(&F_3);
+  gsl_integration_qags(G_3, 0.0, inf, 0.0, 3e-4, 100000, w_3, &int_val_3, &int_err_3);
+  gsl_integration_workspace_free (w_3);
+
+
+  
+
+  gsl_function_pp<decltype(F)> F_2(F);
+  gsl_integration_workspace * w_2 = gsl_integration_workspace_alloc (10000);
+  gsl_function *G_2 = static_cast<gsl_function*>(&F_2);
+  gsl_integration_qags(G_2, t0, 40.0, 0.0, 1e-6, 10000, w_2, &int_val_2, &int_err_2);
+  gsl_integration_workspace_free (w_2);
+
+  if( (int_err_1+ int_err_3)/(fabs(int_val_1 + int_val_3)) > 1e-5) {
+
+    gsl_function_pp<decltype(F2)> F_4(F2);
+    gsl_integration_workspace * w_4 = gsl_integration_workspace_alloc (100000);
+    gsl_function *G_4 = static_cast<gsl_function*>(&F_4);
+    gsl_integration_qags(G_4, 0.0, t0, 0.0, 1e-6, 100000, w_4, &int_val_3, &int_err_3);
+    gsl_integration_workspace_free (w_4);
+    int_val_1 =0.0;
+    int_err_1 =0.0;
+    if( (int_err_1+ int_err_3)/(fabs(int_val_1 + int_val_3)) > 5e-6) {
+    cout<<"val1 : "<<int_val_1<<" +- "<<int_err_1<<endl;
+    cout<<"val3 : "<<int_val_3<<" +- "<<int_err_3<<endl;
+    crash("In Z_function_laplacian_luscher unable to get target accuracy of 1e-5. Current precision: "+to_string_with_precision( (int_err_1+ int_err_3)/(fabs(int_val_1)+fabs(int_val_3)),10));
+    }
+  }
+  if( int_err_2/fabs(int_val_2) > 5e-6) crash("In Z_function_laplacian_luscher unable to get target accuracy of 5e-6. Current precision: "+to_string_with_precision( int_err_2/fabs(int_val_2),10));
+  //double int_val_2= boost::math::quadrature::gauss_kronrod<double, 15>::integrate(F, t0, 30.0 , 5, tol_zeta);
+  //double int_val_1= boost::math::quadrature::gauss_kronrod<double, 15>::integrate(F2, inf, t0 , 5, tol_zeta);
+
+
+  //cout<<"z: "<<z<<" [0,inf] : "<<int_val_3<<" [inf,t0] : "<<int_val_1<<endl;
+
+  double int_val = int_val_3+ int_val_2 + int_val_1 + sum0 -M_PI/sqrt(t0);
 
   if( isnan( int_val)) crash("integral in Generalized zeta is nan");
   return int_val;
@@ -264,7 +350,7 @@ void Zeta_function_zeroes(int Nzeros, Vfloat &res) { //using Newton method
 	     };
 
 
-  double Precision= 1e-10;
+  double Precision= 1e-9;
   double offset = 1e-10;
 
   int N2old=0;
@@ -272,7 +358,7 @@ void Zeta_function_zeroes(int Nzeros, Vfloat &res) { //using Newton method
   for(int izero=0; izero<Nzeros;izero++) {
 
     int status;   
-    int iter = 0, max_iter = 100;
+    int iter = 0, max_iter = 1000;
     const gsl_root_fdfsolver_type *TT;
     gsl_root_fdfsolver *ss;
     double x0,x;
@@ -350,16 +436,18 @@ void Generate_free_corr_data() {
   //charm
 
   // A ensembles
-  /*
-  amu_Tmax.push_back( make_pair( 0.240, 24));
-  amu_Tmax.push_back( make_pair( 0.240, 32));
-  amu_Tmax.push_back( make_pair( 0.240, 48));
+  //amu_Tmax.push_back( make_pair( 0.240, 24));
+  //amu_Tmax.push_back( make_pair( 0.240, 32));
+  //amu_Tmax.push_back( make_pair( 0.240, 48));
   amu_Tmax.push_back( make_pair( 0.265, 24));
   amu_Tmax.push_back( make_pair( 0.265, 32));
   amu_Tmax.push_back( make_pair( 0.265, 48));
   amu_Tmax.push_back( make_pair( 0.290, 24));
   amu_Tmax.push_back( make_pair( 0.290, 32));
   amu_Tmax.push_back( make_pair( 0.290, 48));
+  amu_Tmax.push_back( make_pair( 0.300, 24));
+  amu_Tmax.push_back( make_pair( 0.300, 32));
+  amu_Tmax.push_back( make_pair( 0.300, 48));
 
   //B ensembles
   amu_Tmax.push_back( make_pair( 0.21, 48));
@@ -379,23 +467,22 @@ void Generate_free_corr_data() {
   amu_Tmax.push_back( make_pair( 0.165, 96));
   amu_Tmax.push_back( make_pair( 0.175, 96));
 
-  */
 
   //strange
 
   //B ensembles
-  /*
-  amu_Tmax.push_back( make_pair(2*0.019, 64));
-  amu_Tmax.push_back( make_pair(2*0.019, 96));
-  amu_Tmax.push_back( make_pair(2*0.021, 64));
-  amu_Tmax.push_back( make_pair(2*0.021, 96));
+  
+  amu_Tmax.push_back( make_pair(0.019, 64));
+  amu_Tmax.push_back( make_pair(0.019, 96));
+  amu_Tmax.push_back( make_pair(0.021, 64));
+  amu_Tmax.push_back( make_pair(0.021, 96));
   //C ensembles
-  amu_Tmax.push_back( make_pair(2*0.016, 80));
-  amu_Tmax.push_back( make_pair(2*0.018, 80));
+  amu_Tmax.push_back( make_pair(0.016, 80));
+  amu_Tmax.push_back( make_pair(0.018, 80));
   //D ensembles
-  amu_Tmax.push_back( make_pair( 2*0.014, 96));
-  amu_Tmax.push_back( make_pair( 2*0.015, 96));
-  */
+  amu_Tmax.push_back( make_pair( 0.014, 96));
+  amu_Tmax.push_back( make_pair( 0.015, 96));
+
 
   //A ensembles
   /*amu_Tmax.push_back( make_pair( 2*0.0205, 24));
@@ -406,11 +493,24 @@ void Generate_free_corr_data() {
   amu_Tmax.push_back( make_pair( 0.023, 24));
   amu_Tmax.push_back( make_pair( 0.0205, 32));
   amu_Tmax.push_back( make_pair( 0.023, 32));
-  */
   amu_Tmax.push_back(make_pair( 2*0.300, 24));
   amu_Tmax.push_back(make_pair( 0.300, 24));
   amu_Tmax.push_back(make_pair( 2*0.300, 32));
   amu_Tmax.push_back(make_pair( 0.300, 32));
+  */
+
+  //light
+  //amu_Tmax.push_back( make_pair( 2*0.00054, 96));
+  //amu_Tmax.push_back( make_pair( 0.00054, 96));
+  //amu_Tmax.push_back( make_pair( 2*0.00060, 80));
+  //amu_Tmax.push_back( make_pair( 0.00060, 80));
+  //amu_Tmax.push_back( make_pair( 2*0.00072, 64));
+  //amu_Tmax.push_back( make_pair( 0.00072, 64));
+  //amu_Tmax.push_back( make_pair( 2*0.00072, 96));
+  //amu_Tmax.push_back( make_pair( 0.00072, 96));
+
+  //amu_Tmax.push_back( make_pair(0.0, 200));
+  
   
   
 
@@ -427,12 +527,28 @@ void Compute_free_corr(double am, int Tmax) {
 
   auto C_cont = [&Nc, &am](int t) -> double {
 
-		  double tolerance=1e-14;
-		  double err;
+		  //double tolerance=1e-16;
+		  //double err;
 
 		  auto f = [&am, &t, &Nc](double x) {  return (Nc*2.0/pow(M_PI,2))*exp(-2.0*t*sqrt( pow(x,2) + pow(am,2)))*pow(x,2)*( 1.0/3 + pow(am,2)/( 6.0*( pow(am,2) + pow(x,2))));};
 
-		  return boost::math::quadrature::gauss_kronrod<double, 15>::integrate( f, 0, numeric_limits<double>::infinity(), 5,tolerance, &err);
+		  double val;
+		  double tolerance=1e-9;
+		  double err;
+		  
+
+
+		  gsl_function_pp<decltype(f)> F_corr(f);
+		  gsl_integration_workspace * w = gsl_integration_workspace_alloc (10000);
+		  gsl_function *G = static_cast<gsl_function*>(&F_corr);
+		  gsl_integration_qagiu(G, 0.0, 0.0, tolerance, 10000, w, &val, &err);
+		  gsl_integration_workspace_free (w);
+
+		  if( err/fabs(val) > 5*tolerance) crash("In free_vector_corr_cont gls integration not able to achieve target precision");
+		  
+		  return val;
+
+		  //return boost::math::quadrature::gauss_kronrod<double, 15>::integrate( f, 0, numeric_limits<double>::infinity(), 5,tolerance, &err);
 		  
 		};
 
@@ -456,15 +572,19 @@ void Compute_free_corr(double am, int Tmax) {
 
   for(int i=0;i<2;i++) { //loop over r
 
-    int r= 2*i-1; //set Wilson parameter 
+    int r= 2*i-1; //set Wilson parameter
+
+   
 
     int time;
-    double tol = 1e-13;
+    double tol = 1e-9;
     
     for(int t=1;t<=Tmax;t++) { //loop over time
 
       cout<<"r: "<<r<<" t: "<<t<<endl;
       time =t;
+
+      double err;
     
       auto corrp1= [&corr, &time, &r, &tol](double p1) -> double {  //boost only performs 1d integrals. 
      
@@ -473,13 +593,49 @@ void Compute_free_corr(double am, int Tmax) {
 				     auto corrp3 = [&corr, &p1, &p2, &time, &r](double p3) {
 						     return corr(p1, p2, p3, time,r);
 						   };
-				     return boost::math::quadrature::gauss_kronrod<double, 15>::integrate( corrp3, 0, M_PI, 5,tol);
+
+				     
+				     double err_3;
+				     double tol3= 1e-9;
+				     double val_3;
+				     //double val_3 = boost::math::quadrature::gauss_kronrod<double, 15>::integrate( corrp3, 0, M_PI, 5,tol, &err_3);
+				     gsl_function_pp<decltype(corrp3)> F_corr3(corrp3);
+				     gsl_integration_workspace * w3 = gsl_integration_workspace_alloc(10000);
+				     gsl_function *G3 = static_cast<gsl_function*>(&F_corr3);
+				     gsl_integration_qags(G3, 0.0, M_PI, 0.0, tol3, 10000, w3, &val_3, &err_3);
+				     gsl_integration_workspace_free (w3);
+
+				     if( err_3/fabs(val_3) > 2*tol3) crash("corr_p3 did not achieve the target accuracy of "+to_string_with_precision(2*tol3, 10)+". Current precision: "+to_string_with_precision( err_3/fabs(val_3), 10));
+				     return val_3;
 				   };
-		     return boost::math::quadrature::gauss_kronrod<double, 15>::integrate( corrp2, 0, M_PI, 5,tol);
+		     
+		     double err_2;
+		     double tol2=1e-9;
+		     double val_2;
+		     //double val_2 = boost::math::quadrature::gauss_kronrod<double, 15>::integrate( corrp2, 0, M_PI, 5,tol, &err_2);
+		     gsl_function_pp<decltype(corrp2)> F_corr2(corrp2);
+		     gsl_integration_workspace * w2 = gsl_integration_workspace_alloc(10000);
+		     gsl_function *G2 = static_cast<gsl_function*>(&F_corr2);
+		     gsl_integration_qags(G2, 0.0,M_PI, 0.0, tol2, 10000, w2, &val_2, &err_2);
+		     gsl_integration_workspace_free (w2);
+		     
+		     if( err_2/fabs(val_2) > 2*tol2) crash("corr_p2 did not achieve the target accuracy of "+to_string_with_precision(2*tol2, 10)+". Current precision: "+to_string_with_precision( err_2/fabs(val_2), 10));
+		     return val_2;
 		   };
+
+      double val;
+      gsl_function_pp<decltype(corrp1)> F_corr1(corrp1);
+      gsl_integration_workspace * w1 = gsl_integration_workspace_alloc(10000);
+      gsl_function *G1 = static_cast<gsl_function*>(&F_corr1);
+      gsl_integration_qags(G1, 0.0,M_PI, 0.0, tol, 10000, w1, &val, &err);
+      gsl_integration_workspace_free (w1);
+
+      if( err/fabs(val) > 2*tol) crash("corr_p1 did not achieve the target accuracy of "+to_string_with_precision(2*tol, 10)+". Current precision: "+to_string_with_precision( err/fabs(val), 10));
+      //double val = boost::math::quadrature::gauss_kronrod<double, 15>::integrate(corrp1, 0, M_PI, 5, tol, &err);
+           
   
-      if(r==1)  corr_pert_res_OS[t] = boost::math::quadrature::gauss_kronrod<double, 15>::integrate(corrp1, 0, M_PI, 5, tol);
-      else if(r==-1) corr_pert_res_tm[t] = boost::math::quadrature::gauss_kronrod<double, 15>::integrate(corrp1, 0, M_PI, 5, tol);
+      if(r==1)  corr_pert_res_OS[t] = val;
+      else if(r==-1) corr_pert_res_tm[t] = val;
       else crash("Wilson parameter r: "+to_string(r)+" not recognized");
 
     }
@@ -505,6 +661,7 @@ void Compute_free_corr(double am, int Tmax) {
 
   //create directory
   boost::filesystem::create_directory("../Vkvk_cont");
+  boost::filesystem::create_directory("../Vkvk_cont/a_mu_SD_scaling");
   boost::filesystem::create_directory("../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,3));
 
 
@@ -512,12 +669,78 @@ void Compute_free_corr(double am, int Tmax) {
   Print_To_File({}, {a2corr_pert_res_OS, corr_pert_res_OS, corr_pert_cont}, "../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,3)+"/SAMER", "" , "");
   
 
-  
+  Vfloat amu_SD_OPPOR_list, amu_SD_OPPOR_diff_list, amu_SD_SAMER_list, amu_SD_SAMER_diff_list, a_lat_list;
 
+  double a_coarse= 0.0908026;
+  double a_finest= 0.0100000;
+  int Niter=100;
+
+  //get amu_SD_scaling
+
+    double tt0 = 0.4/0.197327;
+    double tDelta= 0.15/0.197327;
+    double aem= 1.0/137.035999;
+    
+
+    for(int it=0; it < Niter;it++) {
+
+      double ag= (a_finest+ it*(a_coarse-a_finest)/(Niter-1.0));
+      a_lat_list.push_back(ag);
+      ag /= 0.197327; //conversion in Gev^-1
+
+      double amu_SD_OPPOR_diff=0.0;
+      double amu_SD_SAMER_diff=0.0;
+      double amu_SD_OPPOR=0.0;
+      double amu_SD_SAMER=0.0;
+
+      for(int tt=1; tt< Tmax; tt++) {
+
+	amu_SD_OPPOR_diff += 4.0*pow(aem,2)*( pow(2.0/3.0,2) + pow(1.0/3.0, 2))*a2corr_pert_res_tm[tt]*(1.0 -  1.0/(1.0 + exp(-2.0*(tt*ag-tt0)/tDelta)))*kernel_K(tt, ag);
+	amu_SD_SAMER_diff += 4.0*pow(aem,2)*( pow(2.0/3.0,2) + pow(1.0/3.0, 2))*a2corr_pert_res_OS[tt]*(1.0 -  1.0/(1.0 + exp(-2.0*(tt*ag-tt0)/tDelta)))*kernel_K(tt, ag);
+	amu_SD_OPPOR +=  4.0*pow(aem,2)*( pow(2.0/3.0,2) + pow(1.0/3.0, 2))*corr_pert_res_tm[tt]*(1.0 -  1.0/(1.0 + exp(-2.0*(tt*ag-tt0)/tDelta)))*kernel_K(tt, ag);
+	amu_SD_SAMER +=  4.0*pow(aem,2)*( pow(2.0/3.0,2) + pow(1.0/3.0, 2))*corr_pert_res_OS[tt]*(1.0 -  1.0/(1.0 + exp(-2.0*(tt*ag-tt0)/tDelta)))*kernel_K(tt, ag);
+      }
+
+      amu_SD_OPPOR_diff_list.push_back(amu_SD_OPPOR_diff);
+      amu_SD_SAMER_diff_list.push_back(amu_SD_SAMER_diff);
+      amu_SD_OPPOR_list.push_back( amu_SD_OPPOR);
+      amu_SD_SAMER_list.push_back( amu_SD_SAMER);
+    }
+
+
+
+
+    Print_To_File( {}, { a_lat_list, amu_SD_OPPOR_list, amu_SD_OPPOR_diff_list,  amu_SD_SAMER_list, amu_SD_SAMER_diff_list}, "../Vkvk_cont/a_mu_SD_scaling/scaling_am_"+to_string_with_precision(am,3)+".dat", "", "#a[fm] a_mu[tm]  Da_mu[tm] a_mu[OS]   Da_mu[OS]");
   
 
 
   return;
+}
+
+double free_vector_corr_cont(int Nc, double am, double t) {
+
+  
+  double val;
+  double tolerance=1e-9;
+  double err;
+
+  auto f = [&am, &t, &Nc](double x) {  return (Nc*2.0/pow(M_PI,2))*exp(-2.0*t*sqrt( pow(x,2) + pow(am,2)))*pow(x,2)*( 1.0/3 + pow(am,2)/( 6.0*( pow(am,2) + pow(x,2))));};
+
+
+   gsl_function_pp<decltype(f)> F_corr(f);
+   gsl_integration_workspace * w = gsl_integration_workspace_alloc (10000);
+   gsl_function *G = static_cast<gsl_function*>(&F_corr);
+   gsl_integration_qagiu(G, 0.0, 0.0, tolerance, 10000, w, &val, &err);
+   gsl_integration_workspace_free (w);
+
+   if( err/fabs(val) > 5*tolerance) crash("In free_vector_corr_cont gls integration not able to achieve target precision");
+
+   return val;
+
+   //return boost::math::quadrature::gauss_kronrod<double, 15>::integrate( f, 0, numeric_limits<double>::infinity(), 5,tolerance, &err);
+		  
+
+
 }
 
 
@@ -896,6 +1119,7 @@ void LL_functions::Find_pipi_energy_lev(double L, double m_rho, double g_rho_pip
   double z2_crit= z_crit*z_crit;
 
 
+  //Mpi=0.135;
   //add z2_crit to divergent_levels
   divergent_levels.push_back(z2_crit);
   sort(divergent_levels.begin(), divergent_levels.end());
@@ -1090,12 +1314,23 @@ double LL_functions::V_pipi_infL(double t, double m_rho_infL, double g_rho_pipi_
 
   double tol_infL= 1e-14;
 
-
   auto Integrand = [&](double omega) -> double {
 		     return (1.0/(48.0*pow(M_PI,2)))*pow(omega,2)*pow(1.0- pow(2.0*Mpi_infL/omega,2), 3.0/2.0)*exp(-omega*t)*pow(F_pi_GS_mod(omega, m_rho_infL, g_rho_pipi_infL,Mpi_infL,kappa_infL),2);};
 
 
-  return boost::math::quadrature::gauss_kronrod<double, 61>::integrate(Integrand, 2*Mpi_infL, numeric_limits<double>::infinity(), 5, tol_infL)  ;
+  double val,err;
+  double tolerance = 1e-9;
+  gsl_function_pp<decltype(Integrand)> F_corr(Integrand);
+  gsl_integration_workspace * w = gsl_integration_workspace_alloc (10000);
+  gsl_function *G = static_cast<gsl_function*>(&F_corr);
+  gsl_integration_qagiu(G, 2*Mpi_infL, 0.0, tolerance, 10000, w, &val, &err);
+  gsl_integration_workspace_free (w);
+  
+  if( err/fabs(val) > 5*tolerance) crash("In free_vector_corr_cont gls integration not able to achieve target precision");
+
+  return val;
+
+  //return boost::math::quadrature::gauss_kronrod<double, 61>::integrate(Integrand, 2*Mpi_infL, numeric_limits<double>::infinity(), 5, tol_infL)  ;
 
 
   

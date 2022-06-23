@@ -261,6 +261,7 @@ class Jackknife {
     this->Njacks= Njacks;
     Verbose_jack=0;
     ReturnBlockSizeMax=0;
+    Enable_fractional_jackknife= true;
     }
   distr_t DoJack(int , ...);
   distr_t DoJack(function<double(const Vfloat&)> F, int Nobs, ... );

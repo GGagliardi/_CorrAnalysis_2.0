@@ -321,6 +321,28 @@ double DoConstantFit(Vfloat &data, Vfloat &err) {
 }
 
 
+double quad_interpolator(double y1, double y2, double y3, double Dx1, double Dx2, double Dx3, double Dx) {
+
+
+  
+	double n1 = y1*Dx2*Dx3/( (Dx1-Dx2)*(Dx1-Dx3));
+	double n2 = -y2*Dx1*Dx3/( (Dx1-Dx2)*(Dx2-Dx3));
+	double n3 = y3*Dx1*Dx2/( (Dx1-Dx3)*(Dx2-Dx3));
+
+	double prod= (Dx1-Dx2)*(Dx1-Dx3)*(Dx2-Dx3);
+
+	double a0 = n1+n2+n3;
+	double a1 = (pow(Dx3,2)*(y1-y2) + pow(Dx1,2)*(y2-y3) + pow(Dx2,2)*(y3-y1))/prod ;
+	double a2 = (Dx3*(y2-y1) + Dx2*(y1-y3) + Dx1*(y3-y2))/prod;
+
+	return a0 + a1*Dx + a2*pow(Dx,2);
+  
+
+
+
+}
+
+
 void Print_To_File(const vector<string>& row_id, const VVfloat &data, string Path, string MODE, string Header) {
 
   ofstream Print;
@@ -459,4 +481,38 @@ int degeneracy(int m) {
   
   return deg_val;
   
+}
+
+
+//Integrator: rectangular, trapezoidal, 1/3 Simpson, 3/8 Simpson
+double w(int t, int Simps_ord) {
+
+  if(Simps_ord == 1) return 1.0;
+
+  else if(Simps_ord == 2) {
+
+    if(t == 0) return 0.5;
+    else return 1.0;
+
+  }
+
+  else if(Simps_ord == 3) {
+
+    if(t==0) return 2.0/6.0;
+    if(t%2==0) return 4.0/6.0;
+    else return 8.0/6.0;
+
+  }
+
+  else if(Simps_ord == 4) {
+    if(t==0) return 3.0/8.0;
+    if (t%3 == 0) return 6.0/8.0;
+    else return 9.0/8.0;
+  }
+  
+  else crash("Simpson integrator with order: "+to_string(Simps_ord)+" not found");
+
+  exit(-1);
+  return 0.0;
+
 }

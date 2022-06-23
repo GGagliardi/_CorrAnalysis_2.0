@@ -3,8 +3,6 @@
 using namespace std;
 
 
-
-
 void Add_to_mom_list(pt3_momenta_list &M, struct header_virph &header, double& L) {
 
   vector<pt3_momenta> A;

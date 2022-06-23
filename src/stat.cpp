@@ -89,6 +89,9 @@ void Compute_autocorrelation_time(const Vfloat &data, string Path, string Tag) {
   int N = (signed)data.size();
 
   Vfloat rho_E(N, 0.0);
+  Vfloat log_rho_E(N,0.0);
+  Vfloat t_int(N,0.0);
+  double t_accumulated = -1.0;
 
   for(int t=0; t< N;t++) {
 
@@ -104,11 +107,14 @@ void Compute_autocorrelation_time(const Vfloat &data, string Path, string Tag) {
     for(int i=0;i< N-t;i++) {den1 += pow( data[i] - bar_x_t, 2); den2 += pow( data[t+i]-bar_y_t,2);}
     den = sqrt( den1*den2);
     rho_E[t] = num/den;
+    log_rho_E[t] = log(fabs(num/den));
+    t_accumulated += 2.0*num/den;
+    t_int[t] = t_accumulated;
 
 
   }
 
-  Print_To_File({}, {rho_E}, Path+"/autocorr_"+Tag+".dat", "", "");
+  Print_To_File({}, {rho_E, log_rho_E, t_int}, Path+"/autocorr_"+Tag+".dat", "", "");
 
 
 
@@ -139,9 +145,68 @@ distr_t Jackknife::DoJack(function<double(const Vfloat&)> F, int Nobs,...) {
     for(auto &data: Copy_data) data.erase(data.begin(), data.begin()+ThermalMeasToErase);
   }
 
-    if(Copy_data.size() == 0) crash("Jackknife routine called with an empty vector");
+  if(Copy_data.size() == 0) crash("Jackknife routine called with an empty vector");
 
-   
+
+  if(Enable_fractional_jackknife) {
+
+     //crash if called with Returnblocksizemax.
+    if(ReturnBlockSizeMax) crash("DoJack called in mode fractional with Returnblocksizemax=true");
+    double bs = ((double)N)/((double)Njacks); //fractional block_size
+  
+    //get total sum
+    Vfloat total_sum(Nobs,0.0);
+    for(int iobs=0;iobs<Nobs;iobs++)
+      for(int iconf=0;iconf< N;iconf++) total_sum[iobs] += Copy_data[iobs][iconf];
+    
+    for(int ijack=0;ijack < Njacks; ijack++) {
+      //get out of the block mean erasing the block ijack of size bs
+
+
+      //initial bin time
+      const double bin_start= ijack*bs;
+      const double bin_end = bin_start + bs;
+
+      //loop over time
+      double binPos = bin_start;
+      Vfloat data_to_cluster = total_sum;
+
+      do {
+
+	int iConf= floor(binPos + 1e-10);
+
+	//Rectangle left point
+	double lpoint = binPos;
+
+	//Rectangle right point
+	double rpoint = min(bin_end, lpoint+1.0);
+
+	//Rectangle horizontal size
+	double rect_size = rpoint-lpoint;
+
+
+	//add to jack
+        for(int iobs=0; iobs <Nobs;iobs++) data_to_cluster[iobs] -= Copy_data[iobs][iConf]*rect_size;
+
+
+
+	//update position
+	binPos = rpoint;
+
+
+
+
+      } while (bin_end - binPos > 1e-10);
+      
+
+      for(int iobs=0;iobs<Nobs;iobs++) data_to_cluster[iobs] /= (double)(N - bs);
+
+      JackDistribution.distr.push_back(F(data_to_cluster));
+    }
+  }
+
+  else {
+    
   
   Vfloat sigma_obs_block(block_size_max,0);
   Vfloat mean_obs_block(block_size_max,0);
@@ -193,6 +258,7 @@ distr_t Jackknife::DoJack(function<double(const Vfloat&)> F, int Nobs,...) {
 	if(Verbose_jack) cout<<block_size<<"\t"<<mean_obs_block[block_size-1]<<"\t"<<sigma_obs_block[block_size-1]<<endl<<flush;
       }
     }
+  }
 
   return JackDistribution;
 }
@@ -225,8 +291,69 @@ distr_t Jackknife::DoJack(int Nobs,...) {
     for(auto &data: Copy_data) data.erase(data.begin(), data.begin()+ThermalMeasToErase);
   }
 
-    if(Copy_data.size() == 0) crash("Jackknife routine called with an empty vector");
+  if(Copy_data.size() == 0) crash("Jackknife routine called with an empty vector");
+  
+  
+  if(Enable_fractional_jackknife) {
+    //crash if called with Returnblocksizemax.
+    if(ReturnBlockSizeMax) crash("DoJack called in mode fractional with Returnblocksizemax=true");
+    double bs = ((double)N)/((double)Njacks); //fractional block_size
  
+    //get total sum
+    double total_sum=0.0;
+    for(int iobs=0;iobs<Nobs;iobs++)
+      for(int iconf=0;iconf< N;iconf++) total_sum += Copy_data[iobs][iconf];
+    
+    for(int ijack=0;ijack < Njacks; ijack++) {
+      //get out of the block mean erasing the block ijack of size bs
+
+
+      //initial bin time
+      const double bin_start= ijack*bs;
+      const double bin_end = bin_start + bs;
+
+      //loop over time
+      double binPos = bin_start;
+      double data_to_cluster = total_sum;
+
+      do {
+
+	int iConf= floor(binPos + 1e-10);
+
+	//Rectangle left point
+	double lpoint = binPos;
+
+	//Rectangle right point
+	double rpoint = min(bin_end, lpoint+1.0);
+
+	//Rectangle horizontal size
+	double rect_size = rpoint-lpoint;
+
+
+	//add to jack
+        for(int iobs=0; iobs <Nobs;iobs++) data_to_cluster -= Copy_data[iobs][iConf]*rect_size;
+
+
+
+	//update position
+	binPos = rpoint;
+
+
+
+
+      } while (bin_end - binPos > 1e-10);
+      
+
+      data_to_cluster /= (double)(N - bs);
+
+      JackDistribution.distr.push_back(data_to_cluster);
+    }
+
+
+  }
+
+
+  else {
   
   
   Vfloat sigma_obs_block(block_size_max,0);
@@ -283,7 +410,7 @@ distr_t Jackknife::DoJack(int Nobs,...) {
       }
     }
 
- 
+  }
   
   return JackDistribution;
 }

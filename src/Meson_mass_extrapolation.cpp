@@ -17,12 +17,13 @@ class fpar {
 public:
   fpar() {}
   fpar(const Vfloat &par) {
-    if((signed)par.size() != 2) crash("In Obs_extrapolation_meson_mass, class fpar has size different from two.");
+    if((signed)par.size() != 3) crash("In Obs_extrapolation_meson_mass, class fpar has size different from three.");
     a0=par[0];
     D=par[1];
+    D2= par[2];
   }
 
-  double a0,D;
+  double a0,D, D2;
 
 };
 
@@ -54,9 +55,11 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
   for(auto &ms: Meas) a0_guess += ms.ave()/Nmeas;
   bf.Add_par("a0", a0_guess, 1e-2*a0_guess);
   bf.Add_par("D", -1.0e-1, 1e-3);
+  bf.Add_par("D2", -1.0e-1, 1e-3);
+  if(Nmeas <= 3) bf.Fix_par("D2", 0.0);
 
   bf.ansatz =  [&](const fpar &p, const Ov &ip) -> double {
-		 return p.a0*(1.0) + (p.D*(ip.X - Op_phys));
+		 return p.a0*(1.0) + (p.D*(ip.X - Op_phys)) +  p.D2*pow((ip.X - Op_phys),2);
 	       };
 
   bf.measurement = [&](const fpar &p, const Ov &ip) ->double {
@@ -100,7 +103,7 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
 
   
 
-  for(int ijack=0;ijack<Njacks;ijack++) {a0_fit.distr.push_back( Bt_fit.par[ijack].a0); D_fit.distr.push_back(Bt_fit.par[ijack].D);}
+  for(int ijack=0;ijack<Njacks;ijack++) {a0_fit.distr.push_back( Bt_fit.par[ijack].a0); D_fit.distr.push_back(Bt_fit.par[ijack].D); D2_fit.distr.push_back( Bt_fit.par[ijack].D2);}
 
 
   if(Print_dir != "") {
@@ -114,8 +117,8 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
       Extr_val.push_back(0);
     }
 
-    double der_val = D_fit.ave();
-    double der_err = D_fit.err();
+    double der_val = (0.01*Op_phys*D_fit/a0_fit).ave();
+    double der_err = (0.01*Op_phys*D_fit/a0_fit).err();
     X.push_back(Op_phys);
     Xerr.push_back(0.0);
     Y.push_back(a0_fit.ave());
@@ -134,7 +137,7 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
     distr_t_list Fit_func;
     for(int ipoint=0;ipoint<Npoints;ipoint++) {
       double xp= xmin+ ipoint*(xmax-xmin)/((double)Npoints);
-      Fit_func.distr_list.push_back(a0_fit*(1.0) + (D_fit*(xp-Op_phys)));
+      Fit_func.distr_list.push_back(a0_fit*(1.0) + (D_fit*(xp-Op_phys)) + D2_fit*pow( xp- Op_phys,2));
       Xpoints.push_back(xp);
     }
 
@@ -204,8 +207,8 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
       Yerr.push_back(a0_fit.err());
       Extr_val.push_back(1);
 
-      double der_val= D_fit.ave();
-      double der_err= D_fit.err();
+      double der_val= (0.01*Op_phys*D_fit/a0_fit).ave();
+      double der_err= (0.01*Op_phys*D_fit/a0_fit).err();
       
       Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_spline_extr.meas", "", "# X Xerr Y Yerr Extr_id, derivative: "+to_string_with_precision(der_val,6)+" +- "+to_string_with_precision(der_err,6));
       
@@ -267,9 +270,11 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
   for(auto &ms: Meas) a0_guess += ms.ave()/Nmeas;
   bf.Add_par("a0", a0_guess, 1e-2*a0_guess);
   bf.Add_par("D", -1.0e-1, 1e-3);
+  bf.Add_par("D2", -1.0e-1, 1e-3);
+  if(Nmeas <= 3) bf.Fix_par("D2", 0.0);
 
   bf.ansatz =  [&](const fpar &p, const Ov &ip) -> double {
-		 return p.a0*(1.0) + p.D*(ip.X - ip.X_phys);
+		 return p.a0*(1.0) + p.D*(ip.X - ip.X_phys) + p.D2*pow( ip.X - ip.X_phys, 2);
 	       };
 
   bf.measurement = [&](const fpar &p, const Ov &ip) ->double {
@@ -314,7 +319,7 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
 
   
 
-  for(int ijack=0;ijack<Njacks;ijack++) {a0_fit.distr.push_back( Bt_fit.par[ijack].a0); D_fit.distr.push_back(Bt_fit.par[ijack].D);}
+  for(int ijack=0;ijack<Njacks;ijack++) {a0_fit.distr.push_back( Bt_fit.par[ijack].a0); D_fit.distr.push_back(Bt_fit.par[ijack].D); D2_fit.distr.push_back( Bt_fit.par[ijack].D2);}
 
 
   if(Print_dir != "") {
@@ -334,8 +339,8 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
     Yerr.push_back(a0_fit.err());
     Extr_val.push_back(1);
 
-    double der_val = D_fit.ave();
-    double der_err= D_fit.err();
+    double der_val =(0.01*Op_phys*D_fit/a0_fit).ave();
+    double der_err= (0.01*Op_phys*D_fit/a0_fit).err();
 
     Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_fit_extr.meas", "", "# X Xerr Y Yerr Extr_id, derivative: "+to_string_with_precision(der_val,6)+" +- "+to_string_with_precision(der_err,6));
 
@@ -349,7 +354,7 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
     distr_t_list Fit_func;
     for(int ipoint=0;ipoint<Npoints;ipoint++) {
       double xp= xmin+ ipoint*(xmax-xmin)/((double)Npoints);
-      Fit_func.distr_list.push_back(a0_fit*(1.0) + D_fit*(xp-Op_phys));
+      Fit_func.distr_list.push_back(a0_fit*(1.0) + D_fit*(xp-Op_phys) + D2_fit*(xp - Op_phys)*(xp - Op_phys));
       Xpoints.push_back(xp);
     }
 
@@ -417,8 +422,8 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
       Yerr.push_back(a0_fit.err());
       Extr_val.push_back(1);
 
-      double der_val= D_fit.ave();
-      double der_err= D_fit.err();
+      double der_val= (0.01*Op_phys*D_fit/a0_fit).ave();
+      double der_err= (0.01*Op_phys*D_fit/a0_fit).err();
       
       Print_To_File({}, {X,Xerr, Y, Yerr, Extr_val}, Print_dir+"/extr/"+Tag+"_spline_extr.meas", "", "# X Xerr Y Yerr Extr_id, derivative: "+to_string_with_precision(der_val,6)+" +- "+to_string_with_precision(der_err,6));
       
@@ -432,8 +437,8 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
       distr_t_list Fit_func;
       for(int ipoint=0;ipoint<Npoints;ipoint++) {
 	double xp= xmin+ ipoint*(xmax-xmin)/((double)Npoints);
-	if(Nmeas==2) { Fit_func.distr_list.push_back(a0_fit + D_fit*(xp-Op_phys.ave())) ;}
-	else if(Nmeas==3)  { Fit_func.distr_list.push_back(a0_fit + D_fit*(xp-Op_phys.ave()) + D2_fit*(xp-Op_phys.ave())*(xp-Op_phys.ave())  );}
+	if(Nmeas==2) { Fit_func.distr_list.push_back(a0_fit + D_fit*(xp-Op_phys)) ;}
+	else if(Nmeas==3)  { Fit_func.distr_list.push_back(a0_fit + D_fit*(xp-Op_phys) + D2_fit*(xp-Op_phys.ave())*(xp-Op_phys));}
 	else crash("In Meson_mass_extrapolation.cpp: SPLINATOR called with Nmeas: "+to_string(Nmeas));
 	Xpoints.push_back(xp);
       }

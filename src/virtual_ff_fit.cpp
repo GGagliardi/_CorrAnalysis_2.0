@@ -65,7 +65,7 @@ public:
 
  
 
-void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, const vector<distr_t> &FF, distr_t &f_p,distr_t &m_p, distr_t& Za_ov_Zv, vector<pt3_momenta> &mom, string ff_type, string W, string Ens_tag, string Meson, bool UseJack, bool ConstFit, int t_fit) {
+void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func,  distr_t &A_ret, distr_t &rk_ret, distr_t &rq_ret, const vector<distr_t> &FF, distr_t &f_p,distr_t &m_p, distr_t& Za_ov_Zv, vector<pt3_momenta> &mom, string ff_type, string W, string Ens_tag, string Meson, bool UseJack, bool ConstFit, int t_fit) {
 
   int Nmeas= FF.size();
   int njacks = f_p.size();
@@ -230,7 +230,7 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
   //params printed
 
 
-  //define lambda functions
+  //define lambda functions and return fit parameters
   for(int ijack=0;ijack<njacks;ijack++) {
     auto F = [=](double xk, double xq) -> double {
 	       double val= Bt_fit.par[ijack].a0 + Bt_fit.par[ijack].ampl/((1.0-pow(xk,2)*Bt_fit.par[ijack].rk)*(1.0 -pow(xq,2)*Bt_fit.par[ijack].rq));
@@ -239,6 +239,11 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
 	     };
     
     fit_func.push_back(F);
+    
+    //ret parameters
+    A_ret.distr.push_back( Bt_fit.par[ijack].ampl);
+    rk_ret.distr.push_back( Bt_fit.par[ijack].rk);
+    rq_ret.distr.push_back( Bt_fit.par[ijack].rq);
   }
 
 
@@ -293,7 +298,7 @@ void Fit_virtual_FF_VMD( vector<function<double(double, double)>> &fit_func, con
 
 
 
-void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, const vector<distr_t> &FF, distr_t &f_p, distr_t &m_p, distr_t &Za_ov_Zv, vector<pt3_momenta> &mom, string ff_type, string W, string Ens_tag, string Meson, bool UseJack, bool ConstFit, int t_fit) {
+void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func,  distr_t &a0_ret, distr_t &ak_ret, distr_t &aq_ret, const vector<distr_t> &FF, distr_t &f_p, distr_t &m_p, distr_t &Za_ov_Zv, vector<pt3_momenta> &mom, string ff_type, string W, string Ens_tag, string Meson, bool UseJack, bool ConstFit, int t_fit) {
 
   int Nmeas= FF.size();
   int njacks = f_p.size();
@@ -402,10 +407,15 @@ void Fit_virtual_FF_ChPT(vector<function<double(double, double)>> &fit_func, con
   //params printed
 
 
-  //define lambda functions
+  //define lambda functions and return parameters
   for(int ijack=0;ijack<njacks;ijack++) {
     auto F = [=](double xk, double xq) -> double { return Bt_fit.par[ijack].a0 + Bt_fit.par[ijack].ak*pow(xk,2) + Bt_fit.par[ijack].aq*pow(xq,2) +Bt_fit.par[ijack].akq*xk*xq + Bt_fit.par[ijack].a2kq*pow(xk*xq,2);};
     fit_func.push_back(F);
+
+    //ret parameters
+    a0_ret.distr.push_back( Bt_fit.par[ijack].a0);
+    ak_ret.distr.push_back( Bt_fit.par[ijack].ak);
+    aq_ret.distr.push_back( Bt_fit.par[ijack].aq);
   }
 
 

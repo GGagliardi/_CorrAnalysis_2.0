@@ -11,6 +11,7 @@
 
 using namespace std;
 
+double Get_exact_gauss(const double &E,const double &m,const double &s,const double &E0);
 PrecFloat Get_exact_gauss(const PrecFloat &E,const PrecFloat &m,const PrecFloat &s,const PrecFloat &E0);
 PrecFloat Get_exact_gaussE2(const PrecFloat &E,const PrecFloat &m,const PrecFloat &s,const PrecFloat &E0);
 PrecFloat Get_exact_lego(const PrecFloat &E,const PrecFloat &m,const PrecFloat &s,const PrecFloat &E0);
@@ -37,8 +38,8 @@ void Get_G_matrix(PrecMatr &G,const PrecMatr &Atr_inv, vector<PrecVect> &Rt_n);
 void Get_M_N(PrecFloat &m, PrecFloat &s, PrecFloat &E0,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, PrecVect &M_n);
 void Get_M_tilde_N( const PrecVect &ft, const PrecMatr &Atr_inv, vector<PrecVect> &Rt_n,  PrecVect &M_tilde_n);
 void Compute_covariance_matrix(PrecMatr &B,const PrecMatr &Atr, const distr_t_list &corr, int tmin, int tmax, string MODE);
-void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft,const PrecVect &Rt,const PrecFloat & M2,const double &mean, const double &sigma, const double &Estart,  double& lambda_opt, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, vector<PrecVect> Rt_n, const PrecVect &M_n ,const distr_t_list & corr,int T, int tmin, int tmax,   string MODE, string curr_type, string SMEARING_FUNC, string CORR_NAME);
-distr_t Get_Laplace_transfo(double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, const distr_t_list& corr, double &syst, double rc, double& lambda_ret, string MODE, string cur_type, string CORR_NAME);
+void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft,const PrecVect &Rt,const PrecFloat & M2,const double &mean, const double &sigma, const double &Estart,  double& lambda_opt, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, vector<PrecVect> Rt_n, const PrecVect &M_n ,const distr_t_list & corr,int T, int tmin, int tmax, const double mult,   string MODE, string curr_type, string SMEARING_FUNC, string CORR_NAME, string FLAV);
+distr_t Get_Laplace_transfo(double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, const distr_t_list& corr, double &syst,const double mult, double& lambda_ret, string MODE, string cur_type, string CORR_NAME, string FLAV);
 
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef __spectral_tests__
-#define __spectral_tests__
+#ifndef __tau_decay__
+#define __tau_decay__
 
 #include "numerics.h"
 #include "highPrec.h"
@@ -13,10 +13,10 @@
 #include "Meson_mass_extrapolation.h"
 
 
+
 using namespace std;
 
-void Spectral_tests();
-void Get_exp_smeared_R_ratio(const Vfloat &Ergs_GeV_list, double sigma);
+void Compute_tau_decay_width();
 
 
 #endif

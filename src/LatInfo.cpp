@@ -153,6 +153,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   if(Tag.substr(1,1)=="A") {
     a= 0.09471;          //real is 0.09471 let us change it by 1.5 sigma
     a_err= 0.00039;
+    a_from_afp = 0.0908026;
+    a_from_afp_err = 0.000535517;
     a_nucleon=0.09295;
     a_nucleon_err=0.00047;
     Za=0.724;
@@ -168,22 +170,22 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Za_WI_charm_extr = 0.66016;
     Za_WI_charm_extr_err = 0.0014;
     if(Tag == "cA211a.53.24") {
-      Za_WI_strange= 0.728838 ;
-      Za_WI_strange_err = 0.00160579;
-      Zv_WI_strange = 0.68670;
-      Zv_WI_strange_err = 0.00014;
+      Za_WI_strange= 0.728393; // 0.728838 ;
+      Za_WI_strange_err = 0.0018; // 0.00160579;
+      Zv_WI_strange = 0.687002; // 0.68670;
+      Zv_WI_strange_err = 0.00015; // 0.00014;
     }
     else if(Tag == "cA211a.40.24") {
-      Za_WI_strange= 0.728838 ;
-      Za_WI_strange_err = 0.00160579; 
-      Zv_WI_strange = 0.68670;
-      Zv_WI_strange_err = 0.00014;
+      Za_WI_strange= 0.728393; // 0.728838 ;
+      Za_WI_strange_err = 0.0018; // 0.00160579;
+      Zv_WI_strange = 0.687002; // 0.68670;
+      Zv_WI_strange_err = 0.00015; // 0.00014;
     }
     else if(Tag == "cA211ab.30.32") {
-       Za_WI_strange= 0.728838 ;
-       Za_WI_strange_err = 0.00160579;
-       Zv_WI_strange = 0.68670;
-       Zv_WI_strange_err = 0.00014;
+      Za_WI_strange= 0.728393; // 0.728838 ;
+      Za_WI_strange_err = 0.0018; // 0.00160579;
+      Zv_WI_strange = 0.687002; // 0.68670;
+      Zv_WI_strange_err = 0.00015; // 0.00014;
     }
     
     ms_L=0.02050; ms_M=0.02300;
@@ -192,7 +194,9 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
 
   else if(Tag.substr(1,1)=="B") {
     a= 0.08161;
-    a_err= 0.00015; //0.00030;   RIMETTI CORRETTO ERRORE
+    a_err= 0.00030;
+    a_from_afp= 0.079616;
+    a_from_afp_err = 0.000127363;
     a_nucleon=0.07975;
     a_nucleon_err=0.00032;
     Za=0.746;
@@ -204,10 +208,11 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
       Zv_WI_err = 0.000007;
 
       //
-      Za_WI_strange= 0.74298;
-      Za_WI_strange_err =0.00018;
-      Zv_WI_strange = 0.70619;
-      Zv_WI_strange_err = 3e-05;
+      Za_WI_strange= 0.742837; //0.74298;
+      Za_WI_strange_err = 0.00023; //0.00018;
+      Zv_WI_strange = 0.706377; // 0.70619;
+      Zv_WI_strange_err = 1.7e-5; //3e-5;
+
     }
     else if (Tag == "cB211b.072.96") {
       Za_WI = 0.71577 ;
@@ -216,10 +221,11 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
       Zv_WI_err = 0.000005;
 
       //
-      Za_WI_strange= 0.742803;
-      Za_WI_strange_err = 0.00022 ;
-      Zv_WI_strange = 0.706211;
-      Zv_WI_strange_err = 3e-05;
+      Za_WI_strange= 0.742741; // 0.742803;
+      Za_WI_strange_err = 0.00019; // 0.00022 ;
+      Zv_WI_strange = 0.706401; // 0.706211;
+      Zv_WI_strange_err = 1.6e-5; // 3e-5;
+
     }
     Zv=0.7131;
     Zv_err=0.0006;
@@ -229,7 +235,9 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
 
   else if(Tag.substr(1,1)=="C") {
     a= 0.06942; 
-    a_err= 0.00013; // 0.00026; RIMETTI CORRETTO ERRORE
+    a_err= 0.00026;
+    a_from_afp = 0.0682068;
+    a_from_afp_err  = 0.000117345;
     a_nucleon=0.06860;
     a_nucleon_err=0.00020;
     Za=0.761;
@@ -242,10 +250,11 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_WI_err = 0.000005;
 
     //
-    Za_WI_strange= 0.7584361736;
-    Za_WI_strange_err =0.00020;
-    Zv_WI_strange = 0.725291;
-    Zv_WI_strange_err = 2.5e-05;
+    Za_WI_strange= 0.758409; // 0.7584361736;
+    Za_WI_strange_err = 0.00016; //0.00020;
+
+    Zv_WI_strange = 0.725404; // 0.725291;
+    Zv_WI_strange_err = 1.2e-5; // 2.5e-05;
     
     ms_L= 0.01600; ms_M= 0.01800;
     mc_L=0.17500; mc_M=0.19500; mc_H=0.21500;
@@ -253,7 +262,9 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
 
   else if(Tag.substr(1,1)=="D") {
     a= 0.0577;
-    a_err=  0.0001; //0.0002; RIMETTI CORRETTO ERRORE 
+    a_err=  0.0002;
+    a_from_afp = 0.0569252;
+    a_from_afp_err = 0.000103587;
     a_nucleon= 0.05777; //fake
     a_nucleon_err= 0.0002; //fake
     Za= 0.76217;
@@ -266,13 +277,13 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_err = 0.000005;
 
     //
-    Za_WI_strange= 0.77395;
-    Za_WI_strange_err = 0.00011;
-    Zv_WI_strange = 0.744037;
-    Zv_WI_strange_err = 2e-05;
-
-
+    Za_WI_strange= 0.773945; // 0.77395;
+    Za_WI_strange_err = 0.00010; // 0.00011;
     
+    Zv_WI_strange = 0.744104; // 0.744037;
+    Zv_WI_strange_err = 1.2e-5; // 2e-05;
+
+      
     ms_L= 0.014; ms_M= 0.015;
     mc_L=0.165; mc_M=0.175; mc_H=0.175; //mc_H is fake 
 

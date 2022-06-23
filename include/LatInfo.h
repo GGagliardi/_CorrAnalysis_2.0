@@ -43,6 +43,8 @@ class LatticeInfo {
   string CURRENT_TYPE;
   double ainv; //GeV
   double ainv_err; //GeV
+  double a_from_afp; //lattice spacing [ in fm ] on new ensembles using afp analysis
+  double a_from_afp_err; //error on lattice spacing [ in fm ] on the new ensembles determined from afp analysis
   double Za_fact;
   double Zm_fact;
   double Za_fact_err;

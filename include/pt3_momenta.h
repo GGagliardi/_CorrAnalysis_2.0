@@ -3,7 +3,6 @@
 
 
 
-
 #include "numerics.h"
 #include "random.h"
 #include "Corr_analysis.h"
@@ -60,7 +59,18 @@ class pt3_momenta {
     double e=0.0;
     Vfloat k=this->k();
     for(auto &k_x: k ) e += pow(k_x,2);
-    return 2.0*asinh(sqrt(e + pow(2*sinh( this->virt()/2.0)  ,2) )/2.0);
+    double eg = 2.0*asinh(0.5*sqrt(e));
+    return sqrt( eg*eg + pow(this->virt(),2));
+    //return 2.0*asinh(sqrt(e + pow(2*sinh( this->virt()/2.0)  ,2) )/2.0);
+  }
+
+  double Egamma_asinh() {
+     double e=0.0;
+     Vfloat k=this->k();
+     for(auto &k_x: k ) e += pow(k_x,2);
+     return 2.0*asinh(sqrt(e + pow(2*sinh( this->virt()/2.0)  ,2) )/2.0);
+
+
   }
 
 

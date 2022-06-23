@@ -3,29 +3,32 @@
 using namespace std;
 namespace plt = matplotlibcpp;
 
+
 const double M2PiPhys=pow(0.135,2);
-const double alpha = 1/137.04;
-const double e2 = alpha*4.0*M_PI;
+const double alpha_em = 1/137.04;
+const double e2 = alpha_em*4.0*M_PI;
 const int Nbranches = 8;
 const int Nboots= 100;
 bool UseJack=1;
 const int nboots=150;
-const int Njacks=24;
+const int Njacks=30;
 int sm_lev=1;
 const double e_f1 = 2.0/3.0; //electric charge of u-type quark
 const double e_f2 = -1.0/3.0; //electric charge of d-type quark
-bool Include_k0_noise=1;
+bool Include_k0_noise=1; //1
 bool VIRTUAL_RUN=1;
 bool Determine_contaminations=0;
-int SUB_ZERO_MOMENTUM_VIRTUAL_INT= 1;
+int SUB_ZERO_MOMENTUM_VIRTUAL_INT= 0; //1
 double SUB_ZERO_MOMENTUM_VIRTUAL=(double)SUB_ZERO_MOMENTUM_VIRTUAL_INT;
 int verbosity=1; //used in Fit Contaminations to print infos about minimization
-bool FIT_VIRTUAL_FF=1;
-bool USE_FITTED_FF=1;
-bool COMPUTE_l4_DECAY_RATE=1;
+bool FIT_VIRTUAL_FF=0; //1
+bool USE_FITTED_FF=0; //1
+bool COMPUTE_l4_DECAY_RATE=0; //1
 int VIRTUAL_ESTIMATOR_SET=3;
-const string Meson="K";
-const bool Include_FSES=true;
+bool FIND_k0_KIN=false;
+bool FIND_k0_kz0_KIN=false;
+const string Meson="K_def";
+const int Include_FSES=0;
 
 class ExpFit {
 
@@ -1048,7 +1051,7 @@ distr_t_list H_2_impr(const distr_t_list& H30,const distr_t_list& H03, const dis
 
  distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
- distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk ;
+ distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - Include_FSES*corr_3003*exp_mk ;
  distr_t_list H11_sub = H11_n - H11_0_n ;
  distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);
  
@@ -1124,7 +1127,7 @@ distr_t_list H_1_impr(const distr_t_list& H30,const distr_t_list& H03, const dis
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
   
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk;
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - Include_FSES*corr_3003*exp_mk;
   distr_t_list H11_sub = H11_n - H11_0_n ;
   distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);
 
@@ -1203,7 +1206,7 @@ distr_t_list FA_off_impr(const distr_t_list& H30,const distr_t_list& H03, const 
 
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
    
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk;
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - Include_FSES*corr_3003*exp_mk;
   distr_t_list H11_sub = H11_n - H11_0_n ;
   distr_t_list H33_sub = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);  
 
@@ -1276,7 +1279,7 @@ distr_t_list H_2_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
 
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk;
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - Include_FSES*corr_3003*exp_mk;
   distr_t_list H11_sub_temp = H11_n - H11_0_n ;
   distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);
   distr_t_list H33_sub = (H11_sub_temp+H33_sub_temp)/2.0;
@@ -1348,7 +1351,7 @@ distr_t_list H_1_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, con
   distr_t den = pow(Eg*kz,2)*Power(m,2)*(Eg-2.0*m);
   
   
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk;
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - Include_FSES*corr_3003*exp_mk;
   distr_t_list H11_sub_temp = H11_n - H11_0_n ;
   distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);
   distr_t_list H33_sub = (H11_sub_temp+H33_sub_temp)/2.0;
@@ -1422,7 +1425,7 @@ distr_t_list FA_off_mixed_diag(const distr_t_list& H30,const distr_t_list& H03, 
   distr_t_list H11_kz0_n = (H11_kz0-H11_0)/H11_0;
   distr_t_list H33_kz0_n = (H33_kz0-H33_0)/H11_0;
    
-  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - corr_3003*exp_mk;
+  distr_t_list H30_sub = H30_n - H03_n*(m-Eg)/(2.0*m-Eg) - Include_FSES*corr_3003*exp_mk;
   distr_t_list H11_sub_temp = H11_n - H11_0_n ;
   distr_t_list H33_sub_temp = H33_n - H33_0_n*(2.0*m*Eg -ksq-resc_FSES*pow(kz,2))/(2.0*m*Eg -ksq);
   distr_t_list H33_sub = (H11_sub_temp+H33_sub_temp)/2.0;
@@ -1471,6 +1474,7 @@ void Compute_form_factors() {
 
   
   string dir= "../3pt_data/"+Meson;
+  string dir_test = "../3pt_data/K_no_sm_new_seed";
   int Nens=0;
   vector<string> Ens_tag;
   
@@ -1521,9 +1525,12 @@ void Compute_form_factors() {
     FILE *stream_3pt;
     FILE *stream_2pt;
 
+    FILE *stream_2pt_test;
+
     struct header_virph header_3pt;
     struct header_virph header_2pt;
 
+    struct header_virph header_2pt_test;
    
     
 
@@ -1533,14 +1540,21 @@ void Compute_form_factors() {
     string Path2pt = dir+"/"+Ens_tag[i_ens]+"/conf.virtualph.dat2";
 
 
+    string Path2pt_test = dir_test+"/"+Ens_tag[i_ens]+"/conf.virtualph.dat2";
+
+
 
     stream_3pt= fopen(Path3pt.c_str(), "rb");
     stream_2pt= fopen(Path2pt.c_str(), "rb");
+
+    stream_2pt_test= fopen(Path2pt_test.c_str(), "rb");
 
 
 
     read_header_bin(stream_3pt, header_3pt);
     read_header_bin(stream_2pt, header_2pt);
+
+    read_header_bin(stream_2pt_test, header_2pt_test);
 
 
   
@@ -1673,7 +1687,7 @@ void Compute_form_factors() {
 	distr_t a_temp(UseJack);
 	int jackmax= (UseJack)?corr.Njacks:corr.Nboots;
 	for(int ijack=0;ijack<jackmax;ijack++) {
-	  if(UseJack) a_temp.distr.push_back( L_info.ainv + 0.0000001*L_info.ainv_err*(1.0/(sqrt(corr.Njacks-1)))*Gauss_RC());
+	  if(UseJack) a_temp.distr.push_back( L_info.ainv + L_info.ainv_err*(1.0/(sqrt(corr.Njacks-1)))*Gauss_RC());
 	  else a_temp.distr.push_back( L_info.ainv + L_info.ainv_err*Gauss_RC());
 	}
 	ainv.push_back(a_temp);
@@ -1711,11 +1725,19 @@ void Compute_form_factors() {
 
 	for(int icomb2pt=0; icomb2pt<ncomb2pt;icomb2pt++) {
 
-	  auto c = header_2pt.comb[icomb2pt];
+	  corr.Perform_Nt_t_average=1;
+	  corr.Reflection_sign=1;
+	  
+	  auto c = header_2pt.comb[icomb2pt];	  
 	  string tag=to_string(icomb2pt);
 
-	   
+	  distr_t_list corr_2pt_distr = corr.corr_t(Get_obs_2pt(stream_2pt,header_2pt,0,icomb2pt,0,sm_lev), "../data/form_factors/"+Meson+"/corr_2pt_"+Ens_tag[i_ens]+"_sm_lev"+to_string(sm_lev)+"_"+tag);
 
+	  distr_t_list corr_2pt_distr_test = corr.corr_t(Get_obs_2pt(stream_2pt_test,header_2pt_test,0,icomb2pt,0,sm_lev), "");
+
+	  //Print difference
+	  Print_To_File({}, { (corr_2pt_distr-corr_2pt_distr_test).ave(), (corr_2pt_distr-corr_2pt_distr_test).err()}, "../data/form_factors/"+Meson+"/corr_diff_2pt_"+Ens_tag[i_ens]+"_sm_lev"+to_string(sm_lev)+"_"+tag, "","");
+	  
 	  distr_t_list overlap_distr_list = corr.residue_t(Get_obs_2pt(stream_2pt,header_2pt,0,icomb2pt,0,0), "");
 
 	  distr_t_list overlap_smeared_distr_list = corr.residue_t(Get_obs_2pt(stream_2pt,header_2pt,0,icomb2pt,0,sm_lev), "../data/form_factors/"+Meson+"/overlap_"+Ens_tag[i_ens]+"_sm_lev"+to_string(sm_lev)+"_"+tag);
@@ -1732,7 +1754,18 @@ void Compute_form_factors() {
 	  m_fit_distr.push_back(corr.Fit_distr(m_distr_list[icomb2pt]));
 
 	  
-
+	  //print 2pt info
+	  cout<<"#####################"<<endl;
+	  cout<<"icomb_2pt: "<<icomb2pt<<endl;
+	  cout<<"m1: "<<c.mu1<<endl;
+	  cout<<"m2: "<<c.mu2<<endl;
+	  cout<<"off: "<<c.off<<endl;
+	  cout<<"th_0: "<<c.th0[0]<<", "<<c.th0[1]<<", "<<c.th0[2]<<endl;
+	  cout<<"th_s: "<<c.ths[0]<<", "<<c.ths[1]<<", "<<c.ths[2]<<endl;
+	  cout<<"th_t: "<<c.tht[0]<<", "<<c.tht[1]<<", "<<c.tht[2]<<endl;
+	  
+	  cout<<"#####################"<<endl;
+	  
 	  if(icomb2pt==0) {
 	    f_p.push_back(fp_fit_distr[0]); m_p.push_back(m_fit_distr[0]);
 	    //read RC
@@ -1801,19 +1834,24 @@ void Compute_form_factors() {
 	  //####################################################
 
       
-	  int icomb_k0= Get_comb_k0(header_3pt, icomb3pt);
+	  int icomb_k0= 0;
+	  if(FIND_k0_KIN) icomb_k0= Get_comb_k0(header_3pt, icomb3pt);
 	  int symmetric_comb=Get_symmetric_comb(header_3pt, icomb3pt);
-	  int symmetric_comb_k0 = Get_symmetric_comb(header_3pt, icomb_k0);
-	  int icomb_kz0_k2, symmetric_comb_kz0_k2;
-	  if(VIRTUAL_RUN) {
+	  int symmetric_comb_k0 = 0;
+	  if(FIND_k0_KIN) symmetric_comb_k0 = Get_symmetric_comb(header_3pt, icomb_k0);
+	  int icomb_kz0_k2=0;
+	  int symmetric_comb_kz0_k2=0;
+	  if(VIRTUAL_RUN && FIND_k0_kz0_KIN) {
 	  icomb_kz0_k2 = Get_comb_k0_same_off(header_3pt, icomb3pt);
 	  symmetric_comb_kz0_k2 = Get_symmetric_comb(header_3pt, icomb_kz0_k2);
 	  }
 	  else { icomb_kz0_k2 = -1; symmetric_comb_kz0_k2=-1;}
 	  
-	  int pt2_k0p0 = Get_2pt_k0p0(header_2pt, c.mu1, c.mu2);
+	  int pt2_k0p0 = 0;
+	  if(FIND_k0_KIN) Get_2pt_k0p0(header_2pt, c.mu1, c.mu2);
 	  int pt2_p = Get_2pt_p(header_2pt, c.i0, c.is);
 	  double Egamma = mom3_l.mom[i_ens][icomb3pt].Egamma();
+	  double Egamma_ash = mom3_l.mom[i_ens][icomb3pt].Egamma_asinh();
 	  double xg = mom3_l.mom[i_ens][icomb3pt].x_gamma(m_fit_distr[pt2_k0p0]).ave();
 	  double xg_off =  mom3_l.mom[i_ens][icomb3pt].x_gamma_off(m_fit_distr[pt2_k0p0]).ave();
 	  double offsh= mom3_l.mom[i_ens][icomb3pt].virt();
@@ -1832,18 +1870,23 @@ void Compute_form_factors() {
 	  cout<<"nconfs: "<<Get_number_of_configs_3pt(stream_3pt, header_3pt)<<endl;
 	  cout<<"c.mu1: "<<c.mu1<<endl;
 	  cout<<"c.mu2: "<<c.mu2<<endl;
+	  if(FIND_k0_KIN) {
 	  cout<<"icomb_k0: "<<icomb_k0<<" th_t: "<<header_3pt.comb[icomb_k0].tht[2]<<endl;
-	  if(VIRTUAL_RUN) {
+	  }
+	  if(VIRTUAL_RUN && FIND_k0_kz0_KIN) {
 	  cout<<"icomb_kz0_k2: "<<icomb_kz0_k2<<" th_t: "<<header_3pt.comb[icomb_kz0_k2].tht[2]<<", off: "<<header_3pt.comb[icomb_kz0_k2].off<<endl;
 	  }
 	  cout<<"icomb_symm: "<<symmetric_comb<<" th_t: "<<header_3pt.comb[symmetric_comb].tht[2]<<endl;
+	  if(FIND_k0_KIN) {
 	  cout<<"icomb_symm_k0: "<<symmetric_comb_k0<<" th_t: "<<header_3pt.comb[symmetric_comb_k0].tht[2]<<endl;
+	  }
 	  if(VIRTUAL_RUN) {
 	  cout<<"icomb_symm_kz0_k2: "<<symmetric_comb_kz0_k2<<" th_t: "<<header_3pt.comb[symmetric_comb_kz0_k2].tht[2]<<", off= "<<header_3pt.comb[symmetric_comb_kz0_k2].off<<endl;
 	  }
 	  cout<<"fp: "<<fp_fit_distr[pt2_k0p0].ave()<<"("<<fp_fit_distr[pt2_k0p0].err()<<")"<<endl;
 	  cout<<"k_z: "<<mom3_l.mom[i_ens][icomb3pt].k()[2]<<endl;
 	  cout<<"Egamma["<<icomb3pt<<"] :"<<Egamma<<endl;
+	  cout<<"Egamma asinh["<<icomb3pt<<"] :"<<Egamma_ash<<endl;
 	  cout<<"EgammaT["<<icomb3pt<<"] :"<<Egamma_T<<endl;
 	  cout<<"Mass: "<<meson_mass<<"("<<m_fit_distr[pt2_k0p0].err()<<")"<<endl;
 	  cout<<"fp^3pt*Mp: "<<(fp_fit_distr[pt2_k0p0]*(1.0/Zv_distr[0])*m_fit_distr[pt2_k0p0]).ave()<<" +- "<<(fp_fit_distr[pt2_k0p0]*(1.0/Zv_distr[0])*m_fit_distr[pt2_k0p0]).err()<<endl;
@@ -1874,7 +1917,6 @@ void Compute_form_factors() {
 
 
 	  //loop over alpha and mu
-        
 	  for(int alpha=0; alpha<4;alpha++) {
 	    for(int mu=0; mu<4;mu++) {
 
@@ -1885,23 +1927,32 @@ void Compute_form_factors() {
 	      corr.Reflection_sign = -1;
    
 	      distr_no_symm_V[alpha][mu] =e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 1, icomb3pt, alpha, mu, "V", sm_lev), "");
+	      if(FIND_k0_KIN) {
 	      distr_no_symm_V_k0[alpha][mu] =e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 1,icomb_k0, alpha, mu, "V", sm_lev), "");
+	      }
 	      distr_V[alpha][mu] = distr_no_symm_V[alpha][mu] + e_f2*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 1, symmetric_comb, alpha, mu, "V", sm_lev), "");
+	      if(FIND_k0_KIN) {
 	      distr_V_k0[alpha][mu] = distr_no_symm_V_k0[alpha][mu]  + e_f2*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, 1, symmetric_comb_k0, alpha, mu, "V", sm_lev), "");
+	      }
 
 	      //######################################################################
 
 
 	      //compute_axial_correlators C_A_alpha^\mu for each alpha and mu
 	      //######################################################################
+	      
 	      corr.Reflection_sign = 1;
 	  
 	      int Im_Re= 0; double parity=1.0; double sign=1;
 	      if( (alpha==0 || mu==0) && (alpha != 0 || mu != 0)  ) {Im_Re=1; corr.Reflection_sign=-1;sign=1; parity=-1;}
 	      distr_no_symm_A[alpha][mu] = parity*e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, Im_Re, icomb3pt, alpha, mu, "A", sm_lev), "");
+	      if(FIND_k0_KIN) {
 	      distr_no_symm_A_k0[alpha][mu] =parity*e_f1*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt,Im_Re, icomb_k0, alpha, mu, "A", sm_lev), "");
+	      }
 	      distr_A[alpha][mu] = distr_no_symm_A[alpha][mu]  - parity*sign*e_f2*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, Im_Re, symmetric_comb, alpha, mu, "A", sm_lev), "");
+	      if(FIND_k0_KIN) {
 	      distr_A_k0[alpha][mu] = distr_no_symm_A_k0[alpha][mu]   - parity*sign*e_f2*corr.corr_t(Get_obs_3pt(stream_3pt, header_3pt, Im_Re, symmetric_comb_k0, alpha, mu, "A", sm_lev), "");
+	      }
 
 
 	      
@@ -1929,23 +1980,17 @@ void Compute_form_factors() {
 	      Print_To_File({}, {distr_A[alpha][mu].ave(), distr_A[alpha][mu].err(), distr_V[alpha][mu].ave(), distr_V[alpha][mu].err()}, "../data/form_factors/"+Meson+"/C_"+Ens_tag[i_ens]+"/icomb_"+to_string(icomb3pt)+"_alpha"+to_string(alpha)+"_mu"+to_string(mu)+"_sm_lev_"+to_string(sm_lev)+".dat","", "#");
 
 
-
-
+	      
 	      //COMPUTE THE TENSOR H_W_alpha^\mu
 	      //########################################################################
 
-	      /*
-	      distr_t_list distr_no_symm_A_exp= (m_distr_list[pt2_p]/sqrt_overlap_distr[pt2_p])*distr_t_list::f_of_distr_list(Exp_lat2, m_distr_list[pt2_p])*(distr_no_symm_A[alpha][mu]*exp_Nt_t); 
-	      distr_t_list distr_no_symm_V_exp=  (m_distr_list[pt2_p]/sqrt_overlap_distr[pt2_p])*distr_t_list::f_of_distr_list(Exp_lat2, m_distr_list[pt2_p])*(distr_no_symm_V[alpha][mu]*exp_Nt_t);
-	      distr_A_exp[alpha][mu] = (1.0*m_distr_list[pt2_p]/sqrt_overlap_distr[pt2_p])*distr_t_list::f_of_distr_list(Exp_lat2, m_distr_list[pt2_p])*(distr_A[alpha][mu]*exp_Nt_t);
-	      distr_A_exp_k0[alpha][mu] = (1.0*m_distr_list[pt2_k0p0]/sqrt_overlap_distr[pt2_k0p0])*distr_t_list::f_of_distr_list(Exp_lat2, m_distr_list[pt2_k0p0])*(distr_A_k0[alpha][mu]); 
-	      distr_V_exp[alpha][mu] =  (1.0*m_distr_list[pt2_p]/sqrt_overlap_distr[pt2_p])*distr_t_list::f_of_distr_list(Exp_lat2, m_distr_list[pt2_p])*(distr_V[alpha][mu]*exp_Nt_t);
-	      */
 
 	      distr_t_list distr_no_symm_A_exp= (m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p],Nt)*(distr_no_symm_A[alpha][mu]*exp_Nt_t); 
 	      distr_t_list distr_no_symm_V_exp=  (m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p],Nt)*(distr_no_symm_V[alpha][mu]*exp_Nt_t);
 	      distr_A_exp[alpha][mu] = (2.0*m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p],Nt)*(distr_A[alpha][mu]*exp_Nt_t);
-	      distr_A_exp_k0[alpha][mu] = (1.0*m_fit_distr[pt2_k0p0]/sqrt_overlap_fit_distr[pt2_k0p0])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_k0p0],Nt)*(distr_A_k0[alpha][mu]); 
+	      if(FIND_k0_KIN) {
+	      distr_A_exp_k0[alpha][mu] = (1.0*m_fit_distr[pt2_k0p0]/sqrt_overlap_fit_distr[pt2_k0p0])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_k0p0],Nt)*(distr_A_k0[alpha][mu]);
+	      }
 	      distr_V_exp[alpha][mu] =  (2.0*m_fit_distr[pt2_p]/sqrt_overlap_fit_distr[pt2_p])*distr_t_list::f_of_distr(Exp_lat, m_fit_distr[pt2_p],Nt)*(distr_V[alpha][mu]*exp_Nt_t);
 
 	      //PRINT TO FILE THE TENSOR H_alpha^mu
@@ -1959,9 +2004,9 @@ void Compute_form_factors() {
 	    }
 	  }
 
+	  exit(-1);
 	 
-           
-	       
+	 	      
 	  //COMPUTE R and bar_R and form factors
 	  distr_t_list bar_R_A_distr, bar_R_V_distr, R_A_distr, R_V_distr, bar_R_A_distr_exp;
 
@@ -2279,46 +2324,115 @@ void Compute_form_factors() {
 	
       
 	vector<function<double(double xk, double xq)>> H1_VMD, H2_VMD, FA_off_VMD, FV_off_VMD, H1_ChPT, H2_ChPT, FA_off_ChPT, FV_off_ChPT;
+	//define jack_distr for fit parameters
+	//polynomial fit
+	distr_t a0_H1, ak_H1, aq_H1; //H1
+	distr_t a0_H2, ak_H2, aq_H2; //H2
+	distr_t a0_FA, ak_FA, aq_FA; //FA
+	distr_t a0_FV, ak_FV, aq_FV; //FV
+	//pole-like fit
+	distr_t A_H1, rq_H1, rk_H1; //H1
+	distr_t A_H2, rq_H2, rk_H2; //H2
+	distr_t A_FA, rq_FA, rk_FA; //FA
+	distr_t A_FV, rq_FV, rk_FV; //FV
+	
 	cout<<"####Fitting form factor H1  VMD Ansatz.....####"<<endl;
 	cout<<"USE_FITTED_FF: "<<USE_FITTED_FF;
 	if(!USE_FITTED_FF) cout<<"time: "<<t<<endl;
 	else cout<<endl;
-	Fit_virtual_FF_VMD(H1_VMD, H1_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "H1", "A", Tag, Meson, UseJack, USE_FITTED_FF, t);// VECTOR MESON DOMINANCE FIT
+	//
+	Fit_virtual_FF_VMD(H1_VMD, A_H1, rk_H1, rq_H1,  H1_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "H1", "A", Tag, Meson, UseJack, USE_FITTED_FF, t);// VECTOR MESON DOMINANCE FIT
 	cout<<"####Fitting form factor H2  VMD Ansatz.....####"<<endl;
 	cout<<"USE_FITTED_FF: "<<USE_FITTED_FF;
 	if(!USE_FITTED_FF) cout<<"time: "<<t<<endl;
 	else cout<<endl;
-	Fit_virtual_FF_VMD(H2_VMD,H2_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,Tmom, "H2", "A", Tag, Meson, UseJack,  USE_FITTED_FF, t);// VECTOR MESON DOMINANCE FIT
+	//
+	Fit_virtual_FF_VMD(H2_VMD, A_H2, rk_H2, rq_H2 , H2_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,Tmom, "H2", "A", Tag, Meson, UseJack,  USE_FITTED_FF, t);// VECTOR MESON DOMINANCE FIT
 	cout<<"####Fitting form factor FA  VMD Ansatz.....####"<<endl;
 	cout<<"USE_FITTED_FF: "<<USE_FITTED_FF;
 	if(!USE_FITTED_FF) cout<<"time: "<<t<<endl;
 	else cout<<endl;
-	Fit_virtual_FF_VMD(FA_off_VMD,FA_off_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp, Tmom, "FA", "A", Tag, Meson, UseJack,  USE_FITTED_FF, t);// VECTOR MESON DOMINANCE FIT
+	//
+	Fit_virtual_FF_VMD(FA_off_VMD, A_FA, rk_FA, rq_FA, FA_off_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp, Tmom, "FA", "A", Tag, Meson, UseJack,  USE_FITTED_FF, t);// VECTOR MESON DOMINANCE FIT
 	cout<<"####Fitting form factor FV  VMD Ansatz.....####"<<endl;
 	cout<<"USE_FITTED_FF: "<<USE_FITTED_FF;
 	if(!USE_FITTED_FF) cout<<"time: "<<t<<endl;
 	else cout<<endl;
-	Fit_virtual_FF_VMD(FV_off_VMD,FV_off_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "FV", "V", Tag, Meson, UseJack,  USE_FITTED_FF, t);// VECTOR MESON DOMINANCE FIT
+	//
+	Fit_virtual_FF_VMD(FV_off_VMD, A_FV, rk_FV, rq_FV, FV_off_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "FV", "V", Tag, Meson, UseJack,  USE_FITTED_FF, t);// VECTOR MESON DOMINANCE FIT
 	cout<<"####Fitting form factor H1  ChPT Ansatz.....####"<<endl;
 	cout<<"USE_FITTED_FF: "<<USE_FITTED_FF;
 	if(!USE_FITTED_FF) cout<<"time: "<<t<<endl;
 	else cout<<endl;
-	Fit_virtual_FF_ChPT(H1_ChPT,H1_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "H1", "A", Tag, Meson, UseJack,  USE_FITTED_FF, t);// CHPT FIT
+	//
+	Fit_virtual_FF_ChPT(H1_ChPT, a0_H1, ak_H1, aq_H1, H1_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "H1", "A", Tag, Meson, UseJack,  USE_FITTED_FF, t);// CHPT FIT
 	cout<<"####Fitting form factor H2  ChPT Ansatz.....####"<<endl;
 	cout<<"USE_FITTED_FF: "<<USE_FITTED_FF;
 	if(!USE_FITTED_FF) cout<<"time: "<<t<<endl;
 	else cout<<endl;
-	Fit_virtual_FF_ChPT(H2_ChPT,H2_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "H2", "A", Tag, Meson, UseJack,  USE_FITTED_FF, t);// CHPT FIT
+	//
+	Fit_virtual_FF_ChPT(H2_ChPT, a0_H2, ak_H2, aq_H2, H2_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "H2", "A", Tag, Meson, UseJack,  USE_FITTED_FF, t);// CHPT FIT
 	cout<<"####Fitting form factor FA  ChPT Ansatz.....####"<<endl;
 	cout<<"USE_FITTED_FF: "<<USE_FITTED_FF;
 	if(!USE_FITTED_FF) cout<<"time: "<<t<<endl;
 	else cout<<endl;
-	Fit_virtual_FF_ChPT(FA_off_ChPT,FA_off_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "FA", "A", Tag, Meson, UseJack,  USE_FITTED_FF, t);// CHPT FIT
+	//
+	Fit_virtual_FF_ChPT(FA_off_ChPT, a0_FA, ak_FA, aq_FA, FA_off_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "FA", "A", Tag, Meson, UseJack,  USE_FITTED_FF, t);// CHPT FIT
 	cout<<"####Fitting form factor FV  ChPT Ansatz.....####"<<endl;
 	cout<<"USE_FITTED_FF: "<<USE_FITTED_FF;
 	if(!USE_FITTED_FF) cout<<"time: "<<t<<endl;
 	else cout<<endl;
-	Fit_virtual_FF_ChPT(FV_off_ChPT,FV_off_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "FV", "V", Tag, Meson, UseJack,  USE_FITTED_FF, t);// CHPT FIT
+	//
+	Fit_virtual_FF_ChPT(FV_off_ChPT, a0_FV, ak_FV, aq_FV, FV_off_temp_list, f_p_temp, m_p_temp, Za_ov_Zv_temp,  Tmom, "FV", "V", Tag, Meson, UseJack,  USE_FITTED_FF, t);// CHPT FIT
+
+
+	//print correlation matrix of fit parameters
+
+	//pole-like fit
+	VVfloat Corr_mat_pole_like;
+	vector<distr_t> fit_pars_pole_like({ A_H1, rk_H1, rq_H1, A_H2, rk_H2, rq_H2, A_FA, rk_FA, rq_FA, A_FV, rk_FV, rq_FV});
+	int N= (signed)fit_pars_pole_like.size();
+
+	//set dimensions of Corr_mat_pole_like   ( NxN matrix )
+	Corr_mat_pole_like.resize(N);
+	for( auto &corr_mat_row: Corr_mat_pole_like) corr_mat_row.resize(N);
+
+	cout<<"Printing correlation matrix for pole-like fit"<<endl;
+	for(int i=0; i < N; i++) {
+	  cout<<"( "<<endl;
+	  for(int j=0; j < N; j++) {
+	    Corr_mat_pole_like[i][j] = (fit_pars_pole_like[i]%fit_pars_pole_like[j])/( sqrt( ( fit_pars_pole_like[i]%fit_pars_pole_like[i])*( fit_pars_pole_like[j]%fit_pars_pole_like[j]         )));
+	    cout<<Corr_mat_pole_like[i][j]<<", ";
+	  }
+	  cout<<" )"<<endl;
+	}
+	cout<<"done!"<<endl;
+	//polynomial fit
+	VVfloat Corr_mat_polynomial;
+	vector<distr_t> fit_pars_polynomial({ a0_H1, ak_H1, aq_H1, a0_H2, ak_H2, aq_H2, a0_FA, ak_FA, aq_FA, a0_FV, ak_FV, aq_FV});
+	N= (signed)fit_pars_polynomial.size();
+
+	//set dimensions of Corr_mat_pole_like   ( NxN matrix )
+	Corr_mat_polynomial.resize(N);
+	for( auto &corr_mat_row: Corr_mat_polynomial) corr_mat_row.resize(N);
+	cout<<"Printing correlation matrix for polynomial fit"<<endl;
+	for(int i=0; i < N; i++) {
+	  cout<<"( "<<endl;
+	  for(int j=0; j < N; j++) {
+	    Corr_mat_polynomial[i][j] = (fit_pars_polynomial[i]%fit_pars_polynomial[j])/( sqrt( ( fit_pars_polynomial[i]%fit_pars_polynomial[i])*( fit_pars_polynomial[j]%fit_pars_polynomial[j]         )));
+	    cout<<Corr_mat_polynomial[i][j]<<", ";
+	  }
+	  cout<<" )"<<endl;
+	}
+	cout<<"done!"<<endl;
+
+
+	
+
+
+	
+
+	
 
 
 	

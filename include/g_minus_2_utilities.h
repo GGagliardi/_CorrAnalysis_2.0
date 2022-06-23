@@ -29,6 +29,7 @@ double phi_der_for_back(double z, int mode);
 void Generate_free_corr_data();
 void Compute_SD_window_Free();
 void Compute_free_corr(double am, int Tmax);
+double free_vector_corr_cont(int Nc, double am, double t);
 
 class LL_functions{
 
@@ -98,7 +99,7 @@ public:
   double Amplitude(double k, double L, double m_rho, double g_rho_pipi, double Mpi, double kappa);
   void Find_pipi_energy_lev(double L, double m_rho, double g_rho_pipi, double Mpi, double kappa,  Vfloat &res);
   double V_pipi(double t, double L, double m_rho, double g_rho_pipi, double Mpi, double kappa, Vfloat &Knpp);
-  double V_pipi_infL(double t, double m_rho_infL, double g_rho_pipi_infL, double kappa_inf_L, double Mpi_infL);
+  double V_pipi_infL(double t, double m_rho_infL, double g_rho_pipi_infL, double Mpi_infL, double kappa);
   int Nres;
   Vfloat sx_intervals;
   Vfloat Luscher_zeroes;
