@@ -25,9 +25,9 @@ const int Upper_Limit_Time_Integral_charm= 300;
 const int Upper_Limit_Time_Integral_light=300;
 const double fm_to_inv_Gev= 1.0/0.197327;
 const bool verbosity=1;
-const double Nresonances= 2; //50; //50; //25; //2; //normally you used 12
-const int Luscher_num_zeroes= 4; //55; // 55; //30; // 4; //normally you used  20
-const int npts_spline= 10; //1000; //10; //normally you used 1000 
+const double Nresonances= 50; //50; //50; //25; //2; //normally you used 12
+const int Luscher_num_zeroes= 55; //55; // 55; //30; // 4; //normally you used  20
+const int npts_spline= 1000; //1000; //10; //normally you used 1000 
 bool Use_Mpi_OS=false;
 bool Include_light_disco= true;
 bool Include_strange_disco= true;
@@ -74,9 +74,9 @@ bool Use_Za_Zv_from_charm_run = false;
 bool Use_Za_Zv_from_strange_run_in_light_corr=true;
 bool Use_Extrapolated_Za_Zv_strange = true;
 bool Use_Extrapolated_Za_Zv_charm= true;
-string Extrapolation_strange_mode="phi";
+string Extrapolation_strange_mode="etas";
 string ELM_mass_strange = "phi";
-string Extrapolation_charm_mode= "Jpsi";
+string Extrapolation_charm_mode= "etac";
 string ELM_mass_charm = "Jpsi";
 const int pert_corr_charm_on_off= 1;
 const int pert_corr_strange_on_off=1;
@@ -144,6 +144,9 @@ void Gm2() {
   if(Mod=="FREE_THEORY") { Compute_SD_window_Free(); exit(-1);}
 
   if(Gen_free_corr_data) {Generate_free_corr_data(); exit(-1);}
+
+
+  Plot_Energy_windows_K();
 
 
   //create directories
@@ -907,7 +910,6 @@ void Gm2() {
 
  
 
-  exit(-1);
   //#####################################################################################################################
 
 
@@ -950,7 +952,7 @@ void Gm2() {
 
 
 
-  exit(-1);
+ 
 
   //####################################### GET AUTOCORRELATION FOR VECTOR CORRELATOR #####################################
   for(int ins=0;ins<Nens_light;ins++) {
@@ -3810,8 +3812,7 @@ void Gm2() {
 
   cout<<"charm quark correlator analyzed!"<<endl;
 
-  exit(-1);
-
+ 
   //light
   channel="l";
   
@@ -6389,47 +6390,62 @@ void Gm2() {
   //#####################################################################################################################
   //#####################################################################################################################
 
-
+  distr_t ret_distr_SD_light(UseJack), ret_distr_W_light(UseJack); 
   //full disco light
-  Perform_Akaike_fits(agm2_disco_light, agm2_disco_light, a_A, a_B, a_C, a_D, L_list_disco, a_distr_list_disco_light, Mpi_fit_disco, fp_fit_disco, disco_light_Tags, UseJack, Njacks, Nboots, "total_disco", "light", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest,0,0, -10.0, LL, 0.0);
+  //Perform_Akaike_fits(agm2_disco_light, agm2_disco_light, a_A, a_B, a_C, a_D, L_list_disco, a_distr_list_disco_light, Mpi_fit_disco, fp_fit_disco, disco_light_Tags, UseJack, Njacks, Nboots, "total_disco", "light", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest,0,0, -10.0, LL, 0.0);
 
 
   allow_a4_and_log=true;
   mass_extr_list = {"on", "off"};
-  single_fit_list = {"off", "tm", "OS"};
+  single_fit_list = {"off"};
   a4_list = {"off", "on", "tm", "OS"};
-  FSEs_list = {"tm", "off", "on", "comb_GS"}; //add comb_GS
+  FSEs_list = {"off", "comb_GS"}; //add comb_GS
   a2_list = {"on", "off", "tm", "OS"};
 
   //light connected
     
 
   //NO ELM
-  Perform_Akaike_fits(agm2_light_SD, agm2_light_SD_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "SD_win", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, 0.0);
+  Perform_Akaike_fits(agm2_light_SD, agm2_light_SD_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "SD_win", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, 0.0, ret_distr_SD_light);
+
+  vector<distr_t> ret_distr_SD_tmins;
+
+  FSEs_list = {"off"};
 
   for(int tmins_id=0;tmins_id<(signed)tmins.size(); tmins_id++) {
 
-    Perform_Akaike_fits(agm2_light_SD_tmins_distr_list[tmins_id], agm2_light_SD_OS_tmins_distr_list[tmins_id], a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "SD_win_tmins_"+to_string_with_precision(tmins[tmins_id],4), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, tmins[tmins_id]*fm_to_inv_Gev);
+    ret_distr_SD_tmins.emplace_back(UseJack);
+    Perform_Akaike_fits(agm2_light_SD_tmins_distr_list[tmins_id], agm2_light_SD_OS_tmins_distr_list[tmins_id], a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "SD_win_tmins_"+to_string_with_precision(tmins[tmins_id],4), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, tmins[tmins_id]*fm_to_inv_Gev, ret_distr_SD_tmins[tmins_id]);
 
   }
 
 
+  //Extrapolate distr_SD_tmins to zero
+  vector<distr_t> tmins2_distr;
+  for(int tt=0;tt<(signed)tmins.size();tt++) {
+    tmins2_distr.emplace_back(UseJack);
+    for(int ijack=0; ijack<Njacks;ijack++) {
+      tmins2_distr[tt].distr.push_back( pow(tmins[tt],2)*(1.0 + GM()*1e-14));
+    }
+  }
+  Obs_extrapolation_meson_mass(ret_distr_SD_tmins, tmins2_distr, 0.0, "../data/gm2/light", "tmins_cont_lim", UseJack, "FIT");
   
 
 
  
-  FSEs_list = {"tm", "off", "on", "comb_GS"};
+  FSEs_list = {"comb_GS"};
   n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3)};
   //ELM
-  Perform_Akaike_fits(agm2_light_W_ELM, agm2_light_W_ELM_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "W_win_ELM", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, 0.0);
+  //Perform_Akaike_fits(agm2_light_W_ELM, agm2_light_W_ELM_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "W_win_ELM", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, 0.0);
   //NO ELM
-  Perform_Akaike_fits(agm2_light_W, agm2_light_W_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "W_win", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, 0.0);
+  Perform_Akaike_fits(agm2_light_W, agm2_light_W_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "W_win", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, 0.0, ret_distr_W_light);
 
   //without B96
 
   distr_t_list agm2_light_W_red(UseJack), agm2_light_W_OS_red(UseJack), a_distr_list_red(UseJack), Mpi_fit_red(UseJack), fp_fit_red(UseJack);
   Vfloat L_list_red;
   vector<string> V_light_Tag_red;
+  distr_t ret_distr_W_light_red(UseJack);
 
   for(int iens=0; iens<(signed)V_light_1.Tag.size(); iens++) {
 
@@ -6482,7 +6498,7 @@ void Gm2() {
   FSEs_list = {"off"};
   
 
-  Perform_Akaike_fits(agm2_light_W_red, agm2_light_W_OS_red, a_A, a_B, a_C, a_D, L_list_red, a_distr_list_red, Mpi_fit_red,fp_fit_red, V_light_Tag_red, UseJack, Njacks, Nboots, "W_win_red", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, 0.0);
+  Perform_Akaike_fits(agm2_light_W_red, agm2_light_W_OS_red, a_A, a_B, a_C, a_D, L_list_red, a_distr_list_red, Mpi_fit_red,fp_fit_red, V_light_Tag_red, UseJack, Njacks, Nboots, "W_win_red", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, 0.0, ret_distr_W_light_red);
 
  
     
@@ -6510,36 +6526,39 @@ void Gm2() {
   //#####################################################################################################################
   //#####################################################################################################################
 
-  FSEs_list = {"off", "on", "tm"};
+  FSEs_list = {"off"};
   a4_list={"off", "on", "tm", "OS"};
   mass_extr_list={"off", "on"};
-  single_fit_list = {"off", "tm", "OS"};
+  single_fit_list = {"off"};
   a2_list = {"on", "off", "tm", "OS"};
+
+
+  distr_t ret_distr_SD_strange(UseJack), ret_distr_W_strange(UseJack);
 
    
   //W strange
   //ELM
-  Perform_Akaike_fits(agm2_strange_W_ELM_Extr, agm2_strange_W_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "W_win_ELM_"+Extrapolation_strange_mode, "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0, 0, 27.0, LL, 0.0);
+  //Perform_Akaike_fits(agm2_strange_W_ELM_Extr, agm2_strange_W_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "W_win_ELM_"+Extrapolation_strange_mode, "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0, 0, 27.0, LL, 0.0);
   //NO ELM
-  Perform_Akaike_fits(agm2_strange_W_Extr, agm2_strange_W_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "W_win_"+Extrapolation_strange_mode, "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0, 0, 27.0, LL, 0.0);
+  Perform_Akaike_fits(agm2_strange_W_Extr, agm2_strange_W_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "W_win_"+Extrapolation_strange_mode, "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0, 0, 27.0, LL, 0.0, ret_distr_W_strange);
 
 
   n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(-1,0), make_pair(0,-1), make_pair(-1,-1)};
     
   //SD strange
   //ELM
-  Perform_Akaike_fits(agm2_strange_SD_ELM_Extr, agm2_strange_SD_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_ELM_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0,0, 9.0, LL, 0.0);
+  //Perform_Akaike_fits(agm2_strange_SD_ELM_Extr, agm2_strange_SD_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_ELM_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0,0, 9.0, LL, 0.0);
   //NO ELM
-  Perform_Akaike_fits(agm2_strange_SD_Extr, agm2_strange_SD_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0,0, 9.0, LL, 0.0);
+  Perform_Akaike_fits(agm2_strange_SD_Extr, agm2_strange_SD_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0,0, 9.0, LL, 0.0, ret_distr_SD_strange);
 
 
   n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3)};
 
   //total strange
   //ELM
-  Perform_Akaike_fits(agm2_strange_No_ELM_Extr, agm2_strange_OS_No_ELM_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "total_ELM_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 50.0, LL, 0.0);
+  //Perform_Akaike_fits(agm2_strange_No_ELM_Extr, agm2_strange_OS_No_ELM_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "total_ELM_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 50.0, LL, 0.0);
   //NO ELM
-  Perform_Akaike_fits(agm2_strange_Extr, agm2_strange_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "total_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 50.0, LL, 0.0);
+  //Perform_Akaike_fits(agm2_strange_Extr, agm2_strange_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "total_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 50.0, LL, 0.0);
 
   //#####################################################################################################################
   //#####################################################################################################################
@@ -6565,37 +6584,39 @@ void Gm2() {
 
   a2_list ={"on", "tm", "OS"};
   FSEs_list ={"off"};
-  mass_extr_list={"off", "on"};
-  single_fit_list={"off", "tm", "OS"};
+  mass_extr_list={"off"};
+  single_fit_list={"off"};
   a4_list ={"on", "off", "tm", "OS"};
   allow_a4_and_log=true;
   allow_only_finest=true;
 
   n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3)};
 
+  distr_t ret_distr_SD_charm(UseJack), ret_distr_W_charm(UseJack);
+
  
     
   //W charm
   //ELM
-  Perform_Akaike_fits(agm2_charm_W_ELM_Extr, agm2_charm_W_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "W_win_ELM_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 0,0, 2.5, LL, 0.0);
+  //Perform_Akaike_fits(agm2_charm_W_ELM_Extr, agm2_charm_W_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "W_win_ELM_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 0,0, 2.5, LL, 0.0);
   //NO ELM
-  Perform_Akaike_fits(agm2_charm_W_Extr, agm2_charm_W_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "W_win_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 2.5, LL, 0.0);
+  Perform_Akaike_fits(agm2_charm_W_Extr, agm2_charm_W_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "W_win_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 2.5, LL, 0.0, ret_distr_W_charm);
 
 
   n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(-1,0), make_pair(0,-1), make_pair(-1,-1)};
   //SD charm
   //ELM
-  Perform_Akaike_fits(agm2_charm_SD_ELM_Extr, agm2_charm_SD_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_ELM_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 11.5, LL, 0.0);
+  //Perform_Akaike_fits(agm2_charm_SD_ELM_Extr, agm2_charm_SD_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_ELM_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 11.5, LL, 0.0);
   //NO ELM
-  Perform_Akaike_fits(agm2_charm_SD_Extr, agm2_charm_SD_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 0,0, 11.5, LL, 0.0);
+  Perform_Akaike_fits(agm2_charm_SD_Extr, agm2_charm_SD_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 0,0, 11.5, LL, 0.0, ret_distr_SD_charm);
 
   
 
   //total charm
   //ELM
-  Perform_Akaike_fits(agm2_charm_Extr, agm2_charm_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "total_ELM_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 14.0, LL, 0.0);
+  //Perform_Akaike_fits(agm2_charm_Extr, agm2_charm_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "total_ELM_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 14.0, LL, 0.0);
   //NO ELM
-  Perform_Akaike_fits(agm2_charm_No_ELM_Extr, agm2_charm_OS_No_ELM_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "total_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 14.0, LL, 0.0);
+  //Perform_Akaike_fits(agm2_charm_No_ELM_Extr, agm2_charm_OS_No_ELM_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "total_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 14.0, LL, 0.0);
     
 
   allow_only_finest=false;
@@ -6623,6 +6644,9 @@ void Gm2() {
   //#####################################################################################################################
 
 
+  distr_t ret_distr_SD_disco(UseJack), ret_distr_W_disco(UseJack);
+
+
   if(Include_light_disco) {
 
 
@@ -6636,26 +6660,55 @@ void Gm2() {
 
 
     //W disco light
-    Perform_Akaike_fits(comb_disco_W, comb_disco_W, a_A, a_B, a_C, a_D, vols_disco, a_lat, Mpi_fit_disco, fp_fit_disco, comb_Tags, UseJack, Njacks, Nboots, "W_win_disco", "total_disco", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 0,0, -0.9, LL, 0.0);
+    Perform_Akaike_fits(comb_disco_W, comb_disco_W, a_A, a_B, a_C, a_D, vols_disco, a_lat, Mpi_fit_disco, fp_fit_disco, comb_Tags, UseJack, Njacks, Nboots, "W_win_disco", "total_disco", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 0,0, -0.9, LL, 0.0, ret_distr_W_disco);
 
 
     //SD disco light
-    Perform_Akaike_fits(comb_disco_SD, comb_disco_SD, a_A, a_B, a_C, a_D, vols_disco, a_lat, Mpi_fit_disco, fp_fit_disco, comb_Tags, UseJack, Njacks, Nboots, "SD_win_disco", "total_disco", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 0,0, -0.001, LL, 0.0);
-
-
-     exit(-1);
-
-
-  
-
-
-
-
-
+    Perform_Akaike_fits(comb_disco_SD, comb_disco_SD, a_A, a_B, a_C, a_D, vols_disco, a_lat, Mpi_fit_disco, fp_fit_disco, comb_Tags, UseJack, Njacks, Nboots, "SD_win_disco", "total_disco", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 0,0, -0.001, LL, 0.0, ret_distr_SD_disco);
 
 
 
   }
+
+
+
+  Print_To_File({}, { ret_distr_SD_light.distr, ret_distr_SD_strange.distr, ret_distr_SD_charm.distr, ret_distr_SD_disco.distr}  , "../data/gm2/fit_corr_SD_"+Extrapolation_strange_mode+"_"+Extrapolation_charm_mode+".dat" ,"", "#light strange charm disco");
+  Print_To_File({}, { ret_distr_W_light.distr, ret_distr_W_strange.distr, ret_distr_W_charm.distr, ret_distr_W_disco.distr}  , "../data/gm2/fit_corr_W_"+Extrapolation_strange_mode+"_"+Extrapolation_charm_mode+".dat" ,"", "#light strange charm disco");
+
+
+  //print correlation matrix on screen
+
+  vector<distr_t> SD_corr({ ret_distr_SD_light, ret_distr_SD_strange, ret_distr_SD_charm, ret_distr_SD_disco  });
+  vector<distr_t> W_corr({ ret_distr_W_light, ret_distr_W_strange, ret_distr_W_charm, ret_distr_W_disco  });
+
+
+  //print SD corr
+  cout<<"Printing correlation matrix of single contributions for SD"<<endl;
+  for(int i=0; i< (signed)SD_corr.size();i++) {
+    
+    for(int j=0; j<(signed)SD_corr.size(); j++) {
+
+      double val= (SD_corr[i]%SD_corr[j])/( SD_corr[i].err()*SD_corr[j].err());
+      cout<<val<<" ";
+
+    }
+    cout<<endl;
+  }
+
+  //print W corr
+  cout<<"Printing correlation matrix of single contributions for W"<<endl;
+  for(int i=0; i< (signed)W_corr.size();i++) {
+    for(int j=0; j<(signed)W_corr.size(); j++) {
+
+      double val= (W_corr[i]%W_corr[j])/( W_corr[i].err()*W_corr[j].err());
+      cout<<val<<" ";
+
+    }
+    cout<<endl;
+    
+  }
+
+  cout<<"Bye"<<endl;
 
     
   //#####################################################################################################################
@@ -6669,7 +6722,7 @@ void Gm2() {
   
 
   //print kernel
-  Plot_kernel_K(2000);
+  //Plot_kernel_K(2000);
   
 
   

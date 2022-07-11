@@ -75,7 +75,7 @@ public:
 
 
 
-void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS, const distr_t &a_A, const distr_t &a_B, const distr_t &a_C, const distr_t &a_D, Vfloat &L_list,const distr_t_list &a_distr_list, const distr_t_list &Mpi_fit, const distr_t_list &fp_fit, vector<string> &Ens_Tag, bool UseJack, int Njacks, int Nboots,  string W_type, string channel, vector<string> &Inc_a2_list, vector<string> &Inc_FSEs_list, vector<string> &Inc_a4_list, vector<string> &Inc_mass_extr_list, vector<string> &Inc_single_fit_list, VPfloat &Inc_log_corr_list, bool allow_a4_and_log, bool allow_only_finest, int vol_mult, int mass_mult, double cont_guess, LL_functions &LL, double tmin_SD ) {
+void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS, const distr_t &a_A, const distr_t &a_B, const distr_t &a_C, const distr_t &a_D, Vfloat &L_list,const distr_t_list &a_distr_list, const distr_t_list &Mpi_fit, const distr_t_list &fp_fit, vector<string> &Ens_Tag, bool UseJack, int Njacks, int Nboots,  string W_type, string channel, vector<string> &Inc_a2_list, vector<string> &Inc_FSEs_list, vector<string> &Inc_a4_list, vector<string> &Inc_mass_extr_list, vector<string> &Inc_single_fit_list, VPfloat &Inc_log_corr_list, bool allow_a4_and_log, bool allow_only_finest, int vol_mult, int mass_mult, double cont_guess, LL_functions &LL, double tmin_SD , distr_t &return_distr) {
 
 
 
@@ -240,12 +240,12 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
       gsl_function *GINT = static_cast<gsl_function*>(&FINT);
       gsl_deriv_forward(GINT, Mpi, 1e-4, &FSEs_der_from_GS, &FSEs_der_from_GS_err);
 
-      if(FSEs_der_from_GS_err/fabs(FSEs_der_from_GS) > 0.01) {
+      if(FSEs_der_from_GS_err/fabs(FSEs_der_from_GS) > 0.05) {
 
 	cout.precision(10);
 	cout<<"val: "<<FSEs_der_from_GS<<endl;
 	cout<<"err: "<<FSEs_der_from_GS_err<<endl;
-	crash("Cannot evaluate numerical derivative of GS-parametrization with target accuracy of 0.1. Current precision: "+to_string_with_precision( FSEs_der_from_GS_err/fabs(FSEs_der_from_GS),10));
+	crash("Cannot evaluate numerical derivative of GS-parametrization with target accuracy of 5%. Current precision: "+to_string_with_precision( FSEs_der_from_GS_err/fabs(FSEs_der_from_GS),10));
 
       }
 
@@ -285,6 +285,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
   //Contains the info on the continuum/thermodynamic and physical point extrapolated results for all fits
   Vfloat val, err;
+  vector<distr_t> val_distr;
 
 
   vector<string> which_lattice_spacings_list;
@@ -637,6 +638,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		  //forward info on expectation value and error of cont extrapolated val
 		  val.push_back(w0.ave());
 		  err.push_back(w0.err());
+		  val_distr.push_back(w0);
    
 
 
@@ -906,6 +908,148 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
   cout<<"Npars: "<<Npars[smallest_ch2_red_id]<<endl;
   cout<<"Result: "<<val[smallest_ch2_red_id]<<" +- "<<err[smallest_ch2_red_id]<<endl;
   cout<<"####################### Bye! ###########################"<<endl;
+
+
+
+  //get return distribution depending on fit type
+
+  int ret_counter=0;
+
+  for(int ifit=0;ifit<Nfits;ifit++) {
+
+  if(channel == "light") {
+
+    if(W_type == "W_win") {
+
+      if( a2_list[ifit] == "on" && mass_extr_list[ifit] == "on" && FSEs_list[ifit]=="comb_GS" && Ch2[ifit]/Ndof[ifit] < 1.8) {
+
+	if(ret_counter == 0) return_distr = val_distr[ifit];
+	else return_distr = return_distr + val_distr[ifit];
+	ret_counter++;
+
+      }
+      
+    }
+
+    else if(W_type=="W_win_red") {
+
+
+      //do nothing
+
+    }
+
+    else if(W_type == "SD_win") {
+
+      if( a2_list[ifit] == "on" && Ch2[ifit]/Ndof[ifit] < 1.8 && ( Ndof[ifit] > 2 || ( FSEs_list[ifit]=="tm" && Ndof[ifit] > 1) || FSEs_list[ifit]=="comb_GS") && ( mass_extr_list[ifit] == "off" || a4_list[ifit] == "off" || a4_list[ifit] == "tm")   ) {
+
+	if(ret_counter == 0) return_distr = val_distr[ifit];
+	else return_distr = return_distr + val_distr[ifit];
+	ret_counter++;
+      }
+
+    }
+
+    else if(W_type.substr(0,12) == "SD_win_tmins") {
+
+      if( a2_list[ifit] == "on" && a4_list[ifit] == "tm" && FSEs_list[ifit] == "off" && n_m_list[ifit].first == 0 && n_m_list[ifit].second == 0 && mass_extr_list[ifit] == "off") {
+
+	if(ret_counter == 0) return_distr = val_distr[ifit];
+	else return_distr = return_distr + val_distr[ifit];
+	ret_counter++;
+	
+
+      }
+
+    }
+
+    else crash("channel: light, fit type not recognized");
+
+
+
+  }
+
+  else if (channel == "strange") {
+
+    if(W_type.substr(0,5)=="W_win") {
+
+        if(Ndof[ifit] > 2 && Ch2[ifit]/Ndof[ifit] < 1.8 && err[ifit] < 1.2 && a2_list[ifit] == "on" && mass_extr_list[ifit] == "off" && FSEs_list[ifit] == "off") {
+
+	if(ret_counter == 0) return_distr = val_distr[ifit];
+	else return_distr = return_distr + val_distr[ifit];
+	ret_counter++;
+
+      }
+
+    }
+
+    else if(W_type.substr(0,6)=="SD_win") {
+
+        if(Ndof[ifit] > 2 && Ch2[ifit]/Ndof[ifit] < 1.8 && a2_list[ifit] == "on" && mass_extr_list[ifit] == "off" && FSEs_list[ifit] == "off") {
+
+	if(ret_counter == 0) return_distr = val_distr[ifit];
+	else return_distr = return_distr + val_distr[ifit];
+	ret_counter++;
+
+      }
+
+    }
+
+    else crash("channel: strange, fit type not recognized");
+    
+  }
+
+  else if (channel == "charm") {
+
+    if(W_type.substr(0,5)=="W_win") {
+
+      if(Ndof[ifit] > 2 && Ch2[ifit]/Ndof[ifit] < 1.8 && a2_list[ifit] == "on" && mass_extr_list[ifit] == "off" && FSEs_list[ifit] == "off") {
+
+	if(ret_counter == 0) return_distr = val_distr[ifit];
+	else return_distr = return_distr + val_distr[ifit];
+	ret_counter++;
+
+      }
+
+    }
+
+    else if(W_type.substr(0,6)=="SD_win") {
+
+       if(Ndof[ifit] > 2 && Ch2[ifit]/Ndof[ifit] < 1.8 && a2_list[ifit] == "on" && mass_extr_list[ifit] == "off" && FSEs_list[ifit] == "off") {
+
+	if(ret_counter == 0) return_distr = val_distr[ifit];
+	else return_distr = return_distr + val_distr[ifit];
+	ret_counter++;
+
+      }
+
+
+    }
+
+    else crash("channel: charm, fit type not recognized");
+
+
+  }
+
+  else if (channel == "total_disco") {
+
+     if(W_type=="W_win_disco" || W_type =="SD_win_disco") {
+
+       if(a2_list[ifit]=="OS") {return_distr = val_distr[ifit]; ret_counter++;}
+    }
+
+     else crash("channel: disconnected, fit type not recognized");
+  }
+
+  else crash("Fit type not recognized");
+
+
+  }
+
+  if(ret_counter != 0) return_distr = return_distr/((double)ret_counter);
+
+
+  cout<<"FIT PERFORMED"<<endl;
+  cout<<"channel: "<<channel<<" W_type: "<<W_type<<" n_fits added: "<<ret_counter<<endl;
   
   return;  
 }

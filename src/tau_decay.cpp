@@ -312,7 +312,8 @@ void Compute_tau_decay_width() {
       else Found_error_less_x_percent=true;
     }
 
-   
+   cout<<"Print times"<<endl;
+   cout<<"tmax_tm_0: "<<tmax_tm_0<<" tmax_tm_1: "<<tmax_tm_1<<" tmax_OS_0: "<<tmax_OS_0<<" tmax_OS_1: "<<tmax_OS_1<<endl;
 
     //loop over sigma
     #pragma omp parallel for
@@ -329,8 +330,7 @@ void Compute_tau_decay_width() {
       double mult=0.05;
       if(MODE=="SANF") mult= 0.00005;
       distr_t resc_GeV = 1.0/(a_distr*a_distr*a_distr*m_tau);
-      cout<<"Print times"<<endl;
-      cout<<"tmax_tm_0: "<<tmax_tm_0<<" tmax_tm_1: "<<tmax_tm_1<<" tmax_OS_0: "<<tmax_OS_0<<" tmax_OS_1: "<<tmax_OS_1<<endl;
+      
       Br_sigma_0_tm = GAMMA_FACT*resc_GeV*Get_Laplace_transfo(  0.0,  s, E0_l,  T, tmax_tm_0, prec, SM_TYPE_0,K0, -1*C0_tm, syst_0_tm, mult, l0_tm, MODE, "tm", "TAU_K0_light_tm_"+Vk_data_tm.Tag[iens], "ud" );
       cout<<"Br0_tm["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<l0_tm<<" : "<<Br_sigma_0_tm.ave()<<" +- "<<Br_sigma_0_tm.err()<<endl; 
       Br_sigma_1_tm = GAMMA_FACT*resc_GeV*Get_Laplace_transfo(  0.0,  s, E0_l,  T, tmax_tm_1, prec, SM_TYPE_1,K1, Cii_tm, syst_1_tm, mult, l1_tm, MODE, "tm", "TAU_K1_light_tm_"+Vk_data_tm.Tag[iens], "ud" );

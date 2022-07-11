@@ -56,7 +56,7 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
   bf.Add_par("a0", a0_guess, 1e-2*a0_guess);
   bf.Add_par("D", -1.0e-1, 1e-3);
   bf.Add_par("D2", -1.0e-1, 1e-3);
-  if(Nmeas <= 3) bf.Fix_par("D2", 0.0);
+  if(Nmeas <= 3 || Nmeas >= 7) bf.Fix_par("D2", 0.0);
 
   bf.ansatz =  [&](const fpar &p, const Ov &ip) -> double {
 		 return p.a0*(1.0) + (p.D*(ip.X - Op_phys)) +  p.D2*pow((ip.X - Op_phys),2);
@@ -271,7 +271,7 @@ distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op
   bf.Add_par("a0", a0_guess, 1e-2*a0_guess);
   bf.Add_par("D", -1.0e-1, 1e-3);
   bf.Add_par("D2", -1.0e-1, 1e-3);
-  if(Nmeas <= 3) bf.Fix_par("D2", 0.0);
+  if(Nmeas <= 3 || Nmeas > 7) bf.Fix_par("D2", 0.0);
 
   bf.ansatz =  [&](const fpar &p, const Ov &ip) -> double {
 		 return p.a0*(1.0) + p.D*(ip.X - ip.X_phys) + p.D2*pow( ip.X - ip.X_phys, 2);

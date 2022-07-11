@@ -7,7 +7,7 @@ double lambda= INCLUDE_ERRORS?0.9:0.0;
 bool FIND_OPTIMAL_LAMBDA= true;
 string COV_MATRIX_MODE = "";
 const int Nmoms=1;
-const int alpha=2;
+const int alpha=0;
 const bool Use_balance_condition = true;
 
 

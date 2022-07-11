@@ -19,6 +19,7 @@ using namespace std;
 
 double kernel_K(double t,double MV);
 void Plot_kernel_K(int Npoints);
+void Plot_Energy_windows_K();
 double Zeta_function_laplacian_Luscher(double z);
 void Zeta_function_zeroes(int Nzeros, Vfloat &res);
 double tan_phi(double z);

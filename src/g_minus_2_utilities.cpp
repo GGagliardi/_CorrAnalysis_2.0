@@ -94,6 +94,108 @@ void Plot_kernel_K(int npoints) {
 }
 
 
+void Plot_Energy_windows_K() {
+
+  //open Silvano's file
+
+  //tau=m_\mu t    t(fm)       M(SD)       M(W)        M(LD)      x=E/m_\mu   E(GeV)     Mtilde(SD)  Mtilde(W)  Mtilde(LD)
+
+  Vfloat t_adim = Read_From_File("../energy_window_ker/modulating.dat", 0, 10);
+  Vfloat t_fm = Read_From_File("../energy_window_ker/modulating.dat", 1, 10);
+  Vfloat M_SD_t = Read_From_File("../energy_window_ker/modulating.dat", 2, 10);
+  Vfloat M_W_t = Read_From_File("../energy_window_ker/modulating.dat", 3, 10);
+  Vfloat M_LD_t = Read_From_File("../energy_window_ker/modulating.dat", 4, 10);
+  Vfloat E_adim= Read_From_File("../energy_window_ker/modulating.dat", 5, 10);
+  Vfloat E_GeV= Read_From_File("../energy_window_ker/modulating.dat", 6, 10);
+  Vfloat M_SD_E = Read_From_File("../energy_window_ker/modulating.dat", 7, 10);
+  Vfloat M_W_E = Read_From_File("../energy_window_ker/modulating.dat", 8, 10);
+  Vfloat M_LD_E = Read_From_File("../energy_window_ker/modulating.dat", 9, 10);
+
+
+  //multiply M by kernel functions
+
+  auto F_t = [&](double t) -> double {
+
+
+	    
+	       auto F = [&t](double x) -> double {
+			  
+			  double z= t*m_muon;
+			  
+			  double y= 0.5*z*x/sqrt(1.0-x);
+			  
+			  if( z < 8e-6) { cout<<"Warning: kernel function evaluated at too small value of the argument and has been set to zero"<<endl; return 0.0;}
+
+			  return 2*(1.0-x)*(1.0- pow(sin(y)/y,2));
+
+			};
+
+	       gsl_function_pp<decltype(F)> Fp(F);
+ 	       gsl_integration_workspace * w = gsl_integration_workspace_alloc (10000);
+	       gsl_function *G = static_cast<gsl_function*>(&Fp);
+	       double res_GSL, err_GSL;
+	       gsl_integration_qags(G, 0.0, 1.0, 0.0, 1e-5, 10000, w, &res_GSL, &err_GSL);
+	       gsl_integration_workspace_free (w);
+
+	       return res_GSL;
+  
+	     };
+
+
+   auto F_E = [&](double E) -> double { 
+
+	       auto F = [&E](double x) -> double {
+			  
+			  double x2= pow(E/m_muon,2);
+
+			  double resc= pow(m_muon/E,3);
+			  
+			  return 3*resc*x2*(1.0-x)*x*x/(x*x + (1-x)*x2);
+
+			};
+
+	       gsl_function_pp<decltype(F)> Fp(F);
+ 	       gsl_integration_workspace * w = gsl_integration_workspace_alloc (10000);
+	       gsl_function *G = static_cast<gsl_function*>(&Fp);
+	       double res_GSL, err_GSL;
+	       gsl_integration_qags(G, 0.0, 1.0, 0.0, 1e-5, 10000, w, &res_GSL, &err_GSL);
+	       gsl_integration_workspace_free (w);
+
+	       return res_GSL;
+  
+	     };
+
+
+   Vfloat M_SD_t_N, M_W_t_N, M_LD_t_N;
+
+   for(unsigned int tt=0; tt< t_fm.size();tt++) {
+
+     double integrand= F_t( t_fm[tt]*1.0/0.197327);
+     M_SD_t_N.push_back( M_SD_t[tt]*integrand);
+     M_W_t_N.push_back( M_W_t[tt]*integrand);
+     M_LD_t_N.push_back( M_LD_t[tt]*integrand);
+
+   }
+
+   Vfloat M_SD_E_N, M_W_E_N, M_LD_E_N;
+
+   for(unsigned int ee=0; ee< E_GeV.size();ee++) {
+
+     double integrand= F_E( E_GeV[ee]);
+     M_SD_E_N.push_back( M_SD_E[ee]*integrand); 
+     M_W_E_N.push_back( M_W_E[ee]*integrand);
+     M_LD_E_N.push_back( M_LD_E[ee]*integrand);
+
+   }
+   
+
+   Print_To_File({}, {t_adim, t_fm, M_SD_t_N, M_W_t_N, M_LD_t_N, E_adim, E_GeV, M_SD_E_N, M_W_E_N, M_LD_E_N} , "../energy_window_ker/modulating_bis.dat","", "//tau=m_\mu t    t(fm)       M(SD)       M(W)        M(LD)      x^2=(E/m_\mu)^2   E(GeV)     Mtilde(SD)  Mtilde(W)  Mtilde(LD)" );
+
+
+  return;  
+}
+
+
 double Zeta_function_laplacian_Luscher(double z) {
 
 
