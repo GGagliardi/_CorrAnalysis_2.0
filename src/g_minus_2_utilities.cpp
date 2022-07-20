@@ -72,6 +72,14 @@ double kernel_K(double t, double MV) {
 
 }
 
+
+double Kernel_Pi_q2(double t, double Q, double a) {
+
+  
+  return t*t - 4.0*pow(sin(Q*t/2.0),2)/pow(Q,2);
+
+}
+
 void Plot_kernel_K(int npoints) {
 
   double tmin=0.0;

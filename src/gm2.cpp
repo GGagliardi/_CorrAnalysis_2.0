@@ -25,8 +25,8 @@ const int Upper_Limit_Time_Integral_charm= 300;
 const int Upper_Limit_Time_Integral_light=300;
 const double fm_to_inv_Gev= 1.0/0.197327;
 const bool verbosity=1;
-const double Nresonances= 50; //50; //50; //25; //2; //normally you used 12
-const int Luscher_num_zeroes= 55; //55; // 55; //30; // 4; //normally you used  20
+const double Nresonances= 20; //50; //50; //25; //2; //normally you used 12
+const int Luscher_num_zeroes= 24; //55; // 55; //30; // 4; //normally you used  20
 const int npts_spline= 1000; //1000; //10; //normally you used 1000 
 bool Use_Mpi_OS=false;
 bool Include_light_disco= true;
@@ -67,7 +67,9 @@ const double s2 = 0.5 - M_PI/8.0;
 const double s3 = 3.0*M_PI/16.0 - 0.5;
 const double Csi_K_phys= m_k*m_k/(fk_phys*fk_phys) ;
 const double Csi_D_phys= m_d*m_d/(fd_phys*fd_phys) ;
-bool Skip_total_light_calc= true;
+bool Skip_total_light_calc= false;
+bool Fit_only_light_corr_tail=true;
+bool Reco_agm2_total=false;
 string Mod="FLEE_THEORY";
 bool Use_Za_Zv_from_strange_run=true;
 bool Use_Za_Zv_from_charm_run = false;
@@ -96,6 +98,7 @@ bool scale_setting_from_fp = true; //true
 bool Use_scale_setting_from_this_analysis=true; //true
 bool Print_FSEs_from_GSLL_param=false;
 Vfloat tmins({ 0.08, 0.09, 0.100, 0.11, 0.125, 0.130, 0.140, 0.150}); //tmins for SD extrapolation in fermi
+Vfloat Qs2;
 
 
 class ipar {
@@ -134,7 +137,285 @@ public:
 
 };
 
+void Init_Qs2() {
 
+  int Nqs=100;
+
+  double Qs_max= 4.0; //4GeV
+
+  double Qs_min= 0.2; //200 MeV
+
+  //generate equally spaced points in [Qs_min^2 , Qs_max^2]
+
+  double step_size= (pow(Qs_max,2) - pow(Qs_min,2))/(Nqs-1.0);
+
+  for(int n=0; n < Nqs; n++) {
+
+    
+    Qs2.push_back( pow(Qs_min,2) + step_size*n); //in GeV
+
+  }
+
+
+  return;
+
+}
+
+
+distr_t PI_q2( const distr_t_list &V,const distr_t &a, double Q2, int Tmax) {
+
+  double T= V.size();
+  distr_t res= 0.0*a;
+
+  distr_t_list Ker_PI(UseJack);
+
+  for(int t=0; t < T; t++) {
+
+    distr_t Ker_PI_t(UseJack);
+    for(int ijack=0;ijack<Njacks;ijack++) { Ker_PI_t.distr.push_back( Kernel_Pi_q2( 1.0*t, sqrt( Q2), a.distr[ijack]));}
+
+    Ker_PI.distr_list.push_back( Ker_PI_t);
+  }
+    
+  
+  for(int t=1;t < Tmax; t++) {
+
+    res = res + Ker_PI.distr_list[t]*V.distr_list[t];
+
+  }
+
+  return res;
+
+
+}
+
+distr_t PI_q2( const distr_t_list &V,const distr_t &a, const distr_t &Q2, int Tmax) {
+
+  double T= V.size();
+  distr_t res= 0.0*a;
+
+  distr_t_list Ker_PI(UseJack);
+
+  for(int t=0; t < T; t++) {
+
+    distr_t Ker_PI_t(UseJack);
+    for(int ijack=0;ijack<Njacks;ijack++) { Ker_PI_t.distr.push_back( Kernel_Pi_q2( 1.0*t, sqrt( Q2.distr[ijack]), a.distr[ijack]));}
+
+    Ker_PI.distr_list.push_back( Ker_PI_t);
+  }
+    
+  
+  for(int t=1;t < Tmax; t++) {
+
+    res = res + Ker_PI.distr_list[t]*V.distr_list[t];
+
+  }
+
+  return res;
+
+
+}
+
+distr_t PI_q2_fixed_t(const distr_t &Vt, const distr_t &a, const distr_t &Q2, int t) {
+
+ 
+  distr_t Ker_PI_t(UseJack);
+  for(int ijack=0;ijack<Njacks;ijack++) { Ker_PI_t.distr.push_back( Kernel_Pi_q2( 1.0*t, sqrt( Q2.distr[ijack]), a.distr[ijack]));}
+
+  return Ker_PI_t*Vt;
+
+
+}
+
+void Add_ens_val_PI_q2( vector<distr_t_list> &PI_master, const distr_t_list &V, const distr_t &a, int Tmax) {
+
+  //sanity check
+  if(PI_master.size() != Qs2.size()) crash("In add_ens_val_PI_q2, size of PI_master and Qs are not equal");
+
+  int Q_size= Qs2.size();
+
+  for(int q=0; q < Q_size; q++) {
+
+    PI_master[q].distr_list.push_back( PI_q2(V,a,Qs2[q]*a*a, Tmax));
+
+  }
+
+  return;
+
+}
+
+void Add_ens_val_PI_q2( vector<distr_t_list> &PI_master, const distr_t_list &PI_per_ens) {
+
+  //sanity check
+  if(PI_master.size() != Qs2.size()) crash("In add_ens_val_PI_q2, size of PI_master and Qs are not equal");
+  if(PI_per_ens.size() != (signed)Qs2.size()) crash("In add_ens_val_PI_q2, size of PI_per_ens and Qs are not equal");
+
+  int Q_size= Qs2.size();
+
+  for(int q=0; q < Q_size; q++) {
+
+    PI_master[q].distr_list.push_back( PI_per_ens.distr_list[q]);
+
+  }
+
+  return;
+
+}
+
+void Get_PI_q2( distr_t_list &PI_per_ens, const distr_t_list &V, const distr_t &a, int Tmax) {
+
+  int Q_size= Qs2.size();
+
+  for(int q=0; q<Q_size;q++) {
+
+    PI_per_ens.distr_list.push_back( PI_q2(V,a, Qs2[q]*a*a, Tmax));
+
+  }
+
+  return;
+
+}
+
+
+
+
+void Bounding_PI_q2(distr_t_list &PI_per_ens, const distr_t_list &V, const distr_t &a, string path, Vint &Tdatas_opt, distr_t &lowest_mass) {
+
+
+  
+
+  int T_ext_max= 300;
+ 
+  
+  CorrAnalysis Corr(UseJack, Njacks,Nboots);
+  Corr.Nt = V.size();
+ 
+  distr_t_list eff_mass_V = Corr.effective_mass_t(V, "");
+
+ 
+  //loop over Qs2
+  
+  for(int q=0; q < (signed)Qs2.size(); q++) {
+
+   
+
+
+    distr_t_list PI_q2_min_Tdata(UseJack), PI_q2_max_Tdata(UseJack), PI_q2_T_2(UseJack);
+
+    Vfloat TCUTS;
+
+    Vfloat Is_T_data_opt;
+    
+    //loop over tcut
+    for(int tcut=1; tcut<V.size()/2 -2 ;tcut++) {
+
+
+      TCUTS.push_back( (double)tcut);
+      distr_t PI_q2_up_to_tcut = PI_q2(V, a, Qs2[q]*a*a, tcut+1);
+      PI_q2_min_Tdata.distr_list.push_back(PI_q2_up_to_tcut);
+      PI_q2_max_Tdata.distr_list.push_back(PI_q2_up_to_tcut);
+      PI_q2_T_2.distr_list.push_back(PI_q2(V,a,Qs2[q]*a*a, V.size()/2));
+      distr_t V_tcut = V.distr_list[tcut];
+      Is_T_data_opt.push_back( 0.0);
+
+      
+
+      
+      
+
+      for(int t=tcut+1; t < T_ext_max;t++) {
+
+	//lambda function for lower and upper limit of single exp V(t)
+	auto EXP_MIN = [&tcut, &t](double E) { return exp(-E*(t-tcut));};
+	auto LOG = [](double R_G) { return log(fabs(R_G));};
+	distr_t ker_val = PI_q2_fixed_t(V_tcut, a, Qs2[q]*a*a , t);
+	int size_min= PI_q2_min_Tdata.size();
+	int size_max= PI_q2_max_Tdata.size();
+	distr_t lower_exp = distr_t::f_of_distr(EXP_MIN,eff_mass_V.distr_list[tcut]);
+	bool lower_exp_is_nan= isnan(lower_exp.ave());
+	distr_t mult_fact_lower= (lower_exp_is_nan || (eff_mass_V.ave(tcut)-eff_mass_V.err(tcut) < lowest_mass.ave()))?(0.0*ker_val):lower_exp;
+	PI_q2_min_Tdata.distr_list[size_min-1] = PI_q2_min_Tdata.distr_list[size_min-1] + ker_val*mult_fact_lower; 
+	PI_q2_max_Tdata.distr_list[size_max-1] = PI_q2_max_Tdata.distr_list[size_max-1] + ker_val*distr_t::f_of_distr(EXP_MIN, lowest_mass);
+      }
+
+      
+    }
+
+
+   
+
+
+      //find interval where difference between PI_q2_min_Tdata and PI_q2_max_Tdata is smaller than 0.5 sigma
+      //average
+      bool Found_Tdata_opt=false;
+      int tdata_opt=1;
+      int NT= V.size();
+      while(!Found_Tdata_opt && tdata_opt < NT/2 -2 ) {
+
+	distr_t diff_max_min = PI_q2_max_Tdata.distr_list[tdata_opt-1] - PI_q2_min_Tdata.distr_list[tdata_opt-1];
+	if( diff_max_min.ave()/min( PI_q2_max_Tdata.err(tdata_opt-1) , PI_q2_min_Tdata.err(tdata_opt-1)) < 0.5) Found_Tdata_opt=true;
+	else tdata_opt++;
+      }
+
+      
+
+      //if tdata_opt has not been found return tdata = -1 and PI(q^2) = PI(q^2, T/2)
+      if(!Found_Tdata_opt) {
+	
+	Tdatas_opt.push_back( -1);
+	PI_per_ens.distr_list.push_back(  PI_q2_T_2.distr_list[0]);
+	
+      }
+      else { //tdata_opt has been found
+
+	bool fit_to_constant=true;
+	//average over min max over an interval of 0.5 fm
+	if( PI_q2_max_Tdata.size() != PI_q2_min_Tdata.size()) crash("Size of PI_q2_max_Tdata and PI_q2_min_Tdata are not equal");
+	int S_Tdata= PI_q2_min_Tdata.size();
+	int DT = min( (int)(0.5*fm_to_inv_Gev/a.ave()), (S_Tdata -tdata_opt));
+	distr_t PI_ave_max= PI_q2_max_Tdata.distr_list[tdata_opt-1];
+	distr_t PI_ave_min= PI_q2_min_Tdata.distr_list[tdata_opt-1];
+	if(fit_to_constant) {
+	  PI_ave_max = PI_ave_max*1.0/pow(PI_q2_max_Tdata.err(tdata_opt-1),2);
+	  PI_ave_min = PI_ave_min*1.0/pow(PI_q2_min_Tdata.err(tdata_opt-1),2);
+	}
+	double PI_weight_max = (fit_to_constant)?1.0/(pow(PI_q2_max_Tdata.err(tdata_opt-1),2)):1.0;
+	double PI_weight_min = (fit_to_constant)?1.0/(pow(PI_q2_min_Tdata.err(tdata_opt-1),2)):1.0;
+	for(int t=tdata_opt; t< tdata_opt+DT; t++) {
+
+	  double weight_max_t = (fit_to_constant)?1.0/pow(PI_q2_max_Tdata.err(t),2):1.0;
+	  double weight_min_t = (fit_to_constant)?1.0/pow(PI_q2_min_Tdata.err(t),2):1.0;
+	 
+	  PI_ave_max = PI_ave_max + PI_q2_max_Tdata.distr_list[t]*weight_max_t;
+	  PI_ave_min = PI_ave_min + PI_q2_min_Tdata.distr_list[t]*weight_min_t;
+	  PI_weight_max += weight_max_t;
+	  PI_weight_min += weight_min_t;
+
+	}
+
+	PI_ave_max= PI_ave_max/PI_weight_max;
+	PI_ave_min= PI_ave_min/PI_weight_min;
+
+	double den_weight= 1.0/(pow(PI_ave_max.err(),2))  + 1.0/(pow(PI_ave_min.err(),2));
+	double fin_weight_max= (fit_to_constant)?(1.0/(pow(PI_ave_max.err(),2)*den_weight)):0.5;
+	double fin_weight_min= (fit_to_constant)?(1.0/(pow(PI_ave_min.err(),2)*den_weight)):0.5;
+
+	Tdatas_opt.push_back(tdata_opt);
+	PI_per_ens.distr_list.push_back( fin_weight_min*PI_ave_min + fin_weight_max*PI_ave_max);
+	Is_T_data_opt[tdata_opt-1] = 1.0;
+
+      }
+
+
+      //Print to File
+      Print_To_File({}, {TCUTS, PI_q2_min_Tdata.ave(), PI_q2_min_Tdata.err(), PI_q2_max_Tdata.ave(), PI_q2_max_Tdata.err(), PI_q2_T_2.ave(), PI_q2_T_2.err(), Is_T_data_opt}, path+"_Q2_"+to_string_with_precision(Qs2[q],5)+".dat", "", "#tcut   lower    upper     T/2      Is_Tcut_opt.       Tcut_opt= "+to_string(Tdatas_opt[q]));
+
+
+  }
+
+  return;
+
+}
 
 
 void Gm2() {
@@ -148,8 +429,10 @@ void Gm2() {
 
   Plot_Energy_windows_K();
 
+  Init_Qs2();
 
-  //create directories
+
+  //create directories g-2
   boost::filesystem::create_directory("../data/gm2");
   boost::filesystem::create_directory("../data/gm2/scale_setting");
   boost::filesystem::create_directory("../data/gm2/scale_setting/Mp");
@@ -186,6 +469,33 @@ void Gm2() {
   boost::filesystem::create_directory("../data/gm2/strange_charm/disco");
   boost::filesystem::create_directory("../data/gm2/total_disco");
   boost::filesystem::create_directory("../data/gm2/total_disco/disco");
+
+  //create directories PI(q^2)
+  boost::filesystem::create_directory("../data/PI_Q2");
+  boost::filesystem::create_directory("../data/PI_Q2/light");
+  boost::filesystem::create_directory("../data/PI_Q2/light/tm");
+  boost::filesystem::create_directory("../data/PI_Q2/light/OS");
+  boost::filesystem::create_directory("../data/PI_Q2/light/disco");
+  boost::filesystem::create_directory("../data/PI_Q2/strange");
+  boost::filesystem::create_directory("../data/PI_Q2/strange/tm_phi");
+  boost::filesystem::create_directory("../data/PI_Q2/strange/OS_phi");
+  boost::filesystem::create_directory("../data/PI_Q2/strange/tm_etas");
+  boost::filesystem::create_directory("../data/PI_Q2/strange/OS_etas");
+  boost::filesystem::create_directory("../data/PI_Q2/strange/disco");
+  boost::filesystem::create_directory("../data/PI_Q2/charm");
+  boost::filesystem::create_directory("../data/PI_Q2/charm/tm_Jpsi");
+  boost::filesystem::create_directory("../data/PI_Q2/charm/OS_Jpsi");
+  boost::filesystem::create_directory("../data/PI_Q2/charm/tm_etac");
+  boost::filesystem::create_directory("../data/PI_Q2/charm/OS_etac");
+  boost::filesystem::create_directory("../data/PI_Q2/charm/disco");
+  boost::filesystem::create_directory("../data/PI_Q2/light_strange");
+  boost::filesystem::create_directory("../data/PI_Q2/light_charm");
+  boost::filesystem::create_directory("../data/PI_Q2/strange_charm");
+  boost::filesystem::create_directory("../data/PI_Q2/light_strange/disco");
+  boost::filesystem::create_directory("../data/PI_Q2/light_charm/disco");
+  boost::filesystem::create_directory("../data/PI_Q2/strange_charm/disco");
+  boost::filesystem::create_directory("../data/PI_Q2/total_disco");
+  boost::filesystem::create_directory("../data/PI_Q2/total_disco/disco");
 
 
  
@@ -1134,6 +1444,21 @@ void Gm2() {
   distr_t_list a_distr_list(UseJack), a_distr_list_strange(UseJack), a_distr_list_charm(UseJack), a_distr_list_disco_light(UseJack);
   Vfloat L_strange_list, a_strange_list, ml_strange_list;
   Vfloat L_charm_list, a_charm_list, ml_charm_list;
+
+
+  //####################### PI(Q^2) analysis ################################//
+
+  //objects where to store Pi(Q^2) data
+  vector<distr_t_list> PI_Q2_light_tm(Qs2.size()), PI_Q2_light_OS(Qs2.size());
+  vector<distr_t_list> PI_Q2_strange_tm(Qs2.size()), PI_Q2_strange_OS(Qs2.size());
+  vector<distr_t_list> PI_Q2_charm_tm(Qs2.size()), PI_Q2_charm_OS(Qs2.size());
+  vector<distr_t_list> PI_Q2_disco(Qs2.size());
+  vector<distr_t_list> PI_Q2_light_tm_pert_sub(Qs2.size()), PI_Q2_light_OS_pert_sub(Qs2.size());
+  vector<distr_t_list> PI_Q2_strange_tm_pert_sub(Qs2.size()), PI_Q2_strange_OS_pert_sub(Qs2.size());
+  vector<distr_t_list> PI_Q2_charm_tm_pert_sub(Qs2.size()), PI_Q2_charm_OS_pert_sub(Qs2.size());
+
+
+  //####################### PI(Q^2) analysis ################################//
 
   //define lambda for convolution with kernel
   auto K = [&](double Mv, double t, double size) -> double { return kernel_K(t, Mv);};
@@ -2258,6 +2583,90 @@ void Gm2() {
     Print_To_File({}, {Tdata_vec, agm2_OS_distr_Tdata_M.ave(), agm2_OS_distr_Tdata_M.err()}, "../data/gm2/strange/OS_"+Extrapolation_strange_mode+"/agm2_Tdata_ELM_"+V_strange_1_M.Tag[i_ens]+"_M.dat.t", "", "#id  Tdata   ag2m agm2_err");
     Print_To_File({}, {Tdata_vec, agm2_distr_Tdata_No_ELM_M.ave(), agm2_distr_Tdata_No_ELM_M.err()}, "../data/gm2/strange/tm_"+Extrapolation_strange_mode+"/agm2_Tdata_"+V_strange_1_M.Tag[i_ens]+"_M.dat.t", "", "#id  Tdata   ag2m agm2_err");
     Print_To_File({}, {Tdata_vec, agm2_OS_distr_Tdata_No_ELM_M.ave(), agm2_OS_distr_Tdata_No_ELM_M.err()}, "../data/gm2/strange/OS_"+Extrapolation_strange_mode+"/agm2_Tdata_"+V_strange_1_M.Tag[i_ens]+"_M.dat.t", "", "#id  Tdata   ag2m agm2_err");
+
+
+
+
+    
+    //######################   PI(Q^2) analysis   ###########################
+
+
+    distr_t_list PI_Q2_L_tm, PI_Q2_L_OS, PI_Q2_M_tm, PI_Q2_M_OS;
+    distr_t_list PI_Q2_L_tm_pert_sub, PI_Q2_L_OS_pert_sub, PI_Q2_M_tm_pert_sub, PI_Q2_M_OS_pert_sub;
+
+    
+    Vint Tdatas_opt_L_tm, Tdatas_opt_L_OS, Tdatas_opt_M_tm, Tdatas_opt_M_OS;
+    Vint Tdatas_opt_L_tm_pert_sub, Tdatas_opt_L_OS_pert_sub, Tdatas_opt_M_tm_pert_sub, Tdatas_opt_M_OS_pert_sub;
+
+    
+    // Apply bounding method
+    Bounding_PI_q2(PI_Q2_L_tm, Za*Za*V_strange_distr_L, a_distr, "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_L.Tag[i_ens]+"_L"  , Tdatas_opt_L_tm, MV_strange_L );
+    Bounding_PI_q2(PI_Q2_M_tm, Za*Za*V_strange_distr_M, a_distr, "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_M.Tag[i_ens]+"_M"  , Tdatas_opt_M_tm, MV_strange_M);
+    Bounding_PI_q2(PI_Q2_L_OS, Zv*Zv*V_strange_OS_distr_L, a_distr, "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_L.Tag[i_ens]+"_L"  , Tdatas_opt_L_OS, MV_strange_OS_L);
+    Bounding_PI_q2(PI_Q2_M_OS, Zv*Zv*V_strange_OS_distr_M, a_distr, "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_M.Tag[i_ens]+"_M"  , Tdatas_opt_M_OS, MV_strange_OS_M);
+    //include perturbative subtraction
+    Bounding_PI_q2(PI_Q2_L_tm_pert_sub, Za*Za*V_strange_distr_L_pert_sub, a_distr, "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_L.Tag[i_ens]+"_L_pert_sub"  , Tdatas_opt_L_tm_pert_sub, MV_strange_L);
+    Bounding_PI_q2(PI_Q2_M_tm_pert_sub, Za*Za*V_strange_distr_M_pert_sub, a_distr, "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_M.Tag[i_ens]+"_M_pert_sub"  , Tdatas_opt_M_tm_pert_sub, MV_strange_M);
+    Bounding_PI_q2(PI_Q2_L_OS_pert_sub, Zv*Zv*V_strange_OS_distr_L_pert_sub, a_distr, "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_L.Tag[i_ens]+"_L_pert_sub"  , Tdatas_opt_L_OS_pert_sub, MV_strange_OS_L);
+    Bounding_PI_q2(PI_Q2_M_OS_pert_sub, Zv*Zv*V_strange_OS_distr_M_pert_sub, a_distr, "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_M.Tag[i_ens]+"_M_pert_sub"  , Tdatas_opt_M_OS_pert_sub, MV_strange_OS_M);
+
+
+    //interpolate to the physical point
+
+    distr_t_list PI_Q2_Extr_tm, PI_Q2_Extr_OS;
+    distr_t_list PI_Q2_Extr_tm_pert_sub, PI_Q2_Extr_OS_pert_sub;
+
+    Vfloat Tcut_f_tm, Tcut_f_OS, Tcut_f_tm_pert_sub, Tcut_f_OS_pert_sub;
+
+    
+    int Q_size= Qs2.size();
+    for(int q=0; q < Q_size;q++) {
+
+      vector<distr_t> PIs_q2_strange_tm({ PI_Q2_L_tm.distr_list[q], PI_Q2_M_tm.distr_list[q]});
+      vector<distr_t> PIs_q2_strange_OS({ PI_Q2_L_OS.distr_list[q], PI_Q2_M_OS.distr_list[q]});
+      vector<distr_t> PIs_q2_strange_tm_pert_sub({ PI_Q2_L_tm_pert_sub.distr_list[q], PI_Q2_M_tm_pert_sub.distr_list[q]});
+      vector<distr_t> PIs_q2_strange_OS_pert_sub({ PI_Q2_L_OS_pert_sub.distr_list[q], PI_Q2_M_OS_pert_sub.distr_list[q]});
+      
+      PI_Q2_Extr_tm.distr_list.push_back(Obs_extrapolation_meson_mass(PIs_q2_strange_tm, X_2_fit, X_2_phys,  "../data/PI_Q2/strange", "PI_Q2_tm_extr_"+Extrapolation_strange_mode+"_"+V_strange_1_L.Tag[i_ens]+"_Q2_"+to_string_with_precision(Qs2[q],5), UseJack, "SPLINE"));
+
+      PI_Q2_Extr_OS.distr_list.push_back(Obs_extrapolation_meson_mass(PIs_q2_strange_OS, X_2_fit, X_2_phys,  "../data/PI_Q2/strange", "PI_Q2_OS_extr_"+Extrapolation_strange_mode+"_"+V_strange_1_M.Tag[i_ens]+"_Q2_"+to_string_with_precision(Qs2[q],5), UseJack, "SPLINE"));
+      PI_Q2_Extr_tm_pert_sub.distr_list.push_back(Obs_extrapolation_meson_mass(PIs_q2_strange_tm_pert_sub, X_2_fit, X_2_phys,  "../data/PI_Q2/strange", "PI_Q2_tm_pert_sub_extr_"+Extrapolation_strange_mode+"_"+V_strange_1_L.Tag[i_ens]+"_Q2_"+to_string_with_precision(Qs2[q],5), UseJack, "SPLINE"));
+      PI_Q2_Extr_OS_pert_sub.distr_list.push_back(Obs_extrapolation_meson_mass(PIs_q2_strange_OS_pert_sub, X_2_fit, X_2_phys,  "../data/PI_Q2/strange", "PI_Q2_OS_pert_sub_extr_"+Extrapolation_strange_mode+"_"+V_strange_1_M.Tag[i_ens]+"_Q2_"+to_string_with_precision(Qs2[q],5), UseJack, "SPLINE"));
+
+
+
+      //check if bounding method worked for both L and M (1=worked, 0= not worked)
+      if( Tdatas_opt_L_tm[q] > 0 && Tdatas_opt_M_tm[q] > 0) Tcut_f_tm.push_back( 1.0);
+      else Tcut_f_tm.push_back( 0.0);
+      if( Tdatas_opt_L_OS[q] > 0 && Tdatas_opt_M_OS[q] > 0) Tcut_f_OS.push_back( 1.0);
+      else Tcut_f_OS.push_back( 0.0);
+      if( Tdatas_opt_L_tm_pert_sub[q] > 0 && Tdatas_opt_M_tm_pert_sub[q] > 0) Tcut_f_tm_pert_sub.push_back( 1.0);
+      else Tcut_f_tm_pert_sub.push_back( 0.0);
+      if( Tdatas_opt_L_OS_pert_sub[q] > 0 && Tdatas_opt_M_OS_pert_sub[q] > 0) Tcut_f_OS_pert_sub.push_back( 1.0);
+      else Tcut_f_OS_pert_sub.push_back( 0.0);
+
+      
+    }
+    
+
+
+    //push_back and print to file
+
+    Add_ens_val_PI_q2( PI_Q2_strange_tm, PI_Q2_Extr_tm);
+    Add_ens_val_PI_q2( PI_Q2_strange_OS, PI_Q2_Extr_OS);
+    Add_ens_val_PI_q2( PI_Q2_strange_tm_pert_sub, PI_Q2_Extr_tm_pert_sub);
+    Add_ens_val_PI_q2( PI_Q2_strange_OS_pert_sub, PI_Q2_Extr_OS_pert_sub);
+
+
+    Print_To_File({}, {Qs2, PI_Q2_Extr_tm.ave(), PI_Q2_Extr_tm.err(), Tcut_f_tm } , "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_extr_"+V_strange_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+    Print_To_File({}, {Qs2, PI_Q2_Extr_OS.ave(), PI_Q2_Extr_OS.err(), Tcut_f_OS } , "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_extr_"+V_strange_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+    Print_To_File({}, {Qs2, PI_Q2_Extr_tm_pert_sub.ave(), PI_Q2_Extr_tm_pert_sub.err(), Tcut_f_tm_pert_sub } , "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_extr_pert_sub_"+V_strange_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+    Print_To_File({}, {Qs2, PI_Q2_Extr_OS_pert_sub.ave(), PI_Q2_Extr_OS_pert_sub.err(), Tcut_f_OS_pert_sub } , "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_extr_pert_sub_"+V_strange_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+
+
+
+
+    //#######################################################################
   
   }
 
@@ -3806,6 +4215,128 @@ void Gm2() {
     //H
     Print_To_File({}, {Tdata_vec, agm2_distr_Tdata_No_ELM_H.ave(), agm2_distr_Tdata_No_ELM_H.err()}, "../data/gm2/charm/tm_"+Extrapolation_charm_mode+"/agm2_Tdata_"+V_charm_1_H.Tag[i_ens]+"_H.dat.t", "", "#id  Tdata   ag2m agm2_err");
     Print_To_File({}, {Tdata_vec, agm2_OS_distr_Tdata_No_ELM_H.ave(), agm2_OS_distr_Tdata_No_ELM_H.err()}, "../data/gm2/charm/OS_"+Extrapolation_charm_mode+"/agm2_Tdata_"+V_charm_1_H.Tag[i_ens]+"_H.dat.t", "", "#id  Tdata   ag2m agm2_err");
+
+
+
+
+
+
+    
+    //######################   PI(Q^2) analysis   ###########################
+
+
+    distr_t_list PI_Q2_L_tm, PI_Q2_L_OS, PI_Q2_M_tm, PI_Q2_M_OS, PI_Q2_H_tm, PI_Q2_H_OS;
+    distr_t_list PI_Q2_L_tm_pert_sub, PI_Q2_L_OS_pert_sub, PI_Q2_M_tm_pert_sub, PI_Q2_M_OS_pert_sub, PI_Q2_H_tm_pert_sub, PI_Q2_H_OS_pert_sub;
+
+    
+    Vint Tdatas_opt_L_tm, Tdatas_opt_L_OS, Tdatas_opt_M_tm, Tdatas_opt_M_OS, Tdatas_opt_H_tm, Tdatas_opt_H_OS;
+    Vint Tdatas_opt_L_tm_pert_sub, Tdatas_opt_L_OS_pert_sub, Tdatas_opt_M_tm_pert_sub, Tdatas_opt_M_OS_pert_sub, Tdatas_opt_H_tm_pert_sub, Tdatas_opt_H_OS_pert_sub;
+
+    // Apply bounding method
+    Bounding_PI_q2(PI_Q2_L_tm, Za_L*Za_L*V_charm_distr_L, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_L.Tag[i_ens]+"_L"  , Tdatas_opt_L_tm, MV_charm_L);
+    Bounding_PI_q2(PI_Q2_M_tm, Za_M*Za_M*V_charm_distr_M, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_M.Tag[i_ens]+"_M"  , Tdatas_opt_M_tm, MV_charm_M);
+    Bounding_PI_q2(PI_Q2_H_tm, Za_H*Za_H*V_charm_distr_H, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_H.Tag[i_ens]+"_H"  , Tdatas_opt_H_tm, MV_charm_H);
+    Bounding_PI_q2(PI_Q2_L_OS, Zv_L*Zv_L*V_charm_OS_distr_L, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_L.Tag[i_ens]+"_L"  , Tdatas_opt_L_OS, MV_charm_OS_L);
+    Bounding_PI_q2(PI_Q2_M_OS, Zv_M*Zv_M*V_charm_OS_distr_M, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_M.Tag[i_ens]+"_M"  , Tdatas_opt_M_OS, MV_charm_OS_M);
+    Bounding_PI_q2(PI_Q2_H_OS, Zv_H*Zv_H*V_charm_OS_distr_H, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_H.Tag[i_ens]+"_H"  , Tdatas_opt_H_OS, MV_charm_OS_H);
+
+    //include perturbative subtraction
+    Bounding_PI_q2(PI_Q2_L_tm_pert_sub, Za_L*Za_L*V_charm_distr_L_pert_sub, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_L.Tag[i_ens]+"_L_pert_sub"  , Tdatas_opt_L_tm_pert_sub, MV_charm_L);
+    Bounding_PI_q2(PI_Q2_M_tm_pert_sub, Za_M*Za_M*V_charm_distr_M_pert_sub, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_M.Tag[i_ens]+"_M_pert_sub"  , Tdatas_opt_M_tm_pert_sub, MV_charm_M);
+    Bounding_PI_q2(PI_Q2_H_tm_pert_sub, Za_H*Za_H*V_charm_distr_H_pert_sub, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_H.Tag[i_ens]+"_H_pert_sub"  , Tdatas_opt_H_tm_pert_sub, MV_charm_H);
+    Bounding_PI_q2(PI_Q2_L_OS_pert_sub, Zv_L*Zv_L*V_charm_OS_distr_L_pert_sub, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_L.Tag[i_ens]+"_L_pert_sub"  , Tdatas_opt_L_OS_pert_sub, MV_charm_OS_L);
+    Bounding_PI_q2(PI_Q2_M_OS_pert_sub, Zv_M*Zv_M*V_charm_OS_distr_M_pert_sub, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_M.Tag[i_ens]+"_M_pert_sub"  , Tdatas_opt_M_OS_pert_sub, MV_charm_OS_M);
+    Bounding_PI_q2(PI_Q2_H_OS_pert_sub, Zv_H*Zv_H*V_charm_OS_distr_H_pert_sub, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_H.Tag[i_ens]+"_H_pert_sub"  , Tdatas_opt_H_OS_pert_sub, MV_charm_OS_H);
+
+   
+
+
+    //interpolate to the physical point
+
+    distr_t_list PI_Q2_Extr_tm, PI_Q2_Extr_OS;
+    distr_t_list PI_Q2_Extr_tm_pert_sub, PI_Q2_Extr_OS_pert_sub;
+
+    Vfloat Tcut_f_tm, Tcut_f_OS, Tcut_f_tm_pert_sub, Tcut_f_OS_pert_sub;
+
+    
+    int Q_size= Qs2.size();
+    for(int q=0; q < Q_size;q++) {
+
+      vector<distr_t> PIs_q2_charm_tm, PIs_q2_charm_OS, PIs_q2_charm_tm_pert_sub, PIs_q2_charm_OS_pert_sub;
+
+      if(V_charm_1_L.Tag[i_ens].substr(1,1)=="D") {
+	PIs_q2_charm_tm = { PI_Q2_L_tm.distr_list[q], PI_Q2_M_tm.distr_list[q]};
+	PIs_q2_charm_OS = { PI_Q2_L_OS.distr_list[q], PI_Q2_M_OS.distr_list[q]};
+	PIs_q2_charm_tm_pert_sub = { PI_Q2_L_tm_pert_sub.distr_list[q], PI_Q2_M_tm_pert_sub.distr_list[q]};
+	PIs_q2_charm_OS_pert_sub = { PI_Q2_L_OS_pert_sub.distr_list[q], PI_Q2_M_OS_pert_sub.distr_list[q]};
+      }
+      else {
+
+	PIs_q2_charm_tm = { PI_Q2_L_tm.distr_list[q], PI_Q2_M_tm.distr_list[q], PI_Q2_H_tm.distr_list[q] };
+	PIs_q2_charm_OS = { PI_Q2_L_OS.distr_list[q], PI_Q2_M_OS.distr_list[q], PI_Q2_H_OS.distr_list[q]};
+	PIs_q2_charm_tm_pert_sub = { PI_Q2_L_tm_pert_sub.distr_list[q], PI_Q2_M_tm_pert_sub.distr_list[q], PI_Q2_H_tm_pert_sub.distr_list[q]};
+	PIs_q2_charm_OS_pert_sub = { PI_Q2_L_OS_pert_sub.distr_list[q], PI_Q2_M_OS_pert_sub.distr_list[q], PI_Q2_H_OS_pert_sub.distr_list[q] };
+
+      }
+      
+      PI_Q2_Extr_tm.distr_list.push_back(Obs_extrapolation_meson_mass(PIs_q2_charm_tm, X_2_fit, X_2_phys,  "../data/PI_Q2/charm", "PI_Q2_tm_extr_"+Extrapolation_charm_mode+"_"+V_charm_1_L.Tag[i_ens]+"_Q2_"+to_string_with_precision(Qs2[q],5), UseJack, "SPLINE"));
+
+      PI_Q2_Extr_OS.distr_list.push_back(Obs_extrapolation_meson_mass(PIs_q2_charm_OS, X_2_fit, X_2_phys,  "../data/PI_Q2/charm", "PI_Q2_OS_extr_"+Extrapolation_charm_mode+"_"+V_charm_1_L.Tag[i_ens]+"_Q2_"+to_string_with_precision(Qs2[q],5), UseJack, "SPLINE"));
+      PI_Q2_Extr_tm_pert_sub.distr_list.push_back(Obs_extrapolation_meson_mass(PIs_q2_charm_tm_pert_sub, X_2_fit, X_2_phys,  "../data/PI_Q2/charm", "PI_Q2_tm_pert_sub_extr_"+Extrapolation_charm_mode+"_"+V_charm_1_L.Tag[i_ens]+"_Q2_"+to_string_with_precision(Qs2[q],5), UseJack, "SPLINE"));
+      PI_Q2_Extr_OS_pert_sub.distr_list.push_back(Obs_extrapolation_meson_mass(PIs_q2_charm_OS_pert_sub, X_2_fit, X_2_phys,  "../data/PI_Q2/charm", "PI_Q2_OS_pert_sub_extr_"+Extrapolation_charm_mode+"_"+V_charm_1_L.Tag[i_ens]+"_Q2_"+to_string_with_precision(Qs2[q],5), UseJack, "SPLINE"));
+
+
+
+      //check if bounding method worked for both L and M (1=worked, 0= not worked)
+      if( Tdatas_opt_L_tm[q] > 0 && Tdatas_opt_M_tm[q] > 0 && Tdatas_opt_H_tm[q] > 0) Tcut_f_tm.push_back( 1.0);
+      else Tcut_f_tm.push_back( 0.0);
+      if( Tdatas_opt_L_OS[q] > 0 && Tdatas_opt_M_OS[q] > 0 && Tdatas_opt_H_OS[q] > 0) Tcut_f_OS.push_back( 1.0);
+      else Tcut_f_OS.push_back( 0.0);
+      if( Tdatas_opt_L_tm_pert_sub[q] > 0 && Tdatas_opt_M_tm_pert_sub[q] > 0 && Tdatas_opt_H_tm_pert_sub[q] > 0) Tcut_f_tm_pert_sub.push_back( 1.0);
+      else Tcut_f_tm_pert_sub.push_back( 0.0);
+      if( Tdatas_opt_L_OS_pert_sub[q] > 0 && Tdatas_opt_M_OS_pert_sub[q] > 0 && Tdatas_opt_H_OS_pert_sub[q] > 0) Tcut_f_OS_pert_sub.push_back( 1.0);
+      else Tcut_f_OS_pert_sub.push_back( 0.0);
+
+      
+    }
+    
+
+
+    //push_back and print to file
+
+    Add_ens_val_PI_q2( PI_Q2_charm_tm, PI_Q2_Extr_tm);
+    Add_ens_val_PI_q2( PI_Q2_charm_OS, PI_Q2_Extr_OS);
+    Add_ens_val_PI_q2( PI_Q2_charm_tm_pert_sub, PI_Q2_Extr_tm_pert_sub);
+    Add_ens_val_PI_q2( PI_Q2_charm_OS_pert_sub, PI_Q2_Extr_OS_pert_sub);
+
+
+    Print_To_File({}, {Qs2, PI_Q2_Extr_tm.ave(), PI_Q2_Extr_tm.err(), Tcut_f_tm } , "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_extr_"+V_charm_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+    Print_To_File({}, {Qs2, PI_Q2_Extr_OS.ave(), PI_Q2_Extr_OS.err(), Tcut_f_OS } , "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_extr_"+V_charm_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+    Print_To_File({}, {Qs2, PI_Q2_Extr_tm_pert_sub.ave(), PI_Q2_Extr_tm_pert_sub.err(), Tcut_f_tm_pert_sub } , "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_extr_pert_sub_"+V_charm_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+    Print_To_File({}, {Qs2, PI_Q2_Extr_OS_pert_sub.ave(), PI_Q2_Extr_OS_pert_sub.err(), Tcut_f_OS_pert_sub } , "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_extr_pert_sub_"+V_charm_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+
+
+
+
+    //#######################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
   
   }
 
@@ -4914,14 +5445,20 @@ void Gm2() {
       //######################FIT INTERVALS####################
       //##############INCLUDE only times t for which dC(t)/C(t) < 0.1#####################
 
-      //Tfit_min always starts at 0.2fm
-      int Tfit_min= 5;
+      
+      int Tfit_min;
+      if(!Fit_only_light_corr_tail) {
+      Tfit_min= 5;
       if(V_light_1.Tag[i_ens].substr(1,1) == "D") Tfit_min++;
+      }
+      else { //start fitting from 1 fermi
+	Tfit_min = (int)(1.2*fm_to_inv_Gev/a_distr.ave());
+      }
       int Tfit_max= Tfit_min;  
       bool Found_error_less_10_percent=false;
       while(!Found_error_less_10_percent && Tfit_max < Corr.Nt/2) {
    
-	if( (Za*Za*V_light_distr_tm_corr.distr_list[Tfit_max]).err()/fabs( (Za*Za*V_light_distr_tm_corr.distr_list[Tfit_max]).ave()) <  0.15) Tfit_max++;
+	if( (Za*Za*V_light_distr_tm_corr.distr_list[Tfit_max]).err()/fabs( (Za*Za*V_light_distr_tm_corr.distr_list[Tfit_max]).ave()) <  0.10) Tfit_max++;
 	else Found_error_less_10_percent=true;
       }
       int Tfit_points = Tfit_max +1 - Tfit_min;
@@ -4960,6 +5497,12 @@ void Gm2() {
       //bf.Fix_par("gpi",1.0);
       bf.Fix_par("kappa", 0.0);
       bf.Fix_par("Mpi_corr", 1.0);
+      if(Fit_only_light_corr_tail) { //set to zero parameters of dual representation
+
+	bf.Fix_par("Ed", 0.0);
+	bf.Fix_par("Rd", 0.0);
+
+      }
 
       map<pair<pair<double,double>, pair<double,double>>,Vfloat> Energy_lev_list;
   
@@ -5033,6 +5576,19 @@ void Gm2() {
     
       Bt_fit.ch2_ave();
 
+
+      //get energy levels and store the distribution of the ground state (2-pi)
+      distr_t gs_tm(UseJack);
+      for(int ijack=0;ijack<Njacks;ijack++) {
+	double M= Mpi.distr[ijack];
+	double MR= Bt_fit.par[ijack].Mrho;
+	double FP= fp.distr[ijack];
+	double GG= Bt_fit.par[ijack].gpi;
+	Vfloat Enn;
+	LL.Find_pipi_energy_lev((double)L_info.L,M*MR, GG*MR*M/FP, M, 0.0, Enn);
+	gs_tm.distr.push_back(2.0*sqrt( pow(Enn[0],2) + M*M));
+      }
+
       //###################################################
       //print fitted func
     
@@ -5041,6 +5597,7 @@ void Gm2() {
       cout<<"Printing fit function with: istep: "<<step_size_time<<" and nstep: "<<nsteps<<endl;
       distr_t_list func(UseJack, nsteps);
       Vfloat times;
+    
 
       //generate data
       for(int istep=0; istep<nsteps;istep++) {
@@ -5053,6 +5610,9 @@ void Gm2() {
 	  my_ipar.Mp_OS=Mpi_OS.distr[ijack];
 	  my_ipar.fp = fp.distr[ijack];
 	  func.distr_list[istep].distr.push_back( bf.ansatz( Bt_fit.par[ijack], my_ipar ));
+	  
+	  
+	  
 	}
       }
 
@@ -5081,14 +5641,18 @@ void Gm2() {
       //######################FIT INTERVALS####################
       //##############INCLUDE only times t for which dC(t)/C(t) < 0.1#####################
 
-      //Tfit_min always starts at 0.2fm
+      if(!Fit_only_light_corr_tail) {
       Tfit_min= 6;
       if(V_light_1.Tag[i_ens].substr(1,1) == "D") Tfit_min++;
+      }
+      else { //start fitting from 1 fm
+	Tfit_min = (int)(1.2*fm_to_inv_Gev/a_distr.ave());
+      }
       Tfit_max= Tfit_min;  
       Found_error_less_10_percent=false;
       while(!Found_error_less_10_percent && Tfit_max < Corr.Nt/2) {
    
-	if( (Zv*Zv*V_light_distr_OS_corr.distr_list[Tfit_max]).err()/fabs( (Zv*Zv*V_light_distr_OS_corr.distr_list[Tfit_max]).ave()) <  0.15) Tfit_max++;
+	if( (Zv*Zv*V_light_distr_OS_corr.distr_list[Tfit_max]).err()/fabs( (Zv*Zv*V_light_distr_OS_corr.distr_list[Tfit_max]).ave()) <  0.10) Tfit_max++;
 	else Found_error_less_10_percent=true;
       }
       Tfit_points = Tfit_max +1 - Tfit_min;
@@ -5127,6 +5691,10 @@ void Gm2() {
       //bf_OS.Fix_par("gpi",1.0);
       bf_OS.Fix_par("Mpi_corr", 1.0);
       bf_OS.Fix_par("kappa", 0.0);
+      if(Fit_only_light_corr_tail) { //fix to zero params of dual representation
+	bf_OS.Fix_par("Ed",0.0);
+	bf_OS.Fix_par("Rd", 0.0);
+      }
 
       map<pair<pair<double,double>, pair<double,double>>,Vfloat> Energy_lev_list_OS;
   
@@ -5200,6 +5768,19 @@ void Gm2() {
     
       Bt_fit_OS.ch2_ave();
 
+
+      //get energy levels and store the distribution of the ground state (2-pi)
+      distr_t gs_OS(UseJack);
+      for(int ijack=0;ijack<Njacks;ijack++) {
+	double M= Mpi.distr[ijack];
+	double MR= Bt_fit_OS.par[ijack].Mrho;
+	double FP= fp.distr[ijack];
+	double GG= Bt_fit_OS.par[ijack].gpi;
+	Vfloat Enn;
+	LL.Find_pipi_energy_lev((double)L_info.L,M*MR, GG*MR*M/FP, M, 0.0, Enn);
+	gs_OS.distr.push_back(2.0*sqrt( pow(Enn[0],2) + M*M));
+      }
+
       //###################################################
       //print fitted func
 
@@ -5233,6 +5814,66 @@ void Gm2() {
 
       //#################################################################################################################################################################################################
 
+    
+
+
+
+
+
+
+      //######################   PI(Q^2) analysis   ###########################
+
+
+      distr_t_list PI_Q2_tm, PI_Q2_OS;
+      distr_t_list PI_Q2_tm_pert_sub, PI_Q2_OS_pert_sub;
+
+    
+      Vint Tdatas_opt_tm, Tdatas_opt_OS;
+      Vint Tdatas_opt_tm_pert_sub, Tdatas_opt_OS_pert_sub;
+
+    
+      // Apply bounding method
+      Bounding_PI_q2(PI_Q2_tm, Za*Za*V_light_distr, a_distr, "../data/PI_Q2/light/tm/PI_Q2_Tdata_"+V_light_1.Tag[i_ens]  , Tdatas_opt_tm, gs_tm);
+  
+      Bounding_PI_q2(PI_Q2_OS, Zv*Zv*V_light_OS_distr, a_distr, "../data/PI_Q2/light/OS/PI_Q2_Tdata_"+V_light_1.Tag[i_ens], Tdatas_opt_OS, gs_OS);
+  
+      //include perturbative subtraction
+      Bounding_PI_q2(PI_Q2_tm_pert_sub, Za*Za*V_light_distr_tm_corr, a_distr, "../data/PI_Q2/light/tm/PI_Q2_Tdata_"+V_light_1.Tag[i_ens]+"_pert_sub", Tdatas_opt_tm_pert_sub, gs_tm);
+  
+      Bounding_PI_q2(PI_Q2_OS_pert_sub, Zv*Zv*V_light_distr_OS_corr, a_distr, "../data/PI_Q2/light/OS/PI_Q2_Tdata_"+V_light_1.Tag[i_ens]+"_pert_sub", Tdatas_opt_OS_pert_sub, gs_OS);
+  
+
+
+      
+      Vfloat Tcut_f_tm, Tcut_f_OS, Tcut_f_tm_pert_sub, Tcut_f_OS_pert_sub;
+
+    
+      int Q_size= Qs2.size();
+      for(int q=0; q < Q_size;q++) {
+	Tcut_f_tm.push_back( (double)Tdatas_opt_tm[q]);
+	Tcut_f_OS.push_back( (double)Tdatas_opt_OS[q]);
+	Tcut_f_tm_pert_sub.push_back( (double)Tdatas_opt_tm_pert_sub[q]);
+	Tcut_f_OS_pert_sub.push_back( (double)Tdatas_opt_OS_pert_sub[q]);
+      }
+    
+      //push_back and print to file
+
+      Add_ens_val_PI_q2( PI_Q2_light_tm, PI_Q2_tm);
+      Add_ens_val_PI_q2( PI_Q2_light_OS, PI_Q2_OS);
+      Add_ens_val_PI_q2( PI_Q2_light_tm_pert_sub, PI_Q2_tm_pert_sub);
+      Add_ens_val_PI_q2( PI_Q2_light_OS_pert_sub, PI_Q2_OS_pert_sub);
+
+
+      Print_To_File({}, {Qs2, PI_Q2_tm.ave(), PI_Q2_tm.err(), Tcut_f_tm } , "../data/PI_Q2/light/tm/PI_Q2_extr_"+V_light_1.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f. Mpi: "+to_string_with_precision(Mpi.ave(),6)+" +- "+to_string_with_precision(Mpi.err(), 6)+" lightest 2pi-state: "+to_string_with_precision(gs_tm.ave(),6)+" +- "+to_string_with_precision(gs_tm.err(),6));
+    Print_To_File({}, {Qs2, PI_Q2_OS.ave(), PI_Q2_OS.err(), Tcut_f_OS } , "../data/PI_Q2/light/OS/PI_Q2_extr_"+V_light_1.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f. Mpi: "+to_string_with_precision(Mpi.ave(),6)+" +- "+to_string_with_precision(Mpi.err(), 6)+" lightest 2pi-state: "+to_string_with_precision(gs_OS.ave(),6)+" +- "+to_string_with_precision(gs_OS.err(),6));
+    Print_To_File({}, {Qs2, PI_Q2_tm_pert_sub.ave(), PI_Q2_tm_pert_sub.err(), Tcut_f_tm_pert_sub } , "../data/PI_Q2/light/tm/PI_Q2_extr_pert_sub_"+V_light_1.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f. Mpi: "+to_string_with_precision(Mpi.ave(),6)+" +- "+to_string_with_precision(Mpi.err(), 6)+" lightest 2pi-state: "+to_string_with_precision(gs_tm.ave(),6)+" +- "+to_string_with_precision(gs_tm.err(),6));
+    Print_To_File({}, {Qs2, PI_Q2_OS_pert_sub.ave(), PI_Q2_OS_pert_sub.err(), Tcut_f_OS_pert_sub } , "../data/PI_Q2/light/OS/PI_Q2_extr_pert_sub_"+V_light_1.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f. Mpi: "+to_string_with_precision(Mpi.ave(),6)+" +- "+to_string_with_precision(Mpi.err(), 6)+" lightest 2pi-state: "+to_string_with_precision(gs_OS.ave(),6)+" +- "+to_string_with_precision(gs_OS.err(),6));
+
+
+
+
+    //#######################################################################
+
     }
   }
   
@@ -5250,7 +5891,7 @@ void Gm2() {
   distr_t_list Edual(UseJack), Rdual(UseJack), Mrho(UseJack), gpi(UseJack), Kappa(UseJack), M_corr(UseJack);
   distr_t_list Edual_OS(UseJack), Rdual_OS(UseJack), Mrho_OS(UseJack), gpi_OS(UseJack), Kappa_OS(UseJack), M_corr_OS(UseJack);
 
-  if(!Skip_total_light_calc) {
+  if(!Skip_total_light_calc && Reco_agm2_total) {
 
 
 
@@ -6150,7 +6791,7 @@ void Gm2() {
   
   
 
-  if(!Skip_total_light_calc) {
+  if(!Skip_total_light_calc && Reco_agm2_total) {
  
     //print fitted pars for all ensembles
     //tm
@@ -6168,6 +6809,37 @@ void Gm2() {
 
 
   }
+
+
+
+
+  //########################### PRINT TO FILE PI(Q^2) #######################################
+
+  int Qs_size= Qs2.size();
+
+  for(int q=0; q < Qs_size; q++) {
+
+    //tm light
+    Print_To_File(V_light_1.Tag,{L_list, a_list, PI_Q2_light_tm[q].ave(), PI_Q2_light_tm[q].err(), PI_Q2_light_tm_pert_sub[q].ave(), PI_Q2_light_tm_pert_sub[q].err()}, "../data/PI_Q2/light/tm/PI_Q2_"+to_string_with_precision(Qs2[q],5)+".t", "", "#Ens L a PI(Q^2)   PI(Q^2,sub)"  );
+    //OS light
+    Print_To_File(V_light_1.Tag,{L_list, a_list, PI_Q2_light_OS[q].ave(), PI_Q2_light_OS[q].err(), PI_Q2_light_OS_pert_sub[q].ave(), PI_Q2_light_OS_pert_sub[q].err()}, "../data/PI_Q2/light/OS/PI_Q2_"+to_string_with_precision(Qs2[q],5)+".t", "", "#Ens L a PI(Q^2)   PI(Q^2,sub)"  );
+
+    //tm strange
+    Print_To_File(V_strange_1_L.Tag,{L_strange_list, a_strange_list, PI_Q2_strange_tm[q].ave(), PI_Q2_strange_tm[q].err(), PI_Q2_strange_tm_pert_sub[q].ave(), PI_Q2_strange_tm_pert_sub[q].err()}, "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_"+to_string_with_precision(Qs2[q],5)+".t", "", "#Ens L a PI(Q^2)   PI(Q^2,sub)"  );
+    //OS strange
+    Print_To_File(V_strange_1_L.Tag,{L_strange_list, a_strange_list, PI_Q2_strange_OS[q].ave(), PI_Q2_strange_OS[q].err(), PI_Q2_strange_OS_pert_sub[q].ave(), PI_Q2_strange_OS_pert_sub[q].err()}, "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_"+to_string_with_precision(Qs2[q],5)+".t", "", "#Ens L a PI(Q^2)   PI(Q^2,sub)"  );
+
+    //tm charm
+    Print_To_File(V_charm_1_L.Tag,{L_charm_list, a_charm_list, PI_Q2_charm_tm[q].ave(), PI_Q2_charm_tm[q].err(), PI_Q2_charm_tm_pert_sub[q].ave(), PI_Q2_charm_tm_pert_sub[q].err()}, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_"+to_string_with_precision(Qs2[q],5)+".t", "", "#Ens L a PI(Q^2)   PI(Q^2,sub)"  );
+    //OS charm
+    Print_To_File(V_charm_1_L.Tag,{L_charm_list, a_charm_list, PI_Q2_charm_OS[q].ave(), PI_Q2_charm_OS[q].err(), PI_Q2_charm_OS_pert_sub[q].ave(), PI_Q2_charm_OS_pert_sub[q].err()}, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_"+to_string_with_precision(Qs2[q],5)+".t", "", "#Ens L a PI(Q^2)   PI(Q^2,sub)"  );
+
+
+
+  }
+
+
+  //#########################################################################################
 
 
   //print Zv and Za (Hadronic and RI-MOM) from strange correlators
@@ -6371,6 +7043,7 @@ void Gm2() {
   distr_t res_mc_Jpsi_etac_ratio_finest = Obs_extrapolation_meson_mass( mc_Jpsi_etac_ratio_finest_list, a2_mc_diff_finest_list,  0.0, "../data/gm2/charm", "mc_finest_Jpsi_etac_ratio_cont_limit", UseJack, "FIT");
 
 
+  exit(-1);
  
   //#############################################        CONTINUUM/THERMODYNAMIC/PHYSICAL-POINT EXTRAPOLATION       ###############################################
   vector<string> a2_list({"OS"});
@@ -6383,7 +7056,6 @@ void Gm2() {
   bool allow_only_finest= false;
 
 
-  
 
   //light
   //#####################################################################################################################
