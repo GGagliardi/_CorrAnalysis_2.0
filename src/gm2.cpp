@@ -25,9 +25,9 @@ const int Upper_Limit_Time_Integral_charm= 300;
 const int Upper_Limit_Time_Integral_light=300;
 const double fm_to_inv_Gev= 1.0/0.197327;
 const bool verbosity=1;
-const double Nresonances= 20; //50; //50; //25; //2; //normally you used 12
-const int Luscher_num_zeroes= 24; //55; // 55; //30; // 4; //normally you used  20
-const int npts_spline= 1000; //1000; //10; //normally you used 1000 
+const double Nresonances= 40; //50; //50; //25; //2; //normally you used 12
+const int Luscher_num_zeroes= 45; //55; // 55; //30; // 4; //normally you used  20
+const int npts_spline= 200; //1000; //10; //normally you used 1000 
 bool Use_Mpi_OS=false;
 bool Include_light_disco= true;
 bool Include_strange_disco= true;
@@ -97,7 +97,8 @@ bool scale_setting_from_w0X=false;
 bool scale_setting_from_fp = true; //true 
 bool Use_scale_setting_from_this_analysis=true; //true
 bool Print_FSEs_from_GSLL_param=false;
-Vfloat tmins({ 0.08, 0.09, 0.100, 0.11, 0.125, 0.130, 0.140, 0.150}); //tmins for SD extrapolation in fermi
+Vfloat tmins({0.08});
+//Vfloat tmins({ 0.08, 0.09, 0.100, 0.11, 0.125, 0.130, 0.140, 0.150}); //tmins for SD extrapolation in fermi
 Vfloat Qs2;
 
 
@@ -139,23 +140,27 @@ public:
 
 void Init_Qs2() {
 
-  int Nqs=100;
 
-  double Qs_max= 4.0; //4GeV
+  bool mode_skip=0;
+  
+  double q2_1=0.01;
+  double q2_2=0.1;
+  double q2_3=0.5;
+  double q2_4=2.0;
+  double q2_5=5.0;
+  double q2_6=7.0;
+  double q2_7=14.0;
 
-  double Qs_min= 0.2; //200 MeV
+  Qs2.push_back( q2_1);
+  if(mode_skip) return;
+  while( q2_1 <= q2_2+1e-6) { q2_1+= 0.01; Qs2.push_back( q2_1);};
+  while( q2_2 <= q2_3+1e-6) { q2_2+= 0.02; Qs2.push_back( q2_2);};
+  while( q2_3 <= q2_4+1e-6) { q2_3+= 0.05; Qs2.push_back( q2_3);};
+  while( q2_4 <= q2_5+1e-6) { q2_4+= 0.10; Qs2.push_back( q2_4);};
+  while( q2_5 <= q2_6+1e-6) { q2_5+= 0.20; Qs2.push_back( q2_5);};
+  while( q2_6 <= q2_7+1e-6) { q2_6+= 0.50; Qs2.push_back( q2_6);};
 
-  //generate equally spaced points in [Qs_min^2 , Qs_max^2]
-
-  double step_size= (pow(Qs_max,2) - pow(Qs_min,2))/(Nqs-1.0);
-
-  for(int n=0; n < Nqs; n++) {
-
-    
-    Qs2.push_back( pow(Qs_min,2) + step_size*n); //in GeV
-
-  }
-
+ 
 
   return;
 
@@ -276,23 +281,46 @@ void Get_PI_q2( distr_t_list &PI_per_ens, const distr_t_list &V, const distr_t &
 
 }
 
+void Get_PI_q2(distr_t_list &PI_per_ens, const Vfloat &V, const distr_t &a, int Tmax) {
+
+  GaussianMersenne G(435435);
+  int size= (signed)V.size();
+  distr_t_list V_distr(UseJack, size);
+  for(int t=0; t<size;t++) {
+
+    for(int ijack=0;ijack<Njacks;ijack++) V_distr.distr_list[t].distr.push_back( V[t] + G()*1e-16*V[t]/sqrt(Njacks-1));
+    
+
+  }
+
+  Get_PI_q2(PI_per_ens, V_distr, a, Tmax);
+  return;
+
+}
+
 
 
 
 void Bounding_PI_q2(distr_t_list &PI_per_ens, const distr_t_list &V, const distr_t &a, string path, Vint &Tdatas_opt, distr_t &lowest_mass) {
 
 
+  auto LOG = [](double R_G, double t) { return log(fabs(R_G));};
   
 
+ 
+    
   int T_ext_max= 300;
  
   
   CorrAnalysis Corr(UseJack, Njacks,Nboots);
   Corr.Nt = V.size();
- 
-  distr_t_list eff_mass_V = Corr.effective_mass_t(V, "");
+  distr_t_list ratio_corr_V(UseJack);
+  for(int t=0; t<Corr.Nt;t++) ratio_corr_V.distr_list.push_back( V.distr_list[t]/V.distr_list[(t+1)%Corr.Nt]);
+  //decide whether to use m_eff(t) or log( V(t)/V(t+1)) (true = use log)  
+  bool update_min_Tdata_from_log_ratio=true;    
+  distr_t_list eff_mass_V = (update_min_Tdata_from_log_ratio)?distr_t_list::f_of_distr_list(LOG, ratio_corr_V):Corr.effective_mass_t(V, "");
+  
 
- 
   //loop over Qs2
   
   for(int q=0; q < (signed)Qs2.size(); q++) {
@@ -305,6 +333,8 @@ void Bounding_PI_q2(distr_t_list &PI_per_ens, const distr_t_list &V, const distr
     Vfloat TCUTS;
 
     Vfloat Is_T_data_opt;
+    int slice_to_use_for_eff_mass=1;
+    
     
     //loop over tcut
     for(int tcut=1; tcut<V.size()/2 -2 ;tcut++) {
@@ -314,12 +344,15 @@ void Bounding_PI_q2(distr_t_list &PI_per_ens, const distr_t_list &V, const distr
       distr_t PI_q2_up_to_tcut = PI_q2(V, a, Qs2[q]*a*a, tcut+1);
       PI_q2_min_Tdata.distr_list.push_back(PI_q2_up_to_tcut);
       PI_q2_max_Tdata.distr_list.push_back(PI_q2_up_to_tcut);
-      PI_q2_T_2.distr_list.push_back(PI_q2(V,a,Qs2[q]*a*a, V.size()/2));
+      PI_q2_T_2.distr_list.push_back(PI_q2_up_to_tcut);
       distr_t V_tcut = V.distr_list[tcut];
       Is_T_data_opt.push_back( 0.0);
-
       
+      bool eff_mass_is_nan= isnan( eff_mass_V.ave(tcut));
+      bool update_min_Tdata=true;
+      if(eff_mass_is_nan || (eff_mass_V.err(tcut)/eff_mass_V.ave(tcut) > 0.05) || (eff_mass_V.ave(tcut) < 0 )) update_min_Tdata=false;
 
+      if(update_min_Tdata) slice_to_use_for_eff_mass=tcut;
       
       
 
@@ -327,14 +360,13 @@ void Bounding_PI_q2(distr_t_list &PI_per_ens, const distr_t_list &V, const distr
 
 	//lambda function for lower and upper limit of single exp V(t)
 	auto EXP_MIN = [&tcut, &t](double E) { return exp(-E*(t-tcut));};
-	auto LOG = [](double R_G) { return log(fabs(R_G));};
+	
 	distr_t ker_val = PI_q2_fixed_t(V_tcut, a, Qs2[q]*a*a , t);
 	int size_min= PI_q2_min_Tdata.size();
 	int size_max= PI_q2_max_Tdata.size();
-	distr_t lower_exp = distr_t::f_of_distr(EXP_MIN,eff_mass_V.distr_list[tcut]);
-	bool lower_exp_is_nan= isnan(lower_exp.ave());
-	distr_t mult_fact_lower= (lower_exp_is_nan || (eff_mass_V.ave(tcut)-eff_mass_V.err(tcut) < lowest_mass.ave()))?(0.0*ker_val):lower_exp;
-	PI_q2_min_Tdata.distr_list[size_min-1] = PI_q2_min_Tdata.distr_list[size_min-1] + ker_val*mult_fact_lower; 
+	if(size_min != tcut || size_max != tcut) crash("size_min or size_max is different from tcut");
+	distr_t lower_exp = distr_t::f_of_distr(EXP_MIN,eff_mass_V.distr_list[slice_to_use_for_eff_mass]);
+	PI_q2_min_Tdata.distr_list[size_min-1] = PI_q2_min_Tdata.distr_list[size_min-1] + ker_val*lower_exp;
 	PI_q2_max_Tdata.distr_list[size_max-1] = PI_q2_max_Tdata.distr_list[size_max-1] + ker_val*distr_t::f_of_distr(EXP_MIN, lowest_mass);
       }
 
@@ -363,7 +395,7 @@ void Bounding_PI_q2(distr_t_list &PI_per_ens, const distr_t_list &V, const distr
       if(!Found_Tdata_opt) {
 	
 	Tdatas_opt.push_back( -1);
-	PI_per_ens.distr_list.push_back(  PI_q2_T_2.distr_list[0]);
+	PI_per_ens.distr_list.push_back(  PI_q2(V,a,Qs2[q]*a*a, V.size()/2));
 	
       }
       else { //tdata_opt has been found
@@ -412,6 +444,17 @@ void Bounding_PI_q2(distr_t_list &PI_per_ens, const distr_t_list &V, const distr
 
 
   }
+
+  return;
+
+}
+
+
+void Bounding_PI_q2_disco(distr_t_list &PI_per_ens, const distr_t_list &V, const distr_t_list &Conn_guess, const distr_t &a, string path, Vint &Tdatas_opt, distr_t m_rho_GS) {
+
+  Bounding_PI_q2( PI_per_ens, V, a, path, Tdatas_opt, m_rho_GS);
+
+  PI_per_ens = PI_per_ens - Conn_guess;
 
   return;
 
@@ -812,7 +855,31 @@ void Gm2() {
 			    }
 			    
 			    return A<B;
+			    }; 
+
+  /*
+  auto Sort_light_confs = [](string A, string B) {
+
+			    
+			    string conf_num_A = A.substr(0,4);
+			    string conf_num_B = B.substr(0,4);
+		      
+			    string rA = A.substr(A.length()-2);
+			    string rB = B.substr(B.length()-2);
+			    if(rA.substr(0,1) == "r") { 
+			      int n1 = stoi(A.substr(A.length()-1));
+			      int n2 = stoi(B.substr(B.length()-1));
+			      if(rA == rB) {
+			      if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+			      else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+			      else crash("stream not recognized");
+			      }
+			      else return n1<n2;
+			    }
+			    
+			    return A<B;
 			  };
+  */
 
   //#################################END CUSTOM SORTING#################
   V_light_1.Read("../gm2_data/light", "mes_contr_2pts_ll_1", "V1V1", Sort_light_confs);
@@ -1170,10 +1237,10 @@ void Gm2() {
       a_B.distr.push_back( fm_to_inv_Gev*( a_B_ave + GM()*a_B_err*(1.0/sqrt(Njacks-1.0))));
       a_C.distr.push_back( fm_to_inv_Gev*( a_C_ave + GM()*a_C_err*(1.0/sqrt(Njacks-1.0))));
       a_D.distr.push_back( fm_to_inv_Gev*( a_D_ave + GM()*a_D_err*(1.0/sqrt(Njacks-1.0))));
-      a_A_afp.distr.push_back( fm_to_inv_Gev*( a_A_afp_ave+ GM()*a_A_afp_err*(1.0/sqrt(Njacks -1.0))));
-      a_B_afp.distr.push_back( fm_to_inv_Gev*( a_B_afp_ave+ GM()*a_B_afp_err*(1.0/sqrt(Njacks -1.0))));
-      a_C_afp.distr.push_back( fm_to_inv_Gev*( a_C_afp_ave+ GM()*a_C_afp_err*(1.0/sqrt(Njacks -1.0))));
-      a_D_afp.distr.push_back( fm_to_inv_Gev*( a_D_afp_ave+ GM()*a_D_afp_err*(1.0/sqrt(Njacks -1.0))));
+      a_A_afp.distr.push_back( fm_to_inv_Gev*( a_A_afp_ave+ 2*GM()*a_A_afp_err*(1.0/sqrt(Njacks -1.0))));
+      a_B_afp.distr.push_back( fm_to_inv_Gev*( a_B_afp_ave+ 2*GM()*a_B_afp_err*(1.0/sqrt(Njacks -1.0))));
+      a_C_afp.distr.push_back( fm_to_inv_Gev*( a_C_afp_ave+ 2*GM()*a_C_afp_err*(1.0/sqrt(Njacks -1.0))));
+      a_D_afp.distr.push_back( fm_to_inv_Gev*( a_D_afp_ave+ 2*GM()*a_D_afp_err*(1.0/sqrt(Njacks -1.0))));
 
     }
     }
@@ -1183,10 +1250,10 @@ void Gm2() {
       a_B.distr.push_back( fm_to_inv_Gev*( a_B_ave + GM()*a_B_err));
       a_C.distr.push_back( fm_to_inv_Gev*( a_C_ave + GM()*a_C_err));
       a_D.distr.push_back( fm_to_inv_Gev*( a_D_ave + GM()*a_D_err));
-      a_A_afp.distr.push_back( fm_to_inv_Gev*( a_A_afp_ave+ GM()*a_A_afp_err));
-      a_B_afp.distr.push_back( fm_to_inv_Gev*( a_B_afp_ave+ GM()*a_B_afp_err));
-      a_C_afp.distr.push_back( fm_to_inv_Gev*( a_C_afp_ave+ GM()*a_C_afp_err));
-      a_D_afp.distr.push_back( fm_to_inv_Gev*( a_D_afp_ave+ GM()*a_D_afp_err));
+      a_A_afp.distr.push_back( fm_to_inv_Gev*( a_A_afp_ave+ 2*GM()*a_A_afp_err));
+      a_B_afp.distr.push_back( fm_to_inv_Gev*( a_B_afp_ave+ 2*GM()*a_B_afp_err));
+      a_C_afp.distr.push_back( fm_to_inv_Gev*( a_C_afp_ave+ 2*GM()*a_C_afp_err));
+      a_D_afp.distr.push_back( fm_to_inv_Gev*( a_D_afp_ave+ 2*GM()*a_D_afp_err));
     }
   }
   
@@ -1330,7 +1397,7 @@ void Gm2() {
   //#############################################################################################################
   //window contributions
   //light
-  distr_t_list agm2_light_W(UseJack), agm2_light_SD(UseJack), agm2_light_W_ELM(UseJack), agm2_light_SD_ELM(UseJack);
+  distr_t_list agm2_light_W(UseJack), agm2_light_SD(UseJack), agm2_light_W_ELM(UseJack), agm2_light_SD_ELM(UseJack), agm2_light_W_2a(UseJack), agm2_light_W_der_err_scale_setting(UseJack), agm2_light_SD_der_err_scale_setting(UseJack), agm2_light_tot_der_err_scale_setting(UseJack);
   vector<distr_t_list> agm2_light_SD_tmins_distr_list(tmins.size());
   Vfloat pert_result_SD_list;
   distr_t_list agm2_light_W_OS(UseJack), agm2_light_SD_OS(UseJack), agm2_light_W_ELM_OS(UseJack), agm2_light_SD_ELM_OS(UseJack);
@@ -1458,8 +1525,31 @@ void Gm2() {
   vector<distr_t_list> PI_Q2_charm_tm_pert_sub(Qs2.size()), PI_Q2_charm_OS_pert_sub(Qs2.size());
 
 
+  vector<distr_t_list> CORR_DISCO_FOR_PI_Q2(3);
+  vector<distr_t_list> CORR_LIGHT_FOR_PI_Q2(3);
+  vector<distr_t_list> CORR_STRANGE_FOR_PI_Q2(3);
+  vector<distr_t_list> CORR_CHARM_FOR_PI_Q2(3);
+
+  vector<distr_t_list> STRANGE_PI_Q2_FOR_DISCO(3);
+  vector<distr_t_list> CHARM_PI_Q2_FOR_DISCO(3);
+  vector<distr_t_list> LIGHT_PI_Q2_FOR_DISCO(3);
+
+  
+
+  distr_t_list a_disc_PI_Q2(UseJack,3);
+  vector<string> Ens_list_disc_PI_Q2(3);
+  Vfloat L_list_disco_PI_Q2(3);
+  distr_t_list Mpi_fit_disc_PI_Q2(UseJack,3);
+  distr_t_list fpi_fit_disc_PI_Q2(UseJack,3);
+  vector<distr_t> Mrho_from_GS(3);
   //####################### PI(Q^2) analysis ################################//
 
+
+  //store pseudoscalar masses for physical point ensembles
+  distr_t_list Mp_light_tm(UseJack,4), Mp_s1_tm(UseJack,4), Mp_s2_tm(UseJack,4), Mp_c1_tm(UseJack,4), Mp_c2_tm(UseJack,4), Mp_c3_tm(UseJack,4);
+  distr_t_list Mp_light_OS(UseJack,4), Mp_s1_OS(UseJack,4), Mp_s2_OS(UseJack,4), Mp_c1_OS(UseJack,4), Mp_c2_OS(UseJack,4), Mp_c3_OS(UseJack,4); 
+  vector<string> ens_masses_id(4);
+  
   //define lambda for convolution with kernel
   auto K = [&](double Mv, double t, double size) -> double { return kernel_K(t, Mv);};
   auto exp_MV = [&](double Mv, double t, double size) -> double { return exp(-Mv*t);};
@@ -1729,6 +1819,18 @@ void Gm2() {
     cout<<"M_etas (H)  ["<<V_strange_1_L.Tag[i_ens]<<" ] : "<<M_etas_heavy.ave()<<" "<<M_etas_heavy.err()<<" "<<Corr.Tmin<<" "<<Corr.Tmax<<endl;
     M_etas_OS= Corr.Fit_distr(M_etas_OS_distr);
     M_etas_OS_heavy = Corr.Fit_distr(M_etas_OS_distr_heavy);
+
+    int id=0;
+    if(V_strange_1_L.Tag[i_ens] == "cB211b.072.64") id=0;
+    else if(V_strange_1_L.Tag[i_ens] == "cB211b.072.96") id=1;
+    else if(V_strange_1_L.Tag[i_ens].substr(1,1) == "C") id=2;
+    else if(V_strange_1_L.Tag[i_ens].substr(1,1) == "D") id=3;
+    else crash("Ensemble not recognized");
+    ens_masses_id[id] == V_strange_1_L.Tag[i_ens];
+    Mp_s1_tm.distr_list[id] = M_etas;
+    Mp_s2_tm.distr_list[id] = M_etas_heavy;
+    Mp_s1_OS.distr_list[id] = M_etas_OS;
+    Mp_s2_OS.distr_list[id] = M_etas_OS_heavy;
     //fit obs to compute Zv and Za (hadronic method)
     Zp_ov_Zs = Corr.Fit_distr(Zp_ov_Zs_distr);
     Zp_ov_Zs_heavy = Corr.Fit_distr(Zp_ov_Zs_distr_heavy);
@@ -2598,17 +2700,48 @@ void Gm2() {
     Vint Tdatas_opt_L_tm, Tdatas_opt_L_OS, Tdatas_opt_M_tm, Tdatas_opt_M_OS;
     Vint Tdatas_opt_L_tm_pert_sub, Tdatas_opt_L_OS_pert_sub, Tdatas_opt_M_tm_pert_sub, Tdatas_opt_M_OS_pert_sub;
 
+   
+
     
-    // Apply bounding method
+
+    
+    //Apply bounding method
     Bounding_PI_q2(PI_Q2_L_tm, Za*Za*V_strange_distr_L, a_distr, "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_L.Tag[i_ens]+"_L"  , Tdatas_opt_L_tm, MV_strange_L );
     Bounding_PI_q2(PI_Q2_M_tm, Za*Za*V_strange_distr_M, a_distr, "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_M.Tag[i_ens]+"_M"  , Tdatas_opt_M_tm, MV_strange_M);
     Bounding_PI_q2(PI_Q2_L_OS, Zv*Zv*V_strange_OS_distr_L, a_distr, "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_L.Tag[i_ens]+"_L"  , Tdatas_opt_L_OS, MV_strange_OS_L);
     Bounding_PI_q2(PI_Q2_M_OS, Zv*Zv*V_strange_OS_distr_M, a_distr, "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_M.Tag[i_ens]+"_M"  , Tdatas_opt_M_OS, MV_strange_OS_M);
+
     //include perturbative subtraction
-    Bounding_PI_q2(PI_Q2_L_tm_pert_sub, Za*Za*V_strange_distr_L_pert_sub, a_distr, "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_L.Tag[i_ens]+"_L_pert_sub"  , Tdatas_opt_L_tm_pert_sub, MV_strange_L);
-    Bounding_PI_q2(PI_Q2_M_tm_pert_sub, Za*Za*V_strange_distr_M_pert_sub, a_distr, "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_M.Tag[i_ens]+"_M_pert_sub"  , Tdatas_opt_M_tm_pert_sub, MV_strange_M);
-    Bounding_PI_q2(PI_Q2_L_OS_pert_sub, Zv*Zv*V_strange_OS_distr_L_pert_sub, a_distr, "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_L.Tag[i_ens]+"_L_pert_sub"  , Tdatas_opt_L_OS_pert_sub, MV_strange_OS_L);
-    Bounding_PI_q2(PI_Q2_M_OS_pert_sub, Zv*Zv*V_strange_OS_distr_M_pert_sub, a_distr, "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_Tdata_"+V_strange_1_M.Tag[i_ens]+"_M_pert_sub"  , Tdatas_opt_M_OS_pert_sub, MV_strange_OS_M);
+    Get_PI_q2(PI_Q2_L_tm_pert_sub, VV_free_oppor_L, a_distr, Corr.Nt/2);
+    Get_PI_q2(PI_Q2_M_tm_pert_sub, VV_free_oppor_M, a_distr, Corr.Nt/2);
+    Get_PI_q2(PI_Q2_L_OS_pert_sub, VV_free_samer_L, a_distr, Corr.Nt/2);
+    Get_PI_q2(PI_Q2_M_OS_pert_sub, VV_free_samer_M, a_distr, Corr.Nt/2);
+
+    PI_Q2_L_tm_pert_sub = PI_Q2_L_tm_pert_sub + PI_Q2_L_tm;
+    PI_Q2_M_tm_pert_sub = PI_Q2_M_tm_pert_sub + PI_Q2_M_tm;
+    PI_Q2_L_OS_pert_sub = PI_Q2_L_OS_pert_sub + PI_Q2_L_OS;
+    PI_Q2_M_OS_pert_sub = PI_Q2_M_OS_pert_sub + PI_Q2_M_OS;
+    
+
+
+    //push back OS strange correlator for bounding on disconnected, and the disconnected correlator 
+
+    if(V_strange_1_L.Tag[i_ens] == "cD211a.054.96" || V_strange_1_L.Tag[i_ens] == "cC211a.06.80" || V_strange_1_L.Tag[i_ens] == "cB211b.072.64") {
+      int id_disco_ens=0;
+      if(V_strange_1_L.Tag[i_ens] == "cD211a.054.96") id_disco_ens=2;
+      else if(V_strange_1_L.Tag[i_ens] == "cC211a.06.80") id_disco_ens=1;
+      else if(V_strange_1_L.Tag[i_ens] == "cB211b.072.64") id_disco_ens=0;
+      else crash("what");
+      
+      CORR_STRANGE_FOR_PI_Q2[id_disco_ens] = Zv*Zv*V_strange_OS_distr_M;
+      STRANGE_PI_Q2_FOR_DISCO[id_disco_ens] =PI_Q2_M_OS;
+      if(Include_strange_disco && Include_off_diagonal_disco) {
+	if(!Found_disco_impr_ens || !Found_disco_impr_lightD_strange_ens || !Found_disco_impr_strange_charm_ens) crash("disconnected for PI(Q^2) not found in strange ens");
+	CORR_DISCO_FOR_PI_Q2[id_disco_ens] = Zv*Zv*(disco_impr_distr + disco_impr_lightD_strange_distr+ disco_impr_strange_charm_distr);
+      }
+      else crash("what?");
+    }
+
 
 
     //interpolate to the physical point
@@ -2636,14 +2769,14 @@ void Gm2() {
 
 
       //check if bounding method worked for both L and M (1=worked, 0= not worked)
-      if( Tdatas_opt_L_tm[q] > 0 && Tdatas_opt_M_tm[q] > 0) Tcut_f_tm.push_back( 1.0);
+      if( Tdatas_opt_L_tm[q] > 0 && Tdatas_opt_M_tm[q] > 0)  Tcut_f_tm.push_back( 1.0);
       else Tcut_f_tm.push_back( 0.0);
       if( Tdatas_opt_L_OS[q] > 0 && Tdatas_opt_M_OS[q] > 0) Tcut_f_OS.push_back( 1.0);
       else Tcut_f_OS.push_back( 0.0);
-      if( Tdatas_opt_L_tm_pert_sub[q] > 0 && Tdatas_opt_M_tm_pert_sub[q] > 0) Tcut_f_tm_pert_sub.push_back( 1.0);
-      else Tcut_f_tm_pert_sub.push_back( 0.0);
-      if( Tdatas_opt_L_OS_pert_sub[q] > 0 && Tdatas_opt_M_OS_pert_sub[q] > 0) Tcut_f_OS_pert_sub.push_back( 1.0);
-      else Tcut_f_OS_pert_sub.push_back( 0.0);
+      //if( Tdatas_opt_L_tm_pert_sub[q] > 0 && Tdatas_opt_M_tm_pert_sub[q] > 0) Tcut_f_tm_pert_sub.push_back( 1.0);
+      //else Tcut_f_tm_pert_sub.push_back( 0.0);
+      //if( Tdatas_opt_L_OS_pert_sub[q] > 0 && Tdatas_opt_M_OS_pert_sub[q] > 0) Tcut_f_OS_pert_sub.push_back( 1.0);
+      //else Tcut_f_OS_pert_sub.push_back( 0.0);
 
       
     }
@@ -2660,8 +2793,8 @@ void Gm2() {
 
     Print_To_File({}, {Qs2, PI_Q2_Extr_tm.ave(), PI_Q2_Extr_tm.err(), Tcut_f_tm } , "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_extr_"+V_strange_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
     Print_To_File({}, {Qs2, PI_Q2_Extr_OS.ave(), PI_Q2_Extr_OS.err(), Tcut_f_OS } , "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_extr_"+V_strange_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
-    Print_To_File({}, {Qs2, PI_Q2_Extr_tm_pert_sub.ave(), PI_Q2_Extr_tm_pert_sub.err(), Tcut_f_tm_pert_sub } , "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_extr_pert_sub_"+V_strange_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
-    Print_To_File({}, {Qs2, PI_Q2_Extr_OS_pert_sub.ave(), PI_Q2_Extr_OS_pert_sub.err(), Tcut_f_OS_pert_sub } , "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_extr_pert_sub_"+V_strange_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+    Print_To_File({}, {Qs2, PI_Q2_Extr_tm_pert_sub.ave(), PI_Q2_Extr_tm_pert_sub.err(), Tcut_f_tm } , "../data/PI_Q2/strange/tm_"+Extrapolation_strange_mode+"/PI_Q2_extr_pert_sub_"+V_strange_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+    Print_To_File({}, {Qs2, PI_Q2_Extr_OS_pert_sub.ave(), PI_Q2_Extr_OS_pert_sub.err(), Tcut_f_OS } , "../data/PI_Q2/strange/OS_"+Extrapolation_strange_mode+"/PI_Q2_extr_pert_sub_"+V_strange_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
 
 
 
@@ -3150,6 +3283,29 @@ void Gm2() {
     cbar_c_OS_mass_M= Corr.Fit_distr(M_etaC_distr_OS_M);
     cbar_c_mass_H = Corr.Fit_distr(M_etaC_distr_H);
     cbar_c_OS_mass_H= Corr.Fit_distr(M_etaC_distr_OS_H);
+
+    if( V_charm_1_L.Tag[i_ens].substr(1,1) != "A") {
+
+      int id=0;
+      if( V_charm_1_L.Tag[i_ens].substr(1,1) == "D") id = 3;
+      else if(V_charm_1_L.Tag[i_ens].substr(1,1) == "C") id=2;
+      else if(V_charm_1_L.Tag[i_ens].substr(1,1) == "B") id=0;
+      else crash("Ensemble not recognised");
+      Mp_c1_tm.distr_list[id] = cbar_c_mass_L;
+      Mp_c2_tm.distr_list[id] =cbar_c_mass_M;
+      Mp_c3_tm.distr_list[id] = cbar_c_mass_H;
+      Mp_c1_OS.distr_list[id] =cbar_c_OS_mass_L;
+      Mp_c2_OS.distr_list[id] =cbar_c_OS_mass_M;
+      Mp_c3_OS.distr_list[id] =cbar_c_OS_mass_H;
+      if (id == 0) {
+	Mp_c1_tm.distr_list[id+1] = cbar_c_mass_L;
+	Mp_c2_tm.distr_list[id+1] =cbar_c_mass_M;
+	Mp_c3_tm.distr_list[id+1] = cbar_c_mass_H;
+	Mp_c1_OS.distr_list[id+1] =cbar_c_OS_mass_L;
+	Mp_c2_OS.distr_list[id+1] =cbar_c_OS_mass_M;
+	Mp_c3_OS.distr_list[id+1] =cbar_c_OS_mass_H;
+      }
+    }
     //fit obs to compute Zv and Za (hadronic method)
     Zp_ov_Zs_L = Corr.Fit_distr(Zp_ov_Zs_distr_L);
     Zp_ov_Zs_M = Corr.Fit_distr(Zp_ov_Zs_distr_M);
@@ -4232,6 +4388,8 @@ void Gm2() {
     Vint Tdatas_opt_L_tm, Tdatas_opt_L_OS, Tdatas_opt_M_tm, Tdatas_opt_M_OS, Tdatas_opt_H_tm, Tdatas_opt_H_OS;
     Vint Tdatas_opt_L_tm_pert_sub, Tdatas_opt_L_OS_pert_sub, Tdatas_opt_M_tm_pert_sub, Tdatas_opt_M_OS_pert_sub, Tdatas_opt_H_tm_pert_sub, Tdatas_opt_H_OS_pert_sub;
 
+    
+
     // Apply bounding method
     Bounding_PI_q2(PI_Q2_L_tm, Za_L*Za_L*V_charm_distr_L, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_L.Tag[i_ens]+"_L"  , Tdatas_opt_L_tm, MV_charm_L);
     Bounding_PI_q2(PI_Q2_M_tm, Za_M*Za_M*V_charm_distr_M, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_M.Tag[i_ens]+"_M"  , Tdatas_opt_M_tm, MV_charm_M);
@@ -4240,16 +4398,41 @@ void Gm2() {
     Bounding_PI_q2(PI_Q2_M_OS, Zv_M*Zv_M*V_charm_OS_distr_M, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_M.Tag[i_ens]+"_M"  , Tdatas_opt_M_OS, MV_charm_OS_M);
     Bounding_PI_q2(PI_Q2_H_OS, Zv_H*Zv_H*V_charm_OS_distr_H, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_H.Tag[i_ens]+"_H"  , Tdatas_opt_H_OS, MV_charm_OS_H);
 
+  
     //include perturbative subtraction
-    Bounding_PI_q2(PI_Q2_L_tm_pert_sub, Za_L*Za_L*V_charm_distr_L_pert_sub, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_L.Tag[i_ens]+"_L_pert_sub"  , Tdatas_opt_L_tm_pert_sub, MV_charm_L);
-    Bounding_PI_q2(PI_Q2_M_tm_pert_sub, Za_M*Za_M*V_charm_distr_M_pert_sub, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_M.Tag[i_ens]+"_M_pert_sub"  , Tdatas_opt_M_tm_pert_sub, MV_charm_M);
-    Bounding_PI_q2(PI_Q2_H_tm_pert_sub, Za_H*Za_H*V_charm_distr_H_pert_sub, a_distr, "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_H.Tag[i_ens]+"_H_pert_sub"  , Tdatas_opt_H_tm_pert_sub, MV_charm_H);
-    Bounding_PI_q2(PI_Q2_L_OS_pert_sub, Zv_L*Zv_L*V_charm_OS_distr_L_pert_sub, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_L.Tag[i_ens]+"_L_pert_sub"  , Tdatas_opt_L_OS_pert_sub, MV_charm_OS_L);
-    Bounding_PI_q2(PI_Q2_M_OS_pert_sub, Zv_M*Zv_M*V_charm_OS_distr_M_pert_sub, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_M.Tag[i_ens]+"_M_pert_sub"  , Tdatas_opt_M_OS_pert_sub, MV_charm_OS_M);
-    Bounding_PI_q2(PI_Q2_H_OS_pert_sub, Zv_H*Zv_H*V_charm_OS_distr_H_pert_sub, a_distr, "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_Tdata_"+V_charm_1_H.Tag[i_ens]+"_H_pert_sub"  , Tdatas_opt_H_OS_pert_sub, MV_charm_OS_H);
+    Get_PI_q2(PI_Q2_L_tm_pert_sub, VV_free_oppor_L, a_distr, Corr.Nt/2);
+    Get_PI_q2(PI_Q2_M_tm_pert_sub, VV_free_oppor_M, a_distr, Corr.Nt/2);
+    Get_PI_q2(PI_Q2_H_tm_pert_sub, VV_free_oppor_H, a_distr, Corr.Nt/2);
+    Get_PI_q2(PI_Q2_L_OS_pert_sub, VV_free_samer_L, a_distr, Corr.Nt/2);
+    Get_PI_q2(PI_Q2_M_OS_pert_sub, VV_free_samer_M, a_distr, Corr.Nt/2);
+    Get_PI_q2(PI_Q2_H_OS_pert_sub, VV_free_samer_H, a_distr, Corr.Nt/2);
 
-   
+    PI_Q2_L_tm_pert_sub = PI_Q2_L_tm_pert_sub + PI_Q2_L_tm;
+    PI_Q2_M_tm_pert_sub = PI_Q2_M_tm_pert_sub + PI_Q2_M_tm;
+    PI_Q2_H_tm_pert_sub = PI_Q2_H_tm_pert_sub + PI_Q2_H_tm;
+    PI_Q2_L_OS_pert_sub = PI_Q2_L_OS_pert_sub + PI_Q2_L_OS;
+    PI_Q2_M_OS_pert_sub = PI_Q2_M_OS_pert_sub + PI_Q2_M_OS;
+    PI_Q2_H_OS_pert_sub = PI_Q2_H_OS_pert_sub + PI_Q2_H_OS;
 
+
+
+     if(V_charm_1_M.Tag[i_ens] == "cD211a.054.96" || V_charm_1_M.Tag[i_ens] == "cC211a.06.80" || V_charm_1_M.Tag[i_ens] == "cB211b.072.64") {
+       int id_disco_ens=0;
+       if(V_charm_1_M.Tag[i_ens]== "cD211a.054.96") id_disco_ens=2;
+       else if(V_charm_1_M.Tag[i_ens]== "cC211a.06.80") id_disco_ens=1;
+       else if(V_charm_1_M.Tag[i_ens]== "cB211b.072.64") id_disco_ens=0;
+       else crash("what?");
+       
+       CORR_CHARM_FOR_PI_Q2[id_disco_ens]= Zv_H*Zv_H*V_charm_OS_distr_H;
+       CHARM_PI_Q2_FOR_DISCO[id_disco_ens] = PI_Q2_H_OS;
+       if(Include_charm_disco && Include_off_diagonal_disco) {
+	 if(!Found_disco_impr_ens || !Found_disco_impr_lightD_charm_ens) crash("Disconnected for PI(Q^2) not found in charm ens");
+	 CORR_DISCO_FOR_PI_Q2[id_disco_ens] = CORR_DISCO_FOR_PI_Q2[id_disco_ens] + Zv_M*Zv_M*( disco_impr_distr + disco_impr_lightD_charm_distr);
+
+       }
+       else crash("what?");
+
+     }
 
     //interpolate to the physical point
 
@@ -4292,10 +4475,10 @@ void Gm2() {
       else Tcut_f_tm.push_back( 0.0);
       if( Tdatas_opt_L_OS[q] > 0 && Tdatas_opt_M_OS[q] > 0 && Tdatas_opt_H_OS[q] > 0) Tcut_f_OS.push_back( 1.0);
       else Tcut_f_OS.push_back( 0.0);
-      if( Tdatas_opt_L_tm_pert_sub[q] > 0 && Tdatas_opt_M_tm_pert_sub[q] > 0 && Tdatas_opt_H_tm_pert_sub[q] > 0) Tcut_f_tm_pert_sub.push_back( 1.0);
-      else Tcut_f_tm_pert_sub.push_back( 0.0);
-      if( Tdatas_opt_L_OS_pert_sub[q] > 0 && Tdatas_opt_M_OS_pert_sub[q] > 0 && Tdatas_opt_H_OS_pert_sub[q] > 0) Tcut_f_OS_pert_sub.push_back( 1.0);
-      else Tcut_f_OS_pert_sub.push_back( 0.0);
+      //if( Tdatas_opt_L_tm_pert_sub[q] > 0 && Tdatas_opt_M_tm_pert_sub[q] > 0 && Tdatas_opt_H_tm_pert_sub[q] > 0) Tcut_f_tm_pert_sub.push_back( 1.0);
+      //else Tcut_f_tm_pert_sub.push_back( 0.0);
+      //if( Tdatas_opt_L_OS_pert_sub[q] > 0 && Tdatas_opt_M_OS_pert_sub[q] > 0 && Tdatas_opt_H_OS_pert_sub[q] > 0) Tcut_f_OS_pert_sub.push_back( 1.0);
+      //else Tcut_f_OS_pert_sub.push_back( 0.0);
 
       
     }
@@ -4312,8 +4495,8 @@ void Gm2() {
 
     Print_To_File({}, {Qs2, PI_Q2_Extr_tm.ave(), PI_Q2_Extr_tm.err(), Tcut_f_tm } , "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_extr_"+V_charm_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
     Print_To_File({}, {Qs2, PI_Q2_Extr_OS.ave(), PI_Q2_Extr_OS.err(), Tcut_f_OS } , "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_extr_"+V_charm_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
-    Print_To_File({}, {Qs2, PI_Q2_Extr_tm_pert_sub.ave(), PI_Q2_Extr_tm_pert_sub.err(), Tcut_f_tm_pert_sub } , "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_extr_pert_sub_"+V_charm_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
-    Print_To_File({}, {Qs2, PI_Q2_Extr_OS_pert_sub.ave(), PI_Q2_Extr_OS_pert_sub.err(), Tcut_f_OS_pert_sub } , "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_extr_pert_sub_"+V_charm_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+    Print_To_File({}, {Qs2, PI_Q2_Extr_tm_pert_sub.ave(), PI_Q2_Extr_tm_pert_sub.err(), Tcut_f_tm } , "../data/PI_Q2/charm/tm_"+Extrapolation_charm_mode+"/PI_Q2_extr_pert_sub_"+V_charm_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+    Print_To_File({}, {Qs2, PI_Q2_Extr_OS_pert_sub.ave(), PI_Q2_Extr_OS_pert_sub.err(), Tcut_f_OS } , "../data/PI_Q2/charm/OS_"+Extrapolation_charm_mode+"/PI_Q2_extr_pert_sub_"+V_charm_1_L.Tag[i_ens]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
 
 
 
@@ -4356,7 +4539,7 @@ void Gm2() {
     Corr.Nt = V_light_1.nrows[i_ens];
 
     //resample lattice spacing
-    distr_t a_distr(UseJack);
+    distr_t a_distr(UseJack), a_distr_2a(UseJack);
     LatticeInfo L_info;
     L_info.LatInfo_new_ens(V_light_1.Tag[i_ens]);
  
@@ -4387,14 +4570,14 @@ void Gm2() {
   
 
     //Analyze correlators
-    if(V_light_1.Tag[i_ens].substr(1,1)=="A") {Corr.Tmin=14;Corr.Tmax=19; a_distr=a_A;}
-    else if(V_light_1.Tag[i_ens].substr(1,12)=="B211b.072.96") {Corr.Tmin=26; Corr.Tmax=60; a_distr=a_B;}
-    else if(V_light_1.Tag[i_ens].substr(1,12)=="B211b.072.64") { Corr.Tmin=24; Corr.Tmax=36; a_distr = a_B;}
-    else if(V_light_1.Tag[i_ens].substr(1,11)=="B211a.25.24") {Corr.Tmin=15; Corr.Tmax=20; a_distr=a_B;}
-    else if(V_light_1.Tag[i_ens].substr(1,11)=="B211a.25.32") {Corr.Tmin=21; Corr.Tmax=30; a_distr = a_B;}
-    else if(V_light_1.Tag[i_ens].substr(1,11)=="B211a.25.48") {Corr.Tmin=21; Corr.Tmax=40; a_distr = a_B;}
-    else if(V_light_1.Tag[i_ens].substr(1,1)=="C") {Corr.Tmin=40; Corr.Tmax=60; a_distr=a_C;}
-    else if(V_light_1.Tag[i_ens].substr(1,1)=="D") {Corr.Tmin=41; Corr.Tmax=80; a_distr=a_D;}
+    if(V_light_1.Tag[i_ens].substr(1,1)=="A") {Corr.Tmin=14;Corr.Tmax=19; a_distr=a_A; a_distr_2a= a_A_afp;}
+    else if(V_light_1.Tag[i_ens].substr(1,12)=="B211b.072.96") {Corr.Tmin=26; Corr.Tmax=60; a_distr=a_B; a_distr_2a= a_B_afp;}
+    else if(V_light_1.Tag[i_ens].substr(1,12)=="B211b.072.64") { Corr.Tmin=24; Corr.Tmax=36; a_distr = a_B; a_distr_2a= a_B_afp;}
+    else if(V_light_1.Tag[i_ens].substr(1,11)=="B211a.25.24") {Corr.Tmin=15; Corr.Tmax=20; a_distr=a_B; a_distr_2a= a_B_afp;}
+    else if(V_light_1.Tag[i_ens].substr(1,11)=="B211a.25.32") {Corr.Tmin=21; Corr.Tmax=30; a_distr = a_B; a_distr_2a= a_B_afp;}
+    else if(V_light_1.Tag[i_ens].substr(1,11)=="B211a.25.48") {Corr.Tmin=21; Corr.Tmax=40; a_distr = a_B; a_distr_2a= a_B_afp;}
+    else if(V_light_1.Tag[i_ens].substr(1,1)=="C") {Corr.Tmin=40; Corr.Tmax=60; a_distr=a_C; a_distr_2a= a_C_afp;}
+    else if(V_light_1.Tag[i_ens].substr(1,1)=="D") {Corr.Tmin=41; Corr.Tmax=80; a_distr=a_D; a_distr_2a= a_D_afp;} 
     else crash("Cannot find ensemble: "+V_light_1.Tag[i_ens]+" while modifying fit interval for MV_light");
 
 
@@ -4589,6 +4772,14 @@ void Gm2() {
   
     Mpi=Corr.Fit_distr(Mpi_distr);
     Mpi_OS= Corr.Fit_distr(Mpi_OS_distr);
+    int id=0;
+    if(V_light_1.Tag[i_ens] == "cB211b.072.64") id=0;
+    else if(V_light_1.Tag[i_ens]== "cB211b.072.96") id=1;
+    else if(V_light_1.Tag[i_ens].substr(1,1) == "C") id=2;
+    else if(V_light_1.Tag[i_ens].substr(1,1) == "D") id=3;
+    else crash("Ensemble not recognised");
+    Mp_light_tm.distr_list[id] = Mpi;
+    Mp_light_OS.distr_list[id] = Mpi_OS;
     fp= Corr.Fit_distr(fp_distr);
     fp_ov_Mpi= fp/Mpi;
     Zp_ov_Zs = Corr.Fit_distr(Zp_ov_Zs_distr);
@@ -4915,6 +5106,17 @@ void Gm2() {
     distr_t agm2_W_ELM(UseJack, UseJack?Njacks:Nboots); //constructor sets agm2_W_ELM to zero by default
     distr_t agm2_SD_ELM(UseJack, UseJack?Njacks:Nboots);  //constructor sets agm2_SD_ELM to zero by default
 
+    //test
+    distr_t agm2_W_2a(UseJack, UseJack?Njacks:Nboots);
+    distr_t_list agm2_W_func_a(UseJack);
+    double a_min= 0.03*fm_to_inv_Gev;
+    double a_max= 0.2*fm_to_inv_Gev;
+    int Nsteps_a= (int)((a_max-a_min)/(0.005*fm_to_inv_Gev));
+    distr_t agm2_W_rel_err(UseJack, UseJack?Njacks:Nboots);
+    distr_t agm2_SD_rel_err(UseJack, UseJack?Njacks:Nboots);
+    distr_t agm2_tot(UseJack, UseJack?Njacks:Nboots);
+    distr_t agm2_tot_rel_err(UseJack, UseJack?Njacks:Nboots);
+
 
     //#################################################################################################
 
@@ -4926,17 +5128,52 @@ void Gm2() {
     distr_t X = X_pi/X_pi_phys;  //Mpi/( (Mpi/a_distr).ave()); //variable to be used in ELT
 
     distr_t_list Ker = distr_t_list::f_of_distr(K, a_distr , Corr.Nt);
+    distr_t_list Ker_2a= distr_t_list::f_of_distr(K, a_distr_2a, Corr.Nt);
     distr_t_list Ker_ELM = distr_t_list::f_of_distr(K, X, Corr.Nt);
+    auto K_der_W_func_times_a = [&](double Mv, double t, double size) -> double { return Mv*der_kernel_K_W_win(t, Mv);};
+    auto K_der_SD_func_times_a = [&](double Mv, double t, double size) -> double { return Mv*der_kernel_K_SD_win(t, Mv);};
+    auto K_der_func_times_a = [&](double Mv, double t, double size) -> double { return Mv*der_kernel_K(t, Mv);};
+    //auto K = [&](double Mv, double t, double size) -> double { return kernel_K(t, Mv);};
+    distr_t_list Ker_der_W= distr_t_list::f_of_distr(K_der_W_func_times_a, a_distr, Corr.Nt);
+    distr_t_list Ker_der_SD= distr_t_list::f_of_distr(K_der_SD_func_times_a, a_distr, Corr.Nt);
+    distr_t_list Ker_der= distr_t_list::f_of_distr(K_der_func_times_a, a_distr, Corr.Nt);
+
     
     //define lambdas for the theta func
     auto th0 = [](double ta) ->double { return 1.0/(1.0 + exp(-2.0*(ta-t0)/Delta));};
     auto th1 = [](double ta) ->double { return 1.0/(1.0 + exp(-2.0*(ta-t1)/Delta));};
     for(int t=1; t< Corr.Nt/2; t++) {
       agm2_W = agm2_W + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
+      agm2_tot= agm2_tot + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_distr.distr_list[t]*Ker.distr_list[t];
+      agm2_W_rel_err = agm2_W_rel_err + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_distr.distr_list[t]*Ker_der_W.distr_list[t];
+      agm2_SD_rel_err = agm2_SD_rel_err + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_distr.distr_list[t]*Ker_der_SD.distr_list[t];
+      agm2_tot_rel_err = agm2_tot_rel_err + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_distr.distr_list[t]*Ker_der.distr_list[t];
+      agm2_W_2a = agm2_W_2a + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_distr.distr_list[t]*Ker_2a.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr_2a) - distr_t::f_of_distr(th1, t*a_distr_2a));
       agm2_SD = agm2_SD + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*(V_light_distr_tm_corr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
       agm2_W_ELM = agm2_W_ELM + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_distr.distr_list[t]*Ker_ELM.distr_list[t]*( distr_t::f_of_distr(th0, t*X) - distr_t::f_of_distr(th1, t*X));
       agm2_SD_ELM = agm2_SD_ELM + 4.0*w(t,Simps_ord)*pow(alpha,2)*(Za*Za*V_light_distr_tm_corr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
     }
+
+    agm2_W_rel_err= agm2_W_rel_err/agm2_W;
+    agm2_SD_rel_err= agm2_SD_rel_err/agm2_SD;
+    agm2_tot_rel_err = agm2_tot_rel_err/agm2_tot;
+
+  
+    //test, compute a_mu^W as a function of lattice spacing
+    Vfloat a_test_list;
+    for(int is=0;is<Nsteps_a;is++) {
+      agm2_W_func_a.distr_list.push_back(0.0*agm2_W);
+      double a_to_use= a_min + is*0.005*fm_to_inv_Gev;
+      a_test_list.push_back(a_to_use);
+      for(int t=1;t < Corr.Nt/2;t++) {
+	agm2_W_func_a.distr_list[is] = agm2_W_func_a.distr_list[is] + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_distr.distr_list[t]*kernel_K(t,a_to_use)*( th0(t*a_to_use) - th1(t*a_to_use));
+
+      }
+    }
+
+  
+    //print a_mu^W as a function of lattice spacing
+    Print_To_File({},{a_test_list, agm2_W_func_a.ave(), agm2_W_func_a.err() }, "../data/gm2/light/tm/agm2_W_func_a_"+V_light_1.Tag[i_ens]+".dat.t", "", "a[GeV] a_mu^W a_mu^W(err)");
 
     vector<distr_t> agm2_SD_tmins( tmins.size());
 
@@ -5040,6 +5277,11 @@ void Gm2() {
     agm2_light_SD.distr_list.push_back(agm2_SD);
     agm2_light_W_ELM.distr_list.push_back(agm2_W_ELM);
     agm2_light_SD_ELM.distr_list.push_back(agm2_SD_ELM);
+
+    agm2_light_W_2a.distr_list.push_back(agm2_W_2a);
+    agm2_light_W_der_err_scale_setting.distr_list.push_back(agm2_W_rel_err);
+    agm2_light_SD_der_err_scale_setting.distr_list.push_back(agm2_SD_rel_err);
+    agm2_light_tot_der_err_scale_setting.distr_list.push_back(agm2_tot_rel_err);
 
   
     //push_back the result for tmins
@@ -5771,15 +6013,21 @@ void Gm2() {
 
       //get energy levels and store the distribution of the ground state (2-pi)
       distr_t gs_OS(UseJack);
+      distr_t mrho_GS(UseJack);
       for(int ijack=0;ijack<Njacks;ijack++) {
 	double M= Mpi.distr[ijack];
 	double MR= Bt_fit_OS.par[ijack].Mrho;
 	double FP= fp.distr[ijack];
+	mrho_GS.distr.push_back( M*MR);
 	double GG= Bt_fit_OS.par[ijack].gpi;
 	Vfloat Enn;
 	LL.Find_pipi_energy_lev((double)L_info.L,M*MR, GG*MR*M/FP, M, 0.0, Enn);
 	gs_OS.distr.push_back(2.0*sqrt( pow(Enn[0],2) + M*M));
       }
+
+      if(V_light_1.Tag[i_ens] == "cD211a.054.96") Mrho_from_GS[2] = mrho_GS;
+      else if(V_light_1.Tag[i_ens] == "cC211a.06.80") Mrho_from_GS[1] = mrho_GS;
+      else if(V_light_1.Tag[i_ens] == "cB211b.072.64") Mrho_from_GS[0]= mrho_GS;
 
       //###################################################
       //print fitted func
@@ -5841,6 +6089,33 @@ void Gm2() {
       Bounding_PI_q2(PI_Q2_tm_pert_sub, Za*Za*V_light_distr_tm_corr, a_distr, "../data/PI_Q2/light/tm/PI_Q2_Tdata_"+V_light_1.Tag[i_ens]+"_pert_sub", Tdatas_opt_tm_pert_sub, gs_tm);
   
       Bounding_PI_q2(PI_Q2_OS_pert_sub, Zv*Zv*V_light_distr_OS_corr, a_distr, "../data/PI_Q2/light/OS/PI_Q2_Tdata_"+V_light_1.Tag[i_ens]+"_pert_sub", Tdatas_opt_OS_pert_sub, gs_OS);
+
+
+      //push_back light corr for bounding on disconnected
+      if(V_light_1.Tag[i_ens] == "cD211a.054.96" || V_light_1.Tag[i_ens] == "cC211a.06.80" || V_light_1.Tag[i_ens] == "cB211b.072.64") {
+	int id_disco_ens=0;
+	if(V_light_1.Tag[i_ens]== "cD211a.054.96") id_disco_ens=2;
+	else if(V_light_1.Tag[i_ens]== "cC211a.06.80") id_disco_ens=1;
+	else if(V_light_1.Tag[i_ens]== "cB211b.072.64") id_disco_ens=0;
+	else crash("what?");
+       
+	CORR_LIGHT_FOR_PI_Q2[id_disco_ens]= Zv*Zv*V_light_OS_distr;
+	LIGHT_PI_Q2_FOR_DISCO[id_disco_ens] = PI_Q2_OS;
+
+	if(Include_light_disco && Include_off_diagonal_disco) {
+	  if(!Found_disco_impr_D_ens) crash("Disconnected for PI(Q^2) not found in light ens");
+	  CORR_DISCO_FOR_PI_Q2[id_disco_ens] = CORR_DISCO_FOR_PI_Q2[id_disco_ens] + Zv*Zv*disco_impr_D_distr;
+	  L_list_disco_PI_Q2[id_disco_ens] = L_info.L;
+	  Mpi_fit_disc_PI_Q2.distr_list[id_disco_ens] = Mpi ;
+	  fpi_fit_disc_PI_Q2.distr_list[id_disco_ens] =fp;
+	  a_disc_PI_Q2.distr_list[id_disco_ens] = a_distr;
+	  Ens_list_disc_PI_Q2[id_disco_ens] = V_light_1.Tag[i_ens];
+
+	}
+	else crash("what?");
+
+      }
+
   
 
 
@@ -6417,6 +6692,11 @@ void Gm2() {
   
   cout<<"########### DONE #############"<<endl;
 
+  //print pseudoscalar masses for physical point ensembles
+  Print_To_File(ens_masses_id, {Mp_light_tm.ave(), Mp_light_tm.err(), Mp_s1_tm.ave(), Mp_s1_tm.err(), Mp_s2_tm.ave(), Mp_s2_tm.err(), Mp_c1_tm.ave(), Mp_c1_tm.err(), Mp_c2_tm.ave(), Mp_c2_tm.err(), Mp_c3_tm.ave(), Mp_c3_tm.err()}, "../data/gm2/MP_masses_tm.dat", "", "#Ensemble   Mp_l   Mp_s1   Mp_s2   Mp_c1    Mp_c2   Mp_c3");
+  
+  Print_To_File(ens_masses_id, {Mp_light_OS.ave(), Mp_light_OS.err(), Mp_s1_OS.ave(), Mp_s1_OS.err(), Mp_s2_OS.ave(), Mp_s2_OS.err(), Mp_c1_OS.ave(), Mp_c1_OS.err(), Mp_c2_OS.ave(), Mp_c2_OS.err(), Mp_c3_OS.ave(), Mp_c3_OS.err()}, "../data/gm2/MP_masses_OS.dat", "", "#Ensemble   Mp_l   Mp_s1   Mp_s2   Mp_c1    Mp_c2   Mp_c3");
+  
 
  
  
@@ -6576,6 +6856,9 @@ void Gm2() {
   //light
   //tm
   Print_To_File(V_light_1.Tag, {L_list, a_list, ml_list, Mpi_fit.ave(), Mpi_fit.err(), Mpi_OS_fit.ave(), Mpi_OS_fit.err(),  fp_fit.ave(), fp_fit.err(), Zv_fit.ave(), Zv_fit.err(), Za_fit.ave(), Za_fit.err(), Zp_ov_Zs_fit.ave(), Zp_ov_Zs_fit.err(), agm2_light_W.ave(), agm2_light_W.err(), agm2_light_W_ELM.ave(), agm2_light_W_ELM.err(), agm2_light_SD.ave(), agm2_light_SD.err(), agm2_light_SD_ELM.ave(), agm2_light_SD_ELM.err()}, "../data/gm2/light/tm/windows.list", "", "#ENS L a ml  Mpi_tm  Mpi_OS fp  Zv   Za   Zp/Zs   W    W(ELM)     SD     SD(ELM) ");
+  //tm test 2a
+  Print_To_File(V_light_1.Tag, {agm2_light_W_2a.ave(), agm2_light_W_2a.err()}, "../data/gm2/light/tm/windows_test_2a.list", "", "#ENS  W");
+  Print_To_File(V_light_1.Tag, {agm2_light_W_der_err_scale_setting.ave(), agm2_light_W_der_err_scale_setting.err(), agm2_light_SD_der_err_scale_setting.ave(), agm2_light_SD_der_err_scale_setting.err(), agm2_light_tot_der_err_scale_setting.ave(), agm2_light_tot_der_err_scale_setting.err() }, "../data/gm2/light/tm/win_scale_setting_err.list", "", "#ENS  W   SD  LD");
   //OS
   Print_To_File(V_light_1.Tag, {L_list, a_list, ml_list, Mpi_fit.ave(), Mpi_fit.err(), Mpi_OS_fit.ave(), Mpi_OS_fit.err(),  fp_fit.ave(), fp_fit.err(), Zv_fit.ave(), Zv_fit.err(), Za_fit.ave(), Za_fit.err(), Zp_ov_Zs_fit.ave(), Zp_ov_Zs_fit.err(), agm2_light_W_OS.ave(), agm2_light_W_OS.err(), agm2_light_W_ELM_OS.ave(), agm2_light_W_ELM_OS.err(), agm2_light_SD_OS.ave(), agm2_light_SD_OS.err(), agm2_light_SD_ELM_OS.ave(), agm2_light_SD_ELM_OS.err()}, "../data/gm2/light/OS/windows.list", "", "#ENS L a ml  Mpi_tm  Mpi_OS fp  Zv   Za   Zp/Zs   W    W(ELM)     SD     SD(ELM) ");
 
@@ -6842,6 +7125,31 @@ void Gm2() {
   //#########################################################################################
 
 
+
+
+
+  
+  //PRINT DISCONNECTED BOUNDING FOR PI(Q^2) analysis
+  //###########################################################
+  if(Include_light_disco && Include_charm_disco && Include_strange_disco && Include_off_diagonal_disco) {
+  for(int iens_disc=0; iens_disc<(signed)CORR_DISCO_FOR_PI_Q2.size();iens_disc++) {
+    distr_t_list DISC_PI_PER_ENS(UseJack);
+    Vint Tdatas_opt_disc;
+    Bounding_PI_q2_disco(DISC_PI_PER_ENS, CORR_DISCO_FOR_PI_Q2[iens_disc] +0.1*CORR_LIGHT_FOR_PI_Q2[iens_disc]+CORR_STRANGE_FOR_PI_Q2[iens_disc]+CORR_CHARM_FOR_PI_Q2[iens_disc], 0.1*LIGHT_PI_Q2_FOR_DISCO[iens_disc] + STRANGE_PI_Q2_FOR_DISCO[iens_disc] + CHARM_PI_Q2_FOR_DISCO[iens_disc] ,  a_disc_PI_Q2.distr_list[iens_disc], "../data/PI_Q2/disco/PI_Q2_Tdata_"+Ens_list_disc_PI_Q2[iens_disc], Tdatas_opt_disc, m_rho*a_disc_PI_Q2.distr_list[iens_disc]);
+    Vfloat Tcut_f_disco;
+    for(int q=0;q<Qs_size;q++) {
+      if( Tdatas_opt_disc[q] > 0) Tcut_f_disco.push_back( 1.0);
+    }
+    Add_ens_val_PI_q2(PI_Q2_disco, DISC_PI_PER_ENS);
+
+    //Print
+    Print_To_File({}, {Qs2, DISC_PI_PER_ENS.ave(), DISC_PI_PER_ENS.err(), Tcut_f_disco } , "../data/PI_Q2/disco/PI_Q2_extr_"+Ens_list_disc_PI_Q2[iens_disc]+".t", "", "# Q2[GeV2]   PI(Q^2)   Tcut_f");
+   
+  }
+  }
+  //###########################################################
+
+
   //print Zv and Za (Hadronic and RI-MOM) from strange correlators
   for(int is=0;is<Nens_strange;is++) {
     cout<<"####################"<<endl;
@@ -7043,8 +7351,11 @@ void Gm2() {
   distr_t res_mc_Jpsi_etac_ratio_finest = Obs_extrapolation_meson_mass( mc_Jpsi_etac_ratio_finest_list, a2_mc_diff_finest_list,  0.0, "../data/gm2/charm", "mc_finest_Jpsi_etac_ratio_cont_limit", UseJack, "FIT");
 
 
+
   exit(-1);
- 
+
+
+  
   //#############################################        CONTINUUM/THERMODYNAMIC/PHYSICAL-POINT EXTRAPOLATION       ###############################################
   vector<string> a2_list({"OS"});
   vector<string> FSEs_list({"off"});
@@ -7057,6 +7368,10 @@ void Gm2() {
 
 
 
+
+
+
+  
   //light
   //#####################################################################################################################
   //#####################################################################################################################
@@ -7080,6 +7395,7 @@ void Gm2() {
   //NO ELM
   Perform_Akaike_fits(agm2_light_SD, agm2_light_SD_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "SD_win", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, 0.0, ret_distr_SD_light);
 
+ 
   vector<distr_t> ret_distr_SD_tmins;
 
   FSEs_list = {"off"};
@@ -7348,6 +7664,69 @@ void Gm2() {
   Print_To_File({}, { ret_distr_W_light.distr, ret_distr_W_strange.distr, ret_distr_W_charm.distr, ret_distr_W_disco.distr}  , "../data/gm2/fit_corr_W_"+Extrapolation_strange_mode+"_"+Extrapolation_charm_mode+".dat" ,"", "#light strange charm disco");
 
 
+
+
+
+  //#####################################################################################################
+  //continuum extrapolation of PI(Q^2)
+
+  
+  for(int j=0; j< (signed)Qs2.size();j++) {
+
+    distr_t ret_distr_PI_Q2_light(UseJack), ret_distr_PI_Q2_light_ps(UseJack);
+    allow_a4_and_log=true;
+    allow_only_finest=false;
+    mass_extr_list = {"on", "off"};
+    single_fit_list = {"off"};
+    a4_list = {"off", "on", "tm", "OS"};
+    FSEs_list = {"off", "comb_GS"}; //add comb_GS
+    a2_list = {"on", "off", "tm", "OS"};
+    n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3)};
+    //light 
+    Perform_Akaike_fits_PI_Q2(Qs2[j], PI_Q2_light_tm[j], PI_Q2_light_OS[j], a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "Q2_"+to_string_with_precision(Qs2[j],5), "light", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 0.1, LL, ret_distr_PI_Q2_light);
+    //light pert sub
+    Perform_Akaike_fits_PI_Q2(Qs2[j],PI_Q2_light_tm_pert_sub[j], PI_Q2_light_OS_pert_sub[j], a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "Q2_"+to_string_with_precision(Qs2[j],5)+"_ps", "light", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 0.1, LL, ret_distr_PI_Q2_light_ps);
+
+    distr_t ret_distr_PI_Q2_strange(UseJack), ret_distr_PI_Q2_strange_ps(UseJack);
+    FSEs_list = {"off"};
+    mass_extr_list = {"off"};
+    //strange
+    Perform_Akaike_fits_PI_Q2(Qs2[j], PI_Q2_strange_tm[j], PI_Q2_strange_OS[j], a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "Q2_"+to_string_with_precision(Qs2[j],5)+"_"+Extrapolation_strange_mode, "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0, 0, 0.05, LL,  ret_distr_PI_Q2_strange);
+    //strange pert sub
+    Perform_Akaike_fits_PI_Q2(Qs2[j],PI_Q2_strange_tm_pert_sub[j], PI_Q2_strange_OS_pert_sub[j], a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "Q2_"+to_string_with_precision(Qs2[j],5)+"_"+Extrapolation_strange_mode+"_ps", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0, 0, 0.05, LL,  ret_distr_PI_Q2_strange_ps);
+
+    allow_only_finest=true;
+
+    distr_t ret_distr_PI_Q2_charm(UseJack), ret_distr_PI_Q2_charm_ps(UseJack);
+    //charm
+    Perform_Akaike_fits_PI_Q2(Qs2[j],PI_Q2_charm_tm[j], PI_Q2_charm_OS[j], a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "Q2_"+to_string_with_precision(Qs2[j],5)+"_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 0.01, LL,  ret_distr_PI_Q2_charm);
+    //charm pert sub
+    Perform_Akaike_fits_PI_Q2(Qs2[j],PI_Q2_charm_tm[j], PI_Q2_charm_OS[j], a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "Q2_"+to_string_with_precision(Qs2[j],5)+"_"+Extrapolation_charm_mode+"_ps", "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, 0.01, LL,  ret_distr_PI_Q2_charm_ps);
+
+
+    single_fit_list={"OS"};
+    FSEs_list={"off"};
+    a4_list={"off"};
+    n_m_pair_list ={make_pair(0,0)};
+    a2_list={"off", "OS"};
+    mass_extr_list={"off"};
+    allow_a4_and_log = false;
+    allow_only_finest= false;
+
+    distr_t ret_distr_PI_Q2_disc(UseJack);
+
+    //disconnected
+    if(Include_charm_disco && Include_light_disco && Include_off_diagonal_disco && Include_strange_disco) {
+    Perform_Akaike_fits_PI_Q2(Qs2[j],PI_Q2_disco[j], PI_Q2_disco[j], a_A, a_B, a_C, a_D, L_list_disco_PI_Q2, a_disc_PI_Q2, Mpi_fit_disc_PI_Q2, fpi_fit_disc_PI_Q2, Ens_list_disc_PI_Q2, UseJack, Njacks, Nboots, "Q2_"+to_string_with_precision(Qs2[j],5), "disco", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, 0,0, -0.01, LL,  ret_distr_PI_Q2_disc);
+    }
+    
+    
+  }
+
+
+  //######################################################################################################
+
+
   //print correlation matrix on screen
 
   vector<distr_t> SD_corr({ ret_distr_SD_light, ret_distr_SD_strange, ret_distr_SD_charm, ret_distr_SD_disco  });
@@ -7380,6 +7759,12 @@ void Gm2() {
     
   }
 
+
+
+
+
+  
+
   cout<<"Bye"<<endl;
 
     
@@ -7389,6 +7774,8 @@ void Gm2() {
 
    
 
+
+  
 
  
   

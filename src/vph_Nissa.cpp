@@ -13,7 +13,7 @@ const double qu = 2.0/3.0; //electric charge of u-type quark
 const double qd = -1.0/3.0; //electric charge of d-type quark
 const string Meson="Ds";
 bool Is_reph=true;
-int num_xg=2;
+int num_xg=11;
 
 
 

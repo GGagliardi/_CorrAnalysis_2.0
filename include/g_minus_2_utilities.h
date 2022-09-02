@@ -19,6 +19,9 @@ using namespace std;
 
 
 double kernel_K(double t,double MV);
+double der_kernel_K_W_win(double t, double MV);
+double der_kernel_K_SD_win(double t, double MV);
+double der_kernel_K(double t, double MV);
 void Plot_kernel_K(int Npoints);
 double Kernel_Pi_q2(double t, double Q, double a);
 void Plot_Energy_windows_K();

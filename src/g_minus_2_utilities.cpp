@@ -16,6 +16,8 @@ const double relerr= 1e-12;
 
 double kernel_K(double t, double MV) {
 
+  //PrecFloat::setDefaultPrecision(80);
+
   double m_mu= m_muon;
 
   if(t < 1e-18) return 0.0; 
@@ -26,20 +28,23 @@ double kernel_K(double t, double MV) {
     return (4.0/pow(m_mu*MV,2))*(1.0/sqrt(4.0 + pow(x,2)))*pow(  (sqrt(4.0+pow(x,2))-x)/(sqrt(4.0+pow(x,2))+x),2)*( (cos(m_mu*MV*t*x)-1)/pow(x,2) + (1.0/2.0)*pow(t*m_mu*MV,2));
   };
 
-  double prec= 1e-8;
-  if ( t*MV*m_mu < 5e-4) prec= 1e-6;
+  double prec= 1e-8; //old_prec is 1e-8
+  if ( t*MV*m_mu < 5e-4) prec= 1e-6; 
 
   if( t*MV*m_mu < 1e-4) prec= 5e-5;
 
   auto F2 = [&](double x) -> double {
 
+
 	      double z= t*MV*m_mu;
+
+	      //PrecFloat y_MP= 0.5*z*x/sqrt( 1.0- PrecFloat(x)); 
 
 	      double y= 0.5*z*x/sqrt(1.0-x);
 
 	      if( z < 8e-6) { cout<<"Warning: kernel function evaluated at too small value of the argument and has been set to zero"<<endl; return 0.0;}
 
-	      return (1.0/pow(m_mu*MV,2))*z*z*(1.0-x)*(1.0- pow(sin(y)/y,2));
+	      return (1.0-x)*( 1.0- pow(sin(y)/y,2) );
 
 	    };
 
@@ -51,24 +56,106 @@ double kernel_K(double t, double MV) {
   gsl_function_pp<decltype(F2)> Fp(F2);
 
  
-  gsl_integration_workspace * w = gsl_integration_workspace_alloc (100000);
+  gsl_integration_workspace * w = gsl_integration_workspace_alloc (10000);
 
 
   gsl_function *G = static_cast<gsl_function*>(&Fp);
   double res_GSL, err_GSL;
  
 
-  gsl_integration_qags(G, 0.0, 1.0, 0.0, prec, 100000, w, &res_GSL, &err_GSL);
+  gsl_integration_qags(G, 0.0, 1.0, 0.0, prec, 10000, w, &res_GSL, &err_GSL);
   gsl_integration_workspace_free (w);
-  if(err_GSL/fabs(res_GSL) > prec*5 && err_GSL/fabs(res_GSL) > 1e-5) crash("GSL integrator did not achieve target precision: "+to_string_with_precision(prec,10)+". prec achieved: "+to_string_with_precision( err_GSL/fabs(res_GSL), 7)+"at time t: "+to_string_with_precision(t,8));
+  if(err_GSL/fabs(res_GSL) > prec*5 && err_GSL/fabs(res_GSL) > 1e-5) crash("GSL integrator did not achieve target precision: "+to_string_with_precision(5*prec,10)+". prec achieved: "+to_string_with_precision( err_GSL/fabs(res_GSL), 7)+"at time t: "+to_string_with_precision(t,8));
   if(res_GSL < 0) crash("kernel_K < 0, for t: "+to_string_with_precision(t,5)+" K(t): "+to_string_with_precision(res_GSL, 13));
 
-  return res_GSL;
+  return res_GSL*(1.0/pow(m_mu*MV,2))*pow(t*MV*m_mu,2);
 
   //if(result < 0) crash("kernel_K < 0, for t: "+to_string_with_precision(t,5)+" K(t): "+to_string_with_precision(result, 13));
 
   //return result;
 
+
+}
+
+double der_kernel_K_W_win(double t, double MV) {
+
+  auto der_K = [&t](double x) {
+		 double tt0=0.4*1.0/0.197327;
+		 double tt1=1.0*1.0/0.197327;
+		 double dd= 0.15*1.0/0.197327;
+		 auto tth0 = [&tt0, &dd](double ta) ->double { return 1.0/(1.0 + exp(-2.0*(ta-tt0)/dd));};
+		 auto tth1 = [&tt1,&dd](double ta) ->double { return 1.0/(1.0 + exp(-2.0*(ta-tt1)/dd));};
+		 return kernel_K(t,x)*(tth0(t*x) - tth1(t*x));};
+
+  gsl_function_pp<decltype(der_K)> dK(der_K);
+
+  gsl_function *G = static_cast<gsl_function*>(&dK);
+
+  double result, err;
+  gsl_deriv_central(G, MV, MV*0.01, &result, &err);
+
+  if(err/result > 1e-2) crash("Failed to evaluate kernel  derivative");
+
+  cout<<"(t, MV): ("<<t<<","<<MV<<")"<<endl;
+  cout<<"ker_W(t,MV):"<<der_K(MV)<<endl;
+  cout<<"ker_W_derivative: "<<result<<" +- "<<err<<endl;
+
+  return result;
+  
+  
+
+}
+
+double der_kernel_K_SD_win(double t, double MV) {
+
+  auto der_K = [&t](double x) {
+		 double tt0=0.4*1.0/0.197327;
+		 double tt1=1.0*1.0/0.197327;
+		 double dd= 0.15*1.0/0.197327;
+		 auto tth0 = [&tt0, &dd](double ta) ->double { return 1.0/(1.0 + exp(-2.0*(ta-tt0)/dd));};
+		 return kernel_K(t,x)*(1.0 -tth0(t*x));};
+
+  gsl_function_pp<decltype(der_K)> dK(der_K);
+
+  gsl_function *G = static_cast<gsl_function*>(&dK);
+
+  double result, err;
+  gsl_deriv_central(G, MV, MV*0.01, &result, &err);
+
+  if(err/result > 1e-2) crash("Failed to evaluate kernel  derivative");
+
+  cout<<"(t, MV): ("<<t<<","<<MV<<")"<<endl;
+  cout<<"ker_SD(t,MV):"<<der_K(MV)<<endl;
+  cout<<"ker_SD_derivative: "<<result<<" +- "<<err<<endl;
+
+  return result;
+  
+  
+
+}
+
+double der_kernel_K(double t, double MV) {
+
+  auto der_K = [&t](double x) {
+		 
+		 return kernel_K(t,x);};
+
+  gsl_function_pp<decltype(der_K)> dK(der_K);
+
+  gsl_function *G = static_cast<gsl_function*>(&dK);
+
+  double result, err;
+  gsl_deriv_central(G, MV, MV*0.01, &result, &err);
+
+  if(err/result > 1e-2) crash("Failed to evaluate kernel  derivative");
+
+  cout<<"(t, MV): ("<<t<<","<<MV<<")"<<endl;
+  cout<<"ker_tot(t,MV):"<<der_K(MV)<<endl;
+  cout<<"ker_tot_derivative: "<<result<<" +- "<<err<<endl;
+
+  return result;
+  
+  
 
 }
 
@@ -365,7 +452,7 @@ double tan_phi_der(double z) {
 
   //double result= boost::math::differentiation::finite_difference_derivative(tf,x, &err);
 
-  if(err/result > 1.0e-1) crash("numerical derivative in tan_phi'(z) has reached a low level of accuracy in phi_der. z: "+to_string_with_precision(z,10)+" rel_err: "+to_string_with_precision(err/result,10));
+  if(err/result > 1.0e-2) crash("numerical derivative in tan_phi'(z) has reached a low level of accuracy in phi_der. z: "+to_string_with_precision(z,10)+" rel_err: "+to_string_with_precision(err/result,10));
 
 
   if(isnan(result)) crash("Function tan_phi_der(z) returned nan");
@@ -386,15 +473,15 @@ double phi_der(double z) {
 
   gsl_function *G = static_cast<gsl_function*>(&Fp);
   if(z < 2e-3) {
-     gsl_deriv_forward(G, z, 1e-3, &result, &err);
+     gsl_deriv_forward(G, z, 1e-4, &result, &err);
   }
   else {
-  gsl_deriv_central(G, z, 1e-3, &result, &err);
+  gsl_deriv_central(G, z, 1e-4, &result, &err);
   }
 
   //double result= boost::math::differentiation::finite_difference_derivative(tf,x, &err);
 
-  if(err/result > 1.0e-1) crash("numerical derivative in phi'(z) has reached a low level of accuracy in phi_der. z: "+to_string_with_precision(z,10)+" rel_err: "+to_string_with_precision(err/result,10));
+  if(err/result > 2.0e-2) crash("numerical derivative in phi'(z) has reached a low level of accuracy in phi_der. z: "+to_string_with_precision(z,10)+" rel_err: "+to_string_with_precision(err/result,10));
 
   double res= result/(1.0+ pow(tan_phi(z),2));
 

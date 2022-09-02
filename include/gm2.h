@@ -20,7 +20,9 @@ distr_t PI_q2_fixed_t(const distr_t &Vt, const distr_t &a, const distr_t &Q2, in
 void Add_ens_val_PI_q2( vector<distr_t_list> &PI_master, const distr_t_list &V, const distr_t &a, int Tmax);
 void Add_ens_val_PI_q2( vector<distr_t_list> &PI_master, const distr_t_list &PI_per_ens);
 void Get_PI_q2( distr_t_list &PI_per_ens, const distr_t_list &V, const distr_t &a, int Tmax);
+void Get_PI_q2(distr_t_list &PI_per_ens, const Vfloat &V, const distr_t &a, int Tmax);
 void Bounding_PI_q2(distr_t_list &PI_per_ens, const distr_t_list &V, const distr_t &a, string path, Vint &Tdatas_opt, distr_t &lowest_mass);
+void Bounding_PI_q2_disco(distr_t_list &PI_per_ens, const distr_t_list &V, const distr_t_list &Conn_guess, const distr_t &a, string path, Vint &Tdatas_opt, distr_t m_rho_GS);
 void Gm2() ;
 
 
