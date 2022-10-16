@@ -132,7 +132,7 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
 
   }
 
-  else if(Analysis_Mode=="Spectral") {
+  else if(Analysis_Mode=="R_ratio") {
     //do nothing
 
   }
@@ -211,9 +211,9 @@ void MasterClass_analysis::Analysis_manager() {
 
   }
 
-  if(Analysis_Mode == "Spectral") {
+  if(Analysis_Mode == "R_ratio") {
 
-    Spectral_tests();
+    Compute_R_ratio();
   }
 
   if(Analysis_Mode == "Fake_spectral") {

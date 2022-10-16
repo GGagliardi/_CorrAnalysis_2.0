@@ -6,7 +6,7 @@ const double Mp_phys_err =  0.0002;
 const double fp_phys= 0.1304;
 const double fp_phys_err = 0.0002;
 const double csi_phys= pow(Mp_phys/(4.0*M_PI*fp_phys),2);
-const double csi_phys_err =  0.000029;
+//const double csi_phys_err =  0.000029;
 const double Xpi_phys= pow(fp_phys*pow(Mp_phys,4),1.0/5.0);
 const double l1ph= -0.4; //-0.4
 const double l2ph= 4.3; //4.3
@@ -1079,6 +1079,17 @@ void Determine_scale_from_fp(const distr_t_list &Mpi_phys_point, const distr_t_l
 
 
     //print on screen
+    //print afC and afD before and after corrections:
+    cout<<"C ensemble"<<endl;
+    cout<<"af_C: "<<fpi_phys_point.distr_list[C_id].ave()<<" +- "<<fpi_phys_point.distr_list[C_id].err()<<endl;
+    cout<<"af_C (CDH-corrected): "<<fp_CDH_phys_point[C_id].ave()<<" +- "<<fp_CDH_phys_point[C_id].err()<<endl;
+    cout<<"af_C (infL): "<<(fp_CDH_phys_point[C_id]/(corr_C_FSEs)).ave()<<" +- "<<(fp_CDH_phys_point[C_id]/corr_C_FSEs).err()<<endl;
+    cout<<"af_C (infL-mass corrected): "<<(fp_CDH_phys_point[C_id]/(corr_C_FSEs*corr_C_mass)).ave()<<" +- "<<(fp_CDH_phys_point[C_id]/(corr_C_FSEs*corr_C_mass)).err()<<endl;
+    cout<<"D ensemble"<<endl;
+    cout<<"af_D: "<<fpi_phys_point.distr_list[D_id].ave()<<" +- "<<fpi_phys_point.distr_list[D_id].err()<<endl;
+    cout<<"af_D (CDH-corrected): "<<fp_CDH_phys_point[D_id].ave()<<" +- "<<fp_CDH_phys_point[D_id].err()<<endl;
+    cout<<"af_D (infL): "<<(fp_CDH_phys_point[D_id]/(corr_D_FSEs)).ave()<<" +- "<<(fp_CDH_phys_point[D_id]/corr_D_FSEs).err()<<endl;
+    cout<<"af_D (infL-mass corrected): "<<(fp_CDH_phys_point[D_id]/(corr_D_FSEs*corr_D_mass)).ave()<<" +- "<<(fp_CDH_phys_point[D_id]/(corr_D_FSEs*corr_D_mass)).err()<<endl;   
     cout<<"#######  Printing lattice spacing determined from afp analysis ########"<<endl;
     cout<<"A ensemble: "<< a_distr_A.ave()<<" +- "<<a_distr_A.err()<<" [GeV-1]    "<<(a_distr_A/fm_to_iGev).ave()<<" +- "<<(a_distr_A/fm_to_iGev).err()<<" [fm] "<<endl;
     cout<<"B ensemble: "<< a_distr_B.ave()<<" +- "<<a_distr_B.err()<<" [GeV-1]    "<<(a_distr_B/fm_to_iGev).ave()<<" +- "<<(a_distr_B/fm_to_iGev).err()<<" [fm] "<<endl;

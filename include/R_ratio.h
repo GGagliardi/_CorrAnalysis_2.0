@@ -1,5 +1,5 @@
-#ifndef __tau_decay__
-#define __tau_decay__
+#ifndef __R_ratio__
+#define __R_ratio__
 
 #include "numerics.h"
 #include "highPrec.h"
@@ -11,14 +11,13 @@
 #include "LatInfo.h"
 #include "input.h"
 #include "Meson_mass_extrapolation.h"
-#include "g_minus_2_utilities.h"
-
 
 
 using namespace std;
 
-void Compute_tau_decay_width();
-void get_sigma_list();
+void Get_Ergs_list();
+void Compute_R_ratio();
+void Get_exp_smeared_R_ratio(const Vfloat &Ergs_GeV_list_exp, double sigma);
 
 
 #endif

@@ -143,7 +143,8 @@ private:
 };
 
 
-
+auto fake_func= [](const function<double(double)> &A) { return 0.0;};
+auto fake_func_d = [](double x) { return 0.0;};
 void D(int k);
 long long int ipow(int a,int n);
 double fpow(double a, int n);
@@ -246,6 +247,33 @@ vector<vector<T>> Sum_Vvectors( const vector<vector<T>> & A,const  vector<vector
 
 
 }
+
+
+
+template <typename T,
+	  typename...V>
+T summ_master(const T& t,const V&...v)
+{
+  return (v+...+t);
+}
+
+template <typename T,
+	  typename...V>
+auto summ_master(const std::vector<T>& t0,const std::vector<V>&...t)
+{
+   
+  static_assert((std::is_same_v<T,V> and...),"Needs to call with the same container type");
+  
+    
+  std::vector<T> res(t0.size());
+  
+  for(std::size_t i=0;i<t0.size();i++)
+    res[i]=summ_master(t0[i],t[i]...);
+  
+  return res;
+}
+
+
 
 template <typename T>
 vector<T> Multiply_vector_by_scalar(const vector<T> & A, T B) {
@@ -360,7 +388,7 @@ int degeneracy(int m);
 //define special functions
 auto g1_l = [](double x) -> double {
 
-		      double n_max= 40;
+		      double n_max= 50;
 
 		      double res=0.0;
 
@@ -372,7 +400,7 @@ auto g1_l = [](double x) -> double {
 
 		      for(int n=1; n<=n_max;n++) {
 			
-			res += (4.0*degeneracy(n)/(sqrt(n)*x))*boost::math::cyl_bessel_k(1, sqrt(n)*x);
+			res += (4.0*degeneracy(n)/(sqrt(n*1.0)*x))*boost::math::cyl_bessel_k(1, sqrt(n*1.0)*x);
 			
 		      }
 		     
@@ -382,7 +410,7 @@ auto g1_l = [](double x) -> double {
 
 auto g2_l = [](double x) -> double {
 
-		      double n_max= 40;
+		      double n_max= 50;
 
 		      double res=0.0;
 
@@ -394,7 +422,7 @@ auto g2_l = [](double x) -> double {
 
 		      for(int n=1; n<=n_max;n++) {
 			
-			res += (4.0*degeneracy(n)/(pow(sqrt(n)*x,2)))*boost::math::cyl_bessel_k(2, sqrt(n)*x);
+			res += (4.0*degeneracy(n)/(pow(sqrt(n*1.0)*x,2)))*boost::math::cyl_bessel_k(2, sqrt(n*1.0)*x);
 			
 		      }
 		     

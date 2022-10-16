@@ -18,6 +18,8 @@
 
 using namespace std;
 
+
+void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg);
 void Compute_form_factors_Nissa();
 
 

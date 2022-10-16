@@ -77,6 +77,26 @@ double kernel_K(double t, double MV) {
 
 }
 
+
+double kernel_K_old(double t, double MV) {
+
+  double m_mu= m_muon;
+
+  auto F = [&](double x) -> double {
+
+    if (x<1e-40) return 0;
+    return (4.0/pow(m_mu*MV,2))*(1.0/sqrt(4.0 + pow(x,2)))*pow(  (sqrt(4.0+pow(x,2))-x)/(sqrt(4.0+pow(x,2))+x),2)*( (cos(m_mu*MV*t*x)-1)/pow(x,2) + (1.0/2.0)*pow(t*m_mu*MV,2));
+  };
+
+
+  double err;
+  double tol_kernel= 1e-14;
+  return boost::math::quadrature::gauss_kronrod<double,61>::integrate(F, 0.0, numeric_limits<double>::infinity() , 5, tol_kernel, &err);
+
+
+}
+
+
 double der_kernel_K_W_win(double t, double MV) {
 
   auto der_K = [&t](double x) {
@@ -939,6 +959,7 @@ double free_vector_corr_cont(int Nc, double am, double t) {
 
 
 }
+
 
 
 void Compute_SD_window_Free() {

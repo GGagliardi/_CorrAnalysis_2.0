@@ -2,6 +2,7 @@
 
 using namespace std;
 
+
 Pfloat JackAve(const Vfloat &JackDistr) {
 
   int Nclusters = JackDistr.size();
@@ -24,9 +25,13 @@ double Compute_jack_cov(const Vfloat& A,const Vfloat& B) {
   double barA = JackAve(A).first;
   double barB = JackAve(B).first;
 
-  Vfloat C = Multiply_vectors(A,B);
-  double AB = JackAve(C).first;
-  return (Nclusters-1.0)*( AB - barA*barB);
+  double result=0;
+
+  for(int ijack=0;ijack<Nclusters;ijack++) result += (A[ijack]-barA)*(B[ijack]-barB);
+
+  //Vfloat C = Multiply_vectors(A,B);
+  //double AB = JackAve(C).first;
+  return (Nclusters-1.0)*result/Nclusters;
   
 }
 
@@ -860,7 +865,15 @@ distr_t_list operator*(const distr_t_list &A, const Vfloat& B) {
 distr_t_list operator*(const Vfloat& B, const distr_t_list& A) { return A*B;}
 
 
+distr_t Get_id_jack_distr(int N) {
 
+
+  distr_t id_jack_distr;
+
+  for(int i=0;i<N;i++) id_jack_distr.distr.push_back(1);
+
+  return id_jack_distr;
+}
 
 
 

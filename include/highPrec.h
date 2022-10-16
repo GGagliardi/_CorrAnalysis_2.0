@@ -331,6 +331,8 @@ PROVIDE_UNARY_FUNCTION(cosh,mpfr_cosh)
 PROVIDE_UNARY_FUNCTION(erf,mpfr_erf)
 PROVIDE_UNARY_FUNCTION(erfc,mpfr_erfc)
 PROVIDE_UNARY_FUNCTION(log, mpfr_log)
+PROVIDE_UNARY_FUNCTION(gamma, mpfr_gamma)
+
 
 #undef PROVIDE_UNARY_FUNCTION
 #undef UNARY_HELPER
@@ -357,6 +359,8 @@ PROVIDE_UNARY_FUNCTION(log, mpfr_log)
 
 PROVIDE_BINARY_FUNCTION(min, mpfr_min)
 PROVIDE_BINARY_FUNCTION(max, mpfr_max)
+PROVIDE_BINARY_FUNCTION(gamma_inc, mpfr_gamma_inc)
+
 
 
 #undef PROVIDE_BINARY_FUNCTION

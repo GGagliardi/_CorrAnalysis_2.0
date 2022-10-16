@@ -1,14 +1,16 @@
 #include "../include/Spectral.h"
 
 
-const double step_size = 0.1; //in units of sigma
+double step_size = 0.1; //in units of sigma
 const bool INCLUDE_ERRORS= true;
 double lambda= INCLUDE_ERRORS?0.9:0.0;
 bool FIND_OPTIMAL_LAMBDA= true;
 string COV_MATRIX_MODE = "";
-const int Nmoms=1;
+const int Nmoms=0;
 const int alpha=0;
-const bool Use_balance_condition = true;
+const double Beta= 1.00; //1.99;
+const bool mult_estimated_from_norm0=false;
+const bool print_reco_in_stability_analysis=true;
 
 
 using namespace std;
@@ -30,121 +32,11 @@ PrecFloat Get_exact_gauss(const PrecFloat &E,const PrecFloat &m,const PrecFloat 
 }
 
 
-PrecFloat Get_exact_gaussE2(const PrecFloat &E,const PrecFloat &m,const PrecFloat &s,const PrecFloat &E0) {
-  return Get_exact_gauss(E, m, s, E0)*E*E;
-}
-
-PrecFloat Get_gaussE2_norm(const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0) {
-
-  PrecFloat a1 = exp( -sqr(m-E0)/(s*s*2))*(E0+m)*sqr(s);
-  PrecFloat norm= s*( 1.0 + erf( (m-E0)/(s*sqrt(PrecFloat(2)))))*sqrt(precPi()/PrecFloat(2)) ;
-
-  return a1/norm + sqr(m)+sqr(s);
-  
-}
-
-PrecFloat Get_legoE2_norm(const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0) {
-
-  return m*m+ s*s/12;  
-
-}
-
-PrecFloat Get_exact_lego(const PrecFloat &E,const PrecFloat &m,const PrecFloat &s,const PrecFloat &E0) {
-  PrecFloat a1, a2;
-
-  a1= m - s/2;
-  a2= m + s/2;
-  if( E >= a1 && E <= a2) return 1/s;
-  else return PrecFloat(0);
-}
-
-PrecFloat Get_exact_legoE2(const PrecFloat &E,const PrecFloat &m,const PrecFloat &s,const PrecFloat &E0) {
-  PrecFloat a1, a2;
-
-  return E*E*Get_exact_lego(E,m,s,E0);
-}
-
-PrecFloat Get_exact_cauchy(const PrecFloat &E,const PrecFloat &m,const PrecFloat &s,const PrecFloat &E0) {
-  PrecFloat Z = 0.5 + (1/precPi())*atan( (m-E0)/s);
-  PrecFloat c = (1/precPi())*s/( sqr(E-m) + s*s);
-  return c/Z;
-}
-
-PrecFloat Get_exact_func(const PrecFloat &E,const PrecFloat &m,const PrecFloat &s,const PrecFloat &E0, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f ) {
-
-  PrecFloat res;
-
-   if(SMEARING_FUNC == "GAUSSIAN") { res = Get_exact_gauss(E, m, s, E0); }
-   else if(SMEARING_FUNC == "GAUSSIAN_E2") {     res = Get_exact_gaussE2(E, m, s, E0);   }
-   else if(SMEARING_FUNC == "LEGO") {  res = Get_exact_lego(E, m, s, E0);  } 
-   else if(SMEARING_FUNC == "LEGO_E2") {  res = Get_exact_legoE2(E, m, s, E0); }  
-   else  res= f(E,m,s,E0);
-
-   return res ;
-
-}
-   
 
 
-PrecFloat BaseFunc(const PrecFloat& E, int t, int T) { return exp(-E*t) + exp( -E*T+ E*t);}
-
-PrecFloat F_gauss(const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int t) {
-
-  PrecFloat x,y,z;
-
-  y = exp( -( 2*m - s*s*t)*t/2);
-  x = erfc( (E0-m)/(s*sqrt(PrecFloat(2))));
-  z = erfc(  (E0 -m + s*s*t)/(s*sqrt(PrecFloat(2))));
+PrecFloat BaseFunc(const PrecFloat& E, int t, int T) { return exp(-E*t) + exp( -E*T+ E*t);  }
 
 
-  return y*z/x;
-  
-}
-
-
-PrecFloat F_gaussE2(const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int t) {
-
-  PrecFloat x,y,z;
-
-  PrecFloat y1, z1;
-
-  PrecFloat y2, z2; 
-
-  y = exp( -( 2*m - s*s*t)*t/2);
-  x = erfc( (E0-m)/(s*sqrt(PrecFloat(2))));
-  z = erfc(  (E0 -m + s*s*t)/(s*sqrt(PrecFloat(2))));
-
-  y1 =  exp( ( -2*m + s*s*t)*t/2)*(-m + s*s*t);
-  y2 =  exp( ( -2*m + s*s*t)*t/2)*( sqr(s*s*t -m) + sqr(s));
-
-  z1 = -exp( -sqr(E0 -m + s*s*t)/(s*s*2))*s*sqrt( PrecFloat(2)/precPi());
-  z2 = exp( -sqr(E0 -m + s*s*t)/(s*s*2))*sqrt( PrecFloat(2)/precPi())*s*(E0 - m + s*s*t);
-
-
-  return (y2*z + y*z2 + +2*y1*z1)/x;
-  
-}
-
-
-PrecFloat F_lego(const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int t) {
-
-  return ( exp( -max(E0, m - s/2)*t) - exp( -(m + s/2)*t))/(s*t);
-
-}
-
-
-PrecFloat F_legoE2(const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int t) {
-
-  PrecFloat num = exp( -max(E0, m - s/2)*t) - exp( -(m + s/2)*t);
-  PrecFloat den = s*t;
-  PrecFloat num1 = -max(E0, m - s/2)*exp( -max(E0, m - s/2)*t) + (m + s/2)*exp( -(m + s/2)*t);
-  PrecFloat num2 = sqr(max(E0, m - s/2))*exp( -max(E0, m - s/2)*t) - sqr((m + s/2))*exp( -(m + s/2)*t);
-  PrecFloat den1 = s;
-
-  return num2/den - 2*num1*den1/sqr(den) + 2*num*sqr(den1)/(den*den*den);
-
-
-}
 
 
 
@@ -154,14 +46,33 @@ PrecFloat F_legoE2(const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, 
 
 //}
 
-PrecFloat aE0(const PrecFloat &E0, int t, int n) { if(n==0) { return exp(-E0*t)/t;} else return pow(E0, PrecFloat(n))*exp(-E0*t)/t + PrecFloat(n)*aE0(E0,t,n-1)/t;}
+PrecFloat aE0(const PrecFloat &E0,const PrecFloat &t, int n) {
+  if(n<0) crash("In AE0 n<0");
+  
+  if(n==0) return exp(-E0*t)/t;
+  else return pow(t,PrecFloat(-(n+1)))*( gamma(PrecFloat(n+1)) -PrecFloat(n)*gamma(PrecFloat(n)) + gamma_inc(PrecFloat(1+n), E0*t));
+
+
+  // if(n<0) crash("In AE0 n<0"); if(n==0) { return exp(-E0*t)/t;} else return pow(E0, PrecFloat(n))*exp(-E0*t)/t + PrecFloat(n)*aE0(E0,t,n-1)/t;
+}
 
 void Get_Atr(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int tmax)  {
 
   Atr.resize(tmax-tmin+1, tmax-tmin+1);
 
   for(int t=tmin;t<= tmax; t++)
-    for(int r=tmin; r<= tmax; r++) Atr(t-tmin,r-tmin) = aE0(E0, t+r,alpha) + aE0(E0, T - t +r, alpha) + aE0(E0, T+t -r, alpha) + aE0(E0, 2*T -t -r, alpha);
+    for(int r=tmin; r<= tmax; r++) Atr(t-tmin,r-tmin) = aE0(E0, PrecFloat(t+r-Beta),alpha) + aE0(E0, PrecFloat(T - t +r-Beta), alpha) + aE0(E0,PrecFloat(-Beta+ T+t -r), alpha) + aE0(E0,PrecFloat(-Beta+ 2*T -t -r), alpha);
+    
+  
+  return;
+}
+
+void Get_Atr_std(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int tmax)  {
+
+  Atr.resize(tmax-tmin+1, tmax-tmin+1);
+
+  for(int t=tmin;t<= tmax; t++)
+    for(int r=tmin; r<= tmax; r++) Atr(t-tmin,r-tmin) = aE0(E0, PrecFloat(t+r),0) + aE0(E0, PrecFloat(T - t +r), 0) + aE0(E0, PrecFloat(T+t -r), 0) + aE0(E0,PrecFloat(2*T -t -r), 0);
     
   
   return;
@@ -184,39 +95,49 @@ void Get_Rt(PrecVect& Rt, const PrecFloat &E0,  int T, int tmin, int tmax) {
 
 }
 
-void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int T, int tmin, int tmax, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f) {
+void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int jack_id, int T, int tmin, int tmax, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f) {
 
   ft.resize(tmax-tmin+1);
 
-  if(SMEARING_FUNC == "GAUSSIAN") {
-       for(int t=tmin;t<=tmax;t++) ft(t-tmin) = F_gauss(E0, m, s, t) + F_gauss(E0, m,s, T-t);
-  }
-  else if(SMEARING_FUNC == "GAUSSIAN_E2") {
-       for(int t=tmin;t<=tmax;t++) ft(t-tmin) = F_gaussE2(E0, m, s, t) + F_gaussE2(E0, m,s, T-t);
-  }
-  else if(SMEARING_FUNC == "LEGO") {
-       for(int t=tmin;t<=tmax;t++) ft(t-tmin) = F_lego(E0, m, s, t) + F_lego(E0, m,s, T-t);
-  }
-  else if(SMEARING_FUNC == "LEGO_E2") {
-       for(int t=tmin;t<=tmax;t++) ft(t-tmin) = F_legoE2(E0, m, s, t) + F_legoE2(E0, m,s, T-t);
-  }
-
-  else {
+ 
     for(int t=tmin;t<=tmax;t++) {
 
    
     const auto ftT=
-      [&f, &m,&s,&E0, &t, &T](const PrecFloat& x) -> PrecFloat
+      [&f, &m,&s,&E0, &t, &T, &jack_id](const PrecFloat& x) -> PrecFloat
     {
     
-      return pow(x,PrecFloat(alpha))*f(x,m,s,E0)*(exp(-x*t) + exp(-x*(T-t))) ;
+      return exp(PrecFloat(Beta)*x)*pow(x,PrecFloat(alpha))*f(x,m,s,E0, jack_id)*(exp(-x*t) + exp(-x*(T-t))) ;
+    };
+
+
+    ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
+    }
+  
+
+  return;
+}
+
+void Get_ft_std(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int jack_id, int T, int tmin, int tmax, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f) {
+
+  ft.resize(tmax-tmin+1);
+
+ 
+    for(int t=tmin;t<=tmax;t++) {
+
+   
+    const auto ftT=
+      [&f, &m,&s,&E0, &t, &T, &jack_id](const PrecFloat& x) -> PrecFloat
+    {
+    
+      return f(x,m,s,E0, jack_id)*(exp(-x*t) + exp(-x*(T-t))) ;
     };
 
 
     
     ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
     }
-  }
+  
 
   return;
 }
@@ -232,53 +153,60 @@ void Get_bt(PrecVect& bt,const PrecFloat &E,  int T, int tmin, int tmax) {
 
 }
 
-PrecFloat Get_norm_constraint(PrecFloat &m, PrecFloat &s, PrecFloat &E0, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f) {
+PrecFloat Get_norm_constraint(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&,int)> &f) {
 
   PrecFloat res=1;
 
-  if(SMEARING_FUNC == "GAUSSIAN_E2") {
-     res= Get_gaussE2_norm(m, s, E0);
-   }
-  else if(SMEARING_FUNC == "LEGO_E2") {
-    return Get_legoE2_norm(m,s,E0);
-  }
-  else {
-
-    const auto f1=
-      [&f, &m,&s,&E0](const PrecFloat& x) -> PrecFloat
+  
+  const auto f1=
+    [&f, &m,&s,&E0, &jack_id](const PrecFloat& x) -> PrecFloat
     {
-      return pow(x,PrecFloat(alpha))*f(x, m, s, E0) ;
+      return f(x, m, s, E0, jack_id) ;
     };
-
+  
   return  integrateUpToInfinite(f1, E0.get());
-  }
-  return res;
+  
 }
 
 
-PrecFloat Get_M2(PrecFloat &m, PrecFloat &s, PrecFloat &E0,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f) {
+PrecFloat Get_M2(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f) {
 
 
   const auto f2=
-    [&f, &m,&s,&E0](const PrecFloat& x) -> PrecFloat
+    [&f, &m,&s,&E0, &jack_id](const PrecFloat& x) -> PrecFloat
     {
-      return pow(x,PrecFloat(alpha))*f(x, m, s, E0)*f(x,m,s,E0) ;
+      return exp(PrecFloat(Beta)*x)*pow(x,PrecFloat(alpha))*pow(f(x, m, s, E0, jack_id),2);
     };
 
   return  integrateUpToInfinite(f2, E0.get());
 
 }
 
-void Get_M_N(PrecFloat &m, PrecFloat &s, PrecFloat &E0,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f,  PrecVect &M_n) {
+PrecFloat Get_M2_std_norm(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f) {
 
+
+  const auto f2=
+    [&f, &m,&s,&E0, &jack_id](const PrecFloat& x) -> PrecFloat
+    {
+      return pow(f(x, m, s, E0, jack_id),2);
+    };
+
+  return  integrateUpToInfinite(f2, E0.get());
+
+}
+
+void Get_M_N(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f,  PrecVect &M_n) {
+
+  if(Nmoms==0) return;
+  
   M_n.resize(Nmoms);
 
   for(int n=0;n<Nmoms;n++) {
 
      const auto fn=
-       [&f, &m,&s,&E0, &n](const PrecFloat& x) -> PrecFloat
+       [&f, &m,&s,&E0, &n, &jack_id](const PrecFloat& x) -> PrecFloat
     {
-      return pow(x,PrecFloat(alpha))*f(x, m, s, E0)*pow(x,PrecFloat(n)) ;
+      return f(x, m, s, E0, jack_id)*pow(x,PrecFloat(n)) ;
     };
 
      M_n(n) = integrateUpToInfinite(fn,E0.get());   
@@ -290,6 +218,8 @@ void Get_M_N(PrecFloat &m, PrecFloat &s, PrecFloat &E0,  const function<PrecFloa
 }
 
 void Get_M_tilde_N(const PrecVect &ft, const PrecMatr &Atr_inv, vector<PrecVect> &Rt_n,  PrecVect &M_tilde_n) {
+
+  if(Nmoms==0) return;
 
   M_tilde_n.resize(Nmoms);
 
@@ -306,6 +236,8 @@ void Get_M_tilde_N(const PrecVect &ft, const PrecMatr &Atr_inv, vector<PrecVect>
 
 void Get_Rt_up_to_N(PrecFloat &E0, int T, int tmin, int tmax, vector<PrecVect> &Rt_n) {
 
+  if(Nmoms==0) return;
+
   Rt_n.resize(Nmoms);
 
 
@@ -313,13 +245,13 @@ void Get_Rt_up_to_N(PrecFloat &E0, int T, int tmin, int tmax, vector<PrecVect> &
 
     Rt_n[n].resize(tmax-tmin+1);
 
-    for(int t=tmin;t<=tmax;t++) Rt_n[n](t-tmin) = aE0(E0,t,alpha+n) + aE0(E0,T-t,alpha+n);
+    for(int t=tmin;t<=tmax;t++) Rt_n[n](t-tmin) = aE0(E0,PrecFloat(t),n) + aE0(E0,PrecFloat(T-t),n);
 
   }
 
 
   return;
-
+ 
 }
 
 void Get_G_matrix(PrecMatr &G,const PrecMatr &Atr_inv, vector<PrecVect> &Rt_n) {
@@ -338,57 +270,72 @@ void Get_G_matrix(PrecMatr &G,const PrecMatr &Atr_inv, vector<PrecVect> &Rt_n) {
   
 }
 
-void Compute_covariance_matrix(PrecMatr &B,const PrecMatr &Atr, const distr_t_list &corr, int tmin, int tmax, string MODE) {
+void Compute_covariance_matrix(PrecMatr &B,const PrecMatr &Atr, const distr_t_list &corr, int tmin, int tmax, PrecFloat m, string analysis_name,  string MODE, Vfloat &covariance) {
 
   
   PrecFloat norm= sqr(PrecFloat(corr.ave(0)));
 
+  
+  if(analysis_name.substr(0,7)=="R_ratio") norm = sqr(PrecFloat(corr.ave(1)))*pow(m,-6);
+
   B.resize(tmax-tmin+1, tmax-tmin+1);
+
 
   for(int t=tmin;t<=tmax;t++) {
     for(int r=tmin;r<=tmax;r++) {
-      if(t==r) {
-	if(MODE =="TANT") B(t-tmin,r-tmin) =  (1/norm)*sqr( PrecFloat(corr.err(t)));
-	else B(t-tmin,r-tmin) = Atr(t-tmin,r-tmin)*sqr(PrecFloat(corr.err(t)/corr.ave(t)));
+      if(MODE=="TANT") {
+	B(t-tmin,r-tmin) = covariance[t*corr.size()+ r];
       }
-      else if( (r==t+1) || (t==r+1)) {
-	if(COV_MATRIX_MODE == "NN") {
-	   PrecFloat cov_t_t1 = corr.distr_list[t]%corr.distr_list[r];
-	   if(MODE == "TANT") B(t-tmin,r-tmin) =  cov_t_t1/norm;
-	   else B(t-tmin,r-tmin) = Atr(t-tmin,r-tmin)*PrecFloat(cov_t_t1/(corr.ave(t)*corr.ave(r)));
-	}
-	else {
-	  B(t-tmin, r-tmin) = PrecFloat(0);
-	}
-      }
-      else {
-	B(t-tmin, r-tmin) = PrecFloat(0);
-      }
+      else B(t-tmin, r-tmin) = covariance[t*corr.size()+r]/(corr.ave(t)*corr.ave(r));
     }
   }
 
+
+  for(int t=tmin;t<=tmax;t++)
+    for(int r=t;r<=tmax;r++) if (B(t-tmin,r-tmin) != B(r-tmin,t-tmin)) crash("covariance matrix is not symmetric");
+
+
+   
+  if(MODE != "TANT") B= Atr*B;
+  else B= (1.0/norm)*B;
+
+ 
+      
+ 
+  return;
 }
 
 
-void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft,const PrecVect &Rt,const PrecFloat & M2,const double &mean, const double &sigma, const double &Estart,  double& lambda_opt, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, vector<PrecVect> Rt_n, const PrecVect &M_n ,const distr_t_list & corr,int T, int tmin, int tmax,const double mult,  string MODE, string curr_type, string SMEARING_FUNC, string CORR_NAME, string FLAV) {
+void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const PrecMatr &B,const PrecVect &ft, vector<PrecVect>& ft_jack, const PrecVect &ft_std_norm, const PrecFloat & M2, const PrecFloat &M2_std_norm, const double &mean, const double &sigma, const double &Estart,  double& lambda_opt, double& lambda_opt_10, vector<PrecVect> Rt_n, const PrecVect &M_n , vector<PrecVect>& M_n_jack, const distr_t_list & corr,int T, int tmin, int tmax,const double mult,  string MODE, string curr_type, string SMEARING_FUNC, string CORR_NAME, double Ag_ov_A0_tg, bool JackOnKer,const distr_t& Prefact, string analysis_name,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f,  const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density ) {
 
 
 
-  //create print directory
-  boost::filesystem::create_directory("../data/spectral_reconstruction/smearing/lambda_stability");
 
-  int MAX_Iters = 1000;
+
+  int MAX_Iters = 500;
+
+  int Global_id=0;
 
  
-  string out_path = MODE+"_"+CORR_NAME+"_"+curr_type+"_"+SMEARING_FUNC+"_E*_"+to_string_with_precision(mean,3)+"_sigma_"+to_string_with_precision(sigma,3)+"_E0_"+to_string_with_precision(Estart,3)+"_T_"+to_string(T)+"_tmax_"+to_string(tmax);
-
-  ofstream Print_R_at_lambda("../data/spectral_reconstruction/smearing/lambda_stability/"+out_path);
+  string out_path = MODE+"_"+CORR_NAME+"_"+curr_type+"_"+SMEARING_FUNC+"_E*_"+to_string_with_precision(mean,3)+"_sigma_"+to_string_with_precision(sigma,3)+"_E0_"+to_string_with_precision(Estart,3)+"_T_"+to_string(T)+"_tmax_"+to_string(tmax)+"_alpha_"+to_string(alpha)+"_beta_"+to_string_with_precision(Beta,2)+".dat";
   
+  ofstream Print_R_at_lambda("../data/spectral_reconstruction/"+analysis_name+"/lambda_stability/beta_"+to_string_with_precision(Beta,2)+"/"+out_path);
+
+  //Print header
+  if(Use_guess_density) Print_R_at_lambda<<"# $1=lambda,  $2= A[g]/A[0], $3=B[g], $4=Aa[g]/Aa[0], $5= val, $6=err, $7=syst, $8=S_FLAG $9=mult"<<endl; 
+  else Print_R_at_lambda<<"# $1=lambda,  $2= A[g]/A[0], $3=B[g], $4=Aa[g]/Aa[0], $5= val, $6=err, $7=S_FLAG $8=mult"<<endl;
+
+  Print_R_at_lambda.precision(10);
+    
   cout<<"Finding optimal lambda* ..."<<endl;
+
+  int Njacks= corr.distr_list[0].distr.size();
+
+ 
 
    
   const auto A1=
-    [&M2, &Atr, &ft](const PrecVect& gmin, PrecFloat lx) -> PrecFloat
+    [&M2, &Atr, &ft](const PrecVect& gmin) -> PrecFloat
     {
       PrecVect Atr_g = Atr*gmin;
       PrecFloat g_Atr_g = gmin.transpose()*Atr_g;
@@ -397,7 +344,7 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
     };
 
   const auto B1=
-    [&B, &M2, &MODE](const PrecVect& gmin, PrecFloat lx) -> PrecFloat
+    [&B, &M2, &MODE](const PrecVect& gmin) -> PrecFloat
     {
       PrecVect B_g = B*gmin;
       PrecFloat g_B_g = gmin.transpose()*B_g;
@@ -405,124 +352,211 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
       return g_B_g ;
     };
 
+  const auto A1_std=
+    [&M2_std_norm, &Atr_std_norm, &ft_std_norm](const PrecVect& gmin) -> PrecFloat
+    {
+      PrecVect Atr_g = Atr_std_norm*gmin;
+      PrecFloat g_Atr_g = gmin.transpose()*Atr_g;
+      PrecFloat ft_g = ft_std_norm.transpose()*gmin;
+      return (M2_std_norm + g_Atr_g -2*ft_g)/M2_std_norm  ;
+    };
+
+  const auto B1_std=
+    [&B, &M2_std_norm, &MODE](const PrecVect& gmin) -> PrecFloat
+    {
+      PrecVect B_g = B*gmin;
+      PrecFloat g_B_g = gmin.transpose()*B_g;
+      if(MODE=="SANF") g_B_g = g_B_g/M2_std_norm; 
+      return g_B_g ;
+    };
+
   
   //bisection search
   PrecFloat l_low =0;
   PrecFloat l_up = 1;
-  PrecFloat diff;
   PrecFloat l_start=1.0;
   int Nit=0;
   int Nit_Ag0=0;
-  double lambda_Ag0;
+  int Nit_10=0;
+  int Nit_100=0;
   double lambda_balance;
-  bool lambda_found_Ag_A0=false;
+  double lambda_balance_10;
+  double lambda_balance_100;
   bool lambda_balance_found=false;
+  bool lambda_balance_found_10=false;
   PrecFloat Ag_ov_A0_target=1e-4;
-  if(FLAV=="fake") {
-    if(MODE=="SANF") {
-      if(mean < 0.2) Ag_ov_A0_target = 5e-3 ;
-      else if(mean < 0.3) Ag_ov_A0_target = 5e-3   ;
-      else if(mean < 0.4) Ag_ov_A0_target = 5e-3  ;
-      else Ag_ov_A0_target = 5e-3   ;
+  if(Ag_ov_A0_tg > 0) Ag_ov_A0_target= PrecFloat(Ag_ov_A0_tg);
+  Vfloat Ags_mult ={10.0, 1.0}; 
+ 
+  cout<<"Finding lambdas corresponding to A[g]/A[0] in  "<<Ag_ov_A0_target<<" * { 1, 10}"<<endl;
 
-    }
-    if(MODE=="TANT") {
-       if(mean < 0.2) Ag_ov_A0_target = 5e-3 ;
-      else if(mean < 0.3) Ag_ov_A0_target = 5e-3   ;
-      else if(mean < 0.4) Ag_ov_A0_target = 5e-3  ;
-      else Ag_ov_A0_target = 5e-3   ;
+  //###############################################################################################
+  bool Skip_check_bracketing=true;
+  if(!Skip_check_bracketing) {
+  cout<<"Checking if lambda [0,1] bracket A[g]/A[0] target..."<<endl;
+  PrecMatr C0 = Atr/M2;
+  PrecMatr C0_inv = C0.inverse();
+  PrecMatr C1 = B/(MODE=="SANF"?M2:1.0);
+  PrecMatr C1_inv= C1.inverse();
+  PrecVect ft_l0 = ft/M2;
+  PrecVect ft_l1 = 0.0*ft;
+  PrecVect M_tilde_n0, M_tilde_n1;
+  PrecMatr G_n0, G_n1;
+  Get_M_tilde_N(ft_l0, C0_inv, Rt_n, M_tilde_n0);
+  Get_M_tilde_N(ft_l1, C1_inv, Rt_n, M_tilde_n1);
+  Get_G_matrix(G_n0, C0_inv, Rt_n);
+  Get_G_matrix(G_n1, C1_inv, Rt_n);
 
-    }
+  PrecVect gm0 = C0_inv*ft_l0;
+  PrecVect gm1 = C1_inv*ft_l1;
+  PrecVect pn0, pn1;
+  PrecMatr G_n_inv0, G_n_inv1;
+  PrecVect M_n_diff0, M_n_diff1;
+  
+  if(Nmoms > 0) {
+    G_n_inv0= G_n0.inverse();
+    M_n_diff0 = M_n - M_tilde_n0;
+    pn0 = G_n_inv0*M_n_diff0;
+    G_n_inv1= G_n1.inverse();
+    M_n_diff1 = M_n - M_tilde_n1;
+    pn1 = G_n_inv1*M_n_diff1;
+  }
+
+  for(int n=0;n<Nmoms;n++) {
+    PrecVect lmult_n0 = C0_inv*Rt_n[n];
+    PrecVect lmult_n1 = C1_inv*Rt_n[n];
+    gm0 = gm0 + lmult_n0*pn0(n);
+    gm1 = gm1 + lmult_n1*pn1(n);
+  }
+  
+  if( A1_std(gm0) > Ag_ov_A0_target*Ags_mult[ Ags_mult.size()-1] ) crash("MODE:"+MODE+" A(gm0)/A(0) = "+to_string_with_precision(A1_std(gm0),10)+" > "+to_string_with_precision( Ag_ov_A0_target.get()*Ags_mult[ Ags_mult.size()-1],10));
+  if( A1_std(gm1) < Ag_ov_A0_target*Ags_mult[0] ) crash("MODE: "+MODE+" A(gm1)/A(0) = "+to_string_with_precision(A1_std(gm1),10)+" > "+to_string_with_precision( Ag_ov_A0_target.get()*Ags_mult[0],10));
+  }
+
+  
+  
+  
+
+
+
+
+
+
+  //################################################################################################
+  
+  int counter_Ag_m=0;
+ 
+  for(auto & Ag_m: Ags_mult) {
+  
+    bool lambda_found_Ag_A0=false;
+    Nit_Ag0=0;
+    l_low=0;
     
-  }
-  if(FLAV=="light") {
-    Ag_ov_A0_target = (MODE=="TANT")?1.0e-3:1.0e-6;
-  }
-  else if (FLAV=="strange") {
-    Ag_ov_A0_target = (MODE=="TANT")?1.0e-3:1.0e-6;
-  }
-  else if(FLAV=="charm") {
-    Ag_ov_A0_target = (MODE=="TANT")?1.0e-4:1.0e-9;
-  }
+    //bisection search for given A[g]/A[0]
+    while( !lambda_found_Ag_A0 ) {
 
-  cout<<"Finding lambda corresponding to A[g]/A[0] = "<<Ag_ov_A0_target<<endl;
-
-  vector<PrecFloat> lambdas({0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85});
-  double Nfs_L= 50;
-  double Nfs_S= 100;
-  double Nfs_SSS= 100;
-  double Nfs_SSSS= 100;
-  double Nfs_SSSSS= 100;
-  double Nfs_LL = 100;
-  double Nfs_SS=100;
-  for(int i=0; i < Nfs_SSSSS; i++) lambdas.push_back( PrecFloat( 0.0000001 + i*0.000001/Nfs_SSSSS));
-  for(int i=0; i < Nfs_SSSS; i++) lambdas.push_back( PrecFloat( 0.000001 + i*0.00001/Nfs_SSSS));
-  for(int i=0; i < Nfs_SSS; i++) lambdas.push_back( PrecFloat( 0.00001 + i*0.0001/Nfs_SSS));
-  for(int i=0; i < Nfs_SS; i++) lambdas.push_back( PrecFloat( 0.0001 + i*0.001/Nfs_S));
-  for(int i=0; i < Nfs_S; i++) lambdas.push_back( PrecFloat( 0.001 + i*0.01/Nfs_S));
-  for(int i=0;i< Nfs_L;i++) lambdas.push_back( PrecFloat( 0.90 + i*0.1/50));
-  for(int i=0;i< Nfs_LL;i++) lambdas.push_back( PrecFloat( 0.99 + i*0.01/100));
-
-  
-  
-  
-  //bisection search for given A[g]/A[0]
-  while( !lambda_found_Ag_A0 ) {
-
-    PrecFloat lambda_mid;
-    if(Nit_Ag0 < (signed)lambdas.size()) lambda_mid = lambdas[Nit_Ag0];
-    else  lambda_mid =  (Nit_Ag0==(signed)lambdas.size())?l_start:(l_up+l_low)/2;
+    PrecFloat lambda_mid  =  (Nit_Ag0==0 && counter_Ag_m==0)?l_start:(l_up+l_low)/2;
     PrecMatr C = Atr*(1-lambda_mid)/M2 + B*lambda_mid/(MODE=="SANF"?M2:1.0);
     PrecMatr C_inv = C.inverse();
     PrecVect ft_l = ft*(1-lambda_mid)/M2;
     PrecVect M_tilde_n;
     PrecMatr G_n;
+    vector<PrecVect> ft_l_jack;
+    if(JackOnKer) for(int ijack=0;ijack<Njacks;ijack++) ft_l_jack.push_back( ft_jack[ijack]*(1-lambda_mid)/M2);
+    
+   
+    //Lagrangian multipliers
+    
+    Get_M_tilde_N(ft_l, C_inv, Rt_n, M_tilde_n);
+    Get_G_matrix(G_n, C_inv, Rt_n);
+    
+         
 
-      //Lagrangian multipliers
-      if(Nmoms > 0) {
-	Get_M_tilde_N(ft_l, C_inv, Rt_n, M_tilde_n);
-	Get_G_matrix(G_n, C_inv, Rt_n);
+    PrecVect gm = C_inv*ft_l;
+    vector<PrecVect> gm_jack;
+    PrecVect pn;
+    PrecMatr G_n_inv;
+    PrecVect M_n_diff;
+    if(Nmoms > 0) {
+      G_n_inv= G_n.inverse();
+      M_n_diff = M_n - M_tilde_n;
+      pn = G_n_inv*M_n_diff;
+    }
+
+    for(int n=0;n<Nmoms;n++) {
+      PrecVect lmult_n = C_inv*Rt_n[n]; 
+      gm = gm + lmult_n*pn(n);
+    }
+
+    if(JackOnKer) {
+
+      for(int ijack=0; ijack<Njacks;ijack++) {
+	PrecVect gm_ij = C_inv*ft_l_jack[ijack];
+	PrecVect M_tilde_n_ij;
+	Get_M_tilde_N(ft_l_jack[ijack], C_inv, Rt_n, M_tilde_n_ij);
+	PrecVect M_n_diff_ij, pn_ij;
+	if(Nmoms > 0) {
+	  M_n_diff_ij= M_n_jack[ijack] - M_tilde_n_ij;
+	  pn_ij = G_n_inv*M_n_diff_ij;
+	}
+	for(int n=0; n<Nmoms;n++) {
+	  PrecVect lmult_n= C_inv*Rt_n[n];
+	  gm_ij = gm_ij + lmult_n*pn_ij(n);
+	}
+	gm_jack.push_back(gm_ij);
       }
-      
-      
-      //get matrix-vector product C_inv * ft_l
 
-      const PrecVect C_inv_ft_l = C_inv*ft_l; 
+    }
 
-      //get matrix-vector product C_inv * Rt
+      PrecFloat A1_val = A1(gm);
+      PrecFloat B1_val = B1(gm);
+      PrecFloat W_val = (1-lambda_mid)*A1_val + lambda_mid*B1_val;
 
-      const PrecVect C_inv_Rt = C_inv*Rt;
-      
-      //get scalar product Rt * ( C_inv * ft_l)
+      PrecFloat A1_val_std = A1_std(gm);
+      PrecFloat B1_val_std = B1_std(gm);
+      PrecFloat W_val_std = (1-lambda_mid)*A1_val_std + lambda_mid*B1_val_std;
 
-      const PrecFloat Rt_C_inv_ft_l = Rt.transpose()*C_inv_ft_l;
+      double syst=0.0;
 
-      //get scalar product Rt * ( C_inv * Rt)
+      if(Use_guess_density) {
 
-      const PrecFloat Rt_C_inv_Rt = Rt.transpose()*C_inv_Rt;
+	auto integrand_syst = [&tmin, &tmax, &T, &gm, &f, &mean, &sigma, &Estart](double E) ->double {
+			   PrecVect bt;
+			   Get_bt(bt, E, T, tmin,tmax);
+			   return (f(E,mean, sigma, Estart, -1) - gm.transpose()*bt).get();
+			 };
 
 
-      PrecVect gm = C_inv*ft_l;
+	syst= syst_func(integrand_syst);
 
-      PrecVect pn;
+	if(print_reco_in_stability_analysis) {
+	   int Npoints;
+	   if(analysis_name == "tau_decay") {Npoints= 2000; step_size=0.005;}
+	   else Npoints= (int)(((mean+20*sigma -Estart)/(sigma*step_size)));
+	   Vfloat Erg, Error, Spec_dens_guess, Agvs;
 
-      PrecVect M_n_diff = M_n - M_tilde_n;
+	   for(int ip=0; ip<Npoints;ip++) {
+	    
+	     double E;
+	     Agvs.push_back(A1_val_std.get());
+	     if(analysis_name == "tau_decay") E= (Estart+ ip*step_size);
+	     else E = (Estart + (ip*sigma)*step_size);
+	     Error.push_back(integrand_syst(E));
+	     Erg.push_back(E);
+	     Spec_dens_guess.push_back(guess_density(E));
+	   }
 
-      if(Nmoms > 0) pn = G_n.inverse()*M_n_diff;
+	   Print_To_File({}, {Agvs, Erg, Error, Spec_dens_guess}, "../data/spectral_reconstruction/"+analysis_name+"/error_funcs/beta_"+to_string_with_precision(Beta,2)+"/"+to_string(Global_id)+"_"+out_path,"", "#E   |reco-exact|   guess ");
 
-      for(int n=0;n<Nmoms;n++) {
-	PrecVect lmult_n = C_inv*Rt_n[n]; 
-	gm = gm + lmult_n*pn(n);
+
+	}
+	
+	
       }
 
-      PrecFloat A1_val = A1(gm, lambda_mid);
-      PrecFloat B1_val = B1(gm, lambda_mid);
-      PrecFloat W_val = (1-lambda_mid)*A1_val + lambda_mid*B1_val/(MODE=="SANF"?M2:1.0);
-
-      cout.precision(10);
-      //cout<<"lambda : "<<lambda_mid.get()<<" A[g]/A[0] : "<<A1_val<<endl;
-
-      if(Nit_Ag0 >= MAX_Iters) crash("After "+to_string(Nit_Ag0)+" iterations, target A[g]/A[0] cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+". Actual A[g]/A[0]: "+to_string_with_precision( A1_val.get(), 10) );
+      cout.precision(20);
+     
+     
 
 
       //##########################################################################################
@@ -533,114 +567,190 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
 
 	PrecFloat spec_lambda_d_jack=0;
 
-	for(int t=tmin;t<=tmax;t++) spec_lambda_d_jack = spec_lambda_d_jack + gm(t-tmin)*corr.distr_list[t].distr[ijack]; 
+	for(int t=tmin;t<=tmax;t++) spec_lambda_d_jack = spec_lambda_d_jack + ((JackOnKer)?gm_jack[ijack](t-tmin):gm(t-tmin))*corr.distr_list[t].distr[ijack]; 
 
 	R_E_lambda.distr.push_back( spec_lambda_d_jack.get());
       }
 
-      Print_R_at_lambda<<"lambda: "<<lambda_mid<<" A[g]/A[0]: "<<A1_val<<" B[g]: "<<B1_val<<" W[g]/A[g]/A[0]: "<<W_val/A1_val<<" R: "<<R_E_lambda.ave()<<" +- "<<R_E_lambda.err()<<" 0"<<endl;
+      PrecFloat mult_est = (mult_estimated_from_norm0==false)?A1_val/B1_val:A1_val_std/B1_val_std;
+     
+      Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<B1_val_std<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
+      if(Use_guess_density) Print_R_at_lambda<<" "<<syst;
+      Print_R_at_lambda<<" 0 "<<mult_est<<endl;
 
       //##########################################################################################
 
-      if(Nit_Ag0 >= (signed)lambdas.size()) {
+     
    
 
-      if(A1_val > Ag_ov_A0_target) { // lambda_mid is new l_low
+      if(A1_val_std > Ag_ov_A0_target*Ag_m) { // lambda_mid is new l_low
           l_up =lambda_mid;
       }
       else { //lambda_mid is new l_up
 	l_low = lambda_mid;
       }
 
-      }
       
-      lambda_Ag0= lambda_mid.get();
+      
       Nit_Ag0++;
-      if( (A1_val < 1.1*Ag_ov_A0_target && A1_val > 0.90*Ag_ov_A0_target) &&  (Nit_Ag0 >= (signed)lambdas.size() ) ) lambda_found_Ag_A0=true;
+      if( (A1_val_std < 2*Ag_ov_A0_target*Ag_m && A1_val_std > 0.8*Ag_ov_A0_target*Ag_m)) lambda_found_Ag_A0=true;
+
+      if(Nit_Ag0 >= MAX_Iters) {
+	cout<<"WARNING: A[g]/A[0]: "<<Ag_ov_A0_target*Ag_m<<" cannot be obtained after "<<Nit_Ag0<<" iterations...Skipping!"<<endl;
+	lambda_found_Ag_A0=true;
+      }
+       Global_id++;
+    }
    
+    counter_Ag_m++;
   }
 
-  cout.precision(20);
-  cout<<"lambda(A[g]/A[0] ="<<Ag_ov_A0_target<<") = : "<<lambda_Ag0<<endl;
-  
+  cout<<"A[g]/A[0] scan completed!"<<endl;
+  cout.precision(10);
+ 
 
-  cout<<"Finding lambda from balance condition A=mult*B..."<<endl;
+
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  
+  cout<<"Finding lambda from balance condition A=mult*B, mult= "<<mult<<endl;
   l_up=1.0;
   l_low =0.0;
-  diff= l_up-l_low;
-
+  
  
-  //bisection search for condition A = B
+  //bisection search for condition A = mult*B
   while( !lambda_balance_found ) {
 
-    if(Nit > MAX_Iters) crash("After "+to_string(Nit)+" iterations, balance condition A = mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", mult = "+to_string_with_precision( mult, 8));
-
+   
     //evaluate the minimum at midpoint
     PrecFloat lambda_mid = (Nit==0)?l_start:(l_up+l_low)/2;
     PrecMatr C = Atr*(1-lambda_mid)/M2 + B*lambda_mid/(MODE=="SANF"?M2:1);
     PrecMatr C_inv = C.inverse();
     PrecVect ft_l = ft*(1-lambda_mid)/M2;
+    vector<PrecVect> ft_l_jack;
+    if(JackOnKer) for(int ijack=0;ijack<Njacks;ijack++) ft_l_jack.push_back( ft_jack[ijack]*(1-lambda_mid)/M2);
     PrecVect M_tilde_n;
     PrecMatr G_n;
 
-      //Lagrangian multipliers
-      if(Nmoms > 0) {
-	Get_M_tilde_N(ft_l, C_inv, Rt_n, M_tilde_n);
-	Get_G_matrix(G_n, C_inv, Rt_n);
+    //Lagrangian multipliers
+    
+    Get_M_tilde_N(ft_l, C_inv, Rt_n, M_tilde_n);
+    Get_G_matrix(G_n, C_inv, Rt_n);
+    
+      
+    
+    PrecVect gm = C_inv*ft_l;
+
+    vector<PrecVect> gm_jack;
+
+    PrecVect pn, M_n_diff;
+
+    PrecMatr G_n_inv;
+
+
+    if(Nmoms > 0) {
+      G_n_inv = G_n.inverse();
+      M_n_diff = M_n - M_tilde_n;
+      pn = G_n_inv*M_n_diff;
+    }
+
+    for(int n=0;n<Nmoms;n++) {
+      PrecVect lmult_n = C_inv*Rt_n[n]; 
+      gm = gm + lmult_n*pn(n);
+    }
+
+
+    if(JackOnKer) {
+
+      for(int ijack=0; ijack<Njacks;ijack++) {
+	PrecVect gm_ij = C_inv*ft_l_jack[ijack];
+	PrecVect M_tilde_n_ij, M_n_diff_ij, pn_ij;
+	Get_M_tilde_N(ft_l_jack[ijack], C_inv, Rt_n, M_tilde_n_ij);
+	if(Nmoms>0) {
+	PrecVect M_n_diff_ij = M_n_jack[ijack] - M_tilde_n_ij;
+	PrecVect pn_ij = G_n_inv*M_n_diff_ij;
+	}
+	for(int n=0; n<Nmoms;n++) {
+	  PrecVect lmult_n= C_inv*Rt_n[n];
+	  gm_ij = gm_ij + lmult_n*pn_ij(n);
+	}
+	gm_jack.push_back(gm_ij);
       }
       
-      
-      //get matrix-vector product C_inv * ft_l
+    }
 
-      const PrecVect C_inv_ft_l = C_inv*ft_l; 
-
-      //get matrix-vector product C_inv * Rt
-
-      const PrecVect C_inv_Rt = C_inv*Rt;
-      
-      //get scalar product Rt * ( C_inv * ft_l)
-
-      const PrecFloat Rt_C_inv_ft_l = Rt.transpose()*C_inv_ft_l;
-
-      //get scalar product Rt * ( C_inv * Rt)
-
-      const PrecFloat Rt_C_inv_Rt = Rt.transpose()*C_inv_Rt;
+    PrecFloat A1_val = A1(gm);
+    PrecFloat B1_val = B1(gm);
+    PrecFloat W_val = (1-lambda_mid)*A1_val + lambda_mid*B1_val;
+    
+    PrecFloat A1_val_std = A1_std(gm);
+    PrecFloat B1_val_std = B1_std(gm);
+    PrecFloat W_val_std = (1-lambda_mid)*A1_val_std + lambda_mid*B1_val_std;
 
 
-      PrecVect gm = C_inv*ft_l;
+    double syst=0.0;
 
-      PrecVect pn;
+    if(Use_guess_density) {
 
-      PrecVect M_n_diff = M_n - M_tilde_n;
+      	auto integrand_syst = [&tmin, &tmax, &T, &gm, &f, &mean, &sigma, &Estart](double E) ->double {
+			   PrecVect bt;
+			   Get_bt(bt, E, T, tmin,tmax);
+			   return (f(E,mean, sigma, Estart, -1) - gm.transpose()*bt).get();
+			 };
 
-      if(Nmoms > 0) pn = G_n.inverse()*M_n_diff;
 
-      for(int n=0;n<Nmoms;n++) {
-	PrecVect lmult_n = C_inv*Rt_n[n]; 
-	gm = gm + lmult_n*pn(n);
-      }
+	syst= syst_func(integrand_syst);
 
-      PrecFloat A1_val = A1(gm, lambda_mid);
-      PrecFloat B1_val = B1(gm, lambda_mid);
-      PrecFloat W_val = (1-lambda_mid)*A1_val + lambda_mid*B1_val/(MODE=="SANF"?M2:1.0);
-      
+	if(print_reco_in_stability_analysis) {
+	   int Npoints;
+	   if(analysis_name == "tau_decay") {Npoints= 2000; step_size=0.005;}
+	   else Npoints= (int)(((mean+20*sigma -Estart)/(sigma*step_size)));
+	   Vfloat Erg, Error, Spec_dens_guess, Agvs;
+
+	   for(int ip=0; ip<Npoints;ip++) {
+	    
+	     double E;
+	     Agvs.push_back(A1_val_std.get());
+	     if(analysis_name == "tau_decay") E= (Estart+ ip*step_size);
+	     else E = (Estart + (ip*sigma)*step_size);
+	     Error.push_back(integrand_syst(E));
+	     Erg.push_back(E);
+	     Spec_dens_guess.push_back(guess_density(E));
+	   }
+
+	   Print_To_File({}, {Agvs,Erg, Error, Spec_dens_guess}, "../data/spectral_reconstruction/"+analysis_name+"/error_funcs/beta_"+to_string_with_precision(Beta,2)+"/"+to_string(Global_id)+"_"+out_path,"", "#E   |reco-exact|   guess ");
+
+
+	}
+	
+	
+    }
 
 
     
       
- 
-     
-      if(mult*B1_val > A1_val) { // lambda_mid is new l_low
-	l_low =lambda_mid;
-      }
-      else { //lambda_mid is new l_up
-	l_up = lambda_mid;
-      }
+    double mult_est = (mult_estimated_from_norm0==false)?(A1_val/B1_val).get():(A1_val_std/B1_val_std).get();
+         
+    if(mult> mult_est) { // lambda_mid is new l_low
+      l_low =lambda_mid;
+    }
+    else { //lambda_mid is new l_up
+      l_up = lambda_mid;
+    }
+    
+    lambda_balance= lambda_mid.get();
+    
+    Nit++;
+    if(fabs(mult_est - mult)/(mult) < 0.001) lambda_balance_found=true;
 
-      diff = l_up-l_low;
-      lambda_balance= lambda_mid.get();
-      Nit++;
-      if(diff/(l_up+l_low) < 0.01) lambda_balance_found=true;
+
+      if(Nit > MAX_Iters) {
+	cout<<"###### FAILED CONVERGENCE #########"<<endl;
+	cout<<"lambda_low: "<<l_low<<" lambda_up: "<<l_up<<endl;
+	crash("After "+to_string(Nit)+" iterations, balance condition A = mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", mult(target) = "+to_string_with_precision( mult, 8)+", a*sigma: "+to_string_with_precision(sigma,5)+", aE*: "+to_string_with_precision(mean, 5)+" lambda: "+to_string_with_precision(lambda_mid, 5)+" , mult: "+to_string_with_precision(mult_est,5));
+      }
 
 
       //##########################################################################################
@@ -651,25 +761,382 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
 
 	PrecFloat spec_lambda_d_jack=0;
 
-	for(int t=tmin;t<=tmax;t++) spec_lambda_d_jack = spec_lambda_d_jack + gm(t-tmin)*corr.distr_list[t].distr[ijack]; 
+	for(int t=tmin;t<=tmax;t++) spec_lambda_d_jack = spec_lambda_d_jack + ((JackOnKer==true)?gm_jack[ijack](t-tmin):gm(t-tmin))*corr.distr_list[t].distr[ijack]; 
 
 	R_E_lambda.distr.push_back( spec_lambda_d_jack.get());
       }
 
-      Print_R_at_lambda<<"lambda: "<<lambda_mid<<" A[g]/A[0]: "<<A1_val<<" B[g]: "<<B1_val<<" W[g]/A[g]/A[0]: "<<W_val/A1_val<<" R: "<<R_E_lambda.ave()<<" +- "<<R_E_lambda.err()<<" "<<lambda_balance_found<<endl;
+      
+
+      Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<B1_val_std<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
+      if(Use_guess_density) Print_R_at_lambda<<" "<<syst;
+      Print_R_at_lambda<<" "<<lambda_balance_found<<" "<<mult_est<<endl;
 
       //##########################################################################################
+
+     
     
-   
+      Global_id++;
   }
 
 
   cout<<"lambda_opt = "<<lambda_balance<<endl;
 
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  //#############################################################################################################################################
 
-  if(Use_balance_condition) lambda_opt =  lambda_balance;
-  else lambda_opt = lambda_Ag0;
 
+
+
+
+
+
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+
+  double k=0.1;
+  l_low =0.0;
+  cout<<"Finding lambda from balance condition A=(k="<<to_string_with_precision(k,2)<<")*mult*B, mult= "<<mult<<endl;
+ 
+ 
+  //bisection search for condition A = mult*B
+  while( !lambda_balance_found_10 ) {
+
+   
+
+    //evaluate the minimum at midpoint
+    PrecFloat lambda_mid = (Nit_10==0)?l_up:(l_up+l_low)/2;
+    PrecMatr C = Atr*(1-lambda_mid)/M2 + B*lambda_mid/(MODE=="SANF"?M2:1);
+    PrecMatr C_inv = C.inverse();
+    PrecVect ft_l = ft*(1-lambda_mid)/M2;
+    vector<PrecVect> ft_l_jack;
+    if(JackOnKer) for(int ijack=0;ijack<Njacks;ijack++) ft_l_jack.push_back( ft_jack[ijack]*(1-lambda_mid)/M2);
+    PrecVect M_tilde_n;
+    PrecMatr G_n;
+
+    //Lagrangian multipliers
+    
+    Get_M_tilde_N(ft_l, C_inv, Rt_n, M_tilde_n);
+    Get_G_matrix(G_n, C_inv, Rt_n);
+    
+      
+    
+    PrecVect gm = C_inv*ft_l;
+
+    vector<PrecVect> gm_jack;
+
+    PrecVect pn, M_n_diff;
+
+    PrecMatr G_n_inv;
+
+
+    if(Nmoms > 0) {
+      G_n_inv = G_n.inverse();
+      M_n_diff = M_n - M_tilde_n;
+      pn = G_n_inv*M_n_diff;
+    }
+
+    for(int n=0;n<Nmoms;n++) {
+      PrecVect lmult_n = C_inv*Rt_n[n]; 
+      gm = gm + lmult_n*pn(n);
+    }
+
+
+    if(JackOnKer) {
+
+      for(int ijack=0; ijack<Njacks;ijack++) {
+	PrecVect gm_ij = C_inv*ft_l_jack[ijack];
+	PrecVect M_tilde_n_ij, M_n_diff_ij, pn_ij;
+	Get_M_tilde_N(ft_l_jack[ijack], C_inv, Rt_n, M_tilde_n_ij);
+	if(Nmoms>0) {
+	PrecVect M_n_diff_ij = M_n_jack[ijack] - M_tilde_n_ij;
+	PrecVect pn_ij = G_n_inv*M_n_diff_ij;
+	}
+	for(int n=0; n<Nmoms;n++) {
+	  PrecVect lmult_n= C_inv*Rt_n[n];
+	  gm_ij = gm_ij + lmult_n*pn_ij(n);
+	}
+	gm_jack.push_back(gm_ij);
+      }
+      
+    }
+
+    PrecFloat A1_val = A1(gm);
+    PrecFloat B1_val = B1(gm);
+    PrecFloat W_val = (1-lambda_mid)*A1_val + lambda_mid*B1_val;
+    
+    PrecFloat A1_val_std = A1_std(gm);
+    PrecFloat B1_val_std = B1_std(gm);
+    PrecFloat W_val_std = (1-lambda_mid)*A1_val_std + lambda_mid*B1_val_std;
+
+
+    double syst=0.0;
+
+    if(Use_guess_density) {
+
+      	auto integrand_syst = [&tmin, &tmax, &T, &gm, &f, &mean, &sigma, &Estart](double E) ->double {
+			   PrecVect bt;
+			   Get_bt(bt, E, T, tmin,tmax);
+			   return (f(E,mean, sigma, Estart, -1) - gm.transpose()*bt).get();
+			 };
+	syst= syst_func(integrand_syst);
+
+	
+	if(print_reco_in_stability_analysis) {
+	   int Npoints;
+	   if(analysis_name == "tau_decay") {Npoints= 2000; step_size=0.005;}
+	   else Npoints= (int)(((mean+20*sigma -Estart)/(sigma*step_size)));
+	   Vfloat Erg, Error, Spec_dens_guess, Agvs;
+
+	   for(int ip=0; ip<Npoints;ip++) {
+	    
+	     double E;
+	     Agvs.push_back(A1_val_std.get());
+	     if(analysis_name == "tau_decay") E= (Estart+ ip*step_size);
+	     else E = (Estart + (ip*sigma)*step_size);
+	     Error.push_back(integrand_syst(E));
+	     Erg.push_back(E);
+	     Spec_dens_guess.push_back(guess_density(E));
+	   }
+
+	   Print_To_File({}, {Agvs, Erg, Error, Spec_dens_guess}, "../data/spectral_reconstruction/"+analysis_name+"/error_funcs/beta_"+to_string_with_precision(Beta,2)+"/"+to_string(Global_id)+"_"+out_path,"", "#E   |reco-exact|   guess ");
+
+
+	}
+	
+    }
+
+      
+    double mult_est = (mult_estimated_from_norm0==false)?(A1_val/B1_val).get():(A1_val_std/B1_val_std).get();
+         
+      if(k*mult> mult_est) { // lambda_mid is new l_low
+	l_low =lambda_mid;
+      }
+      else { //lambda_mid is new l_up
+	l_up = lambda_mid;
+      }
+
+      lambda_balance_10= lambda_mid.get();
+      
+      Nit_10++;
+      if(fabs(mult_est - k*mult)/(k*mult) < 0.001) lambda_balance_found_10=true;
+
+      if(Nit_10 > MAX_Iters) {
+	cout<<"###### FAILED CONVERGENCE #########"<<endl;
+	cout<<"lambda_low: "<<l_low<<" lambda_up: "<<l_up<<endl;
+	crash("After "+to_string(Nit_10)+" iterations, balance condition A = k*mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", mult(target) = "+to_string_with_precision( k*mult, 8)+" a*sigma: "+to_string_with_precision(sigma,5)+", aE*: "+to_string_with_precision(mean, 5)+" lambda: "+to_string_with_precision(lambda_mid, 5)+" , mult: "+to_string_with_precision(mult_est,5));
+      }
+
+
+      //##########################################################################################
+      //compute anti-Laplace transform corresponding to lambda_mid:
+      distr_t R_E_lambda;
+      
+      for(int ijack=0; ijack< corr.distr_list[1].size(); ijack++) {
+
+	PrecFloat spec_lambda_d_jack=0;
+
+	for(int t=tmin;t<=tmax;t++) spec_lambda_d_jack = spec_lambda_d_jack + ((JackOnKer==true)?gm_jack[ijack](t-tmin):gm(t-tmin))*corr.distr_list[t].distr[ijack]; 
+
+	R_E_lambda.distr.push_back( spec_lambda_d_jack.get());
+      }
+
+      Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<B1_val_std<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
+      if(Use_guess_density) Print_R_at_lambda<<" "<<syst;
+      Print_R_at_lambda<<" "<<2*(lambda_balance_found_10==1)<<" "<<mult_est<<endl;
+
+      //##########################################################################################
+
+      Global_id++;
+    
+   
+  }
+
+
+  cout<<"lambda_opt_10 = "<<lambda_balance_10<<endl;
+
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+
+
+
+  k=0.01;
+  l_low =0.0;
+  cout<<"Finding lambda from balance condition A=(k="<<to_string_with_precision(k,2)<<")*mult*B, mult: "<<mult<<endl;
+  bool lambda_balance_found_100=false;
+ 
+ 
+  //bisection search for condition A = mult*B
+  while( !lambda_balance_found_100 ) {
+
+   
+
+    //evaluate the minimum at midpoint
+    PrecFloat lambda_mid = (Nit_100==0)?l_up:(l_up+l_low)/2;
+    PrecMatr C = Atr*(1-lambda_mid)/M2 + B*lambda_mid/(MODE=="SANF"?M2:1);
+    PrecMatr C_inv = C.inverse();
+    PrecVect ft_l = ft*(1-lambda_mid)/M2;
+    vector<PrecVect> ft_l_jack;
+    if(JackOnKer) for(int ijack=0;ijack<Njacks;ijack++) ft_l_jack.push_back( ft_jack[ijack]*(1-lambda_mid)/M2);
+    PrecVect M_tilde_n;
+    PrecMatr G_n;
+
+    //Lagrangian multipliers
+    
+    Get_M_tilde_N(ft_l, C_inv, Rt_n, M_tilde_n);
+    Get_G_matrix(G_n, C_inv, Rt_n);
+    
+      
+    
+    PrecVect gm = C_inv*ft_l;
+
+    vector<PrecVect> gm_jack;
+
+    PrecVect pn, M_n_diff;
+
+    PrecMatr G_n_inv;
+
+
+    if(Nmoms > 0) {
+      G_n_inv = G_n.inverse();
+      M_n_diff = M_n - M_tilde_n;
+      pn = G_n_inv*M_n_diff;
+    }
+
+    for(int n=0;n<Nmoms;n++) {
+      PrecVect lmult_n = C_inv*Rt_n[n]; 
+      gm = gm + lmult_n*pn(n);
+    }
+
+
+    if(JackOnKer) {
+
+      for(int ijack=0; ijack<Njacks;ijack++) {
+	PrecVect gm_ij = C_inv*ft_l_jack[ijack];
+	PrecVect M_tilde_n_ij, M_n_diff_ij, pn_ij;
+	Get_M_tilde_N(ft_l_jack[ijack], C_inv, Rt_n, M_tilde_n_ij);
+	if(Nmoms>0) {
+	PrecVect M_n_diff_ij = M_n_jack[ijack] - M_tilde_n_ij;
+	PrecVect pn_ij = G_n_inv*M_n_diff_ij;
+	}
+	for(int n=0; n<Nmoms;n++) {
+	  PrecVect lmult_n= C_inv*Rt_n[n];
+	  gm_ij = gm_ij + lmult_n*pn_ij(n);
+	}
+	gm_jack.push_back(gm_ij);
+      }
+      
+    }
+
+    PrecFloat A1_val = A1(gm);
+    PrecFloat B1_val = B1(gm);
+    PrecFloat W_val = (1-lambda_mid)*A1_val + lambda_mid*B1_val;
+    
+    PrecFloat A1_val_std = A1_std(gm);
+    PrecFloat B1_val_std = B1_std(gm);
+    PrecFloat W_val_std = (1-lambda_mid)*A1_val_std + lambda_mid*B1_val_std;
+
+
+    double syst=0.0;
+
+    if(Use_guess_density) {
+
+      	auto integrand_syst = [&tmin, &tmax, &T, &gm, &f, &mean, &sigma, &Estart](double E) ->double {
+			   PrecVect bt;
+			   Get_bt(bt, E, T, tmin,tmax);
+			   return (f(E,mean, sigma, Estart, -1) - gm.transpose()*bt).get();
+			 };
+	syst= syst_func(integrand_syst);
+
+	if(print_reco_in_stability_analysis) {
+	   int Npoints;
+	   if(analysis_name == "tau_decay") {Npoints= 2000; step_size=0.005;}
+	   else Npoints= (int)(((mean+20*sigma -Estart)/(sigma*step_size)));
+	   Vfloat Erg, Error, Spec_dens_guess, Agvs;
+
+	   for(int ip=0; ip<Npoints;ip++) {
+	    
+	     double E;
+	     Agvs.push_back(A1_val_std.get());
+	     if(analysis_name == "tau_decay") E= (Estart+ ip*step_size);
+	     else E = (Estart + (ip*sigma)*step_size);
+	     Error.push_back(integrand_syst(E));
+	     Erg.push_back(E);
+	     Spec_dens_guess.push_back(guess_density(E));
+	   }
+
+	   Print_To_File({}, {Agvs, Erg, Error, Spec_dens_guess}, "../data/spectral_reconstruction/"+analysis_name+"/error_funcs/beta_"+to_string_with_precision(Beta,2)+"/"+to_string(Global_id)+"_"+out_path,"", "#E   |reco-exact|   guess ");
+
+
+	}
+	
+    }
+      
+    double mult_est = (mult_estimated_from_norm0==false)?(A1_val/B1_val).get():(A1_val_std/B1_val_std).get();
+         
+      if(k*mult> mult_est) { // lambda_mid is new l_low
+	l_low =lambda_mid;
+      }
+      else { //lambda_mid is new l_up
+	l_up = lambda_mid;
+      }
+
+      lambda_balance_100= lambda_mid.get();
+      
+      Nit_100++;
+      if(fabs(mult_est - k*mult)/(k*mult) < 0.001) lambda_balance_found_100=true;
+
+      if(Nit_100 > MAX_Iters) {
+	cout<<"###### FAILED CONVERGENCE #########"<<endl;
+	cout<<"lambda_low: "<<l_low<<" lambda_up: "<<l_up<<endl;
+	crash("After "+to_string(Nit_100)+" iterations, balance condition A = k*mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", mult(target) = "+to_string_with_precision( k*mult, 8)+" a*sigma: "+to_string_with_precision(sigma,5)+", aE*: "+to_string_with_precision(mean, 5)+" lambda: "+to_string_with_precision(lambda_mid, 5)+" , mult: "+to_string_with_precision(mult_est,5));
+      }
+
+
+      //##########################################################################################
+      //compute anti-Laplace transform corresponding to lambda_mid:
+      distr_t R_E_lambda;
+      
+      for(int ijack=0; ijack< corr.distr_list[1].size(); ijack++) {
+
+	PrecFloat spec_lambda_d_jack=0;
+
+	for(int t=tmin;t<=tmax;t++) spec_lambda_d_jack = spec_lambda_d_jack + ((JackOnKer==true)?gm_jack[ijack](t-tmin):gm(t-tmin))*corr.distr_list[t].distr[ijack]; 
+
+	R_E_lambda.distr.push_back( spec_lambda_d_jack.get());
+      }
+
+      Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<B1_val_std<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
+      if(Use_guess_density) Print_R_at_lambda<<" "<<syst;
+      Print_R_at_lambda<<" "<<3*(lambda_balance_found_100==1)<<" "<<mult_est<<endl;
+
+      //##########################################################################################
+
+     
+      Global_id++;
+   
+  }
+
+  cout<<"lambda_opt_100 = "<<lambda_balance_100<<endl;
+
+
+ 
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+  //#############################################################################################################################################
+
+  
+
+
+  lambda_opt =  lambda_balance;
+ 
   Print_R_at_lambda.close();
 
   
@@ -678,15 +1145,25 @@ void Get_optimal_lambda(const PrecMatr &Atr,const PrecMatr &B,const PrecVect &ft
 }
 
 
-distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string cur_type, string CORR_NAME, string FLAV) {
+distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact, string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density) {
 
 
   if(MODE != "TANT" && MODE != "SANF") crash("MODE: "+MODE+" not recognized");
 
+  int Njacks= corr.distr_list[0].distr.size();
+
+ 
 
   //create output directory
   boost::filesystem::create_directory("../data/spectral_reconstruction");
-  boost::filesystem::create_directory("../data/spectral_reconstruction/smearing");
+  boost::filesystem::create_directory("../data/spectral_reconstruction/"+analysis_name);
+  boost::filesystem::create_directory("../data/spectral_reconstruction/"+analysis_name+"/smearing_func");
+  boost::filesystem::create_directory("../data/spectral_reconstruction/"+analysis_name+"/lambda_stability");
+  boost::filesystem::create_directory("../data/spectral_reconstruction/"+analysis_name+"/error_funcs");
+  boost::filesystem::create_directory("../data/spectral_reconstruction/"+analysis_name+"/smearing_func/beta_"+to_string_with_precision(Beta,2));
+  boost::filesystem::create_directory("../data/spectral_reconstruction/"+analysis_name+"/lambda_stability/beta_"+to_string_with_precision(Beta,2));
+  boost::filesystem::create_directory("../data/spectral_reconstruction/"+analysis_name+"/error_funcs/beta_"+to_string_with_precision(Beta,2));
+  
 
   PrecFloat::setDefaultPrecision(prec);
 
@@ -694,114 +1171,173 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   PrecFloat m = mean;
   PrecFloat E0 = Estart;
 
+ 
 
-  PrecMatr Atr,B;
-  PrecVect ft, Rt;
-  PrecFloat M2, N;
+  PrecMatr Atr, Atr_std, B;
+  PrecMatr Atr_10;
+  PrecVect ft, ft_std, ft_10;
+  PrecFloat M2, M2_std;
 
 
   //vectors for Lagrangian multiplier
   vector<PrecVect> Rt_n;
   PrecVect M_n;
-  PrecVect M_tilde_n;
-  PrecMatr G_n;
+  PrecVect M_tilde_n, M_tilde_n_10;
+  PrecMatr G_n, G_n_10;
 
-  //get vectors ft, Rt, and matrix Atr
+  //get vectors ft, and matrix Atr
 
- 
-  Get_ft(ft, E0, m, s, T, 1, tmax, SMEARING_FUNC, f);
+  cout<<"computing f(t)..."<<flush;
 
-  Get_Rt(Rt,E0, T, 1, tmax);
   
+  Get_ft(ft, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
+
+  cout<<"done!"<<endl<<flush;
+
+  cout<<"computing f(t)_std...";
+  
+  Get_ft_std(ft_std, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
+
+  cout<<"done!"<<endl<<flush;
+    
   Get_Atr(Atr, E0, T, 1, tmax);
 
-  M2= Get_M2(m,s,E0, f);
+  Get_Atr_std(Atr_std, E0, T, 1, tmax);
 
-  N= Get_norm_constraint(m,s,E0,SMEARING_FUNC, f);
+  M2= Get_M2(m,s,E0,-1,f);
 
- 
-  if(Nmoms > 0) {
-
-     Get_Rt_up_to_N(E0, T, 1, tmax, Rt_n);
-     Get_M_N(m,s,E0,f, M_n);
- 
-  }
+  M2_std= Get_M2_std_norm(m,s,E0, -1,f);
   
+  Get_Rt_up_to_N(E0, T, 1, tmax, Rt_n);
 
-  if(INCLUDE_ERRORS) Compute_covariance_matrix(B,Atr, corr,1,tmax, MODE);
+  Get_M_N(m,s,E0,-1,f, M_n);
+ 
+
+
+  //get ft, M_N in case a statistical fluctuations in kernel function must be computed
+  vector<PrecVect> ft_jack, ft_jack_10;
+  vector<PrecVect> M_n_jack, M_n_diff_jack;
+  vector<PrecVect> M_n_jack_10, M_n_diff_jack_10;
+ 
+
+  if(JackOnKer) {
+    //compute jackknife distribution of ft,  M_n
+    for(int ijack=0;ijack<Njacks;ijack++) {
+      PrecVect ft_ij;
+      PrecVect M_n_ij;
+
+      Get_ft(ft_ij, E0, m , s, ijack, T,1,tmax, SMEARING_FUNC, f);
+      Get_M_N(m,s,E0,ijack, f, M_n_ij);
+
+      ft_jack.push_back(ft_ij);
+      ft_jack_10.push_back(ft_ij);
+      M_n_jack.push_back(M_n_ij);
+    }
+
+  }
+
+  if(INCLUDE_ERRORS) Compute_covariance_matrix(B,Atr, corr,1,tmax, m, analysis_name, MODE, covariance);
 
   double lambda_opt= lambda;
+  double lambda_opt_10=lambda;
 
-  if(INCLUDE_ERRORS && FIND_OPTIMAL_LAMBDA) Get_optimal_lambda(Atr, B, ft, Rt, M2, mean, sigma, Estart, lambda_opt , f, Rt_n, M_n, corr, T , 1 , tmax, mult,  MODE, cur_type, SMEARING_FUNC,  CORR_NAME, FLAV);
+  if(INCLUDE_ERRORS && FIND_OPTIMAL_LAMBDA) Get_optimal_lambda(Atr, Atr_std,  B, ft, ft_jack, ft_std, M2, M2_std, mean, sigma, Estart, lambda_opt , lambda_opt_10, Rt_n, M_n, M_n_jack, corr, T , 1 , tmax, mult,  MODE, reg_type, SMEARING_FUNC,  CORR_NAME, Ag_ov_A0_target, JackOnKer, Prefact, analysis_name, f, syst_func, Use_guess_density, guess_density);
 
 
     							         
-  if(INCLUDE_ERRORS) {Atr = Atr*(1-lambda_opt)/M2 + B*lambda_opt/((MODE=="SANF")?M2:1);  ft= ft*(1-lambda_opt)/M2;       }
+  if(INCLUDE_ERRORS) {
+    Atr_10 = Atr*(1-lambda_opt_10)/M2 + B*lambda_opt_10/((MODE=="SANF")?M2:1);
+    Atr = Atr*(1-lambda_opt)/M2 + B*lambda_opt/((MODE=="SANF")?M2:1);
+    ft_10 = ft*(1-lambda_opt_10)/M2;
+    ft= ft*(1-lambda_opt)/M2;
+    if(JackOnKer) {
+      for(int ijack=0;ijack<Njacks;ijack++) {
+	ft_jack_10[ijack] = ft_jack_10[ijack]*(1-lambda_opt_10)/M2;
+	ft_jack[ijack] = ft_jack[ijack]*(1-lambda_opt)/M2;
+      }
+    }
+  }
 
 
   //invert Atr
 
   const PrecMatr Atr_inv = Atr.inverse();
+  const PrecMatr Atr_inv_10= Atr_10.inverse();
 
 
   
   //to compute Lagrangian multiplier
 
-  if(Nmoms > 0) {
-    Get_M_tilde_N(ft, Atr_inv, Rt_n, M_tilde_n);
-    Get_G_matrix(G_n, Atr_inv, Rt_n);
+  
+  Get_M_tilde_N(ft, Atr_inv, Rt_n, M_tilde_n);
+  Get_M_tilde_N(ft_10, Atr_inv_10, Rt_n, M_tilde_n_10);
+  Get_G_matrix(G_n, Atr_inv, Rt_n);
+  Get_G_matrix(G_n_10, Atr_inv_10, Rt_n);
+
+  if(JackOnKer && Nmoms > 0) {
+    for(int ijack=0; ijack<Njacks;ijack++) {
+      PrecVect M_tilde_n_ij;
+      PrecVect M_tilde_n_ij_10;
+      Get_M_tilde_N(ft_jack[ijack], Atr_inv, Rt_n, M_tilde_n_ij);
+      Get_M_tilde_N(ft_jack_10[ijack], Atr_inv_10, Rt_n, M_tilde_n_ij_10);
+      M_n_diff_jack.push_back(M_n_jack[ijack] - M_tilde_n_ij);
+      M_n_diff_jack_10.push_back( M_n_jack[ijack] - M_tilde_n_ij_10);
+    }
   }
   
-
-  //get matrix-vector product Atr_inv * ft
-
-
-  const PrecVect Atr_inv_ft = Atr_inv*ft; 
-
-   //get matrix-vector product Atr_inv * Rt
-
-  const PrecVect Atr_inv_Rt = Atr_inv*Rt;
-
-  //get scalar product Rt * ( Atr_inv * ft)
-
-  const PrecFloat Rt_Atr_inv_ft = Rt.transpose()*Atr_inv_ft;
-
-
-  //get scalar product Rt * ( Atr_inv * Rt)
-
-  const PrecFloat Rt_Atr_inv_Rt = Rt.transpose()*Atr_inv_Rt;
-
-
-  //get p as in Francesco's note
-
-  // const PrecFloat p = (N- Rt_Atr_inv_ft)/Rt_Atr_inv_Rt;
-
+  
 
   //get g(t) coefficient vector
   
 
   PrecVect g = Atr_inv*ft;
+  PrecVect g_10= Atr_inv_10*ft_10;
+
+  vector<PrecVect> g_jack;
+  vector<PrecVect> g_jack_10;
 
   //add Lagrangian multipliers
 
-  PrecVect pn;
 
-  PrecVect M_n_diff = M_n - M_tilde_n;
+  PrecMatr G_n_inv, G_n_inv_10;
+  PrecVect pn, pn_10;
 
-  if(Nmoms > 0) pn= G_n.inverse()*M_n_diff;
+  if(Nmoms>0) { G_n_inv= G_n.inverse(); G_n_inv_10=G_n_10.inverse();}
+
+  PrecVect M_n_diff, M_n_diff_10;
+
+  if(Nmoms > 0) {
+
+    M_n_diff= M_n - M_tilde_n;
+    M_n_diff_10= M_n - M_tilde_n_10;
+    pn= G_n_inv*M_n_diff;
+    pn_10= G_n_inv_10*M_n_diff_10;
+  }
+
 
   for(int n=0;n <Nmoms;n++) {
     PrecVect lmult_n = Atr_inv*Rt_n[n];
+    PrecVect lmult_n_10= Atr_inv_10*Rt_n[n];
     g = g + lmult_n*pn(n);
+    g_10= g_10 + lmult_n_10*pn_10(n);
   }
 
-  // cout<<"##### PRINTING G ######"<<endl;
-  //cout<<g<<endl;
-
-
-
-
-
+  if(JackOnKer) {
+    for(int ijack=0;ijack<Njacks;ijack++) {
+      PrecVect g_ij = Atr_inv*ft_jack[ijack];
+      PrecVect g_ij_10= Atr_inv_10*ft_jack_10[ijack];
+      PrecVect pn_ij, pn_ij_10;
+      if(Nmoms>0) { pn_ij= G_n_inv*M_n_diff_jack[ijack]; pn_ij_10= G_n_inv_10*M_n_diff_jack_10[ijack];}
+      for(int n=0; n < Nmoms; n++) {
+	PrecVect lmult_n= Atr_inv*Rt_n[n];
+	PrecVect lmult_n_10= Atr_inv_10*Rt_n[10];
+	g_ij = g_ij + lmult_n*pn_ij(n);
+	g_ij_10= g_ij_10 + lmult_n_10*pn_ij_10(n);
+      }
+      g_jack.push_back(g_ij);
+      g_jack_10.push_back(g_ij_10);
+    }
+  }
 
 
   //print reconstructed gaussian, exact Gaussian, diff
@@ -812,27 +1348,40 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   vector<double> Exact;
   vector<double> Err;
   vector<double> Erg;
+  vector<double> Spec_dens_guess;
 
 
-  int Npoints=  (int)(((m+10*s -E0)/(s*step_size)).get());
+  int Npoints;
+  if(analysis_name == "tau_decay") {Npoints= 20000; step_size=0.001;}
+  else Npoints= (int)(((m+20*s -E0)/(s*step_size)).get());
 
   for(int ip=0; ip<Npoints;ip++) {
     PrecVect bt;
-    PrecFloat E = E0 + (ip*s)*step_size;
+    PrecFloat E;
+    if(analysis_name == "tau_decay") E= E0+ ip*step_size;
+    else E = E0 + (ip*s)*step_size;
     Get_bt(bt, E, T, 1, tmax);  
     const PrecFloat reco_result = g.transpose()*bt;
-    const PrecFloat exact_result = Get_exact_func(E,m,s,E0, SMEARING_FUNC, f);
+    const PrecFloat exact_result = f(E,m,s,E0,-1);
     Reco.push_back( reco_result.get());
     Exact.push_back( exact_result.get());
     Err.push_back(  (exact_result -reco_result).get());
-    Erg.push_back(E.get());    
+    Erg.push_back(E.get());
+    if(Use_guess_density) Spec_dens_guess.push_back( guess_density(E.get()));
   }
 
   
   //print to file
-  Print_To_File({}, { Erg, Reco, Exact, Err}, "../data/spectral_reconstruction/smearing/"+MODE+"_"+CORR_NAME+"_"+cur_type+"_"+SMEARING_FUNC+"_func_E*_"+to_string_with_precision(mean,3)+"_sigma_"+to_string_with_precision(sigma,3)+"_E0_"+to_string_with_precision(E0.get(),3)+"_T_"+to_string(T)+"_tmax_"+to_string(tmax), "", "#id  E   reco    exact    error");
+  if(!Use_guess_density) {
+  Print_To_File({}, { Erg, Reco, Exact, Err}, "../data/spectral_reconstruction/"+analysis_name+"/smearing_func/beta_"+to_string_with_precision(Beta,2)+"/"+MODE+"_"+CORR_NAME+"_"+reg_type+"_"+SMEARING_FUNC+"_func_E*_"+to_string_with_precision(mean,3)+"_sigma_"+to_string_with_precision(sigma,3)+"_E0_"+to_string_with_precision(E0.get(),3)+"_T_"+to_string(T)+"_tmax_"+to_string(tmax)+"_alpha_"+to_string(alpha)+"_beta_"+to_string_with_precision(Beta,2)+".dat", "", "#id  E   reco    exact    error");
+  }
+  else {
+    Print_To_File({}, { Erg, Reco, Exact, Err, Spec_dens_guess}, "../data/spectral_reconstruction/"+analysis_name+"/smearing_func/beta_"+to_string_with_precision(Beta,2)+"/"+MODE+"_"+CORR_NAME+"_"+reg_type+"_"+SMEARING_FUNC+"_func_E*_"+to_string_with_precision(mean,3)+"_sigma_"+to_string_with_precision(sigma,3)+"_E0_"+to_string_with_precision(E0.get(),3)+"_T_"+to_string(T)+"_tmax_"+to_string(tmax)+"_alpha_"+to_string(alpha)+"_beta_"+to_string_with_precision(Beta,2)+".dat", "", "#id  E   reco    exact    error guess_density");
+
+  }
 
   distr_t Spec_dens_at_E_star; //Uses Jackknife distr by default
+  distr_t Spec_dens_at_E_star_10;
 
 
   if(INCLUDE_ERRORS) {
@@ -840,43 +1389,52 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
     //build the spectral density at E*
     
 
-    for(int ijack=0; ijack< corr.distr_list[1].size(); ijack++) {
+    for(int ijack=0; ijack< Njacks; ijack++) {
 
       PrecFloat spec_d_jack=0;
-
-      for(int t=1;t<=tmax;t++) spec_d_jack = spec_d_jack + g(t-1)*corr.distr_list[t].distr[ijack]; 
+      PrecFloat spec_d_jack_10=0;
+      for(int t=1;t<=tmax;t++)  {
+	spec_d_jack = spec_d_jack + ((JackOnKer)?g_jack[ijack](t-1):g(t-1))*corr.distr_list[t].distr[ijack];
+	spec_d_jack_10 = spec_d_jack_10 + ((JackOnKer)?g_jack_10[ijack](t-1):g_10(t-1))*corr.distr_list[t].distr[ijack];
+      }
 
       Spec_dens_at_E_star.distr.push_back( spec_d_jack.get());
+      Spec_dens_at_E_star_10.distr.push_back( spec_d_jack_10.get());
     }
 
+    Spec_dens_at_E_star = Spec_dens_at_E_star*Prefact;
+    Spec_dens_at_E_star_10 = Spec_dens_at_E_star_10*Prefact;
 
     
-  //print coefficient
-  ofstream PrintCoeff("../data/spectral_reconstruction/smearing/"+MODE+"_"+CORR_NAME+"_"+cur_type+"_"+SMEARING_FUNC+"_coeff_E*"+to_string_with_precision(mean,3)+"_sigma_"+to_string_with_precision(sigma,3)+"_E0_"+to_string_with_precision(E0.get(),3)+"_T_"+to_string(T)+"_tmax_"+to_string(tmax));
-  if(!INCLUDE_ERRORS) {
-  PrintCoeff<<g<<endl;
+
+    
+    //print coefficient
+    ofstream PrintCoeff("../data/spectral_reconstruction/"+analysis_name+"/smearing_func/beta_"+to_string_with_precision(Beta,2)+"/"+MODE+"_"+CORR_NAME+"_"+reg_type+"_"+SMEARING_FUNC+"_coeff_E*"+to_string_with_precision(mean,3)+"_sigma_"+to_string_with_precision(sigma,3)+"_E0_"+to_string_with_precision(E0.get(),3)+"_T_"+to_string(T)+"_tmax_"+to_string(tmax)+"_alpha_"+to_string(alpha)+"_beta_"+to_string_with_precision(Beta,3)+".dat");
+    if(!INCLUDE_ERRORS) {
+      PrintCoeff<<g<<endl;
+    }
+    else {
+      if(!JackOnKer) {
+	for(int t=1;t<=tmax;t++) PrintCoeff<<g(t-1)<<"\t"<<g(t-1)*(Prefact*corr).ave(t)<<"\t"<<Spec_dens_at_E_star.ave()<<"\t"<<Spec_dens_at_E_star.err()<<endl;
+      }
+      else {
+	for(int t=1; t<=tmax;t++) {
+	  distr_t g_t;
+	  for(int ijack=0;ijack<Njacks;ijack++) g_t.distr.push_back( g_jack[ijack](t-1).get());
+	  PrintCoeff<<g_t.ave()<<"  "<<g_t.err()<<"\t"<<(g_t*Prefact*corr).ave(t)<<"   "<<(g_t*Prefact*corr).err(t)<<"\t"<<Spec_dens_at_E_star.ave()<<"\t"<<Spec_dens_at_E_star.err()<<endl;
+	}
+      }
+    }
+    PrintCoeff.close();
+        
+    syst = fabs( Spec_dens_at_E_star.ave() - Spec_dens_at_E_star_10.ave());
   }
-  else {
-    for(int t=1;t<=tmax;t++) PrintCoeff<<g(t-1)<<"\t"<<g(t-1)*corr.ave(t)<<"\t"<<Spec_dens_at_E_star.ave()<<"\t"<<Spec_dens_at_E_star.err()<<endl;
-  }
-  PrintCoeff.close();
+    
+
+//set lambda_ret to lambda_optimal
+
+lambda_ret= lambda_opt;
   
-
-
-    //evaluate the smeared function at the peak
-    PrecVect bt;
-    Get_bt(bt, m, T, 1, tmax);
-    const PrecFloat reco_at_peak= g.transpose()*bt;
-    
-    
-    syst = 0.68*abs(Spec_dens_at_E_star.ave())*abs(  1 -  reco_at_peak.get()/Get_exact_func(m,m,s,E0, SMEARING_FUNC, f).get());
-    
-  }
-
-  //set lambda_ret to lambda_optimal
-
-  lambda_ret= lambda_opt;
-  
-  return Spec_dens_at_E_star;  
+return Spec_dens_at_E_star;  
   
 }

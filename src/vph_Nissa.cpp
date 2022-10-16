@@ -8,12 +8,88 @@ const double e2 = alpha*4.0*M_PI;
 const int Nboots= 100;
 const bool UseJack=1;
 const int nboots=150;
-const int Njacks=30;
+const int Njacks=15;
 const double qu = 2.0/3.0; //electric charge of u-type quark
 const double qd = -1.0/3.0; //electric charge of d-type quark
 const string Meson="Ds";
 bool Is_reph=true;
-int num_xg=11;
+int num_xg=13;
+
+
+void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg) {
+
+  if(ixg==0) {
+    if(W=="A") {Tmin= 20; Tmax=30;}
+    else {Tmin=20;Tmax=30;}
+
+  }
+  else if(ixg==1) {
+    if(W=="A") {Tmin= 17; Tmax=24;}
+    else {Tmin=20;Tmax=37;}
+
+  }
+  else if(ixg==2) {
+    if(W=="A") {Tmin= 17; Tmax=29;}
+    else {Tmin=23;Tmax=38;}
+
+  }
+  else if(ixg==3) {
+    if(W=="A") {Tmin= 18; Tmax=28;}
+    else {Tmin=23;Tmax=38;}
+    
+  }
+  else if(ixg==4) {
+    if(W=="A") {Tmin= 18; Tmax=29;}
+    else {Tmin=18;Tmax=38;}
+    
+  }
+  else if(ixg==5) {
+    if(W=="A") {Tmin= 18; Tmax=30;}
+    else {Tmin=18;Tmax=38;}
+    
+  }
+  else if(ixg==6) {
+    if(W=="A") {Tmin= 20; Tmax=28;}
+    else {Tmin=18;Tmax=35;}
+    
+  }
+  else if(ixg==7) {
+    if(W=="A") {Tmin= 14; Tmax=29;}
+    else {Tmin=18;Tmax=35;}
+    
+  }
+  else if(ixg==8) {
+    if(W=="A") {Tmin= 10; Tmax=29;}
+    else {Tmin=11;Tmax=38;}
+    
+  }
+  else if(ixg==9) {
+    if(W=="A") {Tmin= 10; Tmax=30;}
+    else {Tmin=21;Tmax=40;}
+    
+  }
+  else if(ixg==10) {
+    if(W=="A") {Tmin= 10; Tmax=34;}
+    else {Tmin=26;Tmax=40;}
+
+  }
+  else if(ixg==11) {
+    if(W=="A") {Tmin= 20; Tmax=30;}
+    else {Tmin=20;Tmax=30;}
+
+  }
+  else if(ixg==12) {
+    if(W=="A") {Tmin= 20; Tmax=30;}
+    else {Tmin=20;Tmax=30;}
+
+  }
+  else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
+
+
+ 
+
+  return; 
+}
 
 
 
@@ -35,6 +111,8 @@ void Compute_form_factors_Nissa() {
   boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/mass");
   boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/decay_const");
   boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF");
+  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF_u");
+  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF_d");
    
   string ph_type_mes=ph_type+"/"+Meson;
   
@@ -85,8 +163,8 @@ void Compute_form_factors_Nissa() {
 
   //2pts function
 
-  data_2pts.Read("../new_vph_gpu_data", "mes_contr_2pts_3", "P5P5");
-  data_2pts_SM.Read("../new_vph_gpu_data", "mes_contr_2pts_SM_3", "P5P5");
+  data_2pts.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "P5P5");
+  data_2pts_SM.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_SM_3", "P5P5");
 
   
 
@@ -100,22 +178,22 @@ void Compute_form_factors_Nissa() {
 
 	//vector
 	//Fu
-	C_V_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
+	C_V_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
 	//Fd
-	C_V_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
+	C_V_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
 	//Bu
-	C_V_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
+	C_V_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
 	//Bd
-	C_V_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
+	C_V_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
 
 	//axial
-	C_A_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
+	C_A_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
 	//Fd
-	C_A_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
+	C_A_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
 	//Bu
-	C_A_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
+	C_A_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
 	//Bd
-	C_A_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
+	C_A_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
 
       }
     }
@@ -159,6 +237,11 @@ void Compute_form_factors_Nissa() {
     boost::filesystem::create_directory("../data/ph_emission/"+ph_type_mes+"/C/"+data_2pts.Tag[iens]);
     boost::filesystem::create_directory("../data/ph_emission/"+ph_type_mes+"/H/"+data_2pts.Tag[iens]);
     boost::filesystem::create_directory("../data/ph_emission/"+ph_type_mes+"/FF/"+data_2pts.Tag[iens]);
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type_mes+"/FF/"+data_2pts.Tag[iens]+"/fit_results");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type_mes+"/FF_u/"+data_2pts.Tag[iens]);
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type_mes+"/FF_u/"+data_2pts.Tag[iens]+"/fit_results");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type_mes+"/FF_d/"+data_2pts.Tag[iens]);
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type_mes+"/FF_d/"+data_2pts.Tag[iens]+"/fit_results");
     boost::filesystem::create_directory("../data/ph_emission/"+ph_type_mes+"/mass/"+data_2pts.Tag[iens]);
     boost::filesystem::create_directory("../data/ph_emission/"+ph_type_mes+"/decay_const/"+data_2pts.Tag[iens]);
     //boost::filesystem::create_directory("../data/ph_emission/C/"+data_2pts.Tag[iens]);
@@ -176,10 +259,10 @@ void Compute_form_factors_Nissa() {
     //read theta values and loop over them
     Vfloat thetas, masses_u, masses_d, virts;
 
-    thetas= Read_From_File("../new_vph_gpu_data/"+data_2pts.Tag[iens]+"/pars_list.dat", 1 , 5);
-    virts=  Read_From_File("../new_vph_gpu_data/"+data_2pts.Tag[iens]+"/pars_list.dat", 2 , 5);
-    masses_u= Read_From_File("../new_vph_gpu_data/"+data_2pts.Tag[iens]+"/pars_list.dat", 3 , 5);
-    masses_d= Read_From_File("../new_vph_gpu_data/"+data_2pts.Tag[iens]+"/pars_list.dat", 4 , 5);
+    thetas= Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 1 , 5);
+    virts=  Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 2 , 5);
+    masses_u= Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 3 , 5);
+    masses_d= Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 4 , 5);
 
     if((signed)thetas.size() != num_xg) crash("Number of rows in pars_list.dat does not match num_xg"); 
 
@@ -237,13 +320,23 @@ void Compute_form_factors_Nissa() {
 
    
 
-    vector<vector<vector<distr_t_list>>> Ax_glb, Vec_glb;
+    vector<vector<vector<distr_t_list>>> Ax_glb, Vec_glb, Ax_u_glb, Ax_d_glb, Vec_u_glb, Vec_d_glb;
+    distr_t_list FV(UseJack), FA(UseJack), FV_u(UseJack), FV_d(UseJack), FA_u(UseJack), FA_d(UseJack);
+
+
+    distr_t_list xg_list(UseJack);
+    
     
 
     for(int ixg=0;ixg<num_xg;ixg++) {
 
       vector<vector<distr_t_list>> Ax_tens(size_mu_nu);
+      vector<vector<distr_t_list>> Ax_tens_u(size_mu_nu);
+      vector<vector<distr_t_list>> Ax_tens_d(size_mu_nu);
       vector<vector<distr_t_list>> Vec_tens(size_mu_nu);
+      vector<vector<distr_t_list>> Vec_tens_u(size_mu_nu);
+      vector<vector<distr_t_list>> Vec_tens_d(size_mu_nu);
+      
 
 
       //get xg, Eg, kz from thetas
@@ -254,6 +347,7 @@ void Compute_form_factors_Nissa() {
 
       double Eg= pt3_mom.Egamma();
       distr_t xg= pt3_mom.x_gamma(M_P);
+      xg_list.distr_list.push_back(xg);
       double kz = pt3_mom.k()[2];
     
    
@@ -306,8 +400,14 @@ void Compute_form_factors_Nissa() {
 	  distr_t_list vec_d = th_FF*vec_F_d + th_BB*vec_B_d;
 	  distr_t_list vec = vec_u + vec_d;
 	  distr_t_list vec_symm= vec;
+	  distr_t_list vec_u_symm= vec_u;
+	  distr_t_list vec_d_symm= vec_d;
 	  //symmetrize vec
-	  for(int t=0; t<Corr.Nt;t++) vec_symm.distr_list[t] = 0.5*(vec.distr_list[t] + Corr.Reflection_sign*vec.distr_list[( Corr.Nt -t)%Corr.Nt]);
+	  for(int t=0; t<Corr.Nt;t++) {
+	    vec_symm.distr_list[t] = 0.5*(vec.distr_list[t] + Corr.Reflection_sign*vec.distr_list[( Corr.Nt -t)%Corr.Nt]);
+	    vec_u_symm.distr_list[t] = 0.5*(vec_u.distr_list[t] + Corr.Reflection_sign*vec_u.distr_list[( Corr.Nt -t)%Corr.Nt]);
+	    vec_d_symm.distr_list[t] = 0.5*(vec_d.distr_list[t] + Corr.Reflection_sign*vec_d.distr_list[( Corr.Nt -t)%Corr.Nt]);
+	  }
 	  Corr.Perform_Nt_t_average=1;
 	
 	
@@ -327,8 +427,14 @@ void Compute_form_factors_Nissa() {
 	  distr_t_list ax_d = parity*(ax_F_d*th_FF  + ax_B_d*th_BB);
 	  distr_t_list ax = ax_u -ax_d;
 	  distr_t_list ax_symm=ax;
+	  distr_t_list ax_u_symm= ax_u;
+	  distr_t_list ax_d_symm= ax_d;
 	  //symmetrize ax
-	  for(int t=0; t<Corr.Nt;t++) ax_symm.distr_list[t] = 0.5*(ax.distr_list[t] + Corr.Reflection_sign*ax.distr_list[( Corr.Nt -t)%Corr.Nt]);
+	  for(int t=0; t<Corr.Nt;t++) {
+	    ax_symm.distr_list[t] = 0.5*(ax.distr_list[t] + Corr.Reflection_sign*ax.distr_list[( Corr.Nt -t)%Corr.Nt]);
+	    ax_u_symm.distr_list[t] = 0.5*(ax_u.distr_list[t] + Corr.Reflection_sign*ax_u.distr_list[( Corr.Nt -t)%Corr.Nt]);
+	    ax_d_symm.distr_list[t] = 0.5*(ax_d.distr_list[t] + Corr.Reflection_sign*ax_d.distr_list[( Corr.Nt -t)%Corr.Nt]);
+	  }
 	  Corr.Perform_Nt_t_average=1;
 
 	  //restore standard reflection sign
@@ -345,8 +451,12 @@ void Compute_form_factors_Nissa() {
 	
 
 	  //single contributions to C
-	  Print_To_File({}, {ax_u.ave() ,ax_u.err(), ax_d.ave(), ax_d.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/quark_contr_A_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "#   ax_u    ax_d");
-	  Print_To_File({}, {vec_u.ave() ,vec_u.err(), vec_d.ave(), vec_d.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/quark_contr_V_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "#   vec_u    vec_d");
+	  Print_To_File({}, {ax_u.ave() ,ax_u.err(), ax_d.ave(), ax_d.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/quark_contr_A_w0_T_symm_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "#   ax_u    ax_d");
+	  Print_To_File({}, {vec_u.ave() ,vec_u.err(), vec_d.ave(), vec_d.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/quark_contr_V_w0_T_symm_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "#   vec_u    vec_d");
+
+	  //single contributions to C with symmetrization
+	  Print_To_File({}, {ax_u_symm.ave() ,ax_u_symm.err(), ax_d_symm.ave(), ax_d_symm.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/quark_contr_A_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "#   ax_u    ax_d");
+	  Print_To_File({}, {vec_u_symm.ave() ,vec_u_symm.err(), vec_d_symm.ave(), vec_d_symm.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/quark_contr_V_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "#   vec_u    vec_d");
 
 	  //total contribution without symmetrization to C
 
@@ -365,8 +475,12 @@ void Compute_form_factors_Nissa() {
 
 	  //push back
 	  Ax_tens[mu].push_back(ax_symm);
+	  Ax_tens_u[mu].push_back(ax_u_symm);
+	  Ax_tens_d[mu].push_back(ax_d_symm);
 	  Vec_tens[mu].push_back(vec_symm);
-	
+	  Vec_tens_u[mu].push_back(vec_u_symm);
+	  Vec_tens_d[mu].push_back(vec_d_symm);
+	  
 	
 
 	}
@@ -374,19 +488,65 @@ void Compute_form_factors_Nissa() {
 
       //push_back Ax_tens and Vec_tens
       Ax_glb.push_back(Ax_tens);
+      Ax_u_glb.push_back(Ax_tens_u);
+      Ax_d_glb.push_back(Ax_tens_d);
+      
       Vec_glb.push_back(Vec_tens);
+      Vec_u_glb.push_back(Vec_tens_u);
+      Vec_d_glb.push_back(Vec_tens_d);
 
       //Compute FV and FA
       distr_t_list FA0_distr= 0.5*(Ax_glb[0][1-off_i][1-off_i] + Ax_glb[0][2-off_i][2-off_i]);
       distr_t_list FA_distr = (0.5*(Ax_tens[1-off_i][1-off_i] + Ax_tens[2-off_i][2-off_i])*EXP_PH - FA0_distr)*(1.0/Eg)*F_P/FA0_distr;
       distr_t_list FV_distr = -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH/kz;
       distr_t_list FV_sub_distr= -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH - Vec_glb[0][1-off_i][2-off_i] + Vec_glb[0][2-off_i][1-off_i])/kz;
+      //compute FV and FA (up-component)
+      distr_t_list FA0_u_distr= 0.5*(Ax_u_glb[0][1-off_i][1-off_i] + Ax_u_glb[0][2-off_i][2-off_i]);
+      distr_t_list FA_u_distr = (0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH - FA0_u_distr)*(1.0/Eg)*F_P/FA0_distr;
+      distr_t_list FV_u_distr = -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH/kz;
+      distr_t_list FV_u_sub_distr= -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH - Vec_u_glb[0][1-off_i][2-off_i] + Vec_u_glb[0][2-off_i][1-off_i])/kz;
+
+      //compute FV and FA (d-component)
+      distr_t_list FA0_d_distr= 0.5*(Ax_d_glb[0][1-off_i][1-off_i] + Ax_d_glb[0][2-off_i][2-off_i]);
+      distr_t_list FA_d_distr = (0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH - FA0_d_distr)*(1.0/Eg)*F_P/FA0_distr;
+      distr_t_list FV_d_distr = -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH/kz;
+      distr_t_list FV_d_sub_distr= -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH - Vec_d_glb[0][1-off_i][2-off_i] + Vec_d_glb[0][2-off_i][1-off_i])/kz;
 
 
-      //Print
+      //Print FV and FA
       Print_To_File({}, {FA_distr.ave(), FA_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "");
       Print_To_File({}, {FV_distr.ave(), FV_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "");
       Print_To_File({}, {FV_sub_distr.ave(), FV_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "");
+
+      //Print FV and FA (up-component)
+      Print_To_File({}, {FA_u_distr.ave(), FA_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "");
+      Print_To_File({}, {FV_u_distr.ave(), FV_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "");
+      Print_To_File({}, {FV_u_sub_distr.ave(), FV_u_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "");
+
+      //Print FV and FA (d-component)
+      Print_To_File({}, {FA_d_distr.ave(), FA_d_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "");
+      Print_To_File({}, {(-1.0*FV_d_distr).ave(), (-1.0*FV_d_distr).err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "");
+      Print_To_File({}, {(-1.0*FV_d_sub_distr).ave(), (-1.0*FV_d_sub_distr).err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),5)+".dat", "", "");
+
+      //fit the form factors
+
+      //set interval depending on xg
+      int Tmin_V, Tmax_V, Tmin_A, Tmax_A;
+      Get_Tmin_Tmax("A", Tmin_A, Tmax_A, ixg);
+      Get_Tmin_Tmax("V", Tmin_V, Tmax_V, ixg);
+
+
+      //axial
+      Corr.Tmin= Tmin_A; Corr.Tmax= Tmax_A;
+      FA.distr_list.push_back( Corr.Fit_distr(FA_distr));
+      FA_u.distr_list.push_back(Corr.Fit_distr(FA_u_distr));
+      FA_d.distr_list.push_back(Corr.Fit_distr(FA_d_distr));
+      //vector
+      Corr.Tmin= Tmin_V; Corr.Tmax= Tmax_V;
+      FV.distr_list.push_back( Corr.Fit_distr(FV_distr));
+      FV_u.distr_list.push_back( Corr.Fit_distr(FV_u_distr));
+      FV_d.distr_list.push_back( Corr.Fit_distr(FV_d_distr));
+				
       
       
     
@@ -394,6 +554,15 @@ void Compute_form_factors_Nissa() {
     }
 
 
+    //Print fitted form factors
+    Print_To_File({}, {xg_list.ave(), xg_list.err(), FV.ave(), FV.err()}, "../data/ph_emission/"+ph_type_mes+"/FF/"+data_2pts.Tag[iens]+"/fit_results/FV.dat", "", "#xg Dxg  FV DFV");
+    Print_To_File({}, {xg_list.ave(), xg_list.err(), FA.ave(), FA.err()}, "../data/ph_emission/"+ph_type_mes+"/FF/"+data_2pts.Tag[iens]+"/fit_results/FA.dat", "", "#xg Dxg  FA DFA");
+
+    Print_To_File({}, {xg_list.ave(), xg_list.err(), FV_u.ave(), FV_u.err()}, "../data/ph_emission/"+ph_type_mes+"/FF_u/"+data_2pts.Tag[iens]+"/fit_results/FV.dat", "", "#xg Dxg  FV DFV");
+    Print_To_File({}, {xg_list.ave(), xg_list.err(), FA_u.ave(), FA_u.err()}, "../data/ph_emission/"+ph_type_mes+"/FF_u/"+data_2pts.Tag[iens]+"/fit_results/FA.dat", "", "#xg Dxg  FA DFA");
+
+    Print_To_File({}, {xg_list.ave(), xg_list.err(), (-1.0*FV_d).ave(), (-1.0*FV_d).err()}, "../data/ph_emission/"+ph_type_mes+"/FF_d/"+data_2pts.Tag[iens]+"/fit_results/FV.dat", "", "#xg Dxg  FV DFV");
+    Print_To_File({}, {xg_list.ave(), xg_list.err(), FA_d.ave(), FA_d.err()}, "../data/ph_emission/"+ph_type_mes+"/FF_d/"+data_2pts.Tag[iens]+"/fit_results/FA.dat", "", "#xg Dxg  FA DFA");
 
 
   }

@@ -208,10 +208,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
       Zv_WI_err = 0.000007;
 
       //
-      Za_WI_strange= 0.742837; //0.74298;
-      Za_WI_strange_err = 0.00023; //0.00018;
-      Zv_WI_strange = 0.706377; // 0.70619;
-      Zv_WI_strange_err = 1.7e-5; //3e-5;
+      Za_WI_strange= 0.742844; //0.74298;
+      Za_WI_strange_err = 0.00026; //0.00018;
+      Zv_WI_strange = 0.706382; // 0.70619;
+      Zv_WI_strange_err = 2.4e-5; //3e-5;
 
     }
     else if (Tag == "cB211b.072.96") {
@@ -221,10 +221,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
       Zv_WI_err = 0.000005;
 
       //
-      Za_WI_strange= 0.742741; // 0.742803;
-      Za_WI_strange_err = 0.00019; // 0.00022 ;
-      Zv_WI_strange = 0.706401; // 0.706211;
-      Zv_WI_strange_err = 1.6e-5; // 3e-5;
+      Za_WI_strange= 0.742669; // 0.742803;
+      Za_WI_strange_err = 0.00015; // 0.00022 ;
+      Zv_WI_strange = 0.706406; // 0.706211;
+      Zv_WI_strange_err = 1.7e-5; // 3e-5;
 
     }
     Zv=0.7131;
@@ -250,11 +250,11 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_WI_err = 0.000005;
 
     //
-    Za_WI_strange= 0.758409; // 0.7584361736;
+    Za_WI_strange= 0.758355; // 0.7584361736;
     Za_WI_strange_err = 0.00016; //0.00020;
 
     Zv_WI_strange = 0.725404; // 0.725291;
-    Zv_WI_strange_err = 1.2e-5; // 2.5e-05;
+    Zv_WI_strange_err = 1.9e-5; // 2.5e-05;
     
     ms_L= 0.01600; ms_M= 0.01800;
     mc_L=0.17500; mc_M=0.19500; mc_H=0.21500;
@@ -277,10 +277,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_err = 0.000005;
 
     //
-    Za_WI_strange= 0.773945; // 0.77395;
-    Za_WI_strange_err = 0.00010; // 0.00011;
+    Za_WI_strange= 0.773944; // 0.77395;
+    Za_WI_strange_err = 0.00014; // 0.00011;
     
-    Zv_WI_strange = 0.744104; // 0.744037;
+    Zv_WI_strange = 0.744106; // 0.744037;
     Zv_WI_strange_err = 1.2e-5; // 2e-05;
 
       

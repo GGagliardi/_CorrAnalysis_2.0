@@ -19,6 +19,7 @@ using namespace std;
 
 
 double kernel_K(double t,double MV);
+double kernel_K_old(double t, double MV);
 double der_kernel_K_W_win(double t, double MV);
 double der_kernel_K_SD_win(double t, double MV);
 double der_kernel_K(double t, double MV);

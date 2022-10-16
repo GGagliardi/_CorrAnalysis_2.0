@@ -3,6 +3,7 @@
 
 
 #include "numerics.h"
+#include "stat.h"
 
 using namespace std;
 
@@ -25,6 +26,13 @@ public:
     for(auto &c :chi2) ch2+=c/N;
     return ch2;
   }
+
+  double get_ch2_err() {
+    distr_t ch2_distr;
+    for(int i=0;i<(signed)chi2.size();i++) ch2_distr.distr.push_back( chi2[i]);
+    return ch2_distr.err();
+
+  }
   Vfloat chi2;
   Vfloat EDM;
   Vfloat N_it;
@@ -43,9 +51,9 @@ class bootstrap_fit : public ROOT::Minuit2::FCNBase  {
   
 public:
   bootstrap_fit():  theErrorDef(1.0), NumberOfMeasurements(0), warm_up(0) {
-    this->PATH="chi2.out"; this->verbose=0;
+    this->PATH="chi2.out"; this->verbose=0; this->Use_Cov_Matrix=false;
   }
-  bootstrap_fit(int nb) :  Input_pars(nb), theErrorDef(1.0), NumberOfMeasurements(0), nboots(nb), warm_up(0) { this->PATH="chi2.out"; this->verbose=0;}
+  bootstrap_fit(int nb) :  Input_pars(nb), theErrorDef(1.0), NumberOfMeasurements(0), nboots(nb), warm_up(0) { this->PATH="chi2.out"; this->verbose=0; this->Use_Cov_Matrix=false;}
  
   virtual ~bootstrap_fit() {}
   function<double(const T1& p, const T2 &ip)> ansatz;
@@ -90,6 +98,11 @@ public:
   void set_warmup() {warm_up=true;};
   void set_warmup_lev(int ilev) {if(ilev <0) crash("cannot set warm up lev to negative number");warm_up=ilev;}
   void Set_print_path(string A) { this->PATH = A;}
+  void Add_covariance_matrix(Eigen::MatrixXd M) {
+    this->Use_Cov_Matrix=true;
+    if( M.rows() != NumberOfMeasurements) crash("Size of covariant matrix and number of measurements do not match");
+    this->Cov_matrix_inv= M.inverse();
+  }
 
 
   
@@ -111,6 +124,8 @@ public:
   string TAG;
   string PATH;
   int warm_up;
+  bool Use_Cov_Matrix;
+  Eigen::MatrixXd Cov_matrix_inv;
  
   
 };
@@ -126,19 +141,38 @@ double bootstrap_fit<T1, T2>::operator()(const Vfloat& par) const {
       PrintChi<<"#############################################"<<endl;
       PrintChi<<this->TAG<<endl;
     }
-    while(pos<NumberOfMeasurements)  {
+
+
+    if(Use_Cov_Matrix) {
+      for(int i=0;i<NumberOfMeasurements;i++) {
+	T1 pp(par);
+	double ansatz_i= this->ansatz(pp, Input_pars[*ib][i]);
+	double measurement_i = this->measurement(pp, Input_pars[*ib][i]);
+	double res_i = 0;
+	for(int j=0;j<NumberOfMeasurements;j++) {
+	  double ansatz_j = this->ansatz(pp, Input_pars[*ib][j]);
+	  double measurement_j = this->measurement(pp, Input_pars[*ib][j]);
+	  double res= (ansatz_i -measurement_i)*Cov_matrix_inv(i,j)*(ansatz_j-measurement_j);
+	  chi2+=res;
+	  res_i+=res;
+	}
+	if(PRINT) PrintChi<<i<<setw(20)<<ansatz_i<<setw(20)<<measurement_i<<setw(20)<<res_i<<endl;
+      }
+    }
+    
+    else {
+      while(pos<NumberOfMeasurements)  {
       T1 pp(par);
       // for(unsigned int pi=0;pi<par.size();pi++) if(isnan(par[pi])) crash("par nr: "+to_string(pi)+" is nan, bootstrap: "+to_string(*ib));
       double ansatz = this->ansatz(pp, Input_pars[*ib][pos]);
       double measurement = this->measurement(pp, Input_pars[*ib][pos]);
       double error = this->error(pp, Input_pars[*ib][pos]);
-    
-     
-      
+          
       double res = pow( (ansatz-measurement)/error,2);
       if(PRINT) PrintChi<<pos<<setw(20)<<ansatz<<setw(20)<<measurement<<setw(20)<<error<<setw(20)<<res<<endl;
       chi2+=res;
       pos++;
+      }
     }
 
     if(PRINT) PrintChi<<"chi2 w.o. priors: "<<chi2<<endl;

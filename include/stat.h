@@ -311,7 +311,7 @@ class Bootstrap {
 } ;
 
 
-
+distr_t Get_id_jack_distr(int N);
 
 
 

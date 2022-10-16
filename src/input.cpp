@@ -44,6 +44,14 @@ void data_t::Read() {
    
     if(!sort_Custom) sort(Confs.begin(), Confs.end());
     else sort(Confs.begin(), Confs.end(), CustomSorting);
+
+    //test
+    
+    for(int ht=0;ht<(signed)Confs.size();ht++) cout<<Confs[ht]<<endl;
+    //
+    cout<<"###########"<<endl;
+    //
+    
     int N_rows_old=0;
     int N_rows=0;
     int it2=0;
