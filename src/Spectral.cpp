@@ -8,9 +8,11 @@ bool FIND_OPTIMAL_LAMBDA= true;
 string COV_MATRIX_MODE = "";
 const int Nmoms=0;
 const int alpha=0;
-const double Beta= 1.00; //1.99;
+const double Beta= 2.99; //1.99;
 const bool mult_estimated_from_norm0=false;
-const bool print_reco_in_stability_analysis=true;
+const bool print_reco_in_stability_analysis=false;
+const bool Integrate_up_to_max_energy=true;
+const double Emax_int=4.0;
 
 
 using namespace std;
@@ -39,21 +41,16 @@ PrecFloat BaseFunc(const PrecFloat& E, int t, int T) { return exp(-E*t) + exp( -
 
 
 
-
-//PrecFloat F_cauchy(const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int t) {
-
-//  return ;
-
-//}
-
 PrecFloat aE0(const PrecFloat &E0,const PrecFloat &t, int n) {
   if(n<0) crash("In AE0 n<0");
+  if(n==0) {
+    if(!Integrate_up_to_max_energy)  return exp(-E0*t)/t;
+    else return exp(-E0*t)/t - exp(-PrecFloat(Emax_int)*t)/t;
+  }
   
-  if(n==0) return exp(-E0*t)/t;
   else return pow(t,PrecFloat(-(n+1)))*( gamma(PrecFloat(n+1)) -PrecFloat(n)*gamma(PrecFloat(n)) + gamma_inc(PrecFloat(1+n), E0*t));
 
 
-  // if(n<0) crash("In AE0 n<0"); if(n==0) { return exp(-E0*t)/t;} else return pow(E0, PrecFloat(n))*exp(-E0*t)/t + PrecFloat(n)*aE0(E0,t,n-1)/t;
 }
 
 void Get_Atr(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int tmax)  {
@@ -110,8 +107,8 @@ void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFlo
       return exp(PrecFloat(Beta)*x)*pow(x,PrecFloat(alpha))*f(x,m,s,E0, jack_id)*(exp(-x*t) + exp(-x*(T-t))) ;
     };
 
-
-    ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
+    if(Integrate_up_to_max_energy) ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int);
+    else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
     }
   
 
@@ -133,9 +130,8 @@ void Get_ft_std(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const Pre
       return f(x,m,s,E0, jack_id)*(exp(-x*t) + exp(-x*(T-t))) ;
     };
 
-
-    
-    ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
+    if(Integrate_up_to_max_energy) ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int);
+    else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
     }
   
 
@@ -163,8 +159,9 @@ PrecFloat Get_norm_constraint(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jac
     {
       return f(x, m, s, E0, jack_id) ;
     };
-  
-  return  integrateUpToInfinite(f1, E0.get());
+
+  if(Integrate_up_to_max_energy) return integrateUpToXmax(f1, E0.get(), Emax_int);
+  else return  integrateUpToInfinite(f1, E0.get());
   
 }
 
@@ -178,7 +175,8 @@ PrecFloat Get_M2(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id,  const 
       return exp(PrecFloat(Beta)*x)*pow(x,PrecFloat(alpha))*pow(f(x, m, s, E0, jack_id),2);
     };
 
-  return  integrateUpToInfinite(f2, E0.get());
+  if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, E0.get(), Emax_int);
+  else return  integrateUpToInfinite(f2, E0.get());
 
 }
 
@@ -191,6 +189,7 @@ PrecFloat Get_M2_std_norm(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id
       return pow(f(x, m, s, E0, jack_id),2);
     };
 
+  if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, E0.get(), Emax_int);
   return  integrateUpToInfinite(f2, E0.get());
 
 }
@@ -209,8 +208,9 @@ void Get_M_N(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id,  const func
       return f(x, m, s, E0, jack_id)*pow(x,PrecFloat(n)) ;
     };
 
-     M_n(n) = integrateUpToInfinite(fn,E0.get());   
-
+     if(Integrate_up_to_max_energy) M_n(n) = integrateUpToXmax(fn, E0.get(), Emax_int);
+     else M_n(n) = integrateUpToInfinite(fn,E0.get());   
+     
   }
 
   return;
@@ -1149,6 +1149,8 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
 
   if(MODE != "TANT" && MODE != "SANF") crash("MODE: "+MODE+" not recognized");
+
+  if(!Integrate_up_to_max_energy && Beta >= 2.0) crash("Cannot use Beta >=2.0 without a finite Emax");
 
   int Njacks= corr.distr_list[0].distr.size();
 

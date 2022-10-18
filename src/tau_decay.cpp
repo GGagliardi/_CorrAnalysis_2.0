@@ -41,6 +41,7 @@ VVfloat covariance_fake;
 int Num_LUSCH=17;
 int Nres= 15;
 int pts_spline=200;
+bool COMPUTE_SPEC_DENS_FREE=false;
 using namespace std;
 
 
@@ -61,12 +62,28 @@ void get_sigma_list() {
 
 }
 
+void Get_spec_dens_free() {
+
+  Vfloat ams({0.00072, 0.00060, 0.00054});
+
+  for( auto &am: ams)  {
+    Compute_free_spectral_density(3, am, 1, 0.01, "tau_decay");
+    Compute_free_spectral_density(3, am, -1, 0.01, "tau_decay");
+    cout<<"am: "<<am<<" computed!"<<endl;
+  }
+  
+  exit(-1);
+  return;
+}
+
 
 void Compute_tau_decay_width() {
 
   PrecFloat::setDefaultPrecision(prec);
 
-  //generate Luscher's energy level 
+  //generate Luscher's energy level
+
+  if(COMPUTE_SPEC_DENS_FREE) Get_spec_dens_free();
 
   get_sigma_list();
 
@@ -331,6 +348,29 @@ void Compute_tau_decay_width() {
 
     //print number of gauge configurations
     cout<<"Nconfs : "<<Vk_data_OS.Nconfs[iens]<<endl;
+
+    LatticeInfo L_info;
+    L_info.LatInfo_new_ens(Vk_data_tm.Tag[iens]);
+
+
+
+    //Read perturbative data for OS and tm
+    Vfloat Spec_tm = Read_From_File("../data/tau_decay/spec_dens_free/tm/am_"+to_string_with_precision(L_info.ml,5), 2, 4);
+    Vfloat Spec_OS = Read_From_File("../data/tau_decay/spec_dens_free/OS/am_"+to_string_with_precision(L_info.ml,5), 2, 4);
+    Vfloat Ergs_pert = Read_From_File("../data/tau_decay/spec_dens_free/tm/am_"+to_string_with_precision(L_info.ml,5), 1, 4);
+
+    cout<<"perturbative data for Ensemble: "<<Vk_data_tm.Tag[iens]<<" READ! "<<endl;
+    
+
+    //interpolate perturbative data
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_tm(Spec_tm.begin(), Spec_tm.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_OS(Spec_OS.begin(), Spec_OS.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+
+    cout<<"Cubic spline for perturbative data for Ensemble: "<<Vk_data_tm.Tag[iens]<<" produced! "<<endl;
+
+    auto F_free_tm = [&F_boost_tm](double E) { return F_boost_tm(E);};
+    auto F_free_OS = [&F_boost_OS](double E) { return F_boost_OS(E);};
+    
      
     CorrAnalysis Corr(UseJack, Njacks,Nboots);
     CorrAnalysis Corr_block_1(UseJack, Vk_data_tm.Nconfs[iens],Nboots);
@@ -355,8 +395,7 @@ void Compute_tau_decay_width() {
     distr_t resc_GeV = C_V*GAMMA_FACT/(a_distr*a_distr*a_distr);
     
     VVfloat Ergs, Amplitudes;
-    LatticeInfo L_info;
-    L_info.LatInfo_new_ens(Vk_data_tm.Tag[iens]);
+    
     Vfloat gppis({5.95*(Mpi/(0.770*a_distr.ave())), 0.8, 1.2});
     Vfloat Mrhos({0.770*a_distr.ave(), 0.7*a_distr.ave(), 0.85*a_distr.ave()});
     Vfloat Eduals({0.2*a_distr.ave(),0.6*a_distr.ave()});
@@ -401,7 +440,7 @@ void Compute_tau_decay_width() {
 		    };
 
     auto f_syst_A = [](const function<double(double)> &F) { return 0.0;};
-    auto f_syst_V = [&Ergs, &Amplitudes, &mrhs,&Eduals, &GS_V, &a_distr, &Mpi, &resc_GeV, &LL](const function<double(double)> &F) ->double {
+    auto f_syst_V_tm = [&Ergs, &Amplitudes, &mrhs,&Eduals, &GS_V, &a_distr, &Mpi, &resc_GeV, &LL, &F_free_tm](const function<double(double)> &F) ->double {
 
 
 		      int Nergs= Ergs.size();
@@ -416,21 +455,114 @@ void Compute_tau_decay_width() {
 			    double Mrho= mrhs[e];
 			    double Edual= Eduals[ed];
 			    auto FS= [&En, &Amplitude, &Mrho, &Edual, &F, &GS_V](double E) { return F(E)*GS_V(E, En, Amplitude, Mrho, Edual) ;};
+			    auto FS_asympt = [ &En, &Amplitude, &Mrho, &Edual, &F, &GS_V, &F_free_tm, &resc_GeV](double E) {
+					       double syst = F(E)*GS_V(E, En, Amplitude, Mrho, Edual);
+					       if( E > 1) syst = F(E)*resc_GeV.ave()*F_free_tm(E);
+					       return syst;
+					     };
 
 			    //compute model estimate of vector contribution to R_tau
 			    gsl_function_pp<decltype(FS)> SYST(FS);
 			    gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
 			    gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
 			    double val_mod,err_mod;
-			    gsl_integration_qags(G_SYST, E0_l*a_distr.ave(), M_PI,  0.0, 1e-3, 1000, w_SYST, &val_mod, &err_mod);
+			    gsl_integration_qags(G_SYST, E0_l*a_distr.ave(), 4.0,  0.0, 1e-3, 1000, w_SYST, &val_mod, &err_mod);
 			    if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
 			    gsl_integration_workspace_free(w_SYST);
 			    systs.push_back(fabs(val_mod));
-			    gsl_integration_workspace * w_SYST_red= gsl_integration_workspace_alloc(1000);
-			    gsl_integration_qags(G_SYST, E0_l*a_distr.ave(), 1.0,  0.0, 1e-3, 1000, w_SYST_red, &val_mod, &err_mod);
+			    //gsl_integration_workspace * w_SYST_red= gsl_integration_workspace_alloc(1000);
+			    //gsl_integration_qags(G_SYST, E0_l*a_distr.ave(), 1.0,  0.0, 1e-3, 1000, w_SYST_red, &val_mod, &err_mod);
+			    //if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+			    //systs.push_back( fabs(val_mod));
+			    //gsl_integration_workspace_free(w_SYST_red);
+
+			    gsl_function_pp<decltype(FS_asympt)> SYST_asympt(FS_asympt);
+			    gsl_integration_workspace * w_SYST_asympt = gsl_integration_workspace_alloc (1000);
+			    gsl_function *G_SYST_asympt = static_cast<gsl_function*>(&SYST_asympt);
+			    gsl_integration_qags(G_SYST_asympt, E0_l*a_distr.ave(), 4.0,  0.0, 1e-3, 1000, w_SYST_asympt, &val_mod, &err_mod);
 			    if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+			    gsl_integration_workspace_free(w_SYST_asympt);
 			    systs.push_back( fabs(val_mod));
-			    gsl_integration_workspace_free(w_SYST_red);
+					   
+			    
+					
+			    
+			  }
+
+		      //evaluate GS in infinite volume limit
+		      auto FS_infL = [&F, &Mpi, &a_distr, &resc_GeV, &LL](double E) {
+				       double sth= (0.770+0.30)*a_distr.ave();
+				       return F(E)*resc_GeV.ave()*(
+						    (1.0/(24.0*pow(M_PI,2)))*pow(E,2)*pow(1.0- pow(2.0*Mpi/E,2), 3.0/2.0)*pow(LL.F_pi_GS_mod(E, 0.770*a_distr.ave(), 5.95,Mpi,0),2)
+						    + (E> sth)?(1.4*(1.0/(2*M_PI*M_PI))*(0.5*pow(E-sth,2) + 0.5*pow(sth,2)+ sth*(E-sth))):0.0  );};
+		      gsl_function_pp<decltype(FS_infL)> SYST_infL(FS_infL);
+		      gsl_integration_workspace * w_SYST_infL = gsl_integration_workspace_alloc (1000);
+		      gsl_function *G_SYST_infL = static_cast<gsl_function*>(&SYST_infL);
+		      double val_mod_infL,err_mod_infL;
+		      gsl_integration_qags(G_SYST_infL, E0_l*a_distr.ave(), 4.0, 0.0, 1e-3, 1000, w_SYST_infL, &val_mod_infL, &err_mod_infL);
+		      gsl_integration_workspace_free(w_SYST_infL);
+		      systs.push_back(fabs(val_mod_infL));
+
+			
+		      double syst_ave=0.0;
+		      double syst_dev=0.0;
+		      for (int n=0;n<(signed)systs.size();n++) { syst_ave += systs[n]/systs.size(); syst_dev += systs[n]*systs[n];}
+
+		      printV(systs, "SYST", 0);
+		      syst_dev =  sqrt( (1.0/(systs.size()-1.0))*(syst_dev - systs.size()*syst_ave*syst_ave) );
+		      double max = *max_element(systs.begin(), systs.end());
+		      cout<<"systematic computed!!: average: "<<syst_ave<<" max: "<<max<<endl;
+		      return max;
+		   
+		    };
+
+
+
+
+    auto f_syst_V_OS = [&Ergs, &Amplitudes, &mrhs,&Eduals, &GS_V, &a_distr, &Mpi, &resc_GeV, &LL, &F_free_OS](const function<double(double)> &F) ->double {
+
+
+		      int Nergs= Ergs.size();
+		      int Neduals= Eduals.size();
+		      Vfloat systs;
+		     		      
+		      for(int e=0; e<Nergs;e++)
+			  for(int ed=0; ed<Neduals;ed++) {
+
+			    Vfloat En= Ergs[e];
+			    Vfloat Amplitude= Amplitudes[e];
+			    double Mrho= mrhs[e];
+			    double Edual= Eduals[ed];
+			    auto FS= [&En, &Amplitude, &Mrho, &Edual, &F, &GS_V](double E) { return F(E)*GS_V(E, En, Amplitude, Mrho, Edual) ;};
+			    auto FS_asympt = [ &En, &Amplitude, &Mrho, &Edual, &F, &GS_V, &F_free_OS, &resc_GeV](double E) {
+					       double syst = F(E)*GS_V(E, En, Amplitude, Mrho, Edual);
+					       if( E > 1) syst = F(E)*resc_GeV.ave()*F_free_OS(E);
+					       return syst;
+					     };
+	        
+
+			    //compute model estimate of vector contribution to R_tau
+			    gsl_function_pp<decltype(FS)> SYST(FS);
+			    gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+			    gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+			    double val_mod,err_mod;
+			    gsl_integration_qags(G_SYST, E0_l*a_distr.ave(), 4.0,  0.0, 1e-3, 1000, w_SYST, &val_mod, &err_mod);
+			    if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+			    gsl_integration_workspace_free(w_SYST);
+			    systs.push_back(fabs(val_mod));
+			    //gsl_integration_workspace * w_SYST_red= gsl_integration_workspace_alloc(1000);
+			    //gsl_integration_qags(G_SYST, E0_l*a_distr.ave(), 1.0,  0.0, 1e-3, 1000, w_SYST_red, &val_mod, &err_mod);
+			    //if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+			    //systs.push_back( fabs(val_mod));
+			    //gsl_integration_workspace_free(w_SYST_red);
+
+			    gsl_function_pp<decltype(FS_asympt)> SYST_asympt(FS_asympt);
+			    gsl_integration_workspace * w_SYST_asympt = gsl_integration_workspace_alloc (1000);
+			    gsl_function *G_SYST_asympt = static_cast<gsl_function*>(&SYST_asympt);
+			    gsl_integration_qags(G_SYST_asympt, E0_l*a_distr.ave(), 4.0,  0.0, 1e-3, 1000, w_SYST_asympt, &val_mod, &err_mod);
+			    if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+			    gsl_integration_workspace_free(w_SYST_asympt);
+			    systs.push_back( fabs(val_mod));
 			   
 			    
 					
@@ -447,7 +579,7 @@ void Compute_tau_decay_width() {
 		      gsl_integration_workspace * w_SYST_infL = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G_SYST_infL = static_cast<gsl_function*>(&SYST_infL);
 		      double val_mod_infL,err_mod_infL;
-		      gsl_integration_qags(G_SYST_infL, E0_l*a_distr.ave(), M_PI, 0.0, 1e-3, 1000, w_SYST_infL, &val_mod_infL, &err_mod_infL);
+		      gsl_integration_qags(G_SYST_infL, E0_l*a_distr.ave(), 4.0, 0.0, 1e-3, 1000, w_SYST_infL, &val_mod_infL, &err_mod_infL);
 		      gsl_integration_workspace_free(w_SYST_infL);
 		      systs.push_back(fabs(val_mod_infL));
 
@@ -692,7 +824,7 @@ void Compute_tau_decay_width() {
       double syst_A0_OS, syst_Aii_OS, syst_Vii_OS;
       double mult=1e4;
       if(MODE=="SANF") mult= 1e3;
-      const auto model_estimate_V = [&K1, &GS_V, &s, &a_distr, &Ergs, &Amplitudes, &a_distr](double E) -> double {  return K1(E,0.0,s,E0_l*a_distr.ave(), -1).get()*GS_V(E, Ergs[0], Amplitudes[0], 0.770*a_distr.ave(), 0.3*a_distr.ave());};
+      const auto model_estimate_V = [&K1, &GS_V, &s, &a_distr, &Ergs, &Amplitudes](double E) -> double {  return K1(E,0.0,s,E0_l*a_distr.ave(), -1).get()*GS_V(E, Ergs[0], Amplitudes[0], 0.770*a_distr.ave(), 0.3*a_distr.ave());};
       const auto model_V =  [&GS_V, &Ergs, &Amplitudes, &a_distr](double E) -> double {  return GS_V(E, Ergs[0], Amplitudes[0], 0.7*a_distr.ave(), 0.3*a_distr.ave());};
       //compute model estimate of vector contribution to R_tau
       gsl_function_pp<decltype(model_estimate_V)> MOD(model_estimate_V);
@@ -704,9 +836,9 @@ void Compute_tau_decay_width() {
       cout<<"Model estimate R_t(V): "<<val_mod<<" +- "<<err_mod<<endl;
       
 
-      Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, 1e4, lVii_tm, MODE, "tm", "Vii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, f_syst_V,1, model_V );
+      Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, 1e4, lVii_tm, MODE, "tm", "Vii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, f_syst_V_tm,1, model_V );
       cout<<"BrVii_tm["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lVii_tm<<" : "<<Br_sigma_Vii_tm.ave()<<" +- "<<Br_sigma_Vii_tm.err()<<endl;
-      Br_sigma_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_OS, syst_Vii_OS, 1e4, lVii_OS, MODE, "OS", "Vii_light_"+Vk_data_tm.Tag[iens],-1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Vk_OS, f_syst_V,1, model_V );
+      Br_sigma_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_OS, syst_Vii_OS, 1e4, lVii_OS, MODE, "OS", "Vii_light_"+Vk_data_tm.Tag[iens],-1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Vk_OS, f_syst_V_OS,1, model_V );
       cout<<"BrVii_OS["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lVii_OS<<" : "<<Br_sigma_Vii_OS.ave()<<" +- "<<Br_sigma_Vii_OS.err()<<endl;
       Br_sigma_A0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_0, prec, SM_TYPE_0,K0, -1*A0_tm, syst_A0_tm, 1e4, lA0_tm, MODE, "tm", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Zv*Zv, "tau_decay", cov_A0_tm, fake_func,0, fake_func_d );
       cout<<"BrA0_tm["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lA0_tm<<" : "<<Br_sigma_A0_tm.ave()<<" +- "<<Br_sigma_A0_tm.err()<<endl; 

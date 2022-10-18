@@ -17,6 +17,7 @@
 
 using namespace std;
 
+void Get_spec_dens_free();
 void Compute_tau_decay_width();
 void get_sigma_list();
 

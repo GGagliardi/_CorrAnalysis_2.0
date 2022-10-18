@@ -1104,13 +1104,13 @@ void Gm2() {
 
   //#####################################
   //for test of mass dependence on V_light
-  V_light_1_m_small.Read("../gm2_new_run_correlated/0.0006675", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
-  V_light_1_m_big.Read("../gm2_new_run_correlated/0.00072", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
-  P5P5_m_small.Read("../gm2_new_run_correlated/0.0006675", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
-  P5P5_m_big.Read("../gm2_new_run_correlated/0.00072", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
+  V_light_1_m_small.Read("../gm2_new_run_correlated/physical", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
+  V_light_1_m_big.Read("../gm2_new_run_correlated/simulated", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
+  P5P5_m_small.Read("../gm2_new_run_correlated/physical", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
+  P5P5_m_big.Read("../gm2_new_run_correlated/simulated", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
   
-  V_light_OS_1_m_small.Read("../gm2_new_run_correlated/0.0006675", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
-  V_light_OS_1_m_big.Read("../gm2_new_run_correlated/0.00072", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
+  V_light_OS_1_m_small.Read("../gm2_new_run_correlated/physical", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
+  V_light_OS_1_m_big.Read("../gm2_new_run_correlated/simulated", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
   correlated_V_tm_bubble.Read("../gm2_sea_effects/conn", "mes_contr_2pts_ll_1", "V1V1", Sort_light_confs);
   correlated_V_OS_bubble.Read("../gm2_sea_effects/conn", "mes_contr_2pts_ll_2", "V1V1", Sort_light_confs);
   correlated_P5P5_tm_bubble.Read("../gm2_sea_effects/conn", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
@@ -1314,29 +1314,43 @@ void Gm2() {
       else if(pt2_pion.Tag[iens].substr(1,1)=="D") {Corr.Tmin=41; Corr.Tmax=80;}
       else crash("In scale setting analysis cannot find Tmin,Tmax for ensemble: "+pt2_pion.Tag[iens]);
       distr_t_list pion_corr = Corr.corr_t(pt2_pion.col(0)[iens], "");
-      if(pt2_pion.Tag[iens].substr(1,12)=="B211b.072.64") {
+      if(pt2_pion.Tag[iens]=="cB211b.072.64" || pt2_pion.Tag[iens]=="cD211a.054.96") {
 	auto LOG = [](double x) { return log(x);};
 	distr_t_list delta_corr_sea_tm, delta_corr_sea_OS;
 	distr_t_list delta_corr_sea_strange_tm, delta_corr_sea_strange_OS;
+
+
+	//############  FIND SEA AND VALENCE ENSEMBLE ID #######################
 	int id_ens=-1;
 	for(int i_ens_chir=0; i_ens_chir< (signed)chiral_condensate.Tag.size();i_ens_chir++) {
 	if( chiral_condensate.Tag[i_ens_chir] == pt2_pion.Tag[iens]) id_ens = i_ens_chir;
 	}
 	if(id_ens==-1) crash("In evaluating sea quark mistuning in scale setting: cannot find ensemble: "+pt2_pion.Tag[iens]);
+	int id_ens_val=-1;
+	for(int i_ens_val=0; i_ens_val<(signed)P5P5_m_big.Tag.size(); i_ens_val++) {
+	  if( P5P5_m_big.Tag[i_ens_val] == pt2_pion.Tag[iens]) id_ens_val= i_ens_val;
+	}
+	if(id_ens_val==-1) crash("In evaluating valence quark mistuning in scale setting: cannot find ensemble: "+pt2_pion.Tag[iens]);
+	//######################################################################
+	
+
+	//DEFINE DM ########################
+	double dm=0, amphys=0;
+	if( pt2_pion.Tag[iens] == "cB211b.072.64") { dm= (0.00072-0.0006675); amphys=0.0006675;}
+	else if( pt2_pion.Tag[iens] == "cD211a.054.96") {dm = (0.00054 -0.0004964); amphys= 0.0004964;}
+	else crash("DM shift in valence quark mistuning (scale setting) cannot be found ");
+	//##################################
 
         //sea effects
 	VVfloat chiral_condensate_correlated_to_P5P5_tm(Corr.Nt);
 	VVfloat chiral_condensate_correlated_to_P5P5_OS(Corr.Nt);
-	VVfloat chiral_condensate_correlated_to_P5P5_strange_tm(Corr.Nt);
-	VVfloat chiral_condensate_correlated_to_P5P5_strange_OS(Corr.Nt);
-     
+	//sanity check
 	int Nconfs_tm_0 = correlated_P5P5_tm_bubble.col(0)[id_ens][0].size();
 	int Nconfs_OS_0 = correlated_P5P5_OS_bubble.col(0)[id_ens][0].size();
-	int Nconfs_tm_strange_0 = correlated_P5P5_strange_tm_bubble.col(0)[0][0].size();
-	int Nconfs_OS_strange_0 = correlated_P5P5_strange_OS_bubble.col(0)[0][0].size();
 	int Nconfs_chir_0 = chiral_condensate.col(1)[id_ens][0].size();
 	if((Nconfs_tm_0 != Nconfs_OS_0) || (Nconfs_tm_0 != Nconfs_chir_0)) crash("In evaluating sea quark mistuning: number of confs between connected(tm,OS) and chiral condensate do not match");
-	if((Nconfs_tm_strange_0 != Nconfs_OS_strange_0) || (Nconfs_tm_strange_0 != Nconfs_chir_0)) crash("In evaluating sea quark mistuning (strange): number of confs between connected(tm,OS) and chiral condensate do not match");
+
+	
 	Vfloat chiral_condensate_averaged(Nconfs_chir_0,0.0);
 	for(int t=0;t<Corr.Nt;t++) {
 	  int Nconfs_chir = chiral_condensate.col(1)[id_ens][t].size();
@@ -1345,40 +1359,30 @@ void Gm2() {
 	}
 
 	Vfloat chiral_condensate_averaged_light;
-	Vfloat chiral_condensate_averaged_strange;
 	for(auto &chir: chiral_condensate_averaged) {
-	  chiral_condensate_averaged_light.push_back( chir*(0.00072-0.0006675));
-	  chiral_condensate_averaged_strange.push_back( chir*(0.00072-0.0014));
+	  chiral_condensate_averaged_light.push_back( chir*dm);
 	}
 	
 	auto F_disco_jack= [&](const Vfloat& par) { if((signed)par.size() != 3) crash("Lambda function F_disco_jack expects par[3], but par["+to_string((signed)par.size())+"] provided"); return par[0] -par[1]*par[2];};
       
       for(int t=0; t < Corr.Nt;t++) {
 
+	//sanity chekcs
 	int Nconfs_tm = correlated_P5P5_tm_bubble.col(0)[id_ens][t].size();
 	int Nconfs_OS = correlated_P5P5_OS_bubble.col(0)[id_ens][t].size();
-	int Nconfs_tm_strange = correlated_P5P5_strange_tm_bubble.col(0)[0][t].size();
-	int Nconfs_OS_strange = correlated_P5P5_strange_OS_bubble.col(0)[0][t].size();
-
 	if( (Nconfs_tm != Nconfs_tm_0)) crash("In evaluating sea quark mistuning: Nconfs tm P5P5 light not constant over time");
 	if( (Nconfs_OS != Nconfs_OS_0)) crash("In evaluating sea quark mistuning: Nconfs OS P5P5 light not constant over time");
-	if( (Nconfs_tm_strange != Nconfs_tm_strange_0)) crash("In evaluating sea quark mistuning: Nconfs tm P5P5 strange not constant over time");
-	if( (Nconfs_OS_strange != Nconfs_OS_strange_0)) crash("In evaluating sea quark mistuning: Nconfs OS P5P5 strange not constant over time");
 		
 	for(int iconf=0; iconf<Nconfs_tm_0;iconf++) {
-	  chiral_condensate_correlated_to_P5P5_tm[t].push_back( (0.00072-0.0006675)*correlated_P5P5_tm_bubble.col(0)[id_ens][t][iconf]*chiral_condensate_averaged[iconf]);
-	  chiral_condensate_correlated_to_P5P5_OS[t].push_back( (0.00072-0.0006675)*correlated_P5P5_OS_bubble.col(0)[id_ens][t][iconf]*chiral_condensate_averaged[iconf]);
-	  chiral_condensate_correlated_to_P5P5_strange_tm[t].push_back( (0.00072-0.0014)*correlated_P5P5_strange_tm_bubble.col(0)[0][t][iconf]*chiral_condensate_averaged[iconf]);
-	  chiral_condensate_correlated_to_P5P5_strange_OS[t].push_back( (0.00072-0.0014)*correlated_P5P5_strange_OS_bubble.col(0)[0][t][iconf]*chiral_condensate_averaged[iconf]);
+	  chiral_condensate_correlated_to_P5P5_tm[t].push_back( dm*correlated_P5P5_tm_bubble.col(0)[id_ens][t][iconf]*chiral_condensate_averaged[iconf]);
+	  chiral_condensate_correlated_to_P5P5_OS[t].push_back( dm*correlated_P5P5_OS_bubble.col(0)[id_ens][t][iconf]*chiral_condensate_averaged[iconf]);
 	}
 
 	//jackknife
 	Jackknife J_tm(10000,Njacks);
 	delta_corr_sea_tm.distr_list.push_back(J_tm.DoJack(F_disco_jack, 3, chiral_condensate_correlated_to_P5P5_tm[t], chiral_condensate_averaged_light, correlated_P5P5_tm_bubble.col(0)[id_ens][t]));
-	delta_corr_sea_strange_tm.distr_list.push_back(J_tm.DoJack(F_disco_jack, 3, chiral_condensate_correlated_to_P5P5_strange_tm[t], chiral_condensate_averaged_strange, correlated_P5P5_strange_tm_bubble.col(0)[0][t]));
 	Jackknife J_OS(10000,Njacks);
 	delta_corr_sea_OS.distr_list.push_back(J_OS.DoJack(F_disco_jack, 3, chiral_condensate_correlated_to_P5P5_OS[t], chiral_condensate_averaged_light, correlated_P5P5_OS_bubble.col(0)[id_ens][t]));
-	delta_corr_sea_strange_OS.distr_list.push_back(J_tm.DoJack(F_disco_jack, 3, chiral_condensate_correlated_to_P5P5_strange_OS[t], chiral_condensate_averaged_strange, correlated_P5P5_strange_OS_bubble.col(0)[0][t]));
       }
 
       
@@ -1386,23 +1390,8 @@ void Gm2() {
       //Print to File
       Print_To_File({}, {delta_corr_sea_tm.ave(), delta_corr_sea_tm.err()}, "../data/gm2/light/mass_dep/tm/delta_corr_sea_pion_"+pt2_pion.Tag[iens]+".dat", "", "");
       Print_To_File({}, {delta_corr_sea_OS.ave(), delta_corr_sea_OS.err()}, "../data/gm2/light/mass_dep/OS/delta_corr_sea_pion_"+pt2_pion.Tag[iens]+".dat", "", "");
-      Print_To_File({}, {delta_corr_sea_strange_tm.ave(), delta_corr_sea_strange_tm.err()}, "../data/gm2/strange/mass_dep/tm/delta_corr_sea_pion_"+pt2_pion.Tag[iens]+".dat", "", "");
-      Print_To_File({}, {delta_corr_sea_strange_OS.ave(), delta_corr_sea_strange_OS.err()}, "../data/gm2/strange/mass_dep/OS/delta_corr_sea_pion_"+pt2_pion.Tag[iens]+".dat", "", "");
-
-
-
-      distr_t_list P5P5_etas_eff_mass= Corr.effective_mass_t( correlated_P5P5_strange_tm_bubble.col(0)[0],"../data/gm2/strange/mass_dep/tm/eff_mass_original_"+pt2_pion.Tag[iens]+".dat");
-      distr_t_list P5P5_etas_corrected= Corr.corr_t(correlated_P5P5_strange_tm_bubble.col(0)[0],"") + delta_corr_sea_strange_tm;
-      distr_t_list P5P5_etas_eff_mass_corrected= Corr.effective_mass_t( P5P5_etas_corrected, "../data/gm2/strange/mass_dep/tm/eff_mass_corrected_"+pt2_pion.Tag[iens]+".dat");
-      distr_t_list P5P5_etas_OS_eff_mass= Corr.effective_mass_t( correlated_P5P5_strange_OS_bubble.col(0)[0],"../data/gm2/strange/mass_dep/OS/eff_mass_original_"+pt2_pion.Tag[iens]+".dat");
-      distr_t_list P5P5_etas_OS_corrected= Corr.corr_t(correlated_P5P5_strange_OS_bubble.col(0)[0],"") + delta_corr_sea_strange_OS;
-      distr_t_list P5P5_etas_OS_eff_mass_corrected= Corr.effective_mass_t( P5P5_etas_OS_corrected, "../data/gm2/strange/mass_dep/OS/eff_mass_corrected_"+pt2_pion.Tag[iens]+".dat");
-      distr_t_list correlated_etas_eff_mass_difference= P5P5_etas_eff_mass_corrected-P5P5_etas_eff_mass;
-      distr_t_list correlated_etas_OS_eff_mass_difference= P5P5_etas_OS_eff_mass_corrected-P5P5_etas_OS_eff_mass;
-      Print_To_File({}, {correlated_etas_eff_mass_difference.ave(), correlated_etas_eff_mass_difference.err()}, "../data/gm2/strange/mass_dep/tm/eff_mass_diff_"+pt2_pion.Tag[iens]+".dat", "", "");
-      Print_To_File({}, {correlated_etas_OS_eff_mass_difference.ave(), correlated_etas_OS_eff_mass_difference.err()}, "../data/gm2/strange/mass_dep/OS/eff_mass_diff_"+pt2_pion.Tag[iens]+".dat", "", "");
-
-      distr_t_list P5P5_corr_phys_point_val= Corr.corr_t(P5P5_m_small.col(0)[0], "") - Corr.corr_t(P5P5_m_big.col(0)[0], "") + pion_corr;
+     
+      distr_t_list P5P5_corr_phys_point_val= Corr.corr_t(P5P5_m_small.col(0)[id_ens_val], "") - Corr.corr_t(P5P5_m_big.col(0)[id_ens_val], "") + pion_corr;
       distr_t_list P5P5_corr_phys_point_sea= pion_corr + delta_corr_sea_tm;
       distr_t_list P5P5_corr_phys_point= P5P5_corr_phys_point_val + delta_corr_sea_tm;
 
@@ -1419,10 +1408,10 @@ void Gm2() {
 	
       distr_t_list Mpi_eff_phys_point = Corr.effective_mass_t(P5P5_corr_phys_point, "../data/gm2/scale_setting/Mp/Mpi_phys_"+pt2_pion.Tag[iens]+".dat");
       distr_t_list Mpi_eff_phys_point_val= Corr.effective_mass_t(P5P5_corr_phys_point_val,"");
-      distr_t_list Mpi_eff_phys_point_wo_bias_correction= Corr.effective_mass_t(P5P5_m_small.col(0)[0], "../data/gm2/scale_setting/Mp/Mpi_phys_w0_bias_correction_"+pt2_pion.Tag[iens]+".dat");
-      distr_t_list fpi_eff_phys_point = Corr.decay_constant_t(pow(2.0*0.0006675,2)*P5P5_corr_phys_point, "../data/gm2/scale_setting/fp/fpi_phys_"+pt2_pion.Tag[iens]+".dat");
-      distr_t_list fpi_eff_phys_point_val= Corr.decay_constant_t( pow(2.0*0.0006675,2)*P5P5_corr_phys_point_val,"");
-      cout<<"##################  AT ml=0.0006675 on cB211b.072.64 ensemble #########"<<endl;
+      distr_t_list Mpi_eff_phys_point_wo_bias_correction= Corr.effective_mass_t(P5P5_m_small.col(0)[id_ens_val], "../data/gm2/scale_setting/Mp/Mpi_phys_w0_bias_correction_"+pt2_pion.Tag[iens]+".dat");
+      distr_t_list fpi_eff_phys_point = Corr.decay_constant_t(pow(2.0*amphys,2)*P5P5_corr_phys_point, "../data/gm2/scale_setting/fp/fpi_phys_"+pt2_pion.Tag[iens]+".dat");
+      distr_t_list fpi_eff_phys_point_val= Corr.decay_constant_t( pow(2.0*amphys,2)*P5P5_corr_phys_point_val,"");
+      cout<<"##################  AT ml=ml^phys on "<<pt2_pion.Tag[iens]<<" ensemble #########"<<endl;
       distr_t Mpi_fit_phys_point= Corr.Fit_distr(Mpi_eff_phys_point);
       distr_t Mpi_fit_phys_point_val= Corr.Fit_distr(Mpi_eff_phys_point_val);
       distr_t fpi_fit_phys_point= Corr.Fit_distr(fpi_eff_phys_point);
@@ -1432,10 +1421,10 @@ void Gm2() {
       //GL and CDH corrections
       distr_t csi_L = Mpi_fit_phys_point*Mpi_fit_phys_point/(pow(4.0*M_PI,2)*fpi_fit_phys_point*fpi_fit_phys_point);
       distr_t csi_L_val= csi_fit_phys_point_val;
-      distr_t g1 = distr_t::f_of_distr(g1_l, Mpi_fit_phys_point*64);
-      distr_t g2 = distr_t::f_of_distr(g2_l, Mpi_fit_phys_point*64);
-      distr_t g1_val = distr_t::f_of_distr(g1_l, Mpi_fit_phys_point_val*64);
-      distr_t g2_val = distr_t::f_of_distr(g2_l, Mpi_fit_phys_point_val*64);
+      distr_t g1 = distr_t::f_of_distr(g1_l, Mpi_fit_phys_point*L_info.L);
+      distr_t g2 = distr_t::f_of_distr(g2_l, Mpi_fit_phys_point*L_info.L);
+      distr_t g1_val = distr_t::f_of_distr(g1_l, Mpi_fit_phys_point_val*L_info.L);
+      distr_t g2_val = distr_t::f_of_distr(g2_l, Mpi_fit_phys_point_val*L_info.L);
       double csi_true_phys= (1.0/(16.0*M_PI*M_PI))*pow(0.1350/0.1304,2);
       distr_t log_l = log(csi_true_phys) - distr_t::f_of_distr(LOG, csi_L);
       distr_t log_l_val = log(csi_true_phys) - distr_t::f_of_distr(LOG, csi_L_val);
@@ -5229,13 +5218,20 @@ void Gm2() {
     //#############################VALENCE AND SEA PION MASS MISTUNING CORRECTIONS#############################################################
      //valence mistuning effects
     distr_t_list V_light_m_small_distr, V_light_m_big_distr, V_light_OS_m_small_distr, V_light_OS_m_big_distr;
-    if(V_light_1.Tag[i_ens] == "cB211b.072.64") {
-    
+    int id_ens_val=-1;
+    if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") {
+
+      //find valence ensemble id
+      for(int i_ens_val=0; i_ens_val<(signed)V_light_1_m_small.Tag.size(); i_ens_val++) {
+	if( V_light_1_m_small.Tag[i_ens_val] == V_light_1.Tag[i_ens]) id_ens_val=i_ens_val;
+      }
+      if(id_ens_val==-1) crash("In evaluating valence quark mass correction to vector correlator, cannot find ensemble: "+V_light_1.Tag[i_ens]);
+      
       //valence
-      V_light_m_small_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_1_m_small.col(0)[0], "");
-      V_light_m_big_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_1_m_big.col(0)[0], "");
-      V_light_OS_m_small_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_OS_1_m_small.col(0)[0], "");
-      V_light_OS_m_big_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_OS_1_m_big.col(0)[0], "");
+      V_light_m_small_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_1_m_small.col(0)[id_ens_val], "");
+      V_light_m_big_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_1_m_big.col(0)[id_ens_val], "");
+      V_light_OS_m_small_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_OS_1_m_small.col(0)[id_ens_val], "");
+      V_light_OS_m_big_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_OS_1_m_big.col(0)[id_ens_val], "");
           
     }
 
@@ -5254,7 +5250,7 @@ void Gm2() {
       double correction_fact=1.0;
       if(V_light_1.Tag[i_ens] == "cB211b.072.64") correction_fact= (0.00072-0.0006675);
       else if(V_light_1.Tag[i_ens] == "cC211a.06.80") correction_fact= 0.00060*(1 - pow(0.1350/(Mpi/a_distr).ave(),2));
-      else if(V_light_1.Tag[i_ens] == "cD211a.054.96") correction_fact= 0.00054*(1 - pow(0.1350/(Mpi/a_distr).ave(),2));
+      else if(V_light_1.Tag[i_ens] == "cD211a.054.96") correction_fact= (0.00054 - 0.0004964);
       else crash("correction fact in sea quark mistuning, cannot be determined");
       
 
@@ -5441,8 +5437,8 @@ void Gm2() {
     // print summed connected correlators to file
     Print_To_File({}, {V_light_distr.ave(), V_light_distr.err(), (Za*Za*V_light_distr).ave(), (Za*Za*V_light_distr).err(),  ( (Za*Za*V_light_distr- Zv*Zv*V_light_OS_distr)/(Za*Za*V_light_distr)).ave(),  ( (Za*Za*V_light_distr- Zv*Zv*V_light_OS_distr)/(Za*Za*V_light_distr)).err(), (Za*Za*V_light_distr_tm_corr).ave(), (Za*Za*V_light_distr_tm_corr).err()}, "../data/gm2/light/tm/corr_sum_"+V_light_1.Tag[i_ens]+".dat.t", "", "#time   V(t)^tm    V(t)^tm(renormalized)    DV(t)(tm-os/tm)  V(t)^tm(VV_free corrected) ");
     Print_To_File({}, {V_light_OS_distr.ave(), V_light_OS_distr.err(), (Zv*Zv*V_light_OS_distr).ave(), (Zv*Zv*V_light_OS_distr).err(), (Zv*Zv*V_light_distr_OS_corr).ave() , (Zv*Zv*V_light_distr_OS_corr).err()}, "../data/gm2/light/OS/corr_sum_"+V_light_1.Tag[i_ens]+".dat.t", "", "#time V(t)^OS   V(t)^OS(renormalized) V(t)^OS(VV_free_corrected)");
-    //if ensemble cB64 print also m_small and m_big
-    if(V_light_1.Tag[i_ens] == "cB211b.072.64") {
+    //if ensemble cB64 or D96 print also m_small and m_big
+    if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") {
       Print_To_File({}, { (Za*Za*(V_light_m_small_distr-V_light_m_big_distr)).ave(), (Za*Za*(V_light_m_small_distr-V_light_m_big_distr)).err(),(Za*Za*V_light_m_small_distr).ave(), (Za*Za*V_light_m_small_distr).err(), (Za*Za*V_light_m_big_distr).ave(), (Za*Za*V_light_m_big_distr).err()}, "../data/gm2/light/mass_dep/tm/corrs_"+V_light_1.Tag[i_ens]+".dat.t", "", "#t diff  0.0006675 0.00072");
       Print_To_File({}, { (Zv*Zv*(V_light_OS_m_small_distr-V_light_OS_m_big_distr)).ave(), (Zv*Zv*(V_light_OS_m_small_distr-V_light_OS_m_big_distr)).err(),(Zv*Zv*V_light_OS_m_small_distr).ave(), (Zv*Zv*V_light_OS_m_small_distr).err(), (Zv*Zv*V_light_OS_m_big_distr).ave(), (Zv*Zv*V_light_OS_m_big_distr).err()}, "../data/gm2/light/mass_dep/OS/corrs_"+V_light_1.Tag[i_ens]+".dat.t", "", "#t diff  0.0006675 0.00072");
     }
@@ -5666,7 +5662,7 @@ void Gm2() {
       agm2_SD = agm2_SD + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*(V_light_distr_tm_corr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
       agm2_W_ELM = agm2_W_ELM + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_distr.distr_list[t]*Ker_ELM.distr_list[t]*( distr_t::f_of_distr(th0, t*X) - distr_t::f_of_distr(th1, t*X));
       agm2_SD_ELM = agm2_SD_ELM + 4.0*w(t,Simps_ord)*pow(alpha,2)*(Za*Za*V_light_distr_tm_corr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
-      if(V_light_1.Tag[i_ens] == "cB211b.072.64") {
+      if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") {
 	agm2_W_m_small = agm2_W_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_m_small_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
 	agm2_SD_m_small = agm2_SD_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*(V_light_m_small_distr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
 	agm2_W_m_big = agm2_W_m_big + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_m_big_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
@@ -5840,7 +5836,7 @@ void Gm2() {
       agm2_W_ELM_OS = agm2_W_ELM_OS + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*V_light_OS_distr.distr_list[t]*Ker_ELM.distr_list[t]*( distr_t::f_of_distr(th0, t*X) - distr_t::f_of_distr(th1, t*X));
       agm2_SD_ELM_OS = agm2_SD_ELM_OS + 4.0*w(t,Simps_ord)*pow(alpha,2)*(Zv*Zv*V_light_distr_OS_corr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
 
-       if(V_light_1.Tag[i_ens] == "cB211b.072.64") {
+       if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") {
 	agm2_W_OS_m_small = agm2_W_OS_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*V_light_OS_m_small_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
 	agm2_SD_OS_m_small = agm2_SD_OS_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*(V_light_OS_m_small_distr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
 	agm2_W_OS_m_big = agm2_W_OS_m_big + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*V_light_OS_m_big_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
@@ -5857,7 +5853,7 @@ void Gm2() {
     //#############if ensemble cB64 print valence mass correction to the window
     if(i_ens==0) {ofstream Print_mass_dep_SD_val_tm("../data/gm2/light/mass_dep/tm/win_SD_val.dat"); ofstream Print_mass_dep_W_val_tm("../data/gm2/light/mass_dep/tm/win_W_val.dat"); Print_mass_dep_SD_val_tm.close(); Print_mass_dep_W_val_tm.close(); ofstream Print_mass_dep_SD_val_OS("../data/gm2/light/mass_dep/OS/win_SD_val.dat"); ofstream Print_mass_dep_W_val_OS("../data/gm2/light/mass_dep/OS/win_W_val.dat"); Print_mass_dep_SD_val_OS.close(); Print_mass_dep_W_val_OS.close();}
  
-    if(V_light_1.Tag[i_ens] == "cB211b.072.64") {
+    if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") {
 
       //valence tm
       ofstream Print_mass_dep_SD_val_tm, Print_mass_dep_W_val_tm;
@@ -8071,9 +8067,12 @@ void Gm2() {
   //ELM
   //Perform_Akaike_fits(agm2_light_W_ELM, agm2_light_W_ELM_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "W_win_ELM", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 0, 0, 200.0, LL, 0.0);
   //NO ELM
+
+  int id_64_ens=-1;
+  /*
   //shift the data because of pion mass mistuning
   //determine cB64ens
-  int id_64_ens=-1;
+  
   for(int i=0;i<(signed)V_light_1.Tag.size();i++) if(V_light_1.Tag[i]=="cB211b.072.64") id_64_ens=i;
 
   for(int i=0;i<(signed)V_light_1.Tag.size();i++) {
@@ -8091,6 +8090,7 @@ void Gm2() {
 
     }
   }
+  */
   
   Perform_Akaike_fits(agm2_light_W, agm2_light_W_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "W_win", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, w0s_mult, true, 0, 0, 200.0, LL, 0.0, ret_distr_W_light);
 

@@ -34,6 +34,7 @@ double tan_phi_der(double z);
 double phi_der(double z);
 double phi_der_for_back(double z, int mode);
 void Generate_free_corr_data();
+void Compute_free_spectral_density(int Nc, double am, int reg, double step_size_erg, string dir_out);
 void Compute_SD_window_Free();
 void Compute_free_corr(double am, int Tmax);
 double free_vector_corr_cont(int Nc, double am, double t);

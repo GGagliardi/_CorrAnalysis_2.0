@@ -934,6 +934,82 @@ void Compute_free_corr(double am, int Tmax) {
   return;
 }
 
+void Compute_free_spectral_density(int Nc, double am, int reg, double step_size_erg, string dir_out) {
+
+
+  boost::filesystem::create_directory("../data/"+dir_out);
+  boost::filesystem::create_directory("../data/"+dir_out+"/spec_dens_free");
+  boost::filesystem::create_directory("../data/"+dir_out+"/spec_dens_free/tm");
+  boost::filesystem::create_directory("../data/"+dir_out+"/spec_dens_free/OS");
+ 
+
+
+  if( (reg != -1) && (reg != 1)) crash("Compute_free_spectral_density called with an unknown regularization reg: "+to_string(reg));
+  string tag_reg;
+  if(reg==-1) tag_reg= "tm";
+  else tag_reg="OS";
+
+  //assume that energy max is smaller than 2*M_PI in lattice units;
+  //divide energies in step_size of 0.01
+  int Erg_size = 2*M_PI/step_size_erg;
+  Vfloat spec_dens_hist(Erg_size, 0.0);
+  Vfloat energy_list, spec_dens_cont;
+  for(int i=0; i<(signed)spec_dens_hist.size(); i++) energy_list.push_back( (i+0.5)*step_size_erg);
+			
+  auto ptm2 = [](double p1,double p2, double p3) { return pow(sin(p1),2)+ pow(sin(p2),2)+ pow(sin(p3),2);};
+  auto phm2 = [](double p1,double p2, double p3) { return pow(2*sin(p1/2),2) + pow(2*sin(p2/2),2) + pow(2*sin(p3/2),2);};
+  auto fa = [&phm2](double p1, double p2, double p3) { return 1.0 + 0.5*phm2(p1,p2,p3);};
+  auto fb = [&phm2](double p1, double p2, double p3) { return phm2(p1,p2,p3) + 0.5*( pow(2*sin(p1/2),2)*(pow(2*sin(p2/2),2)+pow(2*sin(p3/2),2)) + pow(2*sin(p2/2),2)*pow(2*sin(p3/2),2));};
+  auto D2 = [&am, &fa, &fb](double p1,double p2, double p3) { return ( fb(p1,p2,p3) + pow(am,2))*( 4*fa(p1,p2,p3) + fb(p1,p2,p3) + pow(am,2));};
+  auto W = [&am, &phm2, &fa, &fb](double p1, double p2, double p3) { return 0.25*pow( phm2(p1,p2,p3) - (fb(p1,p2,p3) + pow(am,2))/fa(p1,p2,p3)  ,2);};
+  auto shaEp2 = [&am, &fa, &fb](double p1,double p2, double p3) { return pow( (fb(p1,p2,p3) + pow(am,2))/(2*fa(p1,p2,p3)),2) + (fb(p1,p2,p3)+pow(am,2))/fa(p1,p2,p3);};
+  auto shaEp =[&shaEp2](double p1,double p2, double p3) { return sqrt(shaEp2(p1,p2,p3));};
+  auto Ep =[&shaEp](double p1,double p2, double p3) {return asinh(shaEp(p1,p2,p3));};
+
+
+ //lattice spectral density_int
+ auto spec_int_lat = [&am, &Nc, &ptm2, &D2, &W, &shaEp2, &Ep, &reg](double p1,double p2,double p3) -> double {
+
+		return (32.0*Nc/(pow(2.0*M_PI,3)))*(shaEp2(p1,p2,p3) +(1.0/3.0)*ptm2(p1,p2,p3) +pow(am,2)+ reg*W(p1,p2,p3))/D2(p1,p2,p3);
+	      };
+
+
+ auto spec_cont = [&am, &Nc](double E) {
+		    double x=0;
+		    if( E < 2.0*am) return 0.0;
+		    else x= sqrt( pow(E/2.0,2) - pow(am,2));
+
+		    double jaco= 2.0*x/sqrt( pow(x,2) + pow(am,2));
+		    return (1.0/jaco)*(Nc*2.0/pow(M_PI,2))*pow(x,2)*( 1.0/3 + pow(am,2)/( 6.0*( pow(am,2) + pow(x,2))));
+		  };
+
+ int Npoints_dir=1000;
+ double step_size_px = M_PI/(Npoints_dir);
+ Vfloat pxs, pys, pzs;
+ for(int i=0; i<Npoints_dir;i++) { pxs.push_back( i*M_PI/(Npoints_dir-1.0)); pys.push_back( i*M_PI/(Npoints_dir -1.0)); pzs.push_back( i*M_PI/(Npoints_dir-1.0));}
+
+ #pragma omp parallel for
+ for( auto &px: pxs)
+   for( auto &py: pys)
+     for( auto &pz: pzs) {
+       double Erg = 2*Ep(px,py,pz);
+       double Ampl= pow(step_size_px,3)*spec_int_lat(px,py,pz)/step_size_erg;
+       spec_dens_hist[ (int)(Erg/step_size_erg) ] += Ampl;
+     }
+ 
+
+ //boost::math::interpolators::cardinal_cubic_b_spline<double> f_interp_boost(spec_dens_hist.begin(), spec_dens_hist.end(), 0.5*step_size_erg, step_size_erg);
+
+ //evaluate spectral density in the continuum
+ for(auto &e: energy_list) spec_dens_cont.push_back( spec_cont(e));
+
+ //print_to_file
+
+ Print_To_File({}, {energy_list, spec_dens_hist, spec_dens_cont}, "../data/"+dir_out+"/spec_dens_free/"+tag_reg+"/am_"+to_string_with_precision(am,5), "", "");
+
+
+}
+
 double free_vector_corr_cont(int Nc, double am, double t) {
 
   

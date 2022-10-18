@@ -216,10 +216,7 @@ void MasterClass_analysis::Analysis_manager() {
     Compute_R_ratio();
   }
 
-  if(Analysis_Mode == "Fake_spectral") {
-
-    Spectral_test_Vittorio();
-  }
+  
 
   if(Analysis_Mode == "tau_decay") {
 

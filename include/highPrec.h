@@ -328,6 +328,7 @@ PROVIDE_UNARY_FUNCTION(cos,mpfr_cos)
 PROVIDE_UNARY_FUNCTION(tan,mpfr_tan)
 PROVIDE_UNARY_FUNCTION(sinh,mpfr_sinh)
 PROVIDE_UNARY_FUNCTION(cosh,mpfr_cosh)
+PROVIDE_UNARY_FUNCTION(tanh, mpfr_tanh)
 PROVIDE_UNARY_FUNCTION(erf,mpfr_erf)
 PROVIDE_UNARY_FUNCTION(erfc,mpfr_erfc)
 PROVIDE_UNARY_FUNCTION(log, mpfr_log)
@@ -479,6 +480,100 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
       const PrecFloat s=sinh(t);
       const PrecFloat x=exp(piHalf*s)+xMin;
       const PrecFloat jac=piHalf*exp(piHalf*s)*cosh(t);
+      const PrecFloat res=f(x)*jac;
+      
+      // cout<<" t: "<<t<<" x: "<<x<<" res: "<<res<<" jac: "<<jac<<endl;
+      
+      return res;
+    };
+  
+  PrecFloat sum=c(0)*2;
+  PrecFloat extreme=0;
+  PrecFloat step=1;
+  PrecFloat precSum;
+  PrecFloat stability;
+  
+  do
+    {
+      precSum=sum;
+      
+      bool converged=
+	false;
+      
+      sum/=2;
+      PrecFloat t=step;
+      
+      const PrecFloat doubleStep=
+	step*2;
+      
+      bool exitTheLoop=
+	false;
+      
+      while(not exitTheLoop)
+	{
+	  const PrecFloat contr=
+	    c(t)+c(-t);
+	  
+	  const PrecFloat newSum=
+	    sum+contr*step;
+	  
+	  // cout<<"t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" converged: "<<converged<<endl;
+	  
+	  converged=
+	    (newSum==sum);
+	  
+	  exitTheLoop=
+	    (converged and t>extreme);
+	  
+	  if(t>extreme)
+	    {
+	      extreme=t;
+	      t+=step;
+	    }
+	  else
+	    t+=doubleStep;
+	  
+	  sum=newSum;
+	};
+      
+      step/=2;
+      
+      // cout<<(sum-1)<<endl;
+      
+      stability=abs(sum/precSum-1);
+      // cout<<"Stability: "<<stability<<endl;
+      maxAttainableStability*=2;
+      // cout<<"MaxAttainableStability: "<<maxAttainableStability<<endl;
+    }
+  while(stability>maxAttainableStability);
+  
+  return sum;
+}
+
+
+template <typename F>
+PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
+{
+  /// We compute up to the highest precision possible, which needs to
+  /// be adjusted in terms of the number of iterations (maybe it might
+  /// be enough to increase with the square root?)
+  PrecFloat maxAttainableStability=
+    PrecFloat::getEpsilon()*10;
+
+  PrecFloat xMin_prec= xMin;
+  PrecFloat xMax_prec= xMax;
+  
+  const PrecFloat piHalf=
+    precPi()/2;
+  
+  auto c=
+    [&f,&piHalf,&xMin_prec, &xMax_prec](const PrecFloat& t)
+    {
+      //tanh-sinh to map [xMin, xMax] into [-infinite, +infinite]
+      const PrecFloat s=sinh(t);
+      const PrecFloat g=tanh(piHalf*s);
+      const PrecFloat x=g*(xMax_prec-xMin_prec)/2+(xMax_prec +xMin_prec)/2;
+      const PrecFloat jac=((xMax_prec-xMin_prec)/2)*piHalf*(1 - g*g)*cosh(t);
       const PrecFloat res=f(x)*jac;
       
       // cout<<" t: "<<t<<" x: "<<x<<" res: "<<res<<" jac: "<<jac<<endl;
