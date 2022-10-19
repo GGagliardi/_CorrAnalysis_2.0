@@ -389,11 +389,13 @@ void Compute_tau_decay_width() {
     double Mpi_err=0.0;
     double fpi=0.0;
     double Mpi_OS=0.0;
+    double fpi_OS=0.0;
     if(Vk_data_tm.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; Mpi=0.05653312833; Mpi_err=1.430196186e-05; fpi=0.05278353769; Mpi_OS=0.1203989717;}
     else if(Vk_data_tm.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C; Mpi=0.04722061628; Mpi_err=3.492993579e-05; fpi=0.0450246; Mpi_OS=0.08597942324;}
     else if(Vk_data_tm.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; Mpi=0.04062107883; Mpi_err= 2.973916243e-05; fpi=0.03766423429; Mpi_OS=0.06064150466;}
     else crash("lattice spacing distribution for Ens: "+Vk_data_tm.Tag[iens]+" not found");
-
+    fpi_OS= fpi*L_info.Za_WI_strange/L_info.Za_WI;
+  
     //jack distr for Mpi
     distr_t Mpi_distr(UseJack);
     for(int ij=0;ij<Njacks;ij++) Mpi_distr.distr.push_back( Mpi + GM()*Mpi_err/sqrt(Njacks-1.0));
@@ -596,7 +598,7 @@ void Compute_tau_decay_width() {
 
     auto f_syst_A = [](const function<double(double)> &F) { return 0.0;};
     auto f_syst_A0_tm = [&resc_GeV, &Mpi, &fpi](const function<double(double)> &F) -> double { return resc_GeV.ave()*F(Mpi)*pow(fpi,2)*Mpi/(2.0);};
-    auto f_syst_A0_OS = [&resc_GeV, &Mpi_OS, &fpi](const function<double(double)> &F) -> double { return resc_GeV.ave()*F(Mpi_OS)*pow(fpi,2)*Mpi_OS/(2.0);};
+    auto f_syst_A0_OS = [&resc_GeV, &Mpi_OS, &fpi_OS](const function<double(double)> &F) -> double { return resc_GeV.ave()*F(Mpi_OS)*pow(fpi_OS,2)*Mpi_OS/(2.0);};
       
     auto f_syst_V_tm = [&Ergs, &Amplitudes, &Mrhos, &gppis, &Eduals, &Rduals, &GS_V, &a_distr, &Mpi, &resc_GeV, &LL, &F_free_tm](const function<double(double)> &F) ->double {
 
@@ -811,7 +813,8 @@ void Compute_tau_decay_width() {
       const auto model_V_tm =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);};
       const auto model_estimate_V_OS = [&K1, &GS_V, &s, &a_distr, &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals ](double E) -> double {  return K1(E,0.0,s,E0_l*a_distr.ave(), -1).get()*GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
       const auto model_V_OS =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
-      const auto model_A0 = [&Mpi, &fpi, &resc_GeV ](double E) -> double { double s=Mpi*0.001; return resc_GeV.ave()*(fpi*fpi*Mpi/(2.0))*(1.0/sqrt( 2*M_PI*s*s))*exp( -0.5*pow((E-Mpi)/s,2));};
+      const auto model_A0_tm = [&Mpi, &fpi, &resc_GeV ](double E) -> double { double s=Mpi*0.001; return resc_GeV.ave()*(fpi*fpi*Mpi/(2.0))*(1.0/sqrt( 2*M_PI*s*s))*exp( -0.5*pow((E-Mpi)/s,2));};
+      const auto model_A0_OS = [&Mpi_OS, &fpi_OS, &resc_GeV ](double E) -> double { double s=Mpi_OS*0.001; return resc_GeV.ave()*(fpi_OS*fpi_OS*Mpi_OS/(2.0))*(1.0/sqrt( 2*M_PI*s*s))*exp( -0.5*pow((E-Mpi_OS)/s,2));};
       //compute model estimate of vector contribution to R_tau tm
       gsl_function_pp<decltype(model_estimate_V_tm)> MOD_tm(model_estimate_V_tm);
       gsl_integration_workspace * w_MOD_tm = gsl_integration_workspace_alloc (10000);
@@ -829,16 +832,16 @@ void Compute_tau_decay_width() {
       gsl_integration_workspace_free(w_MOD_OS);
       cout<<"Model estimate R_t(V,OS): "<<val_mod_OS<<" +- "<<err_mod_OS<<endl;
       cout<<"Model estimate R_t(A0, tm): "<<K0(Mpi, 0.0, s ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi,2)*Mpi/2.0<<endl;
-      cout<<"Model estimate R_t(A0, tm): "<<K0(Mpi_OS, 0.0, s ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi,2)*Mpi_OS/2.0<<endl;
+      cout<<"Model estimate R_t(A0, OS): "<<K0(Mpi_OS, 0.0, s ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi_OS,2)*Mpi_OS/2.0<<endl;
       
 
       Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, 1e4, lVii_tm, MODE, "tm", "Vii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, f_syst_V_tm,1, model_V_tm );
       cout<<"BrVii_tm["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lVii_tm<<" : "<<Br_sigma_Vii_tm.ave()<<" +- "<<Br_sigma_Vii_tm.err()<<endl;
       Br_sigma_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_OS, syst_Vii_OS, 1e4, lVii_OS, MODE, "OS", "Vii_light_"+Vk_data_tm.Tag[iens],-1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Vk_OS, f_syst_V_OS,1, model_V_OS );
       cout<<"BrVii_OS["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lVii_OS<<" : "<<Br_sigma_Vii_OS.ave()<<" +- "<<Br_sigma_Vii_OS.err()<<endl;
-      Br_sigma_A0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_0, prec, SM_TYPE_0,K0, -1*A0_tm, syst_A0_tm, 1e4, lA0_tm, MODE, "tm", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Zv*Zv, "tau_decay", cov_A0_tm, f_syst_A0_tm,1, model_A0 );
+      Br_sigma_A0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_0, prec, SM_TYPE_0,K0, -1*A0_tm, syst_A0_tm, 1e4, lA0_tm, MODE, "tm", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Zv*Zv, "tau_decay", cov_A0_tm, f_syst_A0_tm,1, model_A0_tm );
       cout<<"BrA0_tm["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lA0_tm<<" : "<<Br_sigma_A0_tm.ave()<<" +- "<<Br_sigma_A0_tm.err()<<endl; 
-      Br_sigma_A0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_0, prec, SM_TYPE_0,K0, -1*A0_OS, syst_A0_OS, 1e4, lA0_OS, MODE, "OS", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Za*Za, "tau_decay", cov_A0_OS, f_syst_A0_OS,1, model_A0 );
+      Br_sigma_A0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_0, prec, SM_TYPE_0,K0, -1*A0_OS, syst_A0_OS, 1e4, lA0_OS, MODE, "OS", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Za*Za, "tau_decay", cov_A0_OS, f_syst_A0_OS,1, model_A0_OS );
       cout<<"BrA0_OS["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lA0_OS<<" : "<<Br_sigma_A0_OS.ave()<<" +- "<<Br_sigma_A0_OS.err()<<endl; 
       Br_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm, syst_Aii_tm, 1e4, lAii_tm, MODE, "tm", "Aii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d );
       cout<<"BrAii_tm["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lAii_tm<<" : "<<Br_sigma_Aii_tm.ave()<<" +- "<<Br_sigma_Aii_tm.err()<<endl;
