@@ -631,7 +631,7 @@ void Compute_tau_decay_width() {
 					   
 	      
 		      //evaluate GS in infinite volume limit
-		      auto FS_infL = [&F, &Mpi, &a_distr, &resc_GeV, &LL, &Mrhos, &gppis, &Eduals, &Mpi, &Rduals, &F_free_tm](double E) {
+		      auto FS_infL = [&F, &Mpi, &a_distr, &resc_GeV, &LL, &Mrhos, &gppis, &Eduals,  &Rduals, &F_free_tm](double E) {
 				       double sth= Mrhos[0]+Eduals[0];
 				       double syst = F(E)*resc_GeV.ave()*(
 						    (1.0/(24.0*pow(M_PI,2)))*pow(E,2)*pow(1.0- pow(2.0*Mpi/E,2), 3.0/2.0)*pow(LL.F_pi_GS_mod(E, Mrhos[0], gppis[0],Mpi,0),2)
@@ -695,7 +695,7 @@ void Compute_tau_decay_width() {
 					   
 	      
 		      //evaluate GS in infinite volume limit
-		      auto FS_infL = [&F, &Mpi, &a_distr, &resc_GeV, &LL, &Mrhos, &gppis, &Eduals, &Mpi, &Rduals, &F_free_OS](double E) {
+		      auto FS_infL = [&F, &Mpi, &a_distr, &resc_GeV, &LL, &Mrhos, &gppis, &Eduals, &Rduals, &F_free_OS](double E) {
 				       double sth= Mrhos[1]+Eduals[1];
 				       double syst = F(E)*resc_GeV.ave()*(
 						    (1.0/(24.0*pow(M_PI,2)))*pow(E,2)*pow(1.0- pow(2.0*Mpi/E,2), 3.0/2.0)*pow(LL.F_pi_GS_mod(E, Mrhos[1], gppis[1],Mpi,0),2)
