@@ -388,10 +388,10 @@ void Compute_tau_decay_width() {
     double Mpi=0.0;
     double Mpi_err=0.0;
     double fpi=0.0;
-    if(Vk_data_tm.Tag[iens].substr(1,1)=="A") {a_distr=a_A; Zv = ZV_A; Za = ZA_A;}
-    else if(Vk_data_tm.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; Mpi=0.05653312833; Mpi_err=1.430196186e-05; fpi=0.05278353769;}
-    else if(Vk_data_tm.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C; Mpi=0.04722061628; Mpi_err=3.492993579e-05; fpi=0.0450246;}
-    else if(Vk_data_tm.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; Mpi=0.04062107883; Mpi_err= 2.973916243e-05; fpi=0.03766423429;}
+    double Mpi_OS=0.0;
+    if(Vk_data_tm.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; Mpi=0.05653312833; Mpi_err=1.430196186e-05; fpi=0.05278353769; Mpi_OS=0.1203989717;}
+    else if(Vk_data_tm.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C; Mpi=0.04722061628; Mpi_err=3.492993579e-05; fpi=0.0450246; Mpi_OS=0.08597942324;}
+    else if(Vk_data_tm.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; Mpi=0.04062107883; Mpi_err= 2.973916243e-05; fpi=0.03766423429; Mpi_OS=0.06064150466;}
     else crash("lattice spacing distribution for Ens: "+Vk_data_tm.Tag[iens]+" not found");
 
     //jack distr for Mpi
