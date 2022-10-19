@@ -1576,19 +1576,7 @@ double LL_functions::V_pipi(double t, double L, double m_rho, double g_rho_pipi,
   double ret_val=0;
 
  
-  /*
-  cout<<"Entering V_pipi"<<endl;
-  cout<<"########parameters#########"<<endl;
-  cout<<"L: "<<L<<endl;
-  cout<<"mrho: "<<m_rho<<endl;
-  cout<<"Mpi: "<<Mpi<<endl;
-  cout<<"g_rho: "<<g_rho_pipi<<endl;
-  cout<<"#################"<<endl;
-  cout<<"n        k        omega"<<endl;
-  for(int i_lev=0;i_lev<Nres;i_lev++)  cout<<i_lev+1<<"   "<<Knpp[i_lev]<<"    "<<2.0*sqrt(pow(Mpi,2)+pow(Knpp[i_lev],2))<<endl;
-
-  */
-  
+ 
   for(int i_lev=0;i_lev<Nres;i_lev++) {
     double k_n= Knpp[i_lev];  
     double omega_n = 2.0*sqrt( pow(Mpi,2) + pow(k_n,2));
@@ -1597,7 +1585,7 @@ double LL_functions::V_pipi(double t, double L, double m_rho, double g_rho_pipi,
    
 
   }
-  // cout<<"Exiting V_pipi"<<endl;
+  
 
   return ret_val;
 
@@ -1624,9 +1612,131 @@ double LL_functions::V_pipi_infL(double t, double m_rho_infL, double g_rho_pipi_
 
   return val;
 
-  //return boost::math::quadrature::gauss_kronrod<double, 61>::integrate(Integrand, 2*Mpi_infL, numeric_limits<double>::infinity(), 5, tol_infL)  ;
-
+  
 
   
 }
 
+
+
+void LL_functions::MLLGS_fit_to_corr(const distr_t_list &Corr,const distr_t &Mpi,const distr_t &a_distr, double L, distr_t &Edual, distr_t &Rdual, distr_t &Mrho, distr_t &grpp, int tmin, int tmax, string Tag) {
+
+
+  omp_set_num_threads(1);
+  
+  class ipar_MLLGS {
+
+  public:
+    ipar_MLLGS() : V_light(0.0), V_light_err(0.0) {}
+    double Mp;
+    double t,  L;
+    double V_light, V_light_err;
+  };
+
+  class fit_par_MLLGS {
+
+  public:
+    fit_par_MLLGS() {}
+    fit_par_MLLGS(const Vfloat &par) {
+      if((signed)par.size() != 5) crash("In class fit_par_MLLGS in fitting analytic representation of V(t)_light, class constructor Vfloat par has size != 5");
+      Rd=par[0];
+      Ed=par[1];
+      Mrho=par[2];
+      gpi=par[3];
+      kappa= par[4];
+    }
+
+    double Rd,Ed, Mrho, gpi,kappa, Mpi_corr;
+  };
+  
+  int Njacks= Mpi.size();
+  
+  bootstrap_fit<fit_par_MLLGS,ipar_MLLGS> bf(Njacks);
+  bf.set_warmup_lev(4); //sets warmup
+  int Tfit_points= tmax +1 - tmin;
+  
+  
+
+  
+  bf.Set_number_of_measurements(Tfit_points);
+  bf.Set_verbosity(0);
+
+  cout<<"FITTING WITH PIPI+DUAL REPRESENTATION: "<<Tag<<endl;
+  
+
+  //initial guesses are based on the results on the old ETMC confs
+  bf.Add_par("Rd", 1.1, 0.1);
+  bf.Set_limits("Rd", 0.7, 1.8);
+  bf.Add_par("Ed", 2.5, 0.2);
+  bf.Set_limits("Ed", 0.7, 5.0);
+  bf.Add_par("Mrho",5.5, 0.1);
+  bf.Set_limits("Mrho", 4.5 , 7.0);
+  bf.Add_par("gpi", 1.0, 0.01);
+  bf.Add_par("kappa", -3.0, 0.1);
+  bf.Fix_par("kappa", 0.0);
+  bf.Set_limits("gpi",0.6, 1.5);
+  
+  map<pair<pair<double,double>, pair<double,double>>,Vfloat> Energy_lev_list;
+  
+
+  bf.ansatz =  [&](const fit_par_MLLGS &p, const ipar_MLLGS &ip) -> double {
+
+		     double Pi_M = ip.Mp;
+
+		     double GPI = p.gpi*5.95;
+		     Vfloat Knpp;
+		     pair<double,double> Mass_par= make_pair(p.Mrho*Pi_M, p.Mpi_corr*Pi_M);
+		     pair<double,double> Couplings = make_pair(GPI, p.kappa);
+		     pair< pair<double,double>,pair<double, double>> input_pars = make_pair( Mass_par, Couplings);
+		     map<pair<pair<double,double>, pair<double, double>>,Vfloat>::iterator it;
+		     it= Energy_lev_list.find(input_pars);
+		     if(it != Energy_lev_list.end()) Knpp= it->second;
+		     else {
+		       Find_pipi_energy_lev(ip.L,p.Mrho*Pi_M, GPI, Pi_M, p.kappa, Knpp);
+		       //add to Energy_lev_list
+		       Energy_lev_list.insert( make_pair(input_pars, Knpp));
+		     }
+		
+		     return 2.0*V_pipi(ip.t, ip.L, p.Mrho*Pi_M, GPI, Pi_M, p.kappa, Knpp) + (9.0/5.0)*Vdual(ip.t, p.Mrho*Pi_M, p.Ed*Pi_M, p.Rd);
+		   };
+      bf.measurement = [&](const fit_par_MLLGS& p,const ipar_MLLGS& ip) -> double {
+			 return ip.V_light;
+		       };
+      bf.error =  [&](const fit_par_MLLGS& p,const ipar_MLLGS &ip) -> double {
+		    return ip.V_light_err;
+		  };
+
+      //fill the data
+      vector<vector<ipar_MLLGS>> data(Njacks);
+      //allocate space for output result
+      boot_fit_data<fit_par_MLLGS> Bt_fit;
+
+  
+
+      for(auto &data_iboot: data) data_iboot.resize(Tfit_points);
+  
+      for(int ijack=0;ijack<Njacks;ijack++) {
+	for(int t=tmin;t<Tfit_points+tmin;t++) {
+	  int tt=t-tmin;
+	  data[ijack][tt].V_light = Corr.distr_list[t].distr[ijack];
+	  data[ijack][tt].V_light_err = Corr.err(t);
+	  data[ijack][tt].L = L;
+	  data[ijack][tt].Mp = Mpi.distr[ijack];
+	  data[ijack][tt].t = t;
+	} 
+      }
+    
+      //append
+      bf.Append_to_input_par(data);
+      //fit
+      Bt_fit= bf.Perform_bootstrap_fit();
+
+      for(int ijack=0;ijack<Njacks;ijack++) {
+        Mrho.distr.push_back(Bt_fit.par[ijack].Mrho*Mpi.distr[ijack]);
+	grpp.distr.push_back( Bt_fit.par[ijack].gpi*5.95);
+	Edual.distr.push_back( Bt_fit.par[ijack].Ed*Mpi.distr[ijack]);
+	Rdual.distr.push_back( Bt_fit.par[ijack].Rd);
+      }
+
+  return; 
+}

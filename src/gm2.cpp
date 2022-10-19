@@ -1794,6 +1794,10 @@ void Gm2() {
   //pion mass correction
   distr_t_list amu_W_mass_corr_tm_list(UseJack);
   distr_t_list amu_W_mass_corr_OS_list(UseJack);
+  vector<string> amu_W_val_Ens_tag;
+  distr_t_list amu_W_mass_corr_sea_tm_list(UseJack);
+  distr_t_list amu_W_mass_corr_sea_OS_list(UseJack);
+  vector<string> amu_W_sea_Ens_tag;
 
   //disco light
   distr_t_list agm2_disco_light_W(UseJack), agm2_disco_light_SD(UseJack), agm2_disco_light_W_ELM(UseJack), agm2_disco_light_SD_ELM(UseJack);
@@ -5879,6 +5883,9 @@ void Gm2() {
       //push_back
       amu_W_mass_corr_OS_list.distr_list.push_back( agm2_W_OS_m_small-agm2_W_OS_m_big);
 
+
+      amu_W_val_Ens_tag.push_back( V_light_1.Tag[i_ens]);
+
     }
 
 
@@ -5909,6 +5916,8 @@ void Gm2() {
       Print_mass_dep_W_sea_tm<<V_light_1.Tag[i_ens]<<" "<<(a_distr/fm_to_inv_Gev).ave()<<" "<<1e10*(agm2_W_sea_dep).ave()<<" "<<1e10*(agm2_W_sea_dep).err()<<" "<<1e10*(agm2_W_sea_dep+agm2_W).ave()<<" "<<1e10*(agm2_W_sea_dep+agm2_W).err()<<endl;
       Print_mass_dep_SD_sea_tm.close();
       Print_mass_dep_W_sea_tm.close();
+
+      amu_W_mass_corr_sea_tm_list.distr_list.push_back( agm2_W_sea_dep);
    
 
       //sea OS
@@ -5919,6 +5928,10 @@ void Gm2() {
       Print_mass_dep_W_sea_OS<<V_light_1.Tag[i_ens]<<" "<<(a_distr/fm_to_inv_Gev).ave()<<" "<<1e10*(agm2_W_OS_sea_dep).ave()<<" "<<1e10*(agm2_W_OS_sea_dep).err()<<" "<<1e10*(agm2_W_OS_sea_dep+ agm2_W_OS).ave()<<" "<<1e10*(agm2_W_OS_sea_dep+agm2_W_OS).err()<<endl;
       Print_mass_dep_SD_sea_OS.close();
       Print_mass_dep_W_sea_OS.close();
+
+      amu_W_mass_corr_sea_OS_list.distr_list.push_back( agm2_W_OS_sea_dep);
+
+      amu_W_sea_Ens_tag.push_back( V_light_1.Tag[i_ens]);
       
     }
 
@@ -7494,6 +7507,104 @@ void Gm2() {
   //result from bounding
   Print_To_File(V_light_1.Tag, {amu_W_bounding_tm_list.ave(), amu_W_bounding_tm_list.err()}, "../data/gm2/light/tm/windows_bounding.list", "", "#ENS W ");
   Print_To_File(V_light_1.Tag, {amu_W_bounding_OS_list.ave(), amu_W_bounding_OS_list.err()}, "../data/gm2/light/OS/windows_bounding.list", "", "#ENS W ");
+  //compute physical point estimate for light window (tm and OS)
+  distr_t_list amu_W_physical_point_tm(UseJack), amu_W_physical_point_OS(UseJack);
+  for(int iens=0;iens<(signed)V_light_1.Tag.size();iens++) {
+
+    distr_t amu_tm_ph, amu_OS_ph;
+
+    if(V_light_1.Tag[iens] == "cD211a.054.96" || V_light_1.Tag[iens] == "cB211b.072.64") {
+
+      //find sea_id
+      int id_sea=-1;
+      for(int isea=0; isea<(signed)amu_W_sea_Ens_tag.size();isea++) {
+	if(amu_W_sea_Ens_tag[isea] == V_light_1.Tag[iens]) id_sea=isea;
+      }
+      if(id_sea==-1) crash("Cannot find sea ensemble: "+V_light_1.Tag[iens]+" when computing physical point value of amu_W");
+
+      //find val_id
+      int id_val=-1;
+      for(int ival=0; ival<(signed)amu_W_val_Ens_tag.size();ival++) {
+	if(amu_W_val_Ens_tag[ival] == V_light_1.Tag[iens]) id_val=ival;
+      }
+      if(id_val==-1) crash("Cannot find val ensemble: "+V_light_1.Tag[iens]+" when computing physical point value of amu_W");
+    
+      amu_tm_ph= agm2_light_W.distr_list[iens] + amu_W_mass_corr_sea_tm_list[id_sea] + amu_W_mass_corr_tm_list[id_val];
+      amu_OS_ph= agm2_light_W_OS.distr_list[iens] + amu_W_mass_corr_sea_OS_list[id_sea] + amu_W_mass_corr_OS_list[id_val];
+
+    }
+    else if(V_light_1.Tag[iens] == "cB211b.072.96") {
+
+      //find sea_id
+      int id_sea=-1;
+      for(int isea=0; isea<(signed)amu_W_sea_Ens_tag.size();isea++) {
+	if(amu_W_sea_Ens_tag[isea] == "cB211b.072.64") id_sea=isea;
+      }
+      if(id_sea==-1) crash("Cannot find sea ensemble: cB211b.072.64  when computing physical point value of amu_W");
+
+      //find val_id
+      int id_val=-1;
+      for(int ival=0; ival<(signed)amu_W_val_Ens_tag.size();ival++) {
+	if(amu_W_val_Ens_tag[ival] == "cB211b.072.64") id_val=ival;
+      }
+      if(id_val==-1) crash("Cannot find val ensemble: cB211b.072.64 when computing physical point value of amu_W");
+    
+      amu_tm_ph= agm2_light_W.distr_list[iens] + amu_W_mass_corr_sea_tm_list[id_sea] + amu_W_mass_corr_tm_list[id_val];
+      amu_OS_ph= agm2_light_W_OS.distr_list[iens] + amu_W_mass_corr_sea_OS_list[id_sea] + amu_W_mass_corr_OS_list[id_val];
+
+
+    }
+    else if(V_light_1.Tag[iens].substr(1,1)=="C") {
+      
+      //find sea_id
+      int id_sea=-1;
+      for(int isea=0; isea<(signed)amu_W_sea_Ens_tag.size();isea++) {
+	if(amu_W_sea_Ens_tag[isea] == V_light_1.Tag[iens]) id_sea=isea;
+      }
+      if(id_sea==-1) crash("Cannot find sea ensemble: "+V_light_1.Tag[iens]+" when computing physical point value of amu_W");
+
+
+      int id_val_ens_D96, id_val_ens_B64= -1;
+      int id_mass_ens_D96, id_mass_ens_B64=-1;
+
+      for(int i_mass=0; i_mass<(signed)V_light_1.Tag.size();i_mass++) {
+	if( V_light_1.Tag[i_mass] == "cB211b.072.64") id_mass_ens_B64= i_mass;
+	if( V_light_1.Tag[i_mass] == "cD211a.054.96") id_mass_ens_D96= i_mass;
+	
+      }
+      if(id_mass_ens_D96==-1 || id_mass_ens_B64== -1) crash("Cannot find ensemble D96 or B64 when evaluating physical point value of amu_W for ensemble: "+V_light_1.Tag[iens]);
+
+      for(int ival_ens=0; ival_ens<(signed)amu_W_val_Ens_tag.size(); ival_ens++) {
+	if(amu_W_val_Ens_tag[ival_ens] == "cB211b.072.64") id_val_ens_B64=ival_ens;
+	if(amu_W_val_Ens_tag[ival_ens] == "cD211a.054.96") id_val_ens_D96=ival_ens;
+      }
+      if(id_val_ens_D96 == -1 || id_val_ens_B64 == -1) crash("Cannot find ensemble D96 or B64 when evaluating physical point value of amu_W for ensemble: "+V_light_1.Tag[iens]);
+
+      distr_t Mpi_B= Mpi_fit.distr_list[id_mass_ens_B64];
+      distr_t Mpi_D= Mpi_fit.distr_list[id_mass_ens_D96];
+      distr_t Mpi_C= Mpi_fit.distr_list[iens];
+
+      distr_t corr_fact_B64=  (( Mpi_C*Mpi_C - 0.135*0.135*a_C*a_C)/(Mpi_B*Mpi_B - 0.135*0.135*a_B*a_B))*(a_C*a_C - a_D*a_D)/(a_B*a_B - a_D*a_D);
+      distr_t corr_fact_D96=  (( Mpi_C*Mpi_C - 0.135*0.135*a_C*a_C)/(Mpi_D*Mpi_D - 0.135*0.135*a_D*a_D))*(a_B*a_B - a_C*a_C)/(a_B*a_B - a_D*a_D);
+
+
+      amu_tm_ph= agm2_light_W.distr_list[iens] + amu_W_mass_corr_sea_tm_list[id_sea] + corr_fact_B64*amu_W_mass_corr_tm_list[id_val_ens_B64] + corr_fact_D96*amu_W_mass_corr_tm_list[id_val_ens_D96];
+      amu_OS_ph= agm2_light_W_OS.distr_list[iens] + amu_W_mass_corr_sea_OS_list[id_sea] + corr_fact_B64*amu_W_mass_corr_OS_list[id_val_ens_B64] + corr_fact_D96*amu_W_mass_corr_OS_list[id_val_ens_D96];
+    }
+    else crash("When computing physical point value of amu_W, ensemble: "+V_light_1.Tag[iens]+" not recognized");
+
+    
+
+    
+
+    amu_W_physical_point_tm.distr_list.push_back(amu_tm_ph);
+    amu_W_physical_point_OS.distr_list.push_back(amu_OS_ph);
+    
+
+  }
+
+  Print_To_File(V_light_1.Tag , {L_list, a_list, amu_W_physical_point_tm.ave(), amu_W_physical_point_tm.err()}   , "../data/gm2/light/tm/windows_tm_phys_point", "", "#ENS L a val err");
+  Print_To_File(V_light_1.Tag , {L_list, a_list, amu_W_physical_point_OS.ave(), amu_W_physical_point_OS.err()}   , "../data/gm2/light/OS/windows_tm_phys_point", "", "#ENS L a val err");
 
  
   //print informations on the SD windows cut at tmins

@@ -1,9 +1,9 @@
 IDIR=include
-IPY=/usr/include/python3.6 
+IPY=/usr/include/python3.8 
 GCC=g++
-LIBS=  -lboost_system -lboost_filesystem  -lMinuit2 -fopenmp -lpython3.6
-LIB_PY=/usr/lib/python3.6/config-3.6m-x86_64-linux-gnu
-CPPFLAGS= -I$(IDIR) -I$(IPY) -Wall -std=c++17 -O0 -g -rdynamic
+LIBS= -lgsl -lgslcblas -lboost_system -lboost_filesystem  -lMinuit2 -fopenmp -lpython3.8 -lmpfr -lgmp
+LIB_PY=/usr/lib/python3.8/config-3.8m-x86_64-linux-gnu
+CPPFLAGS= -I$(IDIR) -I$(IPY) -Wall -fopenmp -std=c++17 -O3 -g -rdynamic
 SOURCES=$(wildcard src/*.cpp)
 OBJ_1=$(patsubst %.cpp,%.o,$(SOURCES))
 OBJ=$(patsubst src/%, obj/%, $(OBJ_1))

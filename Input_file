@@ -1,7 +1,7 @@
 # Input file for the analysis of QCD+QED observables
 
 #Analysis_Mode
-Meson_masses
+tau_decay
 #Init_description_meson_masses
 #Meson_to_Analyze:
 PI
@@ -9,9 +9,3 @@ PI
 LOCAL
 #Include_disconnected?:
 1
-
-
-
-
-
-
