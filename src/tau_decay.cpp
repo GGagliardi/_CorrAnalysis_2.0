@@ -596,7 +596,7 @@ void Compute_tau_decay_width() {
 
     auto f_syst_A = [](const function<double(double)> &F) { return 0.0;};
     auto f_syst_A0_tm = [&resc_GeV, &Mpi, &fpi](const function<double(double)> &F) -> double { return resc_GeV.ave()*F(Mpi)*pow(fpi,2)*Mpi/(2.0);};
-    auto f_syst_A0_OS = [&resc_GeV, &Mpi, &fpi](const function<double(double)> &F) -> double { return resc_GeV.ave()*F(Mpi)*pow(fpi,2)*Mpi/(2.0);};
+    auto f_syst_A0_OS = [&resc_GeV, &Mpi_OS, &fpi](const function<double(double)> &F) -> double { return resc_GeV.ave()*F(Mpi_OS)*pow(fpi,2)*Mpi_OS/(2.0);};
       
     auto f_syst_V_tm = [&Ergs, &Amplitudes, &Mrhos, &gppis, &Eduals, &Rduals, &GS_V, &a_distr, &Mpi, &resc_GeV, &LL, &F_free_tm](const function<double(double)> &F) ->double {
 
@@ -828,8 +828,8 @@ void Compute_tau_decay_width() {
       gsl_integration_qagiu(G_MOD_OS, 0.0, 0.0, 1e-4, 10000, w_MOD_OS, &val_mod_OS, &err_mod_OS);
       gsl_integration_workspace_free(w_MOD_OS);
       cout<<"Model estimate R_t(V,OS): "<<val_mod_OS<<" +- "<<err_mod_OS<<endl;
-      cout<<"Model estimate R_t(A0, tm&OS): "<<K0(Mpi, 0.0, s ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi,2)*Mpi/2.0<<endl;
-      
+      cout<<"Model estimate R_t(A0, tm): "<<K0(Mpi, 0.0, s ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi,2)*Mpi/2.0<<endl;
+      cout<<"Model estimate R_t(A0, tm): "<<K0(Mpi_OS, 0.0, s ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi,2)*Mpi_OS/2.0<<endl;
       
 
       Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, 1e4, lVii_tm, MODE, "tm", "Vii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, f_syst_V_tm,1, model_V_tm );
