@@ -11,6 +11,7 @@ const double qu= 2.0/3.0;
 const double qd= -1.0/3.0;
 const double qs= qd;
 const double qc= qu;
+const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
 const int prec = 256;
 const double Nc=3;
@@ -79,9 +80,14 @@ void Get_spec_dens_free() {
 
 void Compute_tau_decay_width() {
 
-  PrecFloat::setDefaultPrecision(prec);
+  PrecFloat::setDefaultPrecision(50*ln2_10);
 
   //generate Luscher's energy level
+
+
+
+  cout.precision(5);
+
 
   if(COMPUTE_SPEC_DENS_FREE) Get_spec_dens_free();
 
@@ -219,8 +225,8 @@ void Compute_tau_decay_width() {
   A0_data_OS.Read("../tau_decay_data/light", "mes_contr_2pts_ll_2", "A0A0", Sort_light_confs);
 
 
- 
 
+  
 
 
 
@@ -348,6 +354,8 @@ void Compute_tau_decay_width() {
 
     //print number of gauge configurations
     cout<<"Nconfs : "<<Vk_data_OS.Nconfs[iens]<<endl;
+
+    auto SQRT = [](double x) {return sqrt(x);};
 
     LatticeInfo L_info;
     L_info.LatInfo_new_ens(Vk_data_tm.Tag[iens]);
@@ -485,6 +493,41 @@ void Compute_tau_decay_width() {
     Aii_OS = Ak_OS_distr;
     Vii_OS = Vk_OS_distr;
     //###########################################################
+
+    //############ INTERPOLATE CORRELATORS ######################
+    vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> Aii_tm_interpol_func;
+    vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> Aii_OS_interpol_func;
+    for(int t=1;t< Corr.Nt;t++) {
+      for(int ijack=0;ijack<Njacks;ijack++) {
+	Vfloat Aii_tm_ijack, Aii_OS_ijack;
+	for(int t=1;t< Corr.Nt;t++) { Aii_tm_ijack.push_back( Aii_tm.distr_list[t].distr[ijack]*pow(t,3)); Aii_OS_ijack.push_back( Aii_OS.distr_list[t].distr[ijack]*pow(t,3));}
+
+      Aii_tm_interpol_func.emplace_back( Aii_tm_ijack.begin(), Aii_tm_ijack.end(), 1.0, 1.0);
+      Aii_OS_interpol_func.emplace_back( Aii_OS_ijack.begin(), Aii_OS_ijack.end(), 1.0, 1.0);
+      }
+    }
+
+    auto Aii_tm_interpolated =  [&Aii_tm_interpol_func, &a_distr](double t) -> distr_t {
+				  distr_t ret;
+				  for(int i=0;i<Njacks;i++) ret.distr.push_back( Aii_tm_interpol_func[i](t/a_distr.distr[i]));
+				  return ret;
+			       };
+
+    auto Aii_OS_interpolated =  [&Aii_OS_interpol_func, &a_distr](double t) -> distr_t {
+				  distr_t ret;
+				  for(int i=0;i<Njacks;i++) ret.distr.push_back( Aii_OS_interpol_func[i](t/a_distr.distr[i]));
+				  return ret;
+			       };
+
+    cout<<"Printing Za Ensemble "<<Vk_data_tm.Tag[iens]<<endl;
+    cout<<"ZA: (from Aii at t=0.6fm):"<< distr_t::f_of_distr(SQRT, Zv*Zv*Aii_tm_interpolated(0.6/0.197327)/Aii_OS_interpolated(0.6/0.197327)).ave()<<" +- "<<distr_t::f_of_distr(SQRT, Zv*Zv*Aii_tm_interpolated(0.6/0.197327)/Aii_OS_interpolated(0.6/0.197327)).err()<<endl;
+    cout<<"ZA: "<<L_info.Za_WI_strange<<" +- "<<L_info.Za_WI_strange_err<<endl;
+    cout<<"End printing Za Ensemble "<<Vk_data_tm.Tag[iens]<<endl;
+    
+ 
+
+
+    
 
     bool Found_error_less_x_percent=false;
     double x=15;
@@ -880,12 +923,12 @@ void Compute_tau_decay_width() {
 
     }
     
-    
+   
   }
   
     
    
-
+  
 
 
 

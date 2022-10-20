@@ -477,12 +477,14 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		      if(t_fit_logs==1) npars += (n_m_pair.first != 0 ) + (n_m_pair.second != 0);
 		    }
 
-		    
+
+		    /*
 		    if(W_type.substr(0,5) == "W_win" && channel == "light") { //add priors
 		      prior_on_a2_log_and_a4=true;
 		      //determine Nmeas_prior 
 		      Nmeas_priors=4;
 		    }
+		    */
 		    
 		    if(npars >= Nmeas) Fit_allowed= false;
 
@@ -865,6 +867,11 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			cout<<"m: "<<m.ave()<<endl;
 			cout<<"w0_m: "<<w0_m<<endl;
 			cout<<"Using prior: "<<prior_on_a2_log_and_a4<<endl;
+			if(W_type.find("eps") != string::npos) { //is epsilon-light test
+			  cout<<"EPS: "<<W_type<<endl;
+			  cout<<"D2/D1(tm): "<< (D4_tm*pow(w0_scale,2)/D_tm).ave()<< (D4_tm*pow(w0_scale,2)/D_tm).err()<<endl;
+			  cout<<"D2/D1(OS): "<< (D4_OS*pow(w0_scale,2)/D_OS).ave()<< (D4_OS*pow(w0_scale,2)/D_OS).err()<<endl;
+			}
 			cout<<"#######################################################"<<endl;
 		      }
   

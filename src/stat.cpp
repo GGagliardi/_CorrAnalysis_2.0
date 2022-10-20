@@ -184,7 +184,7 @@ distr_t Jackknife::DoJack(function<double(const Vfloat&)> F, int Nobs,...) {
 	double lpoint = binPos;
 
 	//Rectangle right point
-	double rpoint = min(bin_end, lpoint+1.0);
+	double rpoint = min(bin_end, iConf+1.0);
 
 	//Rectangle horizontal size
 	double rect_size = rpoint-lpoint;
@@ -329,7 +329,7 @@ distr_t Jackknife::DoJack(int Nobs,...) {
 	double lpoint = binPos;
 
 	//Rectangle right point
-	double rpoint = min(bin_end, lpoint+1.0);
+	double rpoint = min(bin_end, iConf+1.0);
 
 	//Rectangle horizontal size
 	double rect_size = rpoint-lpoint;
