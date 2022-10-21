@@ -47,9 +47,9 @@ void data_t::Read() {
 
     //test
     
-    for(int ht=0;ht<(signed)Confs.size();ht++) cout<<Confs[ht]<<endl;
+    //for(int ht=0;ht<(signed)Confs.size();ht++) cout<<Confs[ht]<<endl;
     //
-    cout<<"###########"<<endl;
+    //cout<<"###########"<<endl;
     //
     
     int N_rows_old=0;

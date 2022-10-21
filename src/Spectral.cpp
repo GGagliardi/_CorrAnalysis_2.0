@@ -7,7 +7,7 @@ const bool FIND_OPTIMAL_LAMBDA= true;
 const string COV_MATRIX_MODE = "";
 const int Nmoms=0;
 const int alpha=0;
-const int verbosity_lev=0;
+const int verbosity_lev=1;
 double Beta= 0.0; //1.99;
 const bool mult_estimated_from_norm0=false;
 const bool print_reco_in_stability_analysis=false;
@@ -506,14 +506,22 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
     //bisection search for given A[g]/A[0]
     while( !lambda_found_Ag_A0 ) {
 
+      D(10);
+
     PrecFloat lambda_mid  =  (Nit_Ag0==0 && counter_Ag_m==0)?l_start:(l_up+l_low)/2;
+    D(11);
     PrecMatr C = Atr*(1-lambda_mid)/M2 + B*lambda_mid/(MODE=="SANF"?M2:1.0);
+    D(12);
     PrecMatr C_inv = C.inverse();
+    D(13);
     PrecVect ft_l = ft*(1-lambda_mid)/M2;
+    D(14);
     PrecVect M_tilde_n;
     PrecMatr G_n;
     vector<PrecVect> ft_l_jack;
     if(JackOnKer) for(int ijack=0;ijack<Njacks;ijack++) ft_l_jack.push_back( ft_jack[ijack]*(1-lambda_mid)/M2);
+
+    D(1);
     
    
     //Lagrangian multipliers
@@ -559,6 +567,8 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
     }
 
+    D(2);
+
       PrecFloat A1_val = A1(gm);
       PrecFloat B1_val = B1(gm);
       PrecFloat W_val = (1-lambda_mid)*A1_val + lambda_mid*B1_val;
@@ -571,6 +581,8 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       PrecFloat B1_val_std_Emax= B1_std_Emax(gm);
 
       double syst=0.0;
+
+      D(3);
 
       if(Use_guess_density) {
 
@@ -609,6 +621,8 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       }
 
       cout.precision(20);
+
+      D(4);
      
      
 
@@ -1209,11 +1223,13 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 }
 
 
-distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact, string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_infinite, double Max_Erg, double b) {
+distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact, string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b) {
 
-  Integrate_up_to_max_energy= Int_up_to_infinite;
+  Integrate_up_to_max_energy= Int_up_to_Max;
   Emax_int=Max_Erg;
   Beta=b;
+
+  cout<<b<<" "<<Max_Erg<<" "<<Int_up_to_Max<<endl;
 
   if(MODE != "TANT" && MODE != "SANF") crash("MODE: "+MODE+" not recognized");
 
@@ -1279,11 +1295,15 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
     
   Get_Atr(Atr, E0, T, 1, tmax);
 
+  cout<<Atr<<endl;
+
   Get_Atr_std(Atr_std, E0, T, 1, tmax);
 
   Get_Atr_std_Emax(Atr_std_Emax, E0, T, 1, tmax);
 
   M2= Get_M2(m,s,E0,-1,f);
+
+  cout<<M2<<endl;
 
   M2_std= Get_M2_std_norm(m,s,E0, -1,f);
 

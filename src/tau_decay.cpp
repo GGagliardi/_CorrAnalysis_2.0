@@ -159,7 +159,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
   
   string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
   Tag_reco_type+="_Emax_"+(Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1);
-  bool Is_Spec_free_computed= (COMPUTE_SPEC_DENS_FREE==0)?"no":"yes";
+  string Is_Spec_free_computed= (COMPUTE_SPEC_DENS_FREE==0)?"no":"yes";
   string alpha_Emax_Tag= "{"+to_string_with_precision(beta,2)+","+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1))+"}";
 
 
@@ -187,6 +187,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/Br");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/corr");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/covariance");
+
+  cout<<"done!"<<endl;
 
 
 
