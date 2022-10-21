@@ -96,7 +96,7 @@ distr_t operator/(const Vfloat& B, const distr_t& A);
 class distr_t_list {
 
  public:
-  distr_t_list() {}
+  distr_t_list() {UseJack=1;}
   distr_t_list( bool sampling_type, int size) :  UseJack(sampling_type) {
     for(int i_distr=0; i_distr<size;i_distr++) distr_list.emplace_back(sampling_type);
   }

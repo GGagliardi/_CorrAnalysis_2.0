@@ -166,7 +166,7 @@ distr_t Jackknife::DoJack(function<double(const Vfloat&)> F, int Nobs,...) {
     
     for(int ijack=0;ijack < Njacks; ijack++) {
       //get out of the block mean erasing the block ijack of size bs
-
+      
 
       //initial bin time
       const double bin_start= ijack*bs;

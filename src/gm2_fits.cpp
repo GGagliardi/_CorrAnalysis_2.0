@@ -868,9 +868,10 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			cout<<"w0_m: "<<w0_m<<endl;
 			cout<<"Using prior: "<<prior_on_a2_log_and_a4<<endl;
 			if(W_type.find("eps") != string::npos) { //is epsilon-light test
+			  double a2_Ref=pow(0.0682068*fm_to_iGev,2);
 			  cout<<"EPS: "<<W_type<<endl;
-			  cout<<"D2/D1(tm): "<< (D4_tm*pow(w0_scale,2)/D_tm).ave()<< (D4_tm*pow(w0_scale,2)/D_tm).err()<<endl;
-			  cout<<"D2/D1(OS): "<< (D4_OS*pow(w0_scale,2)/D_OS).ave()<< (D4_OS*pow(w0_scale,2)/D_OS).err()<<endl;
+			  cout<<"D2/D1(tm): "<< (D4_tm*a2_Ref/pow(w0_scale,2)/D_tm).ave()<<"  "<< (D4_tm*a2_Ref/pow(w0_scale,2)/D_tm).err()<<" "<<(D_tm*a2_Ref/pow(w0_scale,2)).ave()<<" "<<(D_tm*a2_Ref/pow(w0_scale,2)).err()<<" "<<(D4_tm*pow(a2_Ref,2)/pow(w0_scale,4)).ave()<<" "<<(D4_tm*pow(a2_Ref,2)/pow(w0_scale,4)).err()<<endl;
+			  cout<<"D2/D1(OS): "<< (D4_OS*a2_Ref/pow(w0_scale,2)/D_OS).ave()<<"  "<< (D4_OS*a2_Ref/pow(w0_scale,2)/D_OS).err()<<" "<<(D_OS*a2_Ref/pow(w0_scale,2)).ave()<<" "<<(D_OS*a2_Ref/pow(w0_scale,2)).err()<<" "<<(D4_OS*pow(a2_Ref,2)/pow(w0_scale,4)).ave()<<" "<<(D4_OS*pow(a2_Ref,2)/pow(w0_scale,4)).err()<<endl;
 			}
 			cout<<"#######################################################"<<endl;
 		      }
@@ -1175,136 +1176,6 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
   //get return distribution depending on fit type
 
   int ret_counter=0;
-
-  for(int ifit=0;ifit<Nfits;ifit++) {
-
-    if(channel == "light") {
-
-      if(W_type == "W_win") {
-
-	if( a2_list[ifit] == "on" && mass_extr_list[ifit] == "on" && FSEs_list[ifit]=="comb_GS" && Ch2[ifit]/Ndof[ifit] < 1.8) {
-
-	  if(ret_counter == 0) return_distr = val_distr[ifit];
-	  else return_distr = return_distr + val_distr[ifit];
-	  ret_counter++;
-
-	}
-      
-      }
-
-      else if(W_type=="W_win_red") {
-
-
-	//do nothing
-
-      }
-
-      else if(W_type == "SD_win") {
-
-	if( a2_list[ifit] == "on" && Ch2[ifit]/Ndof[ifit] < 1.8 && ( Ndof[ifit] > 2 || ( FSEs_list[ifit]=="tm" && Ndof[ifit] > 1) || FSEs_list[ifit]=="comb_GS") && ( mass_extr_list[ifit] == "off" || a4_list[ifit] == "off" || a4_list[ifit] == "tm")   ) {
-
-	  if(ret_counter == 0) return_distr = val_distr[ifit];
-	  else return_distr = return_distr + val_distr[ifit];
-	  ret_counter++;
-	}
-
-      }
-
-      else if(W_type.substr(0,12) == "SD_win_tmins") {
-
-	if( a2_list[ifit] == "on" && a4_list[ifit] == "tm" && FSEs_list[ifit] == "off" && n_m_list[ifit].first == 0 && n_m_list[ifit].second == 0 && mass_extr_list[ifit] == "off") {
-
-	  if(ret_counter == 0) return_distr = val_distr[ifit];
-	  else return_distr = return_distr + val_distr[ifit];
-	  ret_counter++;
-	
-
-	}
-
-      }
-
-      else crash("channel: light, fit type not recognized");
-
-
-
-    }
-
-    else if (channel == "strange") {
-
-      if(W_type.substr(0,5)=="W_win") {
-
-        if(Ndof[ifit] > 2 && Ch2[ifit]/Ndof[ifit] < 1.8 && err[ifit] < 1.2 && a2_list[ifit] == "on" && mass_extr_list[ifit] == "off" && FSEs_list[ifit] == "off") {
-
-	  if(ret_counter == 0) return_distr = val_distr[ifit];
-	  else return_distr = return_distr + val_distr[ifit];
-	  ret_counter++;
-
-	}
-
-      }
-
-      else if(W_type.substr(0,6)=="SD_win") {
-
-        if(Ndof[ifit] > 2 && Ch2[ifit]/Ndof[ifit] < 1.8 && a2_list[ifit] == "on" && mass_extr_list[ifit] == "off" && FSEs_list[ifit] == "off") {
-
-	  if(ret_counter == 0) return_distr = val_distr[ifit];
-	  else return_distr = return_distr + val_distr[ifit];
-	  ret_counter++;
-
-	}
-
-      }
-
-      else crash("channel: strange, fit type not recognized");
-    
-    }
-
-    else if (channel == "charm") {
-
-      if(W_type.substr(0,5)=="W_win") {
-
-	if(Ndof[ifit] > 2 && Ch2[ifit]/Ndof[ifit] < 1.8 && a2_list[ifit] == "on" && mass_extr_list[ifit] == "off" && FSEs_list[ifit] == "off") {
-
-	  if(ret_counter == 0) return_distr = val_distr[ifit];
-	  else return_distr = return_distr + val_distr[ifit];
-	  ret_counter++;
-
-	}
-
-      }
-
-      else if(W_type.substr(0,6)=="SD_win") {
-
-	if(Ndof[ifit] > 2 && Ch2[ifit]/Ndof[ifit] < 1.8 && a2_list[ifit] == "on" && mass_extr_list[ifit] == "off" && FSEs_list[ifit] == "off") {
-
-	  if(ret_counter == 0) return_distr = val_distr[ifit];
-	  else return_distr = return_distr + val_distr[ifit];
-	  ret_counter++;
-
-	}
-
-
-      }
-
-      else crash("channel: charm, fit type not recognized");
-
-
-    }
-
-    else if (channel == "total_disco") {
-
-      if(W_type=="W_win_disco" || W_type =="SD_win_disco") {
-
-	if(a2_list[ifit]=="OS") {return_distr = val_distr[ifit]; ret_counter++;}
-      }
-
-      else crash("channel: disconnected, fit type not recognized");
-    }
-
-    else crash("Fit type not recognized");
-
-
-  }
 
   if(ret_counter != 0) return_distr = return_distr/((double)ret_counter);
 

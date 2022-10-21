@@ -77,24 +77,10 @@ void Get_spec_dens_free() {
   return;
 }
 
-
-void Compute_tau_decay_width() {
-
-  PrecFloat::setDefaultPrecision(50*ln2_10);
-
-  //generate Luscher's energy level
+void tau_decay_analysis() {
 
 
-
-  cout.precision(5);
-
-
-  if(COMPUTE_SPEC_DENS_FREE) Get_spec_dens_free();
-
-  get_sigma_list();
-
-
-  //Init LL_functions;
+   //Init LL_functions;
   //find first  zeros of the Lusher functions
   Vfloat Luscher_zeroes;
   Zeta_function_zeroes(Num_LUSCH, Luscher_zeroes);
@@ -141,6 +127,37 @@ void Compute_tau_decay_width() {
    
 
   LL_functions LL(phi_data,phi_der_data,sx_der, dx_der, sx_int, Dz, Nres, Luscher_zeroes);
+
+  Vfloat betas({0.0, 1.0, 1.99, 2.99, 3.99, 0.0, 1.0, 1.99});
+  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,1,1,1,1,0,0,0});
+
+  int N= betas.size();
+  for(int i=0; i<N;i++) {Compute_tau_decay_width(Is_Emax_Finite[i], Emax_list[i], betas[i], LL); COMPUTE_SPEC_DENS_FREE=false;}
+
+}
+
+
+void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_functions &LL) {
+
+
+  string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
+  Tag_reco_type+="_Emax_"+(Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1);
+  PrecFloat::setDefaultPrecision(prec);
+
+  //generate Luscher's energy level
+
+
+
+  cout.precision(5);
+
+
+  if(COMPUTE_SPEC_DENS_FREE) Get_spec_dens_free();
+
+  get_sigma_list();
+
+
+ 
     
   //###########################################END INTERPOLATION PHI FUNCTION AND DERIVATIVES################################
   cout<<"####Spline for phi(x) and phi'(x) successfully generated!"<<endl;
@@ -148,10 +165,11 @@ void Compute_tau_decay_width() {
   //create directories
 
   boost::filesystem::create_directory("../data/tau_decay");
-  boost::filesystem::create_directory("../data/tau_decay/light");
-  boost::filesystem::create_directory("../data/tau_decay/light/Br");
-  boost::filesystem::create_directory("../data/tau_decay/light/corr");
-  boost::filesystem::create_directory("../data/tau_decay/light/covariance");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type);
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/Br");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/corr");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/covariance");
 
 
 
@@ -420,16 +438,16 @@ void Compute_tau_decay_width() {
     distr_t_list Vk_OS_block_1_distr, V0_OS_block_1_distr, Ak_OS_block_1_distr, A0_OS_block_1_distr;
    
     //light-tm sector
-    Vk_tm_distr = Corr.corr_t(Vk_data_tm.col(0)[iens], "../data/tau_decay/light/corr/Vk_tm_"+Vk_data_tm.Tag[iens]+".dat");
-    V0_tm_distr = Corr.corr_t(V0_data_tm.col(0)[iens], "../data/tau_decay/light/corr/V0_tm_"+Vk_data_tm.Tag[iens]+".dat");
-    Ak_tm_distr = Corr.corr_t(Ak_data_tm.col(0)[iens], "../data/tau_decay/light/corr/Ak_tm_"+Vk_data_tm.Tag[iens]+".dat");
-    A0_tm_distr = Corr.corr_t(A0_data_tm.col(0)[iens], "../data/tau_decay/light/corr/A0_tm_"+Vk_data_tm.Tag[iens]+".dat");
+    Vk_tm_distr = Corr.corr_t(Vk_data_tm.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/Vk_tm_"+Vk_data_tm.Tag[iens]+".dat");
+    V0_tm_distr = Corr.corr_t(V0_data_tm.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/V0_tm_"+Vk_data_tm.Tag[iens]+".dat");
+    Ak_tm_distr = Corr.corr_t(Ak_data_tm.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/Ak_tm_"+Vk_data_tm.Tag[iens]+".dat");
+    A0_tm_distr = Corr.corr_t(A0_data_tm.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/A0_tm_"+Vk_data_tm.Tag[iens]+".dat");
 
     //light-OS sector
-    Vk_OS_distr = Corr.corr_t(Vk_data_OS.col(0)[iens], "../data/tau_decay/light/corr/Vk_OS_"+Vk_data_tm.Tag[iens]+".dat");
-    V0_OS_distr = Corr.corr_t(V0_data_OS.col(0)[iens], "../data/tau_decay/light/corr/V0_OS_"+Vk_data_tm.Tag[iens]+".dat");
-    Ak_OS_distr = Corr.corr_t(Ak_data_OS.col(0)[iens], "../data/tau_decay/light/corr/Ak_OS_"+Vk_data_tm.Tag[iens]+".dat");
-    A0_OS_distr = Corr.corr_t(A0_data_OS.col(0)[iens], "../data/tau_decay/light/corr/A0_OS_"+Vk_data_tm.Tag[iens]+".dat");
+    Vk_OS_distr = Corr.corr_t(Vk_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/Vk_OS_"+Vk_data_tm.Tag[iens]+".dat");
+    V0_OS_distr = Corr.corr_t(V0_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/V0_OS_"+Vk_data_tm.Tag[iens]+".dat");
+    Ak_OS_distr = Corr.corr_t(Ak_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/Ak_OS_"+Vk_data_tm.Tag[iens]+".dat");
+    A0_OS_distr = Corr.corr_t(A0_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/A0_OS_"+Vk_data_tm.Tag[iens]+".dat");
 
 
     //analyze data with Njacks=Nconfs
@@ -470,12 +488,12 @@ void Compute_tau_decay_width() {
 	corr_m_Vk_OS.push_back( (Vk_OS_block_1_distr.distr_list[tt]%Vk_OS_block_1_distr.distr_list[rr])/( Vk_OS_block_1_distr.err(tt)*Vk_OS_block_1_distr.err(rr)));
       }
 
-    Print_To_File({}, {TT,RR,cov_A0_tm, corr_m_A0_tm}, "../data/tau_decay/light/covariance/A0_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
-    Print_To_File({}, {TT,RR,cov_Ak_tm, corr_m_Ak_tm}, "../data/tau_decay/light/covariance/Ak_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
-    Print_To_File({}, {TT,RR,cov_Vk_tm, corr_m_Vk_tm}, "../data/tau_decay/light/covariance/Vk_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
-    Print_To_File({}, {TT,RR,cov_A0_OS, corr_m_A0_OS}, "../data/tau_decay/light/covariance/A0_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
-    Print_To_File({}, {TT,RR,cov_Ak_OS, corr_m_Ak_OS}, "../data/tau_decay/light/covariance/Ak_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
-    Print_To_File({}, {TT,RR,cov_Vk_OS, corr_m_Vk_OS}, "../data/tau_decay/light/covariance/Vk_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_A0_tm, corr_m_A0_tm}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/A0_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_Ak_tm, corr_m_Ak_tm}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Ak_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_Vk_tm, corr_m_Vk_tm}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Vk_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_A0_OS, corr_m_A0_OS}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/A0_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_Ak_OS, corr_m_Ak_OS}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Ak_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_Vk_OS, corr_m_Vk_OS}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Vk_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
 
        
 
@@ -934,9 +952,9 @@ void Compute_tau_decay_width() {
 
   //Print to File
   for(int iens=0; iens<Nens;iens++) {
-    Print_To_File({}, {sigma_list, Br_tau_tm[iens].ave(), Br_tau_tm[iens].err(), syst_per_ens_tm[iens] , Br_tau_OS[iens].ave(), Br_tau_OS[iens].err(), syst_per_ens_OS[iens]}, "../data/tau_decay/light/Br/br_"+MODE+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br[tm] Br[OS]");
-    Print_To_File({}, {sigma_list, Br_A0_tau_tm[iens].ave(), Br_A0_tau_tm[iens].err(), syst_per_ens_tm_A0[iens], Br_Aii_tau_tm[iens].ave(), Br_Aii_tau_tm[iens].err(), syst_per_ens_tm_Ak[iens], Br_Vii_tau_tm[iens].ave(), Br_Vii_tau_tm[iens].err(), syst_per_ens_tm_Vk[iens]}, "../data/tau_decay/light/Br/br_contrib_tm_"+MODE+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br_A0 Br_Aii Br_Vii");
-    Print_To_File({}, {sigma_list, Br_A0_tau_OS[iens].ave(), Br_A0_tau_OS[iens].err(), syst_per_ens_OS_A0[iens], Br_Aii_tau_OS[iens].ave(), Br_Aii_tau_OS[iens].err(), syst_per_ens_OS_Ak[iens], Br_Vii_tau_OS[iens].ave(), Br_Vii_tau_OS[iens].err(), syst_per_ens_OS_Vk[iens]}, "../data/tau_decay/light/Br/br_contrib_OS_"+MODE+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br_A0 Br_Aii Br_Vii");
+    Print_To_File({}, {sigma_list, Br_tau_tm[iens].ave(), Br_tau_tm[iens].err(), syst_per_ens_tm[iens] , Br_tau_OS[iens].ave(), Br_tau_OS[iens].err(), syst_per_ens_OS[iens]}, "../data/tau_decay/"+Tag_reco_type+"/light/Br/br_"+MODE+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br[tm] Br[OS]");
+    Print_To_File({}, {sigma_list, Br_A0_tau_tm[iens].ave(), Br_A0_tau_tm[iens].err(), syst_per_ens_tm_A0[iens], Br_Aii_tau_tm[iens].ave(), Br_Aii_tau_tm[iens].err(), syst_per_ens_tm_Ak[iens], Br_Vii_tau_tm[iens].ave(), Br_Vii_tau_tm[iens].err(), syst_per_ens_tm_Vk[iens]}, "../data/tau_decay/"+Tag_reco_type+"/light/Br/br_contrib_tm_"+MODE+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br_A0 Br_Aii Br_Vii");
+    Print_To_File({}, {sigma_list, Br_A0_tau_OS[iens].ave(), Br_A0_tau_OS[iens].err(), syst_per_ens_OS_A0[iens], Br_Aii_tau_OS[iens].ave(), Br_Aii_tau_OS[iens].err(), syst_per_ens_OS_Ak[iens], Br_Vii_tau_OS[iens].ave(), Br_Vii_tau_OS[iens].err(), syst_per_ens_OS_Vk[iens]}, "../data/tau_decay/"+Tag_reco_type+"/light/Br/br_contrib_OS_"+MODE+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br_A0 Br_Aii Br_Vii");
   }
 
   cout<<"Output per ensemble printed..."<<endl;
@@ -953,7 +971,7 @@ void Compute_tau_decay_width() {
       syst_OS.push_back( syst_per_ens_OS[iens][is]);
     }
 
-    Print_To_File(Vk_data_tm.Tag,{ Br_tau_tm_fixed_sigma.ave(), Br_tau_tm_fixed_sigma.err(), syst_tm, Br_tau_OS_fixed_sigma.ave(), Br_tau_OS_fixed_sigma.err(), syst_OS},"../data/tau_decay/light/Br/br_sigma_"+to_string_with_precision(sigma_list[is],3)+".dat", "", "#Ens tm  OS");
+    Print_To_File(Vk_data_tm.Tag,{ Br_tau_tm_fixed_sigma.ave(), Br_tau_tm_fixed_sigma.err(), syst_tm, Br_tau_OS_fixed_sigma.ave(), Br_tau_OS_fixed_sigma.err(), syst_OS},"../data/tau_decay/"+Tag_reco_type+"/light/Br/br_sigma_"+to_string_with_precision(sigma_list[is],3)+".dat", "", "#Ens tm  OS");
     
   }
 

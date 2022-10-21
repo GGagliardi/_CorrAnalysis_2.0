@@ -213,14 +213,14 @@ void MasterClass_analysis::Analysis_manager() {
 
   if(Analysis_Mode == "R_ratio") {
 
-    Compute_R_ratio();
+    R_ratio_analysis();
   }
 
   
 
   if(Analysis_Mode == "tau_decay") {
 
-    Compute_tau_decay_width();
+    tau_decay_analysis();
   }
   
   return;
