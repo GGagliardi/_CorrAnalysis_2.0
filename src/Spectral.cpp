@@ -7,7 +7,7 @@ const bool FIND_OPTIMAL_LAMBDA= true;
 const string COV_MATRIX_MODE = "";
 const int Nmoms=0;
 const int alpha=0;
-const int verbosity_lev=1;
+const int verbosity_lev=0;
 double Beta= 0.0; //1.99;
 const bool mult_estimated_from_norm0=false;
 const bool print_reco_in_stability_analysis=false;
@@ -506,23 +506,17 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
     //bisection search for given A[g]/A[0]
     while( !lambda_found_Ag_A0 ) {
 
-      D(10);
-
+     
     PrecFloat lambda_mid  =  (Nit_Ag0==0 && counter_Ag_m==0)?l_start:(l_up+l_low)/2;
-    D(11);
     PrecMatr C = Atr*(1-lambda_mid)/M2 + B*lambda_mid/(MODE=="SANF"?M2:1.0);
-    D(12);
     PrecMatr C_inv = C.inverse();
-    D(13);
     PrecVect ft_l = ft*(1-lambda_mid)/M2;
-    D(14);
     PrecVect M_tilde_n;
     PrecMatr G_n;
     vector<PrecVect> ft_l_jack;
     if(JackOnKer) for(int ijack=0;ijack<Njacks;ijack++) ft_l_jack.push_back( ft_jack[ijack]*(1-lambda_mid)/M2);
 
-    D(1);
-    
+        
    
     //Lagrangian multipliers
     
@@ -567,8 +561,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
     }
 
-    D(2);
-
+   
       PrecFloat A1_val = A1(gm);
       PrecFloat B1_val = B1(gm);
       PrecFloat W_val = (1-lambda_mid)*A1_val + lambda_mid*B1_val;
@@ -582,8 +575,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
       double syst=0.0;
 
-      D(3);
-
+   
       if(Use_guess_density) {
 
 	auto integrand_syst = [&tmin, &tmax, &T, &gm, &f, &mean, &sigma, &Estart](double E) ->double {
@@ -622,8 +614,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
       cout.precision(20);
 
-      D(4);
-     
+         
      
 
 
@@ -1229,8 +1220,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   Emax_int=Max_Erg;
   Beta=b;
 
-  cout<<b<<" "<<Max_Erg<<" "<<Int_up_to_Max<<endl;
-
+ 
   if(MODE != "TANT" && MODE != "SANF") crash("MODE: "+MODE+" not recognized");
 
   if(!Integrate_up_to_max_energy && Beta >= 2.0) crash("Cannot use Beta >=2.0 without a finite Emax");
@@ -1295,16 +1285,14 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
     
   Get_Atr(Atr, E0, T, 1, tmax);
 
-  cout<<Atr<<endl;
-
+ 
   Get_Atr_std(Atr_std, E0, T, 1, tmax);
 
   Get_Atr_std_Emax(Atr_std_Emax, E0, T, 1, tmax);
 
   M2= Get_M2(m,s,E0,-1,f);
 
-  cout<<M2<<endl;
-
+  
   M2_std= Get_M2_std_norm(m,s,E0, -1,f);
 
   M2_std_Emax= Get_M2_std_norm_Emax(m,s,E0, -1,f);

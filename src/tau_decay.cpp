@@ -895,7 +895,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     //#############################################
 
     cout<<"sigma list : {"<<sigma_list[0];
-    for(int is=1;is<(signed)sigma_list.size();is++) { cout<<","<<sigma_list[is]<<", ";}
+    for(int is=1;is<(signed)sigma_list.size();is++) { cout<<","<<sigma_list[is];}
     cout<<"}"<<endl;
     cout<<"Looping over sigma";
 
