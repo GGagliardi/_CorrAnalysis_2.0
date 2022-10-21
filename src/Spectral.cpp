@@ -7,6 +7,7 @@ const bool FIND_OPTIMAL_LAMBDA= true;
 const string COV_MATRIX_MODE = "";
 const int Nmoms=0;
 const int alpha=0;
+const int verbosity_lev=0;
 double Beta= 0.0; //1.99;
 const bool mult_estimated_from_norm0=false;
 const bool print_reco_in_stability_analysis=false;
@@ -45,8 +46,7 @@ PrecFloat aE0(const PrecFloat &E0,const PrecFloat &t, int n) {
   if(n==0) {
     if(!Integrate_up_to_max_energy)  return exp(-E0*t)/t;
     else return exp(-E0*t)/t - exp(-PrecFloat(Emax_int)*t)/t;
-  }
-  
+  }  
   else return pow(t,PrecFloat(-(n+1)))*( gamma(PrecFloat(n+1)) -PrecFloat(n)*gamma(PrecFloat(n)) + gamma_inc(PrecFloat(1+n), E0*t));
 
 
@@ -401,7 +401,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
   Print_R_at_lambda.precision(10);
     
-  //cout<<"Finding optimal lambda* ..."<<endl;
+  if(verbosity_lev) cout<<"Finding optimal lambda* ..."<<endl;
 
   int Njacks= corr.distr_list[0].distr.size();
 
@@ -480,7 +480,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
   if(Ag_ov_A0_tg > 0) Ag_ov_A0_target= PrecFloat(Ag_ov_A0_tg);
   Vfloat Ags_mult ={10.0, 1.0}; 
  
-  //cout<<"Finding lambdas corresponding to A[g]/A[0] in  "<<Ag_ov_A0_target<<" * { 1, 10}"<<endl;
+  if(verbosity_lev) cout<<"Finding lambdas corresponding to A[g]/A[0] in  "<<Ag_ov_A0_target<<" * { 1, 10}"<<endl;
 
   //###############################################################################################
   
@@ -659,7 +659,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
     counter_Ag_m++;
   }
 
-  //cout<<"A[g]/A[0] scan completed!"<<endl;
+  if(verbosity_lev) cout<<"A[g]/A[0] scan completed!"<<endl;
   cout.precision(10);
  
 
@@ -669,7 +669,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
   //#############################################################################################################################################
   //#############################################################################################################################################
   
-  //cout<<"Finding lambda from balance condition A=mult*B, mult= "<<mult<<endl;
+  if(verbosity_lev) cout<<"Finding lambda from balance condition A=mult*B, mult= "<<mult<<endl;
   l_up=1.0;
   l_low =0.0;
   
@@ -838,7 +838,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
   }
 
 
-  //cout<<"lambda_opt = "<<lambda_balance<<endl;
+  if(verbosity_lev) cout<<"lambda_opt = "<<lambda_balance<<endl;
 
   //#############################################################################################################################################
   //#############################################################################################################################################
@@ -858,7 +858,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
   double k=0.1;
   l_low =0.0;
-  //cout<<"Finding lambda from balance condition A=(k="<<to_string_with_precision(k,2)<<")*mult*B, mult= "<<mult<<endl;
+  if(verbosity_lev) cout<<"Finding lambda from balance condition A=(k="<<to_string_with_precision(k,2)<<")*mult*B, mult= "<<mult<<endl;
  
  
   //bisection search for condition A = mult*B
@@ -1018,7 +1018,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
   }
 
 
-  //cout<<"lambda_opt_10 = "<<lambda_balance_10<<endl;
+  if(verbosity_lev) cout<<"lambda_opt_10 = "<<lambda_balance_10<<endl;
 
   //#############################################################################################################################################
   //#############################################################################################################################################
@@ -1029,7 +1029,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
   k=0.01;
   l_low =0.0;
-  cout<<"Finding lambda from balance condition A=(k="<<to_string_with_precision(k,2)<<")*mult*B, mult: "<<mult<<endl;
+  if(verbosity_lev) cout<<"Finding lambda from balance condition A=(k="<<to_string_with_precision(k,2)<<")*mult*B, mult: "<<mult<<endl;
   bool lambda_balance_found_100=false;
  
  
@@ -1187,7 +1187,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
    
   }
 
-  //cout<<"lambda_opt_100 = "<<lambda_balance_100<<endl;
+  if(verbosity_lev) cout<<"lambda_opt_100 = "<<lambda_balance_100<<endl;
 
 
  
@@ -1257,25 +1257,25 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
   //get vectors ft, and matrix Atr
 
-  //cout<<"computing f(t)..."<<flush;
+  if(verbosity_lev) cout<<"computing f(t)..."<<flush;
 
   
   Get_ft(ft, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
 
-  //cout<<"done!"<<endl<<flush;
+  if(verbosity_lev) cout<<"done!"<<endl<<flush;
 
-  //cout<<"computing f(t)_std...";
+  if(verbosity_lev) cout<<"computing f(t)_std...";
   
   Get_ft_std(ft_std, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
 
-  //cout<<"done!"<<endl<<flush;
+  if(verbosity_lev) cout<<"done!"<<endl<<flush;
 
 
-  //cout<<"computing f(t)_std_Emax...";
+  if(verbosity_lev) cout<<"computing f(t)_std_Emax...";
   
   Get_ft_std_Emax(ft_std_Emax, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
 
-  cout<<"done!"<<endl<<flush;
+  if(verbosity_lev) cout<<"done!"<<endl<<flush;
     
   Get_Atr(Atr, E0, T, 1, tmax);
 

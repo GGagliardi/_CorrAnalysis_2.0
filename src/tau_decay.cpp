@@ -49,7 +49,7 @@ using namespace std;
 
 void get_sigma_list() {
 
-  bool test=true;
+  bool test=false;
   if(test) { sigma_list.push_back(0.05); return;}
 
   double s_max= 0.2;
@@ -79,11 +79,14 @@ void Get_spec_dens_free() {
 
 void tau_decay_analysis() {
 
+  
 
-   //Init LL_functions;
+
+  //Init LL_functions;
   //find first  zeros of the Lusher functions
   Vfloat Luscher_zeroes;
   Zeta_function_zeroes(Num_LUSCH, Luscher_zeroes);
+  
 
   //############################################INTERPOLATE PHI FUNCTION AND DERIVATIVES#############################
 
@@ -91,9 +94,9 @@ void tau_decay_analysis() {
   Vfloat sx_int;
   Vfloat sx_der, dx_der;
   Vfloat Dz;
-
+  
   for(int L_zero=0;L_zero<Nres+1;L_zero++) {
-    cout<<"Computing n(Lusch): "<<L_zero<<endl;
+    //cout<<"Computing n(Lusch): "<<L_zero<<endl;
     double sx, dx;
     //interpolating between the Luscher_zero[L_zero-1] and Luscher_zero[L_zero];
     if(L_zero==0) { sx_int.push_back(0.0); sx=0.0;}
@@ -123,16 +126,28 @@ void tau_decay_analysis() {
 
 
 
+  //###########################################END INTERPOLATION PHI FUNCTION AND DERIVATIVES################################
  
    
 
   LL_functions LL(phi_data,phi_der_data,sx_der, dx_der, sx_int, Dz, Nres, Luscher_zeroes);
 
+  
   Vfloat betas({0.0, 1.0, 1.99, 2.99, 3.99, 0.0, 1.0, 1.99});
   Vfloat Emax_list({4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
   vector<bool> Is_Emax_Finite({1,1,1,1,1,0,0,0});
 
   int N= betas.size();
+  cout<<"################# DETERMINATION OF BRANCHING RATIOS FOR SEMI-INCLUSIVE TAU-DECAY#################"<<endl;
+  cout<<"INVERSE LAPLACE RECONSTRUCTION CALLED FOR:"<<endl;
+  for(int i=0;i<N;i++) {
+    string alpha_Emax_Tag= "{"+to_string_with_precision(betas[i],2)+","+((Is_Emax_Finite[i]==0)?"inf":to_string_with_precision(Emax_list[i],1))+"}";
+    cout<<"{alpha,Emax} = "<<alpha_Emax_Tag<<endl;
+  }
+  cout<<"##########################################"<<endl;
+
+
+  
   for(int i=0; i<N;i++) {Compute_tau_decay_width(Is_Emax_Finite[i], Emax_list[i], betas[i], LL); COMPUTE_SPEC_DENS_FREE=false;}
 
 }
@@ -140,15 +155,18 @@ void tau_decay_analysis() {
 
 void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_functions &LL) {
 
-
+  PrecFloat::setDefaultPrecision(prec);
+  
   string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
   Tag_reco_type+="_Emax_"+(Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1);
-  PrecFloat::setDefaultPrecision(prec);
-
-  //generate Luscher's energy level
-
+  bool Is_Spec_free_computed= (COMPUTE_SPEC_DENS_FREE==0)?"no":"yes";
+  string alpha_Emax_Tag= "{"+to_string_with_precision(beta,2)+","+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1))+"}";
 
 
+  cout<<"STARTING COMPUTATION OF: {alpha,Emax} : "<<alpha_Emax_Tag<<endl;
+  cout<<"COMPUTE FREE SPECTRAL DENSITY: "<<Is_Spec_free_computed<<endl;
+  cout<<"Creating output directories...";
+  
   cout.precision(5);
 
 
@@ -159,8 +177,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
  
     
-  //###########################################END INTERPOLATION PHI FUNCTION AND DERIVATIVES################################
-  cout<<"####Spline for phi(x) and phi'(x) successfully generated!"<<endl;
+
 
   //create directories
 
@@ -366,11 +383,11 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
 
   //loop over the ensembles
-  #pragma omp parallel for
   for(int iens=0; iens<Nens;iens++) {
 
 
     //print number of gauge configurations
+    cout<<"################### Analyzing Ensemble: "<<Vk_data_tm.Tag[iens]<<endl;
     cout<<"Nconfs : "<<Vk_data_OS.Nconfs[iens]<<endl;
 
     auto SQRT = [](double x) {return sqrt(x);};
@@ -405,9 +422,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     int T = Corr.Nt;
     
 
-    cout<<"Analyzing Ensemble: "<<Vk_data_tm.Tag[iens]<<endl;
-    cout<<"NT: "<<T<<endl;
-     
+   
+       
     //get lattice spacing
     distr_t a_distr(UseJack);
     distr_t Zv(UseJack), Za(UseJack);
@@ -537,10 +553,9 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 				  return ret;
 			       };
 
-    cout<<"Printing Za Ensemble "<<Vk_data_tm.Tag[iens]<<endl;
+    cout<<"Printing Za: "<<endl;
     cout<<"ZA: (from Aii at t=0.6fm):"<< distr_t::f_of_distr(SQRT, Zv*Zv*Aii_tm_interpolated(0.6/0.197327)/Aii_OS_interpolated(0.6/0.197327)).ave()<<" +- "<<distr_t::f_of_distr(SQRT, Zv*Zv*Aii_tm_interpolated(0.6/0.197327)/Aii_OS_interpolated(0.6/0.197327)).err()<<endl;
-    cout<<"ZA: "<<L_info.Za_WI_strange<<" +- "<<L_info.Za_WI_strange_err<<endl;
-    cout<<"End printing Za Ensemble "<<Vk_data_tm.Tag[iens]<<endl;
+    cout<<"ZA (from A0P5): "<<L_info.Za_WI_strange<<" +- "<<L_info.Za_WI_strange_err<<endl;
     
  
 
@@ -687,7 +702,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		      gsl_function_pp<decltype(FS_asympt)> SYST_asympt(FS_asympt);
 		      gsl_integration_workspace * w_SYST_asympt = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G_SYST_asympt = static_cast<gsl_function*>(&SYST_asympt);
-		      gsl_integration_qags(G_SYST_asympt, E0_l*a_distr.ave(), 4.0,  0.0, 1e-3, 1000, w_SYST_asympt, &val_mod, &err_mod);
+		      gsl_integration_qags(G_SYST_asympt, E0_l*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST_asympt, &val_mod, &err_mod);
 		      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
 		      gsl_integration_workspace_free(w_SYST_asympt);
 		      systs.push_back( fabs(val_mod));
@@ -706,7 +721,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		      gsl_integration_workspace * w_SYST_infL = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G_SYST_infL = static_cast<gsl_function*>(&SYST_infL);
 		      double val_mod_infL,err_mod_infL;
-		      gsl_integration_qags(G_SYST_infL, E0_l*a_distr.ave(), 4.0, 0.0, 1e-3, 1000, w_SYST_infL, &val_mod_infL, &err_mod_infL);
+		      gsl_integration_qags(G_SYST_infL, E0_l*a_distr.ave(), 4.0, 0.0, 5e-3, 1000, w_SYST_infL, &val_mod_infL, &err_mod_infL);
 		      gsl_integration_workspace_free(w_SYST_infL);
 		      systs.push_back(fabs(val_mod_infL));
 
@@ -715,10 +730,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		      double syst_dev=0.0;
 		      for (int n=0;n<(signed)systs.size();n++) { syst_ave += systs[n]/systs.size(); syst_dev += systs[n]*systs[n];}
 
-		      printV(systs, "SYST", 0);
 		      syst_dev =  sqrt( (1.0/(systs.size()-1.0))*(syst_dev - systs.size()*syst_ave*syst_ave) );
 		      double max = *max_element(systs.begin(), systs.end());
-		      cout<<"systematic computed!!: average: "<<syst_ave<<" max: "<<max<<endl;
 		      return max;
 		   
 		    };
@@ -751,7 +764,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		      gsl_function_pp<decltype(FS_asympt)> SYST_asympt(FS_asympt);
 		      gsl_integration_workspace * w_SYST_asympt = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G_SYST_asympt = static_cast<gsl_function*>(&SYST_asympt);
-		      gsl_integration_qags(G_SYST_asympt, E0_l*a_distr.ave(), 4.0,  0.0, 1e-3, 1000, w_SYST_asympt, &val_mod, &err_mod);
+		      gsl_integration_qags(G_SYST_asympt, E0_l*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST_asympt, &val_mod, &err_mod);
 		      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
 		      gsl_integration_workspace_free(w_SYST_asympt);
 		      systs.push_back( fabs(val_mod));
@@ -770,7 +783,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		      gsl_integration_workspace * w_SYST_infL = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G_SYST_infL = static_cast<gsl_function*>(&SYST_infL);
 		      double val_mod_infL,err_mod_infL;
-		      gsl_integration_qags(G_SYST_infL, E0_l*a_distr.ave(), 4.0, 0.0, 1e-3, 1000, w_SYST_infL, &val_mod_infL, &err_mod_infL);
+		      gsl_integration_qags(G_SYST_infL, E0_l*a_distr.ave(), 4.0, 0.0, 5e-3, 1000, w_SYST_infL, &val_mod_infL, &err_mod_infL);
 		      gsl_integration_workspace_free(w_SYST_infL);
 		      systs.push_back(fabs(val_mod_infL));
 
@@ -779,10 +792,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		      double syst_dev=0.0;
 		      for (int n=0;n<(signed)systs.size();n++) { syst_ave += systs[n]/systs.size(); syst_dev += systs[n]*systs[n];}
 
-		      printV(systs, "SYST", 0);
 		      syst_dev =  sqrt( (1.0/(systs.size()-1.0))*(syst_dev - systs.size()*syst_ave*syst_ave) );
 		      double max = *max_element(systs.begin(), systs.end());
-		      cout<<"systematic computed!!: average: "<<syst_ave<<" max: "<<max<<endl;
 		      return max;
 		   
 		    };
@@ -846,11 +857,45 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       tmax_tm_1_Aii = tmax_tm_1_Vii= tmax_tm_0 = tmax_OS_0 = tmax_OS_1_Aii = tmax_OS_1_Vii= Corr.Nt/2 -1;
     }
 
-    cout<<"tmax_tm_0: "<<tmax_tm_0<<" tmax_tm_1_Aii: "<<tmax_tm_1_Aii<<" tmax_tm_1_Vii: "<<tmax_tm_1_Vii<<" tmax_OS_0: "<<tmax_OS_0<<" tmax_OS_1_Aii: "<<tmax_OS_1_Aii<<" tmax_OS_1_Vii: "<<tmax_OS_1_Vii<<endl;
   
-    cout<<"sigma : {";
-    for(int is=0;is<(signed)sigma_list.size();is++) { cout<<sigma_list[is]<<", ";}
+  
+    
+    
+
+    //############# MODEL ESTIMATE ###############
+    const auto model_estimate_V_tm = [&K1, &GS_V,  &a_distr, &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals ](double E) -> double {  return K1(E,0.0,1e-6,E0_l*a_distr.ave(), -1).get()*GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);};
+    const auto model_V_tm =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);};
+    const auto model_estimate_V_OS = [&K1, &GS_V, &a_distr, &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals ](double E) -> double {  return K1(E,0.0,1e-6,E0_l*a_distr.ave(), -1).get()*GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
+    const auto model_V_OS =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
+    const auto model_A0_tm = [&Mpi, &fpi, &resc_GeV ](double E) -> double { double s=Mpi*0.001; return resc_GeV.ave()*(fpi*fpi*Mpi/(2.0))*(1.0/sqrt( 2*M_PI*s*s))*exp( -0.5*pow((E-Mpi)/s,2));};
+    const auto model_A0_OS = [&Mpi_OS, &fpi_OS, &resc_GeV ](double E) -> double { double s=Mpi_OS*0.001; return resc_GeV.ave()*(fpi_OS*fpi_OS*Mpi_OS/(2.0))*(1.0/sqrt( 2*M_PI*s*s))*exp( -0.5*pow((E-Mpi_OS)/s,2));};
+    //compute model estimate of vector contribution to R_tau tm
+    gsl_function_pp<decltype(model_estimate_V_tm)> MOD_tm(model_estimate_V_tm);
+    gsl_integration_workspace * w_MOD_tm = gsl_integration_workspace_alloc (10000);
+    gsl_function *G_MOD_tm = static_cast<gsl_function*>(&MOD_tm);
+    double val_mod_tm,err_mod_tm;
+    gsl_integration_qagiu(G_MOD_tm, 0.0, 0.0, 1e-4, 10000, w_MOD_tm, &val_mod_tm, &err_mod_tm);
+    gsl_integration_workspace_free(w_MOD_tm);
+   
+    //compute model estimate of vector contribution to R_tau OS
+    gsl_function_pp<decltype(model_estimate_V_OS)> MOD_OS(model_estimate_V_OS);
+    gsl_integration_workspace * w_MOD_OS = gsl_integration_workspace_alloc (10000);
+    gsl_function *G_MOD_OS = static_cast<gsl_function*>(&MOD_OS);
+    double val_mod_OS,err_mod_OS;
+    gsl_integration_qagiu(G_MOD_OS, 0.0, 0.0, 1e-4, 10000, w_MOD_OS, &val_mod_OS, &err_mod_OS);
+    gsl_integration_workspace_free(w_MOD_OS);
+    cout<<"############### PRINTING MODEL ESTIMATE FOR V-A contributions ##############"<<endl;
+    cout<<"Model estimate R_t(V,tm): "<<val_mod_tm<<" +- "<<err_mod_tm<<endl;
+    cout<<"Model estimate R_t(V,OS): "<<val_mod_OS<<" +- "<<err_mod_OS<<endl;
+    cout<<"Model estimate R_t(A0, tm): "<<K0(Mpi, 0.0, 1e-6 ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi,2)*Mpi/2.0<<endl;
+    cout<<"Model estimate R_t(A0, OS): "<<K0(Mpi_OS, 0.0, 1e-6 ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi_OS,2)*Mpi_OS/2.0<<endl;
+    cout<<"############################################################################"<<endl;
+    //#############################################
+
+    cout<<"sigma list : {"<<sigma_list[0];
+    for(int is=1;is<(signed)sigma_list.size();is++) { cout<<","<<sigma_list[is]<<", ";}
     cout<<"}"<<endl;
+    cout<<"Looping over sigma";
 
     //loop over sigma
     #pragma omp parallel for
@@ -870,44 +915,15 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double syst_A0_OS, syst_Aii_OS, syst_Vii_OS;
       double mult=1e4;
       if(MODE=="SANF") mult= 1e3;
-      const auto model_estimate_V_tm = [&K1, &GS_V, &s, &a_distr, &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals ](double E) -> double {  return K1(E,0.0,s,E0_l*a_distr.ave(), -1).get()*GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);};
-      const auto model_V_tm =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);};
-      const auto model_estimate_V_OS = [&K1, &GS_V, &s, &a_distr, &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals ](double E) -> double {  return K1(E,0.0,s,E0_l*a_distr.ave(), -1).get()*GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
-      const auto model_V_OS =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
-      const auto model_A0_tm = [&Mpi, &fpi, &resc_GeV ](double E) -> double { double s=Mpi*0.001; return resc_GeV.ave()*(fpi*fpi*Mpi/(2.0))*(1.0/sqrt( 2*M_PI*s*s))*exp( -0.5*pow((E-Mpi)/s,2));};
-      const auto model_A0_OS = [&Mpi_OS, &fpi_OS, &resc_GeV ](double E) -> double { double s=Mpi_OS*0.001; return resc_GeV.ave()*(fpi_OS*fpi_OS*Mpi_OS/(2.0))*(1.0/sqrt( 2*M_PI*s*s))*exp( -0.5*pow((E-Mpi_OS)/s,2));};
-      //compute model estimate of vector contribution to R_tau tm
-      gsl_function_pp<decltype(model_estimate_V_tm)> MOD_tm(model_estimate_V_tm);
-      gsl_integration_workspace * w_MOD_tm = gsl_integration_workspace_alloc (10000);
-      gsl_function *G_MOD_tm = static_cast<gsl_function*>(&MOD_tm);
-      double val_mod_tm,err_mod_tm;
-      gsl_integration_qagiu(G_MOD_tm, 0.0, 0.0, 1e-4, 10000, w_MOD_tm, &val_mod_tm, &err_mod_tm);
-      gsl_integration_workspace_free(w_MOD_tm);
-      cout<<"Model estimate R_t(V,tm): "<<val_mod_tm<<" +- "<<err_mod_tm<<endl;
-      //compute model estimate of vector contribution to R_tau OS
-      gsl_function_pp<decltype(model_estimate_V_OS)> MOD_OS(model_estimate_V_OS);
-      gsl_integration_workspace * w_MOD_OS = gsl_integration_workspace_alloc (10000);
-      gsl_function *G_MOD_OS = static_cast<gsl_function*>(&MOD_OS);
-      double val_mod_OS,err_mod_OS;
-      gsl_integration_qagiu(G_MOD_OS, 0.0, 0.0, 1e-4, 10000, w_MOD_OS, &val_mod_OS, &err_mod_OS);
-      gsl_integration_workspace_free(w_MOD_OS);
-      cout<<"Model estimate R_t(V,OS): "<<val_mod_OS<<" +- "<<err_mod_OS<<endl;
-      cout<<"Model estimate R_t(A0, tm): "<<K0(Mpi, 0.0, s ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi,2)*Mpi/2.0<<endl;
-      cout<<"Model estimate R_t(A0, OS): "<<K0(Mpi_OS, 0.0, s ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi_OS,2)*Mpi_OS/2.0<<endl;
+     
       
 
       Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, 1e4, lVii_tm, MODE, "tm", "Vii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, f_syst_V_tm,1, model_V_tm );
-      cout<<"BrVii_tm["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lVii_tm<<" : "<<Br_sigma_Vii_tm.ave()<<" +- "<<Br_sigma_Vii_tm.err()<<endl;
       Br_sigma_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_OS, syst_Vii_OS, 1e4, lVii_OS, MODE, "OS", "Vii_light_"+Vk_data_tm.Tag[iens],-1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Vk_OS, f_syst_V_OS,1, model_V_OS );
-      cout<<"BrVii_OS["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lVii_OS<<" : "<<Br_sigma_Vii_OS.ave()<<" +- "<<Br_sigma_Vii_OS.err()<<endl;
       Br_sigma_A0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_0, prec, SM_TYPE_0,K0, -1*A0_tm, syst_A0_tm, 1e4, lA0_tm, MODE, "tm", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Zv*Zv, "tau_decay", cov_A0_tm, f_syst_A0_tm,1, model_A0_tm );
-      cout<<"BrA0_tm["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lA0_tm<<" : "<<Br_sigma_A0_tm.ave()<<" +- "<<Br_sigma_A0_tm.err()<<endl; 
       Br_sigma_A0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_0, prec, SM_TYPE_0,K0, -1*A0_OS, syst_A0_OS, 1e4, lA0_OS, MODE, "OS", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Za*Za, "tau_decay", cov_A0_OS, f_syst_A0_OS,1, model_A0_OS );
-      cout<<"BrA0_OS["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lA0_OS<<" : "<<Br_sigma_A0_OS.ave()<<" +- "<<Br_sigma_A0_OS.err()<<endl; 
       Br_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm, syst_Aii_tm, 1e4, lAii_tm, MODE, "tm", "Aii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d );
-      cout<<"BrAii_tm["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lAii_tm<<" : "<<Br_sigma_Aii_tm.ave()<<" +- "<<Br_sigma_Aii_tm.err()<<endl;
       Br_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS, syst_Aii_OS, 1e4, lAii_OS, MODE, "OS", "Aii_light_"+Vk_data_tm.Tag[iens], -1,0,resc_GeV*Za*Za, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d );
-      cout<<"BrAii_OS["<<Vk_data_tm.Tag[iens]<<"] , s= "<<s<<", l= "<<lAii_OS<<" : "<<Br_sigma_Aii_OS.ave()<<" +- "<<Br_sigma_Aii_OS.err()<<endl;
       
 
 
@@ -938,8 +954,11 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       Br_Vii_tau_OS[iens].distr_list[is] = Br_sigma_Vii_OS;
       Br_A0_tau_OS[iens].distr_list[is] = Br_sigma_A0_OS;
    
-
+      cout<<".";
     }
+    #pragma omp barrier
+    cout<<endl;
+    cout<<"Finished ensemble: "<<Vk_data_tm.Tag[iens]<<"########################"<<endl;
     
    
   }
@@ -957,7 +976,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     Print_To_File({}, {sigma_list, Br_A0_tau_OS[iens].ave(), Br_A0_tau_OS[iens].err(), syst_per_ens_OS_A0[iens], Br_Aii_tau_OS[iens].ave(), Br_Aii_tau_OS[iens].err(), syst_per_ens_OS_Ak[iens], Br_Vii_tau_OS[iens].ave(), Br_Vii_tau_OS[iens].err(), syst_per_ens_OS_Vk[iens]}, "../data/tau_decay/"+Tag_reco_type+"/light/Br/br_contrib_OS_"+MODE+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br_A0 Br_Aii Br_Vii");
   }
 
-  cout<<"Output per ensemble printed..."<<endl;
+  cout<<"Output per ensemble printed!"<<endl;
 
   //Print all ens for each sigma
   for(int is=0; is<(signed)sigma_list.size();is++) {
@@ -974,6 +993,9 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     Print_To_File(Vk_data_tm.Tag,{ Br_tau_tm_fixed_sigma.ave(), Br_tau_tm_fixed_sigma.err(), syst_tm, Br_tau_OS_fixed_sigma.ave(), Br_tau_OS_fixed_sigma.err(), syst_OS},"../data/tau_decay/"+Tag_reco_type+"/light/Br/br_sigma_"+to_string_with_precision(sigma_list[is],3)+".dat", "", "#Ens tm  OS");
     
   }
+
+  cout<<"output per sigma printed!"<<endl;
+  cout<<"Bye"<<endl;
 
 
   
