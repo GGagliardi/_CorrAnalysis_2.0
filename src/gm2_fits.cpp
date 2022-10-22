@@ -869,9 +869,12 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			cout<<"Using prior: "<<prior_on_a2_log_and_a4<<endl;
 			if(W_type.find("eps") != string::npos) { //is epsilon-light test
 			  double a2_Ref=pow(0.0682068*fm_to_iGev,2);
+			  double a3_Ref=pow(0.0682068*fm_to_iGev,3);
+			  double a4_Ref=pow(0.0682068*fm_to_iGev,4);
+			  double a_Ref= 0.0682068*fm_to_iGev;
 			  cout<<"EPS: "<<W_type<<endl;
-			  cout<<"D2/D1(tm): "<< (D4_tm*a2_Ref/pow(w0_scale,2)/D_tm).ave()<<"  "<< (D4_tm*a2_Ref/pow(w0_scale,2)/D_tm).err()<<" "<<(D_tm*a2_Ref/pow(w0_scale,2)).ave()<<" "<<(D_tm*a2_Ref/pow(w0_scale,2)).err()<<" "<<(D4_tm*pow(a2_Ref,2)/pow(w0_scale,4)).ave()<<" "<<(D4_tm*pow(a2_Ref,2)/pow(w0_scale,4)).err()<<endl;
-			  cout<<"D2/D1(OS): "<< (D4_OS*a2_Ref/pow(w0_scale,2)/D_OS).ave()<<"  "<< (D4_OS*a2_Ref/pow(w0_scale,2)/D_OS).err()<<" "<<(D_OS*a2_Ref/pow(w0_scale,2)).ave()<<" "<<(D_OS*a2_Ref/pow(w0_scale,2)).err()<<" "<<(D4_OS*pow(a2_Ref,2)/pow(w0_scale,4)).ave()<<" "<<(D4_OS*pow(a2_Ref,2)/pow(w0_scale,4)).err()<<endl;
+			  cout<<"D2/D1(tm): "<< (D4_tm*a2_Ref/pow(w0_scale,2)/D_tm).ave()<<"  "<< (D4_tm*a2_Ref/pow(w0_scale,2)/D_tm).err()<<" "<<(D_tm*a2_Ref/pow(w0_scale,2)).ave()<<" "<<(D_tm*a2_Ref/pow(w0_scale,2)).err()<<" "<<(D4_tm*a4_Ref/pow(w0_scale,4)).ave()<<" "<<(D4_tm*a4_Ref/pow(w0_scale,4)).err()<<endl;
+			  cout<<"D2/D1(OS): "<< (D4_OS*a2_Ref/pow(w0_scale,2)/D_OS).ave()<<"  "<< (D4_OS*a2_Ref/pow(w0_scale,2)/D_OS).err()<<" "<<(D_OS*a2_Ref/pow(w0_scale,2)).ave()<<" "<<(D_OS*a2_Ref/pow(w0_scale,2)).err()<<" "<<(D4_OS*a4_Ref/pow(w0_scale,4)).ave()<<" "<<(D4_OS*a4_Ref/pow(w0_scale,4)).err()<<endl;
 			}
 			cout<<"#######################################################"<<endl;
 		      }

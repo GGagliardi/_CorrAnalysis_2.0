@@ -5390,7 +5390,7 @@ void Gm2() {
     for(int t=1;t<Corr.Nt;t++) {
       if(t*a_distr.ave() < add_pert_corr_light_up_to*fm_to_inv_Gev)  free_corr_log_art[t] = -1.0*(qu*qu +qd*qd)*(1.0/(2.0*M_PI*M_PI*pow(t,5)));
 
-      if(t==0 || t*a_distr.ave() > add_pert_corr_light_up_to*fm_to_inv_Gev) { VV_free_samer[t] =0; VV_free_oppor[t] = 0;}
+      //if(t==0 || t*a_distr.ave() > add_pert_corr_light_up_to*fm_to_inv_Gev) { VV_free_samer[t] =0; VV_free_oppor[t] = 0;}
 
 
     }
@@ -5398,8 +5398,11 @@ void Gm2() {
     /*VV_free_samer= free_corr_log_art;
       VV_free_oppor= free_corr_log_art; */
 
-    distr_t_list V_light_distr_tm_corr = (1.0/(Za*Za))*(Za*Za*V_light_distr + VV_free_oppor); //free_corr_log_art
-    distr_t_list V_light_distr_OS_corr = (1.0/(Zv*Zv))*(Zv*Zv*V_light_OS_distr + VV_free_samer); //free_corr_log_art
+    auto F_exp_sigma= [](double a, double t, double NT) {return exp(-t*t*pow(a/0.4*fm_to_inv_Gev,2));};
+    distr_t_list Exp_sigma_pert = distr_t_list::f_of_distr(F_exp_sigma, a_distr, Corr.Nt);
+
+    distr_t_list V_light_distr_tm_corr = (1.0/(Za*Za))*(Za*Za*V_light_distr + Exp_sigma_pert*VV_free_oppor); //free_corr_log_art
+    distr_t_list V_light_distr_OS_corr = (1.0/(Zv*Zv))*(Zv*Zv*V_light_OS_distr + Exp_sigma_pert*VV_free_samer); //free_corr_log_art
 
 
 
@@ -5714,7 +5717,7 @@ void Gm2() {
     auto th1 = [](double ta) ->double { return 1.0/(1.0 + exp(-2.0*(ta-t1)/Delta));};
 
     //get epsilon-window
-    Get_amu_W_eps(amu_W_eps_list_tm, Za*Za*V_light_distr, a_distr);
+    Get_amu_W_eps(amu_W_eps_list_tm, Za*Za*V_light_distr_tm_corr, a_distr);
     if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96")  Get_amu_W_eps(amu_W_eps_val_list_tm, Za*Za*(V_light_m_small_distr-V_light_m_big_distr), a_distr);
     if(V_light_1.Tag[i_ens] != "cB211b.072.96") 	Get_amu_W_eps(amu_W_eps_sea_list_tm, delta_corr_sea_tm, a_distr);
     
@@ -5898,7 +5901,7 @@ void Gm2() {
 
 
     //get epsilon-window
-    Get_amu_W_eps(amu_W_eps_list_OS, Zv*Zv*V_light_OS_distr, a_distr);
+    Get_amu_W_eps(amu_W_eps_list_OS, Zv*Zv*V_light_distr_OS_corr, a_distr);
     if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") 	Get_amu_W_eps(amu_W_eps_val_list_OS, Zv*Zv*(V_light_OS_m_small_distr-V_light_OS_m_big_distr), a_distr);
     if(V_light_1.Tag[i_ens] != "cB211b.072.96")  	Get_amu_W_eps(amu_W_eps_sea_list_OS, delta_corr_sea_OS, a_distr);
     //#################################################################################################
