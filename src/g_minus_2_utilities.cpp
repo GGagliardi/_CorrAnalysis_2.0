@@ -737,6 +737,21 @@ void Generate_free_corr_data() {
   return;
 }
 
+
+void Get_spec_dens_free(const Vfloat &ams, string out_path) {
+
+ 
+  for( auto &am: ams)  {
+    Compute_free_spectral_density(3, am, 1, 0.01, out_path);
+    Compute_free_spectral_density(3, am, -1, 0.01, out_path);
+    cout<<"am: "<<am<<" computed!"<<endl;
+  }
+  
+  exit(-1);
+  return;
+}
+
+
 void Compute_free_corr(double am, int Tmax) {
 
  

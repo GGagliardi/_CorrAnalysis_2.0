@@ -63,19 +63,6 @@ void get_sigma_list() {
 
 }
 
-void Get_spec_dens_free() {
-
-  Vfloat ams({0.00072, 0.00060, 0.00054});
-
-  for( auto &am: ams)  {
-    Compute_free_spectral_density(3, am, 1, 0.01, "tau_decay");
-    Compute_free_spectral_density(3, am, -1, 0.01, "tau_decay");
-    cout<<"am: "<<am<<" computed!"<<endl;
-  }
-  
-  exit(-1);
-  return;
-}
 
 
 
@@ -175,7 +162,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
   cout.precision(5);
 
 
-  if(COMPUTE_SPEC_DENS_FREE) Get_spec_dens_free();
+  if(COMPUTE_SPEC_DENS_FREE) Get_spec_dens_free({0.00072, 0.00060, 0.00054}, "tau_decay");
 
   get_sigma_list();
 

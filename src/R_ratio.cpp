@@ -45,6 +45,7 @@ const int pert_corr_strange_on_off = 0;
 const int pert_corr_charm_on_off = 0;
 const int pert_corr_light_on_off = 0;
 bool Compute_experimental_smeared_R_ratio=false;
+bool Compute_free_spec_dens;
 const int Sim_ord=4;
 const bool Use_t_up_to_T_half=true;
 Vfloat Ergs_GeV_list;
@@ -173,7 +174,7 @@ void R_ratio_analysis() {
   cout<<"##########################################"<<endl;
 
   
-  for(int i=0; i<N;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i]); Compute_experimental_smeared_R_ratio=false;}
+  for(int i=0; i<N;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i]); Compute_experimental_smeared_R_ratio=false; Compute_free_spec_dens=true;}
 
 
 
@@ -1028,7 +1029,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
       //COMPUTE THE SMEARED R-RATIO
 
   
-    
+      #pragma omp parallel for
       for(int ip=0; ip<(signed)Ergs_GeV_list.size();ip++) {
 
 	double mean = Ergs_GeV_list[ip]*a_distr.ave();
@@ -1134,7 +1135,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	cout<<".";
 
       }
-      #pragma omp barrier
+    
 
       if(SANF_MODE_OFF) {
 	Spectral_dens_SANF_Extr= Spectral_dens_Extr; Spectral_dens_OS_SANF_Extr = Spectral_dens_OS_Extr;
@@ -1402,8 +1403,7 @@ if(!skip_light) {
 	cout<<".";
 
       }
-      #pragma omp barrier
-
+     
 
       if(SANF_MODE_OFF) {
 	Spectral_dens_SANF= Spectral_dens; Spectral_dens_OS_SANF = Spectral_dens_OS;
@@ -1855,7 +1855,7 @@ if(!skip_light) {
 
 
       }
-      #pragma omp barrier
+     
 
 
       if(SANF_MODE_OFF) {
@@ -2063,8 +2063,7 @@ if(!skip_disconnected) {
 
 	cout<<".";
       }
-      #pragma omp barrier
-
+   
       if(SANF_MODE_OFF) Spectral_dens_SANF = Spectral_dens;
 
 
@@ -2095,6 +2094,7 @@ if(!skip_disconnected) {
  //######################################################################################################################################################################
  //STORE JACKKNIFE DISTRIBUTIONS
  //light
+ if(!skip_light) {
  for(int i_ens=0; i_ens<Nens_light;i_ens++) {
    boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/light/jackknife/tm/"+V_light_1.Tag[i_ens]);
    boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/light/jackknife/OS/"+V_light_1.Tag[i_ens]);
@@ -2114,8 +2114,10 @@ if(!skip_disconnected) {
      }
    }
  }
+ }
 
  //strange
+ if(!skip_strange) {
  for(int i_ens=0; i_ens<Nens_strange;i_ens++) {
    boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/strange/jackknife/tm/"+V_strange_1_L.Tag[i_ens]);
    boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/strange/jackknife/OS/"+V_strange_1_L.Tag[i_ens]);
@@ -2135,10 +2137,12 @@ if(!skip_disconnected) {
      }
    }
  }
+ }
 
 
 
  //charm
+ if(!skip_charm) {
  for(int i_ens=0; i_ens<Nens_charm;i_ens++) {
    boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/charm/jackknife/tm/"+V_charm_1_L.Tag[i_ens]);
    boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/charm/jackknife/OS/"+V_charm_1_L.Tag[i_ens]);
@@ -2158,9 +2162,11 @@ if(!skip_disconnected) {
      }
    }
  }
+ }
 
 
  //disconected
+ if(!skip_disconnected) {
  for(int i_ens=0; i_ens<Nens_disco;i_ens++) {
    boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/disco/jackknife/"+disco_light.Tag[i_ens]);
    for(int is=0; is<(signed)sigmas.size();is++) {
@@ -2174,6 +2180,7 @@ if(!skip_disconnected) {
        Print_OS.close();
      }
    }
+ }
  }
  
  
