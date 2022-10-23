@@ -48,6 +48,7 @@ bool Compute_experimental_smeared_R_ratio=false;
 bool Compute_free_spec_dens;
 const int Sim_ord=4;
 const bool Use_t_up_to_T_half=true;
+const bool R_ratio_verbosity_lev=0;
 Vfloat Ergs_GeV_list;
 bool SANF_MODE_OFF=true;
 bool skip_light=false;
@@ -55,6 +56,9 @@ bool skip_strange=true;
 bool skip_charm=true;
 bool skip_disconnected=true;
 Vfloat cov_fake;
+int Num_LUSCH_R_ratio=17;
+int Nres_R_ratio= 15;
+int pts_spline_R_ratio=200;
 using namespace std;
 
 
@@ -173,8 +177,63 @@ void R_ratio_analysis() {
   }
   cout<<"##########################################"<<endl;
 
+
+
+
+   //Init LL_functions;
+  //find first  zeros of the Lusher functions
+  Vfloat Luscher_zeroes;
+  Zeta_function_zeroes(Num_LUSCH_R_ratio, Luscher_zeroes);
   
-  for(int i=0; i<N;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i]); Compute_experimental_smeared_R_ratio=false; Compute_free_spec_dens=true;}
+
+  //############################################INTERPOLATE PHI FUNCTION AND DERIVATIVES#############################
+  cout<<"Computing Luscher-zeros"<<flush;
+
+  VVfloat phi_data, phi_der_data;
+  Vfloat sx_int;
+  Vfloat sx_der, dx_der;
+  Vfloat Dz;
+  
+  for(int L_zero=0;L_zero<Nres_R_ratio+1;L_zero++) {
+    cout<<"."<<flush;
+    double sx, dx;
+    //interpolating between the Luscher_zero[L_zero-1] and Luscher_zero[L_zero];
+    if(L_zero==0) { sx_int.push_back(0.0); sx=0.0;}
+    else {sx=Luscher_zeroes[L_zero-1];  sx_int.push_back(sx);}
+    dx= Luscher_zeroes[L_zero];
+    phi_data.resize(L_zero+1);
+    phi_der_data.resize(L_zero+1);
+    phi_data[L_zero].push_back(L_zero==0?0.0:-M_PI/2.0);
+    //divide interval into thousand points;
+    double dz = (dx-sx)/pts_spline_R_ratio;
+    Dz.push_back(dz);
+
+
+    for(int istep=1;istep<=pts_spline_R_ratio-1;istep++) { double pt= sx+dz*istep; phi_data[L_zero].push_back( phi(sqrt(pt)));}
+
+    phi_data[L_zero].push_back(M_PI/2.0);
+    double sx_der_loc =  phi_der_for_back(sqrt(sx)+1e-14, 1);
+    double dx_der_loc =  phi_der_for_back(sqrt(dx)-1e-14, -1);
+    sx_der.push_back(sx_der_loc);
+    dx_der.push_back(dx_der_loc);
+
+    phi_der_data[L_zero].push_back(sx_der_loc);
+    for(int istep=1;istep<=pts_spline_R_ratio-1;istep++) { double pt= sx+dz*istep; phi_der_data[L_zero].push_back( phi_der(sqrt(pt)));}
+    phi_der_data[L_zero].push_back(dx_der_loc);
+    
+  }
+  cout<<"done!"<<endl;
+
+
+
+  //###########################################END INTERPOLATION PHI FUNCTION AND DERIVATIVES################################
+ 
+   
+
+  LL_functions LL(phi_data,phi_der_data,sx_der, dx_der, sx_int, Dz, Nres_R_ratio, Luscher_zeroes);
+
+  
+  for(int i=0; i<N;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i], LL); Compute_experimental_smeared_R_ratio=false; Compute_free_spec_dens=true;}
 
 
 
@@ -182,7 +241,7 @@ void R_ratio_analysis() {
 
 
 
-void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
+void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta, LL_functions &LL) {
 
   string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
   Tag_reco_type+="_Emax_"+(Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1);
@@ -192,6 +251,17 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 
   cout<<"STARTING COMPUTATION OF: {alpha,Emax} : {"<<alpha_Emax_tag<<endl;
   cout<<"COMPUTE EXPERIMENTAL SMEARED R-RATIO: "<<Tag_Exp_sm_r_ratio<<endl;
+
+
+  //COMPUTE FREE SPECTRAL DENSITY IS NEEDED
+  if(Compute_free_spec_dens) {
+    cout<<"Computing free-theory spectral density"<<endl<<flush;
+    Vfloat ams({0.00072,0.00060,0.00054,0.019,0.021,0.01600,0.01800,0.014,0.015,0.21000,0.23000,0.25000,0.17500,0.19500,0.21500,0.165,0.175});
+    Get_spec_dens_free(ams,"R_ratio");
+    cout<<"done!"<<endl<<flush;
+  }
+
+  
   cout<<"Creating output directories...";
 
   
@@ -230,7 +300,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 
   cout<<"done!"<<endl;
 
-  //LOAD GM2 DATA
+  //LOAD DATA
   GaussianMersenne GM(981832);
 
   //light
@@ -370,67 +440,67 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 
   //light 
   //#################################END CUSTOM SORTING#################
-  V_light_1.Read("../tau_decay_data/light", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs_h5);
-  V_light_OS_1.Read("../tau_decay_data/light", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs_h5);
+  V_light_1.Read("../R_ratio_data/light", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs_h5);
+  V_light_OS_1.Read("../R_ratio_data/light", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs_h5);
  
 
   //disco_light
-  disco_light.Read("../gm2_data_disc_Simone/loops/data/light_light_D", "disco", "", Sort_light_confs);
+  disco_light.Read("../R_ratio_data/disconnected/light_light", "disco", "", Sort_light_confs);
   //disco_strange
-  disco_strange.Read("../gm2_data_disc_Simone/loops/data/strange_strange", "disco", "", Sort_light_confs);
+  disco_strange.Read("../R_ratio_data/disconnected/strange_strange", "disco", "", Sort_light_confs);
   //disco_charm
-  disco_charm.Read("../gm2_data_disc_Simone/loops/data/charm_charm", "disco", "", Sort_light_confs);
+  disco_charm.Read("../R_ratio_data/disconnected/charm_charm", "disco", "", Sort_light_confs);
   //disco light-strange
-  disco_light_strange.Read("../gm2_data_disc_Simone/loops/data/light_D_strange", "disco", "", Sort_light_confs);
+  disco_light_strange.Read("../R_ratio_data/disconnected/light_strange", "disco", "", Sort_light_confs);
   //disco light-charm
-  disco_light_charm.Read("../gm2_data_disc_Simone/loops/data/light_D_charm", "disco", "", Sort_light_confs);
+  disco_light_charm.Read("../R_ratio_data/disconnected/light_charm", "disco", "", Sort_light_confs);
   //disco strange-charm
-  disco_strange_charm.Read("../gm2_data_disc_Simone/loops/data/strange_charm", "disco", "", Sort_light_confs);
+  disco_strange_charm.Read("../R_ratio_data/disconnected/strange_charm", "disco", "", Sort_light_confs);
   //#################################END READING LIGHT########################
 
   //strange
   //L
-  V_strange_1_L.Read("../gm2_data/strange_Nhits64_spectral/light", "mes_contr_2pts_ll_1", "V1V1", Sort_light_confs);
-  pt2_etaS_L.Read("../gm2_data/strange_Nhits64_spectral/light", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
-  V_strange_OS_1_L.Read("../gm2_data/strange_Nhits64_spectral/light", "mes_contr_2pts_ll_2", "V1V1", Sort_light_confs); 
-  pt2_etaS_OS_L.Read("../gm2_data/strange_Nhits64_spectral/light", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs);
+  V_strange_1_L.Read("../R_ratio_data/strange/light", "mes_contr_2pts_ll_1", "V1V1", Sort_light_confs);
+  pt2_etaS_L.Read("../R_ratio_data/strange/light", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
+  V_strange_OS_1_L.Read("../R_ratio_data/strange/light", "mes_contr_2pts_ll_2", "V1V1", Sort_light_confs); 
+  pt2_etaS_OS_L.Read("../R_ratio_data/strange/light", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs);
   //M
-  V_strange_1_M.Read("../gm2_data/strange_Nhits64_spectral/heavy", "mes_contr_2pts_ll_1", "V1V1", Sort_light_confs); 
-  pt2_etaS_M.Read("../gm2_data/strange_Nhits64_spectral/heavy", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
-  V_strange_OS_1_M.Read("../gm2_data/strange_Nhits64_spectral/heavy", "mes_contr_2pts_ll_2", "V1V1", Sort_light_confs); 
-  pt2_etaS_OS_M.Read("../gm2_data/strange_Nhits64_spectral/heavy", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs);
+  V_strange_1_M.Read("../R_ratio_data/strange/heavy", "mes_contr_2pts_ll_1", "V1V1", Sort_light_confs); 
+  pt2_etaS_M.Read("../R_ratio_data/strange/heavy", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
+  V_strange_OS_1_M.Read("../R_ratio_data/strange/heavy", "mes_contr_2pts_ll_2", "V1V1", Sort_light_confs); 
+  pt2_etaS_OS_M.Read("../R_ratio_data/strange/heavy", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs);
   //#################################END READING STRANGE########################
 
 
 
   //charm
   //L
-  V_charm_1_L.Read("../gm2_data/charm_Nhits20_spectral/light", "mes_contr_2pts_ll_1", "V1V1",  Sort_light_confs); 
-  V_charm_2_L.Read("../gm2_data/charm_Nhits20_spectral/light", "mes_contr_2pts_ll_1", "V2V2",  Sort_light_confs);
-  V_charm_3_L.Read("../gm2_data/charm_Nhits20_spectral/light", "mes_contr_2pts_ll_1", "V3V3",  Sort_light_confs);
-  pt2_etaC_L.Read( "../gm2_data/charm_Nhits20_spectral/light", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs); 
-  V_charm_OS_1_L.Read("../gm2_data/charm_Nhits20_spectral/light", "mes_contr_2pts_ll_2", "V1V1",  Sort_light_confs); 
-  V_charm_OS_2_L.Read("../gm2_data/charm_Nhits20_spectral/light", "mes_contr_2pts_ll_2", "V2V2",  Sort_light_confs);
-  V_charm_OS_3_L.Read("../gm2_data/charm_Nhits20_spectral/light", "mes_contr_2pts_ll_2", "V3V3",  Sort_light_confs);
-  pt2_etaC_OS_L.Read( "../gm2_data/charm_Nhits20_spectral/light", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs); 
+  V_charm_1_L.Read("../R_ratio_data/charm/light", "mes_contr_2pts_ll_1", "V1V1",  Sort_light_confs); 
+  V_charm_2_L.Read("../R_ratio_data/charm/light", "mes_contr_2pts_ll_1", "V2V2",  Sort_light_confs);
+  V_charm_3_L.Read("../R_ratio_data/charm/light", "mes_contr_2pts_ll_1", "V3V3",  Sort_light_confs);
+  pt2_etaC_L.Read( "../R_ratio_data/charm/light", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs); 
+  V_charm_OS_1_L.Read("../R_ratio_data/charm/light", "mes_contr_2pts_ll_2", "V1V1",  Sort_light_confs); 
+  V_charm_OS_2_L.Read("../R_ratio_data/charm/light", "mes_contr_2pts_ll_2", "V2V2",  Sort_light_confs);
+  V_charm_OS_3_L.Read("../R_ratio_data/charm/light", "mes_contr_2pts_ll_2", "V3V3",  Sort_light_confs);
+  pt2_etaC_OS_L.Read( "../R_ratio_data/charm/light", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs); 
   //M
-  V_charm_1_M.Read("../gm2_data/charm_Nhits20_spectral/medium", "mes_contr_2pts_ll_1", "V1V1",  Sort_light_confs); 
-  V_charm_2_M.Read("../gm2_data/charm_Nhits20_spectral/medium", "mes_contr_2pts_ll_1", "V2V2",  Sort_light_confs);
-  V_charm_3_M.Read("../gm2_data/charm_Nhits20_spectral/medium", "mes_contr_2pts_ll_1", "V3V3",  Sort_light_confs);
-  pt2_etaC_M.Read( "../gm2_data/charm_Nhits20_spectral/medium", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs); 
-  V_charm_OS_1_M.Read("../gm2_data/charm_Nhits20_spectral/medium", "mes_contr_2pts_ll_2", "V1V1",  Sort_light_confs); 
-  V_charm_OS_2_M.Read("../gm2_data/charm_Nhits20_spectral/medium", "mes_contr_2pts_ll_2", "V2V2",  Sort_light_confs);
-  V_charm_OS_3_M.Read("../gm2_data/charm_Nhits20_spectral/medium", "mes_contr_2pts_ll_2", "V3V3",  Sort_light_confs);
-  pt2_etaC_OS_M.Read( "../gm2_data/charm_Nhits20_spectral/medium", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs); 
+  V_charm_1_M.Read("../R_ratio_data/charm/medium", "mes_contr_2pts_ll_1", "V1V1",  Sort_light_confs); 
+  V_charm_2_M.Read("../R_ratio_data/charm/medium", "mes_contr_2pts_ll_1", "V2V2",  Sort_light_confs);
+  V_charm_3_M.Read("../R_ratio_data/charm/medium", "mes_contr_2pts_ll_1", "V3V3",  Sort_light_confs);
+  pt2_etaC_M.Read( "../R_ratio_data/charm/medium", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs); 
+  V_charm_OS_1_M.Read("../R_ratio_data/charm/medium", "mes_contr_2pts_ll_2", "V1V1",  Sort_light_confs); 
+  V_charm_OS_2_M.Read("../R_ratio_data/charm/medium", "mes_contr_2pts_ll_2", "V2V2",  Sort_light_confs);
+  V_charm_OS_3_M.Read("../R_ratio_data/charm/medium", "mes_contr_2pts_ll_2", "V3V3",  Sort_light_confs);
+  pt2_etaC_OS_M.Read( "../R_ratio_data/charm/medium", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs); 
   //H
-  V_charm_1_H.Read("../gm2_data/charm_Nhits20_spectral/heavy", "mes_contr_2pts_ll_1", "V1V1",  Sort_light_confs);
-  V_charm_2_H.Read("../gm2_data/charm_Nhits20_spectral/heavy", "mes_contr_2pts_ll_1", "V2V2",  Sort_light_confs);
-  V_charm_3_H.Read("../gm2_data/charm_Nhits20_spectral/heavy", "mes_contr_2pts_ll_1", "V3V3",  Sort_light_confs);
-  pt2_etaC_H.Read( "../gm2_data/charm_Nhits20_spectral/heavy", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs); 
-  V_charm_OS_1_H.Read("../gm2_data/charm_Nhits20_spectral/heavy", "mes_contr_2pts_ll_2", "V1V1",  Sort_light_confs); 
-  V_charm_OS_2_H.Read("../gm2_data/charm_Nhits20_spectral/heavy", "mes_contr_2pts_ll_2", "V2V2",  Sort_light_confs);
-  V_charm_OS_3_H.Read("../gm2_data/charm_Nhits20_spectral/heavy", "mes_contr_2pts_ll_2", "V3V3",  Sort_light_confs);
-  pt2_etaC_OS_H.Read( "../gm2_data/charm_Nhits20_spectral/heavy", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs); 
+  V_charm_1_H.Read("../R_ratio_data/charm/heavy", "mes_contr_2pts_ll_1", "V1V1",  Sort_light_confs);
+  V_charm_2_H.Read("../R_ratio_data/charm/heavy", "mes_contr_2pts_ll_1", "V2V2",  Sort_light_confs);
+  V_charm_3_H.Read("../R_ratio_data/charm/heavy", "mes_contr_2pts_ll_1", "V3V3",  Sort_light_confs);
+  pt2_etaC_H.Read( "../R_ratio_data/charm/heavy", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs); 
+  V_charm_OS_1_H.Read("../R_ratio_data/charm/heavy", "mes_contr_2pts_ll_2", "V1V1",  Sort_light_confs); 
+  V_charm_OS_2_H.Read("../R_ratio_data/charm/heavy", "mes_contr_2pts_ll_2", "V2V2",  Sort_light_confs);
+  V_charm_OS_3_H.Read("../R_ratio_data/charm/heavy", "mes_contr_2pts_ll_2", "V3V3",  Sort_light_confs);
+  pt2_etaC_OS_H.Read( "../R_ratio_data/charm/heavy", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs); 
 
   cout<<"done!"<<endl;
 
@@ -721,14 +791,17 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
     distr_t_list   V_charm_L_distr, V_charm_L_bin_distr;
     distr_t_list   V_charm_OS_L_distr, V_charm_OS_L_bin_distr;
     distr_t  Metac_L_distr, Metac_OS_L_distr, MV_L_distr, MV_OS_L_distr;
+    distr_t overlap_V_L_distr, overlap_OS_V_L_distr;
     //M
     distr_t_list   V_charm_M_distr, V_charm_M_bin_distr;
     distr_t_list   V_charm_OS_M_distr, V_charm_OS_M_bin_distr;
     distr_t Metac_M_distr, Metac_OS_M_distr, MV_M_distr, MV_OS_M_distr;
+    distr_t overlap_V_M_distr, overlap_OS_V_M_distr;
     //H
     distr_t_list   V_charm_H_distr, V_charm_H_bin_distr;
     distr_t_list   V_charm_OS_H_distr, V_charm_OS_H_bin_distr;
     distr_t Metac_H_distr, Metac_OS_H_distr, MV_H_distr, MV_OS_H_distr;
+    distr_t overlap_V_H_distr, overlap_OS_V_H_distr;
 
 
      
@@ -805,17 +878,23 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 
 
 
-    //get MV from vector correlator
+    //get MV and overlap from vector correlator
     Corr.Tmin= Tmin_VV; Corr.Tmax = Tmax_VV;
     //L
     MV_L_distr = Corr.Fit_distr( Corr.effective_mass_t(V_charm_L_distr, ""));
+    overlap_V_L_distr = Za*Za*Corr.Fit_distr(  Corr.residue_t(V_charm_L_distr, ""))/(2.0*MV_L_distr);
     MV_OS_L_distr = Corr.Fit_distr( Corr.effective_mass_t(V_charm_OS_L_distr, ""));
+    overlap_OS_V_L_distr = Zv*Zv*Corr.Fit_distr(  Corr.residue_t(V_charm_OS_L_distr, ""))/(2.0*MV_OS_L_distr);
     //M
     MV_M_distr = Corr.Fit_distr( Corr.effective_mass_t(V_charm_M_distr, ""));
+    overlap_V_M_distr = Za*Za*Corr.Fit_distr(  Corr.residue_t(V_charm_M_distr, ""))/(2.0*MV_M_distr);
     MV_OS_M_distr = Corr.Fit_distr( Corr.effective_mass_t(V_charm_OS_M_distr, ""));
+    overlap_OS_V_M_distr = Zv*Zv*Corr.Fit_distr(  Corr.residue_t(V_charm_OS_M_distr, ""))/(2.0*MV_OS_M_distr);
     //H
     MV_H_distr = Corr.Fit_distr( Corr.effective_mass_t(V_charm_H_distr, ""));
+    overlap_V_H_distr = Za*Za*Corr.Fit_distr(  Corr.residue_t(V_charm_H_distr, ""))/(2.0*MV_H_distr);
     MV_OS_H_distr = Corr.Fit_distr( Corr.effective_mass_t(V_charm_OS_H_distr, ""));
+    overlap_OS_V_H_distr = Zv*Zv*Corr.Fit_distr(  Corr.residue_t(V_charm_OS_H_distr, ""))/(2.0*MV_OS_H_distr);
 
 
     vector<distr_t> Metac_vec, MJpsi_vec;
@@ -871,6 +950,39 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
       }
       if(t==0 || t*a_distr.ave() > add_pert_corr_charm_up_to*fm_to_inv_Gev) { VV_free_samer_L[t] =0; VV_free_samer_M[t] = 0; VV_free_samer_H[t] =0; VV_free_oppor_L[t] = 0; VV_free_oppor_M[t]=0; VV_free_oppor_H[t]=0;}
     }
+
+
+    //####################################################################
+    //Read perturbative spectral_density for OS and tm
+    //####################################################################
+    
+    Vfloat Spec_tm_L = Read_From_File("../data/R_ratio/spec_dens_free/tm/am_"+to_string_with_precision(L_info.mc_L,5), 2, 4);
+    Vfloat Spec_OS_L = Read_From_File("../data/R_ratio/spec_dens_free/OS/am_"+to_string_with_precision(L_info.mc_L,5), 2, 4);
+    Vfloat Spec_tm_M = Read_From_File("../data/R_ratio/spec_dens_free/tm/am_"+to_string_with_precision(L_info.mc_M,5), 2, 4);
+    Vfloat Spec_OS_M = Read_From_File("../data/R_ratio/spec_dens_free/OS/am_"+to_string_with_precision(L_info.mc_M,5), 2, 4);
+    Vfloat Spec_tm_H = Read_From_File("../data/R_ratio/spec_dens_free/tm/am_"+to_string_with_precision(L_info.mc_H,5), 2, 4);
+    Vfloat Spec_OS_H = Read_From_File("../data/R_ratio/spec_dens_free/OS/am_"+to_string_with_precision(L_info.mc_H,5), 2, 4);
+    Vfloat Ergs_pert = Read_From_File("../data/R_ratio/spec_dens_free/tm/am_"+to_string_with_precision(L_info.mc_L,5), 1, 4);
+
+    cout<<"perturbative spectral density for Ensemble: "<<V_charm_1_L.Tag[i_ens]<<" READ! "<<endl;
+    
+
+    //interpolate perturbative data
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_tm_L(Spec_tm_L.begin(), Spec_tm_L.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_OS_L(Spec_OS_L.begin(), Spec_OS_L.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_tm_M(Spec_tm_M.begin(), Spec_tm_M.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_OS_M(Spec_OS_M.begin(), Spec_OS_M.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_tm_H(Spec_tm_H.begin(), Spec_tm_H.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_OS_H(Spec_OS_H.begin(), Spec_OS_H.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+
+    cout<<"Cubic spline for perturbative spectral density for Ensemble: "<<V_charm_1_L.Tag[i_ens]<<" produced! "<<endl;
+
+    auto F_free_tm_L = [&F_boost_tm_L](double E) { return F_boost_tm_L(E);};
+    auto F_free_OS_L = [&F_boost_OS_L](double E) { return F_boost_OS_L(E);};
+    auto F_free_tm_M = [&F_boost_tm_M](double E) { return F_boost_tm_M(E);};
+    auto F_free_OS_M = [&F_boost_OS_M](double E) { return F_boost_OS_M(E);};
+    auto F_free_tm_H = [&F_boost_tm_H](double E) { return F_boost_tm_H(E);};
+    auto F_free_OS_H = [&F_boost_OS_H](double E) { return F_boost_OS_H(E);};
 
 
     //multiply corr using Zv and Za
@@ -968,6 +1080,131 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
     
     //#############################################################################################################################
 
+
+
+    //#####################################    MODEL ESTIMATE FOR SYSTEMATIC ERRORS ##############################################
+
+    double resc_charm= rho_R*pow(qc,2);
+
+    //tm
+    auto model_charm_tm_L = [&a_distr,&MV_L_distr, &F_free_tm_L, &overlap_V_L_distr, &resc_charm](double E) {
+      double DE= 0.003*a_distr.ave();
+      bool Is_pert= (E > 3.1*a_distr.ave());
+      return resc_charm*(overlap_V_L_distr.ave()*((1.0/sqrt(2*M_PI*DE*DE))*exp(- pow(E-MV_L_distr.ave(),2)/(2*DE*DE))) + Is_pert*F_free_tm_L(E));
+    };
+    auto model_charm_tm_M = [&a_distr,&MV_M_distr, &F_free_tm_M, &overlap_V_M_distr, &resc_charm](double E) {
+      double DE= 0.003*a_distr.ave();
+      bool Is_pert= (E > 3.1*a_distr.ave());
+      return resc_charm*(overlap_V_M_distr.ave()*((1.0/sqrt(2*M_PI*DE*DE))*exp(- pow(E-MV_M_distr.ave(),2)/(2*DE*DE))) + Is_pert*F_free_tm_M(E));
+    };
+    auto model_charm_tm_H = [&a_distr,&MV_H_distr, &F_free_tm_H, &overlap_V_H_distr, &resc_charm](double E) {
+      double DE= 0.003*a_distr.ave();
+      bool Is_pert= (E > 3.0*a_distr.ave());
+      return resc_charm*(overlap_V_H_distr.ave()*((1.0/sqrt(2*M_PI*DE*DE))*exp(- pow(E-MV_H_distr.ave(),2)/(2*DE*DE))) + Is_pert*F_free_tm_H(E));
+    };
+    //OS
+    auto model_charm_OS_L = [&a_distr,&MV_OS_L_distr, &F_free_OS_L, &overlap_OS_V_L_distr, &resc_charm](double E) {
+      double DE= 0.003*a_distr.ave();
+      bool Is_pert= (E > 3.1*a_distr.ave());
+      return resc_charm*(overlap_OS_V_L_distr.ave()*((1.0/sqrt(2*M_PI*DE*DE))*exp(- pow(E-MV_OS_L_distr.ave(),2)/(2*DE*DE))) + Is_pert*F_free_OS_L(E));
+    };
+    auto model_charm_OS_M = [&a_distr,&MV_OS_M_distr, &F_free_OS_M, &overlap_OS_V_M_distr, &resc_charm](double E) {
+      double DE= 0.003*a_distr.ave();
+      bool Is_pert= (E > 3.1*a_distr.ave());
+      return resc_charm*(overlap_OS_V_M_distr.ave()*((1.0/sqrt(2*M_PI*DE*DE))*exp(- pow(E-MV_OS_M_distr.ave(),2)/(2*DE*DE))) + Is_pert*F_free_OS_M(E));
+    };
+    auto model_charm_OS_H = [&a_distr,&MV_OS_H_distr, &F_free_OS_H, &overlap_OS_V_H_distr, &resc_charm](double E) {
+      double DE= 0.003*a_distr.ave();
+      bool Is_pert= (E > 3.1*a_distr.ave());
+      return resc_charm*(overlap_OS_V_H_distr.ave()*((1.0/sqrt(2*M_PI*DE*DE))*exp(- pow(E-MV_OS_H_distr.ave(),2)/(2*DE*DE))) + Is_pert*F_free_OS_H(E));
+    };
+      
+      
+
+
+    //tm
+    auto f_syst_tm_L = [&overlap_V_L_distr, &MV_L_distr, &F_free_tm_L, &resc_charm, &a_distr](const function<double(double)> &F) ->double {
+      double val_mod, err_mod;
+      auto FS= [&F, &a_distr, &F_free_tm_L](double E) { if (E> 3.1*a_distr.ave()) return F_free_tm_L(E)*F(E); return 0.0;}; 
+      gsl_function_pp<decltype(FS)> SYST(FS);
+      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+      return resc_charm*fabs((val_mod + F(MV_L_distr.ave())*overlap_V_L_distr.ave()));
+      
+    };
+
+    auto f_syst_tm_M = [&overlap_V_M_distr, &MV_M_distr, &F_free_tm_M, &resc_charm, &a_distr](const function<double(double)> &F) ->double {
+      double val_mod, err_mod;
+      auto FS= [&F, &a_distr, &F_free_tm_M](double E) { if (E> 3.1*a_distr.ave()) return F_free_tm_M(E)*F(E); return 0.0;}; 
+      gsl_function_pp<decltype(FS)> SYST(FS);
+      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+      return resc_charm*fabs((val_mod + F(MV_M_distr.ave())*overlap_V_M_distr.ave()));
+      
+    };
+
+    auto f_syst_tm_H = [&overlap_V_H_distr, &MV_H_distr, &F_free_tm_H, &resc_charm, &a_distr](const function<double(double)> &F) ->double {
+      double val_mod, err_mod;
+      auto FS= [&F, &a_distr, &F_free_tm_H](double E) { if (E> 3.1*a_distr.ave()) return F_free_tm_H(E)*F(E); return 0.0;}; 
+      gsl_function_pp<decltype(FS)> SYST(FS);
+      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+      return resc_charm*fabs((val_mod + F(MV_H_distr.ave())*overlap_V_H_distr.ave()));
+      
+    };
+
+
+    //OS
+    auto f_syst_OS_L = [&overlap_OS_V_L_distr, &MV_OS_L_distr, &F_free_OS_L, &resc_charm, &a_distr](const function<double(double)> &F) ->double {
+      double val_mod, err_mod;
+      auto FS= [&F, &a_distr, &F_free_OS_L](double E) { if (E> 3.1*a_distr.ave()) return F_free_OS_L(E)*F(E); return 0.0;}; 
+      gsl_function_pp<decltype(FS)> SYST(FS);
+      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+      return resc_charm*fabs((val_mod + F(MV_OS_L_distr.ave())*overlap_OS_V_L_distr.ave()));
+      
+    };
+
+    auto f_syst_OS_M = [&overlap_OS_V_M_distr, &MV_OS_M_distr, &F_free_OS_M, &resc_charm, &a_distr](const function<double(double)> &F) ->double {
+      double val_mod, err_mod;
+      auto FS= [&F, &a_distr, &F_free_OS_M](double E) { if (E> 3.1*a_distr.ave()) return F_free_OS_M(E)*F(E); return 0.0;}; 
+      gsl_function_pp<decltype(FS)> SYST(FS);
+      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+      return resc_charm*fabs((val_mod + F(MV_OS_M_distr.ave())*overlap_OS_V_M_distr.ave()));
+      
+    };
+
+    auto f_syst_OS_H = [&overlap_OS_V_H_distr, &MV_OS_H_distr, &F_free_OS_H, &resc_charm, &a_distr](const function<double(double)> &F) ->double {
+      double val_mod, err_mod;
+      auto FS= [&F, &a_distr, &F_free_OS_H](double E) { if (E> 3.1*a_distr.ave()) return F_free_OS_H(E)*F(E); return 0.0;}; 
+      gsl_function_pp<decltype(FS)> SYST(FS);
+      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+      return resc_charm*fabs((val_mod + F(MV_OS_H_distr.ave())*overlap_OS_V_H_distr.ave()));
+      
+    };
+
+    //##############################################################################################################################
+
+
+
+
+
+    
+
   
 
     //##################################################
@@ -1025,11 +1262,13 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
       Vfloat syst_tm_SANF_H(Ergs_GeV_list.size());
       Vfloat syst_OS_SANF_H(Ergs_GeV_list.size());
 
+      vector<tuple<int, double, double, double>> thread_times_tm(Ergs_GeV_list.size()), thread_times_OS(Ergs_GeV_list.size());
+
 
       //COMPUTE THE SMEARED R-RATIO
 
   
-      #pragma omp parallel for
+      #pragma omp parallel for schedule(dynamic)
       for(int ip=0; ip<(signed)Ergs_GeV_list.size();ip++) {
 
 	double mean = Ergs_GeV_list[ip]*a_distr.ave();
@@ -1044,9 +1283,28 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	//define jackknife distribution to account for systematic error:
 	distr_t syst_L_T_tm(UseJack), syst_L_T_OS(UseJack);
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_L_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_L_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	Spectral_dens_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_L_distr, syst_tm_L[ip], mult_TANT, lambda_Estar, "TANT", "tm", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta ) + syst_L_T_tm*syst_tm_L[ip] ;
-	Spectral_dens_OS_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_L_distr, syst_OS_L[ip], mult_TANT, lambda_Estar, "TANT", "OS", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  ) + syst_L_T_OS*syst_OS_L[ip] ;
-		
+
+	auto start = chrono::system_clock::now();
+	Spectral_dens_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_L_distr, syst_tm_L[ip], mult_TANT, lambda_Estar, "TANT", "tm", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_L, f_syst_tm_L, 1, model_charm_tm_L, Is_Emax_Finite, Emax,beta ) + syst_L_T_tm*syst_tm_L[ip] ;
+	auto end = chrono::system_clock::now();
+	chrono::duration<double> elapsed_seconds = end-start;
+	double time_L_tm= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[L_tm, #thread="<<omp_get_thread_num()<<"] : "<<time_L_tm<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
+
+	start = chrono::system_clock::now();
+	Spectral_dens_OS_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_L_distr, syst_OS_L[ip], mult_TANT, lambda_Estar, "TANT", "OS", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_L, f_syst_OS_L, 1, model_charm_OS_L, Is_Emax_Finite, Emax,beta  ) + syst_L_T_OS*syst_OS_L[ip] ;
+	end = chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	double time_L_OS= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[L_OS, #thread="<<omp_get_thread_num()<<"] : "<<time_L_OS<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
 
 
 	//L (S)
@@ -1065,8 +1323,28 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	//define jackknife distribution to account for systematic error:
 	distr_t syst_M_T_tm(UseJack), syst_M_T_OS(UseJack);
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_M_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_M_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	Spectral_dens_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_M_distr, syst_tm_M[ip], mult_TANT, lambda_Estar, "TANT", "tm", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta ) + syst_tm_M[ip]*syst_M_T_tm ;
-	Spectral_dens_OS_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_M_distr, syst_OS_M[ip], mult_TANT, lambda_Estar, "TANT", "OS", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS_M[ip]*syst_M_T_OS ;
+	
+	start = chrono::system_clock::now();
+	Spectral_dens_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_M_distr, syst_tm_M[ip], mult_TANT, lambda_Estar, "TANT", "tm", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_M, f_syst_tm_M, 1, model_charm_tm_M, Is_Emax_Finite, Emax,beta ) + syst_tm_M[ip]*syst_M_T_tm ;
+	end = chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	double time_M_tm= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[M_tm, #thread="<<omp_get_thread_num()<<"] : "<<time_M_tm<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
+
+	start = chrono::system_clock::now();
+	Spectral_dens_OS_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_M_distr, syst_OS_M[ip], mult_TANT, lambda_Estar, "TANT", "OS", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_M, f_syst_OS_M, 1, model_charm_OS_M, Is_Emax_Finite, Emax,beta  )+ syst_OS_M[ip]*syst_M_T_OS ;
+	end = chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	double time_M_OS= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[M_OS, #thread="<<omp_get_thread_num()<<"] : "<<time_M_OS<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
 
 
 
@@ -1084,9 +1362,28 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	//define jackknife distribution to account for systematic error:
 	distr_t syst_H_T_tm(UseJack), syst_H_T_OS(UseJack);
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_H_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_H_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	Spectral_dens_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_H_distr, syst_tm_H[ip], mult_TANT, lambda_Estar, "TANT", "tm", "H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_H, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_H[ip]*syst_H_T_tm ;
-	Spectral_dens_OS_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_H_distr, syst_OS_H[ip], mult_TANT, lambda_Estar, "TANT", "OS","H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_H, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS_H[ip]*syst_H_T_OS ;
 
+	start = chrono::system_clock::now();
+	Spectral_dens_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_H_distr, syst_tm_H[ip], mult_TANT, lambda_Estar, "TANT", "tm", "H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_H, f_syst_tm_H, 1, model_charm_tm_H, Is_Emax_Finite, Emax,beta  )+ syst_tm_H[ip]*syst_H_T_tm ;
+	end = chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	double time_H_tm= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[H_tm, #thread="<<omp_get_thread_num()<<"] : "<<time_H_tm<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
+
+	start = chrono::system_clock::now();
+	Spectral_dens_OS_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_H_distr, syst_OS_H[ip], mult_TANT, lambda_Estar, "TANT", "OS","H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_H, f_syst_OS_H, 1, model_charm_OS_H, Is_Emax_Finite, Emax,beta  )+ syst_OS_H[ip]*syst_H_T_OS ;
+	end = chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	double time_H_OS= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[H_OS, #thread="<<omp_get_thread_num()<<"] : "<<time_H_OS<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
 
 	//H (S)
 	if(!SANF_MODE_OFF) {
@@ -1097,6 +1394,8 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	}
       
 
+	thread_times_tm[ip] = make_tuple( omp_get_thread_num(), time_L_tm, time_M_tm, time_H_tm);
+	thread_times_tm[ip] = make_tuple( omp_get_thread_num(), time_L_OS, time_M_OS, time_H_OS);
 
 	//Extrapolate to the physical charm point
 	vector<distr_t> Y_fit_tm, Y_fit_OS, Y_fit_SANF_tm, Y_fit_SANF_OS;
@@ -1132,10 +1431,18 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
      
 	//############################################################################################
 
-	cout<<".";
 
       }
-    
+
+      cout<<"done"<<endl<<flush;
+      cout<<"Summary of performances: "<<endl<<flush;
+      cout<<"Erg #thread  L    M    H"<<endl<<flush;
+      cout<<"- - - - - - - - - - - - - - - - - - - - - "<<endl<<flush;
+      for(int ip=0; ip < (signed)Ergs_GeV_list.size();ip++) {
+	cout<<Ergs_GeV_list[ip]<<","<<get<0>(thread_times_tm[ip])<<": "<<get<1>(thread_times_tm[ip])<<" s, "<<get<2>(thread_times_tm[ip])<<" s, "<<get<3>(thread_times_tm[ip])<<" s"<<endl<<flush;
+	cout<<Ergs_GeV_list[ip]<<","<<get<0>(thread_times_OS[ip])<<": "<<get<1>(thread_times_OS[ip])<<" s, "<<get<2>(thread_times_OS[ip])<<" s, "<<get<3>(thread_times_OS[ip])<<" s"<<endl<<flush;
+	cout<<"- - - - - - - - - - - - - - - - - - - - "<<endl<<flush;
+      }
 
       if(SANF_MODE_OFF) {
 	Spectral_dens_SANF_Extr= Spectral_dens_Extr; Spectral_dens_OS_SANF_Extr = Spectral_dens_OS_Extr;
@@ -1150,8 +1457,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
       RE_charm_SANF_OS[isg][i_ens] = Spectral_dens_OS_SANF_Extr;
 
       cout<<endl;
-      cout<<"done!"<<endl;
-      cout<<"printing output charm for sigma: "<<sigmas[isg]<<endl;
+      cout<<"printing output charm for sigma "<<sigmas[isg]<<" ..."<<flush;
 
       //print to file
       //L
@@ -1163,7 +1469,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
       //Extr
       Print_To_File({}, {Ergs_GeV_list,  Spectral_dens_Extr.ave(), Spectral_dens_Extr.err(), Spectral_dens_SANF_Extr.ave(), Spectral_dens_SANF_Extr.err(), Spectral_dens_OS_Extr.ave(), Spectral_dens_OS_Extr.err(), Spectral_dens_OS_SANF_Extr.ave(), Spectral_dens_OS_SANF_Extr.err() }, "../data/R_ratio/"+Tag_reco_type+"/"+charm_tag+"/Extr_"+SM_TYPE+"_"+V_charm_1_M.Tag[i_ens]+"_sigma_"+to_string_with_precision(sigmas[isg],3)+".dat", "", "#E*(GeV)   R(E)_tm[T]  R(E)_tm[S]   R(E)_OS[T]  R(E)_OS[S]");
 
-      cout<<"done!"<<endl;
+      cout<<"done!"<<endl<<flush;
 
 
     }
@@ -1214,11 +1520,17 @@ if(!skip_light) {
     //get lattice spacing
     distr_t a_distr(UseJack);
     distr_t Zv(UseJack), Za(UseJack);
-    if(V_light_1.Tag[i_ens].substr(1,1)=="A") {a_distr=a_A; Zv = ZV_A; Za = ZA_A;}
-    else if(V_light_1.Tag[i_ens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B;}
-    else if(V_light_1.Tag[i_ens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C;}
-    else if(V_light_1.Tag[i_ens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D;}
+    double Mpi=0;
+    double Mpi_err=0;
+    if(V_light_1.Tag[i_ens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; Mpi=0.05653312833; Mpi_err=1.430196186e-05;}
+    else if(V_light_1.Tag[i_ens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C; Mpi=0.04722061628; Mpi_err=3.492993579e-05;}
+    else if(V_light_1.Tag[i_ens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; Mpi=0.04062107883; Mpi_err= 2.973916243e-05;}
     else crash("lattice spacing distribution for Ens: "+V_light_1.Tag[i_ens]+" not found");
+
+
+    //jack distr for Mpi
+    distr_t Mpi_distr(UseJack);
+    for(int ij=0;ij<Njacks;ij++) Mpi_distr.distr.push_back( Mpi + GM()*Mpi_err/sqrt(Njacks-1.0));
   
     LatticeInfo L_info;
     L_info.LatInfo_new_ens(V_light_1.Tag[i_ens]);
@@ -1287,7 +1599,28 @@ if(!skip_light) {
 
 
     }
-  
+
+
+    //####################################################################
+    //Read perturbative spectral_density for OS and tm
+    //####################################################################
+    
+    Vfloat Spec_tm = Read_From_File("../data/R_ratio/spec_dens_free/tm/am_"+to_string_with_precision(L_info.ml,5), 2, 4);
+    Vfloat Spec_OS = Read_From_File("../data/R_ratio/spec_dens_free/OS/am_"+to_string_with_precision(L_info.ml,5), 2, 4);
+    Vfloat Ergs_pert = Read_From_File("../data/R_ratio/spec_dens_free/tm/am_"+to_string_with_precision(L_info.ml,5), 1, 4);
+
+    cout<<"perturbative spectral density for Ensemble: "<<V_light_1.Tag[i_ens]<<" READ! "<<endl;
+    
+
+    //interpolate perturbative data
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_tm(Spec_tm.begin(), Spec_tm.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_OS(Spec_OS.begin(), Spec_OS.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+   
+    cout<<"Cubic spline for perturbative spectral density for Ensemble: "<<V_light_1.Tag[i_ens]<<" produced! "<<endl;
+
+    auto F_free_tm = [&F_boost_tm](double E) { return F_boost_tm(E);};
+    auto F_free_OS = [&F_boost_OS](double E) { return F_boost_OS(E);};
+   
      
     //sum perturbative corrections
     V_light_distr = (V_light_distr)*(1.0 + (1.0/(Za*Za))*(1.0/V_light_distr)*VV_free_oppor);
@@ -1313,7 +1646,7 @@ if(!skip_light) {
     //#############################################################################################################################
 
     bool Found_error_less_x_percent=false;
-    double x=5;
+    double x=10;
     double tmax=1;
     while(!Found_error_less_x_percent && tmax < Corr.Nt/2) {
    
@@ -1329,14 +1662,128 @@ if(!skip_light) {
       else Found_error_less_x_percent=true;
     }
 
+    //###########################################################################################################################
+
+
+
+
+
+    //#####################################    MODEL ESTIMATE FOR SYSTEMATIC ERRORS ##############################################
+
+    distr_t Edual_tm, Edual_OS, Mrho_tm, Mrho_OS, Rdual_tm, Rdual_OS, grpp_tm, grpp_OS;
+    LL.MLLGS_fit_to_corr(Za*Za*V_light_distr, Mpi_distr, a_distr, L_info.L, Edual_tm, Rdual_tm, Mrho_tm, grpp_tm, 5, tmax, V_light_1.Tag[i_ens]+"_tm");
+    LL.MLLGS_fit_to_corr(Zv*Zv*V_light_OS_distr, Mpi_distr, a_distr, L_info.L, Edual_OS, Rdual_OS, Mrho_OS, grpp_OS, 7, tmax_OS, V_light_1.Tag[i_ens]+"_OS");
+
+    Vfloat gppis({grpp_tm.ave(), grpp_OS.ave()});
+    Vfloat Mrhos({Mrho_tm.ave(), Mrho_OS.ave()});
+    Vfloat Eduals({Edual_tm.ave(),Edual_OS.ave()});
+    Vfloat Rduals({Rdual_tm.ave(), Rdual_OS.ave()});
+    Vfloat En_tm, Ampl_tm;
+    Vfloat En_OS, Ampl_OS;
+    LL.Find_pipi_energy_lev( L_info.L  , Mrhos[0],  gppis[0], Mpi, 0.0, En_tm);
+    LL.Find_pipi_energy_lev( L_info.L  , Mrhos[1],  gppis[1], Mpi, 0.0, En_OS);
+    int N=En_tm.size();
+    for(int n=0; n<N;n++) {
+      Ampl_tm.push_back( 2.0*LL.Amplitude( En_tm[n], L_info.L, Mrhos[0], gppis[0], Mpi, 0.0)); En_tm[n] = 2.0*sqrt( En_tm[n]*En_tm[n] + Mpi*Mpi);
+      Ampl_OS.push_back( 2.0*LL.Amplitude( En_OS[n], L_info.L, Mrhos[1], gppis[1], Mpi, 0.0)); En_OS[n] = 2.0*sqrt( En_OS[n]*En_OS[n] + Mpi*Mpi);
+    }
+    VVfloat Ergs({En_tm, En_OS});
+    VVfloat Amplitudes({Ampl_tm, Ampl_OS});
+
+    double resc_light= rho_R*(pow(qu,2)+pow(qd,2));
+    
+    
+    auto GS_V = [ &a_distr, &resc_light](double E, Vfloat &En, Vfloat &Ampl, double Mrho, double Edual, double Rdual) -> double {
+		      
+		  //build a spectral density with resonances up to 1.5 GeV, from 1.5 GeV use pQCD result. two-pion peaks are smeared over a few MeV interval
+
+		  double result=0.0;
+		  double DE= 0.003*a_distr.ave();
+		     
+
+		  //pi-pi states
+		  for(int n=0; n < (signed)En.size();n++) {
+		    if(En[n]< 1.5*a_distr.ave()) {
+		      result += resc_light*Ampl[n]*(1.0/sqrt( 2.0*M_PI*DE*DE))*exp( - ( En[n] - E)*(En[n]-E)/(2.0*DE*DE));
+		    }
+		  }
+		  //pQCD part
+		  double res_pQCD=0.0;
+		 
+		  double sth= Mrho+Edual;
+		  if(E> sth) {
+		    res_pQCD += resc_light*Rdual*(1.0/(2*M_PI*M_PI))*(0.5*pow(E-sth,2) + 0.5*pow(sth,2)+ sth*(E-sth));
+		  }
+		  result += res_pQCD;
+		  
+		  
+		  return result;
+		    };
+
+
+    
+    const auto model_light_tm =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);};
+    const auto model_light_OS =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
+
+    auto f_syst_tm = [&Ergs, &Amplitudes, &Mrhos, &gppis, &Eduals, &Rduals, &GS_V, &a_distr, &Mpi, &resc_light, &LL, &F_free_tm](const function<double(double)> &F) ->double {
+
+
+		     		     
+			     		      
+		      auto FS = [ &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals, &F, &GS_V, &F_free_tm, &resc_light](double E) {
+					       double syst = F(E)*GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);
+					       if( E > 1) syst = F(E)*resc_light*F_free_tm(E);
+					       return syst;
+					     };
+		     
+		      double val_mod, err_mod;
+		      gsl_function_pp<decltype(FS)> SYST(FS);
+		      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+		      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+		      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+		      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+		      gsl_integration_workspace_free(w_SYST);
+		      return fabs(val_mod);
+					   
+	     
+		   
+		    };
+
+
+
+    auto f_syst_OS = [&Ergs, &Amplitudes, &Mrhos, &gppis, &Eduals, &Rduals, &GS_V, &a_distr, &Mpi, &resc_light, &LL, &F_free_OS](const function<double(double)> &F) ->double {
+
+		     		      
+		      auto FS = [ &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals, &F, &GS_V, &F_free_OS, &resc_light](double E) {
+					       double syst = F(E)*GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);
+					       if( E > 1) syst = F(E)*resc_light*F_free_OS(E);
+					       return syst;
+					     };
+
+		      double val_mod, err_mod;
+		      gsl_function_pp<decltype(FS)> SYST(FS);
+		      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+		      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+		      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+		      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+		      gsl_integration_workspace_free(w_SYST);
+		      return fabs(val_mod);
+					   
+			   
+		    };
+
+
+    //###########################################################################################################################
+
+
+
+
+
+
+    
     if(Use_t_up_to_T_half) tmax=tmax_OS= T/2 -1;
     
-    //#############################################################################################################################
-
-    
-
-  
-
+ 
     //##################################################
     //#############################SET GENERAL PARAMETERS######################################
     double E0= Eth*a_distr.ave(); 
@@ -1370,10 +1817,14 @@ if(!skip_light) {
       Vfloat syst_tm_SANF(Ergs_GeV_list.size());
       Vfloat syst_OS_SANF(Ergs_GeV_list.size());
 
+      vector<tuple<int,  double>> thread_times_tm(Ergs_GeV_list.size()), thread_times_OS(Ergs_GeV_list.size());
+
 
       //COMPUTE THE SMEARED R-RATIO
 
-      #pragma omp parallel for
+      cout<<"Looping over energies"<<flush;
+
+      #pragma omp parallel for schedule(dynamic)
       for(int ip=0; ip<(signed)Ergs_GeV_list.size();ip++) {
 
 	double mean = Ergs_GeV_list[ip]*a_distr.ave();
@@ -1385,8 +1836,28 @@ if(!skip_light) {
         //define jackknife distribution to account for systematic error:
 	distr_t syst_T_tm(UseJack), syst_T_OS(UseJack);
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	Spectral_dens.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, V_light_distr, syst_tm[ip], mult_TANT, lambda_Estar, "TANT", "tm", V_light_1.Tag[i_ens], -1 , 0, rho_R*Za*Za*(pow(qu,2)+pow(qd,2)), "R_ratio_light" , cov_tm, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta ) + syst_tm[ip]*syst_T_tm ;
-	Spectral_dens_OS.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS, prec, SM_TYPE+"_ov_E2",f, V_light_OS_distr, syst_OS[ip], mult_TANT, lambda_Estar, "TANT", "OS", V_light_1.Tag[i_ens], -1 , 0,  rho_R*Zv*Zv*(pow(qu,2)+pow(qd,2)), "R_ratio_light", cov_OS, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS[ip]*syst_T_OS ;
+
+	auto start= chrono::system_clock::now();
+	Spectral_dens.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, V_light_distr, syst_tm[ip], mult_TANT, lambda_Estar, "TANT", "tm", V_light_1.Tag[i_ens], -1 , 0, rho_R*Za*Za*(pow(qu,2)+pow(qd,2)), "R_ratio_light" , cov_tm, f_syst_tm, 1, model_light_tm, Is_Emax_Finite, Emax,beta ) + syst_tm[ip]*syst_T_tm ;
+	auto end = chrono::system_clock::now();
+	chrono::duration<double> elapsed_seconds = end-start;
+	double time_tm= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[tm, #thread="<<omp_get_thread_num()<<"] : "<<time_tm<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
+
+	start= chrono::system_clock::now();
+	Spectral_dens_OS.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS, prec, SM_TYPE+"_ov_E2",f, V_light_OS_distr, syst_OS[ip], mult_TANT, lambda_Estar, "TANT", "OS", V_light_1.Tag[i_ens], -1 , 0,  rho_R*Zv*Zv*(pow(qu,2)+pow(qd,2)), "R_ratio_light", cov_OS, f_syst_OS, 1, model_light_OS, Is_Emax_Finite, Emax,beta  )+ syst_OS[ip]*syst_T_OS ;
+	end = chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	double time_OS= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[OS, #thread="<<omp_get_thread_num()<<"] : "<<time_OS<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
 
 	// (S)
 	if(!SANF_MODE_OFF) {
@@ -1400,8 +1871,20 @@ if(!skip_light) {
      
 	//############################################################################################
 
-	cout<<".";
+	thread_times_tm[ip] = make_tuple( omp_get_thread_num(), time_tm);
+	thread_times_OS[ip] = make_tuple( omp_get_thread_num(), time_OS);
+	
 
+      }
+
+      cout<<"done!"<<endl;
+      cout<<"Summary of performances: "<<endl<<flush;
+      cout<<"Erg #thread  L"<<endl<<flush;
+      cout<<"- - - - - - - - - - - - - - - - - - - - - "<<endl<<flush;
+      for(int ip=0; ip < (signed)Ergs_GeV_list.size();ip++) {
+	cout<<Ergs_GeV_list[ip]<<","<<get<0>(thread_times_tm[ip])<<": "<<get<1>(thread_times_tm[ip])<<" s"<<endl<<flush;
+	cout<<Ergs_GeV_list[ip]<<","<<get<0>(thread_times_OS[ip])<<": "<<get<1>(thread_times_OS[ip])<<" s"<<endl<<flush;
+	cout<<"- - - - - - - - - - - - - - - - - - - - "<<endl<<flush;
       }
      
 
@@ -1417,9 +1900,7 @@ if(!skip_light) {
       RE_light_SANF_tm[isg][i_ens] = Spectral_dens_SANF;
       RE_light_SANF_OS[isg][i_ens] = Spectral_dens_OS_SANF;
 
-      cout<<endl;
-      cout<<"done!"<<endl;
-      cout<<"printing output light for sigma: "<<sigmas[isg]<<endl;
+      cout<<"printing output light for sigma: "<<sigmas[isg]<<" ..."<<flush;
 
       //light
       //print to file
@@ -1552,10 +2033,12 @@ if(!skip_light) {
     distr_t_list   V_strange_L_distr, V_strange_L_bin_distr;
     distr_t_list   V_strange_OS_L_distr, V_strange_OS_L_bin_distr;
     distr_t  Metas_L_distr, Metas_OS_L_distr, MV_L_distr, MV_OS_L_distr;
+    distr_t overlap_V_L_distr, overlap_OS_V_L_distr;
     //M
     distr_t_list   V_strange_M_distr, V_strange_M_bin_distr;
     distr_t_list   V_strange_OS_M_distr, V_strange_OS_M_bin_distr;
     distr_t Metas_M_distr, Metas_OS_M_distr, MV_M_distr, MV_OS_M_distr;
+    distr_t overlap_V_M_distr, overlap_OS_V_M_distr;
 
      
     
@@ -1624,13 +2107,17 @@ if(!skip_light) {
     //L
     Corr.Tmin = Tmin_VV; Corr.Tmax= Tmax_VV;
     MV_L_distr = Corr.Fit_distr( Corr.effective_mass_t(V_strange_L_distr, ""));
+    overlap_V_L_distr = Za*Za*Corr.Fit_distr(  Corr.residue_t(V_strange_L_distr, ""))/(2.0*MV_L_distr);
     Corr.Tmin = Tmin_VV_OS; Corr.Tmax = Tmax_VV_OS;
     MV_OS_L_distr = Corr.Fit_distr( Corr.effective_mass_t(V_strange_OS_L_distr, ""));
+    overlap_OS_V_L_distr = Zv*Zv*Corr.Fit_distr(  Corr.residue_t(V_strange_OS_L_distr, ""))/(2.0*MV_OS_L_distr);
     //M
     Corr.Tmin = Tmin_VV; Corr.Tmax = Tmax_VV;
     MV_M_distr = Corr.Fit_distr( Corr.effective_mass_t(V_strange_M_distr, ""));
+    overlap_V_M_distr = Za*Za*Corr.Fit_distr(  Corr.residue_t(V_strange_M_distr, ""))/(2.0*MV_M_distr);
     Corr.Tmin = Tmin_VV_OS; Corr.Tmax = Tmax_VV_OS;
     MV_OS_M_distr = Corr.Fit_distr( Corr.effective_mass_t(V_strange_OS_M_distr, ""));
+    overlap_OS_V_M_distr = Zv*Zv*Corr.Fit_distr(  Corr.residue_t(V_strange_OS_M_distr, ""))/(2.0*MV_OS_M_distr);
 
 
     vector<distr_t> Metas_vec({ Metas_L_distr/a_distr, Metas_M_distr/a_distr});
@@ -1670,6 +2157,36 @@ if(!skip_light) {
 
 
     }
+
+
+    //####################################################################
+    //Read perturbative spectral_density for OS and tm
+    //####################################################################
+    
+    Vfloat Spec_tm_L = Read_From_File("../data/R_ratio/spec_dens_free/tm/am_"+to_string_with_precision(L_info.ms_L,5), 2, 4);
+    Vfloat Spec_OS_L = Read_From_File("../data/R_ratio/spec_dens_free/OS/am_"+to_string_with_precision(L_info.ms_L,5), 2, 4);
+    Vfloat Spec_tm_M = Read_From_File("../data/R_ratio/spec_dens_free/tm/am_"+to_string_with_precision(L_info.ms_M,5), 2, 4);
+    Vfloat Spec_OS_M = Read_From_File("../data/R_ratio/spec_dens_free/OS/am_"+to_string_with_precision(L_info.ms_M,5), 2, 4);
+    Vfloat Ergs_pert = Read_From_File("../data/R_ratio/spec_dens_free/tm/am_"+to_string_with_precision(L_info.ms_L,5), 1, 4);
+
+    cout<<"perturbative spectral density for Ensemble: "<<V_strange_1_L.Tag[i_ens]<<" READ! "<<endl;
+    
+
+    //interpolate perturbative data
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_tm_L(Spec_tm_L.begin(), Spec_tm_L.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_OS_L(Spec_OS_L.begin(), Spec_OS_L.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_tm_M(Spec_tm_M.begin(), Spec_tm_M.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+    boost::math::interpolators::cardinal_cubic_b_spline<double> F_boost_OS_M(Spec_OS_M.begin(), Spec_OS_M.end(), Ergs_pert[0], 2.0*Ergs_pert[0]);
+   
+    cout<<"Cubic spline for perturbative spectral density for Ensemble: "<<V_strange_1_L.Tag[i_ens]<<" produced! "<<endl;
+
+    auto F_free_tm_L = [&F_boost_tm_L](double E) { return F_boost_tm_L(E);};
+    auto F_free_OS_L = [&F_boost_OS_L](double E) { return F_boost_OS_L(E);};
+    auto F_free_tm_M = [&F_boost_tm_M](double E) { return F_boost_tm_M(E);};
+    auto F_free_OS_M = [&F_boost_OS_M](double E) { return F_boost_OS_M(E);};
+  
+
+    
 
 
     //multiply corr using Zv and Za
@@ -1738,6 +2255,94 @@ if(!skip_light) {
     
     //#############################################################################################################################
 
+
+    //#####################################    MODEL ESTIMATE FOR SYSTEMATIC ERRORS ##############################################
+
+    double resc_strange= rho_R*pow(qs,2);
+
+    //tm
+    auto model_strange_tm_L = [&a_distr,&MV_L_distr, &F_free_tm_L, &overlap_V_L_distr, &resc_strange](double E) {
+      double DE= 0.003*a_distr.ave();
+      bool Is_pert= (E > 1.3*a_distr.ave());
+      return resc_strange*(overlap_V_L_distr.ave()*((1.0/sqrt(2*M_PI*DE*DE))*exp(- pow(E-MV_L_distr.ave(),2)/(2*DE*DE))) + Is_pert*F_free_tm_L(E));
+    };
+    auto model_strange_tm_M = [&a_distr,&MV_M_distr, &F_free_tm_M, &overlap_V_M_distr, &resc_strange](double E) {
+      double DE= 0.003*a_distr.ave();
+      bool Is_pert= (E > 1.3*a_distr.ave());
+      return resc_strange*(overlap_V_M_distr.ave()*((1.0/sqrt(2*M_PI*DE*DE))*exp(- pow(E-MV_M_distr.ave(),2)/(2*DE*DE))) + Is_pert*F_free_tm_M(E));
+    };
+    //OS
+    auto model_strange_OS_L = [&a_distr,&MV_OS_L_distr, &F_free_OS_L, &overlap_OS_V_L_distr, &resc_strange](double E) {
+      double DE= 0.003*a_distr.ave();
+      bool Is_pert= (E > 1.3*a_distr.ave());
+      return resc_strange*(overlap_OS_V_L_distr.ave()*((1.0/sqrt(2*M_PI*DE*DE))*exp(- pow(E-MV_OS_L_distr.ave(),2)/(2*DE*DE))) + Is_pert*F_free_OS_L(E));
+    };
+    auto model_strange_OS_M = [&a_distr,&MV_OS_M_distr, &F_free_OS_M, &overlap_OS_V_M_distr, &resc_strange](double E) {
+      double DE= 0.003*a_distr.ave();
+      bool Is_pert= (E > 1.3*a_distr.ave());
+      return resc_strange*(overlap_OS_V_M_distr.ave()*((1.0/sqrt(2*M_PI*DE*DE))*exp(- pow(E-MV_OS_M_distr.ave(),2)/(2*DE*DE))) + Is_pert*F_free_OS_M(E));
+    };
+  
+
+    //tm
+      auto f_syst_tm_L = [&overlap_V_L_distr, &MV_L_distr, &F_free_tm_L, &resc_strange, &a_distr](const function<double(double)> &F) ->double {
+      double val_mod, err_mod;
+      auto FS= [&F, &a_distr, &F_free_tm_L](double E) { if (E> 1.3*a_distr.ave()) return F_free_tm_L(E)*F(E); return 0.0;}; 
+      gsl_function_pp<decltype(FS)> SYST(FS);
+      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+      return resc_strange*fabs((val_mod + F(MV_L_distr.ave())*overlap_V_L_distr.ave()));
+      
+    };
+
+    auto f_syst_tm_M = [&overlap_V_M_distr, &MV_M_distr, &F_free_tm_M, &resc_strange, &a_distr](const function<double(double)> &F) ->double {
+      double val_mod, err_mod;
+      auto FS= [&F, &a_distr, &F_free_tm_M](double E) { if (E> 1.3*a_distr.ave()) return F_free_tm_M(E)*F(E); return 0.0;}; 
+      gsl_function_pp<decltype(FS)> SYST(FS);
+      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+      return resc_strange*fabs((val_mod + F(MV_M_distr.ave())*overlap_V_M_distr.ave()));
+      
+    };
+
+  
+    //OS
+    auto f_syst_OS_L = [&overlap_OS_V_L_distr, &MV_OS_L_distr, &F_free_OS_L, &resc_strange, &a_distr](const function<double(double)> &F) ->double {
+      double val_mod, err_mod;
+      auto FS= [&F, &a_distr, &F_free_OS_L](double E) { if (E> 1.3*a_distr.ave()) return F_free_OS_L(E)*F(E); return 0.0;}; 
+      gsl_function_pp<decltype(FS)> SYST(FS);
+      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+      return resc_strange*fabs((val_mod + F(MV_OS_L_distr.ave())*overlap_OS_V_L_distr.ave()));
+      
+    };
+
+    auto f_syst_OS_M = [&overlap_OS_V_M_distr, &MV_OS_M_distr, &F_free_OS_M, &resc_strange, &a_distr](const function<double(double)> &F) ->double {
+      double val_mod, err_mod;
+      auto FS= [&F, &a_distr, &F_free_OS_M](double E) { if (E> 1.3*a_distr.ave()) return F_free_OS_M(E)*F(E); return 0.0;}; 
+      gsl_function_pp<decltype(FS)> SYST(FS);
+      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
+      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
+      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
+      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+      return resc_strange*fabs((val_mod + F(MV_OS_M_distr.ave())*overlap_OS_V_M_distr.ave()));
+      
+    };
+
+ 
+    //##############################################################################################################################
+
+
+
+
+    
+
   
 
     //##################################################
@@ -1782,10 +2387,12 @@ if(!skip_light) {
       Vfloat syst_tm_SANF_M(Ergs_GeV_list.size());
       Vfloat syst_OS_SANF_M(Ergs_GeV_list.size());
 
+      vector<tuple<int,double, double>> thread_times_tm(Ergs_GeV_list.size()), thread_times_OS(Ergs_GeV_list.size());
+
 
       //COMPUTE THE SMEARED R-RATIO
 
-      #pragma omp parallel for 
+      #pragma omp parallel for schedule(dynamic) 
       for(int ip=0; ip<(signed)Ergs_GeV_list.size();ip++) {
 
 	double mean = Ergs_GeV_list[ip]*a_distr.ave();
@@ -1798,8 +2405,28 @@ if(!skip_light) {
 	//define jackknife distribution to account for systematic error:
 	distr_t syst_L_T_tm(UseJack), syst_L_T_OS(UseJack);
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_L_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_L_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	Spectral_dens_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec, SM_TYPE+"_ov_E2",f, V_strange_L_distr, syst_tm_L[ip], mult_TANT, lambda_Estar, "TANT", "tm", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), "R_ratio_strange", cov_tm_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_L[ip]*syst_L_T_tm ;
-	Spectral_dens_OS_L.distr_list[ip]=Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_L_distr, syst_OS_L[ip], mult_TANT, lambda_Estar, "TANT", "OS", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2), "R_ratio_strange", cov_OS_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS_L[ip]*syst_L_T_OS ;
+
+	auto start = chrono::system_clock::now();
+	Spectral_dens_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec, SM_TYPE+"_ov_E2",f, V_strange_L_distr, syst_tm_L[ip], mult_TANT, lambda_Estar, "TANT", "tm", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), "R_ratio_strange", cov_tm_L, f_syst_tm_L, 1, model_strange_tm_L, Is_Emax_Finite, Emax,beta  )+ syst_tm_L[ip]*syst_L_T_tm ;
+	auto end = chrono::system_clock::now();
+	chrono::duration<double> elapsed_seconds = end-start;
+	double time_L_tm= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[L_tm, #thread="<<omp_get_thread_num()<<"] : "<<time_L_tm<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
+
+	start = chrono::system_clock::now();
+	Spectral_dens_OS_L.distr_list[ip]=Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_L_distr, syst_OS_L[ip], mult_TANT, lambda_Estar, "TANT", "OS", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2), "R_ratio_strange", cov_OS_L, f_syst_OS_L, 1, model_strange_OS_L, Is_Emax_Finite, Emax,beta  )+ syst_OS_L[ip]*syst_L_T_OS ;
+	end = chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	double time_L_OS= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[L_OS, #thread="<<omp_get_thread_num()<<"] : "<<time_L_OS<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
 	
 	//L (S)
 	if(!SANF_MODE_OFF) {
@@ -1814,8 +2441,28 @@ if(!skip_light) {
 	//define jackknife distribution to account for systematic error:
 	distr_t syst_M_T_tm(UseJack), syst_M_T_OS(UseJack);
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_M_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_M_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	Spectral_dens_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec, SM_TYPE+"_ov_E2",f, V_strange_M_distr, syst_tm_M[ip], mult_TANT, lambda_Estar, "TANT", "tm", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), "R_ratio_strange", cov_tm_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_M[ip]*syst_M_T_tm ;
-	Spectral_dens_OS_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_M_distr, syst_OS_M[ip], mult_TANT, lambda_Estar, "TANT", "OS", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2) , "R_ratio_strange", cov_OS_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta )+ syst_OS_M[ip]*syst_M_T_OS ;
+
+	start= chrono::system_clock::now();
+	Spectral_dens_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec, SM_TYPE+"_ov_E2",f, V_strange_M_distr, syst_tm_M[ip], mult_TANT, lambda_Estar, "TANT", "tm", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), "R_ratio_strange", cov_tm_M, f_syst_tm_M, 1, model_strange_tm_M, Is_Emax_Finite, Emax,beta  )+ syst_tm_M[ip]*syst_M_T_tm ;
+	end = chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	double time_M_tm= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[M_tm, #thread="<<omp_get_thread_num()<<"] : "<<time_M_tm<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
+
+	start = chrono::system_clock::now();
+	Spectral_dens_OS_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_M_distr, syst_OS_M[ip], mult_TANT, lambda_Estar, "TANT", "OS", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2) , "R_ratio_strange", cov_OS_M, f_syst_OS_M, 1, model_strange_OS_M, Is_Emax_Finite, Emax,beta )+ syst_OS_M[ip]*syst_M_T_OS ;
+	end = chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	double time_M_OS= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[M_OS, #thread="<<omp_get_thread_num()<<"] : "<<time_M_OS<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
 
 	//M (S)
 	if(!SANF_MODE_OFF) {
@@ -1825,6 +2472,10 @@ if(!skip_light) {
 	  Spectral_dens_SANF_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec, SM_TYPE+"_ov_E2",f, V_strange_M_distr, syst_tm_SANF_M[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), "R_ratio_strange", cov_tm_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_M[ip]*syst_M_S_tm ;
 	  Spectral_dens_OS_SANF_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_M_distr, syst_OS_SANF_M[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2), "R_ratio_strange", cov_OS_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS_SANF_M[ip]*syst_M_S_OS ;
 	}
+
+
+	thread_times_tm[ip] = make_tuple(omp_get_thread_num(), time_L_tm, time_M_tm);
+	thread_times_OS[ip] = make_tuple(omp_get_thread_num(), time_L_OS, time_M_OS);
 
 
 	//Extrapolate to the physical strange mass
@@ -1848,12 +2499,21 @@ if(!skip_light) {
 	
 	
 
-	cout<<".";
         
 	//############################################################################################
 
 
 
+      }
+
+      cout<<"done"<<endl<<flush;
+      cout<<"Summary of performances: "<<endl<<flush;
+      cout<<"Erg #thread  L    M"<<endl<<flush;
+      cout<<"- - - - - - - - - - - - - - - - - - - - - "<<endl<<flush;
+      for(int ip=0; ip < (signed)Ergs_GeV_list.size();ip++) {
+	cout<<Ergs_GeV_list[ip]<<","<<get<0>(thread_times_tm[ip])<<": "<<get<1>(thread_times_tm[ip])<<" s, "<<get<2>(thread_times_tm[ip])<<" s"<<endl<<flush;
+	cout<<Ergs_GeV_list[ip]<<","<<get<0>(thread_times_OS[ip])<<": "<<get<1>(thread_times_OS[ip])<<" s, "<<get<2>(thread_times_OS[ip])<<" s"<<endl<<flush;
+	cout<<"- - - - - - - - - - - - - - - - - - - - "<<endl<<flush;
       }
      
 
@@ -1871,9 +2531,7 @@ if(!skip_light) {
       RE_strange_SANF_OS[isg][i_ens] = Spectral_dens_OS_SANF_Extr;
    
 
-      cout<<endl;
-      cout<<"done!"<<endl;
-      cout<<"printing output strange for sigma: "<<sigmas[isg]<<endl;
+      cout<<"printing output strange for sigma: "<<sigmas[isg]<<" ..."<<flush;
 
       //print to file
       //L
@@ -2038,10 +2696,12 @@ if(!skip_disconnected) {
       distr_t_list Spectral_dens_SANF(UseJack, Ergs_GeV_list.size());
       Vfloat syst(Ergs_GeV_list.size());
       Vfloat syst_SANF(Ergs_GeV_list.size());
+
+      vector<tuple<int,double>> thread_times_OS(Ergs_GeV_list.size());
     
     
       //COMPUTE THE SMEARED R-RATIO
-      #pragma omp parallel for
+      #pragma omp parallel for schedule(dynamic)
       for(int ip=0; ip<(signed)Ergs_GeV_list.size();ip++) {
       
 	double mean = Ergs_GeV_list[ip]*a_distr.ave();
@@ -2051,7 +2711,17 @@ if(!skip_disconnected) {
       
 
 	//(T)
+
+	auto start= chrono::system_clock::now();
 	Spectral_dens.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, disco_distr, syst[ip], mult_TANT, lambda_Estar, "TANT", "OS", disco_light.Tag[i_ens], -1 , 0, rho_R*Zv*Zv, "R_ratio_disco", cov_OS, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  ) ;
+	auto end = chrono::system_clock::now();
+	chrono::duration<double> elapsed_seconds = end-start;
+	double time_OS= elapsed_seconds.count();
+	if(R_ratio_verbosity_lev) {
+	  cout<<endl<<flush;
+	  cout<<"Elapsed time[OS, #thread="<<omp_get_thread_num()<<"] : "<<time_OS<<" s"<<endl<<flush;
+	}
+	cout<<"."<<flush;
 
 	//(S)
 	if(!SANF_MODE_OFF) {
@@ -2061,7 +2731,15 @@ if(!skip_disconnected) {
 	//############################################################################################
 
 
-	cout<<".";
+	thread_times_OS[ip] = make_tuple(omp_get_thread_num(), time_OS);
+      }
+      cout<<"done!"<<endl<<flush;
+      cout<<"Summary of performances: "<<endl<<flush;
+      cout<<"Erg #thread  L    "<<endl<<flush;
+      cout<<"- - - - - - - - - - - - - - - - - - - - - "<<endl<<flush;
+      for(int ip=0; ip < (signed)Ergs_GeV_list.size();ip++) {
+	cout<<Ergs_GeV_list[ip]<<","<<get<0>(thread_times_OS[ip])<<": "<<get<1>(thread_times_OS[ip])<<" s"<<endl<<flush;
+	cout<<"- - - - - - - - - - - - - - - - - - - - "<<endl<<flush;
       }
    
       if(SANF_MODE_OFF) Spectral_dens_SANF = Spectral_dens;
@@ -2071,15 +2749,13 @@ if(!skip_disconnected) {
       RE_disco_SANF[isg][i_ens] = Spectral_dens_SANF;
     
 
-      cout<<endl;
-      cout<<"done!"<<endl;
-      cout<<"printing output light for sigma: "<<sigmas[isg]<<endl;
+      cout<<"printing output light for sigma: "<<sigmas[isg]<<" ..."<<flush;
 
       //light
       //print to file
       Print_To_File({}, {Ergs_GeV_list, Spectral_dens.ave(), Spectral_dens.err(), Spectral_dens_SANF.ave(), Spectral_dens_SANF.err()}, "../data/R_ratio/"+Tag_reco_type+"/"+disco_tag+"/"+SM_TYPE+"_"+disco_light.Tag[i_ens]+"_sigma_"+to_string_with_precision(sigmas[isg],3)+".dat", "", "# aE* E*(GeV)   R(E)[T]  R(E)[S]");
 
-      cout<<"done!"<<endl;
+      cout<<"done!"<<endl<<flush;
 
     }
    }

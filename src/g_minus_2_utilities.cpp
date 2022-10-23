@@ -747,7 +747,6 @@ void Get_spec_dens_free(const Vfloat &ams, string out_path) {
     cout<<"am: "<<am<<" computed!"<<endl;
   }
   
-  exit(-1);
   return;
 }
 
