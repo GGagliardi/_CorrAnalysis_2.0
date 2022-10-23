@@ -21,6 +21,7 @@
 #include <bits/stdc++.h> 
 #include <boost/algorithm/string.hpp> 
 #include <ctime>
+#include <chrono>
 #include <iomanip>
 #include <math.h>
 #include <omp.h>
@@ -143,8 +144,8 @@ private:
 };
 
 
-auto fake_func= [](const function<double(double)> &A) { return 0.0;};
-auto fake_func_d = [](double x) { return 0.0;};
+const auto fake_func= [](const function<double(double)> &A) { return 0.0;};
+const auto fake_func_d = [](double x) { return 0.0;};
 void D(int k);
 long long int ipow(int a,int n);
 double fpow(double a, int n);
@@ -386,7 +387,7 @@ int degeneracy(int m);
 
 
 //define special functions
-auto g1_l = [](double x) -> double {
+const auto g1_l = [](double x) -> double {
 
 		      double n_max= 50;
 
@@ -408,7 +409,7 @@ auto g1_l = [](double x) -> double {
 		    };
 
 
-auto g2_l = [](double x) -> double {
+const auto g2_l = [](double x) -> double {
 
 		      double n_max= 50;
 
@@ -432,19 +433,19 @@ auto g2_l = [](double x) -> double {
 
 
 //CDH FORMULAE FOR Mpi and fpi
-auto Cf1 = [](double l1, double l2, double l3, double l4) { return -(7.0/9.0) + 2.0*l1 + (4.0/3.0)*l2 - 3.0*l4;};
-auto Cf2 = [](double l1, double l2, double l3, double l4) { return  112.0/9.0 - (8.0/3.0)*l1 - (32.0/3.0)*l2;};
-auto Cm1 = [](double l1, double l2, double l3, double l4) { return (-55.0/18.0) + 4.0*l1 +(8.0/3.0)*l2 - (5.0/2.0)*l3 -2.0*l4;};
-auto Cm2 = [](double l1, double l2, double l3, double l4) {return (112.0/9.0) - (8.0/3.0)*l1 -(32.0/3.0)*l2;};
-auto Sf1 = [](double s0, double s1, double s2, double s3) { return (4.0/3.0)*s0 - (13.0/6.0)*s1;};
-auto Sf2 = [](double s0, double s1, double s2, double s3) { return -(40.0/3.0)*s0 +4.0*s1 +(8.0/3.0)*s2 + (13.0/3.0)*s3;};
-auto Sm1 = [](double s0, double s1, double s2, double s3) { return s0*13.0/3.0;};
-auto Sm2 = [](double s0, double s1, double s2, double s3) { return -(40.0/3.0)*s0 - (32.0/3.0)*s1 - (26.0/3.0)*s2;};
+const auto Cf1 = [](double l1, double l2, double l3, double l4) { return -(7.0/9.0) + 2.0*l1 + (4.0/3.0)*l2 - 3.0*l4;};
+const auto Cf2 = [](double l1, double l2, double l3, double l4) { return  112.0/9.0 - (8.0/3.0)*l1 - (32.0/3.0)*l2;};
+const auto Cm1 = [](double l1, double l2, double l3, double l4) { return (-55.0/18.0) + 4.0*l1 +(8.0/3.0)*l2 - (5.0/2.0)*l3 -2.0*l4;};
+const auto Cm2 = [](double l1, double l2, double l3, double l4) {return (112.0/9.0) - (8.0/3.0)*l1 -(32.0/3.0)*l2;};
+const auto Sf1 = [](double s0, double s1, double s2, double s3) { return (4.0/3.0)*s0 - (13.0/6.0)*s1;};
+const auto Sf2 = [](double s0, double s1, double s2, double s3) { return -(40.0/3.0)*s0 +4.0*s1 +(8.0/3.0)*s2 + (13.0/3.0)*s3;};
+const auto Sm1 = [](double s0, double s1, double s2, double s3) { return s0*13.0/3.0;};
+const auto Sm2 = [](double s0, double s1, double s2, double s3) { return -(40.0/3.0)*s0 - (32.0/3.0)*s1 - (26.0/3.0)*s2;};
 
-auto Cf1_log = []() { return 2.0 + 4.0/3.0 - 3.0;};
-auto Cf2_log = []() { return -8.0/3.0 -32.0/3.0;};
-auto Cm1_log = []() { return 4.0 + 8.0/3.0 - 5.0/2.0 - 2.0;};
-auto Cm2_log = []() { return -8.0/3.0 -32.0/3.0;}; 
+const auto Cf1_log = []() { return 2.0 + 4.0/3.0 - 3.0;};
+const auto Cf2_log = []() { return -8.0/3.0 -32.0/3.0;};
+const auto Cm1_log = []() { return 4.0 + 8.0/3.0 - 5.0/2.0 - 2.0;};
+const auto Cm2_log = []() { return -8.0/3.0 -32.0/3.0;}; 
    
 
 

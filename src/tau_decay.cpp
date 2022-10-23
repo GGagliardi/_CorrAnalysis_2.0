@@ -13,7 +13,7 @@ const double qs= qd;
 const double qc= qu;
 const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
-const int prec = 256;
+const int prec = 128;
 const double Nc=3;
 const double m_mu= 0.10565837; // [ GeV ]
 const double GF= 1.1663787*1e-5; //[GeV^-2]
@@ -77,6 +77,9 @@ void Get_spec_dens_free() {
   return;
 }
 
+
+
+
 void tau_decay_analysis() {
 
   
@@ -102,7 +105,7 @@ void tau_decay_analysis() {
   
 
   //############################################INTERPOLATE PHI FUNCTION AND DERIVATIVES#############################
-  cout<<"Computing Luscher-zeros";
+  cout<<"Computing Luscher-zeros"<<flush;
 
   VVfloat phi_data, phi_der_data;
   Vfloat sx_int;
@@ -110,7 +113,7 @@ void tau_decay_analysis() {
   Vfloat Dz;
   
   for(int L_zero=0;L_zero<Nres+1;L_zero++) {
-    cout<<".";
+    cout<<"."<<flush;
     double sx, dx;
     //interpolating between the Luscher_zero[L_zero-1] and Luscher_zero[L_zero];
     if(L_zero==0) { sx_int.push_back(0.0); sx=0.0;}
@@ -158,10 +161,9 @@ void tau_decay_analysis() {
 
 void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_functions &LL) {
 
-  PrecFloat::setDefaultPrecision(prec);
-  
+   
   string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
-  Tag_reco_type+="_Emax_"+(Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1);
+  Tag_reco_type+="_Emax_"+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1));
   string Is_Spec_free_computed= (COMPUTE_SPEC_DENS_FREE==0)?"no":"yes";
   string alpha_Emax_Tag= "{"+to_string_with_precision(beta,2)+","+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1))+"}";
 
@@ -187,6 +189,15 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
   boost::filesystem::create_directory("../data/tau_decay");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type);
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/A0A0");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/AkAk");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/VkVk");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/A0A0");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/AkAk");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/VkVk");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/Br");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/corr");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/covariance");
@@ -355,10 +366,19 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
   int Nens= Vk_data_tm.size;
 
-
+  //resize vector with systematic errors
   vector<distr_t_list> Br_tau_tm, Br_tau_OS;
   vector<distr_t_list> Br_A0_tau_tm, Br_Aii_tau_tm, Br_Vii_tau_tm;
   vector<distr_t_list> Br_A0_tau_OS, Br_Aii_tau_OS, Br_Vii_tau_OS;
+  VVfloat syst_per_ens_tm_A0(Nens);
+  VVfloat syst_per_ens_tm_Ak(Nens);
+  VVfloat syst_per_ens_tm_Vk(Nens);
+  VVfloat syst_per_ens_OS_A0(Nens);
+  VVfloat syst_per_ens_OS_Ak(Nens);
+  VVfloat syst_per_ens_OS_Vk(Nens);
+  VVfloat syst_per_ens_tm(Nens);
+  VVfloat syst_per_ens_OS(Nens);
+
 
   for(int iens=0; iens<Nens; iens++) {
     Br_tau_tm.emplace_back( UseJack, sigma_list.size());
@@ -371,17 +391,22 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     Br_Aii_tau_OS.emplace_back( UseJack, sigma_list.size());
     Br_Vii_tau_OS.emplace_back( UseJack, sigma_list.size());
 
+    syst_per_ens_tm_A0.resize(sigma_list.size());
+    syst_per_ens_tm_Ak.resize(sigma_list.size());
+    syst_per_ens_tm_Vk.resize(sigma_list.size());
+    syst_per_ens_tm.resize(sigma_list.size());
+
+    syst_per_ens_OS_A0.resize(sigma_list.size());
+    syst_per_ens_OS_Ak.resize(sigma_list.size());
+    syst_per_ens_OS_Vk.resize(sigma_list.size());
+    syst_per_ens_OS.resize(sigma_list.size());
+       
+    
+
   }
 
-  //resize vector with systematic errors
-  VVfloat syst_per_ens_tm_A0(Nens);
-  VVfloat syst_per_ens_tm_Ak(Nens);
-  VVfloat syst_per_ens_tm_Vk(Nens);
-  VVfloat syst_per_ens_OS_A0(Nens);
-  VVfloat syst_per_ens_OS_Ak(Nens);
-  VVfloat syst_per_ens_OS_Vk(Nens);
-  VVfloat syst_per_ens_tm(Nens);
-  VVfloat syst_per_ens_OS(Nens);
+ 
+  
   
  
 
@@ -857,6 +882,21 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		   
 		    };
 
+    const auto K0_sharp= [&a_distr](const double &E, const double &E0) {
+
+      if( E > m_tau*a_distr.ave() || E < E0) return 0.0;
+      double X= E/(m_tau*a_distr.ave());
+      return (1/X)*pow(( 1 -pow(X,2)),2);
+    };
+
+    const auto K1_sharp= [&a_distr](const double &E, const double &E0) {
+
+      if( E > m_tau*a_distr.ave() || E < E0) return 0.0;
+      double X= E/(m_tau*a_distr.ave());
+      return  (1 + 2*pow(X,2))*(1/(X))*pow(( 1 -pow(X,2)),2); 
+    };
+    
+
 
     if(Use_t_up_to_T_half) {
       tmax_tm_1_Aii = tmax_tm_1_Vii= tmax_tm_0 = tmax_OS_0 = tmax_OS_1_Aii = tmax_OS_1_Vii= Corr.Nt/2 -1;
@@ -868,9 +908,9 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     
 
     //############# MODEL ESTIMATE ###############
-    const auto model_estimate_V_tm = [&K1, &GS_V,  &a_distr, &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals ](double E) -> double {  return K1(E,0.0,1e-6,E0_l*a_distr.ave(), -1).get()*GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);};
+    const auto model_estimate_V_tm = [&K1_sharp, &GS_V,  &a_distr, &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals ](double E) -> double {  return K1_sharp(E,E0_l*a_distr.ave())*GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);};
     const auto model_V_tm =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);};
-    const auto model_estimate_V_OS = [&K1, &GS_V, &a_distr, &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals ](double E) -> double {  return K1(E,0.0,1e-6,E0_l*a_distr.ave(), -1).get()*GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
+    const auto model_estimate_V_OS = [&K1_sharp, &GS_V, &a_distr, &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals ](double E) -> double {  return K1_sharp(E,E0_l*a_distr.ave())*GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
     const auto model_V_OS =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
     const auto model_A0_tm = [&Mpi, &fpi, &resc_GeV ](double E) -> double { double s=Mpi*0.001; return resc_GeV.ave()*(fpi*fpi*Mpi/(2.0))*(1.0/sqrt( 2*M_PI*s*s))*exp( -0.5*pow((E-Mpi)/s,2));};
     const auto model_A0_OS = [&Mpi_OS, &fpi_OS, &resc_GeV ](double E) -> double { double s=Mpi_OS*0.001; return resc_GeV.ave()*(fpi_OS*fpi_OS*Mpi_OS/(2.0))*(1.0/sqrt( 2*M_PI*s*s))*exp( -0.5*pow((E-Mpi_OS)/s,2));};
@@ -892,27 +932,29 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     cout<<"############### PRINTING MODEL ESTIMATE FOR V-A contributions ##############"<<endl;
     cout<<"Model estimate R_t(V,tm): "<<val_mod_tm<<" +- "<<err_mod_tm<<endl;
     cout<<"Model estimate R_t(V,OS): "<<val_mod_OS<<" +- "<<err_mod_OS<<endl;
-    cout<<"Model estimate R_t(A0, tm): "<<K0(Mpi, 0.0, 1e-6 ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi,2)*Mpi/2.0<<endl;
-    cout<<"Model estimate R_t(A0, OS): "<<K0(Mpi_OS, 0.0, 1e-6 ,E0_l*a_distr.ave(),-1).get()*resc_GeV.ave()*pow(fpi_OS,2)*Mpi_OS/2.0<<endl;
+    cout<<"Model estimate R_t(A0, tm): "<<K0_sharp(Mpi,E0_l*a_distr.ave())*resc_GeV.ave()*pow(fpi,2)*Mpi/2.0<<endl;
+    cout<<"Model estimate R_t(A0, OS): "<<K0_sharp(Mpi_OS, E0_l*a_distr.ave())*resc_GeV.ave()*pow(fpi_OS,2)*Mpi_OS/2.0<<endl;
     cout<<"############################################################################"<<endl;
     //#############################################
 
     cout<<"sigma list : {"<<sigma_list[0];
-    for(int is=1;is<(signed)sigma_list.size();is++) { cout<<","<<sigma_list[is];}
-    cout<<"}"<<endl;
-    cout<<"Looping over sigma";
+    for(int is=1;is<(signed)sigma_list.size();is++) { cout<<","<<sigma_list[is]<<flush;}
+    cout<<"}"<<endl<<flush;
+    cout<<"Looping over sigma"<<flush;
 
     //loop over sigma
     #pragma omp parallel for
     for(int is=0; is < (signed)sigma_list.size(); is++) {
 
+      double s= sigma_list[0];
+      
       distr_t Br_sigma_A0_tm;
       distr_t Br_sigma_Aii_tm;
       distr_t Br_sigma_Vii_tm;
       distr_t Br_sigma_A0_OS;
       distr_t Br_sigma_Aii_OS;
       distr_t Br_sigma_Vii_OS;
-      double s= sigma_list[is];
+   
       //int tmax= T/2 -4;
       double lA0_tm, lAii_tm, lVii_tm;
       double lA0_OS, lAii_OS, lVii_OS;
@@ -920,35 +962,34 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double syst_A0_OS, syst_Aii_OS, syst_Vii_OS;
       double mult=1e4;
       if(MODE=="SANF") mult= 1e3;
-
+      // auto start = chrono::system_clock::now();
       Br_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm, syst_Aii_tm, 1e4, lAii_tm, MODE, "tm", "Aii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      cout<<".";
+      cout<<"."<<flush;
+      //auto end = chrono::system_clock::now();
+      //chrono::duration<double> elapsed_seconds = end-start;
+      //cout<<"elapsed_time thread["<<omp_get_thread_num()<<"] = "<<elapsed_seconds.count()<<" s"<<endl<<flush;
       Br_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS, syst_Aii_OS, 1e4, lAii_OS, MODE, "OS", "Aii_light_"+Vk_data_tm.Tag[iens], -1,0,resc_GeV*Za*Za, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      cout<<".";
+      cout<<"."<<flush;
       Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, 1e4, lVii_tm, MODE, "tm", "Vii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, f_syst_V_tm,1, model_V_tm, Is_Emax_Finite, Emax, beta);
-      cout<<".";
+      cout<<"."<<flush;
       Br_sigma_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_OS, syst_Vii_OS, 1e4, lVii_OS, MODE, "OS", "Vii_light_"+Vk_data_tm.Tag[iens],-1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Vk_OS, f_syst_V_OS,1, model_V_OS ,  Is_Emax_Finite, Emax, beta);
-      cout<<".";
+      cout<<"."<<flush;
       Br_sigma_A0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_0, prec, SM_TYPE_0,K0, -1*A0_tm, syst_A0_tm, 1e4, lA0_tm, MODE, "tm", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Zv*Zv, "tau_decay", cov_A0_tm, f_syst_A0_tm,1, model_A0_tm,  Is_Emax_Finite, Emax, beta );
-      cout<<".";
+      cout<<"."<<flush;
       Br_sigma_A0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_0, prec, SM_TYPE_0,K0, -1*A0_OS, syst_A0_OS, 1e4, lA0_OS, MODE, "OS", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Za*Za, "tau_decay", cov_A0_OS, f_syst_A0_OS,1, model_A0_OS,  Is_Emax_Finite, Emax, beta );
-      cout<<".";
+      cout<<"."<<flush;
       
-      
-
-
-      //push_back systematic error
      
 
       
-      syst_per_ens_tm_A0[iens].push_back( syst_A0_tm);
-      syst_per_ens_tm_Ak[iens].push_back( syst_Aii_tm);
-      syst_per_ens_tm_Vk[iens].push_back( syst_Vii_tm);
-      syst_per_ens_tm[iens].push_back( sqrt( pow(syst_A0_tm,2)+ pow(syst_Aii_tm,2)+ pow(syst_Vii_tm,2)));
-      syst_per_ens_OS_A0[iens].push_back( syst_A0_OS);
-      syst_per_ens_OS_Ak[iens].push_back( syst_Aii_OS);
-      syst_per_ens_OS_Vk[iens].push_back( syst_Vii_OS);
-      syst_per_ens_OS[iens].push_back( sqrt( pow(syst_A0_OS,2)+ pow(syst_Aii_OS,2)+ pow(syst_Vii_OS,2)));
+      syst_per_ens_tm_A0[iens][is] =  syst_A0_tm;
+      syst_per_ens_tm_Ak[iens][is]= syst_Aii_tm;
+      syst_per_ens_tm_Vk[iens][is]= syst_Vii_tm;
+      syst_per_ens_tm[iens][is]= sqrt( pow(syst_A0_tm,2)+ pow(syst_Aii_tm,2)+ pow(syst_Vii_tm,2));
+      syst_per_ens_OS_A0[iens][is]=syst_A0_OS;
+      syst_per_ens_OS_Ak[iens][is]= syst_Aii_OS;
+      syst_per_ens_OS_Vk[iens][is]=syst_Vii_OS;
+      syst_per_ens_OS[iens][is]= sqrt( pow(syst_A0_OS,2)+ pow(syst_Aii_OS,2)+ pow(syst_Vii_OS,2));
 
       
 
@@ -963,10 +1004,11 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       Br_Aii_tau_OS[iens].distr_list[is] = Br_sigma_Aii_OS;
       Br_Vii_tau_OS[iens].distr_list[is] = Br_sigma_Vii_OS;
       Br_A0_tau_OS[iens].distr_list[is] = Br_sigma_A0_OS;
+
+     
    
      
     }
-    #pragma omp barrier
     cout<<endl;
     cout<<"Finished ensemble: "<<Vk_data_tm.Tag[iens]<<"########################"<<endl;
     
@@ -1005,10 +1047,53 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
   }
 
   cout<<"output per sigma printed!"<<endl;
+
+
+
+  //STORE JACKKNIFE DISTRIBUTIONS
+  //light
+  for(int i_ens=0; i_ens<Nens;i_ens++) {
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/A0A0/"+Vk_data_tm.Tag[i_ens]);
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/AkAk/"+Vk_data_tm.Tag[i_ens]);
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/VkVk/"+Vk_data_tm.Tag[i_ens]);
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/A0A0/"+Vk_data_tm.Tag[i_ens]);
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/AkAk/"+Vk_data_tm.Tag[i_ens]);
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/VkVk/"+Vk_data_tm.Tag[i_ens]);
+  
+    for(int is=0; is<(signed)sigma_list.size();is++) {
+      //print jackknife distribution for tm and OS
+      ofstream Print_tm_A0A0("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/A0A0/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+      ofstream Print_tm_AkAk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/AkAk/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+      ofstream Print_tm_VkVk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/VkVk/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+
+      ofstream Print_OS_A0A0("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/A0A0/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+      ofstream Print_OS_AkAk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/AkAk/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+      ofstream Print_OS_VkVk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/VkVk/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+     
+      for(int ijack=0; ijack<Njacks;ijack++) {
+	Print_tm_A0A0<<Br_A0_tau_tm[i_ens].distr_list[is].distr[ijack]<<endl;
+	Print_tm_AkAk<<Br_Aii_tau_tm[i_ens].distr_list[is].distr[ijack]<<endl;
+	Print_tm_VkVk<<Br_Vii_tau_tm[i_ens].distr_list[is].distr[ijack]<<endl;
+	Print_OS_A0A0<<Br_A0_tau_OS[i_ens].distr_list[is].distr[ijack]<<endl;
+	Print_OS_AkAk<<Br_Aii_tau_OS[i_ens].distr_list[is].distr[ijack]<<endl;
+	Print_OS_VkVk<<Br_Vii_tau_OS[i_ens].distr_list[is].distr[ijack]<<endl;
+      }
+      Print_tm_A0A0.close();
+      Print_tm_AkAk.close();
+      Print_tm_VkVk.close();
+      Print_OS_A0A0.close();
+      Print_OS_AkAk.close();
+      Print_OS_VkVk.close();
+     
+    }
+    
+  }
+
+
+  cout<<"Jackknives printed!"<<endl,
   cout<<"Bye"<<endl;
 
 
-  
   
     
  

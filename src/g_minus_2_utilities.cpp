@@ -1621,9 +1621,9 @@ double LL_functions::V_pipi_infL(double t, double m_rho_infL, double g_rho_pipi_
 
 void LL_functions::MLLGS_fit_to_corr(const distr_t_list &Corr,const distr_t &Mpi,const distr_t &a_distr, double L, distr_t &Edual, distr_t &Rdual, distr_t &Mrho, distr_t &grpp, int tmin, int tmax, string Tag) {
 
-
+  int NUMM_THREADS= omp_get_max_threads();
   omp_set_num_threads(1);
-  
+   
   class ipar_MLLGS {
 
   public:
@@ -1737,6 +1737,8 @@ void LL_functions::MLLGS_fit_to_corr(const distr_t_list &Corr,const distr_t &Mpi
 	Edual.distr.push_back( Bt_fit.par[ijack].Ed*Mpi.distr[ijack]);
 	Rdual.distr.push_back( Bt_fit.par[ijack].Rd);
       }
+
+      omp_set_num_threads(NUMM_THREADS);
 
   return; 
 }
