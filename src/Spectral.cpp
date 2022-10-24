@@ -385,7 +385,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
 
 
-  int MAX_Iters = 500;
+  int MAX_Iters = 1000;
 
   int Global_id=0;
 
@@ -653,7 +653,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       
       
       Nit_Ag0++;
-      if( (A1_val_std < 2*Ag_ov_A0_target*Ag_m && A1_val_std > 0.8*Ag_ov_A0_target*Ag_m)) lambda_found_Ag_A0=true;
+      if( (A1_val_std < 2*Ag_ov_A0_target*Ag_m && A1_val_std > 0.6*Ag_ov_A0_target*Ag_m)) lambda_found_Ag_A0=true;
 
       if(Nit_Ag0 >= MAX_Iters) {
 	cout<<"WARNING: A[g]/A[0]: "<<Ag_ov_A0_target*Ag_m<<" cannot be obtained after "<<Nit_Ag0<<" iterations...Skipping!"<<endl;
@@ -771,7 +771,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
     lambda_balance= lambda_mid.get();
     
     Nit++;
-    if(fabs(mult_est - mult)/(mult) < 0.001) lambda_balance_found=true;
+    if(fabs(mult_est - mult)/(mult) < 0.01) lambda_balance_found=true;
 
 
 
@@ -958,7 +958,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
     lambda_balance_10= lambda_mid.get();
       
     Nit_10++;
-    if(fabs(mult_est - k*mult)/(k*mult) < 0.001) lambda_balance_found_10=true;
+    if(fabs(mult_est - k*mult)/(k*mult) < 0.01) lambda_balance_found_10=true;
 
 
     double syst=0.0;
@@ -1136,7 +1136,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
     lambda_balance_100= lambda_mid.get();
       
     Nit_100++;
-    if(fabs(mult_est - k*mult)/(k*mult) < 0.001) lambda_balance_found_100=true;
+    if(fabs(mult_est - k*mult)/(k*mult) < 0.01) lambda_balance_found_100=true;
 
 
     double syst=0.0;
@@ -1149,7 +1149,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 	return (f(E,mean, sigma, Estart, -1) - gm.transpose()*bt).get();
       };
 
-      if(extended_analysis_of_syst || lambda_balance_found_100)  syst= syst_func(integrand_syst);
+      if(extended_analysis_of_syst)  syst= syst_func(integrand_syst);
 
 
       if(print_reco_in_stability_analysis) {
