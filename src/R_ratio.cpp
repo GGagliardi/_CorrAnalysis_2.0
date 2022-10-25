@@ -163,9 +163,9 @@ void Get_exp_smeared_R_ratio(const Vfloat& Ergs_GeV_list_exp, double sigma) {
 
 void R_ratio_analysis() {
 
-  Vfloat betas({0.0, 1.0, 1.99, 2.99, 3.99, 0.0, 1.0, 1.99});
-  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
-  vector<bool> Is_Emax_Finite({1,1,1,1,1,0,0,0});
+  Vfloat betas({ 1.99, 2.99, 3.99, 0.0, 1.0, 1.99});
+  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,1,1,0,0,0});
   int N= betas.size();
 
   cout<<"################# DETERMINATION OF THE SMEARED R-ratio #################"<<endl;
@@ -1130,7 +1130,6 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta, LL_functions
       gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
       gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
       gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 7e-3, 1000, w_SYST, &val_mod, &err_mod);
-      if(err_mod/fabs(val_mod) > 5e-2) crash("Cannot reach accuracy in evaluating systematic");
       return resc_charm*fabs((val_mod + F(MV_L_distr.ave())*overlap_V_L_distr.ave()));
       
     };
@@ -1142,7 +1141,6 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta, LL_functions
       gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
       gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
       gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 7e-3, 1000, w_SYST, &val_mod, &err_mod);
-      if(err_mod/fabs(val_mod) > 5e-2) crash("Cannot reach accuracy in evaluating systematic");
       return resc_charm*fabs((val_mod + F(MV_M_distr.ave())*overlap_V_M_distr.ave()));
       
     };
@@ -1154,7 +1152,6 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta, LL_functions
       gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
       gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
       gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 7e-3, 1000, w_SYST, &val_mod, &err_mod);
-      if(err_mod/fabs(val_mod) > 5e-2) crash("Cannot reach accuracy in evaluating systematic");
       return resc_charm*fabs((val_mod + F(MV_H_distr.ave())*overlap_V_H_distr.ave()));
       
     };
@@ -1168,7 +1165,6 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta, LL_functions
       gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
       gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
       gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 7e-3, 1000, w_SYST, &val_mod, &err_mod);
-      if(err_mod/fabs(val_mod) > 5e-2) crash("Cannot reach accuracy in evaluating systematic");
       return resc_charm*fabs((val_mod + F(MV_OS_L_distr.ave())*overlap_OS_V_L_distr.ave()));
       
     };
@@ -1180,7 +1176,6 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta, LL_functions
       gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
       gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
       gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 7e-3, 1000, w_SYST, &val_mod, &err_mod);
-      if(err_mod/fabs(val_mod) > 5e-2) crash("Cannot reach accuracy in evaluating systematic");
       return resc_charm*fabs((val_mod + F(MV_OS_M_distr.ave())*overlap_OS_V_M_distr.ave()));
       
     };
@@ -1192,7 +1187,6 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta, LL_functions
       gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
       gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
       gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 7e-3, 1000, w_SYST, &val_mod, &err_mod);
-      if(err_mod/fabs(val_mod) > 1e-5) crash("Cannot reach accuracy in evaluating systematic");
       return resc_charm*fabs((val_mod + F(MV_OS_H_distr.ave())*overlap_OS_V_H_distr.ave()));
       
     };
@@ -1742,7 +1736,6 @@ if(!skip_light) {
 		      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
 		      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
-		      if(err_mod/fabs(val_mod) > 5e-2) crash("Cannot reach accuracy in evaluating systematic");
 		      gsl_integration_workspace_free(w_SYST);
 		      return fabs(val_mod);
 					   
@@ -1766,7 +1759,6 @@ if(!skip_light) {
 		      gsl_integration_workspace * w_SYST = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G_SYST = static_cast<gsl_function*>(&SYST);
 		      gsl_integration_qags(G_SYST, Eth*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST, &val_mod, &err_mod);
-		      if(err_mod/fabs(val_mod) > 5e-2) crash("Cannot reach accuracy in evaluating systematic");
 		      gsl_integration_workspace_free(w_SYST);
 		      return fabs(val_mod);
 					   
