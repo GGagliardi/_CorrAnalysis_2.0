@@ -180,60 +180,8 @@ void R_ratio_analysis() {
 
 
 
-   //Init LL_functions;
-  //find first  zeros of the Lusher functions
-  Vfloat Luscher_zeroes;
-  Zeta_function_zeroes(Num_LUSCH_R_ratio, Luscher_zeroes);
   
-
-  //############################################INTERPOLATE PHI FUNCTION AND DERIVATIVES#############################
-  cout<<"Computing Luscher-zeros"<<flush;
-
-  VVfloat phi_data, phi_der_data;
-  Vfloat sx_int;
-  Vfloat sx_der, dx_der;
-  Vfloat Dz;
-  
-  for(int L_zero=0;L_zero<Nres_R_ratio+1;L_zero++) {
-    cout<<"."<<flush;
-    double sx, dx;
-    //interpolating between the Luscher_zero[L_zero-1] and Luscher_zero[L_zero];
-    if(L_zero==0) { sx_int.push_back(0.0); sx=0.0;}
-    else {sx=Luscher_zeroes[L_zero-1];  sx_int.push_back(sx);}
-    dx= Luscher_zeroes[L_zero];
-    phi_data.resize(L_zero+1);
-    phi_der_data.resize(L_zero+1);
-    phi_data[L_zero].push_back(L_zero==0?0.0:-M_PI/2.0);
-    //divide interval into thousand points;
-    double dz = (dx-sx)/pts_spline_R_ratio;
-    Dz.push_back(dz);
-
-
-    for(int istep=1;istep<=pts_spline_R_ratio-1;istep++) { double pt= sx+dz*istep; phi_data[L_zero].push_back( phi(sqrt(pt)));}
-
-    phi_data[L_zero].push_back(M_PI/2.0);
-    double sx_der_loc =  phi_der_for_back(sqrt(sx)+1e-14, 1);
-    double dx_der_loc =  phi_der_for_back(sqrt(dx)-1e-14, -1);
-    sx_der.push_back(sx_der_loc);
-    dx_der.push_back(dx_der_loc);
-
-    phi_der_data[L_zero].push_back(sx_der_loc);
-    for(int istep=1;istep<=pts_spline_R_ratio-1;istep++) { double pt= sx+dz*istep; phi_der_data[L_zero].push_back( phi_der(sqrt(pt)));}
-    phi_der_data[L_zero].push_back(dx_der_loc);
-    
-  }
-  cout<<"done!"<<endl;
-
-
-
-  //###########################################END INTERPOLATION PHI FUNCTION AND DERIVATIVES################################
- 
-   
-
-  LL_functions LL(phi_data,phi_der_data,sx_der, dx_der, sx_int, Dz, Nres_R_ratio, Luscher_zeroes);
-
-  
-  for(int i=0; i<N;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i], LL); Compute_experimental_smeared_R_ratio=false; Compute_free_spec_dens=true;}
+  for(int i=0; i<N;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i]); Compute_experimental_smeared_R_ratio=false; Compute_free_spec_dens=true;}
 
 
 
@@ -241,7 +189,7 @@ void R_ratio_analysis() {
 
 
 
-void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta, LL_functions &LL) {
+void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 
   string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
   Tag_reco_type+="_Emax_"+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1));
@@ -299,6 +247,61 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta, LL_functions
   boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/covariance/charm");
 
   cout<<"done!"<<endl;
+
+
+  
+
+   //Init LL_functions;
+  //find first  zeros of the Lusher functions
+  Vfloat Luscher_zeroes;
+  Zeta_function_zeroes(Num_LUSCH_R_ratio, Luscher_zeroes);
+  
+
+  //############################################INTERPOLATE PHI FUNCTION AND DERIVATIVES#############################
+  cout<<"Computing Luscher-zeros"<<flush;
+
+  VVfloat phi_data, phi_der_data;
+  Vfloat sx_int;
+  Vfloat sx_der, dx_der;
+  Vfloat Dz;
+  
+  for(int L_zero=0;L_zero<Nres_R_ratio+1;L_zero++) {
+    cout<<"."<<flush;
+    double sx, dx;
+    //interpolating between the Luscher_zero[L_zero-1] and Luscher_zero[L_zero];
+    if(L_zero==0) { sx_int.push_back(0.0); sx=0.0;}
+    else {sx=Luscher_zeroes[L_zero-1];  sx_int.push_back(sx);}
+    dx= Luscher_zeroes[L_zero];
+    phi_data.resize(L_zero+1);
+    phi_der_data.resize(L_zero+1);
+    phi_data[L_zero].push_back(L_zero==0?0.0:-M_PI/2.0);
+    //divide interval into thousand points;
+    double dz = (dx-sx)/pts_spline_R_ratio;
+    Dz.push_back(dz);
+
+
+    for(int istep=1;istep<=pts_spline_R_ratio-1;istep++) { double pt= sx+dz*istep; phi_data[L_zero].push_back( phi(sqrt(pt)));}
+
+    phi_data[L_zero].push_back(M_PI/2.0);
+    double sx_der_loc =  phi_der_for_back(sqrt(sx)+1e-14, 1);
+    double dx_der_loc =  phi_der_for_back(sqrt(dx)-1e-14, -1);
+    sx_der.push_back(sx_der_loc);
+    dx_der.push_back(dx_der_loc);
+
+    phi_der_data[L_zero].push_back(sx_der_loc);
+    for(int istep=1;istep<=pts_spline_R_ratio-1;istep++) { double pt= sx+dz*istep; phi_der_data[L_zero].push_back( phi_der(sqrt(pt)));}
+    phi_der_data[L_zero].push_back(dx_der_loc);
+    
+  }
+  cout<<"done!"<<endl;
+
+
+
+  //###########################################END INTERPOLATION PHI FUNCTION AND DERIVATIVES################################
+ 
+   
+
+  LL_functions LL(phi_data,phi_der_data,sx_der, dx_der, sx_int, Dz, Nres_R_ratio, Luscher_zeroes);
 
   //LOAD DATA
   GaussianMersenne GM(981832);

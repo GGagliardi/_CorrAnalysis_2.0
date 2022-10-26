@@ -17,7 +17,7 @@
 using namespace std;
 
 void Get_Ergs_list();
-void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta, LL_functions &LL);
+void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta);
 void R_ratio_analysis();
 void Get_exp_smeared_R_ratio(const Vfloat &Ergs_GeV_list_exp, double sigma);
 
