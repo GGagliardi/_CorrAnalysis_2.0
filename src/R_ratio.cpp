@@ -163,9 +163,9 @@ void Get_exp_smeared_R_ratio(const Vfloat& Ergs_GeV_list_exp, double sigma) {
 
 void R_ratio_analysis() {
 
-  Vfloat betas({ 1.99, 2.99, 3.99, 0.0, 1.0, 1.99});
-  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
-  vector<bool> Is_Emax_Finite({1,1,1,0,0,0});
+  Vfloat betas({1.99});
+  Vfloat Emax_list({4.0});
+  vector<bool> Is_Emax_Finite({0});
   int N= betas.size();
 
   cout<<"################# DETERMINATION OF THE SMEARED R-ratio #################"<<endl;
@@ -181,7 +181,7 @@ void R_ratio_analysis() {
 
 
   
-  for(int i=0; i<N;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i]); Compute_experimental_smeared_R_ratio=false; Compute_free_spec_dens=true;}
+  for(int i=0; i<N;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i]); Compute_experimental_smeared_R_ratio=false; Compute_free_spec_dens=false;}
 
 
 
@@ -253,8 +253,8 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 
    //Init LL_functions;
   //find first  zeros of the Lusher functions
-  Vfloat Luscher_zeroes;
-  Zeta_function_zeroes(Num_LUSCH_R_ratio, Luscher_zeroes);
+  Vfloat Lusch_zeroes;
+  Zeta_function_zeroes(Num_LUSCH_R_ratio, Lusch_zeroes);
   
 
   //############################################INTERPOLATE PHI FUNCTION AND DERIVATIVES#############################
@@ -270,8 +270,8 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
     double sx, dx;
     //interpolating between the Luscher_zero[L_zero-1] and Luscher_zero[L_zero];
     if(L_zero==0) { sx_int.push_back(0.0); sx=0.0;}
-    else {sx=Luscher_zeroes[L_zero-1];  sx_int.push_back(sx);}
-    dx= Luscher_zeroes[L_zero];
+    else {sx=Lusch_zeroes[L_zero-1];  sx_int.push_back(sx);}
+    dx= Lusch_zeroes[L_zero];
     phi_data.resize(L_zero+1);
     phi_der_data.resize(L_zero+1);
     phi_data[L_zero].push_back(L_zero==0?0.0:-M_PI/2.0);
@@ -301,7 +301,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
  
    
 
-  LL_functions LL(phi_data,phi_der_data,sx_der, dx_der, sx_int, Dz, Nres_R_ratio, Luscher_zeroes);
+  LL_functions LL(phi_data,phi_der_data,sx_der, dx_der, sx_int, Dz, Nres_R_ratio, Lusch_zeroes);
 
   //LOAD DATA
   GaussianMersenne GM(981832);

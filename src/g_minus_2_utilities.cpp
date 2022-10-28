@@ -1666,14 +1666,14 @@ void LL_functions::MLLGS_fit_to_corr(const distr_t_list &Corr,const distr_t &Mpi
   int Njacks= Mpi.size();
   
   bootstrap_fit<fit_par_MLLGS,ipar_MLLGS> bf(Njacks);
-  bf.set_warmup_lev(4); //sets warmup
+  bf.set_warmup_lev(2); //sets warmup
   int Tfit_points= tmax +1 - tmin;
   
   
 
   
   bf.Set_number_of_measurements(Tfit_points);
-  bf.Set_verbosity(0);
+  bf.Set_verbosity(1);
 
   cout<<"FITTING WITH PIPI+DUAL REPRESENTATION: "<<Tag<<endl;
   
@@ -1684,16 +1684,16 @@ void LL_functions::MLLGS_fit_to_corr(const distr_t_list &Corr,const distr_t &Mpi
   bf.Add_par("Ed", 2.5, 0.2);
   bf.Set_limits("Ed", 0.7, 5.0);
   bf.Add_par("Mrho",5.5, 0.1);
-  bf.Set_limits("Mrho", 4.5 , 7.0);
+  bf.Set_limits("Mrho", 4.5 , 6.7);
   bf.Add_par("gpi", 1.0, 0.01);
   bf.Add_par("kappa", -3.0, 0.1);
   bf.Fix_par("kappa", 0.0);
-  bf.Set_limits("gpi",0.6, 1.5);
+  bf.Set_limits("gpi",0.6, 1.4);
   
   map<pair<pair<double,double>, pair<double,double>>,Vfloat> Energy_lev_list;
   
 
-  bf.ansatz =  [&](const fit_par_MLLGS &p, const ipar_MLLGS &ip) -> double {
+  bf.ansatz =  [&Energy_lev_list, this](const fit_par_MLLGS &p, const ipar_MLLGS &ip) -> double {
 
 		     double Pi_M = ip.Mp;
 
@@ -1754,5 +1754,5 @@ void LL_functions::MLLGS_fit_to_corr(const distr_t_list &Corr,const distr_t &Mpi
 
       omp_set_num_threads(NUMM_THREADS);
 
-  return; 
+      return; 
 }
