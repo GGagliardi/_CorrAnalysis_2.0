@@ -53,6 +53,7 @@ void get_sigma_list() {
   bool test=false;
   if(test) { sigma_list.push_back(0.05); return;}
 
+
   double s_max= 0.2;
   double s_min= 0.004420;
 
@@ -71,9 +72,9 @@ void get_sigma_list() {
 void tau_decay_analysis() {
 
   
-  Vfloat betas({0.0, 1.0, 1.99, 2.99, 3.99, 0.0, 1.0, 1.99});
-  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
-  vector<bool> Is_Emax_Finite({1,1,1,1,1,0,0,0});
+  Vfloat betas({2.99, 3.99, 1.0, 1.99});
+  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,1,0,0});
 
   int N= betas.size();
   cout<<"################# DETERMINATION OF BRANCHING RATIOS FOR SEMI-INCLUSIVE TAU-DECAY#################"<<endl;
@@ -152,7 +153,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
    
   string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
   Tag_reco_type+="_Emax_"+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1));
-  string Is_Spec_free_computed= (COMPUTE_SPEC_DENS_FREE==0)?"no":"yes";
+  string Is_Spec_free_computed= ((COMPUTE_SPEC_DENS_FREE==0)?"no":"yes");
   string alpha_Emax_Tag= "{"+to_string_with_precision(beta,2)+","+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1))+"}";
 
 
