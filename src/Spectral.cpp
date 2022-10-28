@@ -30,7 +30,7 @@ double Get_exact_gauss(const double &E, const double &m , const double &s, const
 
 PrecFloat Get_exact_gauss(const PrecFloat &E,const PrecFloat &m,const PrecFloat &s,const PrecFloat &E0) {
   PrecFloat e = exp( -0.5*(E-m)*(E-m)/(s*s));
-  PrecFloat norm= s*( 2 + 0.0*erf( (m-E0)/(s*sqrt(PrecFloat(2)))))*sqrt(precPi()/PrecFloat(2)) ;
+  PrecFloat norm= s*sqrt(precPi()*PrecFloat(2)) ;
   return e/norm;
 }
 

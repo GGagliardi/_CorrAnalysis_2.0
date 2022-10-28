@@ -50,7 +50,7 @@ using namespace std;
 
 void get_sigma_list() {
 
-  bool test=false;
+  bool test=true;
   if(test) { sigma_list.push_back(0.05); return;}
 
 
@@ -68,7 +68,6 @@ void get_sigma_list() {
 
 
 
-
 void tau_decay_analysis() {
 
   
@@ -76,15 +75,31 @@ void tau_decay_analysis() {
   Vfloat Emax_list({4.0, 4.0, 4.0, 4.0});
   vector<bool> Is_Emax_Finite({1,1,0,0});
 
-  int N= betas.size();
+  int rank, size;
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  
+  
+  
+   
+
+  int N= (signed)betas.size();
+
+  if(N%size != 0) crash("MPI called with -np= "+to_string(size)+". np does not divide vector size N="+to_string(N));
+  
   cout<<"################# DETERMINATION OF BRANCHING RATIOS FOR SEMI-INCLUSIVE TAU-DECAY#################"<<endl;
+  cout<<"Rank: "<<rank<<" pid: "<<getpid()<<" core id: "<<"("<<sched_getcpu()<<")"<<endl;
   cout<<"INVERSE LAPLACE RECONSTRUCTION CALLED FOR:"<<endl;
-  for(int i=0;i<N;i++) {
+  for(int i=rank*N/size;i<(rank+1)*N/size;i++) {
     string alpha_Emax_Tag= "{"+to_string_with_precision(betas[i],2)+","+((Is_Emax_Finite[i]==0)?"inf":to_string_with_precision(Emax_list[i],1))+"}";
     cout<<"{alpha,Emax} = "<<alpha_Emax_Tag<<endl;
   }
   cout<<"##########################################"<<endl;
+
   
+   
 
 
   //Init LL_functions;
@@ -143,7 +158,7 @@ void tau_decay_analysis() {
 
 
   
-  for(int i=0; i<N;i++) {Compute_tau_decay_width(Is_Emax_Finite[i], Emax_list[i], betas[i], LL); COMPUTE_SPEC_DENS_FREE=false;}
+  for(int i=rank*N/size; i<(rank+1)*N/size;i++) {Compute_tau_decay_width(Is_Emax_Finite[i], Emax_list[i], betas[i], LL); COMPUTE_SPEC_DENS_FREE=false;}
 
 }
 

@@ -482,10 +482,12 @@ double Compute_boot_cov(const Vfloat& A,const Vfloat& B) {
     double barA = BootAve(A).first;
     double barB = BootAve(B).first;
 
-    Vfloat C = Multiply_vectors(A,B);
-    double AB = BootAve(C).first;
-
-    return AB- barA*barB;
+  
+    int N=A.size();
+    double res=0.0;
+    if(N != (signed)B.size()) crash("In Compute_boot_cov: A.size() != B.size()");
+    for(int i=0;i<N;i++) res += (A[i]-barA)*(B[i] - barB); 
+    return res;
 }
 
 

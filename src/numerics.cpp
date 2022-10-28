@@ -1,7 +1,5 @@
 #include "../include/numerics.h"
 
-
-
 using namespace std;
 
 

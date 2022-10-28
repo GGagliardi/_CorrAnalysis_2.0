@@ -6,14 +6,14 @@ const double alpha = 1.0/137.04;
 const double e2 = alpha*4.0*M_PI;
 const bool UseJack=1;
 const int Njacks=50;
-const int Nboots=200;
+const int Nboots=800;
 const double qu= 2.0/3.0;
 const double qd= -1.0/3.0;
 const double qs= qd;
 const double qc= qu;
 const double fm_to_inv_Gev= 1.0/0.197327;
 const int ln2_10=3.32192809489;
-const int prec = 128;
+const int prec = 256;
 const int prec_charm=512;
 const double rho_R= 12*M_PI*M_PI;
 const double Nc=3;
@@ -21,14 +21,14 @@ const double Rpert= Nc*( qu*qu + qd*qd);
 const double Rpert_strange = Nc*(qs*qs);
 const double Rpert_charm = Nc*(qc*qc);
 const double m_mu= 0.10565837; // [ GeV ]
-//const Vfloat sigmas({5.0*m_mu});
-const Vfloat sigmas({4.2*m_mu, 5.0*m_mu, 6.0*m_mu});
+const Vfloat sigmas({4.2*m_mu});
+//const Vfloat sigmas({4.2*m_mu, 5.0*m_mu, 6.0*m_mu});
 const string SM_TYPE= "GAUSSIAN";
 const bool add_pert_corr_light_up_to = 1.0;
 const bool add_pert_corr_strange_up_to = 1.0;
 const bool add_pert_corr_charm_up_to = 1.0;
-const double max_energy = 33.5*m_mu; //33.5*m_mu // [ GeV ]
-const double min_energy = 2.5*m_mu;  //2.5*m_mu;
+const double max_energy = 15.0*m_mu; //33.5*m_mu; //33.5*m_mu // [ GeV ]
+const double min_energy = 15.0*m_mu;//2.5*m_mu;  //2.5*m_mu;
 const double Eth = 2.0*m_mu;
 const double step_size= 0.5*m_mu; //step size
 const double m_Jpsi= 3.0969;
@@ -1508,7 +1508,7 @@ if(!skip_light) {
     string light_tag = "light";
     
     CorrAnalysis Corr(UseJack, Njacks,Nboots);
-    CorrAnalysis Corr_block_1(UseJack,V_light_1.Nconfs[i_ens], Nboots);
+    CorrAnalysis Corr_block_1(0,V_light_1.Nconfs[i_ens], Nboots);
     Corr_block_1.Nt = V_light_1.nrows[i_ens];
     Corr.Nt = V_light_1.nrows[i_ens];
     int T = Corr.Nt;
