@@ -7,15 +7,13 @@ Vfloat CorrAnalysis::ASymm(const VVfloat &data, int t ) {
 
   if((signed)data.size() <= t) crash("In call to CorrAnalysis::ASymm(VVfloat, int t), index t is larger than VVfloat.size(). Exiting..."); 
 
-  
+ 
    
   if(!Perform_Nt_t_average) return data[t];
   
   return Multiply_vector_by_scalar(Sum_vectors(data[t], Multiply_vector_by_scalar(data[(Nt-t)%Nt], (double)this->Reflection_sign)), 0.5);
  
 }
-
-
 
 
 distr_t_list  CorrAnalysis::corr_t(const VVfloat &corr_A, string Obs) {

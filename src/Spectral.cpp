@@ -355,18 +355,22 @@ void Compute_covariance_matrix(PrecMatr &B,const PrecMatr &Atr, const distr_t_li
 
 
   for(int t=tmin;t<=tmax;t++) {
-    for(int r=tmin;r<=tmax;r++) {
+    for(int r=t;r<=tmax;r++) {
       if(MODE=="TANT") {
 	B(t-tmin,r-tmin) = covariance[t*corr.size()+ r];
+	B(r-tmin, t-tmin) = B(t-tmin,r-tmin);
       }
-      else B(t-tmin, r-tmin) = covariance[t*corr.size()+r]/(corr.ave(t)*corr.ave(r));
+      else {
+	B(t-tmin, r-tmin) = covariance[t*corr.size()+r]/(corr.ave(t)*corr.ave(r));
+	B(r-tmin,t-tmin) = B(t-tmin,r-tmin);
+      }
     }
   }
 
-
+  /*
   for(int t=tmin;t<=tmax;t++)
-    for(int r=t;r<=tmax;r++) if (B(t-tmin,r-tmin) != B(r-tmin,t-tmin)) crash("covariance matrix is not symmetric");
-
+    for(int r=t;r<=tmax;r++) if ( fabs( ((B(t-tmin,r-tmin) - B(r-tmin,t-tmin))/(0.5*( B(t-tmin,r-tmin)+B(r-tmin,t-tmin)))).get()) > 1e-14 ) crash("covariance matrix is not symmetric, Cov(i,j) = "+to_string_with_precision(B(t-tmin,r-tmin).get(),50)+" != Cov(j,i)= "+to_string_with_precision(B(r-tmin,t-tmin).get(),50));
+  */
 
    
   if(MODE != "TANT") B= Atr*B;

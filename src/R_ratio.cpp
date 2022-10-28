@@ -168,10 +168,18 @@ void R_ratio_analysis() {
   vector<bool> Is_Emax_Finite({0});
   int N= betas.size();
 
+  int rank,size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+
+  if(N%size != 0) crash("MPI called with -np= "+to_string(size)+". np does not divide vector size N="+to_string(N));
+
   cout<<"################# DETERMINATION OF THE SMEARED R-ratio #################"<<endl;
+  cout<<"Rank: "<<rank<<" pid: "<<getpid()<<" core id: "<<"("<<sched_getcpu()<<")"<<endl;
   cout<<"SMEARING_FUNCTION: "<<SM_TYPE<<endl;
   cout<<"INVERSE LAPLACE RECONSTRUCTION CALLED FOR:"<<endl;
-  for(int i=0;i<N;i++) {
+  for(int i=rank*N/size;i<(rank+1)*N/size;i++) {
     string alpha_Emax_Tag= "{"+to_string_with_precision(betas[i],2)+","+((Is_Emax_Finite[i]==0)?"inf":to_string_with_precision(Emax_list[i],1))+"}";
     cout<<"{alpha,Emax} = "<<alpha_Emax_Tag<<endl;
   }
@@ -181,7 +189,7 @@ void R_ratio_analysis() {
 
 
   
-  for(int i=0; i<N;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i]); Compute_experimental_smeared_R_ratio=false; Compute_free_spec_dens=false;}
+  for(int i=rank*N/size;i<(rank+1)*N/size;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i]); Compute_experimental_smeared_R_ratio=false; Compute_free_spec_dens=false;}
 
 
 
@@ -212,6 +220,12 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
   
   cout<<"Creating output directories...";
 
+
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int _hostname_len;
+  char _hostname[MPI_MAX_PROCESSOR_NAME];
+  MPI_Get_processor_name(_hostname, &_hostname_len);
   
   
   
@@ -990,14 +1004,14 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 
     //multiply corr using Zv and Za
     //L
-    V_charm_L_distr = (V_charm_L_distr)*(1.0 + (1.0/(Za*Za*V_charm_L_distr))*VV_free_oppor_L) ;
-    V_charm_OS_L_distr = (V_charm_OS_L_distr)*(1.0 + (1.0/(Zv*Zv*V_charm_OS_L_distr))*VV_free_samer_L);
+    V_charm_L_distr = (V_charm_L_distr)*(1.0 + pert_corr_charm_on_off*(1.0/(Za*Za*V_charm_L_distr))*VV_free_oppor_L) ;
+    V_charm_OS_L_distr = (V_charm_OS_L_distr)*(1.0 + pert_corr_charm_on_off*(1.0/(Zv*Zv*V_charm_OS_L_distr))*VV_free_samer_L);
     //M
-    V_charm_M_distr = (V_charm_M_distr)*(1.0 + (1.0/(Za*Za*V_charm_M_distr))*VV_free_oppor_M) ;
-    V_charm_OS_M_distr = (V_charm_OS_M_distr)*(1.0 + (1.0/(Zv*Zv*V_charm_OS_M_distr))*VV_free_samer_M);
+    V_charm_M_distr = (V_charm_M_distr)*(1.0 + pert_corr_charm_on_off*(1.0/(Za*Za*V_charm_M_distr))*VV_free_oppor_M) ;
+    V_charm_OS_M_distr = (V_charm_OS_M_distr)*(1.0 + pert_corr_charm_on_off*(1.0/(Zv*Zv*V_charm_OS_M_distr))*VV_free_samer_M);
     //H
-    V_charm_H_distr = (V_charm_H_distr)*(1.0 + (1.0/(Za*Za*V_charm_H_distr))*VV_free_oppor_H) ;
-    V_charm_OS_H_distr = (V_charm_OS_H_distr)*(1.0 + (1.0/(Zv*Zv*V_charm_OS_H_distr))*VV_free_samer_H);
+    V_charm_H_distr = (V_charm_H_distr)*(1.0 + pert_corr_charm_on_off*(1.0/(Za*Za*V_charm_H_distr))*VV_free_oppor_H) ;
+    V_charm_OS_H_distr = (V_charm_OS_H_distr)*(1.0 + pert_corr_charm_on_off*(1.0/(Zv*Zv*V_charm_OS_H_distr))*VV_free_samer_H);
 
 
       
@@ -1500,7 +1514,7 @@ if(!skip_light) {
   
   for(int i_ens=0;i_ens<Nens_light;i_ens++) {
 
-  
+ 
     
     Light_Ens_Tags[i_ens] = V_light_1.Tag[i_ens];
 
@@ -1508,7 +1522,7 @@ if(!skip_light) {
     string light_tag = "light";
     
     CorrAnalysis Corr(UseJack, Njacks,Nboots);
-    CorrAnalysis Corr_block_1(0,V_light_1.Nconfs[i_ens], Nboots);
+    CorrAnalysis Corr_block_1(0,V_light_1.Nconfs[i_ens], Nboots, i_ens);
     Corr_block_1.Nt = V_light_1.nrows[i_ens];
     Corr.Nt = V_light_1.nrows[i_ens];
     int T = Corr.Nt;
@@ -1550,7 +1564,7 @@ if(!skip_light) {
     //print covariance matrix
 
     Vfloat cov_tm, cov_OS, TT, RR;
-    Vfloat corr_tm, corr_OS;
+    Vfloat corr_tm, corr_OS, cov_red_tm, cov_red_OS;
     //double k_fact= pow(1.0/(pow(qu,2)+ pow(qd,2)),2);
  
     for(int tt=0;tt<Corr.Nt;tt++)
@@ -1559,12 +1573,14 @@ if(!skip_light) {
 	RR.push_back(rr);
 	cov_tm.push_back( (V_light_bin_tm_distr.distr_list[tt]%V_light_bin_tm_distr.distr_list[rr]));
 	cov_OS.push_back( (V_light_bin_OS_distr.distr_list[tt]%V_light_bin_OS_distr.distr_list[rr]));
+	cov_red_tm.push_back( cov_tm[tt*Corr.Nt + rr]/pow(V_light_bin_tm_distr.ave(1),2));
+	cov_red_OS.push_back( cov_OS[tt*Corr.Nt + rr]/pow(V_light_bin_OS_distr.ave(1),2));
 	corr_tm.push_back( (V_light_bin_tm_distr.distr_list[tt]%V_light_bin_tm_distr.distr_list[rr])/(V_light_bin_tm_distr.err(tt)*V_light_bin_tm_distr.err(rr)));
 	corr_OS.push_back( (V_light_bin_OS_distr.distr_list[tt]%V_light_bin_OS_distr.distr_list[rr])/( V_light_bin_OS_distr.err(tt)*V_light_bin_OS_distr.err(rr)));
       }
 
-    Print_To_File({}, {TT,RR,cov_tm, corr_tm}, "../data/R_ratio/"+Tag_reco_type+"/covariance/"+light_tag+"/cov_"+V_light_1.Tag[i_ens]+"_tm.dat", "", "");
-    Print_To_File({}, {TT,RR,cov_OS, corr_OS}, "../data/R_ratio/"+Tag_reco_type+"/covariance/"+light_tag+"/cov_"+V_light_1.Tag[i_ens]+"_OS.dat", "", "");
+    Print_To_File({}, {TT,RR,cov_tm, cov_red_tm, corr_tm}, "../data/R_ratio/"+Tag_reco_type+"/covariance/"+light_tag+"/cov_"+V_light_1.Tag[i_ens]+"_tm.dat", "", "");
+    Print_To_File({}, {TT,RR,cov_OS, cov_red_OS, corr_OS}, "../data/R_ratio/"+Tag_reco_type+"/covariance/"+light_tag+"/cov_"+V_light_1.Tag[i_ens]+"_OS.dat", "", "");
      
 
       
@@ -1621,8 +1637,8 @@ if(!skip_light) {
    
      
     //sum perturbative corrections
-    V_light_distr = (V_light_distr)*(1.0 + (1.0/(Za*Za))*(1.0/V_light_distr)*VV_free_oppor);
-    V_light_OS_distr = (V_light_OS_distr)*( 1.0+  (1.0/(Zv*Zv))*(1.0/V_light_OS_distr)*VV_free_samer);
+    V_light_distr = (V_light_distr)*(1.0 + pert_corr_light_on_off*(1.0/(Za*Za))*(1.0/V_light_distr)*VV_free_oppor);
+    V_light_OS_distr = (V_light_OS_distr)*( 1.0+  pert_corr_light_on_off*(1.0/(Zv*Zv))*(1.0/V_light_OS_distr)*VV_free_samer);
 
   
 
@@ -1821,13 +1837,15 @@ if(!skip_light) {
       cout<<"Looping over energies"<<flush;
 
       #pragma omp parallel for schedule(dynamic)
+
       for(int ip=0; ip<(signed)Ergs_GeV_list.size();ip++) {
 
 	double mean = Ergs_GeV_list[ip]*a_distr.ave();
 	double lambda_Estar;
 	double lambda_Estar_SANF;
    
-
+	cout<<"node: "<<_hostname<<", rank: "<<rank<<", thread_id: "<<omp_get_thread_num()<<" core-id: "<<sched_getcpu()<<endl<<flush; 
+	
 	// (T)
         //define jackknife distribution to account for systematic error:
 	distr_t syst_T_tm(UseJack), syst_T_OS(UseJack);
@@ -2187,11 +2205,11 @@ if(!skip_light) {
 
     //multiply corr using Zv and Za
     //L
-    V_strange_L_distr = (V_strange_L_distr)*( 1.0 + (1.0/(Za*Za*V_strange_L_distr))*VV_free_oppor_L) ;
-    V_strange_OS_L_distr = (V_strange_OS_L_distr)*(1.0 + (1.0/(Zv*Zv*V_strange_OS_L_distr))*VV_free_samer_L);
+    V_strange_L_distr = (V_strange_L_distr)*( 1.0 + pert_corr_strange_on_off*(1.0/(Za*Za*V_strange_L_distr))*VV_free_oppor_L) ;
+    V_strange_OS_L_distr = (V_strange_OS_L_distr)*(1.0 + pert_corr_strange_on_off*(1.0/(Zv*Zv*V_strange_OS_L_distr))*VV_free_samer_L);
     //M
-    V_strange_M_distr = (V_strange_M_distr)*(1.0 + (1.0/(Za*Za*V_strange_M_distr))*VV_free_oppor_M) ;
-    V_strange_OS_M_distr = (V_strange_OS_M_distr)*( 1.0 + (1.0/(Zv*Zv*V_strange_OS_M_distr))*VV_free_samer_M);
+    V_strange_M_distr = (V_strange_M_distr)*(1.0 + pert_corr_strange_on_off*(1.0/(Za*Za*V_strange_M_distr))*VV_free_oppor_M) ;
+    V_strange_OS_M_distr = (V_strange_OS_M_distr)*( 1.0 + pert_corr_strange_on_off*(1.0/(Zv*Zv*V_strange_OS_M_distr))*VV_free_samer_M);
 
 
     //print correlator

@@ -450,7 +450,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     
      
     CorrAnalysis Corr(UseJack, Njacks,Nboots);
-    CorrAnalysis Corr_block_1(UseJack, Vk_data_tm.Nconfs[iens],Nboots);
+    CorrAnalysis Corr_block_1(0, Vk_data_tm.Nconfs[iens],Nboots, iens);
     Corr_block_1.Nt= Vk_data_tm.nrows[iens];
     Corr.Nt = Vk_data_tm.nrows[iens];
     int T = Corr.Nt;

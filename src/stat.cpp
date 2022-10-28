@@ -465,13 +465,12 @@ Pfloat BootAve(const Vfloat &BootDistr) {
 
   Pfloat ave_err = make_pair(0.0,0.0);
 
-  int N= BootDistr.size();
-  for(int i=0; i<N; i++) {
-    ave_err.first += BootDistr[i]/N;
-    ave_err.second += pow(BootDistr[i],2)/N;
-  }
-  ave_err.second = sqrt( (N/(double)(N-1.0))*(ave_err.second - pow(ave_err.first,2)));
 
+  int N= BootDistr.size();
+  for(int i=0; i<N; i++)  ave_err.first += BootDistr[i]/N;
+  for(int i=0; i<N;i++) ave_err.second += pow( BootDistr[i]-ave_err.first,2)/(N-1.0);
+
+  ave_err.second = sqrt(ave_err.second);
   return ave_err;
 }
 
@@ -486,7 +485,7 @@ double Compute_boot_cov(const Vfloat& A,const Vfloat& B) {
     int N=A.size();
     double res=0.0;
     if(N != (signed)B.size()) crash("In Compute_boot_cov: A.size() != B.size()");
-    for(int i=0;i<N;i++) res += (A[i]-barA)*(B[i] - barB); 
+    for(int i=0;i<N;i++) res += (1.0/(N-1.0))*(A[i]-barA)*(B[i] - barB); 
     return res;
 }
 
@@ -541,7 +540,6 @@ vector<Pfloat> distr_t_list::ave_err() const {
 
 
   
-
 Pfloat distr_t_list::ave_err(int i_distr) const{
      if(i_distr >=  (signed)distr_list.size()) crash("In distr_t_list function ave called with positional argument greater than distr_list size");
      return distr_list[i_distr].ave_err();
