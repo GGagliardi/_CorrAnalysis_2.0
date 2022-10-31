@@ -659,8 +659,8 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       Nit_Ag0++;
       if( (A1_val_std < 2*Ag_ov_A0_target*Ag_m && A1_val_std > 0.6*Ag_ov_A0_target*Ag_m)) lambda_found_Ag_A0=true;
 
-      if(Nit_Ag0 >= 30) {
-	cout<<"WARNING: A[g]/A[0]: "<<Ag_ov_A0_target*Ag_m<<" cannot be obtained after "<<Nit_Ag0<<" iterations...Skipping!"<<endl;
+      if(Nit_Ag0 >= 15) {
+	//cout<<"WARNING: A[g]/A[0]: "<<Ag_ov_A0_target*Ag_m<<" cannot be obtained after "<<Nit_Ag0<<" iterations...Skipping!"<<endl;
 	lambda_found_Ag_A0=true;
       }
       Global_id++;
@@ -1180,7 +1180,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
     }
       
 
-    if(Nit_100 > 100) {
+    if(Nit_100 > 50) {
      
       string msg = "Warning: After "+to_string(Nit_100)+" iterations, balance condition A = k*mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", mult(target) = "+to_string_with_precision( k*mult, 8)+" a*sigma: "+to_string_with_precision(sigma,5)+", aE*: "+to_string_with_precision(mean, 5)+" lambda: "+to_string_with_precision(lambda_mid, 5)+" , mult: "+to_string_with_precision(mult_est,5);
 

@@ -13,7 +13,7 @@ const double qs= qd;
 const double qc= qu;
 const double fm_to_inv_Gev= 1.0/0.197327;
 const int ln2_10=3.32192809489;
-const int prec = 256;
+const int prec = 128;
 const int prec_charm=512;
 const double rho_R= 12*M_PI*M_PI;
 const double Nc=3;
@@ -21,14 +21,14 @@ const double Rpert= Nc*( qu*qu + qd*qd);
 const double Rpert_strange = Nc*(qs*qs);
 const double Rpert_charm = Nc*(qc*qc);
 const double m_mu= 0.10565837; // [ GeV ]
-const Vfloat sigmas({4.2*m_mu});
-//const Vfloat sigmas({4.2*m_mu, 5.0*m_mu, 6.0*m_mu});
+//const Vfloat sigmas({4.2*m_mu});
+const Vfloat sigmas({4.2*m_mu, 5.0*m_mu, 6.0*m_mu});
 const string SM_TYPE= "GAUSSIAN";
 const bool add_pert_corr_light_up_to = 1.0;
 const bool add_pert_corr_strange_up_to = 1.0;
 const bool add_pert_corr_charm_up_to = 1.0;
-const double max_energy = 15.0*m_mu; //33.5*m_mu; //33.5*m_mu // [ GeV ]
-const double min_energy = 15.0*m_mu;//2.5*m_mu;  //2.5*m_mu;
+const double max_energy = 33.5*m_mu; //33.5*m_mu; //33.5*m_mu // [ GeV ]
+const double min_energy = 2.5*m_mu;//2.5*m_mu;  //2.5*m_mu;
 const double Eth = 2.0*m_mu;
 const double step_size= 0.5*m_mu; //step size
 const double m_Jpsi= 3.0969;
@@ -59,11 +59,14 @@ Vfloat cov_fake;
 int Num_LUSCH_R_ratio=17;
 int Nres_R_ratio= 15;
 int pts_spline_R_ratio=200;
+bool test_mode=false;
 using namespace std;
 
 
 void Get_Ergs_list() {
 
+  Ergs_GeV_list.clear();
+  
   double Erg=min_energy;
 
   while(Erg<=max_energy+1e-10) { Ergs_GeV_list.push_back(Erg); Erg+= step_size;}
@@ -163,9 +166,25 @@ void Get_exp_smeared_R_ratio(const Vfloat& Ergs_GeV_list_exp, double sigma) {
 
 void R_ratio_analysis() {
 
-  Vfloat betas({1.99});
-  Vfloat Emax_list({4.0});
-  vector<bool> Is_Emax_Finite({0});
+
+  if(test_mode && ( !skip_charm || !skip_strange || ! skip_disconnected)) crash("test mode is safe only if skip_light=1 and skip_charm=skip_strange=skip_disconnected=0");
+
+  Get_Ergs_list();
+
+
+  Vfloat Ergs_GeV_list_exp;
+  double Dx_e= 0.01; //10 MeV                                                                                                                                                                             
+  int Nps_exp= (int)((5.0 - Eth)/Dx_e); //up to 5 GeV                                                                                                                                                     
+  for(int ip=0;ip<Nps_exp;ip++) Ergs_GeV_list_exp.push_back(  Eth+ ip*((5.0- Eth)/((double)Nps_exp)));
+  for( auto &sigma: sigmas)
+    if(Compute_experimental_smeared_R_ratio) Get_exp_smeared_R_ratio(Ergs_GeV_list_exp, sigma);
+
+
+
+  
+  Vfloat betas({2.99,1.99});
+  Vfloat Emax_list({ 4.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,0});
   int N= betas.size();
 
   int rank,size;
@@ -189,9 +208,9 @@ void R_ratio_analysis() {
 
 
   
-  for(int i=rank*N/size;i<(rank+1)*N/size;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i]); Compute_experimental_smeared_R_ratio=false; Compute_free_spec_dens=false;}
+  for(int i=rank*N/size;i<(rank+1)*N/size;i++) {Compute_R_ratio(Is_Emax_Finite[i], Emax_list[i], betas[i]); Compute_free_spec_dens=false;}
 
-
+  return;
 
 }
 
@@ -202,11 +221,9 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
   string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
   Tag_reco_type+="_Emax_"+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1));
 
-  string Tag_Exp_sm_r_ratio= (Compute_experimental_smeared_R_ratio==0)?"no":"yes";
   string alpha_Emax_tag= "{"+to_string_with_precision(beta,2)+","+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1))+"}";
 
   cout<<"STARTING COMPUTATION OF: {alpha,Emax} : "<<alpha_Emax_tag<<endl;
-  cout<<"COMPUTE EXPERIMENTAL SMEARED R-RATIO: "<<Tag_Exp_sm_r_ratio<<endl;
 
 
   //COMPUTE FREE SPECTRAL DENSITY IS NEEDED
@@ -339,18 +356,6 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
   data_t  pt2_etaC_H, pt2_etaC_OS_H;
 
 
-
-  Get_Ergs_list();
-
- 
- 
-  Vfloat Ergs_GeV_list_exp;
-  double Dx_e= 0.01; //10 MeV
-  int Nps_exp= (int)((5.0 - Eth)/Dx_e); //up to 5 GeV
-  for(int ip=0;ip<Nps_exp;ip++) Ergs_GeV_list_exp.push_back(  Eth+ ip*((5.0- Eth)/((double)Nps_exp)));
-  for( auto &sigma: sigmas)
-    if(Compute_experimental_smeared_R_ratio) Get_exp_smeared_R_ratio(Ergs_GeV_list_exp, sigma);
-  
 
 
   //Read data
@@ -1739,7 +1744,7 @@ if(!skip_light) {
     const auto model_light_tm =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[0], Amplitudes[0], Mrhos[0], Eduals[0], Rduals[0]);};
     const auto model_light_OS =  [&GS_V, &Ergs, &Amplitudes, &a_distr, &Mrhos, &Eduals, &Rduals](double E) -> double {  return GS_V(E, Ergs[1], Amplitudes[1], Mrhos[1], Eduals[1], Rduals[1]);};
 
-    auto f_syst_tm = [&Ergs, &Amplitudes, &Mrhos, &gppis, &Eduals, &Rduals, &GS_V, &a_distr, &Mpi, &resc_light, &LL, &F_free_tm](const function<double(double)> &F) ->double {
+    auto f_syst_tm = [&Ergs, &Amplitudes, &Mrhos, &gppis, &Eduals, &Rduals, &GS_V, &a_distr, &Mpi, &resc_light, &F_free_tm](const function<double(double)> &F) ->double {
 
 
 		     		     
@@ -1764,7 +1769,7 @@ if(!skip_light) {
 
 
 
-    auto f_syst_OS = [&Ergs, &Amplitudes, &Mrhos, &gppis, &Eduals, &Rduals, &GS_V, &a_distr, &Mpi, &resc_light, &LL, &F_free_OS](const function<double(double)> &F) ->double {
+    auto f_syst_OS = [&Ergs, &Amplitudes, &Mrhos, &gppis, &Eduals, &Rduals, &GS_V, &a_distr, &Mpi, &resc_light, &F_free_OS](const function<double(double)> &F) ->double {
 
 		     		      
 		      auto FS = [ &Ergs, &Amplitudes, &Mrhos, &Eduals, &Rduals, &F, &GS_V, &F_free_OS, &resc_light](double E) {
@@ -1844,7 +1849,6 @@ if(!skip_light) {
 	double lambda_Estar;
 	double lambda_Estar_SANF;
    
-	cout<<"node: "<<_hostname<<", rank: "<<rank<<", thread_id: "<<omp_get_thread_num()<<" core-id: "<<sched_getcpu()<<endl<<flush; 
 	
 	// (T)
         //define jackknife distribution to account for systematic error:
@@ -1854,6 +1858,7 @@ if(!skip_light) {
 	auto start= chrono::system_clock::now();
 	Spectral_dens.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, V_light_distr, syst_tm[ip], mult_TANT, lambda_Estar, "TANT", "tm", V_light_1.Tag[i_ens], -1 , 0, rho_R*Za*Za*(pow(qu,2)+pow(qd,2)), "R_ratio_light" , cov_tm, f_syst_tm, 1, model_light_tm, Is_Emax_Finite, Emax,beta ) + syst_tm[ip]*syst_T_tm ;
 	auto end = chrono::system_clock::now();
+	cout<<"node: "<<_hostname<<", rank: "<<rank<<", thread_id: "<<omp_get_thread_num()<<" core-id: "<<sched_getcpu()<<endl<<flush; 
 	chrono::duration<double> elapsed_seconds = end-start;
 	double time_tm= elapsed_seconds.count();
 	if(R_ratio_verbosity_lev) {
@@ -1900,7 +1905,9 @@ if(!skip_light) {
 	cout<<Ergs_GeV_list[ip]<<","<<get<0>(thread_times_OS[ip])<<": "<<get<1>(thread_times_OS[ip])<<" s"<<endl<<flush;
 	cout<<"- - - - - - - - - - - - - - - - - - - - "<<endl<<flush;
       }
-     
+
+
+      if(!test_mode) {
 
       if(SANF_MODE_OFF) {
 	Spectral_dens_SANF= Spectral_dens; Spectral_dens_OS_SANF = Spectral_dens_OS;
@@ -1919,6 +1926,7 @@ if(!skip_light) {
       //light
       //print to file
       Print_To_File({}, {Ergs_GeV_list, Spectral_dens.ave(), Spectral_dens.err(), Spectral_dens_SANF.ave(), Spectral_dens_SANF.err(), Spectral_dens_OS.ave(), Spectral_dens_OS.err(), Spectral_dens_OS_SANF.ave(), Spectral_dens_OS_SANF.err()}, "../data/R_ratio/"+Tag_reco_type+"/"+light_tag+"/"+SM_TYPE+"_"+V_light_1.Tag[i_ens]+"_sigma_"+to_string_with_precision(sigmas[isg],3)+".dat", "", "#E*(GeV)   R(E)_tm [T]  R(E)_tm[S]   R(E)_OS[T]  R(E)_OS[S]");
+      }
 
       cout<<"done!"<<endl;
     }
@@ -2779,13 +2787,11 @@ if(!skip_disconnected) {
  }
 
 
-
-
-
  
 
  //######################################################################################################################################################################
  //STORE JACKKNIFE DISTRIBUTIONS
+ if(!test_mode) {   
  //light
  if(!skip_light) {
  for(int i_ens=0; i_ens<Nens_light;i_ens++) {
@@ -2880,6 +2886,7 @@ if(!skip_disconnected) {
  
 
  cout<<"Jackknife distributions stored!!"<<endl;
+ }
  cout<<"Bye!"<<endl;
    
     

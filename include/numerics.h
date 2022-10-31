@@ -11,13 +11,13 @@
 #include <cmath>
 #include <map>
 #include <string>
-#include <hwloc.h>
 #include <functional>
 #include <stdarg.h>
 #include <numeric>
 #include <sstream>
 #include <cassert>
 #include <utmpx.h>
+#include <sched.h>
 #include <mpi.h>
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>

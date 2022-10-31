@@ -1660,46 +1660,46 @@ void LL_functions::MLLGS_fit_to_corr(const distr_t_list &Corr,const distr_t &Mpi
       kappa= par[4];
     }
 
-    double Rd,Ed, Mrho, gpi,kappa, Mpi_corr;
+    double Rd,Ed, Mrho, gpi,kappa;
   };
   
-  int Njacks= Mpi.size();
+  int Njacks= a_distr.size();
   
-  bootstrap_fit<fit_par_MLLGS,ipar_MLLGS> bf(Njacks);
-  bf.set_warmup_lev(2); //sets warmup
+  bootstrap_fit<fit_par_MLLGS,ipar_MLLGS> bf_MLLGS(Njacks);
+  //bf_MLLGS.set_warmup_lev(2); //sets warmup
   int Tfit_points= tmax +1 - tmin;
   
   
 
   
-  bf.Set_number_of_measurements(Tfit_points);
-  bf.Set_verbosity(1);
+  bf_MLLGS.Set_number_of_measurements(Tfit_points);
+  bf_MLLGS.Set_verbosity(1);
 
   cout<<"FITTING WITH PIPI+DUAL REPRESENTATION: "<<Tag<<endl;
   
 
   //initial guesses are based on the results on the old ETMC confs
-  bf.Add_par("Rd", 1.1, 0.1);
-  bf.Set_limits("Rd", 0.7, 1.8);
-  bf.Add_par("Ed", 2.5, 0.2);
-  bf.Set_limits("Ed", 0.7, 5.0);
-  bf.Add_par("Mrho",5.5, 0.1);
-  bf.Set_limits("Mrho", 4.5 , 6.7);
-  bf.Add_par("gpi", 1.0, 0.01);
-  bf.Add_par("kappa", -3.0, 0.1);
-  bf.Fix_par("kappa", 0.0);
-  bf.Set_limits("gpi",0.6, 1.4);
+  bf_MLLGS.Add_par("Rd", 1.1, 0.1);
+  bf_MLLGS.Set_limits("Rd", 0.7, 1.8);
+  bf_MLLGS.Add_par("Ed", 2.5, 0.2);
+  bf_MLLGS.Set_limits("Ed", 0.7, 5.0);
+  bf_MLLGS.Add_par("Mrho",5.5, 0.1);
+  bf_MLLGS.Set_limits("Mrho", 4.5 , 6.7);
+  bf_MLLGS.Add_par("gpi", 1.0, 0.01);
+  bf_MLLGS.Add_par("kappa", -3.0, 0.1);
+  bf_MLLGS.Fix_par("kappa", 0.0);
+  bf_MLLGS.Set_limits("gpi",0.6, 1.4);
   
   map<pair<pair<double,double>, pair<double,double>>,Vfloat> Energy_lev_list;
   
 
-  bf.ansatz =  [&Energy_lev_list, this](const fit_par_MLLGS &p, const ipar_MLLGS &ip) -> double {
+  bf_MLLGS.ansatz =  [&Energy_lev_list, this](const fit_par_MLLGS &p, const ipar_MLLGS &ip) -> double {
 
 		     double Pi_M = ip.Mp;
 
 		     double GPI = p.gpi*5.95;
 		     Vfloat Knpp;
-		     pair<double,double> Mass_par= make_pair(p.Mrho*Pi_M, p.Mpi_corr*Pi_M);
+		     pair<double,double> Mass_par= make_pair(p.Mrho*Pi_M, Pi_M);
 		     pair<double,double> Couplings = make_pair(GPI, p.kappa);
 		     pair< pair<double,double>,pair<double, double>> input_pars = make_pair( Mass_par, Couplings);
 		     map<pair<pair<double,double>, pair<double, double>>,Vfloat>::iterator it;
@@ -1713,10 +1713,10 @@ void LL_functions::MLLGS_fit_to_corr(const distr_t_list &Corr,const distr_t &Mpi
 		
 		     return 2.0*V_pipi(ip.t, ip.L, p.Mrho*Pi_M, GPI, Pi_M, p.kappa, Knpp) + (9.0/5.0)*Vdual(ip.t, p.Mrho*Pi_M, p.Ed*Pi_M, p.Rd);
 		   };
-      bf.measurement = [&](const fit_par_MLLGS& p,const ipar_MLLGS& ip) -> double {
+      bf_MLLGS.measurement = [](const fit_par_MLLGS& p,const ipar_MLLGS& ip) -> double {
 			 return ip.V_light;
 		       };
-      bf.error =  [&](const fit_par_MLLGS& p,const ipar_MLLGS &ip) -> double {
+      bf_MLLGS.error =  [](const fit_par_MLLGS& p,const ipar_MLLGS &ip) -> double {
 		    return ip.V_light_err;
 		  };
 
@@ -1741,9 +1741,9 @@ void LL_functions::MLLGS_fit_to_corr(const distr_t_list &Corr,const distr_t &Mpi
       }
     
       //append
-      bf.Append_to_input_par(data);
+      bf_MLLGS.Append_to_input_par(data);
       //fit
-      Bt_fit= bf.Perform_bootstrap_fit();
+      Bt_fit= bf_MLLGS.Perform_bootstrap_fit();
 
       for(int ijack=0;ijack<Njacks;ijack++) {
         Mrho.distr.push_back(Bt_fit.par[ijack].Mrho*Mpi.distr[ijack]);
@@ -1751,6 +1751,9 @@ void LL_functions::MLLGS_fit_to_corr(const distr_t_list &Corr,const distr_t &Mpi
 	Edual.distr.push_back( Bt_fit.par[ijack].Ed*Mpi.distr[ijack]);
 	Rdual.distr.push_back( Bt_fit.par[ijack].Rd);
       }
+
+
+      Energy_lev_list.clear();
 
       omp_set_num_threads(NUMM_THREADS);
 
