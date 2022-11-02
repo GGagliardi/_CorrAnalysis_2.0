@@ -515,3 +515,28 @@ double w(int t, int Simps_ord) {
   return 0.0;
 
 }
+
+
+
+/// Implements the trap to debug
+void debug_loop()
+{
+  volatile int flag=0;
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if(rank==0) {
+  printf("Entering debug loop on rank %d, flag has address %p please type:\n"
+	 "$ gdb -p %d\n"
+	 "$ set flag=1\n"
+	 "$ continue\n",
+	 rank,
+	 &flag,
+	 getpid());
+  }
+  
+  if(rank==0)
+    while(flag==0);
+  
+ MPI_Barrier(MPI_COMM_WORLD);
+
+}

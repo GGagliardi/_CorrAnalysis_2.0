@@ -44,12 +44,15 @@ PrecFloat BaseFunc(const PrecFloat& E, int t, int T) { return exp(-E*t) + exp( -
 
 PrecFloat aE0(const PrecFloat &E0,const PrecFloat &t, int n) {
   if(n!=0) crash("In AE0 n!=0");
-  if(n==0) {
-    if(!Integrate_up_to_max_energy)  return exp(-E0*t)/t;
-    else return exp(-E0*t)/t - exp(-PrecFloat(Emax_int)*t)/t;
-  }  
-  else return pow(t,PrecFloat(-(n+1)))*( gamma(PrecFloat(n+1)) -PrecFloat(n)*gamma(PrecFloat(n)) + gamma_inc(PrecFloat(1+n), E0*t));
 
+  
+  if(!Integrate_up_to_max_energy)  return exp(-E0*t)/t;
+
+
+
+  return exp(-E0*t)/t - exp(-PrecFloat(Emax_int)*t)/t;
+   
+ 
 
 }
 
@@ -81,7 +84,7 @@ void Get_Atr(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int tmax)  {
   Atr.resize(tmax-tmin+1, tmax-tmin+1);
 
   for(int t=tmin;t<= tmax; t++)
-    for(int r=tmin; r<= tmax; r++) Atr(t-tmin,r-tmin) = aE0(E0, PrecFloat(t+r-Beta),alpha) + aE0(E0, PrecFloat(T - t +r-Beta), alpha) + aE0(E0,PrecFloat(-Beta+ T+t -r), alpha) + aE0(E0,PrecFloat(-Beta+ 2*T -t -r), alpha);
+    for(int r=tmin; r<= tmax; r++) Atr(t-tmin,r-tmin) = aE0(E0,-PrecFloat(Beta) + t+r,alpha) + aE0(E0, -PrecFloat(Beta) + T - t +r, alpha) + aE0(E0,-PrecFloat(Beta)+ T+t -r, alpha) + aE0(E0,-PrecFloat(Beta)+ 2*T -t -r, alpha);
     
   
   return;
@@ -402,7 +405,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
   //Print header
   if(Use_guess_density) Print_R_at_lambda<<"# $1=lambda,  $2= A[g]/A[0], $3= A^E[g]/A^E[0] , $4=B[g], $5=B^E[g],  $6=Aa[g]/Aa[0], $7= val, $8=err, $9=syst, $10=S_FLAG $11=mult"<<endl; 
-  else Print_R_at_lambda<<"# $1=lambda,  $2= A[g]/A[0], $3= A^E[g]/A^E[0] , $4=B[g], $5=B^E[g], $6=Aa[g]/Aa[0], $7= val, $8=err, $9=S_FLAG $10=mult"<<endl;
+  else Print_R_at_lambda<<"# $1=lambda,  $2= A[g]/A[0], $3= A^E[g]/A^E[0] , $4=B[g], $5=B^E[g], $6=Aa[g]/Aa[0], $7= val, $8=err, $9=syst,  $10=S_FLAG $11=mult"<<endl;
 
   Print_R_at_lambda.precision(10);
     
@@ -639,7 +642,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       PrecFloat mult_est = (mult_estimated_from_norm0==false)?A1_val/B1_val:A1_val_std/B1_val_std;
      
       Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
-      if(Use_guess_density) Print_R_at_lambda<<" "<<syst;
+      Print_R_at_lambda<<" "<<syst;
       Print_R_at_lambda<<" 0 "<<mult_est<<endl;
 
       //##########################################################################################
@@ -659,7 +662,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       Nit_Ag0++;
       if( (A1_val_std < 2*Ag_ov_A0_target*Ag_m && A1_val_std > 0.6*Ag_ov_A0_target*Ag_m)) lambda_found_Ag_A0=true;
 
-      if(Nit_Ag0 >= 15) {
+      if(Nit_Ag0 >= 10) {
 	//cout<<"WARNING: A[g]/A[0]: "<<Ag_ov_A0_target*Ag_m<<" cannot be obtained after "<<Nit_Ag0<<" iterations...Skipping!"<<endl;
 	lambda_found_Ag_A0=true;
       }
@@ -839,7 +842,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       
 
     Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
-    if(Use_guess_density) Print_R_at_lambda<<" "<<syst;
+    Print_R_at_lambda<<" "<<syst;
     Print_R_at_lambda<<" "<<lambda_balance_found<<" "<<mult_est<<endl;
 
     //##########################################################################################
@@ -1026,7 +1029,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
     }
 
     Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
-    if(Use_guess_density) Print_R_at_lambda<<" "<<syst;
+    Print_R_at_lambda<<" "<<syst;
     Print_R_at_lambda<<" "<<2*(lambda_balance_found_10==1)<<" "<<mult_est<<endl;
 
     //##########################################################################################
@@ -1178,14 +1181,16 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
       }
     }
-      
 
-    if(Nit_100 > 50) {
+    bool skipping_N_100=false;
+
+    if(Nit_100 > 20) {
      
-      string msg = "Warning: After "+to_string(Nit_100)+" iterations, balance condition A = k*mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", mult(target) = "+to_string_with_precision( k*mult, 8)+" a*sigma: "+to_string_with_precision(sigma,5)+", aE*: "+to_string_with_precision(mean, 5)+" lambda: "+to_string_with_precision(lambda_mid, 5)+" , mult: "+to_string_with_precision(mult_est,5);
+      //string msg = "Warning: After "+to_string(Nit_100)+" iterations, balance condition A = k*mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", mult(target) = "+to_string_with_precision( k*mult, 8)+" a*sigma: "+to_string_with_precision(sigma,5)+", aE*: "+to_string_with_precision(mean, 5)+" lambda: "+to_string_with_precision(lambda_mid, 5)+" , mult: "+to_string_with_precision(mult_est,5);
 
-      cout<<msg<<endl;
+      //cout<<msg<<endl;
       lambda_balance_found_100=true;
+      skipping_N_100=true;
     }
 
 
@@ -1203,8 +1208,8 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
     }
 
     Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
-    if(Use_guess_density) Print_R_at_lambda<<" "<<syst;
-    Print_R_at_lambda<<" "<<3*(lambda_balance_found_100==1)<<" "<<mult_est<<endl;
+    Print_R_at_lambda<<" "<<syst;
+    Print_R_at_lambda<<" "<<3*(lambda_balance_found_100==1 && skipping_N_100==0)<<" "<<mult_est<<endl;
 
     //##########################################################################################
 

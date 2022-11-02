@@ -451,6 +451,8 @@ const auto Cm1_log = []() { return 4.0 + 8.0/3.0 - 5.0/2.0 - 2.0;};
 const auto Cm2_log = []() { return -8.0/3.0 -32.0/3.0;}; 
    
 
+//debug
+void debug_loop();
 
 #endif
 

@@ -8,6 +8,8 @@ int main(int narg, char** argv)
 {
 
   MPI_Init(&narg, &argv);
+
+  debug_loop();
   
   if(narg != 2) crash ("ONLY INPUT FILE IS REQUIRED");
 
