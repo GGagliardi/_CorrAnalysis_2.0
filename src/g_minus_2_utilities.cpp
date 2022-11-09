@@ -8,7 +8,7 @@ const double relerr= 1e-12;
 
 
 
-
+#pragma omp declare reduction(+: Vfloat : omp_out= Sum_vectors(omp_out,omp_in)) initializer(omp_priv=Vfloat(omp_orig.size(),0))
 
 
 
@@ -1002,7 +1002,7 @@ void Compute_free_spectral_density(int Nc, double am, int reg, double step_size_
  Vfloat pxs, pys, pzs;
  for(int i=0; i<Npoints_dir;i++) { pxs.push_back( i*M_PI/(Npoints_dir-1.0)); pys.push_back( i*M_PI/(Npoints_dir -1.0)); pzs.push_back( i*M_PI/(Npoints_dir-1.0));}
 
- #pragma omp parallel for
+ #pragma omp parallel for reduction (+:spec_dens_hist)
  for( auto &px: pxs)
    for( auto &py: pys)
      for( auto &pz: pzs) {

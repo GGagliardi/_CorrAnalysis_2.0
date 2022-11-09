@@ -52,8 +52,8 @@ const bool R_ratio_verbosity_lev=1;
 Vfloat Ergs_GeV_list;
 bool SANF_MODE_OFF=true;
 bool skip_light=true;
-bool skip_strange=false;
-bool skip_charm=true;
+bool skip_strange=true;
+bool skip_charm=false;
 bool skip_disconnected=true;
 Vfloat cov_fake;
 int Num_LUSCH_R_ratio=17;
@@ -187,9 +187,9 @@ void R_ratio_analysis() {
 
 
   
-  Vfloat betas({ 1.0, 1.99,2.99, 0.0, 1.0,1.99});
-  Vfloat Emax_list({ 4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
-  vector<bool> Is_Emax_Finite({1,1,1,0,0,0});
+  Vfloat betas({ 0.0, 1.0, 1.99, 2.99, 3.99, 0.0, 1.0, 1.99});
+  Vfloat Emax_list({ 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,1,1,1,1, 0,0,0});
   int N= betas.size();
 
   int rank,size;
@@ -734,7 +734,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
     string charm_tag = "charm";
     
     CorrAnalysis Corr(UseJack, Njacks,Nboots);
-    CorrAnalysis Corr_block_1(UseJack,V_charm_1_L.Nconfs[i_ens], Nboots);
+    CorrAnalysis Corr_block_1(0,V_charm_1_L.Nconfs[i_ens], Nboots, i_ens);
     Corr_block_1.Nt= V_charm_1_L.nrows[i_ens];
     Corr.Nt = V_charm_1_L.nrows[i_ens];
     int T = Corr.Nt;
@@ -1307,7 +1307,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_L_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_L_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
 
 	auto start = chrono::system_clock::now();
-	Spectral_dens_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_L_distr, syst_tm_L[ip], mult_TANT, lambda_Estar, "TANT", "tm", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_L, f_syst_tm_L, 1, model_charm_tm_L, Is_Emax_Finite, Emax,beta ) + syst_L_T_tm*syst_tm_L[ip] ;
+	Spectral_dens_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_L_distr, syst_tm_L[ip], mult_TANT, lambda_Estar, "TANT", "tm", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_L, f_syst_tm_L, 0, model_charm_tm_L, Is_Emax_Finite, Emax,beta ) + syst_L_T_tm*syst_tm_L[ip] ;
 	auto end = chrono::system_clock::now();
 	chrono::duration<double> elapsed_seconds = end-start;
 	double time_L_tm= elapsed_seconds.count();
@@ -1318,7 +1318,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	cout<<"."<<flush;
 
 	start = chrono::system_clock::now();
-	Spectral_dens_OS_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_L_distr, syst_OS_L[ip], mult_TANT, lambda_Estar, "TANT", "OS", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_L, f_syst_OS_L, 1, model_charm_OS_L, Is_Emax_Finite, Emax,beta  ) + syst_L_T_OS*syst_OS_L[ip] ;
+	Spectral_dens_OS_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_L_distr, syst_OS_L[ip], mult_TANT, lambda_Estar, "TANT", "OS", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_L, f_syst_OS_L, 0, model_charm_OS_L, Is_Emax_Finite, Emax,beta  ) + syst_L_T_OS*syst_OS_L[ip] ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_L_OS= elapsed_seconds.count();
@@ -1347,7 +1347,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_M_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_M_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
 	
 	start = chrono::system_clock::now();
-	Spectral_dens_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_M_distr, syst_tm_M[ip], mult_TANT, lambda_Estar, "TANT", "tm", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_M, f_syst_tm_M, 1, model_charm_tm_M, Is_Emax_Finite, Emax,beta ) + syst_tm_M[ip]*syst_M_T_tm ;
+	Spectral_dens_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_M_distr, syst_tm_M[ip], mult_TANT, lambda_Estar, "TANT", "tm", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_M, f_syst_tm_M, 0, model_charm_tm_M, Is_Emax_Finite, Emax,beta ) + syst_tm_M[ip]*syst_M_T_tm ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_M_tm= elapsed_seconds.count();
@@ -1358,7 +1358,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	cout<<"."<<flush;
 
 	start = chrono::system_clock::now();
-	Spectral_dens_OS_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_M_distr, syst_OS_M[ip], mult_TANT, lambda_Estar, "TANT", "OS", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_M, f_syst_OS_M, 1, model_charm_OS_M, Is_Emax_Finite, Emax,beta  )+ syst_OS_M[ip]*syst_M_T_OS ;
+	Spectral_dens_OS_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_M_distr, syst_OS_M[ip], mult_TANT, lambda_Estar, "TANT", "OS", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_M, f_syst_OS_M, 0, model_charm_OS_M, Is_Emax_Finite, Emax,beta  )+ syst_OS_M[ip]*syst_M_T_OS ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_M_OS= elapsed_seconds.count();
@@ -1386,7 +1386,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_H_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_H_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
 
 	start = chrono::system_clock::now();
-	Spectral_dens_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_H_distr, syst_tm_H[ip], mult_TANT, lambda_Estar, "TANT", "tm", "H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_H, f_syst_tm_H, 1, model_charm_tm_H, Is_Emax_Finite, Emax,beta  )+ syst_tm_H[ip]*syst_H_T_tm ;
+	Spectral_dens_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_H_distr, syst_tm_H[ip], mult_TANT, lambda_Estar, "TANT", "tm", "H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_H, f_syst_tm_H, 0, model_charm_tm_H, Is_Emax_Finite, Emax,beta  )+ syst_tm_H[ip]*syst_H_T_tm ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_H_tm= elapsed_seconds.count();
@@ -1397,7 +1397,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	cout<<"."<<flush;
 
 	start = chrono::system_clock::now();
-	Spectral_dens_OS_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_H_distr, syst_OS_H[ip], mult_TANT, lambda_Estar, "TANT", "OS","H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_H, f_syst_OS_H, 1, model_charm_OS_H, Is_Emax_Finite, Emax,beta  )+ syst_OS_H[ip]*syst_H_T_OS ;
+	Spectral_dens_OS_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_H_distr, syst_OS_H[ip], mult_TANT, lambda_Estar, "TANT", "OS","H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_H, f_syst_OS_H, 0, model_charm_OS_H, Is_Emax_Finite, Emax,beta  )+ syst_OS_H[ip]*syst_H_T_OS ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_H_OS= elapsed_seconds.count();
@@ -2608,7 +2608,7 @@ if(!skip_disconnected) {
     string disco_tag= "disco";
     
     CorrAnalysis Corr(UseJack, Njacks,Nboots);
-    CorrAnalysis Corr_block_1(UseJack, disco_light.Nconfs[i_ens], Nboots);
+    CorrAnalysis Corr_block_1(0, disco_light.Nconfs[i_ens],Nboots, i_ens);
     Corr_block_1.Nt= disco_light.nrows[i_ens];
     Corr.Nt = disco_light.nrows[i_ens];
     int T = Corr.Nt;

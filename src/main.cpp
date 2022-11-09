@@ -2,6 +2,7 @@
 
 using namespace std;
 
+bool DEBUG=false;
 
 
 int main(int narg, char** argv)
@@ -9,7 +10,7 @@ int main(int narg, char** argv)
 
   MPI_Init(&narg, &argv);
 
-  debug_loop();
+  if(DEBUG) debug_loop();
   
   if(narg != 2) crash ("ONLY INPUT FILE IS REQUIRED");
 

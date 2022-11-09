@@ -50,7 +50,7 @@ using namespace std;
 
 void get_sigma_list() {
 
-  bool test=true;
+  bool test=false;
   if(test) { sigma_list.push_back(0.05); return;}
 
 
@@ -70,10 +70,13 @@ void get_sigma_list() {
 
 void tau_decay_analysis() {
 
+
+
+  get_sigma_list();
   
-  Vfloat betas({2.99, 3.99, 1.0, 1.99});
-  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0});
-  vector<bool> Is_Emax_Finite({1,1,0,0});
+  Vfloat betas({0.0, 1.0, 1.99, 2.99, 3.99, 0.0, 1.0, 1.99});
+  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,1,1,1,1,0,0,0});
 
   int rank, size;
 
@@ -165,6 +168,10 @@ void tau_decay_analysis() {
 
 void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_functions &LL) {
 
+
+
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    
   string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
   Tag_reco_type+="_Emax_"+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1));
@@ -179,10 +186,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
   cout.precision(5);
 
 
+
   if(COMPUTE_SPEC_DENS_FREE) Get_spec_dens_free({0.00072, 0.00060, 0.00054}, "tau_decay");
-
-  get_sigma_list();
-
 
  
     
@@ -269,15 +274,15 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
   //light 
   //tm
-  Vk_data_tm.Read("../tau_decay_data/light", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
-  V0_data_tm.Read("../tau_decay_data/light", "mes_contr_2pts_ll_1", "V0V0", Sort_light_confs);
-  Ak_data_tm.Read("../tau_decay_data/light", "mes_contr_2pts_ll_1", "AKAK", Sort_light_confs);
-  A0_data_tm.Read("../tau_decay_data/light", "mes_contr_2pts_ll_1", "A0A0", Sort_light_confs);
+  Vk_data_tm.Read("../R_ratio_data/light", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
+  V0_data_tm.Read("../R_ratio_data/light", "mes_contr_2pts_ll_1", "V0V0", Sort_light_confs);
+  Ak_data_tm.Read("../R_ratio_data/light", "mes_contr_2pts_ll_1", "AKAK", Sort_light_confs);
+  A0_data_tm.Read("../R_ratio_data/light", "mes_contr_2pts_ll_1", "A0A0", Sort_light_confs);
   //OS
-  Vk_data_OS.Read("../tau_decay_data/light", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
-  V0_data_OS.Read("../tau_decay_data/light", "mes_contr_2pts_ll_2", "V0V0", Sort_light_confs);
-  Ak_data_OS.Read("../tau_decay_data/light", "mes_contr_2pts_ll_2", "AKAK", Sort_light_confs);
-  A0_data_OS.Read("../tau_decay_data/light", "mes_contr_2pts_ll_2", "A0A0", Sort_light_confs);
+  Vk_data_OS.Read("../R_ratio_data/light", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
+  V0_data_OS.Read("../R_ratio_data/light", "mes_contr_2pts_ll_2", "V0V0", Sort_light_confs);
+  Ak_data_OS.Read("../R_ratio_data/light", "mes_contr_2pts_ll_2", "AKAK", Sort_light_confs);
+  A0_data_OS.Read("../R_ratio_data/light", "mes_contr_2pts_ll_2", "A0A0", Sort_light_confs);
 
 
 
@@ -977,7 +982,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_Aii_tm= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[Aii_tm, #thread="<<omp_get_thread_num()<<"] : "<<time_Aii_tm<<" s"<<endl<<flush;
+	cout<<"Elapsed time[Aii_tm, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Aii_tm<<" s"<<endl<<flush;
       }
       cout<<"."<<flush;
 
@@ -989,7 +994,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_Aii_OS= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[Aii_OS, #thread="<<omp_get_thread_num()<<"] : "<<time_Aii_OS<<" s"<<endl<<flush;
+	cout<<"Elapsed time[Aii_OS, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Aii_OS<<" s"<<endl<<flush;
       }
       cout<<"."<<flush;
 
@@ -1000,7 +1005,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_Vii_tm= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[Vii_tm, #thread="<<omp_get_thread_num()<<"] : "<<time_Vii_tm<<" s"<<endl<<flush;
+	cout<<"Elapsed time[Vii_tm, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Vii_tm<<" s"<<endl<<flush;
       }
       cout<<"."<<flush;
 
@@ -1011,7 +1016,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_Vii_OS= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[Vii_OS, #thread="<<omp_get_thread_num()<<"] : "<<time_Vii_OS<<" s"<<endl<<flush;
+	cout<<"Elapsed time[Vii_OS, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Vii_OS<<" s"<<endl<<flush;
       }
       cout<<"."<<flush;
 
@@ -1023,7 +1028,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_A0_tm= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[A0_tm, #thread="<<omp_get_thread_num()<<"] : "<<time_A0_tm<<" s"<<endl<<flush;
+	cout<<"Elapsed time[A0_tm, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_A0_tm<<" s"<<endl<<flush;
       }
       cout<<"."<<flush;
 
@@ -1034,7 +1039,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_A0_OS= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[A0_OS, #thread="<<omp_get_thread_num()<<"] : "<<time_A0_OS<<" s"<<endl<<flush;
+	cout<<"Elapsed time[A0_OS, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_A0_OS<<" s"<<endl<<flush;
       }
       cout<<"."<<flush;
 
