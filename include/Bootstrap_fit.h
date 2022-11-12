@@ -73,6 +73,7 @@ public:
   void Add_prior_pars(const vector<string>& Names);
   void Append_to_prior(string Name, double val, double err);
   void Fix_par(string Name, double val);
+  void Release_par(string Name);
   void Fix_par(string Name) { Fix_par(Name, nan("1"));};
   void Append_to_input_par(vector<vector<T2>> values) {this->Input_pars = values;}
   void Append_to_input_par(vector<T2> val) { this->Input_pars[*ib] = val;}
@@ -103,6 +104,7 @@ public:
     if( M.rows() != NumberOfMeasurements) crash("Size of covariant matrix and number of measurements do not match");
     this->Cov_matrix_inv= M.inverse();
   }
+  void Disable_correlated_fit() { this->Use_Cov_Matrix=false;}
 
 
   
@@ -284,6 +286,14 @@ void bootstrap_fit<T1,T2>::Fix_par(string Name, double val) {
   }
   
   Fixed_pars.insert(make_pair(Name, val)); 
+  return;  
+}
+
+
+template <class T1, class T2> 
+void bootstrap_fit<T1,T2>::Release_par(string Name) {
+
+  Fixed_pars.erase(Name);
   return;  
 }
 

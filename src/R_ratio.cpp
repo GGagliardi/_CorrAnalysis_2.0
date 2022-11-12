@@ -44,6 +44,7 @@ const string Extrapolation_charm_mode="etac";
 const int pert_corr_strange_on_off = 0;
 const int pert_corr_charm_on_off = 0;
 const int pert_corr_light_on_off = 0;
+const double Lambda_QCD=0.3;
 bool Compute_experimental_smeared_R_ratio=false;
 bool Compute_free_spec_dens=false;
 const int Sim_ord=4;
@@ -60,6 +61,8 @@ int Num_LUSCH_R_ratio=17;
 int Nres_R_ratio= 15;
 int pts_spline_R_ratio=200;
 bool test_mode=false;
+bool only_continuum_extrapolation=false;
+Vfloat lat_to_print; //fm
 using namespace std;
 
 
@@ -76,6 +79,13 @@ void Get_Ergs_list() {
 
 }
 
+void Get_lat_to_print() {
+
+  int Nlat=300;
+  double sx= 0.08*1.5/(Nlat-1.0);
+  for(int a=0; a < Nlat;a++) lat_to_print.push_back(sx*a);
+
+}
 
 
 void Get_exp_smeared_R_ratio(const Vfloat& Ergs_GeV_list_exp, double sigma) {
@@ -167,9 +177,15 @@ void Get_exp_smeared_R_ratio(const Vfloat& Ergs_GeV_list_exp, double sigma) {
 void R_ratio_analysis() {
 
 
+  Get_Ergs_list();
+
+
   if(test_mode && ( !skip_charm || !skip_strange || ! skip_disconnected)) crash("test mode is safe only if skip_light=1 and skip_charm=skip_strange=skip_disconnected=0");
 
-  Get_Ergs_list();
+
+  if(only_continuum_extrapolation) { R_ratio_cont_extrapolation(); exit(-1);}
+
+
 
   if(skip_light==true) { //do not perform GS-analysis of systematics
     Num_LUSCH_R_ratio=2;
@@ -2897,4 +2913,397 @@ if(!skip_disconnected) {
     
   
  return;
+}
+
+
+
+
+void R_ratio_cont_extrapolation() {
+
+  int NUMM_THREADS= omp_get_max_threads();
+  omp_set_num_threads(1);
+
+
+  Get_lat_to_print();
+
+  cout<<"##############CONTINUUM EXTRAPOLATION OF VARIOUS FLAVOUR CONTRIBUTION TO SMEARED R-RATIO#############"<<endl;
+
+
+  
+  
+
+  
+  //############################################################################################
+  //generate fake jack_distr for lattice spacing a_A a_B, a_C, a_D and RENORMALIZATION CONSTANT
+  GaussianMersenne GM(981832);
+  LatticeInfo a_info;
+  distr_t a_A(UseJack), a_B(UseJack), a_C(UseJack), a_D(UseJack);
+  distr_t ZV_A(UseJack), ZV_B(UseJack), ZV_C(UseJack), ZV_D(UseJack);
+  distr_t ZA_A(UseJack), ZA_B(UseJack), ZA_C(UseJack), ZA_D(UseJack);
+  double a_A_ave, a_A_err, a_B_ave, a_B_err, a_C_ave, a_C_err, a_D_ave, a_D_err;
+  double ZV_A_ave, ZV_A_err, ZV_B_ave, ZV_B_err, ZV_C_ave, ZV_C_err, ZV_D_ave, ZV_D_err;
+  double ZA_A_ave, ZA_A_err, ZA_B_ave, ZA_B_err, ZA_C_ave, ZA_C_err, ZA_D_ave, ZA_D_err;
+  a_info.LatInfo_new_ens("cA211a.53.24");
+  a_A_ave= a_info.a_from_afp;
+  a_A_err= a_info.a_from_afp_err;
+  ZA_A_ave = a_info.Za_WI_strange;
+  ZA_A_err = a_info.Za_WI_strange_err;
+  ZV_A_ave = a_info.Zv_WI_strange;
+  ZV_A_err = a_info.Zv_WI_strange_err;
+  a_info.LatInfo_new_ens("cB211b.072.64");
+  a_B_ave= a_info.a_from_afp;
+  a_B_err= a_info.a_from_afp_err;
+  ZA_B_ave = a_info.Za_WI_strange;
+  ZA_B_err = a_info.Za_WI_strange_err;
+  ZV_B_ave = a_info.Zv_WI_strange;
+  ZV_B_err = a_info.Zv_WI_strange_err;
+  a_info.LatInfo_new_ens("cC211a.06.80");
+  a_C_ave= a_info.a_from_afp;
+  a_C_err= a_info.a_from_afp_err;
+  ZA_C_ave = a_info.Za_WI_strange;
+  ZA_C_err = a_info.Za_WI_strange_err;
+  ZV_C_ave = a_info.Zv_WI_strange;
+  ZV_C_err = a_info.Zv_WI_strange_err;
+  a_info.LatInfo_new_ens("cD211a.054.96");
+  a_D_ave= a_info.a_from_afp;
+  a_D_err= a_info.a_from_afp_err;
+  ZA_D_ave = a_info.Za_WI_strange;
+  ZA_D_err = a_info.Za_WI_strange_err;
+  ZV_D_ave = a_info.Zv_WI_strange;
+  ZV_D_err = a_info.Zv_WI_strange_err;
+  
+  if(UseJack)  { for(int ijack=0;ijack<Njacks;ijack++) {
+      a_A.distr.push_back( fm_to_inv_Gev*( a_A_ave + GM()*a_A_err*(1.0/sqrt(Njacks-1.0))));
+      a_B.distr.push_back( fm_to_inv_Gev*( a_B_ave + GM()*a_B_err*(1.0/sqrt(Njacks-1.0))));
+      a_C.distr.push_back( fm_to_inv_Gev*( a_C_ave + GM()*a_C_err*(1.0/sqrt(Njacks-1.0))));
+      a_D.distr.push_back( fm_to_inv_Gev*( a_D_ave + GM()*a_D_err*(1.0/sqrt(Njacks-1.0))));
+      ZA_A.distr.push_back(  ZA_A_ave + GM()*ZA_A_err*(1.0/sqrt(Njacks -1.0)));
+      ZV_A.distr.push_back(  ZV_A_ave + GM()*ZV_A_err*(1.0/sqrt(Njacks -1.0)));
+      ZA_B.distr.push_back(  ZA_B_ave + GM()*ZA_B_err*(1.0/sqrt(Njacks -1.0)));
+      ZV_B.distr.push_back(  ZV_B_ave + GM()*ZV_B_err*(1.0/sqrt(Njacks -1.0)));
+      ZA_C.distr.push_back(  ZA_C_ave + GM()*ZA_C_err*(1.0/sqrt(Njacks -1.0)));
+      ZV_C.distr.push_back(  ZV_C_ave + GM()*ZV_C_err*(1.0/sqrt(Njacks -1.0)));
+      ZA_D.distr.push_back(  ZA_D_ave + GM()*ZA_D_err*(1.0/sqrt(Njacks -1.0)));
+      ZV_D.distr.push_back(  ZV_D_ave + GM()*ZV_D_err*(1.0/sqrt(Njacks -1.0)));
+      
+    }
+  }
+  else {
+    for (int iboot=0; iboot<Nboots;iboot++) {
+      a_A.distr.push_back( fm_to_inv_Gev*( a_A_ave + GM()*a_A_err));
+      a_B.distr.push_back( fm_to_inv_Gev*( a_B_ave + GM()*a_B_err));
+      a_C.distr.push_back( fm_to_inv_Gev*( a_C_ave + GM()*a_C_err));
+      a_D.distr.push_back( fm_to_inv_Gev*( a_D_ave + GM()*a_D_err));
+      ZA_A.distr.push_back(  ZA_A_ave + GM()*ZA_A_err);
+      ZV_A.distr.push_back(  ZV_A_ave + GM()*ZV_A_err);
+      ZA_B.distr.push_back(  ZA_B_ave + GM()*ZA_B_err);
+      ZV_B.distr.push_back(  ZV_B_ave + GM()*ZV_B_err);
+      ZA_C.distr.push_back(  ZA_C_ave + GM()*ZA_C_err);
+      ZV_C.distr.push_back(  ZV_C_ave + GM()*ZV_C_err);
+      ZA_D.distr.push_back(  ZA_D_ave + GM()*ZA_D_err);
+      ZV_D.distr.push_back(  ZV_D_ave + GM()*ZV_D_err);
+      
+    }
+  }
+
+
+
+  //############################################################################################
+
+
+
+  //##### TMinuit2 classes for bootstrap fit ###################
+
+  class ipar_R {
+
+  public:
+    
+    ipar_R() : a(0) {}
+
+
+    double meas, err, a;
+    bool Is_tm;
+    
+  };
+
+
+  class fpar_R {
+
+  public:
+
+    fpar_R(Vfloat par) {
+      if(par.size() != 3) crash("fpar_R constructor called with Vfloat of size != 3");
+      D=par[0];
+      D2_tm=par[1];
+      D2_OS=par[2];
+    }
+
+    double D, D2_tm, D2_OS;
+
+  };
+  
+  //###########################################################
+
+
+
+
+
+  //#############    Init bootstrap fit     ###################
+
+  bootstrap_fit<fpar_R, ipar_R> bf_R(Njacks);
+  bf_R.set_warmup_lev(0);
+  
+  bf_R.Set_verbosity(1);
+  bf_R.Add_par("D", 1.0, 0.01);
+  bf_R.Add_par("D2_tm", 1.0, 0.01);
+  bf_R.Add_par("D2_OS", 1.0, 0.01);
+  //fit on mean values to get ch2
+  bootstrap_fit<fpar_R, ipar_R> bf_R_ch2(1);
+  bf_R_ch2.set_warmup_lev(0);
+  bf_R_ch2.Set_verbosity(1);
+  bf_R_ch2.Add_par("D", 1.0, 0.01);
+  bf_R_ch2.Add_par("D2_tm", 1.0, 0.01);
+  bf_R_ch2.Add_par("D2_OS", 1.0, 0.01);
+
+
+
+  //ansatz
+  bf_R.ansatz= [](const fpar_R &p, const ipar_R &ip) {
+    double D2= (ip.Is_tm==1)?p.D2_tm:p.D2_OS;
+    return p.D + D2*pow(ip.a*Lambda_QCD,2);
+  };
+  bf_R.measurement= [](const fpar_R &p, const ipar_R &ip) {
+
+    return ip.meas;
+  };
+  bf_R.error= [](const fpar_R &p, const ipar_R &ip) {
+
+    return ip.err;
+  };
+  
+  bf_R_ch2.ansatz= bf_R.ansatz;
+  bf_R_ch2.measurement= bf_R.measurement;
+  bf_R_ch2.error= bf_R.error;
+
+  
+  //#########################################################
+    
+
+  
+  
+
+
+  //loop over different betas analyzed
+  Vfloat betas({ 0.0, 1.0, 1.99, 2.99, 3.99, 0.0, 1.0, 1.99});
+  Vfloat Emax_list({ 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
+  vector<bool> Are_Emax_Finite({1,1,1,1,1, 0,0,0});
+  int N= betas.size();
+
+ 
+
+  
+  for(int i=0; i < N;i++) {
+
+
+    double beta= betas[i];
+    double Is_Emax_Finite= Are_Emax_Finite[i];
+    double Emax= Emax_list[i];
+    string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
+    Tag_reco_type+="_Emax_"+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1));
+
+
+    //create output directories
+    boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/continuum");
+    boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/continuum/total");
+  
+    vector<string> flavors({"light", "strange", "charm", "disconnected"});
+    for(auto &f: flavors) {
+    boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/continuum/"+f);
+    for(auto &sigma:sigmas) {
+      boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/continuum/"+f+"/"+to_string_with_precision(sigma,3));
+    }
+    }
+  for(auto &sigma:sigmas) boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/continuum/total/"+to_string_with_precision(sigma,3));
+
+  
+
+  vector<vector<distr_t_list>> R_ratio_flav;
+  R_ratio_flav.resize(flavors.size());
+  for(auto &R_ratio_flav_sigma: R_ratio_flav) R_ratio_flav_sigma.resize(sigmas.size());
+
+    int count_flav=0;
+
+    //loop over contributions
+    for( auto &flav: flavors) {
+
+
+      distr_t_list a_distr_list(UseJack);
+      vector<string> Ensemble_list;
+      if(flav == "disconnected" || flav=="charm") {
+	a_distr_list.distr_list.push_back(a_B);
+	a_distr_list.distr_list.push_back(a_C);
+	a_distr_list.distr_list.push_back(a_D);
+	Ensemble_list = {"cB211b.072.64", "cC211a.06.80", "cD211a.054.96"};
+
+      }
+      else {
+	a_distr_list.distr_list.push_back(a_B);
+	a_distr_list.distr_list.push_back(a_B);
+	a_distr_list.distr_list.push_back(a_C);
+	a_distr_list.distr_list.push_back(a_D);
+	Ensemble_list = {"cB211b.072.64", "cB211b.072.96", "cC211a.06.80", "cD211a.054.96"};
+      }
+
+
+      int combined_mult=(flav != "disconnected")?2:1;
+
+      //fix D2_tm if disconnected
+      if(combined_mult==1) {bf_R.Fix_par("D2_tm", 0.0); bf_R_ch2.Fix_par("D2_tm", 0.0);}
+      else { bf_R.Release_par("D2_tm"); bf_R_ch2.Release_par("D2_tm");}
+
+      
+      //loop over sigma and Energies
+      for(int is=0;is<(signed)sigmas.size();is++) {
+
+
+	double sigma=sigmas[is];
+
+	distr_t_list R_ratio_fixed_sigma(UseJack);
+	Vfloat ch2_list;
+	
+	for(int id_erg=0;id_erg<(signed)Ergs_GeV_list.size();id_erg++) {
+	  
+	  double Erg=Ergs_GeV_list[id_erg];
+
+
+	  //###################################################################
+	  //load tm and OS jack-data corresponding to given sigma and Energy for all ensembles
+	  distr_t_list data_tm(UseJack), data_OS(UseJack);
+	  for(int iens=0; iens<(signed)Ensemble_list.size();iens++) {
+	    string TAG_TM= "../data/R_ratio/"+Tag_reco_type+"/"+flav+"/jackknife/tm/"+Ensemble_list[iens]+"/"+to_string_with_precision(sigmas[is],3)+"/Erg_"+to_string_with_precision(Ergs_GeV_list[id_erg],3)+".jack";
+	    string TAG_OS= "../data/R_ratio/"+Tag_reco_type+"/"+flav+"/jackknife/OS/"+Ensemble_list[iens]+"/"+to_string_with_precision(sigmas[is],3)+"/Erg_"+to_string_with_precision(Ergs_GeV_list[id_erg],3)+".jack";
+	    distr_t tm_distr(UseJack, Read_From_File((flav != "disconnected")?TAG_TM:TAG_OS, 0,1));
+	    distr_t OS_distr(UseJack, Read_From_File(TAG_OS, 0,1));
+	    //push_back to data_tm and data_OS
+	    data_tm.distr_list.push_back(tm_distr);
+	    data_OS.distr_list.push_back(OS_distr);
+	  }
+	  //##################################################################
+
+	  vector<vector<ipar_R>> data_boot(Njacks);
+	  vector<vector<ipar_R>> data_boot_ch2(1);
+	  bf_R.Set_number_of_measurements(combined_mult*Ensemble_list.size());
+	  bf_R_ch2.Set_number_of_measurements(combined_mult*Ensemble_list.size());
+
+	  //#################################################################
+	  //Add covariance matrix if combined fit
+	  if(flav != "disconnected") {
+	    Eigen::MatrixXd Cov_Matrix(combined_mult*Ensemble_list.size(), combined_mult*Ensemble_list.size());
+	    Eigen::MatrixXd Corr_Matrix(combined_mult*Ensemble_list.size(), combined_mult*Ensemble_list.size());
+	    for(int iens=0; iens<(signed)Ensemble_list.size(); iens++) {
+	      Cov_Matrix(iens,iens) = pow(data_OS.err(iens),2);
+	      Cov_Matrix(iens+Ensemble_list.size(), iens+Ensemble_list.size()) = pow(data_tm.err(iens),2);
+	      Corr_Matrix(iens,iens) = 1;
+	      Corr_Matrix(iens+Ensemble_list.size(), iens+Ensemble_list.size()) = 1;
+	      Cov_Matrix(iens, iens + Ensemble_list.size()) = data_OS.distr_list[iens]%data_tm.distr_list[iens];
+	      Corr_Matrix(iens, iens + Ensemble_list.size()) = data_OS.distr_list[iens]%data_tm.distr_list[iens]/(data_tm.err(iens)*data_OS.err(iens));
+	      Cov_Matrix(iens+Ensemble_list.size(), iens) = Cov_Matrix(iens, iens+Ensemble_list.size());
+	      Corr_Matrix(iens+Ensemble_list.size(),iens) = Corr_Matrix(iens, iens+Ensemble_list.size());
+	      bf_R.Add_covariance_matrix(Cov_Matrix);
+	      bf_R_ch2.Add_covariance_matrix(Cov_Matrix);
+	    }
+	  }
+	  else {
+	    bf_R.Disable_correlated_fit();
+	    bf_R_ch2.Disable_correlated_fit();
+	  }
+	  //#################################################################
+	  
+	  
+	  for(auto &dt: data_boot) dt.resize(combined_mult*Ensemble_list.size());
+	  for(auto &dt: data_boot_ch2) dt.resize(combined_mult*Ensemble_list.size());
+	  boot_fit_data<fpar_R>  Bt_fit;
+	  boot_fit_data<fpar_R>  Bt_fit_ch2;
+
+	  for(int ijack=0;ijack<Njacks;ijack++) {
+	    for(int iens=0; iens<(signed)Ensemble_list.size();iens++) {
+	      data_boot[ijack][iens].meas= data_OS.distr_list[iens].distr[ijack];
+	      data_boot[ijack][iens].err= data_OS.err(iens);
+	      data_boot[ijack][iens].a= a_distr_list.distr_list[iens].distr[ijack];
+	      data_boot[ijack][iens].Is_tm=false;
+	      if(flav != "disconnected") {
+	      data_boot[ijack][iens+Ensemble_list.size()].meas= data_tm.distr_list[iens].distr[ijack];
+	      data_boot[ijack][iens+Ensemble_list.size()].err= data_tm.err(iens);
+	      data_boot[ijack][iens+Ensemble_list.size()].a= a_distr_list.distr_list[iens].distr[ijack];
+	      data_boot[ijack][iens+Ensemble_list.size()].Is_tm=true;
+	      }
+
+	      if(ijack==0) { //mean values
+		data_boot_ch2[ijack][iens].meas= data_OS.ave(iens);
+		data_boot_ch2[ijack][iens].err= data_OS.err(iens);
+		data_boot_ch2[ijack][iens].a= a_distr_list.ave(iens);
+		data_boot_ch2[ijack][iens].Is_tm=false;
+		data_boot_ch2[ijack][iens+Ensemble_list.size()].meas= data_tm.ave(iens);
+		data_boot_ch2[ijack][iens+Ensemble_list.size()].err= data_tm.err(iens);
+		data_boot_ch2[ijack][iens+Ensemble_list.size()].a= a_distr_list.ave(iens);
+		data_boot_ch2[ijack][iens+Ensemble_list.size()].Is_tm=true;
+	      }
+	    }
+	  }
+
+
+	  bf_R.Append_to_input_par(data_boot);
+	  bf_R_ch2.Append_to_input_par(data_boot_ch2);
+	  //fit
+	  Bt_fit= bf_R.Perform_bootstrap_fit();
+	  Bt_fit_ch2= bf_R_ch2.Perform_bootstrap_fit();
+
+
+
+	  //Print result and store the ch2
+	  distr_t D(UseJack), D2_tm(UseJack), D2_OS(UseJack);
+	  distr_t_list f_func_tm(UseJack), f_func_OS(UseJack);
+
+	  for(int ijack=0;ijack<Njacks;ijack++) {
+	    D.distr.push_back( Bt_fit.par[ijack].D);
+	    D2_tm.distr.push_back( Bt_fit.par[ijack].D2_tm);
+	    D2_OS.distr.push_back( Bt_fit.par[ijack].D2_OS);
+	  }
+
+	  R_ratio_fixed_sigma.distr_list.push_back(D);
+	  ch2_list.push_back( Bt_fit_ch2.get_ch2_ave());
+	  for(auto &a: lat_to_print) { f_func_tm.distr_list.push_back( (D+ pow(a*Lambda_QCD/0.197327,2)*D2_tm)); f_func_OS.distr_list.push_back( (D+ pow(a*Lambda_QCD/0.197327,2)*D2_OS)); }
+	  //print
+	  Print_To_File({}, {lat_to_print, f_func_tm.ave(), f_func_tm.err(), f_func_OS.ave(), f_func_OS.err()}, "../data/R_ratio/"+Tag_reco_type+"/continuum/"+flav+"/"+to_string_with_precision(sigma,3)+"/E_"+to_string_with_precision(Erg,3)+".interpol", "", "# a[fm]   tm    OS");
+	  Print_To_File({Ensemble_list}, {data_tm.ave(), data_tm.err(), data_OS.ave(), data_OS.err()}, "../data/R_ratio/"+Tag_reco_type+"/continuum/"+flav+"/"+to_string_with_precision(sigma,3)+"/E_"+to_string_with_precision(Erg,3)+".dat", "", "#Ens  tm  OS");
+	  
+	}
+
+	R_ratio_flav[count_flav][is] = R_ratio_fixed_sigma;
+
+	//print R_ratio at this sigma and ch2 info
+	Print_To_File({}, {Ergs_GeV_list, R_ratio_fixed_sigma.ave(), R_ratio_fixed_sigma.err(), ch2_list}, "../data/R_ratio/"+Tag_reco_type+"/continuum/"+flav+"/"+to_string_with_precision(sigma,3)+"/continuum.dat", "", "#Erg[GeV]  R_ratio   Ch2");
+      }
+      count_flav++;
+    }
+    //print total contribution for each sigma
+    //accumulate contributions
+    vector<distr_t_list> R_ratio_total_per_sigma(sigmas.size());
+    for(int iflav=0;iflav<(signed)flavors.size();iflav++) {
+      for(int is=0;is<(signed)sigmas.size();is++) {
+	if(iflav==0) R_ratio_total_per_sigma[is] = R_ratio_flav[iflav][is];
+	else R_ratio_total_per_sigma[is] = R_ratio_total_per_sigma[is]+R_ratio_flav[iflav][is];
+      }
+    }
+    //print
+    for(int is=0;is<(signed)sigmas.size();is++)   Print_To_File({}, {Ergs_GeV_list, R_ratio_total_per_sigma[is].ave(), R_ratio_total_per_sigma[is].err()}, "../data/R_ratio/"+Tag_reco_type+"/continuum/total/"+to_string_with_precision(sigmas[is],3)+"/continuum.dat", "", "#Erg[GeV] R_ratio"); 
+    
+  }
+
+
+
+
+  omp_set_num_threads(NUMM_THREADS);
+  cout<<"Bye!"<<endl;
+  return;
 }
