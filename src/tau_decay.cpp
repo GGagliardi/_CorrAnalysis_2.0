@@ -74,9 +74,9 @@ void tau_decay_analysis() {
 
   get_sigma_list();
   
-  Vfloat betas({0.0, 1.0, 1.99, 2.99, 3.99, 0.0, 1.0, 1.99});
-  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0});
-  vector<bool> Is_Emax_Finite({1,1,1,1,1,0,0,0});
+  Vfloat betas({ 3.99});
+  Vfloat Emax_list({4.0});
+  vector<bool> Is_Emax_Finite({1});
 
   int rank, size;
 
@@ -172,6 +172,10 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int _hostname_len;
+  char _hostname[MPI_MAX_PROCESSOR_NAME];
+  MPI_Get_processor_name(_hostname, &_hostname_len);
+
    
   string Tag_reco_type="Beta_"+to_string_with_precision(beta,2);
   Tag_reco_type+="_Emax_"+((Is_Emax_Finite==0)?"inf":to_string_with_precision(Emax,1));
@@ -978,6 +982,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       auto start = chrono::system_clock::now();
       Br_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm, syst_Aii_tm, 1e4, lAii_tm, MODE, "tm", "Aii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       auto end = chrono::system_clock::now();
+      cout<<"node: "<<_hostname<<", rank: "<<rank<<", thread_id: "<<omp_get_thread_num()<<" core-id: "<<sched_getcpu()<<endl<<flush;
       chrono::duration<double> elapsed_seconds = end-start;
       double time_Aii_tm= elapsed_seconds.count();
       if(tau_verbosity_lev) {
