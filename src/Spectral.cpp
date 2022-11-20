@@ -660,9 +660,9 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       
       
       Nit_Ag0++;
-      if( (A1_val_std < 2*Ag_ov_A0_target*Ag_m && A1_val_std > 0.6*Ag_ov_A0_target*Ag_m)) lambda_found_Ag_A0=true;
+      if( (A1_val_std < 1.5*Ag_ov_A0_target*Ag_m && A1_val_std > 0.7*Ag_ov_A0_target*Ag_m)) lambda_found_Ag_A0=true;
 
-      if(Nit_Ag0 >= 10) {
+      if(Nit_Ag0 >= 60) { //R_ratio used Nit_Ag0=10
 	//cout<<"WARNING: A[g]/A[0]: "<<Ag_ov_A0_target*Ag_m<<" cannot be obtained after "<<Nit_Ag0<<" iterations...Skipping!"<<endl;
 	lambda_found_Ag_A0=true;
       }

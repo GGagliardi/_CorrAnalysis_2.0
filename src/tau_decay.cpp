@@ -6,7 +6,7 @@ const double alpha = 1.0/137.04;
 const double e2 = alpha*4.0*M_PI;
 const bool UseJack=1;
 const int Njacks=50;
-const int Nboots=200;
+const int Nboots=800;
 const double qu= 2.0/3.0;
 const double qd= -1.0/3.0;
 const double qs= qd;
@@ -30,7 +30,7 @@ const double m_etac_err = 0.004;
 const double m_etas = 0.68989;
 const double m_etas_err= 0.00050;
 const double m_pi_plus = 0.13957039;
-const double E0_l = 0.05;
+const double E0_l = 0.05*m_tau;
 Vfloat sigma_list;
 const double C_V = 2*M_PI/(pow(m_tau,3));
 const double GAMMA_FACT= 12*M_PI; //12*M_PI*pow(Vud*GF,2);
@@ -74,9 +74,9 @@ void tau_decay_analysis() {
 
   get_sigma_list();
   
-  Vfloat betas({ 3.99});
-  Vfloat Emax_list({4.0});
-  vector<bool> Is_Emax_Finite({1});
+  Vfloat betas({ 1.0, 1.99, 1.99, 2.99});
+  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0});
+  vector<bool> Is_Emax_Finite({0,0,1,1});
 
   int rank, size;
 
