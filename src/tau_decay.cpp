@@ -74,9 +74,9 @@ void tau_decay_analysis() {
 
   get_sigma_list();
   
-  Vfloat betas({ 1.0, 1.99, 1.99, 2.99});
-  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0});
-  vector<bool> Is_Emax_Finite({0,0,1,1});
+  Vfloat betas({ 1.99,  2.99});
+  Vfloat Emax_list({4.0, 4.0});
+  vector<bool> Is_Emax_Finite({0,1});
 
   int rank, size;
 
@@ -746,7 +746,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		      gsl_integration_workspace * w_SYST_asympt = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G_SYST_asympt = static_cast<gsl_function*>(&SYST_asympt);
 		      gsl_integration_qags(G_SYST_asympt, E0_l*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST_asympt, &val_mod, &err_mod);
-		      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+		      //if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
 		      gsl_integration_workspace_free(w_SYST_asympt);
 		      systs.push_back( fabs(val_mod));
 					   
@@ -808,7 +808,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		      gsl_integration_workspace * w_SYST_asympt = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G_SYST_asympt = static_cast<gsl_function*>(&SYST_asympt);
 		      gsl_integration_qags(G_SYST_asympt, E0_l*a_distr.ave(), 4.0,  0.0, 5e-3, 1000, w_SYST_asympt, &val_mod, &err_mod);
-		      if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
+		      //if(err_mod/fabs(val_mod) > 1e-2) crash("Cannot reach accuracy in evaluating systematic");
 		      gsl_integration_workspace_free(w_SYST_asympt);
 		      systs.push_back( fabs(val_mod));
 					   
