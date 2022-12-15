@@ -25,6 +25,7 @@ void Bounding_amu_W(distr_t &amu_W, const distr_t_list &V, const distr_t &a, str
 void Bounding_PI_q2(distr_t_list &PI_per_ens, const distr_t_list &V, const distr_t &a, string path, Vint &Tdatas_opt, distr_t &lowest_mass);
 void Bounding_PI_q2_disco(distr_t_list &PI_per_ens, const distr_t_list &V, const distr_t_list &Conn_guess, const distr_t &a, string path, Vint &Tdatas_opt, distr_t m_rho_GS);
 void Get_amu_W_eps( vector<distr_t_list> &eps_win_list, const distr_t_list &V, const distr_t &a);
+double Get_GS_artifacts_win(double M, double L, LL_functions &LL, bool mode_mixed);
 void Gm2() ;
 
 

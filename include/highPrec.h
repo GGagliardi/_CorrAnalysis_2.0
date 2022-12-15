@@ -6,7 +6,7 @@
 
 using namespace std;
 
-/// Undef this to disable actual usage of the high preceision
+/// Undef this to disable actual usage of the high precision
 //#define FAKE_HP
 
 /// Structure to represent arbitray precision real number
@@ -391,6 +391,24 @@ inline PrecFloat precPi()
     out;
 }
 
+
+/// Precise Euler constant
+
+inline PrecFloat precEuler()
+{
+  PrecFloat out;
+  
+#ifdef FAKE_HP
+  out.data=0.57721566490153286060651209008240243104215933593992;
+#else
+  mpfr_const_euler(out.data, MPFR_RNDD);
+#endif
+  
+  return
+    out;
+}
+
+
 /////////////////////////////////////////////////////////////////
 
 // Tell Eigen how to deal with PrecFloat numbers
@@ -482,34 +500,41 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
       const PrecFloat jac=piHalf*exp(piHalf*s)*cosh(t);
       const PrecFloat res=f(x)*jac;
       
-      // cout<<" t: "<<t<<" x: "<<x<<" res: "<<res<<" jac: "<<jac<<endl;
+      //cout<<" t: "<<t<<" x: "<<x<<" f(x): "<<f(x)<<" jac: "<<jac<<" res: "<<res<<endl;
       
       return res;
     };
+
+  PrecFloat step_old=1;
+  PrecFloat sum_final;
+  bool RESTART=false;
+
+  do {
+
+    RESTART=false;  
+    PrecFloat sum=c(0)*2*step_old;
+    PrecFloat extreme=0;
+    PrecFloat step=step_old;
+    PrecFloat precSum;
+    PrecFloat stability;
   
-  PrecFloat sum=c(0)*2;
-  PrecFloat extreme=0;
-  PrecFloat step=1;
-  PrecFloat precSum;
-  PrecFloat stability;
-  
-  do
-    {
-      precSum=sum;
+    do
+      {
+	precSum=sum;
       
-      bool converged=
-	false;
+	bool converged=
+	  false;
       
-      sum/=2;
-      PrecFloat t=step;
+	sum/=2;
+	PrecFloat t=step;
       
-      const PrecFloat doubleStep=
-	step*2;
+	const PrecFloat doubleStep=
+	  step*2;
+	
+	bool exitTheLoop=
+	  false;
       
-      bool exitTheLoop=
-	false;
-      
-      while(not exitTheLoop)
+	while(not exitTheLoop)
 	{
 	  const PrecFloat contr=
 	    c(t)+c(-t);
@@ -517,7 +542,7 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
 	  const PrecFloat newSum=
 	    sum+contr*step;
 	  
-	  // cout<<"t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" converged: "<<converged<<endl;
+	  //cout<<"t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" converged: "<<converged<<endl;
 	  
 	  converged=
 	    (newSum==sum);
@@ -535,20 +560,34 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
 	  
 	  sum=newSum;
 	};
+	
+	step/=2;
+	
+	//cout<<"sum: "<<sum<<" precSum: "<<precSum<<", extreme: "<<extreme<<" step: "<<step*2<<endl<<flush;
       
-      step/=2;
-      
-      // cout<<(sum-1)<<endl;
-      
-      stability=abs(sum/precSum-1);
-      // cout<<"Stability: "<<stability<<endl;
-      maxAttainableStability*=2;
-      // cout<<"MaxAttainableStability: "<<maxAttainableStability<<endl;
-    }
-  while(stability>maxAttainableStability);
+	stability=abs(sum/precSum-1);
+	//cout<<"Stability: "<<stability<<" MaxAttainable: "<<maxAttainableStability<<endl<<flush;
+	maxAttainableStability*=2;
+
+	if( stability < maxAttainableStability) {sum_final=sum; RESTART=false;}
+	else if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step;}
+   
+      }
+    while( (stability>maxAttainableStability) && !RESTART);
+
+    //if(RESTART) cout<<"Restarting..."<<endl<<flush;
+    //else cout<<"Restart not needed!"<<endl<<flush;
+  }
+  while(RESTART);
+
+  //cout<<"final sum: "<<sum_final<<endl<<flush;
+  //cout<<"integral computed"<<endl<<flush;
   
-  return sum;
+  
+  return sum_final;
 }
+
+
 
 
 template <typename F>
@@ -581,29 +620,36 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
       return res;
     };
   
-  PrecFloat sum=c(0)*2;
-  PrecFloat extreme=0;
-  PrecFloat step=1;
-  PrecFloat precSum;
-  PrecFloat stability;
+  PrecFloat step_old=1;
+  PrecFloat sum_final;
+  bool RESTART=false;
+
+  do {
+
+    RESTART=false;  
+    PrecFloat sum=c(0)*2*step_old;
+    PrecFloat extreme=0;
+    PrecFloat step=step_old;
+    PrecFloat precSum;
+    PrecFloat stability;
   
-  do
-    {
-      precSum=sum;
+    do
+      {
+	precSum=sum;
       
-      bool converged=
-	false;
+	bool converged=
+	  false;
       
-      sum/=2;
-      PrecFloat t=step;
+	sum/=2;
+	PrecFloat t=step;
       
-      const PrecFloat doubleStep=
-	step*2;
+	const PrecFloat doubleStep=
+	  step*2;
+	
+	bool exitTheLoop=
+	  false;
       
-      bool exitTheLoop=
-	false;
-      
-      while(not exitTheLoop)
+	while(not exitTheLoop)
 	{
 	  const PrecFloat contr=
 	    c(t)+c(-t);
@@ -611,7 +657,7 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
 	  const PrecFloat newSum=
 	    sum+contr*step;
 	  
-	  // cout<<"t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" converged: "<<converged<<endl;
+	  //cout<<"t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" converged: "<<converged<<endl;
 	  
 	  converged=
 	    (newSum==sum);
@@ -629,20 +675,43 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
 	  
 	  sum=newSum;
 	};
+	
+	step/=2;
+	
+	//cout<<"sum: "<<sum<<" precSum: "<<precSum<<", extreme: "<<extreme<<" step: "<<step*2<<endl<<flush;
       
-      step/=2;
-      
-      // cout<<(sum-1)<<endl;
-      
-      stability=abs(sum/precSum-1);
-      // cout<<"Stability: "<<stability<<endl;
-      maxAttainableStability*=2;
-      // cout<<"MaxAttainableStability: "<<maxAttainableStability<<endl;
-    }
-  while(stability>maxAttainableStability);
+	stability=abs(sum/precSum-1);
+	//cout<<"Stability: "<<stability<<" MaxAttainable: "<<maxAttainableStability<<endl<<flush;
+	maxAttainableStability*=2;
+
+	if( stability < maxAttainableStability) {sum_final=sum; RESTART=false;}
+	else if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step;}
+   
+      }
+    while( (stability>maxAttainableStability) && !RESTART);
+
+    //if(RESTART) cout<<"Restarting..."<<endl<<flush;
+    //else cout<<"Restart not needed!"<<endl<<flush;
+  }
+  while(RESTART);
+
+  //cout<<"final sum: "<<sum_final<<endl<<flush;
+  //cout<<"integral computed"<<endl<<flush;
   
-  return sum;
+  
+  return sum_final;
 }
+
+
+
+
+
+
+
+
+PrecFloat ExpEiComplexSum(PrecFloat MOD, PrecFloat PH, PrecFloat s,  bool MODE); 
+
+
 
 
 #ifdef MAIN

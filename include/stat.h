@@ -312,7 +312,7 @@ class Bootstrap {
 
 
 distr_t Get_id_jack_distr(int N);
-
+distr_t_list Get_id_jack_distr_list(int size, int N);
 
 
 

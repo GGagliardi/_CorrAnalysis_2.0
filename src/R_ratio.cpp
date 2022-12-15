@@ -61,7 +61,7 @@ int Num_LUSCH_R_ratio=17;
 int Nres_R_ratio= 15;
 int pts_spline_R_ratio=200;
 bool test_mode=false;
-bool only_continuum_extrapolation=false;
+bool only_continuum_extrapolation=true;
 Vfloat lat_to_print; //fm
 using namespace std;
 
@@ -3018,7 +3018,7 @@ void R_ratio_cont_extrapolation() {
 
   public:
     
-    ipar_R() : a(0) {}
+    ipar_R() {}
 
 
     double meas, err, a;
@@ -3116,7 +3116,7 @@ void R_ratio_cont_extrapolation() {
     boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/continuum");
     boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/continuum/total");
   
-    vector<string> flavors({"light", "strange", "charm", "disconnected"});
+    vector<string> flavors({"light", "strange", "charm", "disco"});
     for(auto &f: flavors) {
     boost::filesystem::create_directory("../data/R_ratio/"+Tag_reco_type+"/continuum/"+f);
     for(auto &sigma:sigmas) {
@@ -3139,7 +3139,7 @@ void R_ratio_cont_extrapolation() {
 
       distr_t_list a_distr_list(UseJack);
       vector<string> Ensemble_list;
-      if(flav == "disconnected" || flav=="charm") {
+      if(flav == "disco" || flav=="charm") {
 	a_distr_list.distr_list.push_back(a_B);
 	a_distr_list.distr_list.push_back(a_C);
 	a_distr_list.distr_list.push_back(a_D);
@@ -3155,9 +3155,9 @@ void R_ratio_cont_extrapolation() {
       }
 
 
-      int combined_mult=(flav != "disconnected")?2:1;
+      int combined_mult=(flav != "disco")?2:1;
 
-      //fix D2_tm if disconnected
+      //fix D2_tm if disco
       if(combined_mult==1) {bf_R.Fix_par("D2_tm", 0.0); bf_R_ch2.Fix_par("D2_tm", 0.0);}
       else { bf_R.Release_par("D2_tm"); bf_R_ch2.Release_par("D2_tm");}
 
@@ -3182,33 +3182,46 @@ void R_ratio_cont_extrapolation() {
 	  for(int iens=0; iens<(signed)Ensemble_list.size();iens++) {
 	    string TAG_TM= "../data/R_ratio/"+Tag_reco_type+"/"+flav+"/jackknife/tm/"+Ensemble_list[iens]+"/"+to_string_with_precision(sigmas[is],3)+"/Erg_"+to_string_with_precision(Ergs_GeV_list[id_erg],3)+".jack";
 	    string TAG_OS= "../data/R_ratio/"+Tag_reco_type+"/"+flav+"/jackknife/OS/"+Ensemble_list[iens]+"/"+to_string_with_precision(sigmas[is],3)+"/Erg_"+to_string_with_precision(Ergs_GeV_list[id_erg],3)+".jack";
-	    distr_t tm_distr(UseJack, Read_From_File((flav != "disconnected")?TAG_TM:TAG_OS, 0,1));
+	    if(flav=="disco") {
+	      TAG_OS=  "../data/R_ratio/"+Tag_reco_type+"/"+flav+"/jackknife/"+Ensemble_list[iens]+"/"+to_string_with_precision(sigmas[is],3)+"/Erg_"+to_string_with_precision(Ergs_GeV_list[id_erg],3)+".jack";
+	      TAG_TM=TAG_OS;
+	    }
+	    distr_t tm_distr(UseJack, Read_From_File(TAG_TM, 0,1));
 	    distr_t OS_distr(UseJack, Read_From_File(TAG_OS, 0,1));
+
+	    if(tm_distr.size() != Njacks) crash("tm distr size is different from Njacks="+to_string(Njacks));
+	    if(OS_distr.size() != Njacks) crash("tm distr size is different from Njacks="+to_string(Njacks));
 	    //push_back to data_tm and data_OS
 	    data_tm.distr_list.push_back(tm_distr);
 	    data_OS.distr_list.push_back(OS_distr);
 	  }
 	  //##################################################################
 
-	  vector<vector<ipar_R>> data_boot(Njacks);
-	  vector<vector<ipar_R>> data_boot_ch2(1);
+	  	 
 	  bf_R.Set_number_of_measurements(combined_mult*Ensemble_list.size());
 	  bf_R_ch2.Set_number_of_measurements(combined_mult*Ensemble_list.size());
 
 	  //#################################################################
 	  //Add covariance matrix if combined fit
-	  if(flav != "disconnected") {
+	  if(flav != "disco") {
 	    Eigen::MatrixXd Cov_Matrix(combined_mult*Ensemble_list.size(), combined_mult*Ensemble_list.size());
 	    Eigen::MatrixXd Corr_Matrix(combined_mult*Ensemble_list.size(), combined_mult*Ensemble_list.size());
+	    Cov_Matrix.setZero();
+	    Corr_Matrix.setZero();
+	    
 	    for(int iens=0; iens<(signed)Ensemble_list.size(); iens++) {
 	      Cov_Matrix(iens,iens) = pow(data_OS.err(iens),2);
 	      Cov_Matrix(iens+Ensemble_list.size(), iens+Ensemble_list.size()) = pow(data_tm.err(iens),2);
 	      Corr_Matrix(iens,iens) = 1;
 	      Corr_Matrix(iens+Ensemble_list.size(), iens+Ensemble_list.size()) = 1;
+
+	      
 	      Cov_Matrix(iens, iens + Ensemble_list.size()) = data_OS.distr_list[iens]%data_tm.distr_list[iens];
-	      Corr_Matrix(iens, iens + Ensemble_list.size()) = data_OS.distr_list[iens]%data_tm.distr_list[iens]/(data_tm.err(iens)*data_OS.err(iens));
 	      Cov_Matrix(iens+Ensemble_list.size(), iens) = Cov_Matrix(iens, iens+Ensemble_list.size());
+	      
+	      Corr_Matrix(iens, iens + Ensemble_list.size()) = data_OS.distr_list[iens]%data_tm.distr_list[iens]/(data_tm.err(iens)*data_OS.err(iens));
 	      Corr_Matrix(iens+Ensemble_list.size(),iens) = Corr_Matrix(iens, iens+Ensemble_list.size());
+	      
 	      bf_R.Add_covariance_matrix(Cov_Matrix);
 	      bf_R_ch2.Add_covariance_matrix(Cov_Matrix);
 	    }
@@ -3219,7 +3232,8 @@ void R_ratio_cont_extrapolation() {
 	  }
 	  //#################################################################
 	  
-	  
+	  vector<vector<ipar_R>> data_boot(Njacks);
+	  vector<vector<ipar_R>> data_boot_ch2(1);
 	  for(auto &dt: data_boot) dt.resize(combined_mult*Ensemble_list.size());
 	  for(auto &dt: data_boot_ch2) dt.resize(combined_mult*Ensemble_list.size());
 	  boot_fit_data<fpar_R>  Bt_fit;
@@ -3231,7 +3245,7 @@ void R_ratio_cont_extrapolation() {
 	      data_boot[ijack][iens].err= data_OS.err(iens);
 	      data_boot[ijack][iens].a= a_distr_list.distr_list[iens].distr[ijack];
 	      data_boot[ijack][iens].Is_tm=false;
-	      if(flav != "disconnected") {
+	      if(flav != "disco") {
 	      data_boot[ijack][iens+Ensemble_list.size()].meas= data_tm.distr_list[iens].distr[ijack];
 	      data_boot[ijack][iens+Ensemble_list.size()].err= data_tm.err(iens);
 	      data_boot[ijack][iens+Ensemble_list.size()].a= a_distr_list.distr_list[iens].distr[ijack];
@@ -3243,22 +3257,29 @@ void R_ratio_cont_extrapolation() {
 		data_boot_ch2[ijack][iens].err= data_OS.err(iens);
 		data_boot_ch2[ijack][iens].a= a_distr_list.ave(iens);
 		data_boot_ch2[ijack][iens].Is_tm=false;
+		if(flav != "disco") {
 		data_boot_ch2[ijack][iens+Ensemble_list.size()].meas= data_tm.ave(iens);
 		data_boot_ch2[ijack][iens+Ensemble_list.size()].err= data_tm.err(iens);
 		data_boot_ch2[ijack][iens+Ensemble_list.size()].a= a_distr_list.ave(iens);
 		data_boot_ch2[ijack][iens+Ensemble_list.size()].Is_tm=true;
+		}
 	      }
 	    }
 	  }
 
 
+
 	  bf_R.Append_to_input_par(data_boot);
 	  bf_R_ch2.Append_to_input_par(data_boot_ch2);
 	  //fit
+	  cout<<"####FIT TO:######"<<endl;
+	  cout<<"flavor: "<<flav<<endl;
+	  cout<<"(alpha,Emax): ("<<beta<<","<<Emax<<")"<<endl;
+	  cout<<"sigma, E: "<<sigma<<", "<<Erg<<endl;
 	  Bt_fit= bf_R.Perform_bootstrap_fit();
 	  Bt_fit_ch2= bf_R_ch2.Perform_bootstrap_fit();
 
-
+	
 
 	  //Print result and store the ch2
 	  distr_t D(UseJack), D2_tm(UseJack), D2_OS(UseJack);

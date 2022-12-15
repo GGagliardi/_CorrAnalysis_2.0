@@ -12,6 +12,7 @@
 #include "gm2.h"
 #include "R_ratio.h"
 #include "vph_Nissa.h"
+#include "vph_Nissa_3d.h"
 #include "tau_decay.h"
 
 using namespace std;

@@ -166,6 +166,8 @@ double Root_Brent_sinh(double R, int nt, int NT);
 double DoConstantFit(Vfloat &data, Vfloat &err);
 double quad_interpolator(double y1, double y2, double y3, double Dx1, double Dx2, double Dx3, double Dx);
 void Print_To_File(const vector<string>& row_id, const VVfloat &data, string Path, string MODE, string Header);
+double Get_4l_alpha_s( double Q, double Nf);
+void Print_4l_alpha_s();
 double w(int t, int Simps_ord);
 
 

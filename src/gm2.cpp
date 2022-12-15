@@ -25,9 +25,9 @@ const int Upper_Limit_Time_Integral_charm= 300;
 const int Upper_Limit_Time_Integral_light=300;
 const double fm_to_inv_Gev= 1.0/0.197327;
 const bool verbosity=1;
-const double Nresonances= 2; //50; //50; //25; //2; //normally you used 12
-const int Luscher_num_zeroes= 4; //55; // 55; //30; // 4; //normally you used  20
-const int npts_spline= 10; //1000; //10; //normally you used 1000 
+const double Nresonances= 2; //15; //50; //50; //25; //2; //normally you used 12
+const int Luscher_num_zeroes= 4; //17; //55; // 55; //30; // 4; //normally you used  20
+const int npts_spline= 10; //200; //1000; //10; //normally you used 1000 
 bool Use_Mpi_OS=false;
 bool Include_light_disco= true;
 bool Include_strange_disco= true;
@@ -57,6 +57,7 @@ const double csi_phys= pow(m_pi/(4.0*M_PI*fp_phys),2);
 const double t0 = 0.4*fm_to_inv_Gev;
 const double t1 = 1.0*fm_to_inv_Gev;
 const double Delta= 0.15*fm_to_inv_Gev;
+const double Delta_prime= 0.30*fm_to_inv_Gev;
 const double l1ph= -0.4; //-0.4
 const double l2ph= 4.3; //4.3
 const double l3ph= 3.2; //3.2
@@ -88,8 +89,8 @@ const int sum_pert_corr_strange_to_bare_corr=0;
 const bool Gen_free_corr_data=false;
 double add_pert_corr_charm_up_to = 2.0;
 double add_pert_corr_strange_up_to = 2.0;
-double add_pert_corr_light_up_to = 2.0;
-int Simps_ord= 1;
+double add_pert_corr_light_up_to = 3.0;
+int Simps_ord= 1 ;
 bool Determine_scale_setting=true; //true
 bool Use_three_finest_in_scale_setting_w0X=false;
 bool Use_three_finest_in_scale_setting_fp=false;
@@ -98,11 +99,11 @@ bool scale_setting_from_fp = true; //true
 bool Use_scale_setting_from_this_analysis=true; //true
 bool Print_FSEs_from_GSLL_param=false;
 bool Print_Mpi_dep_from_GSLL_param=false;
-Vfloat tmins({0.08});
-//Vfloat tmins({ 0.08, 0.09, 0.100, 0.11, 0.125, 0.130, 0.140, 0.150}); //tmins for SD extrapolation in fermi
+//Vfloat tmins({0.08});
+Vfloat tmins({ 0.08, 0.09, 0.100, 0.11, 0.125, 0.130, 0.140, 0.150}); //tmins for SD extrapolation in fermi
 Vfloat Qs2;
-const int eps_win_size=9;
-const Vfloat eps_win({ 0.0*fm_to_inv_Gev, 0.05*fm_to_inv_Gev, 0.1*fm_to_inv_Gev, 0.15*fm_to_inv_Gev, 0.2*fm_to_inv_Gev, 0.25*fm_to_inv_Gev, 0.3*fm_to_inv_Gev, 0.35*fm_to_inv_Gev, 0.4*fm_to_inv_Gev});
+const int eps_win_size=12;
+const Vfloat eps_win({ 0.0*fm_to_inv_Gev, -0.05*fm_to_inv_Gev, -0.10*fm_to_inv_Gev, -0.20*fm_to_inv_Gev, 0.05*fm_to_inv_Gev, 0.1*fm_to_inv_Gev, 0.15*fm_to_inv_Gev, 0.2*fm_to_inv_Gev, 0.25*fm_to_inv_Gev, 0.3*fm_to_inv_Gev, 0.35*fm_to_inv_Gev, 0.4*fm_to_inv_Gev});
 
 
 class ipar {
@@ -674,6 +675,42 @@ void Get_amu_W_eps( vector<distr_t_list> &eps_win_list, const distr_t_list &V, c
 }
 
 
+double Get_GS_artifacts_win(double M, double L, LL_functions &LL, bool mode_mixed=0) {
+
+  double res, err;
+  Vfloat Ergs_cont;
+  Vfloat Ergs_lat;
+  LL.Find_pipi_energy_lev(L, m_rho, 5.95, M, 0.0, Ergs_lat);
+  LL.Find_pipi_energy_lev(L, m_rho, 5.95, 0.135, 0.0, Ergs_cont);
+
+  auto Bt_coeff= [](double t) { return 0.5*(1.0 - exp(-pow( Get_4l_alpha_s( 1.0/t, 4)/1.0,2)));};
+
+  
+  auto GS_art =[&LL, &M, &L, &Ergs_lat, &Ergs_cont, &Bt_coeff, &mode_mixed](double t) {
+        	 
+		 if(mode_mixed) return  4.0*pow(alpha,2)*(10.0/9.0)*(1.0-Bt_coeff(t))*(LL.V_pipi(t, L , m_rho, 5.95, 0.135, 0.0, Ergs_cont)  -LL.V_pipi(t, L , m_rho, 5.95, M, 0.0, Ergs_lat))*kernel_K(t, 1.0)*(  1.0/(1.0 + exp(-2.0*(t-t0)/Delta)) -  1.0/(1.0 + exp(-2.0*(t-t1)/Delta)));
+
+
+		 return 4.0*pow(alpha,2)*(10.0/9.0)*( LL.V_pipi(t, L , m_rho, 5.95, 0.135, 0.0, Ergs_cont) - LL.V_pipi(t, L , m_rho, 5.95, M, 0.0, Ergs_lat))*kernel_K(t, 1.0)*(  1.0/(1.0 + exp(-2.0*(t-t0)/Delta)) -  1.0/(1.0 + exp(-2.0*(t-t1)/Delta)));
+	       };
+
+
+  double prec=1e-4;
+  gsl_function_pp<decltype(GS_art)> gsl_GS_art(GS_art);
+  gsl_integration_workspace *w_GS_art = gsl_integration_workspace_alloc(10000);
+  gsl_function *G_GS_art = static_cast<gsl_function*>(&gsl_GS_art);
+  gsl_integration_qagiu(G_GS_art, 0.3, 0.0, prec, 10000, w_GS_art, &res, &err);
+  gsl_integration_workspace_free (w_GS_art);
+  if(fabs(err/res) > 10*prec) crash("In Get_GS_artifacts_win precision reached is: "+to_string_with_precision( fabs(err/res), 5));
+  
+
+  return res;
+
+  
+
+}
+
+
 
 
 void Gm2() {
@@ -688,6 +725,10 @@ void Gm2() {
   Plot_Energy_windows_K();
 
   Init_Qs2();
+
+  Print_4l_alpha_s() ;
+
+  
 
 
   //create directories g-2
@@ -851,92 +892,6 @@ void Gm2() {
 
        
 
- 
-  //###################### FSEs on intermediate light window from continuum-GSLL-parametrization ###############################
-  
-  if(Print_FSEs_from_GSLL_param) {
-  int n_ml=60;
-  Vfloat FSEs_BMW_list, FSEs_Silv_FIT_list, ML_list, L_list_fm, L_list_bis_fm;
-  Vfloat FSEs_BMW_SD_list, FSEs_Silv_FIT_SD_list;
-  for(int i_ml=0; i_ml<n_ml;i_ml++) {
-    Vfloat En_lev;
-    double Mp_to_use = MPiPhys;
-    double MRHO= m_rho;
-    double grpp_to_use = grpp_phys_BMW;
-    double ml = 3.0 + i_ml*(5.8-3.0)/(double)n_ml;
-    double g_phys= sqrt( 48.0*M_PI*pow(MRHO,2)*Gamma_rho/pow( pow(MRHO,2) - 4*pow(Mp_to_use,2),3.0/2.0));
-    grpp_to_use= g_phys;
-    ML_list.push_back(ml);
-    L_list_fm.push_back( (ml/Mp_to_use)/fm_to_inv_Gev);
-    LL.Find_pipi_energy_lev(ml/Mp_to_use , m_rho, grpp_to_use, Mp_to_use, 0.0, En_lev);
-    printV(En_lev, "energy levels GS: ",1);
-    auto FSEs_W = [&En_lev, &ml, &LL, &Mp_to_use, &grpp_to_use](double t) -> double {
-		 if(t < 1e-1) return 0.0;   
-		 double res_V_pipi = LL.V_pipi(t, ml/Mp_to_use, m_rho, grpp_to_use, Mp_to_use, 0.0, En_lev);
-		 double res_V_pipi_infL =  LL.V_pipi_infL(t, m_rho, grpp_to_use, Mp_to_use, 0.0);
-		 return 4.0*pow(alpha,2)*(res_V_pipi_infL - res_V_pipi)*kernel_K(t, 1.0)*(  1.0/(1.0 + exp(-2.0*(t-t0)/Delta)) -  1.0/(1.0 + exp(-2.0*(t-t1)/Delta)));
-	       };
-
-    auto FSEs_SD = [&En_lev, &ml, &LL, &Mp_to_use, &grpp_to_use](double t) -> double {
-		     if(t<1e-1) return 0.0;    
-		     double res_V_pipi = LL.V_pipi(t, ml/Mp_to_use, m_rho, grpp_to_use, Mp_to_use, 0.0, En_lev);
-		     double res_V_pipi_infL =  LL.V_pipi_infL(t, m_rho, grpp_to_use, Mp_to_use, 0.0);
-		     return 4.0*pow(alpha,2)*(res_V_pipi_infL - res_V_pipi)*kernel_K(t, 1.0)*( 1.0 - 1.0/(1.0 + exp(-2.0*(t-t0)/Delta)));
-	       };
-
-    double FSEs_Silv_FIT, FSEs_Silv_err;
-    gsl_function_pp<decltype(FSEs_W)> FS_W_GS_S(FSEs_W);
-    gsl_integration_workspace * w_W_S = gsl_integration_workspace_alloc (10000);
-    gsl_function *G_FSEs_W_S = static_cast<gsl_function*>(&FS_W_GS_S);
-    gsl_integration_qagiu(G_FSEs_W_S, 0.0, 0.0, 1e-5, 10000, w_W_S, &FSEs_Silv_FIT, &FSEs_Silv_err);
-    gsl_integration_workspace_free (w_W_S);
-
-    double FSEs_Silv_FIT_SD, FSEs_Silv_SD_err;
-    gsl_function_pp<decltype(FSEs_SD)> FS_SD_GS_S(FSEs_SD);
-    gsl_integration_workspace * w_SD_S = gsl_integration_workspace_alloc (10000);
-    gsl_function *G_FSEs_SD_S = static_cast<gsl_function*>(&FS_SD_GS_S);
-    gsl_integration_qagiu(G_FSEs_SD_S, 0.0, 0.0, 1e-5, 10000, w_SD_S, &FSEs_Silv_FIT_SD, &FSEs_Silv_SD_err);
-    gsl_integration_workspace_free (w_SD_S);
-    
-    //double FSEs_Silv_FIT =  boost::math::quadrature::gauss_kronrod<double, 61>::integrate(FSEs_W, 0.0, numeric_limits<double>::infinity(), 5, 1e-8);
-    //double FSEs_Silv_FIT_SD =  boost::math::quadrature::gauss_kronrod<double, 61>::integrate(FSEs_SD, 0.0, numeric_limits<double>::infinity(), 5, 1e-8);
-    FSEs_Silv_FIT_list.push_back(FSEs_Silv_FIT);
-    FSEs_Silv_FIT_SD_list.push_back(FSEs_Silv_FIT_SD);
-    Mp_to_use = m_pi_charged;
-    g_phys= sqrt( 48.0*M_PI*pow(MRHO,2)*Gamma_rho/pow( pow(MRHO,2) - 4*pow(Mp_to_use,2),3.0/2.0));
-    L_list_bis_fm.push_back( (ml/Mp_to_use)/fm_to_inv_Gev);
-    grpp_to_use = g_phys;
-    En_lev.clear();
-    LL.Find_pipi_energy_lev(ml/Mp_to_use , m_rho, grpp_to_use, Mp_to_use, 0.0, En_lev);
-
-    double FSEs_BMW, FSEs_BMW_err;
-    gsl_function_pp<decltype(FSEs_W)> FS_W_GS_BMW(FSEs_W);
-    gsl_integration_workspace * w_W_BMW = gsl_integration_workspace_alloc (10000);
-    gsl_function *G_FSEs_W_BMW = static_cast<gsl_function*>(&FS_W_GS_BMW);
-    gsl_integration_qagiu(G_FSEs_W_BMW, 0.0, 0.0, 1e-5, 10000, w_W_S, &FSEs_BMW, &FSEs_BMW_err);
-    gsl_integration_workspace_free (w_W_BMW);
-
-    double FSEs_BMW_SD, FSEs_BMW_SD_err;
-    gsl_function_pp<decltype(FSEs_SD)> FS_SD_GS_BMW(FSEs_SD);
-    gsl_integration_workspace * w_SD_BMW = gsl_integration_workspace_alloc (10000);
-    gsl_function *G_FSEs_SD_BMW = static_cast<gsl_function*>(&FS_SD_GS_BMW);
-    gsl_integration_qagiu(G_FSEs_SD_BMW, 0.0, 0.0, 1e-5, 10000, w_SD_BMW, &FSEs_BMW_SD, &FSEs_BMW_SD_err);
-    gsl_integration_workspace_free (w_SD_BMW);
-
-    
-    //double FSEs_BMW =  boost::math::quadrature::gauss_kronrod<double, 61>::integrate(FSEs_W, 0.0, numeric_limits<double>::infinity(), 5, 1e-8);
-    //double FSEs_BMW_SD =  boost::math::quadrature::gauss_kronrod<double, 61>::integrate(FSEs_SD, 0.0, numeric_limits<double>::infinity(), 5, 1e-8);
-    FSEs_BMW_list.push_back(FSEs_BMW);
-    FSEs_BMW_SD_list.push_back(FSEs_BMW_SD);
-    cout<<"ML: "<<ml<<" FSEs W (BMW) : "<< FSEs_BMW<<" FSEs W (Silv): "<<FSEs_Silv_FIT<< " FSEs SD (BMW) : "<< FSEs_BMW_SD<<" FSEs SD (Silv): "<<FSEs_Silv_FIT_SD<<endl;
-
-  }
-  Print_To_File({}, {L_list_fm, L_list_bis_fm, ML_list, FSEs_BMW_list, FSEs_Silv_FIT_list, FSEs_BMW_SD_list, FSEs_Silv_FIT_SD_list}, "../data/gm2/light/GS_FSEs/ml_dep.dat", "", "#L(1) L(2) ML  GS_W(B)  GS_W(S)  GS_SD(B) GS_SD(S)");
-
-
- 
-  }
-
   //######################################################################################################
 
 
@@ -999,6 +954,9 @@ void Gm2() {
  
   //init Gaussian number generator
   GaussianMersenne GM(943832);
+
+
+  GaussianMersenne GM_tests(54193);
   string channel="";
 
   
@@ -1013,8 +971,7 @@ void Gm2() {
   data_t P5P5_m_big;
   data_t correlated_V_tm_bubble, correlated_V_OS_bubble, chiral_condensate;
   data_t correlated_P5P5_tm_bubble, correlated_P5P5_OS_bubble;
-  data_t correlated_P5P5_strange_tm_bubble, correlated_P5P5_strange_OS_bubble;
- 
+  
 
   //L
   data_t  V_strange_1_L, V_strange_2_L, V_strange_3_L, V_strange_OS_1_L, V_strange_OS_2_L, V_strange_OS_3_L;
@@ -1111,6 +1068,7 @@ void Gm2() {
 
   //#####################################
   //for test of mass dependence on V_light
+  // standard
   V_light_1_m_small.Read("../gm2_new_run_correlated/physical", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
   V_light_1_m_big.Read("../gm2_new_run_correlated/simulated", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
   P5P5_m_small.Read("../gm2_new_run_correlated/physical", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
@@ -1122,9 +1080,24 @@ void Gm2() {
   correlated_V_OS_bubble.Read("../gm2_sea_effects/conn", "mes_contr_2pts_ll_2", "V1V1", Sort_light_confs);
   correlated_P5P5_tm_bubble.Read("../gm2_sea_effects/conn", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
   correlated_P5P5_OS_bubble.Read("../gm2_sea_effects/conn", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs);
-  correlated_P5P5_strange_tm_bubble.Read("../gm2_sea_effects/conn_strange", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
-  correlated_P5P5_strange_OS_bubble.Read("../gm2_sea_effects/conn_strange", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs);
   chiral_condensate.Read("../gm2_sea_effects/bubble", "disco", "", Sort_light_confs);
+  
+
+  //Use for Nazario
+  /*
+  V_light_1_m_small.Read("../mass_corrections_gm2/valence/physical", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
+  V_light_1_m_big.Read("../mass_corrections_gm2/valence/simulated", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
+  P5P5_m_small.Read("../mass_corrections_gm2/valence/physical", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
+  P5P5_m_big.Read("../mass_corrections_gm2/valence/simulated", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
+  
+  V_light_OS_1_m_small.Read("../mass_corrections_gm2/valence/physical", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
+  V_light_OS_1_m_big.Read("../mass_corrections_gm2/valence/simulated", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
+  correlated_V_tm_bubble.Read("../mass_corrections_gm2/original", "mes_contr_2pts_ll_1", "V1V1", Sort_light_confs);
+  correlated_V_OS_bubble.Read("../mass_corrections_gm2/original", "mes_contr_2pts_ll_2", "V1V1", Sort_light_confs);
+  correlated_P5P5_tm_bubble.Read("../mass_corrections_gm2/original", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
+  correlated_P5P5_OS_bubble.Read("../mass_corrections_gm2/original", "mes_contr_2pts_ll_2", "P5P5", Sort_light_confs);
+  chiral_condensate.Read("../mass_corrections_gm2/bubble", "disco", "", Sort_light_confs);
+  */
   //#####################################
   
   pt2_pion.Read("../gm2_data/light", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
@@ -1321,7 +1294,7 @@ void Gm2() {
       else if(pt2_pion.Tag[iens].substr(1,1)=="D") {Corr.Tmin=41; Corr.Tmax=80;}
       else crash("In scale setting analysis cannot find Tmin,Tmax for ensemble: "+pt2_pion.Tag[iens]);
       distr_t_list pion_corr = Corr.corr_t(pt2_pion.col(0)[iens], "");
-      if(pt2_pion.Tag[iens]=="cB211b.072.64" || pt2_pion.Tag[iens]=="cD211a.054.96") {
+      if(pt2_pion.Tag[iens] !="cB211b.072.96") {
 	auto LOG = [](double x) { return log(x);};
 	distr_t_list delta_corr_sea_tm, delta_corr_sea_OS;
 	distr_t_list delta_corr_sea_strange_tm, delta_corr_sea_strange_OS;
@@ -1343,9 +1316,15 @@ void Gm2() {
 
 	//DEFINE DM ########################
 	double dm=0, amphys=0;
-	if( pt2_pion.Tag[iens] == "cB211b.072.64") { dm= (0.00072-0.0006675); amphys=0.0006675;}
-	else if( pt2_pion.Tag[iens] == "cD211a.054.96") {dm = (0.00054 -0.0004964); amphys= 0.0004964;}
+	double alat_res_ave, alat_res_err;
+	distr_t alat_res(UseJack);
+        
+	
+	if( pt2_pion.Tag[iens] == "cB211b.072.64") { dm= (0.00072-0.0006675); amphys=0.0006675; alat_res_ave= 0.0795738*fm_to_inv_Gev  ; alat_res_err= 0.000131636*fm_to_inv_Gev ;}
+	else if(pt2_pion.Tag[iens] == "cC211a.06.80") {dm = (0.00060-0.000585); amphys= 0.000585; alat_res_ave = 0.0682083*fm_to_inv_Gev  ; alat_res_err= 0.000134938*fm_to_inv_Gev; }
+	else if( pt2_pion.Tag[iens] == "cD211a.054.96") {dm = (0.00054 -0.0004964); amphys= 0.0004964; alat_res_ave = 0.0569183*fm_to_inv_Gev; alat_res_err= 0.000115387*fm_to_inv_Gev;}
 	else crash("DM shift in valence quark mistuning (scale setting) cannot be found ");
+	for(int ijack=0;ijack<Njacks;ijack++) alat_res.distr.push_back( alat_res_ave + GM_tests()*alat_res_err/sqrt(Njacks -1.0));
 	//##################################
 
         //sea effects
@@ -1441,7 +1420,12 @@ void Gm2() {
       fpi_GL_phys_point= fpi_fit_phys_point/(1.0 -2.0*csi_L*g1);
       Mpi_GL_phys_point= Mpi_fit_phys_point/(1.0 + 0.5*csi_L*g1);
       distr_t fpi_isoQCD(UseJack);
+      if(pt2_pion.Tag[iens] != "cC211a.06.80") {
       for(int ijack=0;ijack<Njacks;ijack++) fpi_isoQCD.distr.push_back( 0.1304 + GM()*2e-4/sqrt(Njacks-1));
+      }
+      else {
+	for(int ijack=0;ijack<Njacks;ijack++) fpi_isoQCD.distr.push_back( 0.1304 + GM_tests()*2e-4/(Njacks-1));
+      }
       csi_GL_phys_point= Mpi_GL_phys_point*Mpi_GL_phys_point/(16.0*M_PI*M_PI*fpi_GL_phys_point*fpi_GL_phys_point);
       fpi_CDH_phys_point = fpi_fit_phys_point/(1.0 -2.0*csi_L*g1 +2.0*csi_L*csi_L*( (Cf1(l1ph,l2ph,l3ph,l4ph) + Sf1(s0,s1,s2,s3) + Cf1_log()*log_l)*g1 + (Cf2(l1ph,l2ph,l3ph,l4ph) + Sf2(s0,s1,s2,s3) + Cf2_log()*log_l)*g2));
       Mpi_CDH_phys_point = (Mpi_fit_phys_point/(1.0 + 0.5*csi_L*g1 - csi_L*csi_L*( (Cm1(l1ph,l2ph,l3ph,l4ph) + Sm1(s0,s1,s2,s3) + Cm1_log()*log_l)*g1 + (Cm2(l1ph,l2ph,l3ph,l4ph) + Sm2(s0,s1,s2,s3) + Cm2_log()*log_l)*g2)));
@@ -1452,25 +1436,28 @@ void Gm2() {
       csi_CDH_phys_point_val = Mpi_CDH_phys_point_val*Mpi_CDH_phys_point_val/(16.0*M_PI*M_PI*fpi_CDH_phys_point_val*fpi_CDH_phys_point_val);
 
 	
-	cout<<"afB: "<< fpi_fit_phys_point.ave()<< "+- "<<fpi_fit_phys_point.err()<<endl;
-	cout<<"afB: (only valence) "<< fpi_fit_phys_point_val.ave()<< "+- "<<fpi_fit_phys_point_val.err()<<endl;
-	cout<<"afB(GL-corrected): "<<fpi_GL_phys_point.ave()<<" +- "<<fpi_GL_phys_point.err()<<endl;
-	cout<<"afB(CDH-corrected): "<<fpi_CDH_phys_point.ave()<< "+- "<<fpi_CDH_phys_point.err()<<endl;
-	cout<<"afB(CDH-corrected) (only valence): "<<fpi_CDH_phys_point_val.ave()<< "+- "<<fpi_CDH_phys_point_val.err()<<endl;
-	cout<<"aMpi_B: "<< Mpi_fit_phys_point.ave()<< "+- "<<Mpi_fit_phys_point.err()<<endl;
-	cout<<"aMpi_B: (only valence) "<< Mpi_fit_phys_point_val.ave()<< "+- "<<Mpi_fit_phys_point_val.err()<<endl;
-	cout<<"aMpi_B(GL-corrected): "<<Mpi_GL_phys_point.ave()<<" +- "<<Mpi_GL_phys_point.err()<<endl;
-	cout<<"aMpi_B(CDH-corrected): "<<Mpi_CDH_phys_point.ave()<<" +- "<<Mpi_CDH_phys_point.err()<<endl;
-	cout<<"aMpi_B(CDH-corrected) (only valence): "<<Mpi_CDH_phys_point_val.ave()<<" +- "<<Mpi_CDH_phys_point_val.err()<<endl;
-	cout<<"xi_B: "<<csi_fit_phys_point.ave()<< "+- "<<csi_fit_phys_point.err()<<endl;
-	cout<<"xi_B: (only valence) "<<csi_fit_phys_point_val.ave()<< "+- "<<csi_fit_phys_point_val.err()<<endl;
-	cout<<"xi_B(GL-corrected): "<<csi_GL_phys_point.ave()<<" +- "<<csi_GL_phys_point.err()<<endl;
-	cout<<"xi_B(CDH-corrected): "<<csi_CDH_phys_point.ave()<< "+- "<<csi_CDH_phys_point.err()<<endl;
-	cout<<"xi_B(CDH-corrected) (only valence): "<<csi_CDH_phys_point_val.ave()<< "+- "<<csi_CDH_phys_point_val.err()<<endl;
+	cout<<"af: "<< fpi_fit_phys_point.ave()<< "+- "<<fpi_fit_phys_point.err()<<endl;
+	cout<<"af: (only valence) "<< fpi_fit_phys_point_val.ave()<< "+- "<<fpi_fit_phys_point_val.err()<<endl;
+	cout<<"af(GL-corrected): "<<fpi_GL_phys_point.ave()<<" +- "<<fpi_GL_phys_point.err()<<endl;
+	cout<<"af(CDH-corrected): "<<fpi_CDH_phys_point.ave()<< "+- "<<fpi_CDH_phys_point.err()<<endl;
+	cout<<"af(CDH-corrected) (only valence): "<<fpi_CDH_phys_point_val.ave()<< "+- "<<fpi_CDH_phys_point_val.err()<<endl;
+	cout<<"aMpi: "<< (Mpi_fit_phys_point/alat_res).ave()<< "+- "<<(Mpi_fit_phys_point/alat_res).err()<<endl;
+	cout<<"aMpi: (only valence) "<< (Mpi_fit_phys_point_val/alat_res).ave()<< "+- "<<(Mpi_fit_phys_point_val/alat_res).err()<<endl;
+	cout<<"aMpi(GL-corrected): "<<(Mpi_GL_phys_point/alat_res).ave()<<" +- "<<(Mpi_GL_phys_point/alat_res).err()<<endl;
+	cout<<"aMpi(CDH-corrected): "<<(Mpi_CDH_phys_point/alat_res).ave()<<" +- "<<(Mpi_CDH_phys_point/alat_res).err()<<endl;
+	cout<<"aMpi(CDH-corrected) (only valence): "<<(Mpi_CDH_phys_point_val/alat_res).ave()<<" +- "<<(Mpi_CDH_phys_point_val/alat_res).err()<<endl;
+	cout<<"xi: "<<csi_fit_phys_point.ave()<< "+- "<<csi_fit_phys_point.err()<<endl;
+	cout<<"xi: (only valence) "<<csi_fit_phys_point_val.ave()<< "+- "<<csi_fit_phys_point_val.err()<<endl;
+	cout<<"xi(GL-corrected): "<<csi_GL_phys_point.ave()<<" +- "<<csi_GL_phys_point.err()<<endl;
+	cout<<"xi(CDH-corrected): "<<csi_CDH_phys_point.ave()<< "+- "<<csi_CDH_phys_point.err()<<endl;
+	cout<<"xi(CDH-corrected) (only valence): "<<csi_CDH_phys_point_val.ave()<< "+- "<<csi_CDH_phys_point_val.err()<<endl;
 	cout<<"xi_isoQCD: "<<csi_true_phys<<" +- 0.00002 "<<endl;
-	cout<<"Prediction for lattice spacing B: "<<(fpi_CDH_phys_point/(fpi_isoQCD*fm_to_inv_Gev)).ave()<<" +- "<<(fpi_CDH_phys_point/(fm_to_inv_Gev*fpi_isoQCD)).err()<<endl;
-	cout<<"Prediction for lattice spacing B (only valence): "<<(fpi_CDH_phys_point_val/(fpi_isoQCD*fm_to_inv_Gev)).ave()<<" +- "<<(fpi_CDH_phys_point_val/(fm_to_inv_Gev*fpi_isoQCD)).err()<<endl;
-	cout<<"Global fit estimate: 0.0795738 +- 0.000131636 [fm] "<<endl;
+	cout<<"Prediction for lattice spacing: "<<(fpi_CDH_phys_point/(fpi_isoQCD*fm_to_inv_Gev)).ave()<<" +- "<<(fpi_CDH_phys_point/(fm_to_inv_Gev*fpi_isoQCD)).err()<<endl;
+	cout<<"Prediction for lattice spacing(only valence): "<<(fpi_CDH_phys_point_val/(fpi_isoQCD*fm_to_inv_Gev)).ave()<<" +- "<<(fpi_CDH_phys_point_val/(fm_to_inv_Gev*fpi_isoQCD)).err()<<endl;
+	cout<<"Global fit estimate: ";
+	if(pt2_pion.Tag[iens].substr(1,1)=="B") cout<< "0.0795738 +- 0.000131636 [fm] "<<endl;
+	else if(pt2_pion.Tag[iens].substr(1,1)=="C") cout<<"0.0682083 +- 0.000134938 [fm]   "<<endl;
+        else if (pt2_pion.Tag[iens].substr(1,1)=="D") cout<<"0.0569183 +- .000115387 [fm] "<<endl;
 	cout<<"#########################################################################"<<endl;
 
       }
@@ -1745,6 +1732,11 @@ void Gm2() {
   vector<distr_t_list> amu_W_eps_sea_list_tm(eps_win_size);
   vector<distr_t_list> amu_W_eps_sea_list_OS(eps_win_size);
 
+
+  //GS-Sakurai prediction for cut-off effects
+  Vfloat GS_artifacts_W_win_tm;
+  Vfloat GS_artifacts_W_win_OS;
+
   //strange and charm
   //L
   distr_t_list agm2_strange_L(UseJack), agm2_charm_L(UseJack), agm2_strange_OS_L(UseJack), agm2_charm_OS_L(UseJack);
@@ -1810,9 +1802,13 @@ void Gm2() {
   //pion mass correction
   distr_t_list amu_W_mass_corr_tm_list(UseJack);
   distr_t_list amu_W_mass_corr_OS_list(UseJack);
+  distr_t_list amu_SD_mass_corr_tm_list(UseJack);
+  distr_t_list amu_SD_mass_corr_OS_list(UseJack);
   vector<string> amu_W_val_Ens_tag;
   distr_t_list amu_W_mass_corr_sea_tm_list(UseJack);
   distr_t_list amu_W_mass_corr_sea_OS_list(UseJack);
+  distr_t_list amu_SD_mass_corr_sea_tm_list(UseJack);
+  distr_t_list amu_SD_mass_corr_sea_OS_list(UseJack);
   vector<string> amu_W_sea_Ens_tag;
 
   //disco light
@@ -2269,16 +2265,18 @@ void Gm2() {
     M_etas_OS_heavy = Corr.Fit_distr(M_etas_OS_distr_heavy);
 
     int id=0;
-    if(V_strange_1_L.Tag[i_ens] == "cB211b.072.64") id=0;
-    else if(V_strange_1_L.Tag[i_ens] == "cB211b.072.96") id=1;
-    else if(V_strange_1_L.Tag[i_ens].substr(1,1) == "C") id=2;
-    else if(V_strange_1_L.Tag[i_ens].substr(1,1) == "D") id=3;
-    else crash("Ensemble not recognized");
-    ens_masses_id[id] == V_strange_1_L.Tag[i_ens];
-    Mp_s1_tm.distr_list[id] = M_etas;
-    Mp_s2_tm.distr_list[id] = M_etas_heavy;
-    Mp_s1_OS.distr_list[id] = M_etas_OS;
-    Mp_s2_OS.distr_list[id] = M_etas_OS_heavy;
+    if(V_strange_1_L.Tag[i_ens].substr(1,1) != "A") {
+      if(V_strange_1_L.Tag[i_ens] == "cB211b.072.64") id=0;
+      else if(V_strange_1_L.Tag[i_ens] == "cB211b.072.96") id=1;
+      else if(V_strange_1_L.Tag[i_ens].substr(1,1) == "C") id=2;
+      else if(V_strange_1_L.Tag[i_ens].substr(1,1) == "D") id=3;
+      else crash("Ensemble not recognized");
+      ens_masses_id[id] == V_strange_1_L.Tag[i_ens];
+      Mp_s1_tm.distr_list[id] = M_etas;
+      Mp_s2_tm.distr_list[id] = M_etas_heavy;
+      Mp_s1_OS.distr_list[id] = M_etas_OS;
+      Mp_s2_OS.distr_list[id] = M_etas_OS_heavy;
+    }
     //fit obs to compute Zv and Za (hadronic method)
     Zp_ov_Zs = Corr.Fit_distr(Zp_ov_Zs_distr);
     Zp_ov_Zs_heavy = Corr.Fit_distr(Zp_ov_Zs_distr_heavy);
@@ -2395,6 +2393,19 @@ void Gm2() {
     ZV_strange_M = Corr.Fit_distr(ZV_strange_distr_M);
 
     cout<<"M_phi (H)  ["<<V_strange_1_L.Tag[i_ens]<<" ] : "<<MV_strange_M.ave()<<" "<<MV_strange_M.err()<<" "<<Corr.Tmin<<" "<<Corr.Tmax<<endl;
+
+
+    //Print to File M_etas and Mphi
+
+    distr_t_list etas_masses_list(UseJack);
+    distr_t_list phi_masses_list(UseJack);
+
+    etas_masses_list.distr_list.push_back( M_etas);
+    etas_masses_list.distr_list.push_back( M_etas_heavy);
+    phi_masses_list.distr_list.push_back( MV_strange_L);
+    phi_masses_list.distr_list.push_back( MV_strange_M);
+
+    Print_To_File({}, {etas_masses_list.ave(), etas_masses_list.err(), phi_masses_list.ave(), phi_masses_list.err()}, "../data/gm2/strange/masses_"+V_strange_1_L.Tag[i_ens]+".list", "", "# etas   phi");
  
    
     //OS
@@ -2548,6 +2559,9 @@ void Gm2() {
 
 
     cout<<"Zp_ov_Zs ["<<V_strange_1_L.Tag[i_ens]<<"] : "<<Zp_ov_Zs_hadr_extr.ave()<<" +- "<<Zp_ov_Zs_hadr_extr.err()<<endl;
+    cout<<"Zv["<<V_strange_1_L.Tag[i_ens]<<"] : "<<Zv_hadr_extr.ave()<<" +- "<<Zv_hadr_extr.err()<<endl;
+    cout<<"Za["<<V_strange_1_L.Tag[i_ens]<<"] : "<<Za_hadr_extr.ave()<<" +- "<<Za_hadr_extr.err()<<endl;
+    cout<<"Za_ov_Zv["<<V_strange_1_L.Tag[i_ens]<<"] : "<<(Za_hadr_extr/Zv_hadr_extr).ave()<<" +- "<<(Za_hadr_extr/Zv_hadr_extr).err()<<endl;
 
  
 
@@ -3256,6 +3270,8 @@ void Gm2() {
   }
 
   cout<<"strange quark correlator analyzed!"<<endl;
+
+
 
    
 
@@ -3977,6 +3993,22 @@ void Gm2() {
     cout<<" M_Jpsi(M): "<<MV_charm_M.ave()<<" +- "<<MV_charm_M.err()<<endl;
     cout<<" M_Jpsi(H): "<<MV_charm_H.ave()<<" +- "<<MV_charm_H.err()<<endl;
     cout<<"#######################################"<<endl;
+
+
+
+    //Print to File M_etac and M_Jpsi
+
+    distr_t_list etac_masses_list(UseJack);
+    distr_t_list Jpsi_masses_list(UseJack);
+
+    etac_masses_list.distr_list.push_back( M_etaC_L);
+    etac_masses_list.distr_list.push_back( M_etaC_M);
+    etac_masses_list.distr_list.push_back( M_etaC_H);
+    Jpsi_masses_list.distr_list.push_back( MV_charm_L);
+    Jpsi_masses_list.distr_list.push_back( MV_charm_M);
+    Jpsi_masses_list.distr_list.push_back( MV_charm_H);
+
+    Print_To_File({}, {etac_masses_list.ave(), etac_masses_list.err(), Jpsi_masses_list.ave(), Jpsi_masses_list.err()}, "../data/gm2/charm/masses_"+V_charm_1_L.Tag[i_ens]+".list", "", "# etac   Jpsi");
 
 
 
@@ -5008,6 +5040,8 @@ void Gm2() {
 
     //light no replica
     distr_t_list disco_impr_no_rep_distr;
+
+   
     
 									  
     distr_t_list  V_light_OS_1_distr, V_light_OS_2_distr, V_light_OS_3_distr, V_light_OS_distr;  
@@ -5267,96 +5301,299 @@ void Gm2() {
 
 
 
+    //################### GS PREDICTION FOR FSE #######################
+
+    distr_t Mpi_0(UseJack);
+    distr_t Mpi_ave_OS_neutral(UseJack);
+    double c_neutral= 1.0/pow(fm_to_inv_Gev,2);
+    for(int ijack=0; ijack<Njacks;ijack++) {
+      Mpi_0.distr.push_back( sqrt( pow(0.135,2) - pow(a_distr.distr[ijack],2)*c_neutral));
+      Mpi_ave_OS_neutral.distr.push_back( 0.5*(Mpi_OS.distr[ijack]/a_distr.distr[ijack] + Mpi_0.distr[ijack]));
+    }
+    
+    if(V_light_1.Tag[i_ens] != "cB211b.072.96") {
+      GS_artifacts_W_win_tm.push_back(Get_GS_artifacts_win( (0.135+Mpi_0.ave())/2.0, 5.46*fm_to_inv_Gev, LL));
+      GS_artifacts_W_win_OS.push_back(Get_GS_artifacts_win( Mpi_ave_OS_neutral.ave(), 5.46*fm_to_inv_Gev, LL, 1));
+    }
+
+
+
 
     //#############################VALENCE AND SEA PION MASS MISTUNING CORRECTIONS#############################################################
      //valence mistuning effects
     distr_t_list V_light_m_small_distr, V_light_m_big_distr, V_light_OS_m_small_distr, V_light_OS_m_big_distr;
-    int id_ens_val=-1;
-    if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") {
+    distr_t_list V_light_m_small_distr_bootstrap(0), V_light_m_big_distr_bootstrap(0), V_light_OS_m_small_distr_bootstrap(0), V_light_OS_m_big_distr_bootstrap(0);
 
-      //find valence ensemble id
-      for(int i_ens_val=0; i_ens_val<(signed)V_light_1_m_small.Tag.size(); i_ens_val++) {
-	if( V_light_1_m_small.Tag[i_ens_val] == V_light_1.Tag[i_ens]) id_ens_val=i_ens_val;
-      }
-      if(id_ens_val==-1) crash("In evaluating valence quark mass correction to vector correlator, cannot find ensemble: "+V_light_1.Tag[i_ens]);
-      
-      //valence
-      V_light_m_small_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_1_m_small.col(0)[id_ens_val], "");
-      V_light_m_big_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_1_m_big.col(0)[id_ens_val], "");
-      V_light_OS_m_small_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_OS_1_m_small.col(0)[id_ens_val], "");
-      V_light_OS_m_big_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_OS_1_m_big.col(0)[id_ens_val], "");
-          
+
+    //find id for ensemble B64
+    int i_ens_B64=-1;
+    for(int i=0;i<(signed)V_light_1.Tag.size();i++) if( V_light_1.Tag[i] == "cB211b.072.64") { i_ens_B64=i;}
+    if(i_ens_B64==-1) crash("Cannot find ensemble B64");
+    
+    CorrAnalysis Corr_boot(0, Njacks, 800, i_ens);
+    CorrAnalysis Corr_boot_b64(0, Njacks, 800, i_ens_B64);
+    Corr_boot_b64.Nt= 128;
+    Corr_boot.Nt= V_light_1.nrows[i_ens];
+    int seed_boot= (V_light_1.Tag[i_ens] != "cB211b.072.96")?Corr_boot.seed:Corr_boot_b64.seed;
+    int Nt_chir= (V_light_1.Tag[i_ens] == "cB211b.072.96")?128:Corr.Nt;
+    
+    
+    
+    int id_ens_val=-1;
+    
+
+    //find valence ensemble id
+    for(int i_ens_val=0; i_ens_val<(signed)V_light_1_m_small.Tag.size(); i_ens_val++) {
+      if( V_light_1_m_small.Tag[i_ens_val] == V_light_1.Tag[i_ens]) id_ens_val=i_ens_val;
     }
+    if(id_ens_val==-1) crash("In evaluating valence quark mass correction to vector correlator, cannot find ensemble: "+V_light_1.Tag[i_ens]);
+      
+    //valence
+    V_light_m_small_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_1_m_small.col(0)[id_ens_val], "");
+    V_light_m_big_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_1_m_big.col(0)[id_ens_val], "");
+    V_light_OS_m_small_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_OS_1_m_small.col(0)[id_ens_val], "");
+    V_light_OS_m_big_distr = (pow(qu,2)+ pow(qd,2))*Corr.corr_t(V_light_OS_1_m_big.col(0)[id_ens_val], "");
+    
+    //valence bootstrap
+    V_light_m_small_distr_bootstrap = (pow(qu,2)+ pow(qd,2))*Corr_boot.corr_t(V_light_1_m_small.col(0)[id_ens_val], "");
+    V_light_m_big_distr_bootstrap = (pow(qu,2)+ pow(qd,2))*Corr_boot.corr_t(V_light_1_m_big.col(0)[id_ens_val], "");
+    V_light_OS_m_small_distr_bootstrap = (pow(qu,2)+ pow(qd,2))*Corr_boot.corr_t(V_light_OS_1_m_small.col(0)[id_ens_val], "");
+    V_light_OS_m_big_distr_bootstrap = (pow(qu,2)+ pow(qd,2))*Corr_boot.corr_t(V_light_OS_1_m_big.col(0)[id_ens_val], "");
+    
+  
 
 
     //sea quark mistuning effect
     distr_t_list delta_corr_sea_tm, delta_corr_sea_OS;
-    if(V_light_1.Tag[i_ens] != "cB211b.072.96") {
-      distr_t_list chiral_condensate_distr;
+    distr_t_list delta_corr_sea_tm_bootstrap(0), delta_corr_sea_OS_bootstrap(0);
+   
+    distr_t_list chiral_condensate_distr;
 
-      int id_ens=-1;
-      for(int i_ens_chir=0; i_ens_chir< (signed)chiral_condensate.Tag.size();i_ens_chir++) {
+    int id_ens=-1;
+    int id_ens_corr_to_bubble=-1;
+    for(int i_ens_chir=0; i_ens_chir< (signed)chiral_condensate.Tag.size();i_ens_chir++) {
+      if(V_light_1.Tag[i_ens]=="cB211b.072.96") {
+	if(chiral_condensate.Tag[i_ens_chir] == "cB211b.072.64") id_ens= i_ens_chir;
+      }
+      else {
 	if( chiral_condensate.Tag[i_ens_chir] == V_light_1.Tag[i_ens]) id_ens = i_ens_chir;
       }
-      if(id_ens==-1) crash("In evaluating sea quark mistuning: cannot find ensemble: "+V_light_1.Tag[i_ens]);
+    }
+    if(id_ens==-1) crash("In evaluating sea quark mistuning: cannot find ensemble: "+V_light_1.Tag[i_ens]);
+    
+    for(int i_ens_chir=0; i_ens_chir< (signed)correlated_V_tm_bubble.Tag.size();i_ens_chir++) {
+      if( correlated_V_tm_bubble.Tag[i_ens_chir] == V_light_1.Tag[i_ens]) id_ens_corr_to_bubble = i_ens_chir;
+    }
+    if(id_ens_corr_to_bubble==-1) crash("In evaluating sea quark mistuning (2): cannot find ensemble: "+V_light_1.Tag[i_ens]);
+    
+    int id_ens_corr_to_bubble_bis= -1;
+    if(V_light_1.Tag[i_ens] == "cB211b.072.96") {
+      for(int i=0;i<(signed)correlated_V_tm_bubble.Tag.size();i++) {
+	if( correlated_V_tm_bubble.Tag[i] == "cB211b.072.64") id_ens_corr_to_bubble_bis= i;
+      }
+    }
+    else id_ens_corr_to_bubble_bis=id_ens_corr_to_bubble;
+    
+    if(id_ens_corr_to_bubble_bis==-1) crash("In evaluating sea quark mistuning (3): cannot find ensemble: "+V_light_1.Tag[i_ens]);
+    
+    double correction_fact=1.0;
+    if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cB211b.072.96") correction_fact= (0.00072-0.0006675);
+    else if(V_light_1.Tag[i_ens] == "cC211a.06.80") correction_fact= (0.00060 - 0.000585  );
+    else if(V_light_1.Tag[i_ens] == "cD211a.054.96") correction_fact= (0.00054 - 0.0004964);
+    else crash("correction fact in sea quark mistuning, cannot be determined");
+    
 
-      double correction_fact=1.0;
-      if(V_light_1.Tag[i_ens] == "cB211b.072.64") correction_fact= (0.00072-0.0006675);
-      else if(V_light_1.Tag[i_ens] == "cC211a.06.80") correction_fact= 0.00060*(1 - pow(0.1350/(Mpi/a_distr).ave(),2));
-      else if(V_light_1.Tag[i_ens] == "cD211a.054.96") correction_fact= (0.00054 - 0.0004964);
-      else crash("correction fact in sea quark mistuning, cannot be determined");
+
+    //sea effects
+    //chiral_condensate_distr= -1.0*Corr.corr_t( chiral_condensate.col(1)[id_ens], "../data/gm2/light/mass_dep/chiral_cond_"+V_light_1.Tag[i_ens]+".t");
+    
+    VVfloat chiral_condensate_correlated_to_V_tm(Nt_chir);
+    VVfloat chiral_condensate_correlated_to_V_OS(Nt_chir);
+    
+    int Nconfs_tm_0 = correlated_V_tm_bubble.col(0)[id_ens_corr_to_bubble_bis][0].size();
+    int Nconfs_OS_0 = correlated_V_OS_bubble.col(0)[id_ens_corr_to_bubble_bis][0].size();
+    int Nconfs_chir_0 = chiral_condensate.col(1)[id_ens][0].size();
+    if((Nconfs_tm_0 != Nconfs_OS_0) || (Nconfs_tm_0 != Nconfs_chir_0)) crash("In evaluating sea quark mistuning: number of confs between connected(tm,OS) and chiral condensate do not match"); 
+    Vfloat chiral_condensate_averaged(Nconfs_chir_0,0.0);
+    for(int t=0;t<Nt_chir;t++) {
+      int Nconfs_chir = chiral_condensate.col(1)[id_ens][t].size();
+      if( (Nconfs_chir != Nconfs_chir_0)) crash("In evaluating sea quark mistuning: Nconfs chiral not constant over time");
+      for(int iconf=0; iconf<Nconfs_chir;iconf++) chiral_condensate_averaged[iconf] += -1.0*correction_fact*chiral_condensate.col(1)[id_ens][t][iconf];
+    }
+    
+    auto F_disco_jack= [&](const Vfloat& par) { if((signed)par.size() != 3) crash("Lambda function F_disco_jack expects par[3], but par["+to_string((signed)par.size())+"] provided"); return par[0] -par[1]*par[2];};
+    
+    for(int t=0; t < Nt_chir;t++) {
       
-
-
-      //sea effects
-      chiral_condensate_distr= -1.0*Corr.corr_t( chiral_condensate.col(1)[id_ens], "../data/gm2/light/mass_dep/chiral_cond_"+V_light_1.Tag[i_ens]+".t");
+      int Nconfs_tm = correlated_V_tm_bubble.col(0)[id_ens_corr_to_bubble_bis][t].size();
+      int Nconfs_OS = correlated_V_OS_bubble.col(0)[id_ens_corr_to_bubble_bis][t].size();
       
-      VVfloat chiral_condensate_correlated_to_V_tm(Corr.Nt);
-      VVfloat chiral_condensate_correlated_to_V_OS(Corr.Nt);
-     
-      int Nconfs_tm_0 = correlated_V_tm_bubble.col(0)[id_ens][0].size();
-      int Nconfs_OS_0 = correlated_V_OS_bubble.col(0)[id_ens][0].size();
-      int Nconfs_chir_0 = chiral_condensate.col(1)[id_ens][0].size();
-      if((Nconfs_tm_0 != Nconfs_OS_0) || (Nconfs_tm_0 != Nconfs_chir_0)) crash("In evaluating sea quark mistuning: number of confs between connected(tm,OS) and chiral condensate do not match"); 
-      Vfloat chiral_condensate_averaged(Nconfs_chir_0,0.0);
+      if( (Nconfs_tm != Nconfs_tm_0)) crash("In evaluating sea quark mistuning: Nconfs tm not constant over time");
+      if( (Nconfs_OS != Nconfs_OS_0)) crash("In evaluating sea quark mistuning: Nconfs OS not constant over time");
+      
+      for(int iconf=0; iconf<Nconfs_tm_0;iconf++) {
+	chiral_condensate_correlated_to_V_tm[t].push_back( correlated_V_tm_bubble.col(0)[id_ens_corr_to_bubble_bis][t][iconf]*chiral_condensate_averaged[iconf]);
+	chiral_condensate_correlated_to_V_OS[t].push_back( correlated_V_OS_bubble.col(0)[id_ens_corr_to_bubble_bis][t][iconf]*chiral_condensate_averaged[iconf]);
+      }
+      
+      
+      
+      //jackknife
+      Jackknife J_tm(10000,Njacks);
+      delta_corr_sea_tm.distr_list.push_back(J_tm.DoJack(F_disco_jack, 3, chiral_condensate_correlated_to_V_tm[t], chiral_condensate_averaged, correlated_V_tm_bubble.col(0)[id_ens_corr_to_bubble_bis][t]));
+      Jackknife J_OS(10000,Njacks);
+      delta_corr_sea_OS.distr_list.push_back(J_OS.DoJack(F_disco_jack, 3, chiral_condensate_correlated_to_V_OS[t], chiral_condensate_averaged, correlated_V_OS_bubble.col(0)[id_ens_corr_to_bubble_bis][t]));
+
+      //bootstrap
+      Bootstrap B_tm(800, seed_boot, chiral_condensate_averaged.size());
+      delta_corr_sea_tm_bootstrap.distr_list.push_back(B_tm.DoBoot(F_disco_jack, 3, chiral_condensate_correlated_to_V_tm[t], chiral_condensate_averaged, correlated_V_tm_bubble.col(0)[id_ens_corr_to_bubble_bis][t]));
+      Bootstrap B_OS(800, seed_boot, chiral_condensate_averaged.size() );
+      delta_corr_sea_OS_bootstrap.distr_list.push_back(B_OS.DoBoot(F_disco_jack, 3, chiral_condensate_correlated_to_V_OS[t], chiral_condensate_averaged, correlated_V_OS_bubble.col(0)[id_ens_corr_to_bubble_bis][t]));
+            	
+    }
+
+
+    if(V_light_1.Tag[i_ens]=="cB211b.072.96" ) {
+
+      cout<<"I am here"<<endl;
+      cout<<"size of delta corr before resizing: "<<delta_corr_sea_tm.size()<<endl;
+      cout<<"size of delta corr before resizing: "<<delta_corr_sea_OS.size()<<endl;
+      cout<<"size of delta corr before resizing: "<<delta_corr_sea_tm_bootstrap.size()<<endl;
+      cout<<"size of delta corr before resizing: "<<delta_corr_sea_OS_bootstrap.size()<<endl;
+
+      //resize delta_corr_sea_tm and delta_corr_sea_OS for jackknife and bootstrap
+      distr_t fake_jack(1);
+      distr_t fake_boot(0);
+      for(int ijack=0;ijack<Njacks;ijack++) fake_jack.distr.push_back(0.0);
+      for(int ib=0;ib<800;ib++) fake_boot.distr.push_back(0.0);
+
+
       for(int t=0;t<Corr.Nt;t++) {
-	int Nconfs_chir = chiral_condensate.col(1)[id_ens][t].size();
-	if( (Nconfs_chir != Nconfs_chir_0)) crash("In evaluating sea quark mistuning: Nconfs chiral not constant over time");
-	for(int iconf=0; iconf<Nconfs_chir;iconf++) chiral_condensate_averaged[iconf] += -1.0*correction_fact*chiral_condensate.col(1)[id_ens][t][iconf];
-      }
-      
-      auto F_disco_jack= [&](const Vfloat& par) { if((signed)par.size() != 3) crash("Lambda function F_disco_jack expects par[3], but par["+to_string((signed)par.size())+"] provided"); return par[0] -par[1]*par[2];};
-      
-      for(int t=0; t < Corr.Nt;t++) {
 
-	int Nconfs_tm = correlated_V_tm_bubble.col(0)[id_ens][t].size();
-	int Nconfs_OS = correlated_V_OS_bubble.col(0)[id_ens][t].size();
 
-	if( (Nconfs_tm != Nconfs_tm_0)) crash("In evaluating sea quark mistuning: Nconfs tm not constant over time");
-	if( (Nconfs_OS != Nconfs_OS_0)) crash("In evaluating sea quark mistuning: Nconfs OS not constant over time");
-		
-	for(int iconf=0; iconf<Nconfs_tm_0;iconf++) {
-	  chiral_condensate_correlated_to_V_tm[t].push_back( correlated_V_tm_bubble.col(0)[id_ens][t][iconf]*chiral_condensate_averaged[iconf]);
-	  chiral_condensate_correlated_to_V_OS[t].push_back( correlated_V_OS_bubble.col(0)[id_ens][t][iconf]*chiral_condensate_averaged[iconf]);
+	if(t<64) { //Do Nothing
 	}
-
-	
-
-	//jackknife
-	Jackknife J_tm(10000,Njacks);
-	delta_corr_sea_tm.distr_list.push_back(J_tm.DoJack(F_disco_jack, 3, chiral_condensate_correlated_to_V_tm[t], chiral_condensate_averaged, correlated_V_tm_bubble.col(0)[id_ens][t]));
-	Jackknife J_OS(10000,Njacks);
-	delta_corr_sea_OS.distr_list.push_back(J_OS.DoJack(F_disco_jack, 3, chiral_condensate_correlated_to_V_OS[t], chiral_condensate_averaged, correlated_V_OS_bubble.col(0)[id_ens][t]));
-
-
-	
-	
+	else if(t<128) {
+	  delta_corr_sea_tm.distr_list[t] = fake_jack;
+	  delta_corr_sea_OS.distr_list[t] = fake_jack;
+	  delta_corr_sea_tm_bootstrap.distr_list[t]= fake_boot;
+	  delta_corr_sea_OS_bootstrap.distr_list[t]= fake_boot;
+	}
+	else {
+	  delta_corr_sea_tm.distr_list.push_back(fake_jack);
+	  delta_corr_sea_OS.distr_list.push_back(fake_jack);
+	  delta_corr_sea_tm_bootstrap.distr_list.push_back(fake_boot);
+	  delta_corr_sea_OS_bootstrap.distr_list.push_back(fake_boot);
+	}
       }
-      Jackknife JJ(10000, Njacks);
-      cout<<"chiral cond ave for ens: "<<V_light_1.Tag[i_ens]<<" : "<<JJ.DoJack(1, chiral_condensate_averaged).ave()<<" +- "<<JJ.DoJack(1,chiral_condensate_averaged).err()<<endl;
 
-      delta_corr_sea_tm= (Za_WI_strange_distr)*(Za_WI_strange_distr)*(pow(qu,2)+pow(qd,2))*delta_corr_sea_tm;
-      delta_corr_sea_OS= (Zv_WI_strange_distr)*(Zv_WI_strange_distr)*(pow(qu,2)+pow(qd,2))*delta_corr_sea_OS;
+      //now symmetrize
+      for(int t=0;t<Corr.Nt;t++) {
+	delta_corr_sea_tm.distr_list[t] = delta_corr_sea_tm.distr_list[t] + delta_corr_sea_tm.distr_list[ (Corr.Nt-t)%Corr.Nt];
+	delta_corr_sea_OS.distr_list[t] = delta_corr_sea_OS.distr_list[t] + delta_corr_sea_OS.distr_list[ (Corr.Nt-t)%Corr.Nt];
+	delta_corr_sea_tm_bootstrap.distr_list[t] = delta_corr_sea_tm_bootstrap.distr_list[t] + delta_corr_sea_tm_bootstrap.distr_list[ (Corr.Nt-t)%Corr.Nt];
+	delta_corr_sea_OS_bootstrap.distr_list[t] = delta_corr_sea_OS_bootstrap.distr_list[t] + delta_corr_sea_OS_bootstrap.distr_list[ (Corr.Nt-t)%Corr.Nt];
+      }
+      
+      
+
+      cout<<"size of delta corr after resizing: "<<delta_corr_sea_tm.size()<<endl;
+    }
+  
+
+
+   
+    
+    Jackknife JJ(10000, Njacks);
+    //cout<<"chiral cond ave for ens: "<<V_light_1.Tag[i_ens]<<" : "<<JJ.DoJack(1, chiral_condensate_averaged).ave()<<" +- "<<JJ.DoJack(1,chiral_condensate_averaged).err()<<endl;
+
+    delta_corr_sea_tm= (pow(qu,2)+pow(qd,2))*delta_corr_sea_tm;
+    delta_corr_sea_OS= (pow(qu,2)+pow(qd,2))*delta_corr_sea_OS;
+    delta_corr_sea_tm_bootstrap= (pow(qu,2)+ pow(qd,2))*delta_corr_sea_tm_bootstrap;
+    delta_corr_sea_OS_bootstrap= (pow(qu,2) + pow(qd,2))*delta_corr_sea_OS_bootstrap;
+
+
+    distr_t_list V_uncorrected_corr_to_bubble_tm= (pow(qu,2)+pow(qd,2))*Corr.corr_t(correlated_V_tm_bubble.col(0)[id_ens_corr_to_bubble],"");
+    distr_t_list V_uncorrected_corr_to_bubble_OS= (pow(qu,2)+pow(qd,2))*Corr.corr_t(correlated_V_OS_bubble.col(0)[id_ens_corr_to_bubble],"");
+    distr_t_list V_uncorrected_corr_to_bubble_tm_bootstrap=  (pow(qu,2)+pow(qd,2))*Corr_boot.corr_t(correlated_V_tm_bubble.col(0)[id_ens_corr_to_bubble],"");
+    distr_t_list V_uncorrected_corr_to_bubble_OS_bootstrap= (pow(qu,2)+pow(qd,2))*Corr_boot.corr_t(correlated_V_OS_bubble.col(0)[id_ens_corr_to_bubble],"");
+    
+    /*
+      if(V_light_1.Tag[i_ens] == "cB211b.072.64") {
+      //load B96
+      int n_id_B96=-1;
+      for(int idB=0; idB<(signed)V_light_1.Tag.size();idB++) if( V_light_1.Tag[idB]== "cB211b.072.96") n_id_B96= idB;
+      if(n_id_B96==-1) crash("Cannot find ensemble B96 when interpolating B64 correlator at L ~ 5.46 fm");
+      CorrAnalysis Corr_B96(0, Njacks, 800, n_id_B96);
+      Corr_B96.Nt= V_light_1.nrows[n_id_B96];
+      distr_t_list corr_B96_uncorr_tm= (pow(qu,2)+pow(qd,2))*Corr_B96.corr_t(V_light_1.col(0)[n_id_B96], "");
+      distr_t_list corr_B96_uncorr_OS= (pow(qu,2)+pow(qd,2))*Corr_B96.corr_t(V_light_OS_1.col(0)[n_id_B96], "");
+      distr_t_list corr_B64_interpolated_to_546_tm(0);
+      distr_t_list corr_B64_interpolated_to_546_OS(0);
+      
+      
+	for(int t=0;t<Corr.Nt;t++) {
+	distr_t c96_t_tm= corr_B96_uncorr_tm.distr_list[t];
+	distr_t c64_t_tm= V_uncorrected_corr_to_bubble_tm_bootstrap.distr_list[t];
+	distr_t c96_t_OS= corr_B96_uncorr_OS.distr_list[t];
+	distr_t c64_t_OS= V_uncorrected_corr_to_bubble_OS_bootstrap.distr_list[t];
+	
+	distr_t tm_interpol;
+	distr_t OS_interpol;
+
+	//interpolate
+	for(int ijack=0;ijack<800;ijack++) {
+	double exp_2_ML_B64= exp( -1.0*Mpi.ave()*64);
+	double exp_2_ML_B96= exp(-1.0*Mpi.ave()*96);
+	double exp_2_ML_extr= exp(-1.0*Mpi.ave()*5.46*fm_to_inv_Gev/a_distr.ave());
+	double c96_t_tm_jk= c96_t_tm.distr[ijack];
+	double c64_t_tm_jk= c64_t_tm.distr[ijack];
+	double c96_t_OS_jk= c96_t_OS.distr[ijack];
+	double c64_t_OS_jk= c64_t_OS.distr[ijack];
+	double amu_Linf_tm = (c96_t_tm_jk*exp_2_ML_B64 - c64_t_tm_jk*exp_2_ML_B96)/(exp_2_ML_B64 - exp_2_ML_B96);
+	double bmu_Linf_tm = (c64_t_tm_jk - amu_Linf_tm)/exp_2_ML_B64;
+	double amu_Linf_OS = (c96_t_OS_jk*exp_2_ML_B64 - c64_t_OS_jk*exp_2_ML_B96)/(exp_2_ML_B64 - exp_2_ML_B96);
+	double bmu_Linf_OS = (c64_t_OS_jk - amu_Linf_OS)/exp_2_ML_B64;
+	tm_interpol.distr.push_back( amu_Linf_tm+ bmu_Linf_tm*exp_2_ML_extr);
+	OS_interpol.distr.push_back( amu_Linf_OS+ bmu_Linf_OS*exp_2_ML_extr);
+	}
+	
+	corr_B64_interpolated_to_546_tm.distr_list.push_back( tm_interpol);
+	corr_B64_interpolated_to_546_OS.distr_list.push_back( OS_interpol);
+	}
+	
+	
+	//V_uncorrected_corr_to_bubble_tm_bootstrap = corr_B64_interpolated_to_546_tm;
+	//V_uncorrected_corr_to_bubble_OS_bootstrap = corr_B64_interpolated_to_546_OS;
+	}
+      */
+
+      distr_t_list correlator_bare_corrected_tm_bootstrap = delta_corr_sea_tm_bootstrap + V_uncorrected_corr_to_bubble_tm_bootstrap ;
+      distr_t_list correlator_bare_corrected_OS_bootstrap = delta_corr_sea_OS_bootstrap + V_uncorrected_corr_to_bubble_OS_bootstrap ;
+      correlator_bare_corrected_tm_bootstrap = correlator_bare_corrected_tm_bootstrap + V_light_m_small_distr_bootstrap - V_light_m_big_distr_bootstrap;
+      correlator_bare_corrected_OS_bootstrap = correlator_bare_corrected_OS_bootstrap + V_light_OS_m_small_distr_bootstrap - V_light_OS_m_big_distr_bootstrap;
+
+      
+
+      //print jackknives for correlator_bare_correctred_tm
+
+      boost::filesystem::create_directory("../data/gm2/light/mass_dep/tm/bootstrap");
+      boost::filesystem::create_directory("../data/gm2/light/mass_dep/OS/bootstrap");
+      ofstream Print_boot_tm("../data/gm2/light/mass_dep/tm/bootstrap/boot_"+V_light_1.Tag[i_ens]+".dat");
+      ofstream Print_boot_OS("../data/gm2/light/mass_dep/OS/bootstrap/boot_"+V_light_1.Tag[i_ens]+".dat");
+      Print_boot_tm<<"#Nboots=800     T="<<Corr.Nt<<endl;
+      Print_boot_OS<<"#Nboots=800     T="<<Corr.Nt<<endl;
+      Print_boot_tm.precision(10);
+      Print_boot_OS.precision(10);
+      for(int ib=0;ib<800;ib++) {
+	
+	for(int t=0;t<Corr.Nt;t++) {
+	  Print_boot_tm<<correlator_bare_corrected_tm_bootstrap.distr_list[t].distr[ib]<<endl;
+	  Print_boot_OS<<correlator_bare_corrected_OS_bootstrap.distr_list[t].distr[ib]<<endl;
+	}
+      }
+      Print_boot_tm.close();
+      Print_boot_OS.close();
       
       //Print to File
       Print_To_File({}, {delta_corr_sea_tm.ave(), delta_corr_sea_tm.err(), (delta_corr_sea_tm*a_distr/delta_corr_sea_tm).ave() }, "../data/gm2/light/mass_dep/tm/delta_corr_sea_"+V_light_1.Tag[i_ens]+".dat", "", "#t deltaC   a[GeV-1]");
@@ -5364,7 +5601,7 @@ void Gm2() {
 
 
 
-    }
+    
     //####################################################################################################
 
 
@@ -5398,21 +5635,25 @@ void Gm2() {
     /*VV_free_samer= free_corr_log_art;
       VV_free_oppor= free_corr_log_art; */
 
-    auto F_exp_sigma= [](double a, double t, double NT) {return exp(-t*t*pow(a/0.4*fm_to_inv_Gev,2));};
+    auto F_exp_sigma= [](double a, double t, double NT) {return exp(-t*t*pow(a/(0.4*fm_to_inv_Gev),2));};
     distr_t_list Exp_sigma_pert = distr_t_list::f_of_distr(F_exp_sigma, a_distr, Corr.Nt);
 
-    distr_t_list V_light_distr_tm_corr = (1.0/(Za*Za))*(Za*Za*V_light_distr + Exp_sigma_pert*VV_free_oppor); //free_corr_log_art
-    distr_t_list V_light_distr_OS_corr = (1.0/(Zv*Zv))*(Zv*Zv*V_light_OS_distr + Exp_sigma_pert*VV_free_samer); //free_corr_log_art
+    distr_t_list V_light_distr_tm_corr = (1.0/(Za*Za))*(Za*Za*V_light_distr + VV_free_oppor); //free_corr_log_art
+    distr_t_list V_light_distr_OS_corr = (1.0/(Zv*Zv))*(Zv*Zv*V_light_OS_distr + VV_free_samer); //free_corr_log_art
+
+
+    distr_t_list V_light_distr_tm_Mpi_corr= V_light_distr_tm_corr+ delta_corr_sea_tm + V_light_m_small_distr - V_light_m_big_distr;
+    distr_t_list V_light_distr_OS_Mpi_corr= V_light_distr_OS_corr+ delta_corr_sea_OS + V_light_OS_m_small_distr - V_light_OS_m_big_distr;
 
 
 
-    //interpolate V_light_distr_tm_corr and V_light_distr_OS_corr
+    //interpolate V_light_distr_tm_corr and V_light_distr_OS_corr + pion mass mistuning effects
     //################################################################
     vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> Vt3_light_tm_interpol_func;
     vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> Vt3_light_OS_interpol_func;
     for(int ijack=0;ijack<Njacks;ijack++) {
       Vfloat Vt3_tm_ijack, Vt3_OS_ijack;
-      for(int t=1;t< Corr.Nt;t++) { Vt3_tm_ijack.push_back( V_light_distr_tm_corr.distr_list[t].distr[ijack]*pow(t,3)); Vt3_OS_ijack.push_back( V_light_distr_OS_corr.distr_list[t].distr[ijack]*pow(t,3));}
+      for(int t=1;t< Corr.Nt;t++) { Vt3_tm_ijack.push_back( V_light_distr_tm_Mpi_corr.distr_list[t].distr[ijack]*pow(t,3)); Vt3_OS_ijack.push_back( V_light_distr_OS_Mpi_corr.distr_list[t].distr[ijack]*pow(t,3));}
 
       Vt3_light_tm_interpol_func.emplace_back( Vt3_tm_ijack.begin(), Vt3_tm_ijack.end(), 1.0, 1.0);
       Vt3_light_OS_interpol_func.emplace_back( Vt3_OS_ijack.begin(), Vt3_OS_ijack.end(), 1.0, 1.0);
@@ -5500,11 +5741,10 @@ void Gm2() {
     // print summed connected correlators to file
     Print_To_File({}, {V_light_distr.ave(), V_light_distr.err(), (Za*Za*V_light_distr).ave(), (Za*Za*V_light_distr).err(),  ( (Za*Za*V_light_distr- Zv*Zv*V_light_OS_distr)/(Za*Za*V_light_distr)).ave(),  ( (Za*Za*V_light_distr- Zv*Zv*V_light_OS_distr)/(Za*Za*V_light_distr)).err(), (Za*Za*V_light_distr_tm_corr).ave(), (Za*Za*V_light_distr_tm_corr).err()}, "../data/gm2/light/tm/corr_sum_"+V_light_1.Tag[i_ens]+".dat.t", "", "#time   V(t)^tm    V(t)^tm(renormalized)    DV(t)(tm-os/tm)  V(t)^tm(VV_free corrected) ");
     Print_To_File({}, {V_light_OS_distr.ave(), V_light_OS_distr.err(), (Zv*Zv*V_light_OS_distr).ave(), (Zv*Zv*V_light_OS_distr).err(), (Zv*Zv*V_light_distr_OS_corr).ave() , (Zv*Zv*V_light_distr_OS_corr).err()}, "../data/gm2/light/OS/corr_sum_"+V_light_1.Tag[i_ens]+".dat.t", "", "#time V(t)^OS   V(t)^OS(renormalized) V(t)^OS(VV_free_corrected)");
-    //if ensemble cB64 or D96 print also m_small and m_big
-    if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") {
-      Print_To_File({}, { (Za*Za*(V_light_m_small_distr-V_light_m_big_distr)).ave(), (Za*Za*(V_light_m_small_distr-V_light_m_big_distr)).err(),(Za*Za*V_light_m_small_distr).ave(), (Za*Za*V_light_m_small_distr).err(), (Za*Za*V_light_m_big_distr).ave(), (Za*Za*V_light_m_big_distr).err()}, "../data/gm2/light/mass_dep/tm/corrs_"+V_light_1.Tag[i_ens]+".dat.t", "", "#t diff  0.0006675 0.00072");
+   
+    Print_To_File({}, { (Za*Za*(V_light_m_small_distr-V_light_m_big_distr)).ave(), (Za*Za*(V_light_m_small_distr-V_light_m_big_distr)).err(),(Za*Za*V_light_m_small_distr).ave(), (Za*Za*V_light_m_small_distr).err(), (Za*Za*V_light_m_big_distr).ave(), (Za*Za*V_light_m_big_distr).err()}, "../data/gm2/light/mass_dep/tm/corrs_"+V_light_1.Tag[i_ens]+".dat.t", "", "#t diff  0.0006675 0.00072");
       Print_To_File({}, { (Zv*Zv*(V_light_OS_m_small_distr-V_light_OS_m_big_distr)).ave(), (Zv*Zv*(V_light_OS_m_small_distr-V_light_OS_m_big_distr)).err(),(Zv*Zv*V_light_OS_m_small_distr).ave(), (Zv*Zv*V_light_OS_m_small_distr).err(), (Zv*Zv*V_light_OS_m_big_distr).ave(), (Zv*Zv*V_light_OS_m_big_distr).err()}, "../data/gm2/light/mass_dep/OS/corrs_"+V_light_1.Tag[i_ens]+".dat.t", "", "#t diff  0.0006675 0.00072");
-    }
+   
     
 
     //print disco light
@@ -5717,9 +5957,9 @@ void Gm2() {
     auto th1 = [](double ta) ->double { return 1.0/(1.0 + exp(-2.0*(ta-t1)/Delta));};
 
     //get epsilon-window
-    Get_amu_W_eps(amu_W_eps_list_tm, Za*Za*V_light_distr_tm_corr, a_distr);
-    if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96")  Get_amu_W_eps(amu_W_eps_val_list_tm, Za*Za*(V_light_m_small_distr-V_light_m_big_distr), a_distr);
-    if(V_light_1.Tag[i_ens] != "cB211b.072.96") 	Get_amu_W_eps(amu_W_eps_sea_list_tm, delta_corr_sea_tm, a_distr);
+    Get_amu_W_eps(amu_W_eps_list_tm, Za*Za*V_light_distr, a_distr);
+    Get_amu_W_eps(amu_W_eps_val_list_tm, Za*Za*(V_light_m_small_distr-V_light_m_big_distr), a_distr);
+    if(V_light_1.Tag[i_ens] != "cB211b.072.96") 	Get_amu_W_eps(amu_W_eps_sea_list_tm, Za*Za*delta_corr_sea_tm, a_distr);
     
     for(int t=1; t< Corr.Nt/2; t++) {
       agm2_W = agm2_W + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
@@ -5733,17 +5973,15 @@ void Gm2() {
       agm2_SD_ELM = agm2_SD_ELM + 4.0*w(t,Simps_ord)*pow(alpha,2)*(Za*Za*V_light_distr_tm_corr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
       
       
-      if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") {
-	agm2_W_m_small = agm2_W_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_m_small_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
-	agm2_SD_m_small = agm2_SD_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*(V_light_m_small_distr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
-	agm2_W_m_big = agm2_W_m_big + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_m_big_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
-	agm2_SD_m_big = agm2_SD_m_big + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*(V_light_m_big_distr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
+      agm2_W_m_small = agm2_W_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_m_small_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
+      agm2_SD_m_small = agm2_SD_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*(V_light_m_small_distr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
+      agm2_W_m_big = agm2_W_m_big + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*V_light_m_big_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
+      agm2_SD_m_big = agm2_SD_m_big + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*(V_light_m_big_distr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
 	
-      }
-
+      
       if(V_light_1.Tag[i_ens] != "cB211b.072.96") {
-	agm2_W_sea_dep = agm2_W_sea_dep + 4.0*w(t,Simps_ord)*pow(alpha,2)*delta_corr_sea_tm.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
-	agm2_SD_sea_dep = agm2_SD_sea_dep + 4.0*w(t,Simps_ord)*pow(alpha,2)*(delta_corr_sea_tm.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
+	agm2_W_sea_dep = agm2_W_sea_dep + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*delta_corr_sea_tm.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
+	agm2_SD_sea_dep = agm2_SD_sea_dep + 4.0*w(t,Simps_ord)*pow(alpha,2)*Za*Za*(delta_corr_sea_tm.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
       }
     }
 
@@ -5778,9 +6016,24 @@ void Gm2() {
     double tolerance = 1e-14;
     double err;
 
+    //load R_ratio at order alpha_s^4(1/tmin)
+
+    vector<Vfloat> R_ratio_alpha4(tmins.size());
+    vector<Vfloat> R_ratio_ergs_alpha4(tmins.size());
+    Vfloat SD_at_alpha_4;
+    for(int tm=0; tm<(signed)tmins.size();tm++) {
+
+      R_ratio_alpha4[tm]= Read_From_File("../rhad_pert_results/table_scan_"+to_string(tm)+".dat", 1, 2);
+      R_ratio_ergs_alpha4[tm] = Read_From_File("../rhad_pert_results/table_scan_"+to_string(tm)+".dat", 0, 2);
+
+    }
+
     double pert_result_SD, pert_err_SD;
 
-    auto integrand_SD_pt_cont = [&L_info, &a_distr, &th0](double t) { return (t<1e-10)?0.0:(4.0*pow(alpha,2)*( pow(qu,2)+ pow(qd,2))*free_vector_corr_cont(3, L_info.ml/a_distr.ave(),t)*(1.0 - th0(t))*kernel_K(t,1.0));   };
+    auto integrand_SD_pt_cont = [&L_info, &a_distr, &th0](double t) {
+				  return (t<1e-10)?0.0:(4.0*pow(alpha,2)*( pow(qu,2)+ pow(qd,2))*free_vector_corr_cont(3,0.0,t)*(1.0 - th0(t))*kernel_K(t,1.0));
+
+				};
     
      gsl_function_pp<decltype(integrand_SD_pt_cont)> F_SD_pert(integrand_SD_pt_cont);
      gsl_integration_workspace * w_SD_pert = gsl_integration_workspace_alloc (10000);
@@ -5789,14 +6042,30 @@ void Gm2() {
      gsl_integration_workspace_free (w_SD_pert);
 
      pert_result_SD_list.push_back(pert_result_SD);
+
+     
 			   
     for(auto & tm0: tmins) {
 
       if(tm0*fm_to_inv_Gev < a_distr.ave()) crash("tm0 < a");
 
-      auto integrand_pt_cont = [&L_info, &a_distr, &th0](double t) { return (t<1e-10)?0.0:(4.0*pow(alpha,2)*( pow(qu,2)+ pow(qd,2))*free_vector_corr_cont(3, L_info.ml/a_distr.ave(),t)*(1.0 - th0(t))*kernel_K(t,1.0));   };
+      auto integrand_pt_cont = [&L_info, &a_distr, &th0, &R_ratio_alpha4, &R_ratio_ergs_alpha4, &t_counter](double t) {
+				 //return (t<1e-10)?0.0:(4.0*pow(alpha,2)*( pow(qu,2)+ pow(qd,2))*free_vector_corr_cont(3, 0.0,t)*(1.0 - th0(t))*kernel_K(t,1.0));
+				 double fact= 0.0005*(5.0/4.0)*(1.0/(12*M_PI*M_PI));
+				 double corr=0.0;
+				 if(t<1e-10) return 0.0;
+				 for(int j=0;j<(signed)R_ratio_ergs_alpha4[t_counter].size();j++) {
+				   double Erg= R_ratio_ergs_alpha4[t_counter][j];
+				   double R_rat= R_ratio_alpha4[t_counter][j];
+				   if( Erg > 0.2) corr+= fact*pow(Erg,2)*exp(-Erg*t)*R_rat;
+				 }
+				 return 4.0*pow(alpha,2)*corr*(1.0-th0(t))*kernel_K(t,1.0);
+				 
+
+			       };
 
 
+     
       double agm2_pert_up_to_t0, agm2_pert_up_to_t0_err;
 
 
@@ -5807,6 +6076,7 @@ void Gm2() {
       gsl_function *G = static_cast<gsl_function*>(&Fp);
       gsl_integration_qags(G, 0.0, tm0*fm_to_inv_Gev, 0.0, 1e-8, 10000, w_t0, &agm2_pert_up_to_t0, &agm2_pert_up_to_t0_err);
       gsl_integration_workspace_free (w_t0);
+      if(agm2_pert_up_to_t0_err/agm2_pert_up_to_t0 > 1e-5) crash("In determining continuum integral between 0 and tmin, accuracy achieved is only: "+to_string_with_precision(agm2_pert_up_to_t0_err/agm2_pert_up_to_t0,6));
 
       //double agm2_pert_up_to_t0 = boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand_pt_cont, 0.0, tm0*fm_to_inv_Gev, 5,tolerance, &err);
 
@@ -5839,8 +6109,10 @@ void Gm2() {
 	
 
 	agm2_SD_tmins[t_counter].distr.push_back(agm2_SD_t0+ agm2_pert_up_to_t0);
+	
       }
 
+      SD_at_alpha_4.push_back( agm2_pert_up_to_t0);
       t_counter++;
       
     }
@@ -5901,9 +6173,9 @@ void Gm2() {
 
 
     //get epsilon-window
-    Get_amu_W_eps(amu_W_eps_list_OS, Zv*Zv*V_light_distr_OS_corr, a_distr);
-    if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") 	Get_amu_W_eps(amu_W_eps_val_list_OS, Zv*Zv*(V_light_OS_m_small_distr-V_light_OS_m_big_distr), a_distr);
-    if(V_light_1.Tag[i_ens] != "cB211b.072.96")  	Get_amu_W_eps(amu_W_eps_sea_list_OS, delta_corr_sea_OS, a_distr);
+    Get_amu_W_eps(amu_W_eps_list_OS, Zv*Zv*V_light_OS_distr, a_distr);
+    Get_amu_W_eps(amu_W_eps_val_list_OS, Zv*Zv*(V_light_OS_m_small_distr-V_light_OS_m_big_distr), a_distr);
+    if(V_light_1.Tag[i_ens] != "cB211b.072.96")  	Get_amu_W_eps(amu_W_eps_sea_list_OS, Zv*Zv*delta_corr_sea_OS, a_distr);
     //#################################################################################################
 
     for(int t=1; t< Corr.Nt/2; t++) {
@@ -5913,16 +6185,15 @@ void Gm2() {
       agm2_SD_ELM_OS = agm2_SD_ELM_OS + 4.0*w(t,Simps_ord)*pow(alpha,2)*(Zv*Zv*V_light_distr_OS_corr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
       
 
-       if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") {
-	agm2_W_OS_m_small = agm2_W_OS_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*V_light_OS_m_small_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
-	agm2_SD_OS_m_small = agm2_SD_OS_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*(V_light_OS_m_small_distr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
-	agm2_W_OS_m_big = agm2_W_OS_m_big + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*V_light_OS_m_big_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
-	agm2_SD_OS_m_big = agm2_SD_OS_m_big + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*(V_light_OS_m_big_distr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
-       }
-
-       if(V_light_1.Tag[i_ens] != "cB211b.072.96") {
-	agm2_SD_OS_sea_dep = agm2_SD_OS_sea_dep + 4.0*w(t,Simps_ord)*pow(alpha,2)*(delta_corr_sea_OS.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
-	agm2_W_OS_sea_dep = agm2_W_OS_sea_dep +  4.0*w(t,Simps_ord)*pow(alpha,2)*delta_corr_sea_OS.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
+       
+      agm2_W_OS_m_small = agm2_W_OS_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*V_light_OS_m_small_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
+      agm2_SD_OS_m_small = agm2_SD_OS_m_small + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*(V_light_OS_m_small_distr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
+      agm2_W_OS_m_big = agm2_W_OS_m_big + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*V_light_OS_m_big_distr.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
+      agm2_SD_OS_m_big = agm2_SD_OS_m_big + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*(V_light_OS_m_big_distr.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
+      
+      if(V_light_1.Tag[i_ens] != "cB211b.072.96") {
+	agm2_SD_OS_sea_dep = agm2_SD_OS_sea_dep + 4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*(delta_corr_sea_OS.distr_list[t])*Ker.distr_list[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_distr));
+	agm2_W_OS_sea_dep = agm2_W_OS_sea_dep +  4.0*w(t,Simps_ord)*pow(alpha,2)*Zv*Zv*delta_corr_sea_OS.distr_list[t]*Ker.distr_list[t]*( distr_t::f_of_distr(th0, t*a_distr) - distr_t::f_of_distr(th1, t*a_distr));
        }
     }
 
@@ -5930,38 +6201,37 @@ void Gm2() {
     //#############if ensemble cB64 print valence mass correction to the window
     if(i_ens==0) {ofstream Print_mass_dep_SD_val_tm("../data/gm2/light/mass_dep/tm/win_SD_val.dat"); ofstream Print_mass_dep_W_val_tm("../data/gm2/light/mass_dep/tm/win_W_val.dat"); Print_mass_dep_SD_val_tm.close(); Print_mass_dep_W_val_tm.close(); ofstream Print_mass_dep_SD_val_OS("../data/gm2/light/mass_dep/OS/win_SD_val.dat"); ofstream Print_mass_dep_W_val_OS("../data/gm2/light/mass_dep/OS/win_W_val.dat"); Print_mass_dep_SD_val_OS.close(); Print_mass_dep_W_val_OS.close();}
  
-    if(V_light_1.Tag[i_ens] == "cB211b.072.64" || V_light_1.Tag[i_ens] == "cD211a.054.96") {
-
-      //valence tm
-      ofstream Print_mass_dep_SD_val_tm, Print_mass_dep_W_val_tm;
+   
+    //valence tm
+    ofstream Print_mass_dep_SD_val_tm, Print_mass_dep_W_val_tm;
       
-      Print_mass_dep_SD_val_tm.open("../data/gm2/light/mass_dep/tm/win_SD_val.dat", ofstream::app);
-      Print_mass_dep_W_val_tm.open("../data/gm2/light/mass_dep/tm/win_W_val.dat", ofstream::app);
-      Print_mass_dep_SD_val_tm<<V_light_1.Tag[i_ens]<<" "<<(a_distr/fm_to_inv_Gev).ave()<<" "<<1e10*(agm2_SD_m_small-agm2_SD_m_big).ave()<<"  "<<1e10*(agm2_SD_m_small-agm2_SD_m_big).err()<<" "<<1e10*(agm2_SD_m_small-agm2_SD_m_big+agm2_SD).ave()<<" "<<1e10*(agm2_SD_m_small-agm2_SD_m_big+agm2_SD).err()<<" "<<1e10*agm2_SD_m_small.ave()<<" "<<1e10*agm2_SD_m_small.err()<<" "<<1e10*agm2_SD_m_big.ave()<<" "<<1e10*agm2_SD_m_big.err()<<endl;
-      Print_mass_dep_W_val_tm<<V_light_1.Tag[i_ens]<<" "<<(a_distr/fm_to_inv_Gev).ave()<<" "<<1e10*(agm2_W_m_small-agm2_W_m_big).ave()<<"  "<<1e10*(agm2_W_m_small-agm2_W_m_big).err()<<" "<<1e10*(agm2_W_m_small-agm2_W_m_big+ agm2_W).ave()<<" "<<1e10*(agm2_W_m_small-agm2_W_m_big+agm2_W).err()<<" "<<1e10*agm2_W_m_small.ave()<<" "<<1e10*agm2_W_m_small.err()<<" "<<1e10*agm2_W_m_big.ave()<<" "<<1e10*agm2_W_m_big.err()<<endl;
-      Print_mass_dep_SD_val_tm.close();
-      Print_mass_dep_W_val_tm.close();
-      //push_back
-      amu_W_mass_corr_tm_list.distr_list.push_back( agm2_W_m_small-agm2_W_m_big);
+    Print_mass_dep_SD_val_tm.open("../data/gm2/light/mass_dep/tm/win_SD_val.dat", ofstream::app);
+    Print_mass_dep_W_val_tm.open("../data/gm2/light/mass_dep/tm/win_W_val.dat", ofstream::app);
+    Print_mass_dep_SD_val_tm<<V_light_1.Tag[i_ens]<<" "<<(a_distr/fm_to_inv_Gev).ave()<<" "<<1e10*(agm2_SD_m_small-agm2_SD_m_big).ave()<<"  "<<1e10*(agm2_SD_m_small-agm2_SD_m_big).err()<<" "<<1e10*(agm2_SD_m_small-agm2_SD_m_big+agm2_SD).ave()<<" "<<1e10*(agm2_SD_m_small-agm2_SD_m_big+agm2_SD).err()<<" "<<1e10*agm2_SD_m_small.ave()<<" "<<1e10*agm2_SD_m_small.err()<<" "<<1e10*agm2_SD_m_big.ave()<<" "<<1e10*agm2_SD_m_big.err()<<endl;
+    Print_mass_dep_W_val_tm<<V_light_1.Tag[i_ens]<<" "<<(a_distr/fm_to_inv_Gev).ave()<<" "<<1e10*(agm2_W_m_small-agm2_W_m_big).ave()<<"  "<<1e10*(agm2_W_m_small-agm2_W_m_big).err()<<" "<<1e10*(agm2_W_m_small-agm2_W_m_big+ agm2_W).ave()<<" "<<1e10*(agm2_W_m_small-agm2_W_m_big+agm2_W).err()<<" "<<1e10*agm2_W_m_small.ave()<<" "<<1e10*agm2_W_m_small.err()<<" "<<1e10*agm2_W_m_big.ave()<<" "<<1e10*agm2_W_m_big.err()<<endl;
+    Print_mass_dep_SD_val_tm.close();
+    Print_mass_dep_W_val_tm.close();
+    //push_back
+    amu_W_mass_corr_tm_list.distr_list.push_back( agm2_W_m_small-agm2_W_m_big);
+    amu_SD_mass_corr_tm_list.distr_list.push_back( agm2_SD_m_small- agm2_SD_m_big);
 
-      //valence OS
-      ofstream Print_mass_dep_SD_val_OS, Print_mass_dep_W_val_OS;
-      Print_mass_dep_SD_val_OS.open("../data/gm2/light/mass_dep/OS/win_SD_val.dat", ofstream::app);
-      Print_mass_dep_W_val_OS.open("../data/gm2/light/mass_dep/OS/win_W_val.dat", ofstream::app); 
+    //valence OS
+    ofstream Print_mass_dep_SD_val_OS, Print_mass_dep_W_val_OS;
+    Print_mass_dep_SD_val_OS.open("../data/gm2/light/mass_dep/OS/win_SD_val.dat", ofstream::app);
+    Print_mass_dep_W_val_OS.open("../data/gm2/light/mass_dep/OS/win_W_val.dat", ofstream::app); 
 
-      Print_mass_dep_SD_val_OS<<V_light_1.Tag[i_ens]<<" "<<(a_distr/fm_to_inv_Gev).ave()<<" "<<1e10*(agm2_SD_OS_m_small-agm2_SD_OS_m_big).ave()<<"  "<<1e10*(agm2_SD_OS_m_small-agm2_SD_OS_m_big).err()<<" "<<1e10*(agm2_SD_OS_m_small-agm2_SD_OS_m_big+agm2_SD_OS).ave()<<" "<<1e10*(agm2_SD_OS_m_small-agm2_SD_OS_m_big+agm2_SD_OS).err()<<" "<<1e10*agm2_SD_OS_m_small.ave()<<" "<<1e10*agm2_SD_OS_m_small.err()<<" "<<1e10*agm2_SD_OS_m_big.ave()<<" "<<1e10*agm2_SD_OS_m_big.err()<<endl;
-      Print_mass_dep_W_val_OS<<V_light_1.Tag[i_ens]<<" "<<(a_distr/fm_to_inv_Gev).ave()<<" "<<1e10*(agm2_W_OS_m_small-agm2_W_OS_m_big).ave()<<"  "<<1e10*(agm2_W_OS_m_small-agm2_W_OS_m_big).err()<<" "<<1e10*(agm2_W_OS_m_small-agm2_W_OS_m_big+ agm2_W_OS).ave()<<" "<<1e10*(agm2_W_OS_m_small-agm2_W_OS_m_big+agm2_W_OS).err()<<" "<<1e10*agm2_W_OS_m_small.ave()<<" "<<1e10*agm2_W_OS_m_small.err()<<" "<<1e10*agm2_W_OS_m_big.ave()<<" "<<1e10*agm2_W_OS_m_big.err()<<endl;
-      Print_mass_dep_SD_val_OS.close();
-      Print_mass_dep_W_val_OS.close();
-      //push_back
-      amu_W_mass_corr_OS_list.distr_list.push_back( agm2_W_OS_m_small-agm2_W_OS_m_big);
+    Print_mass_dep_SD_val_OS<<V_light_1.Tag[i_ens]<<" "<<(a_distr/fm_to_inv_Gev).ave()<<" "<<1e10*(agm2_SD_OS_m_small-agm2_SD_OS_m_big).ave()<<"  "<<1e10*(agm2_SD_OS_m_small-agm2_SD_OS_m_big).err()<<" "<<1e10*(agm2_SD_OS_m_small-agm2_SD_OS_m_big+agm2_SD_OS).ave()<<" "<<1e10*(agm2_SD_OS_m_small-agm2_SD_OS_m_big+agm2_SD_OS).err()<<" "<<1e10*agm2_SD_OS_m_small.ave()<<" "<<1e10*agm2_SD_OS_m_small.err()<<" "<<1e10*agm2_SD_OS_m_big.ave()<<" "<<1e10*agm2_SD_OS_m_big.err()<<endl;
+    Print_mass_dep_W_val_OS<<V_light_1.Tag[i_ens]<<" "<<(a_distr/fm_to_inv_Gev).ave()<<" "<<1e10*(agm2_W_OS_m_small-agm2_W_OS_m_big).ave()<<"  "<<1e10*(agm2_W_OS_m_small-agm2_W_OS_m_big).err()<<" "<<1e10*(agm2_W_OS_m_small-agm2_W_OS_m_big+ agm2_W_OS).ave()<<" "<<1e10*(agm2_W_OS_m_small-agm2_W_OS_m_big+agm2_W_OS).err()<<" "<<1e10*agm2_W_OS_m_small.ave()<<" "<<1e10*agm2_W_OS_m_small.err()<<" "<<1e10*agm2_W_OS_m_big.ave()<<" "<<1e10*agm2_W_OS_m_big.err()<<endl;
+    Print_mass_dep_SD_val_OS.close();
+    Print_mass_dep_W_val_OS.close();
+    //push_back
+    amu_W_mass_corr_OS_list.distr_list.push_back( agm2_W_OS_m_small-agm2_W_OS_m_big);
+    amu_SD_mass_corr_OS_list.distr_list.push_back( agm2_SD_OS_m_small - agm2_SD_OS_m_big);
 
+    
+    amu_W_val_Ens_tag.push_back( V_light_1.Tag[i_ens]);
 
-      amu_W_val_Ens_tag.push_back( V_light_1.Tag[i_ens]);
-
-    }
-
-
+  
     
 
     //print sea quark mistuning contributions to the window
@@ -5990,7 +6260,8 @@ void Gm2() {
       Print_mass_dep_SD_sea_tm.close();
       Print_mass_dep_W_sea_tm.close();
 
-      amu_W_mass_corr_sea_tm_list.distr_list.push_back( agm2_W_sea_dep);
+      amu_W_mass_corr_sea_tm_list.distr_list.push_back(agm2_W_sea_dep);
+      amu_SD_mass_corr_sea_tm_list.distr_list.push_back(agm2_SD_sea_dep);
    
 
       //sea OS
@@ -6002,7 +6273,8 @@ void Gm2() {
       Print_mass_dep_SD_sea_OS.close();
       Print_mass_dep_W_sea_OS.close();
 
-      amu_W_mass_corr_sea_OS_list.distr_list.push_back( agm2_W_OS_sea_dep);
+      amu_W_mass_corr_sea_OS_list.distr_list.push_back(agm2_W_OS_sea_dep);
+      amu_SD_mass_corr_sea_OS_list.distr_list.push_back(agm2_SD_OS_sea_dep);
 
       amu_W_sea_Ens_tag.push_back( V_light_1.Tag[i_ens]);
       
@@ -6035,6 +6307,8 @@ void Gm2() {
 
       if(tm0*fm_to_inv_Gev < a_distr.ave()) crash("tm0 < a");
 
+      /*
+
       auto integrand_pt_cont = [&L_info, &a_distr, &th0](double t) { return (t<1e-10)?0.0:4.0*pow(alpha,2)*( pow(qu,2)+ pow(qd,2)  )*free_vector_corr_cont(3, L_info.ml/a_distr.ave(),t)*(1.0 - th0(t))*kernel_K(t,1.0);   };
 
       double agm2_pert_up_to_t0, agm2_pert_up_to_t0_err;
@@ -6048,6 +6322,10 @@ void Gm2() {
       gsl_integration_workspace_free (w_t0);
 
       //double agm2_pert_up_to_t0 = boost::math::quadrature::gauss_kronrod<double, 15>::integrate( integrand_pt_cont, 0.0, tm0*fm_to_inv_Gev, 5,tolerance, &err);
+
+      */
+
+      double agm2_pert_up_to_t0 = SD_at_alpha_4[t_counter];
 
       for(int ijack=0;ijack<Njacks;ijack++) {
 
@@ -6442,7 +6720,7 @@ void Gm2() {
       bf.Add_par("kappa", -3.0, 0.1);
       bf.Add_par("Mpi_corr", 1.0, 0.05);
       bf.Set_limits("gpi",0.6, 1.5);
-      bf.Set_limits("Mpi_corr", 0.7, 1.5); 
+      bf.Set_limits("Mpi_corr", 0.5, 1.5); 
       //bf.Set_limits("kappa", -5.0, 1.0);
 
 
@@ -6636,7 +6914,7 @@ void Gm2() {
       bf_OS.Add_par("kappa", -3.0, 0.1);
       bf_OS.Add_par("Mpi_corr", 1.0, 0.05);
       bf_OS.Set_limits("gpi",0.6, 1.5);
-      bf_OS.Set_limits("Mpi_corr", 0.7, 1.5);
+      bf_OS.Set_limits("Mpi_corr", 0.5, 1.5);
       //bf_OS.Set_limits("kappa", -5.0, 1.0);
 
 
@@ -7593,11 +7871,16 @@ void Gm2() {
   //##########################################################################################################################################################
   //compute physical point estimate for light window (tm and OS)
   distr_t_list amu_W_physical_point_tm(UseJack), amu_W_physical_point_OS(UseJack);
+  distr_t_list amu_SD_physical_point_tm(UseJack), amu_SD_physical_point_OS(UseJack);
+  distr_t_list corr_W_physical_point_tm(UseJack), corr_W_physical_point_OS(UseJack);
   distr_t_list amu_W_physical_point_tm_red(UseJack), amu_W_physical_point_OS_red(UseJack);
+  distr_t_list amu_SD_physical_point_tm_red(UseJack), amu_SD_physical_point_OS_red(UseJack);
   vector<distr_t_list> amu_W_eps_physical_point_tm(eps_win_size);
   vector<distr_t_list> amu_W_eps_physical_point_OS(eps_win_size);
   vector<distr_t_list> amu_W_eps_physical_point_tm_red(eps_win_size);
   vector<distr_t_list> amu_W_eps_physical_point_OS_red(eps_win_size);
+  vector<distr_t_list> amu_SD_tmins_physical_point_tm_red(tmins.size());
+  vector<distr_t_list> amu_SD_tmins_physical_point_OS_red(tmins.size());
   distr_t_list a_distr_list_fixed_L(UseJack);
   distr_t_list Mpi_fit_fixed_L(UseJack);
   distr_t_list fp_fit_fixed_L(UseJack);
@@ -7605,9 +7888,10 @@ void Gm2() {
   vector<string> V_light_Tag_fixed_L;
   for(int iens=0;iens<(signed)V_light_1.Tag.size();iens++) {
 
-    cout<<"Computing physical point val of amu^W(light) for ensemble: "<<V_light_1.Tag[iens]<<endl;
+    cout<<"Computing physical point val of amu^W(light) and amu^SD(light) for ensemble: "<<V_light_1.Tag[iens]<<endl;
 
     distr_t amu_tm_ph, amu_OS_ph, amu_tm_ph_red, amu_OS_ph_red;
+    distr_t amu_SD_tm_ph, amu_SD_OS_ph, amu_SD_tm_ph_red, amu_SD_OS_ph_red;
     vector<distr_t> amu_eps_tm_ph;
     vector<distr_t> amu_eps_OS_ph;
     vector<distr_t> amu_eps_tm_ph_red;
@@ -7616,7 +7900,7 @@ void Gm2() {
     int id_sea=-1;
     int id_val=-1;
 
-    if(V_light_1.Tag[iens] == "cD211a.054.96" || V_light_1.Tag[iens] == "cB211b.072.64") {
+    if(V_light_1.Tag[iens] != "cB211b.072.96") {
 
       //find sea_id
       for(int isea=0; isea<(signed)amu_W_sea_Ens_tag.size();isea++) {
@@ -7629,9 +7913,19 @@ void Gm2() {
 	if(amu_W_val_Ens_tag[ival] == V_light_1.Tag[iens]) id_val=ival;
       }
       if(id_val==-1) crash("Cannot find val ensemble: "+V_light_1.Tag[iens]+" when computing physical point value of amu_W");
-    
+
+      //W
       amu_tm_ph= agm2_light_W.distr_list[iens] + amu_W_mass_corr_sea_tm_list.distr_list[id_sea] + amu_W_mass_corr_tm_list.distr_list[id_val];
       amu_OS_ph= agm2_light_W_OS.distr_list[iens] + amu_W_mass_corr_sea_OS_list.distr_list[id_sea] + amu_W_mass_corr_OS_list.distr_list[id_val];
+      //SD
+      amu_SD_tm_ph= agm2_light_SD.distr_list[iens] + amu_SD_mass_corr_sea_tm_list.distr_list[id_sea] + amu_SD_mass_corr_tm_list.distr_list[id_val];
+      amu_SD_OS_ph= agm2_light_SD_OS.distr_list[iens] + amu_SD_mass_corr_sea_OS_list.distr_list[id_sea] + amu_SD_mass_corr_OS_list.distr_list[id_val];
+
+      //correction
+      corr_W_physical_point_tm.distr_list.push_back(amu_W_mass_corr_sea_tm_list.distr_list[id_sea] + amu_W_mass_corr_tm_list.distr_list[id_val]);
+      corr_W_physical_point_OS.distr_list.push_back(amu_W_mass_corr_sea_OS_list.distr_list[id_sea] + amu_W_mass_corr_OS_list.distr_list[id_val]);
+
+      
       for(int id_eps=0;id_eps<eps_win_size;id_eps++) {
 	amu_eps_tm_ph.push_back( amu_W_eps_list_tm[id_eps].distr_list[iens] + amu_W_eps_sea_list_tm[id_eps].distr_list[id_sea] + amu_W_eps_val_list_tm[id_eps].distr_list[id_val]);
 	amu_eps_OS_ph.push_back( amu_W_eps_list_OS[id_eps].distr_list[iens] + amu_W_eps_sea_list_OS[id_eps].distr_list[id_sea] + amu_W_eps_val_list_OS[id_eps].distr_list[id_val]);
@@ -7649,12 +7943,22 @@ void Gm2() {
 
       //find val_id
       for(int ival=0; ival<(signed)amu_W_val_Ens_tag.size();ival++) {
-	if(amu_W_val_Ens_tag[ival] == "cB211b.072.64") id_val=ival;
+	if(amu_W_val_Ens_tag[ival] == V_light_1.Tag[iens]) id_val=ival;
       }
       if(id_val==-1) crash("Cannot find val ensemble: cB211b.072.64 when computing physical point value of amu_W");
-    
+
+      //W
       amu_tm_ph= agm2_light_W.distr_list[iens] + amu_W_mass_corr_sea_tm_list.distr_list[id_sea] + amu_W_mass_corr_tm_list.distr_list[id_val];
       amu_OS_ph= agm2_light_W_OS.distr_list[iens] + amu_W_mass_corr_sea_OS_list.distr_list[id_sea] + amu_W_mass_corr_OS_list.distr_list[id_val];
+      //SD
+      amu_SD_tm_ph= agm2_light_SD.distr_list[iens] + amu_SD_mass_corr_sea_tm_list.distr_list[id_sea] + amu_SD_mass_corr_tm_list.distr_list[id_val];
+      amu_SD_OS_ph= agm2_light_SD_OS.distr_list[iens] + amu_SD_mass_corr_sea_OS_list.distr_list[id_sea] + amu_SD_mass_corr_OS_list.distr_list[id_val];
+
+      //corrections
+      corr_W_physical_point_tm.distr_list.push_back(amu_W_mass_corr_sea_tm_list.distr_list[id_sea] + amu_W_mass_corr_tm_list.distr_list[id_val]);
+      corr_W_physical_point_OS.distr_list.push_back(amu_W_mass_corr_sea_OS_list.distr_list[id_sea] + amu_W_mass_corr_OS_list.distr_list[id_val]);
+      
+      
       for(int id_eps=0;id_eps<eps_win_size;id_eps++) {
 	amu_eps_tm_ph.push_back( amu_W_eps_list_tm[id_eps].distr_list[iens] + amu_W_eps_sea_list_tm[id_eps].distr_list[id_sea] + amu_W_eps_val_list_tm[id_eps].distr_list[id_val]);
 	amu_eps_OS_ph.push_back( amu_W_eps_list_OS[id_eps].distr_list[iens] + amu_W_eps_sea_list_OS[id_eps].distr_list[id_sea] + amu_W_eps_val_list_OS[id_eps].distr_list[id_val]);
@@ -7662,6 +7966,7 @@ void Gm2() {
 
 
     }
+    /*
     else if(V_light_1.Tag[iens].substr(1,1)=="C") {
       
       //find sea_id
@@ -7699,17 +8004,30 @@ void Gm2() {
 
       amu_tm_ph= agm2_light_W.distr_list[iens] + amu_W_mass_corr_sea_tm_list.distr_list[id_sea] + corr_fact_B64*amu_W_mass_corr_tm_list.distr_list[id_val_ens_B64] + corr_fact_D96*amu_W_mass_corr_tm_list.distr_list[id_val_ens_D96];
       amu_OS_ph= agm2_light_W_OS.distr_list[iens] + amu_W_mass_corr_sea_OS_list.distr_list[id_sea] + corr_fact_B64*amu_W_mass_corr_OS_list.distr_list[id_val_ens_B64] + corr_fact_D96*amu_W_mass_corr_OS_list.distr_list[id_val_ens_D96];
+
+
+      amu_SD_tm_ph= agm2_light_SD.distr_list[iens] + amu_SD_mass_corr_sea_tm_list.distr_list[id_sea] + corr_fact_B64*amu_SD_mass_corr_tm_list.distr_list[id_val_ens_B64] + corr_fact_D96*amu_SD_mass_corr_tm_list.distr_list[id_val_ens_D96];
+      amu_SD_OS_ph= agm2_light_SD_OS.distr_list[iens] + amu_SD_mass_corr_sea_OS_list.distr_list[id_sea] + corr_fact_B64*amu_SD_mass_corr_OS_list.distr_list[id_val_ens_B64] + corr_fact_D96*amu_SD_mass_corr_OS_list.distr_list[id_val_ens_D96];
+
+      
+      
       for(int id_eps=0;id_eps<eps_win_size;id_eps++) {
 	amu_eps_tm_ph.push_back( amu_W_eps_list_tm[id_eps].distr_list[iens] + amu_W_eps_sea_list_tm[id_eps].distr_list[id_sea] + corr_fact_B64*amu_W_eps_val_list_tm[id_eps].distr_list[id_val_ens_B64]+ corr_fact_D96*amu_W_eps_val_list_tm[id_eps].distr_list[id_val_ens_D96] );
 	amu_eps_OS_ph.push_back( amu_W_eps_list_OS[id_eps].distr_list[iens] + amu_W_eps_sea_list_OS[id_eps].distr_list[id_sea] + corr_fact_B64*amu_W_eps_val_list_OS[id_eps].distr_list[id_val_ens_B64]+ corr_fact_D96*amu_W_eps_val_list_OS[id_eps].distr_list[id_val_ens_D96] );
       }
 
       
-    }
+    } */
     else crash("When computing physical point value of amu_W, ensemble: "+V_light_1.Tag[iens]+" not recognized");
-        
+
+    //W
     amu_W_physical_point_tm.distr_list.push_back(amu_tm_ph);
     amu_W_physical_point_OS.distr_list.push_back(amu_OS_ph);
+    //SD
+    amu_SD_physical_point_tm.distr_list.push_back(amu_SD_tm_ph);
+    amu_SD_physical_point_OS.distr_list.push_back(amu_SD_OS_ph);
+
+    
     for(int id_eps=0; id_eps<eps_win_size;id_eps++) {
       amu_W_eps_physical_point_tm[id_eps].distr_list.push_back( amu_eps_tm_ph[id_eps]);
       amu_W_eps_physical_point_OS[id_eps].distr_list.push_back( amu_eps_OS_ph[id_eps]);
@@ -7724,65 +8042,159 @@ void Gm2() {
       //Interpolate B64 to L~ 5.46 fm using B96
       if(V_light_1.Tag[iens] == "cB211b.072.64") {
 	int b96_id=0;
+	int b96_id_val=0;
 	bool Find_b96=false;
+	bool Find_b96_val=false;
 	for(int jens=0; jens<V_light_1.Tag.size(); jens++) {
 	  if( V_light_1.Tag[jens] == "cB211b.072.96") { b96_id=jens; Find_b96=true; break;}
 	}
 	if(!Find_b96) crash("Cannot find ensemble cB211b.072.96 in W_red construction");
 
+	for(int jens=0; jens<V_light_1.Tag.size(); jens++) {
+	  if( V_light_1.Tag[jens] == "cB211b.072.96") { b96_id_val=jens; Find_b96_val=true; break;}
+	}
+	if(!Find_b96_val) crash("Cannot find ensemble cB211b.072.96 in W_red val construction");
+	
+
 	//compute B96 ph values
-	distr_t amu_B96_tm_ph= agm2_light_W.distr_list[b96_id] + amu_W_mass_corr_sea_tm_list.distr_list[id_sea] + amu_W_mass_corr_tm_list.distr_list[id_val];  
-	distr_t amu_B96_OS_ph= agm2_light_W_OS.distr_list[b96_id] + amu_W_mass_corr_sea_OS_list.distr_list[id_sea] + amu_W_mass_corr_OS_list.distr_list[id_val];;
+	//W
+	distr_t amu_B96_tm_ph= agm2_light_W.distr_list[b96_id] + amu_W_mass_corr_sea_tm_list.distr_list[id_sea] + amu_W_mass_corr_tm_list.distr_list[b96_id_val];  
+	distr_t amu_B96_OS_ph= agm2_light_W_OS.distr_list[b96_id] + amu_W_mass_corr_sea_OS_list.distr_list[id_sea] + amu_W_mass_corr_OS_list.distr_list[b96_id_val];
+	//SD
+	distr_t amu_SD_B96_tm_ph= agm2_light_SD.distr_list[b96_id] + amu_SD_mass_corr_sea_tm_list.distr_list[id_sea] + amu_SD_mass_corr_tm_list.distr_list[b96_id_val];  
+	distr_t amu_SD_B96_OS_ph= agm2_light_SD_OS.distr_list[b96_id] + amu_SD_mass_corr_sea_OS_list.distr_list[id_sea] + amu_SD_mass_corr_OS_list.distr_list[b96_id_val];
+
+	
 	vector<distr_t> amu_B96_eps_tm_ph(eps_win_size);
 	vector<distr_t> amu_B96_eps_OS_ph(eps_win_size);
 	for(int id_eps=0;id_eps<eps_win_size;id_eps++) {
-	  amu_B96_eps_tm_ph[id_eps] = amu_W_eps_list_tm[id_eps].distr_list[b96_id] + amu_W_eps_sea_list_tm[id_eps].distr_list[id_sea] + amu_W_eps_val_list_tm[id_eps].distr_list[id_val] ;
-	  amu_B96_eps_OS_ph[id_eps] = amu_W_eps_list_OS[id_eps].distr_list[b96_id] + amu_W_eps_sea_list_OS[id_eps].distr_list[id_sea] + amu_W_eps_val_list_OS[id_eps].distr_list[id_val]  ; 
+	  amu_B96_eps_tm_ph[id_eps] = amu_W_eps_list_tm[id_eps].distr_list[b96_id] + amu_W_eps_sea_list_tm[id_eps].distr_list[id_sea] + amu_W_eps_val_list_tm[id_eps].distr_list[b96_id_val] ;
+	  amu_B96_eps_OS_ph[id_eps] = amu_W_eps_list_OS[id_eps].distr_list[b96_id] + amu_W_eps_sea_list_OS[id_eps].distr_list[id_sea] + amu_W_eps_val_list_OS[id_eps].distr_list[b96_id_val]  ; 
 	}
 
-	for(int ijck=0; ijck< Njacks;ijck++) {
-	  double exp_ML_B64= exp( -1.0*Mpi_fit.distr_list[iens].distr[ijck]*L_list[iens]);
-	  double exp_ML_B96= exp(-1.0*Mpi_fit.distr_list[b96_id].distr[ijck]*L_list[b96_id]);
-	  double exp_ML_extr= exp(-1.0*Mpi_fit.distr_list[iens].distr[ijck]*5.46*fm_to_inv_Gev/a_distr_list.distr_list[iens].distr[ijck]);
+	vector<distr_t> amu_SD_B96_tmins_tm_ph(tmins.size());
+	vector<distr_t> amu_SD_B96_tmins_OS_ph(tmins.size());
+	for(int tmins_id=0; tmins_id<(signed)tmins.size();tmins_id++) {
+	  amu_SD_B96_tmins_tm_ph[tmins_id] = agm2_light_SD_tmins_distr_list[tmins_id].distr_list[b96_id];
+	  amu_SD_B96_tmins_OS_ph[tmins_id] = agm2_light_SD_OS_tmins_distr_list[tmins_id].distr_list[b96_id];
+	}
 
-	  //tm
+	vector<distr_t> amu_SD_Bextr_tmins_tm_ph(tmins.size());
+	vector<distr_t> amu_SD_Bextr_tmins_OS_ph(tmins.size());
+
+
+	distr_t Mpi_phys_fake_distr(UseJack);
+	for(int ijack=0;ijack<Njacks;ijack++) Mpi_phys_fake_distr.distr.push_back( (0.135+GM()*0.0002/sqrt(Njacks-1.0))*a_distr_list.distr_list[iens].distr[ijack]);
+
+	for(int ijck=0; ijck< Njacks;ijck++) {
+	  //double exp_ML_B64= exp( -1.0*Mpi_fit.distr_list[iens].distr[ijck]*L_list[iens]);
+	  //double exp_ML_B96= exp(-1.0*Mpi_fit.distr_list[b96_id].distr[ijck]*L_list[b96_id]);
+	  //double exp_ML_extr= exp(-1.0*Mpi_fit.distr_list[iens].distr[ijck]*5.46*fm_to_inv_Gev/a_distr_list.distr_list[iens].distr[ijck]);
+
+	  double exp_ML_B64= exp( -1.0*Mpi_phys_fake_distr.distr[ijck]*L_list[iens]);
+	  double exp_ML_B96= exp(-1.0*Mpi_phys_fake_distr.distr[ijck]*L_list[b96_id]);
+	  double exp_ML_extr= exp(-1.0*Mpi_phys_fake_distr.distr[ijck]*5.46*fm_to_inv_Gev/a_distr_list.distr_list[iens].distr[ijck]);
+
+	  //tm W
 	  double amu_96_tm= amu_B96_tm_ph.distr[ijck];
 	  double amu_64_tm = amu_tm_ph.distr[ijck];
 	  double amu_Linf_tm = (amu_96_tm*exp_ML_B64 - amu_64_tm*exp_ML_B96)/(exp_ML_B64 - exp_ML_B96);
 	  double bmu_Linf_tm = (amu_64_tm - amu_Linf_tm)/exp_ML_B64;
 	  amu_tm_ph_red.distr.push_back( amu_Linf_tm+ bmu_Linf_tm*exp_ML_extr);
-	  //OS
+	  //tm SD
+	  double amu_SD_96_tm= amu_SD_B96_tm_ph.distr[ijck];
+	  double amu_SD_64_tm = amu_SD_tm_ph.distr[ijck];
+	  double amu_SD_Linf_tm = (amu_SD_96_tm*exp_ML_B64 - amu_SD_64_tm*exp_ML_B96)/(exp_ML_B64 - exp_ML_B96);
+	  double bmu_SD_Linf_tm = (amu_SD_64_tm - amu_SD_Linf_tm)/exp_ML_B64;
+	  amu_SD_tm_ph_red.distr.push_back( amu_SD_Linf_tm+ bmu_SD_Linf_tm*exp_ML_extr);
+	  
+	  //OS W
 	  double amu_96_OS= amu_B96_OS_ph.distr[ijck];
 	  double amu_64_OS = amu_OS_ph.distr[ijck];
 	  double amu_Linf_OS = (amu_96_OS*exp_ML_B64 - amu_64_OS*exp_ML_B96)/(exp_ML_B64 - exp_ML_B96);
 	  double bmu_Linf_OS = (amu_64_OS - amu_Linf_OS)/exp_ML_B64;
 	  amu_OS_ph_red.distr.push_back( amu_Linf_OS+ bmu_Linf_OS*exp_ML_extr);
 
+	  //OS SD
+	  double amu_SD_96_OS= amu_SD_B96_OS_ph.distr[ijck];
+	  double amu_SD_64_OS = amu_SD_OS_ph.distr[ijck];
+	  double amu_SD_Linf_OS = (amu_SD_96_OS*exp_ML_B64 - amu_SD_64_OS*exp_ML_B96)/(exp_ML_B64 - exp_ML_B96);
+	  double bmu_SD_Linf_OS = (amu_SD_64_OS - amu_SD_Linf_OS)/exp_ML_B64;
+	  amu_SD_OS_ph_red.distr.push_back( amu_SD_Linf_OS+ bmu_SD_Linf_OS*exp_ML_extr);
+
+
+
+	  //SD tmins
+	  for(int tmin_id=0; tmin_id<(signed)tmins.size();tmin_id++) {
+	    //tm
+	    double amu_SD_96_tm_tmins= amu_SD_B96_tmins_tm_ph[tmin_id].distr[ijck];
+	    double amu_SD_64_tm_tmins= agm2_light_SD_tmins_distr_list[tmin_id].distr_list[iens].distr[ijck];
+	    double amu_SD_Linf_tm_tmins= (amu_SD_96_tm_tmins*exp_ML_B64 - amu_SD_64_tm_tmins*exp_ML_B96)/(exp_ML_B64 - exp_ML_B96);
+	    double bmu_SD_Linf_tm_tmins = (amu_SD_64_tm_tmins - amu_SD_Linf_tm_tmins)/exp_ML_B64;
+	    amu_SD_Bextr_tmins_tm_ph[tmin_id].distr.push_back( amu_SD_Linf_tm_tmins+ bmu_SD_Linf_tm_tmins*exp_ML_extr);
+
+	    //OS
+	    double amu_SD_96_OS_tmins= amu_SD_B96_tmins_OS_ph[tmin_id].distr[ijck];
+	    double amu_SD_64_OS_tmins= agm2_light_SD_OS_tmins_distr_list[tmin_id].distr_list[iens].distr[ijck];
+	    double amu_SD_Linf_OS_tmins = (amu_SD_96_OS_tmins*exp_ML_B64 - amu_SD_64_OS_tmins*exp_ML_B96)/(exp_ML_B64 - exp_ML_B96);
+	    double bmu_SD_Linf_OS_tmins = (amu_SD_64_OS_tmins - amu_SD_Linf_OS_tmins)/exp_ML_B64;
+	    amu_SD_Bextr_tmins_OS_ph[tmin_id].distr.push_back(  amu_SD_Linf_OS_tmins+ bmu_SD_Linf_OS_tmins*exp_ML_extr);
+	    
+	  }
+	  
+
 	  for(int id_eps=0;id_eps<eps_win_size;id_eps++) {
+
+	    //double exp_2ML_B64= exp( -1.0*Mpi_fit.distr_list[iens].distr[ijck]*L_list[iens]);
+	    //double exp_2ML_B96= exp(-1.0*Mpi_fit.distr_list[b96_id].distr[ijck]*L_list[b96_id]);
+	    //double exp_2ML_extr= exp(-1.0*Mpi_fit.distr_list[iens].distr[ijck]*5.46*fm_to_inv_Gev/a_distr_list.distr_list[iens].distr[ijck]);
+
+	    double exp_2ML_B64= exp( -1.0*Mpi_phys_fake_distr.distr[ijck]*L_list[iens]);
+	    double exp_2ML_B96= exp(-1.0*Mpi_phys_fake_distr.distr[ijck]*L_list[b96_id]);
+	    double exp_2ML_extr= exp(-1.0*Mpi_phys_fake_distr.distr[ijck]*5.46*fm_to_inv_Gev/a_distr_list.distr_list[iens].distr[ijck]);
 
 	    //tm
 	    double amu_96_tm_eps= amu_B96_eps_tm_ph[id_eps].distr[ijck];
 	    double amu_64_tm_eps = amu_eps_tm_ph[id_eps].distr[ijck];
-	    double amu_Linf_tm_eps = (amu_96_tm_eps*exp_ML_B64 - amu_64_tm_eps*exp_ML_B96)/(exp_ML_B64 - exp_ML_B96);
-	    double bmu_Linf_tm_eps = (amu_64_tm_eps - amu_Linf_tm_eps)/exp_ML_B64;
-	    amu_eps_tm_ph_red[id_eps].distr.push_back( amu_Linf_tm_eps+ bmu_Linf_tm_eps*exp_ML_extr);
+	    double amu_Linf_tm_eps = (amu_96_tm_eps*exp_2ML_B64 - amu_64_tm_eps*exp_2ML_B96)/(exp_2ML_B64 - exp_2ML_B96);
+	    double bmu_Linf_tm_eps = (amu_64_tm_eps - amu_Linf_tm_eps)/exp_2ML_B64;
+	    amu_eps_tm_ph_red[id_eps].distr.push_back( amu_Linf_tm_eps+ bmu_Linf_tm_eps*exp_2ML_extr);
 	    //OS
 	    double amu_96_OS_eps= amu_B96_eps_OS_ph[id_eps].distr[ijck];
 	    double amu_64_OS_eps = amu_eps_OS_ph[id_eps].distr[ijck];
-	    double amu_Linf_OS_eps = (amu_96_OS_eps*exp_ML_B64 - amu_64_OS_eps*exp_ML_B96)/(exp_ML_B64 - exp_ML_B96);
-	    double bmu_Linf_OS_eps = (amu_64_OS_eps - amu_Linf_OS_eps)/exp_ML_B64;
-	    amu_eps_OS_ph_red[id_eps].distr.push_back( amu_Linf_OS_eps+ bmu_Linf_OS_eps*exp_ML_extr);
+	    double amu_Linf_OS_eps = (amu_96_OS_eps*exp_2ML_B64 - amu_64_OS_eps*exp_2ML_B96)/(exp_2ML_B64 - exp_2ML_B96);
+	    double bmu_Linf_OS_eps = (amu_64_OS_eps - amu_Linf_OS_eps)/exp_2ML_B64;
+	    amu_eps_OS_ph_red[id_eps].distr.push_back( amu_Linf_OS_eps+ bmu_Linf_OS_eps*exp_2ML_extr);
 	  }
 	  
 	}
+
+	//push back tmins
+	for(int tmin_id=0; tmin_id<(signed)tmins.size();tmin_id++) {
+	  amu_SD_tmins_physical_point_tm_red[tmin_id].distr_list.push_back( amu_SD_Bextr_tmins_tm_ph[tmin_id]);
+	  amu_SD_tmins_physical_point_OS_red[tmin_id].distr_list.push_back( amu_SD_Bextr_tmins_OS_ph[tmin_id]);
+	}
+	
       }
-      else { amu_tm_ph_red=amu_tm_ph; amu_OS_ph_red=amu_OS_ph; amu_eps_tm_ph_red= amu_eps_tm_ph; amu_eps_OS_ph_red= amu_eps_OS_ph;}
+      else {
+	amu_tm_ph_red=amu_tm_ph; amu_OS_ph_red=amu_OS_ph; amu_eps_tm_ph_red= amu_eps_tm_ph; amu_eps_OS_ph_red= amu_eps_OS_ph;
+	amu_SD_tm_ph_red=amu_SD_tm_ph; amu_SD_OS_ph_red=amu_SD_OS_ph;
+	for(int tmin_id=0; tmin_id<(signed)tmins.size();tmin_id++) {
+	  amu_SD_tmins_physical_point_tm_red[tmin_id].distr_list.push_back( agm2_light_SD_tmins_distr_list[tmin_id].distr_list[iens]);
+	  amu_SD_tmins_physical_point_OS_red[tmin_id].distr_list.push_back( agm2_light_SD_OS_tmins_distr_list[tmin_id].distr_list[iens]);
+	}
+      }
 
 
         
       //push_back
+      //W
       amu_W_physical_point_tm_red.distr_list.push_back(amu_tm_ph_red);
       amu_W_physical_point_OS_red.distr_list.push_back(amu_OS_ph_red);
+      //SD
+      amu_SD_physical_point_tm_red.distr_list.push_back(amu_SD_tm_ph_red);
+      amu_SD_physical_point_OS_red.distr_list.push_back(amu_SD_OS_ph_red);
+      
       for(int id_eps=0;id_eps<eps_win_size;id_eps++) {
 	amu_W_eps_physical_point_tm_red[id_eps].distr_list.push_back(amu_eps_tm_ph_red[id_eps]);
 	amu_W_eps_physical_point_OS_red[id_eps].distr_list.push_back(amu_eps_OS_ph_red[id_eps]);
@@ -7808,29 +8220,52 @@ void Gm2() {
 
 
   //print raw
-  Print_To_File(V_light_1.Tag , {L_list, a_list, amu_W_physical_point_tm.ave(), amu_W_physical_point_tm.err()}   , "../data/gm2/light/tm/windows_tm_phys_point", "", "#ENS L a val err");
-  Print_To_File(V_light_1.Tag , {L_list, a_list, amu_W_physical_point_OS.ave(), amu_W_physical_point_OS.err()}   , "../data/gm2/light/OS/windows_OS_phys_point", "", "#ENS L a val err");
+  //W
+  Print_To_File(V_light_1.Tag , {L_list, a_list, amu_W_physical_point_tm.ave(), amu_W_physical_point_tm.err(), corr_W_physical_point_tm.ave(), corr_W_physical_point_tm.err()}   , "../data/gm2/light/tm/windows_tm_phys_point", "", "#ENS L a val err");
+  Print_To_File(V_light_1.Tag , {L_list, a_list, amu_W_physical_point_OS.ave(), amu_W_physical_point_OS.err(), corr_W_physical_point_OS.ave(), corr_W_physical_point_OS.err()}   , "../data/gm2/light/OS/windows_OS_phys_point", "", "#ENS L a val err");
+  //SD
+  Print_To_File(V_light_1.Tag , {L_list, a_list, amu_SD_physical_point_tm.ave(), amu_SD_physical_point_tm.err()}   , "../data/gm2/light/tm/SD_tm_phys_point", "", "#ENS L a val err");
+  Print_To_File(V_light_1.Tag , {L_list, a_list, amu_SD_physical_point_OS.ave(), amu_SD_physical_point_OS.err()}   , "../data/gm2/light/OS/SD_OS_phys_point", "", "#ENS L a val err");
   for(int id_eps=0;id_eps<eps_win_size;id_eps++) {
     Print_To_File(V_light_1.Tag, {L_list, a_list, amu_W_eps_list_tm[id_eps].ave(), amu_W_eps_list_tm[id_eps].err()}, "../data/gm2/light/tm/windows_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2)+".list", " ", "#ENS L a val err");
     Print_To_File(V_light_1.Tag, {L_list, a_list, amu_W_eps_list_OS[id_eps].ave(), amu_W_eps_list_OS[id_eps].err()}, "../data/gm2/light/OS/windows_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2)+".list", "", "#ENS L a val err");
-    Print_To_File(V_light_1.Tag , {L_list, a_list, amu_W_eps_physical_point_tm[id_eps].ave(), amu_W_eps_physical_point_tm[id_eps].err()}   , "../data/gm2/light/tm/windows_tm_phys_point_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "", "#ENS L a val err");
+    Print_To_File(V_light_1.Tag , {L_list, a_list, amu_W_eps_physical_point_tm[id_eps].ave(), amu_W_eps_physical_point_tm[id_eps].err(), (amu_W_eps_physical_point_tm[id_eps]-amu_W_eps_physical_point_OS[id_eps]).ave(), (amu_W_eps_physical_point_tm[id_eps]-amu_W_eps_physical_point_OS[id_eps]).err()}   , "../data/gm2/light/tm/windows_tm_phys_point_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "", "#ENS L a val err Delta(tm-OS)");
     Print_To_File(V_light_1.Tag , {L_list, a_list, amu_W_eps_physical_point_OS[id_eps].ave(), amu_W_eps_physical_point_OS[id_eps].err()}   , "../data/gm2/light/OS/windows_OS_phys_point_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "", "#ENS L a val err");
   }
   //print at fixed L~5.46fm
-  Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(),  amu_W_physical_point_tm_red.ave(), amu_W_physical_point_tm_red.err()}, "../data/gm2/light/tm/windows_tm_fixed_L.dat", "", "#Ens a  L  agm2");
-  Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(),  amu_W_physical_point_OS_red.ave(), amu_W_physical_point_OS_red.err()}, "../data/gm2/light/OS/windows_OS_fixed_L.dat", "", "#Ens a  L  agm2");
+  //W
+  Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(),  amu_W_physical_point_tm_red.ave(), amu_W_physical_point_tm_red.err(), GS_artifacts_W_win_tm}, "../data/gm2/light/tm/windows_tm_fixed_L.dat", "", "#Ens L a  agm2 GS_art");
+  Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(),  amu_W_physical_point_OS_red.ave(), amu_W_physical_point_OS_red.err(), GS_artifacts_W_win_OS}, "../data/gm2/light/OS/windows_OS_fixed_L.dat", "", "#Ens L a  agm2");
+  //SD
+  Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(),  amu_SD_physical_point_tm_red.ave(), amu_SD_physical_point_tm_red.err()}, "../data/gm2/light/tm/SD_tm_fixed_L.dat", "", "#Ens L a  agm2 GS_art");
+  Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(),  amu_SD_physical_point_OS_red.ave(), amu_SD_physical_point_OS_red.err()}, "../data/gm2/light/OS/SD_OS_fixed_L.dat", "", "#Ens L a  agm2");
+  
   for(int id_eps=0; id_eps<eps_win_size;id_eps++) {
-    Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(), amu_W_eps_physical_point_tm_red[id_eps].ave(), amu_W_eps_physical_point_tm_red[id_eps].err()}, "../data/gm2/light/tm/windows_tm_fixed_L_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "", "#Ens a  L  agm2");
-    Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(),  amu_W_eps_physical_point_OS_red[id_eps].ave(), amu_W_eps_physical_point_OS_red[id_eps].err()}, "../data/gm2/light/OS/windows_OS_fixed_L_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "", "#Ens a  L  agm2");
+
+    distr_t_list Diff= amu_W_eps_physical_point_tm_red[id_eps] - amu_W_eps_physical_point_OS_red[id_eps];
+    distr_t_list Ratio_minus_1 = amu_W_eps_physical_point_tm_red[id_eps]/amu_W_eps_physical_point_OS_red[id_eps] -1;
+    distr_t_list Diff_over_Ratio_minus_1 = Diff/Ratio_minus_1;
+    Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(), amu_W_eps_physical_point_tm_red[id_eps].ave(), amu_W_eps_physical_point_tm_red[id_eps].err(), (amu_W_eps_physical_point_tm_red[id_eps]-amu_W_eps_physical_point_OS_red[id_eps]).ave(),  (amu_W_eps_physical_point_tm_red[id_eps]-amu_W_eps_physical_point_OS_red[id_eps]).err(), (amu_W_eps_physical_point_tm_red[id_eps]/amu_W_eps_physical_point_OS_red[id_eps]).ave(),  (amu_W_eps_physical_point_tm_red[id_eps]/amu_W_eps_physical_point_OS_red[id_eps]).err(), Diff_over_Ratio_minus_1.ave()     , Diff_over_Ratio_minus_1.err()    }, "../data/gm2/light/tm/windows_tm_fixed_L_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "", "#Ens L a  agm2 Delta(tm-OS)   R(tm/OS)     D/(R-1)");
+    Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(),  amu_W_eps_physical_point_OS_red[id_eps].ave(), amu_W_eps_physical_point_OS_red[id_eps].err(),  (amu_W_eps_physical_point_OS_red[id_eps]/amu_W_eps_physical_point_tm_red[id_eps]).ave(),  (amu_W_eps_physical_point_OS_red[id_eps]/amu_W_eps_physical_point_tm_red[id_eps]).err() }, "../data/gm2/light/OS/windows_OS_fixed_L_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "", "#Ens L a  agm2  R(OS/tm)");
   
   }
+
+  for(int tmin_id=0;tmin_id<(signed)tmins.size();tmin_id++) {
+
+    Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(),  amu_SD_tmins_physical_point_tm_red[tmin_id].ave(), amu_SD_tmins_physical_point_tm_red[tmin_id].err()}, "../data/gm2/light/tm/SD_tmins_"+to_string_with_precision(tmins[tmin_id],5)+"_tm_fixed_L.dat", "", "#Ens L a  agm2");
+    Print_To_File(V_light_Tag_fixed_L,{L_list_fixed_L,(a_distr_list_fixed_L/fm_to_inv_Gev).ave(),  amu_SD_tmins_physical_point_OS_red[tmin_id].ave(), amu_SD_tmins_physical_point_OS_red[tmin_id].err()}, "../data/gm2/light/OS/SD_tmins_"+to_string_with_precision(tmins[tmin_id],5)+"_OS_fixed_L.dat", "", "#Ens L a  agm2");
+
+
+  }
+  
   //###########################################################################################################################################
 
 
 
+  
 
 
-
+  exit(-1);
 
 
 
@@ -8273,19 +8708,26 @@ void Gm2() {
   }
 
 
+  distr_t_list ams_phi_list_ren(UseJack), ams_etas_list_ren(UseJack);
   vector<distr_t> ms_phi_list, ms_etas_list;
   vector<distr_t> ms_diff_list;
   vector<distr_t> a2_ms_diff_list;
   vector<distr_t> ms_phi_etas_ratio_list;
   for(int iens_strange=0;iens_strange<Nens_strange;iens_strange++) {
+
+    distr_t Z_M(UseJack);
+    if(V_strange_1_L.Tag[iens_strange].substr(1,1) == "A") Z_M = 1.0/(ZP_A*Conv_to_2_GeV);
+    else if(V_strange_1_L.Tag[iens_strange].substr(1,1) == "B") Z_M = 1.0/(ZP_B*Conv_to_2_GeV);
+    else if(V_strange_1_L.Tag[iens_strange].substr(1,1) == "C") Z_M = 1.0/(ZP_C*Conv_to_2_GeV);
+    else if(V_strange_1_L.Tag[iens_strange].substr(1,1) == "D") Z_M = 1.0/(ZP_D*Conv_to_2_GeV);
+    else crash("In Determining Z_M (strange), Ensemble : "+V_strange_1_L.Tag[iens_strange]+" not found");
+
+    ams_etas_list_ren.distr_list.push_back( Z_M*ms_extr_etas_list.distr_list[iens_strange]*a_distr_list_strange.distr_list[iens_strange]);
+    ams_phi_list_ren.distr_list.push_back( Z_M*ms_extr_phi_list.distr_list[iens_strange]*a_distr_list_strange.distr_list[iens_strange]);
+      
     if( V_strange_1_L.Tag[iens_strange].substr(1,1) != "A" && V_strange_1_L.Tag[iens_strange] != "cB211b.072.96" ) {
 
-      distr_t Z_M(UseJack);
-      if(V_strange_1_L.Tag[iens_strange].substr(1,1) == "A") Z_M = 1.0/(ZP_A*Conv_to_2_GeV);
-      else if(V_strange_1_L.Tag[iens_strange].substr(1,1) == "B") Z_M = 1.0/(ZP_B*Conv_to_2_GeV);
-      else if(V_strange_1_L.Tag[iens_strange].substr(1,1) == "C") Z_M = 1.0/(ZP_C*Conv_to_2_GeV);
-      else if(V_strange_1_L.Tag[iens_strange].substr(1,1) == "D") Z_M = 1.0/(ZP_D*Conv_to_2_GeV);
-      else crash("In Determining Z_M (strange), Ensemble : "+V_strange_1_L.Tag[iens_strange]+" not found");
+      
       
       ms_phi_list.push_back( Z_M*ms_extr_phi_list.distr_list[iens_strange]);
       ms_etas_list.push_back( Z_M*ms_extr_etas_list.distr_list[iens_strange]);
@@ -8299,7 +8741,10 @@ void Gm2() {
   distr_t res_ms_etas = Obs_extrapolation_meson_mass( ms_etas_list, a2_ms_diff_list,  0.0, "../data/gm2/strange", "ms_cont_limit_etas", UseJack, "FIT");
   distr_t res_ms_phi_etas_ratio = Obs_extrapolation_meson_mass( ms_phi_etas_ratio_list, a2_ms_diff_list,  0.0, "../data/gm2/strange", "ms_phi_etas_ratio_cont_limit", UseJack, "FIT");
 
+  Print_To_File({V_strange_1_L.Tag}, { ams_etas_list_ren.ave(), ams_etas_list_ren.err(), ams_phi_list_ren.ave(), ams_phi_list_ren.err()}, "../data/gm2/strange/ms_ren_2_GeV.list", "", "#Ens ms(etas)  ms(phi)");
 
+
+  distr_t_list amc_Jpsi_list_ren(UseJack), amc_etac_list_ren(UseJack);
   vector<distr_t> mc_etac_list, mc_Jpsi_list;
   vector<distr_t> mc_Jpsi_etac_ratio_list;
   vector<distr_t> mc_etac_finest_list, mc_Jpsi_finest_list;
@@ -8307,15 +8752,21 @@ void Gm2() {
   vector<distr_t> a2_mc_diff_list, a2_mc_diff_finest_list;
   for(int iens_charm=0;iens_charm<Nens_charm;iens_charm++) {
 
+    distr_t Z_M(UseJack);
+    if(V_charm_1_L.Tag[iens_charm].substr(1,1) == "A") Z_M = 1.0/(ZP_A*Conv_to_3_GeV);
+    else if(V_charm_1_L.Tag[iens_charm].substr(1,1) == "B") Z_M = 1.0/(ZP_B*Conv_to_3_GeV);
+    else if(V_charm_1_L.Tag[iens_charm].substr(1,1) == "C") Z_M = 1.0/(ZP_C*Conv_to_3_GeV);
+    else if(V_charm_1_L.Tag[iens_charm].substr(1,1) == "D") Z_M = 1.0/(ZP_D*Conv_to_3_GeV);
+    else crash("In Determining Z_M (charm), Ensemble : "+V_charm_1_L.Tag[iens_charm]+" not found");
+
+
+    amc_etac_list_ren.distr_list.push_back( Z_M*mc_extr_etac_list.distr_list[iens_charm]*a_distr_list_charm.distr_list[iens_charm]);
+    amc_Jpsi_list_ren.distr_list.push_back( Z_M*mc_extr_Jpsi_list.distr_list[iens_charm]*a_distr_list_charm.distr_list[iens_charm]);
+    
     if( V_charm_1_L.Tag[iens_charm].substr(1,1) != "A" || V_charm_1_L.Tag[iens_charm] == "cA211ab.30.32") {
 
 
-      distr_t Z_M(UseJack);
-      if(V_charm_1_L.Tag[iens_charm].substr(1,1) == "A") Z_M = 1.0/(ZP_A*Conv_to_3_GeV);
-      else if(V_charm_1_L.Tag[iens_charm].substr(1,1) == "B") Z_M = 1.0/(ZP_B*Conv_to_3_GeV);
-      else if(V_charm_1_L.Tag[iens_charm].substr(1,1) == "C") Z_M = 1.0/(ZP_C*Conv_to_3_GeV);
-      else if(V_charm_1_L.Tag[iens_charm].substr(1,1) == "D") Z_M = 1.0/(ZP_D*Conv_to_3_GeV);
-      else crash("In Determining Z_M (charm), Ensemble : "+V_charm_1_L.Tag[iens_charm]+" not found");
+      
       
       mc_Jpsi_list.push_back( Z_M*mc_extr_Jpsi_list.distr_list[iens_charm]);
       mc_etac_list.push_back( Z_M*mc_extr_etac_list.distr_list[iens_charm]);
@@ -8340,8 +8791,10 @@ void Gm2() {
   distr_t res_mc_Jpsi_etac_ratio_finest = Obs_extrapolation_meson_mass( mc_Jpsi_etac_ratio_finest_list, a2_mc_diff_finest_list,  0.0, "../data/gm2/charm", "mc_finest_Jpsi_etac_ratio_cont_limit", UseJack, "FIT");
 
 
+  Print_To_File({V_charm_1_L.Tag}, { amc_etac_list_ren.ave(), amc_etac_list_ren.err(), amc_Jpsi_list_ren.ave(), amc_Jpsi_list_ren.err()}, "../data/gm2/charm/mc_ren_3_GeV.list", "", "#Ens mc(etac)  mc(Jpsi)");
 
-  
+
+
   //#############################################        CONTINUUM/THERMODYNAMIC/PHYSICAL-POINT EXTRAPOLATION       ###############################################
   vector<string> a2_list({"OS"});
   vector<string> FSEs_list({"off"});
@@ -8351,10 +8804,11 @@ void Gm2() {
   VPfloat n_m_pair_list({make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)});
   bool allow_a4_and_log= false;
   bool allow_only_finest= false;
-  int w0s_mult=3;
+  int w0s_mult=2;
+  distr_t return4_val;
 
 
-
+  
 
 
 
@@ -8378,18 +8832,106 @@ void Gm2() {
      n_m_pair_list= {make_pair(0,0)};
 
     distr_t return_val;
-    Perform_Akaike_fits(amu_W_eps_physical_point_tm_red[id_eps], amu_W_eps_physical_point_OS_red[id_eps], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_fixed_L_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, return_val);
+    Perform_Akaike_fits(amu_W_eps_physical_point_tm_red[id_eps], amu_W_eps_physical_point_OS_red[id_eps], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_fixed_L_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+
+    single_fit_list={"tm"};
+    a4_list={"tm"};
+    a2_list={"tm"};
+    distr_t D1_diff, D4_diff;
+    Perform_Akaike_fits(amu_W_eps_physical_point_tm_red[id_eps]-amu_W_eps_physical_point_OS_red[id_eps], amu_W_eps_physical_point_OS_red[id_eps], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "diff_tm_OS_fixed_L_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, D1_diff, D4_diff);
+    distr_t R1_ratio, R4_ratio;
+    Perform_Akaike_fits(1.0e-10*amu_W_eps_physical_point_tm_red[id_eps]/amu_W_eps_physical_point_OS_red[id_eps], amu_W_eps_physical_point_OS_red[id_eps], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "ratio_tm_OS_fixed_L_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, R1_ratio, R4_ratio);
+    distr_t R2_ratio, R4_bis_ratio;
+    Perform_Akaike_fits(1.0e-10*amu_W_eps_physical_point_OS_red[id_eps]/amu_W_eps_physical_point_tm_red[id_eps], amu_W_eps_physical_point_OS_red[id_eps], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "ratio_tm_OS_rev_fixed_L_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, R2_ratio, R4_bis_ratio);
+
+
+    auto f_func_tm= [&D1_diff, &D4_diff, &R1_ratio, &R4_ratio, &R2_ratio, &R4_bis_ratio](double a) -> distr_t {
+
+		   distr_t R1= 1.0+ R1_ratio*a*a + R4_ratio*a*a*a*a;
+		   distr_t R2= 1.0 +R2_ratio*a*a + R4_bis_ratio*a*a*a*a;
+		   distr_t D = D1_diff*a*a + D4_diff*a*a*a*a;
+
+		   return 0.5*D*( R1/(R1-1.0) -1.0/(R2-1.0));
+
+		    };
+
+    auto f_func_OS= [&D1_diff, &D4_diff, &R1_ratio, &R4_ratio, &R2_ratio, &R4_bis_ratio](double a) -> distr_t {
+
+		   distr_t R1= 1.0+ R1_ratio*a*a + R4_ratio*a*a*a*a;
+		   distr_t R2= 1.0 +R2_ratio*a*a + R4_bis_ratio*a*a*a*a;
+		   distr_t D = D1_diff*a*a + D4_diff*a*a*a*a;
+
+		   return 0.5*D*( 1.0/(R1-1.0) -R2/(R2-1.0));
+
+		    };
+
+
+    int alat_points=40;
+    Vfloat apoints;
+    distr_t_list sampling_tm(UseJack);
+    distr_t_list sampling_OS(UseJack);
+    for(int ilat=0;ilat<alat_points;ilat++) {
+      double al = ilat*2.0*a_B.ave()/alat_points;
+      apoints.push_back(al);
+      sampling_tm.distr_list.push_back( f_func_tm(al));
+      sampling_OS.distr_list.push_back( f_func_OS(al));
+    }
+
+    //print
+    Print_To_File({}, {apoints,sampling_tm.ave(),sampling_tm.err(), sampling_OS.ave(), sampling_OS.err()}, "../data/gm2/light/windows_fit_func/ratio_tm_OS_fixed_L_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2)+"/windows_fitting_func.dat",   "", "#a  tm   OS");
+
+      
+
+    cout<<"EPSILON: "<<eps_win[id_eps]/fm_to_inv_Gev<<" d1/r1: "<< (D1_diff/R1_ratio).ave()<<" "<<(D1_diff/R1_ratio).err()<<" "<<(-1*D1_diff/R2_ratio).ave()<<" "<<(-1*D1_diff/R2_ratio).err()<<endl;
+
+    single_fit_list={"off"};
+    a4_list={"off"};
+    a2_list={"on"};
+    Perform_Akaike_fits(amu_W_eps_physical_point_tm_red[id_eps], amu_W_eps_physical_point_OS_red[id_eps], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_fixed_L_a2_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+
+
+    single_fit_list={"tm", "OS", "off"};
+    a2_list={"tm", "OS", "on"};
+    a4_list={"off", "OS"};
+    Perform_Akaike_fits(amu_W_eps_physical_point_tm_red[id_eps]+ ((id_eps==0)?1.0:0.0)*Get_id_jack_distr_list(amu_W_eps_physical_point_tm_red[id_eps].size(),Njacks)*GS_artifacts_W_win_tm, amu_W_eps_physical_point_OS_red[id_eps] + ((id_eps==0)?1.0:0.0)*Get_id_jack_distr_list(amu_W_eps_physical_point_OS_red[id_eps].size(),Njacks)*GS_artifacts_W_win_OS, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_fixed_L_single_a2_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+    
+
+    single_fit_list={"off"};
+    a4_list={"off"};
+    a2_list={"on"};
+
+    distr_t_list amu_W_eps_tm_two_finest(UseJack);
+    distr_t_list amu_W_eps_OS_two_finest(UseJack);
+    Vfloat L_list_fixed_L_two_finest;
+    distr_t_list a_distr_list_fixed_L_two_finest(UseJack);
+    distr_t_list Mpi_fit_fixed_L_two_finest(UseJack);
+    distr_t_list fp_fit_fixed_L_two_finest(UseJack);
+    vector<string> V_light_Tag_fixed_L_two_finest;
+
+    for(int iens_tf=0; iens_tf<V_light_Tag_fixed_L.size();iens_tf++) {
+      if(V_light_Tag_fixed_L[iens_tf].substr(1,1) != "B") {
+	amu_W_eps_tm_two_finest.distr_list.push_back( amu_W_eps_physical_point_tm_red[id_eps].distr_list[iens_tf]);
+	amu_W_eps_OS_two_finest.distr_list.push_back( amu_W_eps_physical_point_OS_red[id_eps].distr_list[iens_tf]);
+	L_list_fixed_L_two_finest.push_back(L_list_fixed_L[iens_tf]);
+	a_distr_list_fixed_L_two_finest.distr_list.push_back( a_distr_list_fixed_L.distr_list[iens_tf]);
+	Mpi_fit_fixed_L_two_finest.distr_list.push_back( Mpi_fit_fixed_L.distr_list[iens_tf]);
+	fp_fit_fixed_L_two_finest.distr_list.push_back( fp_fit_fixed_L.distr_list[iens_tf]);
+	V_light_Tag_fixed_L_two_finest.push_back( V_light_Tag_fixed_L[iens_tf]);
+      }
+    }
+
+    Perform_Akaike_fits(amu_W_eps_tm_two_finest, amu_W_eps_OS_two_finest, a_A, a_B, a_C, a_D, L_list_fixed_L_two_finest, a_distr_list_fixed_L_two_finest, Mpi_fit_fixed_L_two_finest,fp_fit_fixed_L_two_finest, V_light_Tag_fixed_L_two_finest, UseJack, Njacks, Nboots, "W_win_fixed_L_a2_two_finest_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
 
     /*
     single_fit_list={"tm"};
     a4_list={"tm"};
     a2_list={"tm"};
-    Perform_Akaike_fits(amu_W_eps_physical_point_tm_red[id_eps], amu_W_eps_physical_point_OS_red[id_eps], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_fixed_L_tm_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, return_val);
+    Perform_Akaike_fits(amu_W_eps_physical_point_tm_red[id_eps], amu_W_eps_physical_point_OS_red[id_eps], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_fixed_L_tm_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
 
     single_fit_list={"OS"};
     a4_list={"OS"};
     a2_list={"OS"};
-    Perform_Akaike_fits(amu_W_eps_physical_point_tm_red[id_eps], amu_W_eps_physical_point_OS_red[id_eps], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_fixed_L_tm_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, return_val);
+    Perform_Akaike_fits(amu_W_eps_physical_point_tm_red[id_eps], amu_W_eps_physical_point_OS_red[id_eps], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_fixed_L_tm_eps_"+to_string_with_precision(eps_win[id_eps]/fm_to_inv_Gev,2), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 1, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
     */
 
     
@@ -8397,6 +8939,734 @@ void Gm2() {
 
   }
 
+
+  //##########################    FINAL EXTRAPOLATION OF LIGHT INTERMEDIATE-WINDOW CONTRIBUTION ################################
+  cout<<"Continuum extrapolation of standard Intermediate window"<<endl;
+  //continuum extrapolation of the standard intermediate window
+  distr_t return_val;
+  
+  //n_m_pair_list= { make_pair(0,0), make_pair(1,1), make_pair(2,2), make_pair(3,3)};
+  mass_extr_list={"off"};
+  FSEs_list = {"off"};
+  allow_only_finest=false;
+  allow_a4_and_log=true;
+  single_fit_list = {"tm"};
+  a2_list = {"tm"};
+  a4_list = {"off"};
+  n_m_pair_list = { make_pair(0,0), make_pair(1,0), make_pair(2,0), make_pair(3,0) };
+  //single fit tm
+  Perform_Akaike_fits(amu_W_physical_point_tm_red, amu_W_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_final_single_tm", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+
+  single_fit_list={"OS"};
+  a2_list= {"OS"};
+  n_m_pair_list = { make_pair(0,0), make_pair(0,1), make_pair(0,2), make_pair(0,3) };
+
+  //single fit OS
+  Perform_Akaike_fits(amu_W_physical_point_tm_red, amu_W_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_final_single_OS", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+
+  n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)};
+  //combined fit standard
+  single_fit_list={"off"};
+  a2_list={"on"};
+  a4_list={"on", "off", "tm", "OS"};
+  Perform_Akaike_fits(amu_W_physical_point_tm_red, amu_W_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_final", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+
+
+  //linear a^2 leaving 1 or two measurements 
+  a4_list={"off"};
+  Perform_Akaike_fits(amu_W_physical_point_tm_red, amu_W_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_final_leave_tm_B", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_W_physical_point_tm_red, amu_W_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_final_leave_OS_B", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_W_physical_point_tm_red, amu_W_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_final_leave_B", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+  
+
+
+  //Pade'
+  a4_list = {"tm", "OS"};
+  //Perform_Akaike_fits(amu_W_physical_point_tm_red, amu_W_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_final_Pade", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+
+
+  //Ratio/Difference method
+  a4_list = {"on", "off"};
+  Perform_Akaike_fits(amu_W_physical_point_tm_red-amu_W_physical_point_OS_red, 1.0e-10*amu_W_physical_point_tm_red/amu_W_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_final_ratio_diff_tm", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_W_physical_point_tm_red-amu_W_physical_point_OS_red, 1.0e-10*amu_W_physical_point_OS_red/amu_W_physical_point_tm_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "W_win_final_ratio_diff_OS", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 200.0, LL, 0.0, return_val, return4_val);
+
+
+  //##########################################################################################################################################################################################
+
+
+
+
+  //####################### FINAL CONTINUUM EXTRAPOLATION OF SHORT-DISTANCE LIGHT #####################################################à
+  
+
+  mass_extr_list={"off"};
+  FSEs_list = {"off"};
+  allow_only_finest=false;
+  allow_a4_and_log=true;
+  single_fit_list = {"tm"};
+  a2_list = {"tm"};
+  a4_list = {"off"};
+  n_m_pair_list = { make_pair(0,0), make_pair(1,0), make_pair(2,0), make_pair(3,0) };
+  //single fit tm
+  Perform_Akaike_fits(amu_SD_physical_point_tm_red, amu_SD_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_single_tm", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, return_val, return4_val);
+
+  single_fit_list={"OS"};
+  a2_list= {"OS"};
+  n_m_pair_list = { make_pair(0,0), make_pair(0,1), make_pair(0,2), make_pair(0,3) };
+
+  //single fit OS
+  Perform_Akaike_fits(amu_SD_physical_point_tm_red, amu_SD_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_single_OS", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, return_val, return4_val);
+
+
+  //combined fit standard
+  single_fit_list={"off"};
+  a2_list={"on"};
+  a4_list={"on", "off", "tm", "OS"};
+  n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)};
+  Perform_Akaike_fits(amu_SD_physical_point_tm_red, amu_SD_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 48, LL, 0.0, return_val, return4_val);
+
+
+  //linear a^2 leaving 1 or two measurements 
+  a4_list={"off"};
+  Perform_Akaike_fits(amu_SD_physical_point_tm_red, amu_SD_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_leave_tm_B", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_SD_physical_point_tm_red, amu_SD_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_leave_OS_B", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_SD_physical_point_tm_red, amu_SD_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_leave_B", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, return_val, return4_val);
+  
+
+
+  //Pade'
+  a4_list = {"tm", "OS"};
+  //Perform_Akaike_fits(amu_SD_physical_point_tm_red, amu_SD_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_Pade", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, return_val, return4_val);
+
+
+  //Ratio/Difference method
+  a4_list = {"on", "off"};
+  Perform_Akaike_fits(amu_SD_physical_point_tm_red-amu_SD_physical_point_OS_red, 1.0e-10*amu_SD_physical_point_tm_red/amu_SD_physical_point_OS_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_ratio_diff_tm", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 48, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_SD_physical_point_tm_red-amu_SD_physical_point_OS_red, 1.0e-10*amu_SD_physical_point_OS_red/amu_SD_physical_point_tm_red, a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_ratio_diff_OS", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 48, LL, 0.0, return_val, return4_val);
+
+
+
+  //####################################################################################################################################
+
+
+
+
+  //CONTINUUM EXTRAPOLATION OF SD-TMINS ################################################################################################
+
+  vector<distr_t> ret_distr_SD_tmins;
+
+  for(int tmins_id=0;tmins_id<(signed)tmins.size(); tmins_id++) {
+
+    ret_distr_SD_tmins.emplace_back(UseJack);
+    
+    mass_extr_list={"off"};
+    FSEs_list = {"off"};
+    allow_only_finest=false;
+    allow_a4_and_log=true;
+    single_fit_list = {"tm"};
+    a2_list = {"tm"};
+    a4_list = {"off"};
+    n_m_pair_list = { make_pair(0,0), make_pair(1,0), make_pair(2,0), make_pair(3,0) };
+    //single fit tm
+    Perform_Akaike_fits(amu_SD_tmins_physical_point_tm_red[tmins_id], amu_SD_tmins_physical_point_OS_red[tmins_id], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_single_tm_tmins_"+to_string_with_precision(tmins[tmins_id],4), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, ret_distr_SD_tmins[tmins_id], return4_val);
+
+    single_fit_list={"OS"};
+    a2_list= {"OS"};
+    n_m_pair_list = { make_pair(0,0), make_pair(0,1), make_pair(0,2), make_pair(0,3) };
+
+    //single fit OS
+    Perform_Akaike_fits(amu_SD_tmins_physical_point_tm_red[tmins_id], amu_SD_tmins_physical_point_OS_red[tmins_id], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_single_OS_tmins_"+to_string_with_precision(tmins[tmins_id],4), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, ret_distr_SD_tmins[tmins_id], return4_val);
+
+
+    //combined fit standard
+    single_fit_list={"off"};
+    a2_list={"on"};
+    a4_list={"on", "off", "tm", "OS"};
+    n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)};
+    Perform_Akaike_fits(amu_SD_tmins_physical_point_tm_red[tmins_id], amu_SD_tmins_physical_point_OS_red[tmins_id], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_tmins_"+to_string_with_precision(tmins[tmins_id],4), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 48, LL, 0.0, ret_distr_SD_tmins[tmins_id], return4_val);
+
+
+    //linear a^2 leaving 1 or two measurements 
+    a4_list={"off"};
+    Perform_Akaike_fits(amu_SD_tmins_physical_point_tm_red[tmins_id], amu_SD_tmins_physical_point_OS_red[tmins_id], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_leave_tm_B_tmins_"+to_string_with_precision(tmins[tmins_id],4), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, ret_distr_SD_tmins[tmins_id], return4_val);
+    Perform_Akaike_fits(amu_SD_tmins_physical_point_tm_red[tmins_id], amu_SD_tmins_physical_point_OS_red[tmins_id], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_leave_OS_B_tmins_"+to_string_with_precision(tmins[tmins_id],4), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, ret_distr_SD_tmins[tmins_id], return4_val);
+    Perform_Akaike_fits(amu_SD_tmins_physical_point_tm_red[tmins_id], amu_SD_tmins_physical_point_OS_red[tmins_id], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_leave_B_tmins_"+to_string_with_precision(tmins[tmins_id],4), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 48, LL, 0.0, ret_distr_SD_tmins[tmins_id], return4_val);
+  
+
+
+
+    //Ratio/Difference method
+    a4_list = {"on", "off"};
+    Perform_Akaike_fits(amu_SD_tmins_physical_point_tm_red[tmins_id]-amu_SD_tmins_physical_point_OS_red[tmins_id], 1.0e-10*amu_SD_tmins_physical_point_tm_red[tmins_id]/amu_SD_tmins_physical_point_OS_red[tmins_id], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_ratio_diff_tm_tmins_"+to_string_with_precision(tmins[tmins_id],4), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 48, LL, 0.0, ret_distr_SD_tmins[tmins_id], return4_val);
+    Perform_Akaike_fits(amu_SD_tmins_physical_point_tm_red[tmins_id]-amu_SD_tmins_physical_point_OS_red[tmins_id], 1.0e-10*amu_SD_tmins_physical_point_OS_red[tmins_id]/amu_SD_tmins_physical_point_tm_red[tmins_id], a_A, a_B, a_C, a_D, L_list_fixed_L, a_distr_list_fixed_L, Mpi_fit_fixed_L,fp_fit_fixed_L, V_light_Tag_fixed_L, UseJack, Njacks, Nboots, "SD_win_final_ratio_diff_OS_tmins_"+to_string_with_precision(tmins[tmins_id],4), "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 48, LL, 0.0, ret_distr_SD_tmins[tmins_id], return4_val);
+
+
+  }
+
+  distr_t_list ret_distr_list_SD_tmins(UseJack);
+  for(int ttt=0; ttt<(signed)tmins.size(); ttt++) ret_distr_list_SD_tmins.distr_list.push_back( ret_distr_SD_tmins[ttt]);
+
+  //print tmins data
+  Print_To_File({}, {tmins, ret_distr_list_SD_tmins.ave(), ret_distr_list_SD_tmins.err()  }, "../data/gm2/light/windows_fit_func/tmins_SD_light.dat" , "", "#tmins[fm] val err");
+
+  //perform extrapolation at tmin=0
+
+  class ipar_tmin {
+
+  public:
+    ipar_tmin() {}
+
+
+    double val, err, tmin;
+
+  };
+
+  class fpar_tmin {
+
+  public:
+    fpar_tmin() {}
+    fpar_tmin(const Vfloat &par)  {
+    if((signed)par.size() != 3) crash("In class fpar_tmin constructor fpar_tmin(vector<double>) called with vector.size != 3 ");
+    w0=par[0];
+    D2=par[1];
+    D4=par[2];
+    }
+
+    double w0, D2, D4;
+
+  };
+
+  bootstrap_fit<fpar_tmin, ipar_tmin> bf_tmin(Njacks);
+  bf_tmin.set_warmup_lev(0);
+  bf_tmin.Set_number_of_measurements(tmins.size());
+  bf_tmin.Set_verbosity(1);
+  bf_tmin.Add_par("w0", 48.0, 0.5);
+  bf_tmin.Add_par("D2", 1.0, 0.1);
+  bf_tmin.Add_par("D4", 1.0, 0.1);
+  bf_tmin.Fix_par("D4", 0.0);
+  //fit on mean values to get ch2
+  bootstrap_fit<fpar_tmin, ipar_tmin> bf_ch2_tmin(1);
+  bf_ch2_tmin.set_warmup_lev(0);
+  bf_ch2_tmin.Set_number_of_measurements(tmins.size());
+  bf_ch2_tmin.Set_verbosity(1);
+  bf_ch2_tmin.Add_par("w0", 48.0, 0.5);
+  bf_ch2_tmin.Add_par("D2", 1.0, 0.1);
+  bf_ch2_tmin.Add_par("D4", 1.0, 0.1);
+  bf_ch2_tmin.Fix_par("D4", 0.0);
+
+  double w0_g=48.0;
+
+  //ansatz
+  bf_tmin.ansatz=  [&w0_g ](const fpar_tmin &p, const ipar_tmin &ip) {
+
+		  
+		     return p.w0 + p.D2*w0_g*pow(ip.tmin*0.3,2)/pow(log(ip.tmin*0.3),1) + p.D4*w0_g*pow(ip.tmin*0.3,4);
+		   }; 
+  bf_tmin.measurement=  [ ](const fpar_tmin &p, const ipar_tmin &ip) {
+
+		 return ip.val;
+		 };
+  bf_tmin.error=  [ ](const fpar_tmin &p, const ipar_tmin &ip) {
+
+		 return ip.err;
+		 };
+  
+
+  
+  bf_ch2_tmin.ansatz= bf_tmin.ansatz;
+  bf_ch2_tmin.measurement = bf_tmin.measurement;
+  bf_ch2_tmin.error = bf_tmin.error;
+
+
+  vector<vector<ipar_tmin>> data_tmin(Njacks);
+  vector<vector<ipar_tmin>> data_ch2_tmin(1);
+  //allocate space for output result
+  boot_fit_data<fpar_tmin> Bt_fit_tmin;
+  boot_fit_data<fpar_tmin> Bt_fit_ch2_tmin;
+  for(auto &data_iboot: data_tmin) data_iboot.resize(tmins.size());
+  for(auto &data_iboot: data_ch2_tmin) data_iboot.resize(tmins.size());
+
+
+  //covariance matrix
+  Eigen::MatrixXd Cov_Matrix_tmin(tmins.size(),tmins.size());
+  Eigen::MatrixXd Corr_Matrix_tmin(tmins.size(), tmins.size());
+  for(int i=0;i<(signed)tmins.size();i++)
+    for(int j=0;j<(signed)tmins.size();j++) {
+      Cov_Matrix_tmin(i,j) = ret_distr_SD_tmins[i]%ret_distr_SD_tmins[j];
+      Corr_Matrix_tmin(i,j) = Cov_Matrix_tmin(i,j)/(ret_distr_SD_tmins[i].err()*ret_distr_SD_tmins[j].err());
+    }
+  //bf_tmin.Add_covariance_matrix(Cov_Matrix_tmin);
+  //bf_ch2_tmin.Add_covariance_matrix(Cov_Matrix_tmin);
+
+
+  Eigen::MatrixXd Corr_Matrix_inverse_tmin = Corr_Matrix_tmin.inverse();
+
+  ofstream Print_cov_tmin("../data/gm2/Covariance_matrix/SD_light_tmins.cov");
+  ofstream Print_corr_tmin("../data/gm2/Correlation_matrix/SD_light_tmins.cov");
+  ofstream Print_corr_inv_tmin("../data/gm2/Correlation_matrix_inverse/SD_light_tmins.cov");
+  Print_cov_tmin<<Cov_Matrix_tmin<<endl;
+  Print_corr_tmin<<Corr_Matrix_tmin<<endl;
+  Print_corr_inv_tmin<<Corr_Matrix_inverse_tmin<<endl;
+  Print_cov_tmin.close();
+  Print_corr_tmin.close();
+  Print_corr_inv_tmin.close();
+
+  for(int ijack=0;ijack<Njacks;ijack++) {
+    for(int tmin_id=0;tmin_id<(signed)tmins.size();tmin_id++) {
+
+      data_tmin[ijack][tmin_id].val = ret_distr_SD_tmins[tmin_id].distr[ijack];
+      data_tmin[ijack][tmin_id].err = ret_distr_SD_tmins[tmin_id].err();
+      data_tmin[ijack][tmin_id].tmin = tmins[tmin_id]*fm_to_inv_Gev;
+
+      if(ijack==0) {
+
+	data_ch2_tmin[ijack][tmin_id].val = ret_distr_SD_tmins[tmin_id].ave();
+	data_ch2_tmin[ijack][tmin_id].err = ret_distr_SD_tmins[tmin_id].err();
+	data_ch2_tmin[ijack][tmin_id].tmin = tmins[tmin_id]*fm_to_inv_Gev;
+      }
+    }
+  }
+
+  //append
+  bf_tmin.Append_to_input_par(data_tmin);
+  bf_ch2_tmin.Append_to_input_par(data_ch2_tmin);
+  //fit
+  cout<<"Fitting tmins... "<<endl;
+  Bt_fit_tmin= bf_tmin.Perform_bootstrap_fit();
+  Bt_fit_ch2_tmin= bf_ch2_tmin.Perform_bootstrap_fit();
+
+  //retrieve parameters
+  distr_t w0_tmin(UseJack), D2_tmin(UseJack), D4_tmin(UseJack);
+  for(int ijack=0;ijack<Njacks;ijack++) { w0_tmin.distr.push_back( Bt_fit_tmin.par[ijack].w0); D2_tmin.distr.push_back( Bt_fit_tmin.par[ijack].D2); D4_tmin.distr.push_back( Bt_fit_tmin.par[ijack].D4); }
+  //push_back ch2
+  double ch2_tmin= Bt_fit_ch2_tmin.get_ch2_ave();
+
+ 
+  //print fit func
+  distr_t_list SD_tmins_to_print(UseJack);
+  Vfloat tmin_list_to_print(400);
+  for(int tt=0;tt<400;tt++) tmin_list_to_print[tt] = tt*0.2/(400-1.0);
+  for(auto &tmin: tmin_list_to_print) {
+    
+    SD_tmins_to_print.distr_list.push_back( w0_tmin + D2_tmin*w0_g*pow(tmin*fm_to_inv_Gev*0.3,2)/pow(log(tmin*fm_to_inv_Gev*0.3),1) + D4_tmin*w0_g*pow(tmin*fm_to_inv_Gev*0.3,4) );
+
+      }
+  Print_To_File({}, {tmin_list_to_print, SD_tmins_to_print.ave(), SD_tmins_to_print.err()}, "../data/gm2/light/windows_fit_func/tmins.fit_func", "", "#tmin[fm] SD SD_err, ch2= "+to_string_with_precision(ch2_tmin,5));
+  
+  
+  //######################################################################################################################################
+
+
+
+
+
+
+
+
+
+  //####################################################################################################################################
+
+
+
+  distr_t_list amu_strange_W_tm_red(UseJack), amu_strange_W_OS_red(UseJack);
+  distr_t_list amu_strange_SD_tm_red(UseJack), amu_strange_SD_OS_red(UseJack);
+  Vfloat L_strange_list_red;
+  distr_t_list a_distr_list_strange_red(UseJack);
+  distr_t_list Mpi_fit_strange_red(UseJack);
+  distr_t_list fp_fit_strange_red(UseJack);
+  vector<string> V_strange_tag_red;
+  for(int ist=0;ist<(signed)V_strange_1_L.Tag.size();ist++) {
+    if(V_strange_1_L.Tag[ist] != "cB211b.072.64") {
+      if(V_strange_1_L.Tag[ist] != "cB211b.072.96") {
+      amu_strange_W_tm_red.distr_list.push_back( agm2_strange_W_Extr.distr_list[ist]);
+      amu_strange_W_OS_red.distr_list.push_back( agm2_strange_W_OS_Extr.distr_list[ist]);
+      amu_strange_SD_tm_red.distr_list.push_back( agm2_strange_SD_Extr.distr_list[ist]);
+      amu_strange_SD_OS_red.distr_list.push_back( agm2_strange_SD_OS_Extr.distr_list[ist]);
+      L_strange_list_red.push_back( L_strange_list[ist]);
+      a_distr_list_strange_red.distr_list.push_back( a_distr_list_strange.distr_list[ist]);
+      Mpi_fit_strange_red.distr_list.push_back(Mpi_fit.distr_list[ist]);
+      fp_fit_strange_red.distr_list.push_back(fp_fit.distr_list[ist]);
+      V_strange_tag_red.push_back(V_strange_1_L.Tag[ist]);
+      }
+      else {
+	//find B64 tag
+	bool find_B64=false;
+	int B64_id=0;
+	for(int ib=0; ib<(signed)V_strange_1_L.Tag.size();ib++) {
+	  if(V_strange_1_L.Tag[ib] == "cB211b.072.64") { find_B64=true; B64_id= ib; break;}
+	}
+	if(!find_B64) crash("Cannot find ensemble B64 when computing strange window contribution");
+
+	double weight_W_tm_B64= (1.0/pow( agm2_strange_W_Extr.err(B64_id),2))/( (1.0/pow(agm2_strange_W_Extr.err(B64_id),2)) + (1.0/pow(agm2_strange_W_Extr.err(ist),2)));
+	double weight_W_tm_B96= (1.0/pow( agm2_strange_W_Extr.err(ist),2))/( (1.0/pow(agm2_strange_W_Extr.err(B64_id),2)) + (1.0/pow(agm2_strange_W_Extr.err(ist),2)));
+
+	double weight_W_OS_B64= (1.0/pow( agm2_strange_W_OS_Extr.err(B64_id),2))/( (1.0/pow(agm2_strange_W_OS_Extr.err(B64_id),2)) + (1.0/pow(agm2_strange_W_OS_Extr.err(ist),2)));
+	double weight_W_OS_B96= (1.0/pow( agm2_strange_W_OS_Extr.err(ist),2))/( (1.0/pow(agm2_strange_W_OS_Extr.err(B64_id),2)) + (1.0/pow(agm2_strange_W_OS_Extr.err(ist),2)));
+
+	double weight_SD_tm_B64= (1.0/pow( agm2_strange_SD_Extr.err(B64_id),2))/( (1.0/pow(agm2_strange_SD_Extr.err(B64_id),2)) + (1.0/pow(agm2_strange_SD_Extr.err(ist),2)));
+	double weight_SD_tm_B96= (1.0/pow( agm2_strange_SD_Extr.err(ist),2))/( (1.0/pow(agm2_strange_SD_Extr.err(B64_id),2)) + (1.0/pow(agm2_strange_SD_Extr.err(ist),2)));
+
+	double weight_SD_OS_B64= (1.0/pow( agm2_strange_SD_OS_Extr.err(B64_id),2))/( (1.0/pow(agm2_strange_SD_OS_Extr.err(B64_id),2)) + (1.0/pow(agm2_strange_SD_OS_Extr.err(ist),2)));
+	double weight_SD_OS_B96= (1.0/pow( agm2_strange_SD_OS_Extr.err(ist),2))/( (1.0/pow(agm2_strange_SD_OS_Extr.err(B64_id),2)) + (1.0/pow(agm2_strange_SD_OS_Extr.err(ist),2)));
+
+	//push_back
+	//W
+	amu_strange_W_tm_red.distr_list.push_back( weight_W_tm_B64*agm2_strange_W_Extr.distr_list[B64_id] + weight_W_tm_B96*agm2_strange_W_Extr.distr_list[ist]);
+	amu_strange_W_OS_red.distr_list.push_back( weight_W_OS_B64*agm2_strange_W_OS_Extr.distr_list[B64_id] + weight_W_OS_B96*agm2_strange_W_OS_Extr.distr_list[ist]);
+
+	//SD
+	amu_strange_SD_tm_red.distr_list.push_back( weight_SD_tm_B64*agm2_strange_SD_Extr.distr_list[B64_id] + weight_SD_tm_B96*agm2_strange_SD_Extr.distr_list[ist]);
+	amu_strange_SD_OS_red.distr_list.push_back( weight_SD_OS_B64*agm2_strange_SD_OS_Extr.distr_list[B64_id] + weight_SD_OS_B96*agm2_strange_SD_OS_Extr.distr_list[ist]);
+	
+	L_strange_list_red.push_back( L_strange_list[ist]);
+	a_distr_list_strange_red.distr_list.push_back( a_distr_list_strange.distr_list[ist]);
+	Mpi_fit_strange_red.distr_list.push_back(Mpi_fit.distr_list[ist]);
+	fp_fit_strange_red.distr_list.push_back(fp_fit.distr_list[ist]);
+	V_strange_tag_red.push_back(V_strange_1_L.Tag[ist]);
+      }
+    }
+  }
+
+
+  //tm
+  Print_To_File(V_strange_tag_red, { L_strange_list_red, (a_distr_list_strange_red/fm_to_inv_Gev).ave() , amu_strange_W_tm_red.ave(), amu_strange_W_tm_red.err()}  , "../data/gm2/strange/tm_"+Extrapolation_strange_mode+"/windows_tm_red", "", "#Ens L a amuW");
+  Print_To_File(V_strange_tag_red, { L_strange_list_red, (a_distr_list_strange_red/fm_to_inv_Gev).ave() , amu_strange_SD_tm_red.ave(), amu_strange_SD_tm_red.err()}  , "../data/gm2/strange/tm_"+Extrapolation_strange_mode+"/SD_tm_red", "", "#Ens L a amuSD");
+
+  //OS
+  Print_To_File(V_strange_tag_red, { L_strange_list_red, (a_distr_list_strange_red/fm_to_inv_Gev).ave() , amu_strange_W_OS_red.ave(), amu_strange_W_OS_red.err()}  , "../data/gm2/strange/OS_"+Extrapolation_strange_mode+"/windows_OS_red", "", "#Ens L a amuW");
+  Print_To_File(V_strange_tag_red, { L_strange_list_red, (a_distr_list_strange_red/fm_to_inv_Gev).ave() , amu_strange_SD_OS_red.ave(), amu_strange_SD_OS_red.err()}  , "../data/gm2/strange/OS_"+Extrapolation_strange_mode+"/SD_OS_red", "", "#Ens L a amuSD");
+
+  //FINAL CONTINUUM EXTRAPOLATION OF INTERMEDIATE DISTANCE STRANGE #####################################################################
+ 
+
+  
+  //n_m_pair_list= { make_pair(0,0), make_pair(1,1), make_pair(2,2), make_pair(3,3)};
+  mass_extr_list={"off"};
+  FSEs_list = {"off"};
+  allow_only_finest=false;
+  allow_a4_and_log=true;
+  single_fit_list = {"tm"};
+  a2_list = {"tm"};
+  a4_list = {"off"};
+  n_m_pair_list = { make_pair(0,0), make_pair(1,0), make_pair(2,0), make_pair(3,0) };
+  //single fit tm
+  Perform_Akaike_fits(amu_strange_W_tm_red, amu_strange_W_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_W_win_final_single_tm", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 27.2, LL, 0.0, return_val, return4_val);
+
+  single_fit_list={"OS"};
+  a2_list= {"OS"};
+  n_m_pair_list = { make_pair(0,0), make_pair(0,1), make_pair(0,2), make_pair(0,3) };
+
+  //single fit OS
+  Perform_Akaike_fits(amu_strange_W_tm_red, amu_strange_W_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_W_win_final_single_OS", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 27.2, LL, 0.0, return_val, return4_val);
+
+
+  //combined fit standard
+  single_fit_list={"off"};
+  a2_list={"on"};
+  a4_list={"on", "off", "tm", "OS"};
+  n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)};
+  Perform_Akaike_fits(amu_strange_W_tm_red, amu_strange_W_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_W_win_final", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 27.2, LL, 0.0, return_val, return4_val);
+
+
+  //linear a^2 leaving 1 or two measurements 
+  a4_list={"off"};
+  Perform_Akaike_fits(amu_strange_W_tm_red, amu_strange_W_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_W_win_final_leave_tm_B", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 27.2, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_strange_W_tm_red, amu_strange_W_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_W_win_final_leave_OS_B", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 27.2, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_strange_W_tm_red, amu_strange_W_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_W_win_final_leave_B", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 27.2, LL, 0.0, return_val, return4_val);
+  
+
+
+  //Pade'
+  a4_list = {"tm", "OS"};
+  //Perform_Akaike_fits(amu_strange_W_tm_red, amu_strange_W_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_W_win_final_Pade", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 27.2, LL, 0.0, return_val, return4_val);
+
+
+  //Ratio/Difference method
+  a4_list = {"on", "off"};
+  Perform_Akaike_fits(amu_strange_W_tm_red-amu_strange_W_OS_red, 1.0e-10*amu_strange_W_tm_red/amu_strange_W_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_W_win_final_ratio_diff_tm", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 27.2, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_strange_W_tm_red-amu_strange_W_OS_red, 1.0e-10*amu_strange_W_OS_red/amu_strange_W_tm_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_W_win_final_ratio_diff_OS", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 27.2, LL, 0.0, return_val, return4_val);
+  
+
+  //####################################################################################################################################
+
+
+
+
+
+   
+
+  //FINAL CONTINUUM EXTRAPOLATION OF SHORT-DISTANCE STRANGE #####################################################################
+  //n_m_pair_list= { make_pair(0,0), make_pair(1,1), make_pair(2,2), make_pair(3,3)};
+  mass_extr_list={"off"};
+  FSEs_list = {"off"};
+  allow_only_finest=false;
+  allow_a4_and_log=true;
+  single_fit_list = {"tm"};
+  a2_list = {"tm"};
+  a4_list = {"off"};
+  n_m_pair_list = { make_pair(0,0), make_pair(1,0), make_pair(2,0), make_pair(3,0) };
+  //single fit tm
+  Perform_Akaike_fits(amu_strange_SD_tm_red, amu_strange_SD_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_SD_win_final_single_tm", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 8, LL, 0.0, return_val, return4_val);
+
+  single_fit_list={"OS"};
+  a2_list= {"OS"};
+  n_m_pair_list = { make_pair(0,0), make_pair(0,1), make_pair(0,2), make_pair(0,3) };
+
+  //single fit OS
+  Perform_Akaike_fits(amu_strange_SD_tm_red, amu_strange_SD_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_SD_win_final_single_OS", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 8, LL, 0.0, return_val, return4_val);
+
+
+  //combined fit standard
+  single_fit_list={"off"};
+  a2_list={"on"};
+  a4_list={"on", "off", "tm", "OS"};
+  n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)};
+  Perform_Akaike_fits(amu_strange_SD_tm_red, amu_strange_SD_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_SD_win_final", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 8, LL, 0.0, return_val, return4_val);
+
+
+  //linear a^2 leaving 1 or two measurements 
+  a4_list={"off"};
+  Perform_Akaike_fits(amu_strange_SD_tm_red, amu_strange_SD_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_SD_win_final_leave_tm_B", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 8, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_strange_SD_tm_red, amu_strange_SD_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_SD_win_final_leave_OS_B", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 8, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_strange_SD_tm_red, amu_strange_SD_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_SD_win_final_leave_B", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 8, LL, 0.0, return_val, return4_val);
+  
+
+
+  //Pade'
+  a4_list = {"tm", "OS"};
+  //Perform_Akaike_fits(amu_strange_SD_tm_red, amu_strange_SD_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_SD_win_final_Pade", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 8, LL, 0.0, return_val, return4_val);
+
+
+  //Ratio/Difference method
+  a4_list = {"on", "off"};
+  Perform_Akaike_fits(amu_strange_SD_tm_red-amu_strange_SD_OS_red, 1.0e-10*amu_strange_SD_tm_red/amu_strange_SD_OS_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_SD_win_final_ratio_diff_tm", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 8, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_strange_SD_tm_red-amu_strange_SD_OS_red, 1.0e-10*amu_strange_SD_OS_red/amu_strange_SD_tm_red, a_A, a_B, a_C, a_D, L_strange_list_red, a_distr_list_strange_red, Mpi_fit_strange_red,fp_fit_strange_red, V_strange_tag_red, UseJack, Njacks, Nboots, Extrapolation_strange_mode+"_SD_win_final_ratio_diff_OS", "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 8, LL, 0.0, return_val, return4_val);
+  
+
+  //####################################################################################################################################
+
+
+
+  //##############################################   CHARM #############################################################################
+
+
+
+  bool first_occurrence_A_ens=true;
+  distr_t_list amu_charm_W_tm_red(UseJack), amu_charm_W_OS_red(UseJack);
+  distr_t_list amu_charm_SD_tm_red(UseJack), amu_charm_SD_OS_red(UseJack);
+  Vfloat L_charm_list_red;
+  distr_t_list a_distr_list_charm_red(UseJack);
+  distr_t_list Mpi_fit_charm_red(UseJack);
+  distr_t_list fp_fit_charm_red(UseJack);
+  vector<string> V_charm_tag_red;
+  for(int ist=0;ist<(signed)V_charm_1_L.Tag.size();ist++) {
+    if(V_charm_1_L.Tag[ist].substr(1,1) != "A") {
+      amu_charm_W_tm_red.distr_list.push_back( agm2_charm_W_Extr.distr_list[ist]);
+      amu_charm_W_OS_red.distr_list.push_back( agm2_charm_W_OS_Extr.distr_list[ist]);
+      amu_charm_SD_tm_red.distr_list.push_back( agm2_charm_SD_Extr.distr_list[ist]);
+      amu_charm_SD_OS_red.distr_list.push_back( agm2_charm_SD_OS_Extr.distr_list[ist]);
+      L_charm_list_red.push_back( L_charm_list[ist]);
+      a_distr_list_charm_red.distr_list.push_back( a_distr_list_charm.distr_list[ist]);
+      Mpi_fit_charm_red.distr_list.push_back(Mpi_fit_charm.distr_list[ist]);
+      fp_fit_charm_red.distr_list.push_back(fp_fit_charm.distr_list[ist]);
+      V_charm_tag_red.push_back(V_charm_1_L.Tag[ist]);
+    }
+    else  {
+      if(first_occurrence_A_ens) {
+	//loop over A ensemble
+	double mult_A_W_tm_ens=0;
+	double mult_A_W_OS_ens=0;
+	double mult_A_SD_tm_ens=0;
+	double mult_A_SD_OS_ens=0;
+	distr_t W_tm(UseJack,UseJack?Njacks:Nboots), W_OS(UseJack,UseJack?Njacks:Nboots), SD_OS(UseJack,UseJack?Njacks:Nboots), SD_tm(UseJack,UseJack?Njacks:Nboots); //constructor sets to 0 
+	for(int isA=0; isA<(signed)V_charm_1_L.Tag.size();isA++) {
+	  if(V_charm_1_L.Tag[isA].substr(1,1) == "A") {
+	    W_tm = W_tm + (1.0/pow(agm2_charm_W_Extr.err(isA),2))*agm2_charm_W_Extr.distr_list[isA];
+	    W_OS = W_OS + (1.0/pow(agm2_charm_W_OS_Extr.err(isA),2))*agm2_charm_W_OS_Extr.distr_list[isA];
+	    SD_tm = SD_tm + (1.0/pow(agm2_charm_SD_Extr.err(isA),2))*agm2_charm_SD_Extr.distr_list[isA];
+	    SD_OS = SD_OS + (1.0/pow(agm2_charm_SD_OS_Extr.err(isA),2))*agm2_charm_SD_OS_Extr.distr_list[isA];
+	    mult_A_W_tm_ens += 1.0/pow(agm2_charm_W_Extr.err(isA),2);
+	    mult_A_W_OS_ens += 1.0/pow(agm2_charm_W_OS_Extr.err(isA),2);
+	    mult_A_SD_tm_ens += 1.0/pow(agm2_charm_SD_Extr.err(isA),2);
+	    mult_A_SD_OS_ens += 1.0/pow(agm2_charm_SD_OS_Extr.err(isA),2);
+	  }
+	}
+
+	//push_back
+	amu_charm_W_tm_red.distr_list.push_back(W_tm/mult_A_W_tm_ens );
+	amu_charm_W_OS_red.distr_list.push_back( W_OS/mult_A_W_OS_ens);
+	amu_charm_SD_tm_red.distr_list.push_back( SD_tm/mult_A_SD_tm_ens);
+	amu_charm_SD_OS_red.distr_list.push_back( SD_OS/mult_A_SD_OS_ens);
+	L_charm_list_red.push_back( L_charm_list[ist]);
+	a_distr_list_charm_red.distr_list.push_back( a_distr_list_charm.distr_list[ist]);
+	Mpi_fit_charm_red.distr_list.push_back(Mpi_fit_charm.distr_list[ist]);
+	fp_fit_charm_red.distr_list.push_back(fp_fit_charm.distr_list[ist]);
+	V_charm_tag_red.push_back(V_charm_1_L.Tag[ist]);
+	
+	
+	first_occurrence_A_ens=false;
+      }
+    }
+  }
+
+
+  cout<<"Charm fit-data produced"<<endl;
+
+
+
+
+  //tm
+  Print_To_File(V_charm_tag_red, { L_charm_list_red, (a_distr_list_charm_red/fm_to_inv_Gev).ave() , amu_charm_W_tm_red.ave(), amu_charm_W_tm_red.err()}  , "../data/gm2/charm/tm_"+Extrapolation_charm_mode+"/windows_tm_red", "", "#Ens L a amuW");
+  Print_To_File(V_charm_tag_red, { L_charm_list_red, (a_distr_list_charm_red/fm_to_inv_Gev).ave() , amu_charm_SD_tm_red.ave(), amu_charm_SD_tm_red.err()}  , "../data/gm2/charm/tm_"+Extrapolation_charm_mode+"/SD_tm_red", "", "#Ens L a amuSD");
+
+  //OS
+  Print_To_File(V_charm_tag_red, { L_charm_list_red, (a_distr_list_charm_red/fm_to_inv_Gev).ave() , amu_charm_W_OS_red.ave(), amu_charm_W_OS_red.err()}  , "../data/gm2/charm/OS_"+Extrapolation_charm_mode+"/windows_OS_red", "", "#Ens L a amuW");
+  Print_To_File(V_charm_tag_red, { L_charm_list_red, (a_distr_list_charm_red/fm_to_inv_Gev).ave() , amu_charm_SD_OS_red.ave(), amu_charm_SD_OS_red.err()}  , "../data/gm2/charm/OS_"+Extrapolation_charm_mode+"/SD_OS_red", "", "#Ens L a amuSD");
+		
+
+  
+  //FINAL CONTINUUM EXTRAPOLATION OF INTERMEDIATE WINDOW CHARM
+
+  //n_m_pair_list= { make_pair(0,0), make_pair(1,1), make_pair(2,2), make_pair(3,3)};
+  mass_extr_list={"off"};
+  FSEs_list = {"off"};
+  allow_only_finest=false;
+  allow_a4_and_log=true;
+  single_fit_list = {"tm"};
+  a2_list = { "tm"};
+  a4_list = {"off", "tm"};
+  n_m_pair_list = { make_pair(0,0), make_pair(1,0), make_pair(2,0), make_pair(3,0) };
+  //single fit tm
+  Perform_Akaike_fits(amu_charm_W_tm_red, amu_charm_W_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_W_win_final_single_tm", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 2.9, LL, 0.0, return_val, return4_val);
+
+  single_fit_list={"OS"};
+  a2_list= { "OS"};
+  a4_list= {"off", "OS"};
+  n_m_pair_list = { make_pair(0,0), make_pair(0,1), make_pair(0,2), make_pair(0,3) };
+
+  //single fit OS
+  Perform_Akaike_fits(amu_charm_W_tm_red, amu_charm_W_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_W_win_final_single_OS", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 2.9, LL, 0.0, return_val, return4_val);
+
+
+  //combined fit standard
+  single_fit_list={"off"};
+  a2_list={"on"};
+  a4_list={"on", "off", "tm", "OS"};
+  n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)};
+  Perform_Akaike_fits(amu_charm_W_tm_red, amu_charm_W_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_W_win_final", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 2.9, LL, 0.0, return_val, return4_val);
+
+
+  //linear a^2 leaving 1 or two measurements 
+  a4_list={"off", "on", "tm", "OS"};
+  Perform_Akaike_fits(amu_charm_W_tm_red, amu_charm_W_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_W_win_final_leave_tm_A", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 2.9, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_charm_W_tm_red, amu_charm_W_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_W_win_final_leave_OS_A", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 2.9, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_charm_W_tm_red, amu_charm_W_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_W_win_final_leave_A", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 2.9, LL, 0.0, return_val, return4_val);
+  
+
+
+  //Pade'
+  //a4_list = {"tm", "OS"};
+  //Perform_Akaike_fits(amu_charm_W_tm_red, amu_charm_W_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_W_win_final_Pade", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 2.9, LL, 0.0, return_val, return4_val);
+
+
+  //Ratio/Difference method
+  a4_list = {"on", "off"};
+  Perform_Akaike_fits(amu_charm_W_tm_red-amu_charm_W_OS_red, 1.0e-10*amu_charm_W_tm_red/amu_charm_W_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_W_win_final_ratio_diff_tm", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 2.9, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_charm_W_tm_red-amu_charm_W_OS_red, 1.0e-10*amu_charm_W_OS_red/amu_charm_W_tm_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_W_win_final_ratio_diff_OS", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 2.9, LL, 0.0, return_val, return4_val);
+
+
+
+  //FINAL CONTINUUM EXTRAPOLATION OF SHORT-DISTANCE WINDOW CHARM
+  
+
+ 
+  //n_m_pair_list= { make_pair(0,0), make_pair(1,1), make_pair(2,2), make_pair(3,3)};
+  mass_extr_list={"off"};
+  FSEs_list = {"off"};
+  allow_only_finest=false;
+  allow_a4_and_log=true;
+  single_fit_list = {"tm"};
+  a2_list = {"tm"};
+  a4_list = {"off", "tm"};
+  n_m_pair_list = { make_pair(0,0), make_pair(1,0), make_pair(2,0), make_pair(3,0) };
+  //single fit tm
+  Perform_Akaike_fits(amu_charm_SD_tm_red, amu_charm_SD_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_SD_win_final_single_tm", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 11.0, LL, 0.0, return_val, return4_val);
+
+  single_fit_list={"OS"};
+  a2_list= {"OS"};
+  a4_list= {"off", "OS"};
+  n_m_pair_list = { make_pair(0,0), make_pair(0,1), make_pair(0,2), make_pair(0,3) };
+
+  //single fit OS
+  Perform_Akaike_fits(amu_charm_SD_tm_red, amu_charm_SD_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_SD_win_final_single_OS", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 11.0, LL, 0.0, return_val, return4_val);
+
+
+  //combined fit standard
+  single_fit_list={"off"};
+  a2_list={"on"};
+  a4_list={"on", "off", "tm", "OS"};
+  n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)};
+  Perform_Akaike_fits(amu_charm_SD_tm_red, amu_charm_SD_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_SD_win_final", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 11.0, LL, 0.0, return_val, return4_val);
+
+
+  //linear a^2 leaving 1 or two measurements 
+  a4_list={"off", "on", "tm", "OS"};
+  Perform_Akaike_fits(amu_charm_SD_tm_red, amu_charm_SD_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_SD_win_final_leave_tm_A", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 11.0, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_charm_SD_tm_red, amu_charm_SD_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_SD_win_final_leave_OS_A", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 11.0, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_charm_SD_tm_red, amu_charm_SD_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_SD_win_final_leave_A", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 11.0, LL, 0.0, return_val, return4_val);
+  
+
+
+  //Pade'
+  //a4_list = {"tm", "OS"};
+  //Perform_Akaike_fits(amu_charm_SD_tm_red, amu_charm_SD_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_SD_win_final_Pade", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, false, 0, 0, 11.0, LL, 0.0, return_val, return4_val);
+
+
+  //Ratio/Difference method
+  a4_list = {"on", "off"};
+  Perform_Akaike_fits(amu_charm_SD_tm_red-amu_charm_SD_OS_red, 1.0e-10*amu_charm_SD_tm_red/amu_charm_SD_OS_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_SD_win_final_ratio_diff_tm", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 11.0, LL, 0.0, return_val, return4_val);
+  Perform_Akaike_fits(amu_charm_SD_tm_red-amu_charm_SD_OS_red, 1.0e-10*amu_charm_SD_OS_red/amu_charm_SD_tm_red, a_A, a_B, a_C, a_D, L_charm_list_red, a_distr_list_charm_red, Mpi_fit_charm_red,fp_fit_charm_red, V_charm_tag_red, UseJack, Njacks, Nboots, Extrapolation_charm_mode+"_SD_win_final_ratio_diff_OS", "charm",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, 2, true, 0, 0, 11.0, LL, 0.0, return_val, return4_val);
+  
+
+
+
+
+
+  //################################################################################################
+
+
+
+  //disco
+
+
+  distr_t ret_distr_SD_disco(UseJack), ret_distr_W_disco(UseJack);
+
+
+  if(Include_light_disco) {
+
+
+    single_fit_list={"OS"};
+    FSEs_list={"off"};
+    a4_list={"off"};
+    n_m_pair_list ={make_pair(0,0)};
+    a2_list={"off", "OS"};
+    mass_extr_list={"off"};
+    allow_a4_and_log = false;
+
+
+    //W disco
+    Perform_Akaike_fits(comb_disco_W, comb_disco_W, a_A, a_B, a_C, a_D, vols_disco, a_lat, Mpi_fit_disco, fp_fit_disco, comb_Tags, UseJack, Njacks, Nboots, "W_win_disco", "total_disco", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 1, false, 0,0, -0.9, LL, 0.0, ret_distr_W_disco, return4_val);
+
+
+    //SD disco
+    Perform_Akaike_fits(comb_disco_SD, comb_disco_SD, a_A, a_B, a_C, a_D, vols_disco, a_lat, Mpi_fit_disco, fp_fit_disco, comb_Tags, UseJack, Njacks, Nboots, "SD_win_disco", "total_disco", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 1, false,  0,0, -0.001, LL, 0.0, ret_distr_SD_disco, return4_val);
+
+
+
+  }
+
+
+  
   exit(-1);
 
 
@@ -8483,7 +9753,7 @@ void Gm2() {
   }
   */
   
-  Perform_Akaike_fits(agm2_light_W, agm2_light_W_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "W_win", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, w0s_mult, true, 0, 0, 200.0, LL, 0.0, ret_distr_W_light);
+  //Perform_Akaike_fits(agm2_light_W, agm2_light_W_OS, a_A, a_B, a_C, a_D, L_list, a_distr_list, Mpi_fit,fp_fit, V_light_1.Tag, UseJack, Njacks, Nboots, "W_win", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, w0s_mult, true, 0, 0, 200.0, LL, 0.0, ret_distr_W_light);
 
   //without B96
 
@@ -8545,12 +9815,11 @@ void Gm2() {
 
 
 
-  Perform_Akaike_fits(agm2_light_W_red, agm2_light_W_OS_red, a_A, a_B, a_C, a_D, L_list_red, a_distr_list_red, Mpi_fit_red,fp_fit_red, V_light_Tag_red, UseJack, Njacks, Nboots, "W_win_red", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, w0s_mult, true, 0, 0, 200.0, LL, 0.0, ret_distr_W_light_red);
+  //Perform_Akaike_fits(agm2_light_W_red, agm2_light_W_OS_red, a_A, a_B, a_C, a_D, L_list_red, a_distr_list_red, Mpi_fit_red,fp_fit_red, V_light_Tag_red, UseJack, Njacks, Nboots, "W_win_red", "light",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, w0s_mult, true, 0, 0, 200.0, LL, 0.0, ret_distr_W_light_red);
 
  
     
-  exit(-1);
-  
+   
     
 
 
@@ -8575,7 +9844,7 @@ void Gm2() {
 
   FSEs_list = {"off"};
   a4_list={"off", "on", "tm", "OS"};
-  mass_extr_list={"off", "on"};
+  mass_extr_list={"off","on"};
   single_fit_list = {"off"};
   a2_list = {"on", "off", "tm", "OS"};
 
@@ -8587,7 +9856,7 @@ void Gm2() {
   //ELM
   //Perform_Akaike_fits(agm2_strange_W_ELM_Extr, agm2_strange_W_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "W_win_ELM_"+Extrapolation_strange_mode, "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0, 0, 27.0, LL, 0.0);
   //NO ELM
-  Perform_Akaike_fits(agm2_strange_W_Extr, agm2_strange_W_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "W_win_"+Extrapolation_strange_mode, "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, w0s_mult, true, 0, 0, 27.0, LL, 0.0, ret_distr_W_strange);
+  Perform_Akaike_fits(agm2_strange_W_Extr, agm2_strange_W_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "W_win_"+Extrapolation_strange_mode, "strange",a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, w0s_mult, true, 0, 0, 27.0, LL, 0.0, ret_distr_W_strange, return4_val);
 
 
   n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)};
@@ -8596,7 +9865,7 @@ void Gm2() {
   //ELM
   //Perform_Akaike_fits(agm2_strange_SD_ELM_Extr, agm2_strange_SD_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_ELM_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest,0,0, 9.0, LL, 0.0);
   //NO ELM
-  Perform_Akaike_fits(agm2_strange_SD_Extr, agm2_strange_SD_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, w0s_mult, true, 0,0, 9.0, LL, 0.0, ret_distr_SD_strange);
+  Perform_Akaike_fits(agm2_strange_SD_Extr, agm2_strange_SD_OS_Extr, a_A, a_B, a_C, a_D, L_strange_list, a_distr_list_strange, Mpi_fit, fp_fit, V_strange_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_"+Extrapolation_strange_mode, "strange", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list,allow_a4_and_log,allow_only_finest, w0s_mult, true, 0,0, 9.0, LL, 0.0, ret_distr_SD_strange, return4_val);
 
 
   n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)};
@@ -8647,7 +9916,7 @@ void Gm2() {
   //ELM
   //Perform_Akaike_fits(agm2_charm_W_ELM_Extr, agm2_charm_W_ELM_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "W_win_ELM_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 0,0, 2.5, LL, 0.0);
   //NO ELM
-  Perform_Akaike_fits(agm2_charm_W_Extr, agm2_charm_W_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "W_win_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, w0s_mult, true, 0,0, 2.5, LL, 0.0, ret_distr_W_charm);
+  Perform_Akaike_fits(agm2_charm_W_Extr, agm2_charm_W_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "W_win_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log,allow_only_finest, w0s_mult, true, 0,0, 2.5, LL, 0.0, ret_distr_W_charm, return4_val);
 
 
   n_m_pair_list = {make_pair(0,0), make_pair(3,0), make_pair(0,3), make_pair(3,3), make_pair(1,0), make_pair(0,1), make_pair(1,1), make_pair(2,0), make_pair(0,2), make_pair(2,2)};
@@ -8658,7 +9927,7 @@ void Gm2() {
 
   a2_list={"on"};
   
-  Perform_Akaike_fits(agm2_charm_SD_Extr, agm2_charm_SD_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, w0s_mult, true, 0,0, 11.5, LL, 0.0, ret_distr_SD_charm);
+  Perform_Akaike_fits(agm2_charm_SD_Extr, agm2_charm_SD_OS_Extr, a_A, a_B, a_C, a_D, L_charm_list, a_distr_list_charm, Mpi_fit_charm, fp_fit_charm, V_charm_1_L.Tag, UseJack, Njacks, Nboots, "SD_win_"+Extrapolation_charm_mode, "charm", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, w0s_mult, true, 0,0, 11.5, LL, 0.0, ret_distr_SD_charm, return4_val);
 
   
 
@@ -8694,31 +9963,7 @@ void Gm2() {
   //#####################################################################################################################
 
 
-  distr_t ret_distr_SD_disco(UseJack), ret_distr_W_disco(UseJack);
 
-
-  if(Include_light_disco) {
-
-
-    single_fit_list={"OS"};
-    FSEs_list={"off"};
-    a4_list={"off"};
-    n_m_pair_list ={make_pair(0,0)};
-    a2_list={"off", "OS"};
-    mass_extr_list={"off"};
-    allow_a4_and_log = false;
-
-
-    //W disco
-    Perform_Akaike_fits(comb_disco_W, comb_disco_W, a_A, a_B, a_C, a_D, vols_disco, a_lat, Mpi_fit_disco, fp_fit_disco, comb_Tags, UseJack, Njacks, Nboots, "W_win_disco", "total_disco", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 1, false, 0,0, -0.9, LL, 0.0, ret_distr_W_disco);
-
-
-    //SD disco
-    Perform_Akaike_fits(comb_disco_SD, comb_disco_SD, a_A, a_B, a_C, a_D, vols_disco, a_lat, Mpi_fit_disco, fp_fit_disco, comb_Tags, UseJack, Njacks, Nboots, "SD_win_disco", "total_disco", a2_list, FSEs_list, a4_list, mass_extr_list, single_fit_list, n_m_pair_list, allow_a4_and_log, allow_only_finest, 1, false,  0,0, -0.001, LL, 0.0, ret_distr_SD_disco);
-
-
-
-  }
 
 
 

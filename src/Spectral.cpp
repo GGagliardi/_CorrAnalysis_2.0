@@ -1,20 +1,20 @@
 #include "../include/Spectral.h"
 
-double step_size = 0.1; //in units of sigma
+double step_size = 0.01; //in units of sigma
 const bool INCLUDE_ERRORS= true;
 const double lambda= INCLUDE_ERRORS?0.9:0.0;
 const bool FIND_OPTIMAL_LAMBDA= true;
 const string COV_MATRIX_MODE = "";
 const int Nmoms=0;
 const int alpha=0;
-const int verbosity_lev=0;
+const int verbosity_lev=1;
 double Beta= 0.0; //1.99;
 const bool mult_estimated_from_norm0=false;
 const bool print_reco_in_stability_analysis=false;
 const bool extended_analysis_of_syst=false;
 bool Integrate_up_to_max_energy=true;
 double Emax_int=4.0;
-
+bool ONLY_FORWARD=false;
 
 using namespace std;
 
@@ -37,7 +37,7 @@ PrecFloat Get_exact_gauss(const PrecFloat &E,const PrecFloat &m,const PrecFloat 
 
 
 
-PrecFloat BaseFunc(const PrecFloat& E, int t, int T) { return exp(-E*t) + exp( -E*T+ E*t);  }
+PrecFloat BaseFunc(const PrecFloat& E, int t, int T) { return exp(-E*t) + ((ONLY_FORWARD)?PrecFloat(0.0):exp( -E*T+ E*t));  }
 
 
 
@@ -53,7 +53,6 @@ PrecFloat aE0(const PrecFloat &E0,const PrecFloat &t, int n) {
   return exp(-E0*t)/t - exp(-PrecFloat(Emax_int)*t)/t;
    
  
-
 }
 
 PrecFloat aE0_std(const PrecFloat &E0,const PrecFloat &t, int n) {
@@ -64,7 +63,7 @@ PrecFloat aE0_std(const PrecFloat &E0,const PrecFloat &t, int n) {
   
   else return pow(t,PrecFloat(-(n+1)))*( gamma(PrecFloat(n+1)) -PrecFloat(n)*gamma(PrecFloat(n)) + gamma_inc(PrecFloat(1+n), E0*t));
 
-
+ 
 }
 
 PrecFloat aE0_std_Emax(const PrecFloat &E0,const PrecFloat &t, int n) {
@@ -75,6 +74,7 @@ PrecFloat aE0_std_Emax(const PrecFloat &E0,const PrecFloat &t, int n) {
   
   else return pow(t,PrecFloat(-(n+1)))*( gamma(PrecFloat(n+1)) -PrecFloat(n)*gamma(PrecFloat(n)) + gamma_inc(PrecFloat(1+n), E0*t));
 
+  
 
 }
 
@@ -84,7 +84,11 @@ void Get_Atr(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int tmax)  {
   Atr.resize(tmax-tmin+1, tmax-tmin+1);
 
   for(int t=tmin;t<= tmax; t++)
-    for(int r=tmin; r<= tmax; r++) Atr(t-tmin,r-tmin) = aE0(E0,-PrecFloat(Beta) + t+r,alpha) + aE0(E0, -PrecFloat(Beta) + T - t +r, alpha) + aE0(E0,-PrecFloat(Beta)+ T+t -r, alpha) + aE0(E0,-PrecFloat(Beta)+ 2*T -t -r, alpha);
+    for(int r=tmin; r<= tmax; r++)
+      {
+	if(ONLY_FORWARD) Atr(t-tmin,r-tmin) = aE0(E0,-PrecFloat(Beta) + t+r,alpha) ;
+	else Atr(t-tmin,r-tmin) = aE0(E0,-PrecFloat(Beta) + t+r,alpha) + aE0(E0, -PrecFloat(Beta) + T - t +r, alpha) + aE0(E0,-PrecFloat(Beta)+ T+t -r, alpha) + aE0(E0,-PrecFloat(Beta)+ 2*T -t -r, alpha);
+      }
     
   
   return;
@@ -95,7 +99,10 @@ void Get_Atr_std(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int tmax) 
   Atr.resize(tmax-tmin+1, tmax-tmin+1);
 
   for(int t=tmin;t<= tmax; t++)
-    for(int r=tmin; r<= tmax; r++) Atr(t-tmin,r-tmin) = aE0_std(E0, PrecFloat(t+r),0) + aE0_std(E0, PrecFloat(T - t +r), 0) + aE0_std(E0, PrecFloat(T+t -r), 0) + aE0_std(E0,PrecFloat(2*T -t -r), 0);
+    for(int r=tmin; r<= tmax; r++) {
+      if(ONLY_FORWARD) Atr(t-tmin,r-tmin) = aE0_std(E0, PrecFloat(t+r),0);
+      else  Atr(t-tmin,r-tmin) = aE0_std(E0, PrecFloat(t+r),0) + aE0_std(E0, PrecFloat(T - t +r), 0) + aE0_std(E0, PrecFloat(T+t -r), 0) + aE0_std(E0,PrecFloat(2*T -t -r), 0);
+    }
     
   
   return;
@@ -106,7 +113,11 @@ void Get_Atr_std_Emax(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int t
   Atr.resize(tmax-tmin+1, tmax-tmin+1);
 
   for(int t=tmin;t<= tmax; t++)
-    for(int r=tmin; r<= tmax; r++) Atr(t-tmin,r-tmin) = aE0_std_Emax(E0, PrecFloat(t+r),0) + aE0_std_Emax(E0, PrecFloat(T - t +r), 0) + aE0_std_Emax(E0, PrecFloat(T+t -r), 0) + aE0_std_Emax(E0,PrecFloat(2*T -t -r), 0);
+    for(int r=tmin; r<= tmax; r++) {
+      if(ONLY_FORWARD) Atr(t-tmin,r-tmin) = aE0_std_Emax(E0, PrecFloat(t+r),0) ;
+      else Atr(t-tmin,r-tmin) = aE0_std_Emax(E0, PrecFloat(t+r),0) + aE0_std_Emax(E0, PrecFloat(T - t +r), 0) + aE0_std_Emax(E0, PrecFloat(T+t -r), 0) + aE0_std_Emax(E0,PrecFloat(2*T -t -r), 0);
+
+    }
     
   
   return;
@@ -130,6 +141,7 @@ void Get_Rt(PrecVect& Rt, const PrecFloat &E0,  int T, int tmin, int tmax) {
 
 }
 
+
 void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int jack_id, int T, int tmin, int tmax, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f) {
 
   ft.resize(tmax-tmin+1);
@@ -142,7 +154,7 @@ void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFlo
       [&f, &m,&s,&E0, &t, &T, &jack_id](const PrecFloat& x) -> PrecFloat
       {
     
-	return exp(PrecFloat(Beta)*x)*pow(x,PrecFloat(alpha))*f(x,m,s,E0, jack_id)*(exp(-x*t) + exp(-x*(T-t))) ;
+	return exp(PrecFloat(Beta)*x)*pow(x,PrecFloat(alpha))*f(x,m,s,E0, jack_id)*(exp(-x*t) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(T-t)))) ;
       };
 
     if(Integrate_up_to_max_energy) ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int);
@@ -157,21 +169,22 @@ void Get_ft_std(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const Pre
 
   ft.resize(tmax-tmin+1);
 
+
  
   for(int t=tmin;t<=tmax;t++) {
-
+    
    
     const auto ftT=
       [&f, &m,&s,&E0, &t, &T, &jack_id](const PrecFloat& x) -> PrecFloat
       {
     
-	return f(x,m,s,E0, jack_id)*(exp(-x*t) + exp(-x*(T-t))) ;
+	return f(x,m,s,E0, jack_id)*(exp(-x*t) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(T-t))) ) ;
       };
 
     
     ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
   }
-  
+
 
   return;
 }
@@ -188,9 +201,10 @@ void Get_ft_std_Emax(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, cons
       [&f, &m,&s,&E0, &t, &T, &jack_id](const PrecFloat& x) -> PrecFloat
       {
     
-	return f(x,m,s,E0, jack_id)*(exp(-x*t) + exp(-x*(T-t))) ;
+	return f(x,m,s,E0, jack_id)*(exp(-x*t) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(T-t)))  ) ;
       };
 
+    
     ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int);
   }
   
@@ -353,6 +367,7 @@ void Compute_covariance_matrix(PrecMatr &B,const PrecMatr &Atr, const distr_t_li
 
   
   if(analysis_name.substr(0,7)=="R_ratio") norm = sqr(PrecFloat(corr.ave(1)))*pow(m,-6);
+  if(analysis_name.substr(0,10)=="virtual_FF") norm= sqr(PrecFloat(corr.ave(1)))*pow(m,-2);
 
   B.resize(tmax-tmin+1, tmax-tmin+1);
 
@@ -389,8 +404,7 @@ void Compute_covariance_matrix(PrecMatr &B,const PrecMatr &Atr, const distr_t_li
 void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const PrecMatr &Atr_std_norm_Emax, const PrecMatr &B,const PrecVect &ft, vector<PrecVect>& ft_jack, const PrecVect &ft_std_norm, const PrecVect &ft_std_norm_Emax, const PrecFloat & M2, const PrecFloat &M2_std_norm, const PrecFloat &M2_std_norm_Emax, const double &mean, const double &sigma, const double &Estart,  double& lambda_opt, double& lambda_opt_10, vector<PrecVect> Rt_n, const PrecVect &M_n , vector<PrecVect>& M_n_jack, const distr_t_list & corr,int T, int tmin, int tmax,const double mult,  string MODE, string curr_type, string SMEARING_FUNC, string CORR_NAME, double Ag_ov_A0_tg, bool JackOnKer,const distr_t& Prefact, string analysis_name,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f,  const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density ) {
 
 
-
-
+ 
 
   int MAX_Iters = 1000;
 
@@ -414,7 +428,6 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
   int Njacks= corr.distr_list[0].distr.size();
 
  
-
    
   const auto A1=
     [&M2, &Atr, &ft](const PrecVect& gmin) -> PrecFloat
@@ -524,8 +537,11 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       vector<PrecVect> ft_l_jack;
       if(JackOnKer) for(int ijack=0;ijack<Njacks;ijack++) ft_l_jack.push_back( ft_jack[ijack]*(1-lambda_mid)/M2);
 
-        
-   
+
+    
+
+
+       
       //Lagrangian multipliers
     
       Get_M_tilde_N(ft_l, C_inv, Rt_n, M_tilde_n);
@@ -818,7 +834,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       }
     }
 
-
+    
     if(Nit > MAX_Iters) {
       cout<<"###### FAILED CONVERGENCE #########"<<endl;
       cout<<"lambda_low: "<<l_low<<" lambda_up: "<<l_up<<endl;
@@ -1239,12 +1255,12 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
 }
 
-
-distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact, string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b) {
+distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact, string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW) {
 
   Integrate_up_to_max_energy= Int_up_to_Max;
   Emax_int=Max_Erg;
   Beta=b;
+  ONLY_FORWARD=ONLY_FW;
 
  
   if(MODE != "TANT" && MODE != "SANF") crash("MODE: "+MODE+" not recognized");
@@ -1265,8 +1281,8 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   boost::filesystem::create_directory("../data/spectral_reconstruction/"+analysis_name+"/smearing_func/beta_"+to_string_with_precision(Beta,2)+"_Emax_"+Emax_val);
   boost::filesystem::create_directory("../data/spectral_reconstruction/"+analysis_name+"/lambda_stability/beta_"+to_string_with_precision(Beta,2)+"_Emax_"+Emax_val);
   boost::filesystem::create_directory("../data/spectral_reconstruction/"+analysis_name+"/error_funcs/beta_"+to_string_with_precision(Beta,2)+"_Emax_"+Emax_val);
-  
 
+  
   PrecFloat::setDefaultPrecision(prec);
 
   PrecFloat s = sigma;
@@ -1287,31 +1303,41 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   PrecVect M_tilde_n, M_tilde_n_10;
   PrecMatr G_n, G_n_10;
 
+   
   //get vectors ft, and matrix Atr
+
+  if(verbosity_lev) cout<<"Njacks: "<<Njacks<<" T: "<<corr.size()<<endl<<flush;
 
   if(verbosity_lev) cout<<"computing f(t)..."<<flush;
 
   
   Get_ft(ft, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
 
-  if(verbosity_lev) cout<<"done!"<<endl<<flush;
+  if(verbosity_lev) { cout<<"done!"<<endl<<flush;}
 
-  if(verbosity_lev) cout<<"computing f(t)_std...";
+   
+
+  if(verbosity_lev) cout<<"computing f(t)_std..."<<flush;
   
   Get_ft_std(ft_std, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
 
   if(verbosity_lev) cout<<"done!"<<endl<<flush;
 
 
-  if(verbosity_lev) cout<<"computing f(t)_std_Emax...";
+  if(verbosity_lev) cout<<"computing f(t)_std_Emax..."<<flush;
   
   Get_ft_std_Emax(ft_std_Emax, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
 
   if(verbosity_lev) cout<<"done!"<<endl<<flush;
+
+  if(verbosity_lev) {
+    cout.precision(PrecFloat::getNDigits());
+    cout<<"Printing ft: "<<endl;
+    for(int t=1;t<=tmax;t++) cout<<"f("<<t<<") : "<<ft_std(t-1)<<" "<<ft_std_Emax(t-1)<<endl<<flush;
+  }
     
   Get_Atr(Atr, E0, T, 1, tmax);
 
- 
   Get_Atr_std(Atr_std, E0, T, 1, tmax);
 
   Get_Atr_std_Emax(Atr_std_Emax, E0, T, 1, tmax);
@@ -1326,9 +1352,16 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   Get_Rt_up_to_N(E0, T, 1, tmax, Rt_n);
 
   Get_M_N(m,s,E0,-1,f, M_n);
+
+  if(verbosity_lev) {
+    cout.precision(PrecFloat::getNDigits());
+    cout<<"M2 : "<<M2<<endl<<flush;
+    cout<<"M2 std: "<<M2_std<<endl<<flush;
+    cout<<"M2_std_Emax: "<<M2_std_Emax<<endl<<flush;
+  }
  
 
-
+  cout.precision(10);
   //get ft, M_N in case a statistical fluctuations in kernel function must be computed
   vector<PrecVect> ft_jack, ft_jack_10;
   vector<PrecVect> M_n_jack, M_n_diff_jack;
@@ -1468,13 +1501,13 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
   int Npoints;
   if(analysis_name == "tau_decay") {Npoints= 20000; step_size=0.001;}
-  else Npoints= (int)(((m+20*s -E0)/(s*step_size)).get());
+  else Npoints= (int)(((m+20*s)/(s*step_size)).get());
 
   for(int ip=0; ip<Npoints;ip++) {
     PrecVect bt;
     PrecFloat E;
     if(analysis_name == "tau_decay") E= E0+ ip*step_size;
-    else E = E0 + (ip*s)*step_size;
+    else E = (ip*s)*step_size;
     Get_bt(bt, E, T, 1, tmax);  
     const PrecFloat reco_result = g.transpose()*bt;
     const PrecFloat exact_result = f(E,m,s,E0,-1);

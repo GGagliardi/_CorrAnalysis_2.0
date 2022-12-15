@@ -876,6 +876,12 @@ distr_t Get_id_jack_distr(int N) {
 }
 
 
+distr_t_list Get_id_jack_distr_list(int size, int N) {
+  distr_t_list return_distr(1);
+  for(int i=0; i<size;i++) return_distr.distr_list.push_back( Get_id_jack_distr(N));
+  return return_distr;
+}
+
 
 
 

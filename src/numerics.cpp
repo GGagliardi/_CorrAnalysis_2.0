@@ -540,3 +540,56 @@ void debug_loop()
  MPI_Barrier(MPI_COMM_WORLD);
 
 }
+
+
+double Get_4l_alpha_s( double Q, double Nf) {
+
+  double B0= 11.0 -(2.0/3.0)*Nf;
+  double B1= 102.0 - (38.0/3)*Nf;
+  double Q2= pow(Q,2);
+  double L2= pow(0.340,2);
+
+  return (4*M_PI/(B0*log(Q2/L2)))*( 1.0 - (B1/pow(B0,2))*log( fabs(log(Q2/L2)))/log(Q2/L2));
+  
+
+
+
+}
+
+void Print_4l_alpha_s() {
+
+  double Qmax= 100;
+  double Qmin=0.1;
+  double Qstep=0.01;
+  double Q=Qmin;
+  ofstream Print_alpha("../data/gm2/alphas_Q.dat");
+  Print_alpha<<"#Q[GeV]  Nf=3    Nf=4"<<endl;
+  while( Q <= Qmax) {
+    Print_alpha<<Q <<" "<<Get_4l_alpha_s(Q,3)<<" "<<Get_4l_alpha_s(Q, 4)<<endl;
+    Q+=Qstep;
+  }
+  Print_alpha.close();
+  Q=Qmin;
+  ofstream Print_alpha_t("../data/gm2/alphas_t_s_pi.dat");
+  Print_alpha_t<<"#t[fm]  Nf=3    Nf=4"<<endl;
+  while( Q <= Qmax) {
+    double flav3= Get_4l_alpha_s(Q,3);
+    double flav4= Get_4l_alpha_s(Q,4);
+    Print_alpha_t<<(M_PI/Q)*0.197327 <<" "<<flav3<<" "<<(1.0 - exp(-pow( flav3/M_PI,2)))<<" "<<flav4<<" "<<(1.0 - exp( - pow(flav4/M_PI,2)))<<endl;
+    Q+=Qstep;
+  }
+
+  Print_alpha_t.close();
+  Q=Qmin;
+  ofstream Print_alpha_t_s1("../data/gm2/alphas_t_s_1.dat");
+  Print_alpha_t_s1<<"#t[fm]  Nf=3    Nf=4"<<endl;
+  while( Q <= Qmax) {
+    double flav3= Get_4l_alpha_s(Q,3);
+    double flav4= Get_4l_alpha_s(Q,4);
+    Print_alpha_t_s1<<(1.0/Q)*0.197327 <<" "<<flav3<<" "<<(1.0 - exp(-pow( flav3/1.0,2)))<<" "<<flav4<<" "<<(1.0 - exp( - pow(flav4/1.0,2)))<<endl;
+    Q+=Qstep;
+  }
+
+  Print_alpha_t_s1.close();
+  return;
+}

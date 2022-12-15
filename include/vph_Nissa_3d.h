@@ -1,5 +1,5 @@
-#ifndef __vph_Nissa__
-#define __vph_Nissa__
+#ifndef __vph_Nissa_3d__
+#define __vph_Nissa_3d__
 
 
 #include "numerics.h"
@@ -15,15 +15,14 @@
 #include "virtual_ff_fit.h"
 #include "virtual_FF_t_interval_list.h"
 #include "ChPT_form_factors.h"
+#include "highPrec.h"
+#include "Spectral.h"
 
 using namespace std;
 
-void Get_xg_t_list();
-void Get_xg_to_spline();
-void Get_xg_to_spline_VMD();
-void Get_lattice_spacings_to_print();
-void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens);
-void Compute_form_factors_Nissa();
+void Get_virt_list();
+void Integrate_over_photon_insertion(const distr_t_list &W, vector<distr_t_list> &H, double Eg, int t_weak, double MP, int TO);
+void Compute_form_factors_Nissa_3d();
 
 
 #endif

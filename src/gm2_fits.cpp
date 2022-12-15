@@ -18,8 +18,8 @@ const double s1 = M_PI/4.0 - 0.5;
 const double s2 = 0.5 - M_PI/8.0;
 const double s3 = 3.0*M_PI/16.0 - 0.5;
 const double fm_to_iGev= 1.0/0.197327;
-double w0_scale= 0.17383*fm_to_iGev;
-Vfloat w0_scales({ w0_scale, w0_scale/1.5, w0_scale*3.0}); 
+double w0_scale_original= 0.17383*fm_to_iGev;
+Vfloat w0_scales({ w0_scale_original,  w0_scale_original*3.0}); 
 const double BMW_FSEs_light_W = -283.0;   //with error this would be 283(8)
 const double t0_W = 0.4*fm_to_iGev;
 const double t1_W = 1.0*fm_to_iGev;
@@ -35,7 +35,7 @@ bool prior_on_a2_log_and_a4=false;
 class W_ipar {
 
 public:
-  W_ipar() : w_val(0.0), w_err(0.0), GS_FSEs(0.0), GS_FSEs_der(0.0) {}
+  W_ipar() : w_val(0.0), w_err(0.0), GS_FSEs(0.0), GS_FSEs_der(0.0), meas_tag("") {}
 
   
   double Mp, Mp_OS;
@@ -46,7 +46,8 @@ public:
   double a;
   bool Is_tm;
   double GS_FSEs;
-  double GS_FSEs_der; 
+  double GS_FSEs_der;
+  string meas_tag;
 };
 
 class W_fpar {
@@ -82,7 +83,7 @@ public:
 
 
 
-void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS, const distr_t &a_A, const distr_t &a_B, const distr_t &a_C, const distr_t &a_D, Vfloat &L_list,const distr_t_list &a_distr_list, const distr_t_list &Mpi_fit, const distr_t_list &fp_fit, vector<string> &Ens_Tag, bool UseJack, int Njacks, int Nboots,  string W_type, string channel, vector<string> &Inc_a2_list, vector<string> &Inc_FSEs_list, vector<string> &Inc_a4_list, vector<string> &Inc_mass_extr_list, vector<string> &Inc_single_fit_list, VPfloat &Inc_log_corr_list, bool allow_a4_and_log, bool allow_only_finest, int w0s_mult, bool Is_Log_fitted, int vol_mult, int mass_mult, double cont_guess, LL_functions &LL, double tmin_SD , distr_t &return_distr) {
+void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS, const distr_t &a_A, const distr_t &a_B, const distr_t &a_C, const distr_t &a_D, Vfloat &L_list,const distr_t_list &a_distr_list, const distr_t_list &Mpi_fit, const distr_t_list &fp_fit, vector<string> &Ens_Tag, bool UseJack, int Njacks, int Nboots,  string W_type, string channel, vector<string> &Inc_a2_list, vector<string> &Inc_FSEs_list, vector<string> &Inc_a4_list, vector<string> &Inc_mass_extr_list, vector<string> &Inc_single_fit_list, VPfloat &Inc_log_corr_list, bool allow_a4_and_log, bool allow_only_finest, int w0s_mult, bool Is_Log_fitted, int vol_mult, int mass_mult, double cont_guess, LL_functions &LL, double tmin_SD , distr_t &return_distr, distr_t &return4_distr) {
 
 
 
@@ -121,6 +122,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
     Csi_CDH.distr_list.push_back( Mpi_CDH.distr_list[iens]*Mpi_CDH.distr_list[iens]/(16.0*M_PI*M_PI*fp_CDH.distr_list[iens]*fp_CDH.distr_list[iens]));
   }
 
+
+  D(1);
 
   //distr_t_list gs_FSEs(UseJack);
 
@@ -353,7 +356,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 		    bool Fit_allowed= true;
 
-		    w0_scale = w0_scales[w0_m];
+		    double w0_scale = w0_scales[w0_m];
 		    int Nmeas_priors=0;
 		    prior_on_a2_log_and_a4=false;
 		    
@@ -443,8 +446,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		    if(t_sin_fit != "off" && t_mass == "off") Nmeas -= mass_mult; //RULE 14
 		    if(t_sin_fit == "off" && (t_mass == "off")) Nmeas -= 2*mass_mult; //RULE 15
 
-		    //if( n_m_pair.first == 0 && n_m_pair.second==0 && w0_m != 0) Fit_allowed=false;
-		    //if( n_m_pair.first == 0 && n_m_pair.second== 0 && t_fit_logs==1) Fit_allowed=false;
+		    if( n_m_pair.first == 0 && n_m_pair.second==0 && w0_m != 0) Fit_allowed=false;
+		    if( n_m_pair.first == 0 && n_m_pair.second== 0 && t_fit_logs==1) Fit_allowed=false;
 
 		    //in the intermediate window 
 	    
@@ -478,15 +481,23 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		    }
 
 
-		    /*
-		    if(W_type.substr(0,5) == "W_win" && channel == "light") { //add priors
-		      prior_on_a2_log_and_a4=true;
-		      //determine Nmeas_prior 
-		      Nmeas_priors=4;
-		    }
-		    */
+	        
+
+		    if( (W_type.find("diff_tm_OS") != string::npos)   || (W_type.find("ratio_tm_OS") != string::npos)  || (W_type.find("ratio_diff") != string::npos)) npars --;
+
+		    if( (W_type.find("leave_tm_B") != string::npos) || (W_type.find("leave_OS_B") != string::npos)) Nmeas--;
+
+		    if( (W_type.find("leave_B") != string::npos)) Nmeas -= 2;
+
+		    if( (W_type.find("leave_tm_A") != string::npos) || (W_type.find("leave_OS_A") != string::npos)) Nmeas--;
+
+		    if( (W_type.find("leave_A") != string::npos)) Nmeas -= 2;
+
+		    if( (W_type.find("ratio_diff") != string::npos) && !t_fit_logs ) { if( n_m_pair.first != n_m_pair.second) Fit_allowed=false;}
 		    
 		    if(npars >= Nmeas) Fit_allowed= false;
+
+		    
 
 
 		   
@@ -495,7 +506,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		    if(Fit_allowed) {
 
 
-
+		      cout<<"Fit allowed!"<<endl;
 		
 		      //push_back info about the allowed fit
 		      //#####################################
@@ -512,18 +523,19 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		      //#####################################
 	      
 		      //########################################################
-  
+
+	  
 		      //perform physical point + continuum + thermodynamic limit
   
 		      bootstrap_fit<W_fpar,W_ipar> bf(UseJack?Njacks:Nboots);
-		      bf.set_warmup_lev(1);
+		      bf.set_warmup_lev(3);
 		      bf.Set_number_of_measurements(Tot_Nmeas);
-		      bf.Set_verbosity(verb);
+		      bf.Set_verbosity(1);
 		      bf.Set_print_path("chi2_comb_W_gm2_"+W_type+"_"+channel+".out");
 
 		      //fit to average values to estimate ch2
 		      bootstrap_fit<W_fpar,W_ipar> bf_ch2(1);
-		      bf_ch2.set_warmup_lev(1);
+		      bf_ch2.set_warmup_lev(3);
 		      bf_ch2.Set_number_of_measurements(Tot_Nmeas);
 		      bf_ch2.Set_verbosity(verb);
   
@@ -533,28 +545,28 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		      bf.Add_par("Al2_tm", +1.0, 0.1);
 		      bf.Add_par("Al2_OS", -1.0, 0.1);
 		      if(prior_on_a2_log_and_a4)  {
-		      bf.Add_prior_par("D_tm", -1.0, 0.1);
-		      bf.Add_prior_par("D_OS", -1.0, 0.1);
+		      bf.Add_prior_par("D_tm", -1.0, 0.01);
+		      bf.Add_prior_par("D_OS", -1.0, 0.01);
 		      }
 		      else {
-			bf.Add_par("D_tm", -1.0, 0.1);
-			bf.Add_par("D_OS", -1.0, 0.1);
+			bf.Add_par("D_tm", 1.0, 0.01);
+			bf.Add_par("D_OS", 1.0, 0.01);
 		      }
 		      
 		   
 		      bf.Add_par("n", 3.0, 0.1);
 		      bf.Add_par("m", 3.0, 0.1);
 		      if(!prior_on_a2_log_and_a4) {
-			bf.Add_par("D4_tm", 1.0, 0.1);
-			bf.Add_par("D4_OS", 1.0, 0.1);
-			bf.Add_par("D_pure_tm", 1.0, 0.1);
-			bf.Add_par("D_pure_OS", 1.0, 0.1);
+			bf.Add_par("D4_tm", 1.0, 0.01);
+			bf.Add_par("D4_OS", 1.0, 0.01);
+			bf.Add_par("D_pure_tm", 1.0, 0.01);
+			bf.Add_par("D_pure_OS", 1.0, 0.01);
 		      }
 		      else {
-			bf.Add_prior_par("D4_tm", 1.0, 0.1);
-			bf.Add_prior_par("D4_OS", 1.0, 0.1);
-			bf.Add_prior_par("D_pure_tm", 1.0, 0.1);
-			bf.Add_prior_par("D_pure_OS", 1.0, 0.1);
+			bf.Add_prior_par("D4_tm", 1.0, 0.01);
+			bf.Add_prior_par("D4_OS", 1.0, 0.01);
+			bf.Add_prior_par("D_pure_tm", 1.0, 0.01);
+			bf.Add_prior_par("D_pure_OS", 1.0, 0.01);
 		      }
 		    
 
@@ -569,28 +581,28 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		      bf_ch2.Add_par("Al2_tm", +1.0, 0.1);
 		      bf_ch2.Add_par("Al2_OS", -1.0, 0.1);
 		      if(prior_on_a2_log_and_a4)  {
-		      bf_ch2.Add_prior_par("D_tm", -1.0, 0.1);
-		      bf_ch2.Add_prior_par("D_OS", -1.0, 0.1);
+		      bf_ch2.Add_prior_par("D_tm", 1.0, 0.01);
+		      bf_ch2.Add_prior_par("D_OS", 1.0, 0.01);
 		      }
 		      else {
-			bf_ch2.Add_par("D_tm", -1.0, 0.1);
-			bf_ch2.Add_par("D_OS", -1.0, 0.1);
+			bf_ch2.Add_par("D_tm", 1.0, 0.01);
+			bf_ch2.Add_par("D_OS", 1.0, 0.01);
 		      }
 
 		      
 		      bf_ch2.Add_par("n", 3.0, 0.1);
 		      bf_ch2.Add_par("m", 3.0, 0.1);
 		      if(!prior_on_a2_log_and_a4) {
-			bf_ch2.Add_par("D4_tm", 1.0, 0.1);
-			bf_ch2.Add_par("D4_OS", 1.0, 0.1);
-			bf_ch2.Add_par("D_pure_tm", 1.0, 0.1);
-			bf_ch2.Add_par("D_pure_OS", 1.0, 0.1);
+			bf_ch2.Add_par("D4_tm", 1.0, 0.01);
+			bf_ch2.Add_par("D4_OS", 1.0, 0.01);
+			bf_ch2.Add_par("D_pure_tm", 1.0, 0.01);
+			bf_ch2.Add_par("D_pure_OS", 1.0, 0.01);
 		      }
 		      else {
-			bf_ch2.Add_prior_par("D4_tm", 1.0, 0.1);
-			bf_ch2.Add_prior_par("D4_OS", 1.0, 0.1);
-			bf_ch2.Add_prior_par("D_pure_tm", 1.0, 0.1);
-			bf_ch2.Add_prior_par("D_pure_OS", 1.0, 0.1);
+			bf_ch2.Add_prior_par("D4_tm", 1.0, 0.01);
+			bf_ch2.Add_prior_par("D4_OS", 1.0, 0.01);
+			bf_ch2.Add_prior_par("D_pure_tm", 1.0, 0.01);
+			bf_ch2.Add_prior_par("D_pure_OS", 1.0, 0.01);
 		      }
 		      
 		 
@@ -643,6 +655,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 
 		      //Fix parameters depending on the fit type
+		      if( (W_type.find("diff_tm_OS") != string::npos) || (W_type.find("ratio_tm_OS") != string::npos) || (W_type.find("ratio_diff") != string::npos)) {bf.Fix_par("w0",1.0); bf_ch2.Fix_par("w0", 1.0);}
 		      if(t_mass == "off") {bf.Fix_par("Am", 0.0); bf_ch2.Fix_par("Am", 0.0);}
 		      if(t_FSEs != "on" && t_FSEs != "comb" && t_FSEs != "comb_GS") { bf.Fix_par("Al1", 0.0); bf_ch2.Fix_par("Al1", 0.0); }
 		      if(t_FSEs == "comb_GS") { bf.Fix_par("Al1", 0.0); bf_ch2.Fix_par("Al1", 0.0); }
@@ -669,10 +682,25 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		      Npars.push_back(npars);
 		      Ndof.push_back(dof);
   
+		      int ansatz_mode=-1;
 
+		      
   
 	      
-		      bf.ansatz= [=](const W_fpar& X, const W_ipar& Y) {
+		      bf.ansatz= [&](const W_fpar& X, const W_ipar& Y) {
+
+
+				   //return 0 in some cases
+				   if( (W_type.find("leave_tm_B") != string::npos) && (Y.Is_tm==1) && ( Y.meas_tag.substr(1,1) == "B")) return 0.0;
+				   if( (W_type.find("leave_OS_B") != string::npos) && (Y.Is_tm==0) && (Y.meas_tag.substr(1,1) == "B")) return 0.0;
+				   if( (W_type.find("leave_B") != string::npos) && (Y.meas_tag.substr(1,1) == "B")) return 0.0;
+
+
+				   if( (W_type.find("leave_tm_A") != string::npos) && (Y.Is_tm==1) && ( Y.meas_tag.substr(1,1) == "A")) return 0.0;
+				   if( (W_type.find("leave_OS_A") != string::npos) && (Y.Is_tm==0) && (Y.meas_tag.substr(1,1) == "A")) return 0.0;
+				   if( (W_type.find("leave_A") != string::npos) && (Y.meas_tag.substr(1,1) == "A")) return 0.0;
+				
+				   
 				   double csi= Y.a==0?csi_phys:pow(Y.Mp/(4.0*M_PI*Y.fp),2); //if a=0 csi is set to its physical value
 				   double MpL;
 				   double Mp_dim = Y.a==0?Mp_phys:Y.Mp/Y.a; //if a=0 Mp is evaluated at the physical point
@@ -685,8 +713,55 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 				   double par_art_a4 = Y.Is_tm?X.D4_tm:X.D4_OS;
 				   double par_art_a2_pure= Y.Is_tm?X.D_pure_tm:X.D_pure_OS;
 				   double par_vol_art = Y.Is_tm?X.Al2_tm:X.Al2_OS;
-				   double res_w0_FSEs = X.w0*(1.0 + X.Am*(Mp_dim-Mp_phys) + par_art_a2_pure*pow(Y.a/w0_scale,2) + par_art*art + par_art_a4*pow(Y.a/w0_scale,4)); // pion mass Y.Mp is in [GeV]
+
+
+				   
+				   double k=1.0;
+				   if(W_type.find("diff_tm_OS") != string::npos) k=0.0;
+				   //double res_w0_FSEs = X.w0*(k + X.Am*(Mp_dim-Mp_phys) + par_art_a2_pure*pow(Y.a/w0_scale,2) + par_art*art + par_art_a4*pow(Y.a/w0_scale,4)); // pion mass Y.Mp is in [GeV]
+
+				   double res_w0_FSEs = X.w0*k + cont_guess*(X.Am*(Mp_dim-Mp_phys) + par_art_a2_pure*pow(Y.a/w0_scale,2) + par_art*art + par_art_a4*pow(Y.a/w0_scale,4)); // pion mass Y.Mp is in [GeV]
+				   if(W_type.find("Pade") != string::npos) res_w0_FSEs=  X.w0*( 1 + X.Am*(Mp_dim-Mp_phys) + par_art_a2_pure*pow(Y.a/w0_scale,2) + par_art*art )/(1.0+ par_art_a4*pow(Y.a/w0_scale,2));
+
+				   if(W_type.find("ratio_diff") != string::npos ) {
+
+				     double diff=X.D_pure_tm*pow(Y.a/w0_scale,2) + X.D_tm*pow(Y.a/w0_scale,2)/pow(log(w0_scale/Y.a), X.n) + X.D4_tm*pow(Y.a/w0_scale,4);
+				     double ratio_tm_OS= res_w0_FSEs= 1.0 + X.D_pure_OS*pow(Y.a/w0_scale,2) + X.D_OS*pow(Y.a/w0_scale,2)/(pow(log(w0_scale/Y.a),X.m)) + X.D4_OS*pow(Y.a/w0_scale,4);
+				     double ratio_OS_tm= 1.0 - 1.0*X.D_pure_OS*pow(Y.a/w0_scale,2)  -1.0*X.D_OS*pow(Y.a/w0_scale,2)/(pow(log(w0_scale/Y.a),X.m)) + X.D4_OS*pow(Y.a/w0_scale,4) ;
+
+
+				     if(Y.Is_tm==1) res_w0_FSEs= diff;
+				     else {
+				       if(W_type.find("tm") != string::npos) res_w0_FSEs=ratio_tm_OS;
+				       else  res_w0_FSEs= ratio_OS_tm;   
+				     }
+
+				     
+				     if(ansatz_mode==1) { //tm
+				       if(W_type.find("OS") != string::npos) res_w0_FSEs= -1.0*diff/(ratio_OS_tm-1.0);
+				       else res_w0_FSEs= ratio_tm_OS*diff/(ratio_tm_OS-1.0);
+				     }
+				     else if(ansatz_mode==0) {  //OS
+				       if(W_type.find("OS") != string::npos) res_w0_FSEs= -1.0*ratio_OS_tm*diff/(ratio_OS_tm -1.0);
+				       else res_w0_FSEs= diff/(ratio_tm_OS -1.0);
+				     }
+
+				     if(Y.a==0) {
+				       if(t_fit_logs==0) res_w0_FSEs= X.D_tm/X.D_OS;
+				       else {
+					 if(X.n==0) res_w0_FSEs= X.D_tm/X.D_pure_OS;
+					 else if(X.m==0) res_w0_FSEs= X.D_pure_tm/X.D_OS;
+					 else res_w0_FSEs= X.D_pure_tm/X.D_pure_OS;
+
+					 if(X.n==0 && X.m==0) crash("t_fit_logs=1 but n=m=0");
+				       }
+				     
+				     }
+				   }
+				   
 				   double res=0.0;
+
+				  
 			       
 				   if(t_FSEs == "comb_GS") {
 				     double FSEs = (Y.GS_FSEs + par_vol_art*pow(Y.a,2)*Y.GS_FSEs_der)/X.w0;
@@ -697,9 +772,23 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 				   }
 				   return res;
 				 };
+
+		      
 		      bf.measurement = [=](const W_fpar& X, const W_ipar& Y) {
+
+					 if( (W_type.find("leave_tm_B") != string::npos) && (Y.Is_tm==1) && ( Y.meas_tag.substr(1,1) == "B")) return 0.0;
+					 if( (W_type.find("leave_OS_B") != string::npos) && (Y.Is_tm==0) && (Y.meas_tag.substr(1,1) == "B")) return 0.0;
+					 if( (W_type.find("leave_B") != string::npos) && (Y.meas_tag.substr(1,1) == "B")) return 0.0;
+
+
+					 if( (W_type.find("leave_tm_A") != string::npos) && (Y.Is_tm==1) && ( Y.meas_tag.substr(1,1) == "A")) return 0.0;
+					 if( (W_type.find("leave_OS_A") != string::npos) && (Y.Is_tm==0) && (Y.meas_tag.substr(1,1) == "A")) return 0.0;
+					 if( (W_type.find("leave_A") != string::npos) && (Y.meas_tag.substr(1,1) == "A")) return 0.0;
+					 
 					 return Y.w_val;
 				       };
+
+		      
 		      bf.error = [=](const W_fpar& X, const W_ipar& Y) {
 				   return Y.w_err;
 				 };
@@ -713,7 +802,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		      for(auto &ipar_ch2_jack: ipar_ch2_all_ens) ipar_ch2_jack.resize(Tot_Nmeas);
 
 		      int id_obs=0;
-	      
+
+		  	      
 		      for(int iens=0; iens<Nens;iens++) {  
 			for(int ijack=0;ijack<(UseJack?Njacks:Nboots);ijack++) {
 			  //tm_data
@@ -731,6 +821,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			    ipar_all_ens[ijack][id_obs].w_err = 1.0e10*meas_tm.err(iens);
 			    ipar_all_ens[ijack][id_obs].GS_FSEs = gs_FSEs_with_error.distr_list[iens].distr[ijack]*(corr_fact_FSEs.distr[ijack]);
 			    ipar_all_ens[ijack][id_obs].GS_FSEs_der = gs_FSEs_der_with_error.distr_list[iens].distr[ijack]*(corr_fact_FSEs.distr[ijack]);
+			    ipar_all_ens[ijack][id_obs].meas_tag= Ens_Tag[iens];
 			    if(ijack==0) {
 			      if(Ens_Tag[iens].substr(1,1) == "A") {ipar_ch2_all_ens[ijack][id_obs].ibeta=0; ipar_ch2_all_ens[ijack][id_obs].a= a_A.ave();}
 			      else if(Ens_Tag[iens].substr(1,1) == "B") {ipar_ch2_all_ens[ijack][id_obs].ibeta=1; ipar_ch2_all_ens[ijack][id_obs].a= a_B.ave();}
@@ -745,6 +836,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			      ipar_ch2_all_ens[ijack][id_obs].w_err = 1.0e10*meas_tm.err(iens);
 			      ipar_ch2_all_ens[ijack][id_obs].GS_FSEs = (gs_FSEs_with_error.distr_list[iens]*corr_fact_FSEs).ave();
 			      ipar_ch2_all_ens[ijack][id_obs].GS_FSEs_der = (gs_FSEs_der_with_error.distr_list[iens]*corr_fact_FSEs).ave();
+			      ipar_ch2_all_ens[ijack][id_obs].meas_tag = Ens_Tag[iens];
 			    }
 			  }
 			}
@@ -768,6 +860,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			    ipar_all_ens[ijack][id_obs].w_err = 1.0e10*meas_OS.err(iens);
 			    ipar_all_ens[ijack][id_obs].GS_FSEs = gs_FSEs_with_error.distr_list[iens].distr[ijack]*(corr_fact_FSEs.distr[ijack]);
 			    ipar_all_ens[ijack][id_obs].GS_FSEs_der = gs_FSEs_der_with_error.distr_list[iens].distr[ijack]*(corr_fact_FSEs.distr[ijack]);
+			    ipar_all_ens[ijack][id_obs].meas_tag= Ens_Tag[iens];
 			    if(ijack==0) {
 			      if(Ens_Tag[iens].substr(1,1) == "A") {ipar_ch2_all_ens[ijack][id_obs].ibeta=0; ipar_ch2_all_ens[ijack][id_obs].a= a_A.ave();}
 			      else if(Ens_Tag[iens].substr(1,1) == "B") {ipar_ch2_all_ens[ijack][id_obs].ibeta=1; ipar_ch2_all_ens[ijack][id_obs].a= a_B.ave();}
@@ -782,6 +875,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			      ipar_ch2_all_ens[ijack][id_obs].w_err = 1.0e10*meas_OS.err(iens);
 			      ipar_ch2_all_ens[ijack][id_obs].GS_FSEs = (gs_FSEs_with_error.distr_list[iens]*corr_fact_FSEs).ave();
 			      ipar_ch2_all_ens[ijack][id_obs].GS_FSEs_der = (gs_FSEs_der_with_error.distr_list[iens]*corr_fact_FSEs).ave();
+			      ipar_ch2_all_ens[ijack][id_obs].meas_tag = Ens_Tag[iens];
 			    }
 			
 			  }
@@ -792,6 +886,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 		     
 
+				      
 		      //append
 		      bf.Append_to_input_par(ipar_all_ens);
 		      bf_ch2.Append_to_input_par(ipar_ch2_all_ens);
@@ -822,10 +917,74 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		      boot_fit_data<W_fpar> Bt_w_fit = bf.Perform_bootstrap_fit();
 		      boot_fit_data<W_fpar> Bt_ch2_w_fit= bf_ch2.Perform_bootstrap_fit();
 
+		      
+
   
 		      //retrieve parameter
 		      distr_t w0, Am, Al1, Al2_tm, Al2_OS, D_tm, D_OS, n, m , D4_tm, D4_OS, D_pure_tm, D_pure_OS;
 
+		      
+		      double w0_mean, Am_mean, Al1_mean, Al2_tm_mean, Al2_OS_mean, D_tm_mean, D_OS_mean, n_mean, m_mean, D4_tm_mean, D4_OS_mean, D_pure_tm_mean, D_pure_OS_mean;
+
+		      W_fpar my_w0_mean_fit_pars= Bt_ch2_w_fit.par[0];
+		      w0_mean= my_w0_mean_fit_pars.w0;
+		      Am_mean= my_w0_mean_fit_pars.Am;
+		      Al1_mean= my_w0_mean_fit_pars.Al1;
+		      Al2_tm_mean = my_w0_mean_fit_pars.Al2_tm;
+		      Al2_OS_mean = my_w0_mean_fit_pars.Al2_OS;
+		      D_tm_mean = my_w0_mean_fit_pars.D_tm;
+		      D_OS_mean = my_w0_mean_fit_pars.D_OS;
+		      n_mean = my_w0_mean_fit_pars.n;
+		      m_mean= my_w0_mean_fit_pars.m;
+		      D4_tm_mean= my_w0_mean_fit_pars.D4_tm;
+		      D4_OS_mean= my_w0_mean_fit_pars.D4_OS;
+		      D_pure_tm_mean = my_w0_mean_fit_pars.D_pure_tm;
+		      D_pure_OS_mean = my_w0_mean_fit_pars.D_pure_OS;
+		      double ch2_ratio_diff=0.0;
+		      if(W_type.find("ratio_diff") != string::npos) {
+			//evaluate covariance matrix of tm and OS window
+			Eigen::MatrixXd Cov_Matrix_tm_OS(Tot_Nmeas,Tot_Nmeas);
+			Eigen::MatrixXd Cov_inverse_tm_OS;
+			distr_t_list win_tm(UseJack), win_OS(UseJack);
+			if(W_type.find("tm") != string::npos) { //tm/OS
+			  win_OS= 1.0e10*meas_tm/(1e10*meas_OS -1.0);
+			  win_tm= 1e10*win_OS*meas_OS;
+
+			}
+			else if( W_type.find("OS") != string::npos) { //OS/tm
+			  win_tm= -1.0*1e10*meas_tm/(1e10*meas_OS -1.0);
+			  win_OS= 1e10*win_tm*meas_OS;
+			    
+			}
+			else crash("Fit mode is ratio_diff, but cannot understand if it is tm/OS or OS/tm");
+			
+			for(int i=0;i<Tot_Nmeas;i++) for(int j=0;j<Tot_Nmeas;j++) Cov_Matrix_tm_OS(i,j)=0;
+			int id_obs=0;
+			for(int iens=0;iens<Nens;iens++) {
+			  Cov_Matrix_tm_OS(id_obs,id_obs+Nens_eff) = (win_tm.distr_list[iens])%(win_OS.distr_list[iens]);
+			  Cov_Matrix_tm_OS(id_obs+Nens_eff,id_obs) = (win_tm.distr_list[iens])%(win_OS.distr_list[iens]);
+			  Cov_Matrix_tm_OS(id_obs,id_obs) = pow(win_tm.err(iens),2);
+			  Cov_Matrix_tm_OS(id_obs+Nens_eff,id_obs+Nens_eff) = pow(win_OS.err(iens),2);
+			  id_obs++;
+			}
+
+			Cov_inverse_tm_OS= Cov_Matrix_tm_OS.inverse();
+			for(int i=0; i<Tot_Nmeas;i++) {
+			  for(int j=0; j<Tot_Nmeas;j++) {
+			    bool Is_i_tm= (i < Nens);
+			    bool Is_j_tm= (j < Nens);
+			    ansatz_mode= Is_i_tm;
+			    double ansatz_i= bf_ch2.ansatz( my_w0_mean_fit_pars, ipar_ch2_all_ens[0][i]) ;
+			    ansatz_mode= Is_j_tm;
+			    double ansatz_j= bf_ch2.ansatz( my_w0_mean_fit_pars, ipar_ch2_all_ens[0][j]);
+			    double meas_i = (Is_i_tm)?win_tm.ave(i):win_OS.ave(i-Nens);
+			    double meas_j = (Is_j_tm)?win_tm.ave(j):win_OS.ave(j-Nens);
+			    ch2_ratio_diff += (meas_i - ansatz_i)*Cov_inverse_tm_OS(i,j)*(meas_j-ansatz_j);
+			    
+			  }
+			}
+		      }
+		      ansatz_mode=-1;
   
  
 		      for(int ijack=0;ijack<(UseJack?Njacks:Nboots);ijack++) {
@@ -849,6 +1008,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		      string only_fin_tag= (which_lat=="three_finest")?"on":"off";
 		      if(print_par_info) {
 			cout<<"########  fit parameter for Obs: "<<W_type<<" channel: "<<channel<<" ##########"<<endl;
+			if(W_type.find("ratio_diff") == string::npos) cout<<"ch2: "<<Bt_ch2_w_fit.get_ch2_ave()<<endl;
+			else cout<<"ch2(RD): "<<Bt_ch2_w_fit.get_ch2_ave()<<", ch2(std): "<<ch2_ratio_diff<<endl;
 			cout<<"single fit: "<<t_sin_fit<<endl;
 			cout<<"only_finest: "<<only_fin_tag<<endl;
 			cout<<"FSEs mode: "<<t_FSEs<<endl;
@@ -867,6 +1028,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			cout<<"m: "<<m.ave()<<endl;
 			cout<<"w0_m: "<<w0_m<<endl;
 			cout<<"Using prior: "<<prior_on_a2_log_and_a4<<endl;
+			if( (W_type.find("Pade") != string::npos) && (D4_tm.ave() < 0 ||  D4_OS.ave() < 0)) cout<<"Warning Pade coeff is negative: D4(tm): "<<D4_tm.ave()<<" +- "<<D4_tm.err()<<" D4(OS): "<<D4_OS.ave()<<" +- "<<D4_OS.err()<<endl; 
 			if(W_type.find("eps") != string::npos) { //is epsilon-light test
 			  double a2_Ref=pow(0.0682068*fm_to_iGev,2);
 			  double a3_Ref=pow(0.0682068*fm_to_iGev,3);
@@ -882,8 +1044,11 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
 		      //forward info on chi2, expectation values and Aka_weight
 
+
+		      cout<<"FORWARDING INFO ON CHI2, AND AKA WEIGHT"<<endl;
+
 		      double small_sample_corr = (2.0*pow(npars,2) +2.0*npars)/(1.0*Nmeas-npars-1.0);
-		      double ch2  = Bt_ch2_w_fit.get_ch2_ave();
+		      double ch2  = (W_type.find("ratio_diff")==string::npos)?Bt_ch2_w_fit.get_ch2_ave():ch2_ratio_diff;
 		      double ch2_err = Bt_w_fit.get_ch2_err();
 		      double ak_weight= exp( -0.5*(ch2 + 2.0*npars - Nmeas));
 		      double ak_weight_corr= exp(-0.5*(ch2 + 2.0*npars - Nmeas + small_sample_corr));
@@ -899,13 +1064,13 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 		      err.push_back(w0.err());
 		      val_distr.push_back(w0);
    
-
+		      cout<<"PLOTTING FITTING FUNCTION"<<endl;
 
 		      //#################################     PLOT FITTING FUNCTION   ###############################################
 
 		      double csi_points=1;
 		      double mL_points=1;
-		      double alat_points=40;
+		      double alat_points=400;
 		      double tm_OS_points=2;
 		      Vfloat csi, mL, alat, tm_OS;
 		      Vfloat func_W_val, func_W_err;
@@ -929,8 +1094,10 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			      Yi.a = al;
 			      Yi.fp = al*fp_phys;
 			      Yi.Is_tm = ir;
+			      if(W_type.find("ratio_diff") != string::npos) ansatz_mode=ir;
 			      Yi.GS_FSEs = 0.0;
 			      Yi.GS_FSEs_der = 0.0;
+			      Yi.meas_tag="cont";
 			      for(int ijack=0;ijack<(UseJack?Njacks:Nboots);ijack++) {
 				W_fpar Xi;
 				Xi.w0 = w0.distr[ijack];
@@ -958,7 +1125,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
  
 
     
-
+		      cout<<"CORRECTING LATTICE DATA FOR FSES and Mpi-Mpi^phys"<<endl;
   
 
 		      //##########################   correct lattice data for FSEs and physical point extrapolation  ###################
@@ -1012,6 +1179,8 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 			Print_To_File(Ens_Tag, {L_list, a_distr_list.ave(), data_extr_OS.ave(), data_extr_OS.err()    }, "../data/gm2/"+channel+"/windows_extr_data/OS/"+W_type+"/"+Fit_tag+".dat", "", "#Ens L a val "+Fit_info);
 		      }
 
+		      if( (W_type.find("diff_tm_OS") != string::npos) || (W_type.find("ratio_tm_OS") != string::npos)) {return_distr = D_tm/pow(w0_scale,2); return4_distr=D4_tm/pow(w0_scale,4);}
+		      if( (W_type.find("tmins") != string::npos) && (W_type.find("SD_win_final_tmins_") != string::npos) && (t_a2=="on") && (t_a4=="tm") && (n_m_pair.first==0) && (n_m_pair.second==0) && (t_fit_logs==0)) return_distr= w0;
 		      Nfits++;
 		    }
 		  }
@@ -1180,7 +1349,7 @@ void Perform_Akaike_fits(const distr_t_list &meas_tm,const distr_t_list &meas_OS
 
   int ret_counter=0;
 
-  if(ret_counter != 0) return_distr = return_distr/((double)ret_counter);
+ 
 
 
   cout<<"FIT PERFORMED"<<endl;
@@ -1392,10 +1561,9 @@ void Perform_Akaike_fits_PI_Q2(double Q2, const distr_t_list &meas_tm,const dist
 	      
 		for( auto& n_m_pair: Inc_log_corr_list) {
 	      
-
 		  bool Fit_allowed= true;
 
-		  w0_scale= w0_scales[w0_m];
+		  double w0_scale= w0_scales[w0_m];
 
 		  /* check if a given combination of fit parameters is allowed
 		     ##############################################################
@@ -1519,7 +1687,7 @@ void Perform_Akaike_fits_PI_Q2(double Q2, const distr_t_list &meas_tm,const dist
 
 		  if(Fit_allowed) {
 
-
+		    cout<<"FIT ALLOWED"<<endl;
 
 		
 		    //push_back info about the allowed fit
@@ -1778,6 +1946,7 @@ void Perform_Akaike_fits_PI_Q2(double Q2, const distr_t_list &meas_tm,const dist
 			    Yi.Is_tm = ir;
 			    Yi.GS_FSEs = 0.0;
 			    Yi.GS_FSEs_der = 0.0;
+			    Yi.meas_tag= "cont";
 			    for(int ijack=0;ijack<(UseJack?Njacks:Nboots);ijack++) {
 			      W_fpar Xi;
 			      Xi.w0 = w0.distr[ijack];
@@ -1858,11 +2027,11 @@ void Perform_Akaike_fits_PI_Q2(double Q2, const distr_t_list &meas_tm,const dist
 		    if(t_sin_fit != "tm") {
 		      Print_To_File(Ens_Tag, {L_list, a_distr_list.ave(), data_extr_OS.ave(), data_extr_OS.err()    }, "../data/PI_Q2/"+channel+"/windows_extr_data/OS/"+W_type+"/"+Fit_tag+".dat", "", "#Ens L a val "+Fit_info);
 		    }
-
+		    
 		    Nfits++;
 		  }
 		}
-	      }
+		}
   //########################## End correct lattice data for FSEs and physical point extrapolation  ###################
 
 

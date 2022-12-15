@@ -153,8 +153,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   if(Tag.substr(1,1)=="A") {
     a= 0.09471;          //real is 0.09471 let us change it by 1.5 sigma
     a_err= 0.00039;
-    a_from_afp = 0.0908026;
-    a_from_afp_err = 0.000535517;
+    a_from_afp =  0.0907593; //0.0908026;
+    a_from_afp_err = 0.00053917; //0.000535517;
     a_nucleon=0.09295;
     a_nucleon_err=0.00047;
     Za=0.724;
@@ -187,6 +187,13 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
       Zv_WI_strange = 0.687002; // 0.68670;
       Zv_WI_strange_err = 0.00015; // 0.00014;
     }
+
+    else if(Tag == "cA211a.12.48") {
+      Za_WI_strange= 0.728393; // 0.728838 ;
+      Za_WI_strange_err = 0.0018; // 0.00160579;
+      Zv_WI_strange = 0.687002; // 0.68670;
+      Zv_WI_strange_err = 0.00015; // 0.00014;
+    }
     
     ms_L=0.02050; ms_M=0.02300;
     mc_L= 0.26500; mc_M=0.29000; mc_H=0.30000;
@@ -195,12 +202,13 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   else if(Tag.substr(1,1)=="B") {
     a= 0.08161;
     a_err= 0.00030;
-    a_from_afp= 0.079616;
-    a_from_afp_err = 0.000127363;
+    a_from_afp= 0.0795739; //0.079616;
+    a_from_afp_err = 0.000132632; // 0.000127363;
     a_nucleon=0.07975;
     a_nucleon_err=0.00032;
     Za=0.746;
     Za_err=0.008;
+    
     if(Tag == "cB211b.072.64") {
       Za_WI = 0.71403 ;
       Za_WI_err = 0.00077 ;
@@ -212,7 +220,7 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
       Za_WI_strange_err = 0.00026;
       Zv_WI_strange = 0.706382;
       Zv_WI_strange_err = 2.4e-5;
-
+    
     }
     else if (Tag == "cB211b.072.96") {
       Za_WI = 0.71577 ;
@@ -221,11 +229,12 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
       Zv_WI_err = 0.000005;
 
       //
+     
       Za_WI_strange= 0.742669;
       Za_WI_strange_err = 0.00015;
       Zv_WI_strange = 0.706406;
       Zv_WI_strange_err = 1.7e-5;
-
+   
     }
     Zv=0.7131;
     Zv_err=0.0006;
@@ -236,8 +245,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   else if(Tag.substr(1,1)=="C") {
     a= 0.06942; 
     a_err= 0.00026;
-    a_from_afp = 0.0682068;
-    a_from_afp_err  = 0.000117345;
+    a_from_afp = 0.0682083;// 0.0682068;
+    a_from_afp_err  = 0.000134938;// 0.000117345;
     a_nucleon=0.06860;
     a_nucleon_err=0.00020;
     Za=0.761;
@@ -263,8 +272,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   else if(Tag.substr(1,1)=="D") {
     a= 0.0577;
     a_err=  0.0002;
-    a_from_afp = 0.0569252;
-    a_from_afp_err = 0.000103587;
+    a_from_afp = 0.0569183;// 0.0569252;
+    a_from_afp_err = 0.000115387;// 0.000103587;
     a_nucleon= 0.05777; //fake
     a_nucleon_err= 0.0002; //fake
     Za= 0.76217;
