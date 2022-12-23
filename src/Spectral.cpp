@@ -7,7 +7,7 @@ const bool FIND_OPTIMAL_LAMBDA= true;
 const string COV_MATRIX_MODE = "";
 const int Nmoms=0;
 const int alpha=0;
-const int verbosity_lev=1;
+const int verbosity_lev=2;
 double Beta= 0.0; //1.99;
 const bool mult_estimated_from_norm0=false;
 const bool print_reco_in_stability_analysis=false;
@@ -15,6 +15,7 @@ const bool extended_analysis_of_syst=false;
 bool Integrate_up_to_max_energy=true;
 double Emax_int=4.0;
 bool ONLY_FORWARD=false;
+bool USE_GENERALIZED_NORM=false;
 
 using namespace std;
 
@@ -33,7 +34,6 @@ PrecFloat Get_exact_gauss(const PrecFloat &E,const PrecFloat &m,const PrecFloat 
   PrecFloat norm= s*sqrt(precPi()*PrecFloat(2)) ;
   return e/norm;
 }
-
 
 
 
@@ -57,39 +57,38 @@ PrecFloat aE0(const PrecFloat &E0,const PrecFloat &t, int n) {
 
 PrecFloat aE0_std(const PrecFloat &E0,const PrecFloat &t, int n) {
   if(n!=0) crash("In AE0_std n!=0");
-  if(n==0) {
-    return exp(-E0*t)/t;
-  }
-  
-  else return pow(t,PrecFloat(-(n+1)))*( gamma(PrecFloat(n+1)) -PrecFloat(n)*gamma(PrecFloat(n)) + gamma_inc(PrecFloat(1+n), E0*t));
 
- 
+  return exp(-E0*t)/t;
+
+
 }
 
 PrecFloat aE0_std_Emax(const PrecFloat &E0,const PrecFloat &t, int n) {
   if(n!=0) crash("In AE0_std_Emax n!=0");
-  if(n==0) {
-    return exp(-E0*t)/t - exp(-PrecFloat(Emax_int)*t)/t;
-  }
-  
-  else return pow(t,PrecFloat(-(n+1)))*( gamma(PrecFloat(n+1)) -PrecFloat(n)*gamma(PrecFloat(n)) + gamma_inc(PrecFloat(1+n), E0*t));
 
-  
-
+  return exp(-E0*t)/t - exp(-PrecFloat(Emax_int)*t)/t;
+ 
+ 
 }
 
 
-void Get_Atr(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int tmax)  {
+void Get_Atr(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int tmax, const function<PrecFloat( PrecFloat )> &Atr_gen_NORM )  {
 
   Atr.resize(tmax-tmin+1, tmax-tmin+1);
 
   for(int t=tmin;t<= tmax; t++)
     for(int r=tmin; r<= tmax; r++)
       {
-	if(ONLY_FORWARD) Atr(t-tmin,r-tmin) = aE0(E0,-PrecFloat(Beta) + t+r,alpha) ;
-	else Atr(t-tmin,r-tmin) = aE0(E0,-PrecFloat(Beta) + t+r,alpha) + aE0(E0, -PrecFloat(Beta) + T - t +r, alpha) + aE0(E0,-PrecFloat(Beta)+ T+t -r, alpha) + aE0(E0,-PrecFloat(Beta)+ 2*T -t -r, alpha);
+	if(USE_GENERALIZED_NORM) {
+	  if(ONLY_FORWARD) Atr(t-tmin,r-tmin)= Atr_gen_NORM( -PrecFloat(Beta)+ t+r);
+	  else  Atr(t-tmin,r-tmin) = Atr_gen_NORM(-PrecFloat(Beta)+t+r) + Atr_gen_NORM(-PrecFloat(Beta)+ T-t+r) + Atr_gen_NORM(-PrecFloat(Beta)+T-r + t) + Atr_gen_NORM(-PrecFloat(Beta)+ 2*T -t -r);
+	}
+	else {
+	  if(ONLY_FORWARD) Atr(t-tmin,r-tmin) = aE0(E0,-PrecFloat(Beta) + t+r,alpha) ;
+	  else Atr(t-tmin,r-tmin) = aE0(E0,-PrecFloat(Beta) + t+r,alpha) + aE0(E0, -PrecFloat(Beta) + T - t +r, alpha) + aE0(E0,-PrecFloat(Beta)+ T+t -r, alpha) + aE0(E0,-PrecFloat(Beta)+ 2*T -t -r, alpha);
+	}
       }
-    
+   
   
   return;
 }
@@ -103,7 +102,7 @@ void Get_Atr_std(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int tmax) 
       if(ONLY_FORWARD) Atr(t-tmin,r-tmin) = aE0_std(E0, PrecFloat(t+r),0);
       else  Atr(t-tmin,r-tmin) = aE0_std(E0, PrecFloat(t+r),0) + aE0_std(E0, PrecFloat(T - t +r), 0) + aE0_std(E0, PrecFloat(T+t -r), 0) + aE0_std(E0,PrecFloat(2*T -t -r), 0);
     }
-    
+  
   
   return;
 }
@@ -142,7 +141,7 @@ void Get_Rt(PrecVect& Rt, const PrecFloat &E0,  int T, int tmin, int tmax) {
 }
 
 
-void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int jack_id, int T, int tmin, int tmax, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f) {
+void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFloat &s, int jack_id, int T, int tmin, int tmax, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> &F_NORM) {
 
   ft.resize(tmax-tmin+1);
 
@@ -151,16 +150,28 @@ void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFlo
 
    
     const auto ftT=
-      [&f, &m,&s,&E0, &t, &T, &jack_id](const PrecFloat& x) -> PrecFloat
+      [&f, &m,&s,&E0, &t, &T, &jack_id, &F_NORM](const PrecFloat& x) -> PrecFloat
       {
-    
-	return exp(PrecFloat(Beta)*x)*pow(x,PrecFloat(alpha))*f(x,m,s,E0, jack_id)*(exp(-x*t) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(T-t)))) ;
+	if(USE_GENERALIZED_NORM) return F_NORM(x,m,s,E0,jack_id)*f(x,m,s,E0, jack_id)*(exp(-x*(-PrecFloat(Beta)+t)) + ((ONLY_FORWARD)?PrecFloat(0):exp(-x*(-PrecFloat(Beta)+T-t)))) ;
+	//PrecFloat fx= f(x,m,s,E0,jack_id);
+	//PrecFloat log_f= log(abs(fx));
+	//int sign= (fx > 0)?1:-1;
+	//return PrecFloat(sign)*exp(-x*(-PrecFloat(Beta)+t) + log_f) + PrecFloat(sign)*((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(-PrecFloat(Beta)+PrecFloat(T-t))+log_f)) ;
+	return f(x,m,s,E0,jack_id)*( exp(-x*(-PrecFloat(Beta)+PrecFloat(t))) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(-PrecFloat(Beta)+PrecFloat(T-t)))));
+	//return sign*exp(-x*(-PrecFloat(Beta)+t) + log_f);
       };
 
+    if(USE_GENERALIZED_NORM) {
+      cout<<"t: "<<t<<endl;
+      if(Integrate_up_to_max_energy) ft(t-tmin) = integrateUpToXmax( ftT,0.0, Emax_int);
+      else ft(t-tmin) = integrateUpToInfinite(ftT, 0.0);
+    }
+    else {
     if(Integrate_up_to_max_energy) ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int);
     else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
+    }
   }
-  
+ 
 
   return;
 }
@@ -169,10 +180,9 @@ void Get_ft_std(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const Pre
 
   ft.resize(tmax-tmin+1);
 
-
  
   for(int t=tmin;t<=tmax;t++) {
-    
+  
    
     const auto ftT=
       [&f, &m,&s,&E0, &t, &T, &jack_id](const PrecFloat& x) -> PrecFloat
@@ -193,6 +203,7 @@ void Get_ft_std_Emax(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, cons
 
   ft.resize(tmax-tmin+1);
 
+ 
  
   for(int t=tmin;t<=tmax;t++) {
 
@@ -243,17 +254,26 @@ PrecFloat Get_norm_constraint(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jac
 }
 
 
-PrecFloat Get_M2(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f) {
+PrecFloat Get_M2(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> &F_NORM) {
 
 
   const auto f2=
-    [&f, &m,&s,&E0, &jack_id](const PrecFloat& x) -> PrecFloat
+    [&f, &m,&s,&E0, &jack_id, &F_NORM](const PrecFloat& x) -> PrecFloat
     {
-      return exp(PrecFloat(Beta)*x)*pow(x,PrecFloat(alpha))*pow(f(x, m, s, E0, jack_id),2);
+      if(USE_GENERALIZED_NORM) return F_NORM(x,m,s,E0,jack_id)*exp(PrecFloat(Beta)*x)*pow(f(x, m, s, E0, jack_id),2);
+      return exp(PrecFloat(Beta)*x)*pow(f(x, m, s, E0, jack_id),2);
     };
 
-  if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, E0.get(), Emax_int);
-  else return  integrateUpToInfinite(f2, E0.get());
+  if(USE_GENERALIZED_NORM) {
+    if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, 0.0, Emax_int);
+    else return integrateUpToInfinite(f2, 0.0);
+  }
+  else{
+    if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, E0.get(), Emax_int);
+    else return  integrateUpToInfinite(f2, E0.get());
+  }
+
+  return PrecFloat(0.0);
 
 }
 
@@ -1255,12 +1275,13 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
 }
 
-distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact, string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW) {
+distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact, string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW,  bool GENERALIZED_NORM,  const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> F_NORM, const function<PrecFloat( PrecFloat )> Atr_gen_NORM) {
 
   Integrate_up_to_max_energy= Int_up_to_Max;
   Emax_int=Max_Erg;
   Beta=b;
   ONLY_FORWARD=ONLY_FW;
+  USE_GENERALIZED_NORM= GENERALIZED_NORM;
 
  
   if(MODE != "TANT" && MODE != "SANF") crash("MODE: "+MODE+" not recognized");
@@ -1311,7 +1332,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   if(verbosity_lev) cout<<"computing f(t)..."<<flush;
 
   
-  Get_ft(ft, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
+  Get_ft(ft, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f, F_NORM);
 
   if(verbosity_lev) { cout<<"done!"<<endl<<flush;}
 
@@ -1330,19 +1351,19 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
   if(verbosity_lev) cout<<"done!"<<endl<<flush;
 
-  if(verbosity_lev) {
+  if(verbosity_lev==2) {
     cout.precision(PrecFloat::getNDigits());
     cout<<"Printing ft: "<<endl;
-    for(int t=1;t<=tmax;t++) cout<<"f("<<t<<") : "<<ft_std(t-1)<<" "<<ft_std_Emax(t-1)<<endl<<flush;
+    for(int t=1;t<=tmax;t++) cout<<"f("<<t<<") : "<<ft(t-1)<<" "<<ft_std(t-1)<<" "<<ft_std_Emax(t-1)<<endl<<flush;
   }
     
-  Get_Atr(Atr, E0, T, 1, tmax);
+  Get_Atr(Atr, E0, T, 1, tmax, Atr_gen_NORM);
 
   Get_Atr_std(Atr_std, E0, T, 1, tmax);
 
   Get_Atr_std_Emax(Atr_std_Emax, E0, T, 1, tmax);
 
-  M2= Get_M2(m,s,E0,-1,f);
+  M2= Get_M2(m,s,E0,-1,f, F_NORM);
 
   
   M2_std= Get_M2_std_norm(m,s,E0, -1,f);
@@ -1353,7 +1374,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
   Get_M_N(m,s,E0,-1,f, M_n);
 
-  if(verbosity_lev) {
+  if(verbosity_lev==2) {
     cout.precision(PrecFloat::getNDigits());
     cout<<"M2 : "<<M2<<endl<<flush;
     cout<<"M2 std: "<<M2_std<<endl<<flush;
@@ -1374,7 +1395,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
       PrecVect ft_ij;
       PrecVect M_n_ij;
 
-      Get_ft(ft_ij, E0, m , s, ijack, T,1,tmax, SMEARING_FUNC, f);
+      Get_ft(ft_ij, E0, m , s, ijack, T,1,tmax, SMEARING_FUNC, f, F_NORM);
       Get_M_N(m,s,E0,ijack, f, M_n_ij);
 
       ft_jack.push_back(ft_ij);

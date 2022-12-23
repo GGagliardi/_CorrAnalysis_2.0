@@ -22,7 +22,8 @@ using namespace std;
 
 void Get_virt_list();
 void Integrate_over_photon_insertion(const distr_t_list &W, vector<distr_t_list> &H, double Eg, int t_weak, double MP, int TO);
-void Compute_form_factors_Nissa_3d();
-
+void Integrate_over_photon_insertion_w_subtraction(const distr_t_list &W, vector<distr_t_list> &H, double Eg, int t_weak, double MP, int ixg, int Tmin_mass, int Tmax_mass,  string out_path, string obs);
+void Get_radiative_form_factors_3d();
+void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Infinite, double Emax, string SM_TYPE, bool Perform_theta_average, double E0_fact);
 
 #endif

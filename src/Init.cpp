@@ -173,7 +173,7 @@ void MasterClass_analysis::Analysis_manager() {
 
   if(Analysis_Mode=="Form_factors_Nissa") Compute_form_factors_Nissa();
 
-  if(Analysis_Mode=="Form_factors_Nissa_3d") Compute_form_factors_Nissa_3d();
+  if(Analysis_Mode=="Form_factors_Nissa_3d") Get_radiative_form_factors_3d();
 
   if(Analysis_Mode=="Meson_masses") {
     if(Meson_to_analyze =="PI") Pion_mass_analysis(this->CURRENT_TYPE, this->IncludeDisconnected);

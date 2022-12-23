@@ -379,6 +379,8 @@ void Compute_form_factors_Nissa() {
   //2pts
   data_t data_2pts, data_2pts_SM;
   data_t data_2pts_V1, data_2pts_V2, data_2pts_V3;
+  data_t data_2pts_u_V1, data_2pts_u_V2, data_2pts_u_V3;
+  data_t data_2pts_d_V1, data_2pts_d_V2, data_2pts_d_V3;
 
   for(int mu=0;mu<size_mu_nu;mu++) {
 
@@ -422,6 +424,12 @@ void Compute_form_factors_Nissa() {
   data_2pts_V1.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "V1V1");
   data_2pts_V2.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "V2V2");
   data_2pts_V3.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "V3V3");
+  data_2pts_d_V1.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_1", "V1V1");
+  data_2pts_d_V2.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_1", "V2V2");
+  data_2pts_d_V3.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_1", "V3V3");
+  data_2pts_u_V1.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_2", "V1V1");
+  data_2pts_u_V2.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_2", "V2V2");
+  data_2pts_u_V3.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_2", "V3V3");
   
 
   //read data
@@ -585,13 +593,15 @@ void Compute_form_factors_Nissa() {
     distr_t_list pt2_distr= Corr.corr_t(data_2pts.col(0)[iens], "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt.dat");
     distr_t_list eff_mass = Corr.effective_mass_t(pt2_distr, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass.dat");
     distr_t_list fp_distr= Corr.decay_constant_t( pow( mu+md,2)*pt2_distr, "../data/ph_emission/"+ph_type_mes+"/"+"decay_const/"+data_2pts.Tag[iens]+"/decay_const.dat");
-    distr_t_list pt2_vector_distr= (1.0/3.0)*Corr.corr_t(summ_master(data_2pts_V1.col(0)[iens], data_2pts_V2.col(0)[iens], data_2pts_V3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt_V.dat");
-    distr_t_list eff_mass_V = Corr.effective_mass_t(pt2_vector_distr, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_V.dat");
     distr_t M_P=Corr.Fit_distr(eff_mass);
     distr_t F_P=Corr.Fit_distr(fp_distr);
     MP_list.distr_list.push_back(M_P/a_distr);
     FP_list.distr_list.push_back(F_P/a_distr);
     MP_ov_FP_list.distr_list.push_back( M_P/F_P);
+
+
+    
+   
     
     //set time interval for eff_mass_fit SM
     if(data_2pts.Tag[iens].substr(1,1) =="A") {Corr.Tmin=24; Corr.Tmax=35;}
@@ -609,6 +619,18 @@ void Compute_form_factors_Nissa() {
     cout<<"MP/FP: "<<(M_P/F_P).ave()<<" +- "<<(M_P/F_P).err()<<endl;
     cout<<"aM_P(SM): "<<M_P_SM.ave()<<" +- "<<M_P_SM.err()<<" -> "<< (M_P_SM/(a_distr)).ave()<<" +- "<<(M_P_SM/a_distr).err()<<" GeV"<<endl;
     cout<<"MP/FP: "<<(M_P/F_P).ave()<<" +- "<<(M_P/F_P).err()<<endl;
+
+
+
+    //vector ud meson
+    distr_t_list pt2_vector_distr= (1.0/3.0)*Corr.corr_t(summ_master(data_2pts_V1.col(0)[iens], data_2pts_V2.col(0)[iens], data_2pts_V3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt_V_ud.dat");
+    distr_t_list eff_mass_V = Corr.effective_mass_t(pt2_vector_distr, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_V_ud.dat");
+    //vector u meson
+    distr_t_list uu_vector_distr= (1.0/3.0)*Corr.corr_t(summ_master(data_2pts_u_V1.col(0)[iens], data_2pts_u_V2.col(0)[iens], data_2pts_u_V3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt_V_uu.dat");
+    distr_t_list eff_mass_V_uu= Corr.effective_mass_t(uu_vector_distr, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_V_uu.dat");
+    //vector d meson
+    distr_t_list dd_vector_distr= (1.0/3.0)*Corr.corr_t(summ_master(data_2pts_d_V1.col(0)[iens], data_2pts_d_V2.col(0)[iens], data_2pts_d_V3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt_V_dd.dat");
+    distr_t_list eff_mass_V_dd= Corr.effective_mass_t(dd_vector_distr, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_V_dd.dat");
 
 
     //define meson mass exponential to be removed

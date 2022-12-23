@@ -52,6 +52,30 @@ struct PrecFloat
 #endif
       ;
   }
+
+  /// Returns the maximum exponent emax: ( max num is (1-e)x 2^emax )
+  static double getEmax_max()
+  {
+    return
+#ifndef FAKE_HP
+    mpfr_get_emax_max()
+#else
+    0
+#endif
+      ;
+  }
+
+  /// Returns the current maximum exponent
+  static double getEmax()
+  {
+    return
+#ifndef FAKE_HP
+    mpfr_get_emax()
+#else
+    0
+#endif
+      ;
+  }
   
   /// Returns the current smaller number
   static PrecFloat getEpsilon()
@@ -88,6 +112,8 @@ struct PrecFloat
     
     return os;
   }
+
+
   
   /// Returns the internal data
   double get() const
@@ -491,18 +517,28 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
   
   const PrecFloat piHalf=
     precPi()/2;
+  const PrecFloat log_piHalf= log(piHalf);
   
   auto c=
-    [&f,&piHalf,&xMin](const PrecFloat& t)
+    [&f,&piHalf,&log_piHalf,&xMin](const PrecFloat& t)
     {
       const PrecFloat s=sinh(t);
       const PrecFloat x=exp(piHalf*s)+xMin;
-      const PrecFloat jac=piHalf*exp(piHalf*s)*cosh(t);
-      const PrecFloat res=f(x)*jac;
+      const PrecFloat x_m= exp(-piHalf*s) + xMin;
+      //const PrecFloat jac=piHalf*exp(piHalf*s)*cosh(t);
+      //const PrecFloat res=f(x)*jac;
+
+      const PrecFloat log_jac=log_piHalf +piHalf*s + log(cosh(t));
+      const PrecFloat log_jack_m= log_jac -2*piHalf*s;
+      const PrecFloat fx= f(x);
+      const PrecFloat fx_m= f(x_m);
+      const int sign= (fx > 0)?1:-1;
+      const int sign_m= (fx_m >0)?1:-1;
+      const PrecFloat log_res = log(abs(fx)) + log_jac;
+      const PrecFloat log_res_m = log(abs(fx_m)) + log_jack_m;
+      //cout<<" t: "<<t<<" x: "<<x<<" f(x): "<<fx<<" jac: "<<exp(log_jac)<<"res: "<<sign*(exp(log_res)+sign_m*sign*exp(log_res_m))<<endl<<flush;
       
-      //cout<<" t: "<<t<<" x: "<<x<<" f(x): "<<f(x)<<" jac: "<<jac<<" res: "<<res<<endl;
-      
-      return res;
+      return sign*(exp(log_res)+ sign_m*sign*exp(log_res_m));
     };
 
   PrecFloat step_old=1;
@@ -512,7 +548,7 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
   do {
 
     RESTART=false;  
-    PrecFloat sum=c(0)*2*step_old;
+    PrecFloat sum=c(0)*step_old;
     PrecFloat extreme=0;
     PrecFloat step=step_old;
     PrecFloat precSum;
@@ -537,7 +573,7 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
 	while(not exitTheLoop)
 	{
 	  const PrecFloat contr=
-	    c(t)+c(-t);
+	    c(t);
 	  
 	  const PrecFloat newSum=
 	    sum+contr*step;
@@ -582,7 +618,7 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
 
   //cout<<"final sum: "<<sum_final<<endl<<flush;
   //cout<<"integral computed"<<endl<<flush;
-  
+  //exit(-1);
   
   return sum_final;
 }
@@ -604,20 +640,30 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
   
   const PrecFloat piHalf=
     precPi()/2;
+
+  const PrecFloat log_piHalf= log(piHalf);
+
+  const PrecFloat log_int_ave= log( (xMax_prec-xMin_prec)/2);
   
   auto c=
-    [&f,&piHalf,&xMin_prec, &xMax_prec](const PrecFloat& t)
+    [&f,&piHalf,&log_piHalf, &log_int_ave, &xMin_prec, &xMax_prec](const PrecFloat& t)
     {
       //tanh-sinh to map [xMin, xMax] into [-infinite, +infinite]
       const PrecFloat s=sinh(t);
       const PrecFloat g=tanh(piHalf*s);
       const PrecFloat x=g*(xMax_prec-xMin_prec)/2+(xMax_prec +xMin_prec)/2;
-      const PrecFloat jac=((xMax_prec-xMin_prec)/2)*piHalf*(1 - g*g)*cosh(t);
-      const PrecFloat res=f(x)*jac;
+      //const PrecFloat jac=((xMax_prec-xMin_prec)/2)*piHalf*(1 - g*g)*cosh(t);
+      //const PrecFloat res=f(x)*jac;
+
+      const PrecFloat log_jac= log_int_ave + log_piHalf -2*log( cosh(piHalf*s)) + log(cosh(t));
+      const PrecFloat fx= f(x);
+      const int sign= (fx > 0)?1:-1;
+      const PrecFloat log_res= log(abs(fx)) + log_jac;
       
-      // cout<<" t: "<<t<<" x: "<<x<<" res: "<<res<<" jac: "<<jac<<endl;
       
-      return res;
+      //cout<<" t: "<<t<<" x: "<<x<<" res: "<<res<<" jac: "<<jac<<"res impr: "<<sign*exp(log_res)<<endl<<flush;
+      
+      return sign*exp(log_res);
     };
   
   PrecFloat step_old=1;
