@@ -148,27 +148,31 @@ void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFlo
  
   for(int t=tmin;t<=tmax;t++) {
 
-   
+    PrecFloat t_n= t - PrecFloat(Beta);
+    PrecFloat T_n= T-t -PrecFloat(Beta);
+    
     const auto ftT=
       [&f, &m,&s,&E0, &t, &T, &jack_id, &F_NORM](const PrecFloat& x) -> PrecFloat
       {
 	if(USE_GENERALIZED_NORM) return F_NORM(x,m,s,E0,jack_id)*f(x,m,s,E0, jack_id)*(exp(-x*(-PrecFloat(Beta)+t)) + ((ONLY_FORWARD)?PrecFloat(0):exp(-x*(-PrecFloat(Beta)+T-t)))) ;
-	//PrecFloat fx= f(x,m,s,E0,jack_id);
-	//PrecFloat log_f= log(abs(fx));
-	//int sign= (fx > 0)?1:-1;
-	//return PrecFloat(sign)*exp(-x*(-PrecFloat(Beta)+t) + log_f) + PrecFloat(sign)*((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(-PrecFloat(Beta)+PrecFloat(T-t))+log_f)) ;
 	return f(x,m,s,E0,jack_id)*( exp(-x*(-PrecFloat(Beta)+PrecFloat(t))) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(-PrecFloat(Beta)+PrecFloat(T-t)))));
-	//return sign*exp(-x*(-PrecFloat(Beta)+t) + log_f);
       };
 
-    if(USE_GENERALIZED_NORM) {
-      cout<<"t: "<<t<<endl;
-      if(Integrate_up_to_max_energy) ft(t-tmin) = integrateUpToXmax( ftT,0.0, Emax_int);
-      else ft(t-tmin) = integrateUpToInfinite(ftT, 0.0);
+    if(Integrate_up_to_max_energy) {
+
+      if(SMEARING_FUNC=="FF_Gauss_IM") {
+	ft(t-tmin) = precPi()*(exp(t_n*(t_n*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+t_n*s*s)/(sqrt(PrecFloat(2))*s))  - erf((E0-m+t_n*s*s)/(sqrt(PrecFloat(2))*s)))/2
+			       + ((ONLY_FORWARD)?PrecFloat(0):(exp(T_n*(T_n*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+T_n*s*s)/(sqrt(PrecFloat(2))*s))  - erf((E0-m+T_n*s*s)/(sqrt(PrecFloat(2))*s)))/2 ) )); }
+      else ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int);
+      
     }
     else {
-    if(Integrate_up_to_max_energy) ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int);
-    else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
+      if(SMEARING_FUNC=="FF_Gauss_IM") { ft(t-tmin) = precPi()*( exp(t_n*(t_n*s*s -2*m)/2)*( 1 - erf((E0-m+t_n*s*s)/(sqrt(PrecFloat(2))*s)))/2    + ((ONLY_FORWARD)?PrecFloat(0):( exp(T_n*(T_n*s*s -2*m)/2)*( 1 - erf((E0-m+T_n*s*s)/(sqrt(PrecFloat(2))*s)))/2  )))  ;
+	PrecFloat test= integrateUpToInfinite(ftT, E0.get());
+	cout.precision(100);
+	cout<<"f("<<t<<"): EXACT: "<<ft(t-tmin)<<", NUM: "<<test<<endl<<flush;
+      }
+      else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
     }
   }
  
@@ -182,7 +186,8 @@ void Get_ft_std(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const Pre
 
  
   for(int t=tmin;t<=tmax;t++) {
-  
+
+    PrecFloat tr = T-t;
    
     const auto ftT=
       [&f, &m,&s,&E0, &t, &T, &jack_id](const PrecFloat& x) -> PrecFloat
@@ -191,8 +196,8 @@ void Get_ft_std(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const Pre
 	return f(x,m,s,E0, jack_id)*(exp(-x*t) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(T-t))) ) ;
       };
 
-    
-    ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
+    if(SMEARING_FUNC=="FF_Gauss_IM")  ft(t-tmin) = precPi()*( exp(t*(t*s*s -2*m)/2)*(1 - erf((E0-m+t*s*s)/(sqrt(PrecFloat(2))*s)))/2  + ((ONLY_FORWARD)?PrecFloat(0):(exp(tr*(tr*s*s -2*m)/2)*(1 - erf((E0-m+tr*s*s)/(sqrt(PrecFloat(2))*s)))/2   )))  ;
+    else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get());
   }
 
 
@@ -207,6 +212,7 @@ void Get_ft_std_Emax(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, cons
  
   for(int t=tmin;t<=tmax;t++) {
 
+    PrecFloat tr= T-t;
    
     const auto ftT=
       [&f, &m,&s,&E0, &t, &T, &jack_id](const PrecFloat& x) -> PrecFloat
@@ -215,8 +221,10 @@ void Get_ft_std_Emax(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, cons
 	return f(x,m,s,E0, jack_id)*(exp(-x*t) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(T-t)))  ) ;
       };
 
-    
-    ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int);
+    if(SMEARING_FUNC=="FF_Gauss_IM") {
+      ft(t-tmin) = precPi()*( exp(t*(t*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+t*s*s)/(sqrt(PrecFloat(2))*s)) - erf((E0-m+t*s*s)/(sqrt(PrecFloat(2))*s)))/2
+		 + ((ONLY_FORWARD)?PrecFloat(0):( exp(tr*(tr*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+tr*s*s)/(sqrt(PrecFloat(2))*s)) - erf((E0-m+tr*s*s)/(sqrt(PrecFloat(2))*s)))/2  )));   }
+    else ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int);
   }
   
 
@@ -857,8 +865,28 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
     
     if(Nit > MAX_Iters) {
       cout<<"###### FAILED CONVERGENCE #########"<<endl;
+      cout<<"###### INFO #######################"<<endl;
+      cout<<"-----------------------------"<<endl;
+      cout<<"Current values of g[t] & f[t]:"<<endl;
+      for(int t=tmin;t<=tmax;t++) cout<<"t: "<<t<<"   "<<gm(t-tmin).get()<<"      "<<ft(t-tmin)<<endl;
+      cout<<"-----------------------------"<<endl;
+      cout<<"M2: "<<M2.get()<<endl;
+      cout<<"M2(std. norm): "<<M2_std_norm.get()<<endl;
+      cout<<"M2(std. norm Emax): "<<M2_std_norm_Emax.get()<<endl;
+      cout<<"A[g]: "<<A1_val<<", B[g]: "<<B1_val<<endl;
+      cout<<"Printing inverse W_tr = A_tr*(1-lambda) + B_tr*lambda matrix: "<<endl;
+      cout<<"-------------------------------------------------------------"<<endl;
+      cout<<C_inv<<endl;
+      cout<<"-------------------------------------------------------------"<<endl;
+      cout<<"Printing inverse A_tr matrix: "<<endl;
+      cout<<"-------------------------------------------------------------"<<endl;
+      cout<<Atr.inverse()<<endl;
+      cout<<"-------------------------------------------------------------"<<endl;
       cout<<"lambda_low: "<<l_low<<" lambda_up: "<<l_up<<endl;
-      crash("After "+to_string(Nit)+" iterations, balance condition A = mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", mult(target) = "+to_string_with_precision( mult, 8)+", a*sigma: "+to_string_with_precision(sigma,5)+", aE*: "+to_string_with_precision(mean, 5)+" lambda: "+to_string_with_precision(lambda_mid, 5)+" , mult: "+to_string_with_precision(mult_est,5));
+      cout<<"####################################"<<endl;
+      crash("After "+to_string(Nit)+" iterations, balance condition A = mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", SM_TYPE: "+SMEARING_FUNC+", Beta: "+to_string_with_precision(Beta,3)+", mult(target) = "+to_string_with_precision( mult, 8)+", a*sigma: "+to_string_with_precision(sigma,5)+", aE*: "+to_string_with_precision(mean, 5)+" lambda: "+to_string_with_precision(lambda_mid, 5)+" , mult: "+to_string_with_precision(mult_est,5));
+    
+      
     }
 
 
@@ -1046,8 +1074,26 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
     if(Nit_10 > MAX_Iters) {
       cout<<"###### FAILED CONVERGENCE #########"<<endl;
+      cout<<"###### INFO #######################"<<endl;
+      cout<<"-----------------------------"<<endl;
+      cout<<"Current values of g[t] & f[t]:"<<endl;
+      for(int t=tmin;t<=tmax;t++) cout<<"t: "<<t<<"   "<<gm(t-tmin).get()<<"      "<<ft(t-tmin)<<endl;
+      cout<<"-----------------------------"<<endl;
+      cout<<"M2: "<<M2.get()<<endl;
+      cout<<"M2(std. norm): "<<M2_std_norm.get()<<endl;
+      cout<<"M2(std. norm Emax): "<<M2_std_norm_Emax.get()<<endl;
+      cout<<"A[g]: "<<A1_val<<", B[g]: "<<B1_val<<endl;
+      cout<<"Printing inverse W_tr = A_tr*(1-lambda) + B_tr*lambda matrix: "<<endl;
+      cout<<"-------------------------------------------------------------"<<endl;
+      cout<<C_inv<<endl;
+      cout<<"-------------------------------------------------------------"<<endl;
+      cout<<"Printing inverse A_tr matrix: "<<endl;
+      cout<<"-------------------------------------------------------------"<<endl;
+      cout<<Atr.inverse()<<endl;
+      cout<<"-------------------------------------------------------------"<<endl;
       cout<<"lambda_low: "<<l_low<<" lambda_up: "<<l_up<<endl;
-      crash("After "+to_string(Nit_10)+" iterations, balance condition A = k*mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", mult(target) = "+to_string_with_precision( k*mult, 8)+" a*sigma: "+to_string_with_precision(sigma,5)+", aE*: "+to_string_with_precision(mean, 5)+" lambda: "+to_string_with_precision(lambda_mid, 5)+" , mult: "+to_string_with_precision(mult_est,5));
+      cout<<"####################################"<<endl;
+      crash("After "+to_string(Nit_10)+" iterations, balance condition A = k*mult*B cannot be obtained for CORR: "+CORR_NAME+" , MODE: "+MODE+", CURR_TYPE: "+curr_type+", SM_TYPE: "+SMEARING_FUNC+", Beta: "+to_string_with_precision(Beta,3)+", mult(target) = "+to_string_with_precision( k*mult, 8)+" a*sigma: "+to_string_with_precision(sigma,5)+", aE*: "+to_string_with_precision(mean, 5)+" lambda: "+to_string_with_precision(lambda_mid, 5)+" , mult: "+to_string_with_precision(mult_est,5));
     }
 
 
@@ -1286,7 +1332,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
  
   if(MODE != "TANT" && MODE != "SANF") crash("MODE: "+MODE+" not recognized");
 
-  if(!Integrate_up_to_max_energy && Beta >= 2.0) crash("Cannot use Beta >=2.0 without a finite Emax");
+  if( (Integrate_up_to_max_energy==false) && (Beta >= 2.0)) crash("Cannot use Beta >=2.0 without a finite Emax. Beta: "+to_string_with_precision(Beta,3));
 
   int Njacks= corr.distr_list[0].distr.size();
 
@@ -1333,24 +1379,31 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
   
   Get_ft(ft, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f, F_NORM);
+  M2=Get_M2(m,s,E0,-1,f, F_NORM);
 
   if(verbosity_lev) { cout<<"done!"<<endl<<flush;}
 
    
 
-  if(verbosity_lev) cout<<"computing f(t)_std..."<<flush;
   
-  Get_ft_std(ft_std, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
-
-  if(verbosity_lev) cout<<"done!"<<endl<<flush;
-
-
-  if(verbosity_lev) cout<<"computing f(t)_std_Emax..."<<flush;
+  if( (Beta != 0) || Integrate_up_to_max_energy) {
+    if(verbosity_lev) cout<<"computing f(t)_std..."<<flush;
+    Get_ft_std(ft_std, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
+    M2_std= Get_M2_std_norm(m,s,E0,-1,f);
+    if(verbosity_lev) cout<<"done!"<<endl<<flush;
+  }
+  else { ft_std= ft; M2_std=M2; }
   
-  Get_ft_std_Emax(ft_std_Emax, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
 
-  if(verbosity_lev) cout<<"done!"<<endl<<flush;
+  if( (Beta != 0) && Integrate_up_to_max_energy) {
+    if(verbosity_lev) cout<<"computing f(t)_std_Emax..."<<flush;
+    Get_ft_std_Emax(ft_std_Emax, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
+    M2_std_Emax=Get_M2_std_norm_Emax(m,s,E0,-1,f);
+    if(verbosity_lev) cout<<"done!"<<endl<<flush;
+  }
+  else { ft_std_Emax= ft; M2_std_Emax= M2; }
 
+  
   if(verbosity_lev==2) {
     cout.precision(PrecFloat::getNDigits());
     cout<<"Printing ft: "<<endl;
@@ -1363,13 +1416,6 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
   Get_Atr_std_Emax(Atr_std_Emax, E0, T, 1, tmax);
 
-  M2= Get_M2(m,s,E0,-1,f, F_NORM);
-
-  
-  M2_std= Get_M2_std_norm(m,s,E0, -1,f);
-
-  M2_std_Emax= Get_M2_std_norm_Emax(m,s,E0, -1,f);
-  
   Get_Rt_up_to_N(E0, T, 1, tmax, Rt_n);
 
   Get_M_N(m,s,E0,-1,f, M_n);
@@ -1413,6 +1459,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   if(INCLUDE_ERRORS && FIND_OPTIMAL_LAMBDA) Get_optimal_lambda(Atr, Atr_std, Atr_std_Emax,  B, ft, ft_jack, ft_std, ft_std_Emax, M2, M2_std, M2_std_Emax, mean, sigma, Estart, lambda_opt , lambda_opt_10, Rt_n, M_n, M_n_jack, corr, T , 1 , tmax, mult,  MODE, reg_type, SMEARING_FUNC,  CORR_NAME, Ag_ov_A0_target, JackOnKer, Prefact, analysis_name, f, syst_func, Use_guess_density, guess_density);
 
 
+  if(verbosity_lev==2) cout<<"Stability analysis completed!"<<endl;
     							         
   if(INCLUDE_ERRORS) {
     Atr_10 = Atr*(1-lambda_opt_10)/M2 + B*lambda_opt_10/((MODE=="SANF")?M2:1);
@@ -1509,7 +1556,8 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   }
 
 
-  //print reconstructed gaussian, exact Gaussian, diff
+  if(verbosity_lev==2) cout<<"printing target & reco smearing func"<<endl<<flush; 
+  //print reconstructed smearing func, exact smearing func, diff
 
   //compute it from E0 up to 10 E* with a step size of sigma * step_size
 
@@ -1523,15 +1571,16 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   int Npoints;
   if(analysis_name == "tau_decay") {Npoints= 20000; step_size=0.001;}
   else Npoints= (int)(((m+20*s)/(s*step_size)).get());
-
   for(int ip=0; ip<Npoints;ip++) {
     PrecVect bt;
     PrecFloat E;
     if(analysis_name == "tau_decay") E= E0+ ip*step_size;
     else E = (ip*s)*step_size;
+    //if(verbosity_lev==2) cout<<"ip: "<<ip<<"/"<<Npoints<<"  (E-m): "<<((E-m)/s).get()<<flush;
     Get_bt(bt, E, T, 1, tmax);  
     const PrecFloat reco_result = g.transpose()*bt;
     const PrecFloat exact_result = f(E,m,s,E0,-1);
+    //if(verbosity_lev==2) cout<<"Exact and reco for ip: "<<ip<<" computed"<<endl<<flush;
     Reco.push_back( reco_result.get());
     Exact.push_back( exact_result.get());
     Err.push_back(  (exact_result -reco_result).get());
@@ -1539,6 +1588,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
     if(Use_guess_density) Spec_dens_guess.push_back( guess_density(E.get()));
   }
 
+  if(verbosity_lev==2) cout<<"data created.."<<endl<<flush;
   
   //print to file
   if(!Use_guess_density) {
@@ -1549,8 +1599,12 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
   }
 
+  if(verbosity_lev==2) cout<<"output written to file!"<<endl<<flush;
+
   distr_t Spec_dens_at_E_star; //Uses Jackknife distr by default
   distr_t Spec_dens_at_E_star_10;
+
+  if(verbosity_lev==2) cout<<"Computing ave+stat+syst on spec density"<<endl<<flush;
 
 
   if(INCLUDE_ERRORS) {
@@ -1575,7 +1629,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
     Spec_dens_at_E_star_10 = Spec_dens_at_E_star_10*Prefact;
 
     
-
+    cout<<"done"<<endl<<flush;
     
     //print coefficient
     ofstream PrintCoeff("../data/spectral_reconstruction/"+analysis_name+"/smearing_func/beta_"+to_string_with_precision(Beta,2)+"_Emax_"+Emax_val+"/"+MODE+"_"+CORR_NAME+"_"+reg_type+"_"+SMEARING_FUNC+"_coeff_E*"+to_string_with_precision(mean,3)+"_sigma_"+to_string_with_precision(sigma,3)+"_E0_"+to_string_with_precision(E0.get(),3)+"_T_"+to_string(T)+"_tmax_"+to_string(tmax)+"_alpha_"+to_string(alpha)+"_beta_"+to_string_with_precision(Beta,3)+".dat");
@@ -1595,8 +1649,14 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
       }
     }
     PrintCoeff.close();
+
+
+
+
+
+    
         
-    syst = fabs( Spec_dens_at_E_star.ave() - Spec_dens_at_E_star_10.ave());
+    syst = erf(fabs( (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave()/(sqrt(2)*Spec_dens_at_E_star_10.err())))*fabs( (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave());
   }
     
 

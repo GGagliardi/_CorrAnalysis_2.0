@@ -1,6 +1,7 @@
 #include "../include/highPrec.h"
 
 
+
 using namespace std;
 
 PrecFloat ExpEiComplexSum(PrecFloat MOD, PrecFloat PH, PrecFloat s,  bool MODE) {
@@ -49,7 +50,79 @@ PrecFloat ExpEiComplexSum(PrecFloat MOD, PrecFloat PH, PrecFloat s,  bool MODE) 
     }
   }
 
-
   return SUM;
   
+}
+
+PrecFloat Erfi( PrecFloat x) {
+
+  PrecFloat preF= 2/sqrt(precPi());
+  bool CONVERGED=false;
+  PrecFloat FACT=x;
+  PrecFloat SUMM= FACT;
+  PrecFloat SUMM_OLD=SUMM;
+  unsigned long int n=1;
+  while(!CONVERGED) {
+    FACT *= x*x/n;
+    SUMM += FACT/(2*n+1);
+    if(SUMM==SUMM_OLD) CONVERGED=true;
+    SUMM_OLD=SUMM;
+    n++;
+    
+  }
+
+  //cout<<"nsteps to evaluate Erfi(x="<<x<<"): "<<n<<endl<<flush;
+  return preF*SUMM;
+}
+
+
+PrecFloat DawsonF(PrecFloat x) {
+
+  int sign= ((x >= 0)?1:-1);
+  x= abs(x);
+  
+  bool MODE=0;
+  bool CONVERGED=false;
+  PrecFloat SUMM, SUMM_OLD, FACT;
+  unsigned long int n=1;
+   
+  if( (x<=18.93)) { //use power expansion around x=0
+
+    SUMM= Erfi(x)*exp(-x*x)*sqrt( precPi())/2;
+    /*
+    FACT= x;
+    SUMM=FACT;
+    SUMM_OLD=SUMM;
+    while(!CONVERGED) { // sum (-1)^n * 2^n * x^(2n+1) /(2n+1)!!
+      
+      FACT *= -2*x*x*(2*n+1);
+
+      SUMM += FACT;
+      if(SUMM==SUMM_OLD) CONVERGED=true;
+      SUMM_OLD=SUMM;
+      cout<<"MODE 0: nstep: "<<n<<" SUMM: "<<SUMM<<endl<<flush;
+      n++;
+      
+    }
+    */
+    
+  }
+  else { //use power expansion around x=Infinity
+    MODE=1;
+    FACT= 1/(2*x);
+    SUMM=FACT;
+    SUMM_OLD=SUMM;
+    while(!CONVERGED) { // \sum_n (2n-1)!! /( 2^(n+1) * x^(2n+1) )
+      
+      FACT /= 2*x*x/(2*n-1);
+      SUMM+=FACT;
+      if(SUMM==SUMM_OLD) CONVERGED=true;
+      SUMM_OLD=SUMM;
+      n++;
+    }
+    //cout<<"DawsonF(x="<<x<<"): "<<SUMM<<" nsteps: "<<n<<" MODE: "<<MODE<<endl<<flush;
+  }
+  
+  return sign*SUMM;
+ 
 }

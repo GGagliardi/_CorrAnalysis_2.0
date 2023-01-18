@@ -437,6 +437,21 @@ inline PrecFloat precEuler()
 
 /////////////////////////////////////////////////////////////////
 
+//return factorial of no
+inline PrecFloat precFact(unsigned long int n)
+{
+  PrecFloat out;
+
+#ifdef FAKE_HP
+  out.data= fact(n);
+#else
+  mpfr_fac_ui(out.data,n, MPFR_RNDD); 
+#endif
+
+  return
+    out;
+}
+
 // Tell Eigen how to deal with PrecFloat numbers
 
 namespace Eigen
@@ -525,9 +540,14 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
       const PrecFloat s=sinh(t);
       const PrecFloat x=exp(piHalf*s)+xMin;
       const PrecFloat x_m= exp(-piHalf*s) + xMin;
-      //const PrecFloat jac=piHalf*exp(piHalf*s)*cosh(t);
-      //const PrecFloat res=f(x)*jac;
 
+
+      const PrecFloat jac=piHalf*exp(piHalf*s)*cosh(t);
+      const PrecFloat jack_m = piHalf*exp(-piHalf*s)*cosh(t);
+      const PrecFloat res=f(x)*jac + f(x_m)*jack_m;
+      return res;
+
+      /*
       const PrecFloat log_jac=log_piHalf +piHalf*s + log(cosh(t));
       const PrecFloat log_jack_m= log_jac -2*piHalf*s;
       const PrecFloat fx= f(x);
@@ -539,6 +559,7 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
       //cout<<" t: "<<t<<" x: "<<x<<" f(x): "<<fx<<" jac: "<<exp(log_jac)<<"res: "<<sign*(exp(log_res)+sign_m*sign*exp(log_res_m))<<endl<<flush;
       
       return sign*(exp(log_res)+ sign_m*sign*exp(log_res_m));
+      */
     };
 
   PrecFloat step_old=1;
@@ -652,9 +673,10 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
       const PrecFloat s=sinh(t);
       const PrecFloat g=tanh(piHalf*s);
       const PrecFloat x=g*(xMax_prec-xMin_prec)/2+(xMax_prec +xMin_prec)/2;
-      //const PrecFloat jac=((xMax_prec-xMin_prec)/2)*piHalf*(1 - g*g)*cosh(t);
-      //const PrecFloat res=f(x)*jac;
+      const PrecFloat jac=((xMax_prec-xMin_prec)/2)*piHalf*(1 - g*g)*cosh(t);
+      return f(x)*jac;
 
+      /*
       const PrecFloat log_jac= log_int_ave + log_piHalf -2*log( cosh(piHalf*s)) + log(cosh(t));
       const PrecFloat fx= f(x);
       const int sign= (fx > 0)?1:-1;
@@ -664,6 +686,7 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
       //cout<<" t: "<<t<<" x: "<<x<<" res: "<<res<<" jac: "<<jac<<"res impr: "<<sign*exp(log_res)<<endl<<flush;
       
       return sign*exp(log_res);
+      */
     };
   
   PrecFloat step_old=1;
@@ -756,8 +779,8 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
 
 
 PrecFloat ExpEiComplexSum(PrecFloat MOD, PrecFloat PH, PrecFloat s,  bool MODE); 
-
-
+PrecFloat Erfi( PrecFloat x);
+PrecFloat DawsonF( PrecFloat x);
 
 
 #ifdef MAIN

@@ -2,13 +2,14 @@
 
 using namespace std;
 
+
 const double M2PiPhys=pow(0.135,2);
-const double alpha = 1/137.04;
+const double alpha= 1/137.04;
 const double e2 = alpha*4.0*M_PI;
 const int Nboots= 800;
 const bool UseJack=1;
 const int nboots=150;
-const int Njacks=25;
+const int Njacks=30;
 const double qu = 2.0/3.0; //electric charge of u-type quark
 const double qd = -1.0/3.0; //electric charge of d-type quark
 const string Meson="Ds";
@@ -19,11 +20,13 @@ Vfloat virt_list;
 bool verbose_lev=0;
 bool P5_ON_SOURCE=true;
 bool Is_rep=false;
-Vfloat sigmas({0.4,0.3,0.2,0.05}); //epsilon in GeV
+Vfloat sigmas({0.6, 0.5, 0.4, 0.3, 0.2}); //sigma in GeV
 int prec=256;
 const string MODE_FF="TANT";
-const bool CONS_EM_CURR=false;
+bool CONS_EM_CURR=false;
 const bool Skip_spectral_reconstruction=false;
+const bool Reconstruct_axial_part=false;
+const bool Reconstruct_vector_part=true;
 const double Mjpsi= 3.0969;
 const double Mphi= 1.019461;
 
@@ -212,29 +215,44 @@ void Integrate_over_photon_insertion_w_subtraction(const distr_t_list &W, vector
 
 void Get_radiative_form_factors_3d() {
 
+
+  Get_virt_list();
   
   int rank, size;
   
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  Vfloat alpha_List({0.0, 0.0, 0.0, 0.99, 0.99, 0.99});
-  vector<bool> Integrate_Up_To_Emax_List({0,0,0,0,0,0});
-  Vfloat Emax_List({10,10,10,10,10,10});
-  vector<bool> Perform_theta_average_List({1,1,1,1,1,1});
-  vector<string> SM_TYPE_List({"Sinh", "Sinh", "Sinh", "Sinh", "Sinh", "Sinh"});
-  Vfloat E0_List({0.5,0.8,0.9,0.5,0.8,0.9});
-  int N= alpha_List.size();
+  /*
+  Vfloat beta_List({0.0, 0.0, 0.0, 0.99, 0.99, 0.99, -0.99, -0.99});
+  vector<bool> Integrate_Up_To_Emax_List({0,0,0,0,0,0,0,0});
+  Vfloat Emax_List({10,10,10,10,10,10,10,10});
+  vector<bool> Perform_theta_average_List({1,1,1,1,1,1,1,1});
+  vector<string> SM_TYPE_List({"FF_Sinh", "FF_Sinh", "FF_Sinh", "FF_Sinh", "FF_Sinh", "FF_Sinh", "FF_Sinh", "FF_Sinh"});
+  Vfloat E0_List({0.6,0.8,0.9,0.6,0.8,0.9,0.8,0.9});
+  */
+
+  Vfloat beta_List({0.0, 0.0});
+  vector<bool> Integrate_Up_To_Emax_List({0,0});
+  Vfloat Emax_List({10,10});
+  vector<bool> Perform_theta_average_List({1,1});
+  vector<string> SM_TYPE_List({"FF_Sinh", "FF_Sinh"});
+  vector<bool> CONS_EM_CURR_LIST({true, false});
+  Vfloat E0_List({0.9,0.8});
+  
+  int N= beta_List.size();
 
   
   if(N%size != 0) crash("MPI called with -np= "+to_string(size)+". np does not divide vector size N="+to_string(N));
   
-  cout<<"################# DETERMINATION OF VIRTUAL-RADIATIVE FF USING HLT & EXP-SUB METHODS #################"<<endl;
-  cout<<"Rank: "<<rank<<" pid: "<<getpid()<<" core id: "<<"("<<sched_getcpu()<<")"<<endl;
-  cout<<"RECONSTRUCTION CALLED FOR:"<<endl;
   for(int i=rank*N/size;i<(rank+1)*N/size;i++) {
-    cout<<"alpha: "<<alpha_List[i]<<", Use_Emax: "<<Integrate_Up_To_Emax_List[i]<<", SM_TYPE: "<<SM_TYPE_List[i]<<", theta average: "<<Perform_theta_average_List[i]<<endl;
-    Compute_form_factors_Nissa_3d(alpha_List[i], Integrate_Up_To_Emax_List[i], Emax_List[i], SM_TYPE_List[i], Perform_theta_average_List[i], E0_List[i]);
+    cout<<"################# DETERMINATION OF VIRTUAL-RADIATIVE FF USING HLT & EXP-SUB METHODS #################"<<endl;
+    cout<<"Rank: "<<rank<<" pid: "<<getpid()<<" core id: "<<"("<<sched_getcpu()<<")"<<endl;
+    cout<<"RECONSTRUCTION CALLED FOR:"<<endl;
+    cout<<"alpha: "<<beta_List[i]<<", Use_Emax: "<<Integrate_Up_To_Emax_List[i]<<", SM_TYPE: "<<SM_TYPE_List[i]<<", theta average: "<<Perform_theta_average_List[i]<<endl;
+    CONS_EM_CURR= CONS_EM_CURR_LIST[i];
+    cout<<"electromagnetic current: "<<((CONS_EM_CURR)?"conserved":"local")<<endl;
+    Compute_form_factors_Nissa_3d(beta_List[i], Integrate_Up_To_Emax_List[i], Emax_List[i], SM_TYPE_List[i], Perform_theta_average_List[i], E0_List[i]);
   }
   cout<<"##########################################"<<endl;
 
@@ -242,14 +260,13 @@ void Get_radiative_form_factors_3d() {
   return ;
 }
 
-void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, double Emax, string SM_TYPE, bool Perform_theta_average, double E0_fact) {
+void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, double Emax, string SM_TYPE, bool Perform_theta_average, double E0_fact) {
 
 
   PrecFloat::setDefaultPrecision(prec);
   cout<<"max possible exponent: "<<PrecFloat::getEmax_max()<<endl;
   cout<<"current max exponent: "<<PrecFloat::getEmax()<<endl;
 
-  Get_virt_list();
 
   string TAG_CURR="";
   if(CONS_EM_CURR==false) TAG_CURR="LOC_";
@@ -320,11 +337,46 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
     }
   }
 
+  //custom sorting of gauge confs
+    auto Sort_confs = [](string A, string B) {
+
+			   
+
+			    int conf_length_A= A.length();
+			    int conf_length_B= B.length();
+
+			    int pos_a_slash=-1;
+			    int pos_b_slash=-1;
+			    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+			    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+
+			    string A_bis= A.substr(pos_a_slash+1);
+			    string B_bis= B.substr(pos_b_slash+1);
+
+					     
+			    string conf_num_A = A_bis.substr(0,4);
+			    string conf_num_B = B_bis.substr(0,4);
+							       
+		      
+			    string rA = A_bis.substr(A_bis.length()-2);
+			    string rB = B_bis.substr(B_bis.length()-2);
+			    if(rA.substr(0,1) == "r") { 
+			      int n1 = stoi(A_bis.substr(A_bis.length()-1));
+			      int n2 = stoi(B_bis.substr(B_bis.length()-1));
+			      if(rA == rB) {
+				if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+				else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+				else crash("stream not recognized");
+			      }
+			      else return n1<n2;
+			    }
+			    return A_bis<B_bis;
+			  };
   
   //read data
 
-  data_2pts.Read("../new_vph_3d_gpu_data", "mes_contr_2pts", "P5P5");
-  data_2pts_SM.Read("../new_vph_3d_gpu_data", "mes_contr_2pts_SM", "P5P5");
+  data_2pts.Read("../new_vph_3d_gpu_data", "mes_contr_2pts", "P5P5", Sort_confs);
+  //data_2pts_SM.Read("../new_vph_3d_gpu_data", "mes_contr_2pts_SM", "P5P5");
 
 
   //loop over mu and nu axial
@@ -348,9 +400,9 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 
 	//axial
 	//u
-	C_A_u_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_mu_"+to_string(mu)+"_u_ixg_"+to_string(ixg), "S0A"+to_string(nu));
+	C_A_u_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_mu_"+to_string(mu)+"_u_ixg_"+to_string(ixg), "S0A"+to_string(nu), Sort_confs);
 	//d
-	C_A_d_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_mu_"+to_string(mu)+"_d_ixg_"+to_string(ixg), "S0A"+to_string(nu));
+	C_A_d_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_mu_"+to_string(mu)+"_d_ixg_"+to_string(ixg), "S0A"+to_string(nu), Sort_confs);
       }
 
       else {
@@ -359,9 +411,9 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 	if(CONS_EM_CURR==false) Tag_contr="V"+to_string(mu)+"P5";
 	//axial
 	//u
-	C_A_u_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_u_A_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr);
+	C_A_u_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_u_A_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
 	//d
-	C_A_d_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_d_A_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr);
+	C_A_d_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_d_A_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
 
       }
     }
@@ -374,9 +426,9 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 	
 	//vector
 	//u
-	C_V_u_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_mu_"+to_string(mu)+"_u_ixg_"+to_string(ixg), "S0V"+to_string(nu));
+	C_V_u_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_mu_"+to_string(mu)+"_u_ixg_"+to_string(ixg), "S0V"+to_string(nu), Sort_confs);
 	//d
-	C_V_d_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_mu_"+to_string(mu)+"_d_ixg_"+to_string(ixg), "S0V"+to_string(nu));
+	C_V_d_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_mu_"+to_string(mu)+"_d_ixg_"+to_string(ixg), "S0V"+to_string(nu), Sort_confs);
       }
 
       else {
@@ -385,9 +437,9 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 	if(CONS_EM_CURR==false) Tag_contr="V"+to_string(mu)+"P5";
 	//vector
 	//u
-	C_V_u_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_u_V_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr);
+	C_V_u_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_u_V_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
 	//d
-	C_V_d_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_d_V_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr);
+	C_V_d_data[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"C_d_V_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
 	
       }
     }
@@ -407,9 +459,9 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 
 	//axial
 	//u
-	C_A_u_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_mu_"+to_string(mu)+"_u_ixg_"+to_string(ixg), "S0A"+to_string(nu));
+	C_A_u_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_mu_"+to_string(mu)+"_u_ixg_"+to_string(ixg), "S0A"+to_string(nu), Sort_confs);
 	//d
-	C_A_d_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_mu_"+to_string(mu)+"_d_ixg_"+to_string(ixg), "S0A"+to_string(nu));
+	C_A_d_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_mu_"+to_string(mu)+"_d_ixg_"+to_string(ixg), "S0A"+to_string(nu), Sort_confs);
       }
 
       else {
@@ -418,9 +470,9 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 	if(CONS_EM_CURR==false) Tag_contr="V"+to_string(mu)+"P5";
 	//axial
 	//u
-	C_A_u_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_u_A_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr);
+	C_A_u_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_u_A_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
 	//d
-	C_A_d_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_d_A_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr);
+	C_A_d_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_d_A_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
 
       }
     }
@@ -433,9 +485,9 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 	
 	//vector
 	//u
-	C_V_u_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_mu_"+to_string(mu)+"_u_ixg_"+to_string(ixg), "S0V"+to_string(nu));
+	C_V_u_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_mu_"+to_string(mu)+"_u_ixg_"+to_string(ixg), "S0V"+to_string(nu), Sort_confs);
 	//d
-	C_V_d_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_mu_"+to_string(mu)+"_d_ixg_"+to_string(ixg), "S0V"+to_string(nu));
+	C_V_d_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_mu_"+to_string(mu)+"_d_ixg_"+to_string(ixg), "S0V"+to_string(nu), Sort_confs);
       }
 
       else {
@@ -444,9 +496,9 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 	if(CONS_EM_CURR==false) Tag_contr="V"+to_string(mu)+"P5";
 	//vector
 	//u
-	C_V_u_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_u_V_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr);
+	C_V_u_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_u_V_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
 	//d
-	C_V_d_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_d_V_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr);
+	C_V_d_data_rev[mu][nu][ixg].Read("../new_vph_3d_gpu_data", TAG_CURR+"REV_C_d_V_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
 	
       }
     }
@@ -571,38 +623,31 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
   //smeared kernel of the real part
   auto K_RE= [&SM_TYPE](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
 
+
+    if(SM_TYPE=="FF_Gauss") {
+      PrecFloat x = (E-m)/(sqrt(PrecFloat(2))*s);
+      return sqrt(2)*DawsonF(x)/s;
+    }
+
     PrecFloat norm;
-    PrecFloat seff= (SM_TYPE=="Sinh")?s:s/2;
-    if( seff > 1) norm= PrecFloat(2)*log( seff + sqrt( seff*seff -1))/sqrt(seff*seff -1);
-    else if(seff==1) norm=PrecFloat(2);
+    if( s > 1) norm= PrecFloat(2)*log( s + sqrt( s*s -1))/sqrt(s*s -1);
+    else if(s==1) norm=PrecFloat(2);
     else {
-      PrecFloat phi= abs(atan( sqrt( 1 - seff*seff)/seff));
-      norm= PrecFloat(2)*phi/sqrt( 1 - seff*seff);
+      PrecFloat phi= abs(atan( sqrt( 1 - s*s)/s));
+      norm= PrecFloat(2)*phi/sqrt( 1 - s*s);
     }
     norm /= precPi();
     norm = 1/norm;
     
-      
+       
     PrecFloat t = (E-m);
     PrecFloat x=sinh(t);
-    //if(SM_TYPE=="Sinh_half") x= 2*sinh(t/2);
-
-    
-    
     PrecFloat res= (x + (s*s/x));
-
     res=1/res;
 
-    /*
-    cout<<"norm: "<<norm<<endl<<flush;
-    cout<<"x: "<<x<<endl<<flush;
-    cout<<"res: "<<res<<endl<<flush;
-    cout.precision(10);
-    cout<<"x: "<<t<<" sinh(x): "<<x<<" , log_res: "<<log(res)<<" bis: "<<log(abs(x)/(s*s+x*x))<<endl<<flush;
-    */
     if( abs(t) >= 1) return norm*res;
     else return norm*x/( s*s + x*x);
-
+      
     exit(-1);
     return 0;
   };
@@ -610,15 +655,14 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
   //smeared kernel of the immaginary part
   auto K_IM = [&SM_TYPE](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
 
-    if(SM_TYPE=="Gauss") return Get_exact_gauss(E, m, s, E0);
+    if(SM_TYPE=="FF_Gauss") return precPi()*Get_exact_gauss(E, m, s, E0);
 
     PrecFloat norm;
-    PrecFloat seff= (SM_TYPE=="Sinh")?s:s/2;
-    if( seff > 1) norm= PrecFloat(2)*log( seff + sqrt( seff*seff -1))/sqrt(seff*seff -1);
-    else if(seff==1) norm=PrecFloat(2);
+    if( s > 1) norm= PrecFloat(2)*log( s + sqrt( s*s -1))/sqrt(s*s -1);
+    else if(s==1) norm=PrecFloat(2);
     else {
-      PrecFloat phi= abs(atan( sqrt( 1 - seff*seff)/seff));
-      norm= PrecFloat(2)*phi/sqrt( 1 - seff*seff);
+      PrecFloat phi= abs(atan( sqrt( 1 - s*s)/s));
+      norm= PrecFloat(2)*phi/sqrt( 1 - s*s);
     }
     
     norm /= precPi();
@@ -626,7 +670,6 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 
     PrecFloat t = E-m;
     PrecFloat x = sinh(t);
-    if(SM_TYPE=="Sinh_half") x= 2*sinh(t/2);
     return norm*s/( pow(x,2) + pow(s,2));
 
   };
@@ -722,6 +765,7 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 
     //smeared
     //set time interval for eff_mass_fit SM
+    /*
     if(data_2pts.Tag[iens].substr(1,1) =="A") {Corr.Tmin=24; Corr.Tmax=35;}
     else if(data_2pts.Tag[iens].substr(1,1) =="B") {Corr.Tmin=20; Corr.Tmax=36;}
     else if(data_2pts.Tag[iens].substr(1,1) == "C")  {Corr.Tmin=33;Corr.Tmax=51;}
@@ -730,7 +774,7 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
     distr_t_list pt2_distr_SM= Corr.corr_t(data_2pts_SM.col(0)[iens], "../data/ph_emission_3d/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt_SM.dat");
     distr_t_list eff_mass_SM = Corr.effective_mass_t(pt2_distr_SM, "../data/ph_emission_3d/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_SM.dat");
     distr_t M_P_SM = Corr.Fit_distr(eff_mass_SM);
-
+    */
 
     //define renormalization factor for axial and vector currents in terms of axial 3pt at k=0
     //#################################################################################
@@ -1064,7 +1108,7 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 	Print_To_File({},{TT,RR, cov_vec_u, corr_vec_u}, "../data/ph_emission_3d/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
 	Print_To_File({},{TT,RR, cov_vec_d, corr_vec_d}, "../data/ph_emission_3d/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
 
-	if(!Skip_spectral_reconstruction) {
+	if(!Skip_spectral_reconstruction && Reconstruct_vector_part) {
 
 	
 	 
@@ -1081,38 +1125,40 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 	      double mult_im_u=1e-2;
 	      double mult_im_d=1e-2;
 	      double s= sigmas[isg]*a_distr.ave();
-	      double E0_u= E0_fact_u*sqrt( pow(Mjpsi*a_distr.ave(),2) + pow(kz,2));
-	      double E0_d= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
 	      double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ie],2));
+	      double E0_u_RE= E0_fact_u*sqrt( pow(Mjpsi*a_distr.ave(),2) + pow(kz,2));
+	      double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
+	      double E0_u_IM= min( Eg+3*s, E0_u_RE);
+	      double E0_d_IM= min( Eg+3*s, E0_d_RE);
 	      double l_re_u, l_re_d;
 	      double l_im_u, l_im_d;
 
-	      cout<<"Computing xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_u: "<<E0_u<<", E0_d: "<<E0_d<<" s: "<<s<<endl<<flush;
-	      cout<<"Mjpsi*a "<<Mjpsi*a_distr.ave()<<endl<<flush;
-	      cout<<"Mphi*a "<<Mphi*a_distr.ave()<<endl<<flush;
-	      cout<<"E0_fact_u: "<<E0_fact_u<<endl<<flush;
-	      cout<<"E0_fact_d: "<<E0_fact_d<<endl<<flush;
-
+	      cout<<"Computing ixg: "<<ixg<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
+	      cout<<"MV_u*a "<<Mjpsi*a_distr.ave()<<" MV_d*a "<<Mphi*a_distr.ave()<<endl<<flush;
+	     
 	      //Real part
-	      RE_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE,K_RE, vec_u_TO_2, syst_re_u[ie], mult_re_u, l_re_u, MODE_FF, "RE", TAG_CURR+"Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF", cov_vec_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, alpha, 1,0, F_NORM_u, Atr_GEN_u );
-	      RE_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE,K_RE, vec_d_TO_2, syst_re_d[ie], mult_re_d, l_re_d, MODE_FF, "RE", TAG_CURR+"Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF", cov_vec_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, alpha, 1,0, F_NORM_d, Atr_GEN_d);
+	      syst_re_u[ie]=0.0;
+	      RE_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks);
+	      //RE_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u_RE,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_RE",K_RE, vec_u_TO_2, syst_re_u[ie], mult_re_u, l_re_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF", cov_vec_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u );
+	      RE_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_RE,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_RE",K_RE, vec_d_TO_2, syst_re_d[ie], mult_re_d, l_re_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF", cov_vec_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d);
 
 	      //Imag part
-	      IM_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE,K_IM, vec_u_TO_2, syst_im_u[ie], mult_im_u, l_im_u, MODE_FF, "IM", TAG_CURR+"Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF", cov_vec_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, alpha, 1,0, F_NORM_u, Atr_GEN_u);
-	      IM_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE,K_IM, vec_d_TO_2, syst_im_d[ie], mult_im_d, l_im_d, MODE_FF, "IM", TAG_CURR+"Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF", cov_vec_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, alpha, 1,0, F_NORM_d, Atr_GEN_d);
+	      syst_im_u[ie]= 0.0;
+	      IM_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks) ;
+	      //IM_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_IM",K_IM, vec_u_TO_2, syst_im_u[ie], mult_im_u, l_im_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF", cov_vec_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u);
+	      IM_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_IM,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_IM",K_IM, vec_d_TO_2, syst_im_d[ie], mult_im_d, l_im_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF", cov_vec_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d);
 
 
-	      syst_re_u[ie] *= erf( syst_re_u[ie]/(sqrt(2.0)*RE_HV_sm_u[iens][mu][nu][ixg][isg].err(ie)));
-	      syst_re_d[ie] *= erf( syst_re_d[ie]/(sqrt(2.0)*RE_HV_sm_d[iens][mu][nu][ixg][isg].err(ie)));
-	      syst_im_u[ie] *= erf( syst_im_u[ie]/(sqrt(2.0)*IM_HV_sm_u[iens][mu][nu][ixg][isg].err(ie)));
-	      syst_im_d[ie] *= erf( syst_im_d[ie]/(sqrt(2.0)*IM_HV_sm_d[iens][mu][nu][ixg][isg].err(ie)));
+	      cout<<"Computed ixg: "<<ixg<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
+
+
 	    }
 
 	    //print to file
 	    //Real part
-	    Print_To_File({}, {virt_list, RE_HV_sm_u[iens][mu][nu][ixg][isg].ave(), RE_HV_sm_u[iens][mu][nu][ixg][isg].err(), syst_re_u, RE_HV_sm_d[iens][mu][nu][ixg][isg].ave(), RE_HV_sm_d[iens][mu][nu][ixg][isg].err(), syst_re_d, (RE_HV_sm_u[iens][mu][nu][ixg][isg] + RE_HV_sm_d[iens][mu][nu][ixg][isg]).ave(), (RE_HV_sm_u[iens][mu][nu][ixg][isg] + RE_HV_sm_d[iens][mu][nu][ixg][isg]).err()}, "../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_V_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "xk u d  u+d");
+	    Print_To_File({}, {virt_list, RE_HV_sm_u[iens][mu][nu][ixg][isg].ave(), RE_HV_sm_u[iens][mu][nu][ixg][isg].err(), syst_re_u, RE_HV_sm_d[iens][mu][nu][ixg][isg].ave(), RE_HV_sm_d[iens][mu][nu][ixg][isg].err(), syst_re_d, (RE_HV_sm_u[iens][mu][nu][ixg][isg] + RE_HV_sm_d[iens][mu][nu][ixg][isg]).ave(), (RE_HV_sm_u[iens][mu][nu][ixg][isg] + RE_HV_sm_d[iens][mu][nu][ixg][isg]).err()}, "../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_V_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "xk u d  u+d");
 	    //Imag part
-	    Print_To_File({}, {virt_list, IM_HV_sm_u[iens][mu][nu][ixg][isg].ave(), IM_HV_sm_u[iens][mu][nu][ixg][isg].err(), syst_im_u, IM_HV_sm_d[iens][mu][nu][ixg][isg].ave(), IM_HV_sm_d[iens][mu][nu][ixg][isg].err(), syst_im_d, (IM_HV_sm_u[iens][mu][nu][ixg][isg]+ IM_HV_sm_d[iens][mu][nu][ixg][isg]).ave(), (IM_HV_sm_u[iens][mu][nu][ixg][isg]+ IM_HV_sm_d[iens][mu][nu][ixg][isg]).err() }, "../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_V_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "xk u d u+d");
+	    Print_To_File({}, {virt_list, IM_HV_sm_u[iens][mu][nu][ixg][isg].ave(), IM_HV_sm_u[iens][mu][nu][ixg][isg].err(), syst_im_u, IM_HV_sm_d[iens][mu][nu][ixg][isg].ave(), IM_HV_sm_d[iens][mu][nu][ixg][isg].err(), syst_im_d, (IM_HV_sm_u[iens][mu][nu][ixg][isg]+ IM_HV_sm_d[iens][mu][nu][ixg][isg]).ave(), (IM_HV_sm_u[iens][mu][nu][ixg][isg]+ IM_HV_sm_d[iens][mu][nu][ixg][isg]).err() }, "../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_V_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "xk u d u+d");
 
 	    cout<<"sigma: "<<sigmas[isg]<<" computed!"<<endl;
 	   
@@ -1122,7 +1168,8 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 	}
       }
 
-
+      
+      
       //axial
       for(auto &pair_A:red_mu_nu_pair_A) {
 
@@ -1396,53 +1443,63 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
 	Print_To_File({},{TT,RR, cov_ax_u, corr_ax_u}, "../data/ph_emission_3d/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
 	Print_To_File({},{TT,RR, cov_ax_d, corr_ax_d}, "../data/ph_emission_3d/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
 
-	if(!Skip_spectral_reconstruction) {
+	if(!Skip_spectral_reconstruction && Reconstruct_axial_part) {
 		 
 	  //spectral reconstruction for second time ordering
 	  for(int isg=0;isg<(signed)sigmas.size();isg++) {
-	    cout<<"Calling spectral reconstruction with sigma= "<<sigmas[isg]<<" GeV, axial channel, (mu,nu) : ("<<mu<<", "<<nu<<")"<<endl<<flush;
+	    cout<<"Calling spectral reconstruction 2nd-TO with sigma= "<<sigmas[isg]<<" GeV, axial channel, (mu,nu) : ("<<mu<<", "<<nu<<")"<<endl<<flush;
 	    Vfloat syst_re_u(virt_list.size()), syst_re_d(virt_list.size()), syst_im_u(virt_list.size()), syst_im_d(virt_list.size());
 
 #pragma omp parallel for schedule(dynamic)
 	    for(int ie=0;ie<(signed)virt_list.size();ie++) {
-	      cout<<"Computing xg: "<<virt_list[ie]<<endl;
+
+
+	      
 	      double mult_re_u=1e-2;
 	      double mult_re_d=1e-2;
 	      double mult_im_u=1e-2;
 	      double mult_im_d=1e-2;
 	      double s= sigmas[isg]*a_distr.ave();
 	      double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ie],2));
-	      double E0_u= E0_fact_u*sqrt( pow(Mjpsi*a_distr.ave(),2) + pow(kz,2));
-	      double E0_d= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
+	      double E0_u_RE= E0_fact_u*sqrt( pow(Mjpsi*a_distr.ave(),2) + pow(kz,2));
+	      double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
+	      double E0_u_IM= min( Eg + 3*s, E0_u_RE);
+	      double E0_d_IM= min( Eg + 3*s, E0_d_RE);
 	      cout<<"Eg: "<<Eg_virt<<" sigma: "<<s<<endl;
 	      double l_re_u, l_re_d;
 	      double l_im_u, l_im_d;
+
+	      cout<<"Computing ixg: "<<ixg<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
+              cout<<"MV_u*a "<<Mjpsi*a_distr.ave()<<" MV_d*a "<<Mphi*a_distr.ave()<<endl<<flush;
 	     
 
 	      //Real part
-	      RE_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE,K_RE, ax_u_TO_2, syst_re_u[ie], mult_re_u, l_re_u, MODE_FF, "RE", TAG_CURR+"Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF", cov_ax_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, alpha, 1,0, F_NORM_u, Atr_GEN_u);
+	      syst_re_u[ie] = 0;
+	      RE_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks);
+	      //RE_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u_RE,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_RE",K_RE, ax_u_TO_2, syst_re_u[ie], mult_re_u, l_re_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF", cov_ax_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u);
 	      cout<<"Re HA u, computed"<<endl;
-	      RE_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE,K_RE, ax_d_TO_2, syst_re_d[ie], mult_re_d, l_re_d, MODE_FF, "RE", TAG_CURR+"Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF", cov_ax_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, alpha, 1,0, F_NORM_d, Atr_GEN_d);
+	      RE_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_RE,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_RE",K_RE, ax_d_TO_2, syst_re_d[ie], mult_re_d, l_re_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF", cov_ax_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d);
 	      cout<<"Re HA d, computed"<<endl;
+	      
 	      //Imag part
-	      IM_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE,K_IM, ax_u_TO_2, syst_im_u[ie], mult_im_u, l_im_u, MODE_FF, "IM", TAG_CURR+"Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF", cov_ax_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, alpha, 1,0, F_NORM_u, Atr_GEN_u);
+	      syst_im_u[ie] = 0;
+	      IM_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie]= 0.0*Get_id_jack_distr(Njacks);
+	      //IM_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_IM",K_IM, ax_u_TO_2, syst_im_u[ie], mult_im_u, l_im_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF", cov_ax_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u);
 	      cout<<"Im HA u, computed"<<endl;
-	      IM_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE,K_IM, ax_d_TO_2, syst_im_d[ie], mult_im_d, l_im_d, MODE_FF, "IM", TAG_CURR+"Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF", cov_ax_d, fake_func,0, fake_func_d ,  0, Integrate_Up_To_Emax, Emax, alpha,0, F_NORM_d, Atr_GEN_d);
+	      IM_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_IM,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_IM",K_IM, ax_d_TO_2, syst_im_d[ie], mult_im_d, l_im_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF", cov_ax_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d);
 	      cout<<"Im HA d, computed"<<endl;
 
 
-	      syst_re_u[ie] *= erf( syst_re_u[ie]/(sqrt(2.0)*RE_HA_sm_u[iens][mu][nu][ixg][isg].err(ie)));
-	      syst_re_d[ie] *= erf( syst_re_d[ie]/(sqrt(2.0)*RE_HA_sm_d[iens][mu][nu][ixg][isg].err(ie)));
-	      syst_im_u[ie] *= erf( syst_im_u[ie]/(sqrt(2.0)*IM_HA_sm_u[iens][mu][nu][ixg][isg].err(ie)));
-	      syst_im_d[ie] *= erf( syst_im_d[ie]/(sqrt(2.0)*IM_HA_sm_d[iens][mu][nu][ixg][isg].err(ie)));
-	     
+	      cout<<"Computed ixg: "<<ixg<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
+
+	     	     
 	    }
 
 	    //print to file
 	    //Real part
-	    Print_To_File({}, {virt_list, RE_HA_sm_u[iens][mu][nu][ixg][isg].ave(), RE_HA_sm_u[iens][mu][nu][ixg][isg].err(), syst_re_u,  RE_HA_sm_d[iens][mu][nu][ixg][isg].ave(), RE_HA_sm_d[iens][mu][nu][ixg][isg].err(), syst_re_d, (RE_HA_sm_u[iens][mu][nu][ixg][isg]-RE_HA_sm_d[iens][mu][nu][ixg][isg]).ave(), (RE_HA_sm_u[iens][mu][nu][ixg][isg]-RE_HA_sm_d[iens][mu][nu][ixg][isg]).err() }, "../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_A_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "#xk  u d  u+d");
+	    Print_To_File({}, {virt_list, RE_HA_sm_u[iens][mu][nu][ixg][isg].ave(), RE_HA_sm_u[iens][mu][nu][ixg][isg].err(), syst_re_u,  RE_HA_sm_d[iens][mu][nu][ixg][isg].ave(), RE_HA_sm_d[iens][mu][nu][ixg][isg].err(), syst_re_d, (RE_HA_sm_u[iens][mu][nu][ixg][isg]-RE_HA_sm_d[iens][mu][nu][ixg][isg]).ave(), (RE_HA_sm_u[iens][mu][nu][ixg][isg]-RE_HA_sm_d[iens][mu][nu][ixg][isg]).err() }, "../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_A_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "#xk  u d  u+d");
 	    //Imag part
-	    Print_To_File({}, {virt_list, IM_HA_sm_u[iens][mu][nu][ixg][isg].ave(), IM_HA_sm_u[iens][mu][nu][ixg][isg].err(), syst_im_u, IM_HA_sm_d[iens][mu][nu][ixg][isg].ave(), IM_HA_sm_d[iens][mu][nu][ixg][isg].err(), syst_im_d, (IM_HA_sm_u[iens][mu][nu][ixg][isg] - IM_HA_sm_d[iens][mu][nu][ixg][isg]).ave(),  (IM_HA_sm_u[iens][mu][nu][ixg][isg] - IM_HA_sm_d[iens][mu][nu][ixg][isg]).err()   }, "../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_A_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "#xk  u   d   u+d"); 
+	    Print_To_File({}, {virt_list, IM_HA_sm_u[iens][mu][nu][ixg][isg].ave(), IM_HA_sm_u[iens][mu][nu][ixg][isg].err(), syst_im_u, IM_HA_sm_d[iens][mu][nu][ixg][isg].ave(), IM_HA_sm_d[iens][mu][nu][ixg][isg].err(), syst_im_d, (IM_HA_sm_u[iens][mu][nu][ixg][isg] - IM_HA_sm_d[iens][mu][nu][ixg][isg]).ave(),  (IM_HA_sm_u[iens][mu][nu][ixg][isg] - IM_HA_sm_d[iens][mu][nu][ixg][isg]).err()   }, "../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_A_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "#xk  u   d   u+d"); 
 
 	    cout<<"sigma: "<<sigmas[isg]<<" computed!"<<endl;
 	   
@@ -1453,6 +1510,49 @@ void Compute_form_factors_Nissa_3d(double alpha, bool Integrate_Up_To_Emax, doub
     }
   }
 
+
+ 
+  if( !Skip_spectral_reconstruction) {
+    cout<<"Storing jackknives distributions for spectral quantities..."<<endl;
+    for(int iens=0;iens<Nens;iens++) {
+      string TAG_CURR_NEW= ((CONS_EM_CURR==0)?"LOC":"CONS");
+      boost::filesystem::create_directory("../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW);
+      boost::filesystem::create_directory("../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives");
+      boost::filesystem::create_directory("../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE);
+      for(int ixg=1;ixg<n_xg;ixg++) {
+	boost::filesystem::create_directory("../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg));
+	for(int isg=0; isg < (signed)sigmas.size();isg++) {
+	  boost::filesystem::create_directory("../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3));
+	  for(int ixk=0;ixk < (signed)virt_list.size();ixk++) {
+	    boost::filesystem::create_directory("../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk));
+	    if(Reconstruct_vector_part) {
+	      for( auto &pair_V:red_mu_nu_pair_V) {
+		int mu= pair_V.first;
+		int nu= pair_V.second;
+		Print_To_File({}, {RE_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr, IM_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr}, "../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".jack", "", "");
+	       
+	      }
+	    }
+	    if(Reconstruct_axial_part) {
+	       for( auto &pair_A:red_mu_nu_pair_A) {
+		int mu=	pair_A.first;
+		int nu=	pair_A.second;
+		Print_To_File({}, {RE_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr, IM_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr},	"../data/ph_emission_3d/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".jack",	"", "");
+
+	       }
+	    }
+	  }
+	}
+      }
+    }
+    cout<<"Jackknives distribution printed! "<<endl;
+  }
+   
+
+
+
+
+  
 
 
   cout<<"Bye!"<<endl;

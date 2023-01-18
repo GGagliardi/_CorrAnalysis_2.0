@@ -46,10 +46,10 @@ void data_t::Read() {
     else sort(Confs.begin(), Confs.end(), CustomSorting);
 
     //test
-    
-    //for(int ht=0;ht<(signed)Confs.size();ht++) cout<<Confs[ht]<<endl;
+    cout<<"###########"<<endl;
+    for(int ht=0;ht<(signed)Confs.size();ht++) cout<<Confs[ht]<<endl;
     //
-    //cout<<"###########"<<endl;
+    cout<<"###########"<<endl;
     //
     
     int N_rows_old=0;
