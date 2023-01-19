@@ -523,6 +523,8 @@ using PrecMatr=
 template <typename F>
 PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
 {
+
+  //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
   /// We compute up to the highest precision possible, which needs to
   /// be adjusted in terms of the number of iterations (maybe it might
   /// be enough to increase with the square root?)
@@ -540,11 +542,21 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
       const PrecFloat s=sinh(t);
       const PrecFloat x=exp(piHalf*s)+xMin;
       const PrecFloat x_m= exp(-piHalf*s) + xMin;
-
-
+      const PrecFloat fx= f(x);
+      const PrecFloat f_x_m= f(x_m);
+     
       const PrecFloat jac=piHalf*exp(piHalf*s)*cosh(t);
-      const PrecFloat jack_m = piHalf*exp(-piHalf*s)*cosh(t);
-      const PrecFloat res=f(x)*jac + f(x_m)*jack_m;
+      const PrecFloat jac_m = piHalf*exp(-piHalf*s)*cosh(t);
+      const PrecFloat res=fx*jac + f_x_m*jac_m;
+
+      /*
+      if(isnan(jac.get())) crash("jacobian is nan for x: "+to_string_with_precision(x.get(),5));
+      if(isnan(fx.get())) crash("f(x) is nan for x: "+to_string_with_precision(x.get(),5));
+      if(isnan(jac_m.get())) crash("jacobian is nan for x_m: "+to_string_with_precision(x_m.get(),5));
+      if(isnan(f_x_m.get())) crash("f(x_m) is nan for x_m: "+to_string_with_precision(x_m.get(),5));
+      if(isnan(res.get())) crash("res is nan for x: "+to_string_with_precision(x.get(),5)+", x_m: "+to_string_with_precision(x_m.get(),5));
+      */
+      
       return res;
 
       /*
@@ -599,7 +611,7 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
 	  const PrecFloat newSum=
 	    sum+contr*step;
 	  
-	  //cout<<"t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" converged: "<<converged<<endl;
+	  //cout<<"t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" converged: "<<converged<<" sum: "<<sum<<endl;
 	  
 	  converged=
 	    (newSum==sum);
@@ -626,7 +638,7 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
 	//cout<<"Stability: "<<stability<<" MaxAttainable: "<<maxAttainableStability<<endl<<flush;
 	maxAttainableStability*=2;
 
-	if( stability < maxAttainableStability) {sum_final=sum; RESTART=false;}
+	if( stability <= maxAttainableStability) {sum_final=sum; RESTART=false;}
 	else if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step;}
    
       }
@@ -640,6 +652,8 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
   //cout<<"final sum: "<<sum_final<<endl<<flush;
   //cout<<"integral computed"<<endl<<flush;
   //exit(-1);
+
+  if(isnan(sum_final.get())) crash("In integrateUpToInfinity res is nan");
   
   return sum_final;
 }
@@ -650,6 +664,8 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0)
 template <typename F>
 PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
 {
+
+  //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
   /// We compute up to the highest precision possible, which needs to
   /// be adjusted in terms of the number of iterations (maybe it might
   /// be enough to increase with the square root?)
@@ -674,6 +690,9 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
       const PrecFloat g=tanh(piHalf*s);
       const PrecFloat x=g*(xMax_prec-xMin_prec)/2+(xMax_prec +xMin_prec)/2;
       const PrecFloat jac=((xMax_prec-xMin_prec)/2)*piHalf*(1 - g*g)*cosh(t);
+      //if(isnan(jac.get())) crash("jacobian is nan for x: "+to_string_with_precision(x.get(),5));
+      //if(isnan(f(x).get())) crash("f(x) is nan for x: "+to_string_with_precision(x.get(),5));
+	
       return f(x)*jac;
 
       /*
@@ -753,7 +772,7 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1)
 	//cout<<"Stability: "<<stability<<" MaxAttainable: "<<maxAttainableStability<<endl<<flush;
 	maxAttainableStability*=2;
 
-	if( stability < maxAttainableStability) {sum_final=sum; RESTART=false;}
+	if( stability <= maxAttainableStability) {sum_final=sum; RESTART=false;}
 	else if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step;}
    
       }

@@ -1,5 +1,7 @@
 #include "../include/Spectral.h"
 
+
+
 double step_size = 0.01; //in units of sigma
 const bool INCLUDE_ERRORS= true;
 const double lambda= INCLUDE_ERRORS?0.9:0.0;

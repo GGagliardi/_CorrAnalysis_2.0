@@ -17,6 +17,7 @@
 #include <sstream>
 #include <cassert>
 #include <utmpx.h>
+#include <fenv.h>
 #include <sched.h>
 #include <mpi.h>
 #include <boost/filesystem.hpp>
