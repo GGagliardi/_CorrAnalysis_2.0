@@ -5,16 +5,19 @@ using namespace std;
 const double M2PiPhys=pow(0.135,2);
 const double alpha = 1/137.04;
 const double e2 = alpha*4.0*M_PI;
-const int Nboots= 100;
+const int Nboots= 800;
 const bool UseJack=1;
-const int nboots=150;
-const int Njacks=40;
+const int Njacks=((UseJack==true)?30:Nboots);
+
 const double qu = 2.0/3.0; //electric charge of u-type quark
 const double qd = -1.0/3.0; //electric charge of d-type quark
 const string Meson="Ds";
 double Lambda_QCD= 0.3; //300 MeV
 bool Is_reph=true;
 bool Perform_continuum_extrapolation=true;
+bool Include_a4=true;
+string Fit_tag= ( (Include_a4==true)?"wa4_":"");
+string _Fit_tag= ( (Include_a4==true)?"_wa4":"");
 int num_xg=11;
 Vfloat xg_t_list;
 Vfloat xg_to_spline;
@@ -468,8 +471,8 @@ void Compute_form_factors_Nissa() {
   GaussianMersenne GM(543543);
 
   //vectors to store FV and FA for all ensembles and values of gamma
-  vector<distr_t_list> FA_per_ens(Nens), FV_per_ens(Nens);
-  vector<distr_t_list> FA_per_kin(num_xg-1), FV_per_kin(num_xg-1); //num_xg -1 is to exclude xg=0 which is undefined
+  vector<distr_t_list> FA_per_ens(Nens), FV_per_ens(Nens), FA_u_per_ens(Nens), FV_u_per_ens(Nens), FA_d_per_ens(Nens), FV_d_per_ens(Nens);
+  vector<distr_t_list> FA_per_kin(num_xg-1), FV_per_kin(num_xg-1), FA_u_per_kin(num_xg-1), FV_u_per_kin(num_xg-1), FA_d_per_kin(num_xg-1), FV_d_per_kin(num_xg-1); //num_xg -1 is to exclude xg=0 which is undefined
   distr_t_list a_distr_list(UseJack);
   //M_Ds, F_Ds
   distr_t_list MP_list(UseJack);
@@ -535,7 +538,7 @@ void Compute_form_factors_Nissa() {
     //Lattice info
     LatticeInfo L_info;
     L_info.LatInfo_new_ens(data_2pts.Tag[iens]);
-    CorrAnalysis Corr(UseJack, Njacks,Nboots);
+    CorrAnalysis Corr(UseJack, Njacks,Nboots, iens);
     Corr.Nt = data_2pts.nrows[iens];
     Corr.Reflection_sign=1;
     Corr.Perform_Nt_t_average=1;
@@ -896,6 +899,8 @@ void Compute_form_factors_Nissa() {
       FA_u.distr_list.push_back(Corr.Fit_distr(FA_u_distr));
       FA_d.distr_list.push_back(Corr.Fit_distr(FA_d_distr));
       FA_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_distr));
+      FA_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_u_distr));
+      FA_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_d_distr));
       ax_Tmin.push_back(Tmin_A);
       ax_Tmax.push_back(Tmax_A);
       }
@@ -906,6 +911,8 @@ void Compute_form_factors_Nissa() {
       FV_u.distr_list.push_back( Corr.Fit_distr(FV_u_distr));
       FV_d.distr_list.push_back( Corr.Fit_distr(FV_d_distr));
       FV_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_distr));
+      FV_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_u_distr));
+      FV_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_u_distr));
       vec_Tmin.push_back(Tmin_V);
       vec_Tmax.push_back(Tmax_V);
       }
@@ -917,6 +924,10 @@ void Compute_form_factors_Nissa() {
 
     FA_per_ens[iens] = FA;
     FV_per_ens[iens] = FV;
+    FA_u_per_ens[iens] = FA_u;
+    FA_d_per_ens[iens] = FA_d;
+    FV_u_per_ens[iens] = FV_u;
+    FV_d_per_ens[iens] = FV_d;
     
 
 
@@ -1019,6 +1030,15 @@ void Compute_form_factors_Nissa() {
     vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FA_cont_interpol_jacks;
     vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FV_cont_interpol_jacks;
 
+    //u contribution
+    vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FA_u_cont_interpol_jacks;
+    vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FV_u_cont_interpol_jacks;
+
+    //d contribution
+    vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FA_d_cont_interpol_jacks;
+    vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FV_d_cont_interpol_jacks;
+    
+
 
   class ipar_FF_Nissa {
   public:
@@ -1030,11 +1050,12 @@ void Compute_form_factors_Nissa() {
   public:
     fpar_FF_Nissa() {}
     fpar_FF_Nissa(const Vfloat &par) {
-      if((signed)par.size() != 2) crash("In class fpar_FF_Nissa  class constructor Vfloat par has size != 2");
+      if((signed)par.size() != 3) crash("In class fpar_FF_Nissa  class constructor Vfloat par has size != 3");
       F0=par[0];
       D1=par[1];
+      D2=par[2];
     }
-    double F0, D1;
+    double F0, D1,D2;
   };
 
   
@@ -1045,6 +1066,7 @@ void Compute_form_factors_Nissa() {
   bf_FF.Set_verbosity(1);
   bf_FF.Add_par("F0", 0.07, 0.001);
   bf_FF.Add_par("D1", 1.0, 0.1);
+  bf_FF.Add_par("D2", 1.0, 0.1);
   //fit on mean values to get ch2
   bootstrap_fit<fpar_FF_Nissa,ipar_FF_Nissa> bf_FF_ch2(1);
   bf_FF_ch2.set_warmup_lev(0); //sets warmup
@@ -1052,13 +1074,16 @@ void Compute_form_factors_Nissa() {
   bf_FF_ch2.Set_verbosity(1);
   bf_FF_ch2.Add_par("F0", 0.07, 0.001);
   bf_FF_ch2.Add_par("D1", 1.0, 0.1);
+  bf_FF_ch2.Add_par("D2", 1.0, 0.1);
+
+  if(Include_a4==false) { bf_FF.Fix_par("D2", 0.0); bf_FF_ch2.Fix_par("D2",0.0);}
   
 
   //ansatz
   bf_FF.ansatz=  [ ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
 
 		  
-		   return p.F0 + p.D1*pow(ip.a*Lambda_QCD,2);
+    return p.F0 + p.D1*pow(ip.a*Lambda_QCD,2) + p.D2*pow(ip.a*Lambda_QCD,4);
 		 };
   bf_FF.measurement=  [ ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
 
@@ -1077,6 +1102,7 @@ void Compute_form_factors_Nissa() {
   Vfloat ch2_FA;
   distr_t_list F0_A_list(UseJack);
   distr_t_list D1_A_list(UseJack);
+  distr_t_list D2_A_list(UseJack);
   for(int ixg=1;ixg<num_xg;ixg++) {
   
   //fill the data
@@ -1120,19 +1146,20 @@ void Compute_form_factors_Nissa() {
 
   
   //retrieve parameters
-  distr_t F0(UseJack), D1(UseJack);
-  for(int ijack=0;ijack<Njacks;ijack++) { F0.distr.push_back( Bt_fit.par[ijack].F0); D1.distr.push_back( Bt_fit.par[ijack].D1);}
+  distr_t F0(UseJack), D1(UseJack), D2(UseJack);
+  for(int ijack=0;ijack<Njacks;ijack++) { F0.distr.push_back( Bt_fit.par[ijack].F0); D1.distr.push_back( Bt_fit.par[ijack].D1); D2.distr.push_back( Bt_fit.par[ijack].D2);}
   //push_back retrieved parameters
   F0_A_list.distr_list.push_back(F0);
   D1_A_list.distr_list.push_back(D1);
+  D2_A_list.distr_list.push_back(D2);
   //push_back ch2
   ch2_FA.push_back( Bt_fit_ch2.get_ch2_ave());
 
  
   //print fit func
   distr_t_list FA_xg_to_print(UseJack);
-  for(auto &a: a_to_print) FA_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2));
-  Print_To_File({}, {a_to_print, FA_xg_to_print.ave(), FA_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
+  for(auto &a: a_to_print) FA_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
+  Print_To_File({}, {a_to_print, FA_xg_to_print.ave(), FA_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
  
   }
 
@@ -1142,10 +1169,13 @@ void Compute_form_factors_Nissa() {
   Vfloat ch2_FV;
   bf_FF.Set_par_val("F0", -0.1, 0.001);
   bf_FF.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF.Set_par_val("D2", 1.0, 0.1);
   bf_FF_ch2.Set_par_val("F0", -0.1, 0.001);
   bf_FF_ch2.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF_ch2.Set_par_val("D2", 1.0, 0.1);
   distr_t_list F0_V_list(UseJack);
   distr_t_list D1_V_list(UseJack);
+  distr_t_list D2_V_list(UseJack);
   for(int ixg=1;ixg<num_xg;ixg++) {
 
     //fill the data
@@ -1186,29 +1216,415 @@ void Compute_form_factors_Nissa() {
   Bt_fit= bf_FF.Perform_bootstrap_fit();
   Bt_fit_ch2= bf_FF_ch2.Perform_bootstrap_fit();
   //retrieve parameters
-  distr_t F0(UseJack), D1(UseJack);
-  for(int ijack=0;ijack<Njacks;ijack++) { F0.distr.push_back( Bt_fit.par[ijack].F0); D1.distr.push_back( Bt_fit.par[ijack].D1);}
+  distr_t F0(UseJack), D1(UseJack), D2(UseJack);
+  for(int ijack=0;ijack<Njacks;ijack++) { F0.distr.push_back( Bt_fit.par[ijack].F0); D1.distr.push_back( Bt_fit.par[ijack].D1); D2.distr.push_back( Bt_fit.par[ijack].D2);}
   //push_back retrieved parameters
   F0_V_list.distr_list.push_back(F0);
   D1_V_list.distr_list.push_back(D1);
+  D2_V_list.distr_list.push_back(D2);
   //push_back ch2
   ch2_FV.push_back( Bt_fit_ch2.get_ch2_ave());
 
   //print fit func
   distr_t_list FV_xg_to_print(UseJack);
-  for(auto &a: a_to_print) FV_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2));
-  Print_To_File({}, {a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
+  for(auto &a: a_to_print) FV_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
+  Print_To_File({}, {a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
+  }
+
+  //Print continuum extrapolated form factors
+  Print_To_File({}, {xg_t_list, F0_A_list.ave(), F0_A_list.err(), (D1_A_list/F0_A_list).ave(), (D1_A_list/F0_A_list).err(), (D2_A_list/F0_A_list).ave(), (D2_A_list/F0_A_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
+  Print_To_File({}, {xg_t_list, F0_V_list.ave(), F0_V_list.err(), (D1_V_list/F0_V_list).ave(), (D1_V_list/F0_V_list).err(), (D2_V_list/F0_V_list).ave(), (D2_V_list/F0_V_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
+
+
+  //Print covariance matrix
+  string Analysis_tag= ( (UseJack==true)?"jack":"boot");
+  Eigen::MatrixXd Cov_FA(num_xg-1, num_xg-1);
+  Eigen::MatrixXd Cov_FV(num_xg-1, num_xg-1);
+  Eigen::MatrixXd Corr_FA(num_xg-1, num_xg-1);
+  Eigen::MatrixXd Corr_FV(num_xg-1, num_xg-1);
+
+  for(int x_xg=1; x_xg<num_xg;x_xg++) {
+    for(int y_xg=1; y_xg<num_xg;y_xg++) {
+      Cov_FA(x_xg-1, y_xg-1) = F0_A_list.distr_list[x_xg-1]%F0_A_list.distr_list[y_xg-1];
+      Cov_FV(x_xg-1, y_xg-1) = F0_V_list.distr_list[x_xg-1]%F0_V_list.distr_list[y_xg-1];
+      Corr_FA(x_xg-1, y_xg-1) = Cov_FA(x_xg-1,y_xg-1)/(F0_A_list.err(x_xg-1)*F0_A_list.err(y_xg-1));
+      Corr_FV(x_xg-1, y_xg-1) = Cov_FV(x_xg-1,y_xg-1)/(F0_V_list.err(x_xg-1)*F0_V_list.err(y_xg-1));
+    }
+  }
+
+  //Print To File
+  ofstream Print_Cov_FA("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Analysis_tag+".cov");
+  ofstream Print_Cov_FV("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Analysis_tag+".cov");
+  ofstream Print_Corr_FA("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Analysis_tag+".corr");
+  ofstream Print_Corr_FV("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Analysis_tag+".corr");
+
+  Print_Cov_FA<<Cov_FA<<endl;
+  Print_Cov_FV<<Cov_FV<<endl;
+  Print_Corr_FA<<Corr_FA<<endl;
+  Print_Corr_FV<<Corr_FV<<endl;
+
+
+  Print_Cov_FA.close();
+  Print_Cov_FV.close();
+  Print_Corr_FA.close();
+  Print_Corr_FV.close();
+
+
+  
+      
+	
+
+
+
+  //############ Up-quark CONTRIBUTION #########################
+  //FIT FA(u) for all xg
+  Vfloat ch2_FA_u;
+  distr_t_list F0_u_A_list(UseJack);
+  distr_t_list D1_u_A_list(UseJack);
+  distr_t_list D2_u_A_list(UseJack);
+  for(int ixg=1;ixg<num_xg;ixg++) {
+  
+  //fill the data
+  vector<vector<ipar_FF_Nissa>> data(Njacks);
+  vector<vector<ipar_FF_Nissa>> data_ch2(1);
+  //allocate space for output result
+  boot_fit_data<fpar_FF_Nissa> Bt_fit;
+  boot_fit_data<fpar_FF_Nissa> Bt_fit_ch2;
+  for(auto &data_iboot: data) data_iboot.resize(Nens);
+  for(auto &data_iboot: data_ch2) data_iboot.resize(Nens);
+  for(int ijack=0;ijack<Njacks;ijack++) {
+    for(int iens=0;iens<Nens;iens++) {
+      data[ijack][iens].FF= FA_u_per_ens[iens].distr_list[ixg-1].distr[ijack];
+      data[ijack][iens].FF_err= FA_u_per_ens[iens].err(ixg-1);
+      if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
+      else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
+
+      //mean values
+      if(ijack==0) {
+	data_ch2[ijack][iens].FF= FA_u_per_ens[iens].ave(ixg-1);
+	data_ch2[ijack][iens].FF_err= FA_u_per_ens[iens].err(ixg-1);
+	if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
+	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
+      }
+    }
+  }
+    
+  //append
+  bf_FF.Append_to_input_par(data);
+  bf_FF_ch2.Append_to_input_par(data_ch2);
+  //fit
+  cout<<"Fitting FA(u), xg: "<<ixg<<endl;
+  Bt_fit= bf_FF.Perform_bootstrap_fit();
+  Bt_fit_ch2= bf_FF_ch2.Perform_bootstrap_fit();
+
+  
+  //retrieve parameters
+  distr_t F0(UseJack), D1(UseJack), D2(UseJack);
+  for(int ijack=0;ijack<Njacks;ijack++) { F0.distr.push_back( Bt_fit.par[ijack].F0); D1.distr.push_back( Bt_fit.par[ijack].D1); D2.distr.push_back( Bt_fit.par[ijack].D2);}
+  //push_back retrieved parameters
+  F0_u_A_list.distr_list.push_back(F0);
+  D1_u_A_list.distr_list.push_back(D1);
+  D2_u_A_list.distr_list.push_back(D2);
+  //push_back ch2
+  ch2_FA_u.push_back( Bt_fit_ch2.get_ch2_ave());
+
+ 
+  //print fit func
+  distr_t_list FA_xg_to_print(UseJack);
+  for(auto &a: a_to_print) FA_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
+  Print_To_File({}, {a_to_print, FA_xg_to_print.ave(), FA_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
+ 
   }
 
 
-          
   
+  //FIT FV for all xg
+  Vfloat ch2_FV_u;
+  bf_FF.Set_par_val("F0", -0.1, 0.001);
+  bf_FF.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF.Set_par_val("D2", 1.0, 0.1);
+  bf_FF_ch2.Set_par_val("F0", -0.1, 0.001);
+  bf_FF_ch2.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF_ch2.Set_par_val("D2", 1.0, 0.1);
+  distr_t_list F0_u_V_list(UseJack);
+  distr_t_list D1_u_V_list(UseJack);
+  distr_t_list D2_u_V_list(UseJack);
+  for(int ixg=1;ixg<num_xg;ixg++) {
 
- 
+    //fill the data
+    vector<vector<ipar_FF_Nissa>> data(Njacks);
+    vector<vector<ipar_FF_Nissa>> data_ch2(1);
+    //allocate space for output result
+    boot_fit_data<fpar_FF_Nissa> Bt_fit;
+    boot_fit_data<fpar_FF_Nissa> Bt_fit_ch2;
+    for(auto &data_iboot: data) data_iboot.resize(Nens);
+    for(auto &data_iboot: data_ch2) data_iboot.resize(Nens);
+    for(int ijack=0;ijack<Njacks;ijack++) {
+      for(int iens=0;iens<Nens;iens++) {
+	data[ijack][iens].FF= FV_u_per_ens[iens].distr_list[ixg-1].distr[ijack];
+	data[ijack][iens].FF_err= FV_u_per_ens[iens].err(ixg-1);
+	if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
+	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
+
+	if(ijack==0) {
+	  	data_ch2[ijack][iens].FF= FV_u_per_ens[iens].ave(ixg-1);
+		data_ch2[ijack][iens].FF_err= FV_u_per_ens[iens].err(ixg-1);
+		if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
+		else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
+		else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
+		else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
+		else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
+	}
+      }
+    }
+    
+  //append
+  bf_FF.Append_to_input_par(data);
+  bf_FF_ch2.Append_to_input_par(data_ch2);
+  //fit
+  cout<<"Fitting FV(u), xg: "<<ixg<<endl;
+  Bt_fit= bf_FF.Perform_bootstrap_fit();
+  Bt_fit_ch2= bf_FF_ch2.Perform_bootstrap_fit();
+  //retrieve parameters
+  distr_t F0(UseJack), D1(UseJack), D2(UseJack);
+  for(int ijack=0;ijack<Njacks;ijack++) { F0.distr.push_back( Bt_fit.par[ijack].F0); D1.distr.push_back( Bt_fit.par[ijack].D1); D2.distr.push_back( Bt_fit.par[ijack].D2);}
+  //push_back retrieved parameters
+  F0_u_V_list.distr_list.push_back(F0);
+  D1_u_V_list.distr_list.push_back(D1);
+  D2_u_V_list.distr_list.push_back(D2);
+  //push_back ch2
+  ch2_FV_u.push_back( Bt_fit_ch2.get_ch2_ave());
+
+  //print fit func
+  distr_t_list FV_xg_to_print(UseJack);
+  for(auto &a: a_to_print) FV_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
+  Print_To_File({}, {a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
+  }
 
   //Print continuum extrapolated form factors
-  Print_To_File({}, {xg_t_list, F0_A_list.ave(), F0_A_list.err(), D1_A_list.ave(), D1_A_list.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_cont.dat", "", "#xg  F0   D1");
-  Print_To_File({}, {xg_t_list, F0_V_list.ave(), F0_V_list.err(), D1_V_list.ave(), D1_V_list.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_cont.dat", "", "#xg  F0   D1");
+  Print_To_File({}, {xg_t_list, F0_u_A_list.ave(), F0_u_A_list.err(), (D1_u_A_list/F0_u_A_list).ave(), (D1_u_A_list/F0_u_A_list).err(), (D2_u_A_list/F0_u_A_list).ave(), (D2_u_A_list/F0_u_A_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
+  Print_To_File({}, {xg_t_list, F0_u_V_list.ave(), F0_u_V_list.err(), (D1_u_V_list/F0_u_V_list).ave(), (D1_u_V_list/F0_u_V_list).err(), (D2_u_V_list/F0_u_V_list).ave(), (D2_u_V_list/F0_u_V_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  Eigen::MatrixXd Cov_FA_u(num_xg-1, num_xg-1);
+  Eigen::MatrixXd Cov_FV_u(num_xg-1, num_xg-1);
+  Eigen::MatrixXd Corr_FA_u(num_xg-1, num_xg-1);
+  Eigen::MatrixXd Corr_FV_u(num_xg-1, num_xg-1);
+
+  for(int x_xg=1; x_xg<num_xg;x_xg++) {
+    for(int y_xg=1; y_xg<num_xg;y_xg++) {
+      Cov_FA_u(x_xg-1, y_xg-1) = F0_u_A_list.distr_list[x_xg-1]%F0_u_A_list.distr_list[y_xg-1];
+      Cov_FV_u(x_xg-1, y_xg-1) = F0_u_V_list.distr_list[x_xg-1]%F0_u_V_list.distr_list[y_xg-1];
+      Corr_FA_u(x_xg-1, y_xg-1) = Cov_FA_u(x_xg-1,y_xg-1)/(F0_u_A_list.err(x_xg-1)*F0_u_A_list.err(y_xg-1));
+      Corr_FV_u(x_xg-1, y_xg-1) = Cov_FV_u(x_xg-1,y_xg-1)/(F0_u_V_list.err(x_xg-1)*F0_u_V_list.err(y_xg-1));
+    }
+  }
+
+  //Print To File
+  ofstream Print_Cov_FA_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Analysis_tag+".cov");
+  ofstream Print_Cov_FV_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Analysis_tag+".cov");
+  ofstream Print_Corr_FA_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Analysis_tag+".corr");
+  ofstream Print_Corr_FV_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Analysis_tag+".corr");
+
+  Print_Cov_FA_u<<Cov_FA_u<<endl;
+  Print_Cov_FV_u<<Cov_FV_u<<endl;
+  Print_Corr_FA_u<<Corr_FA_u<<endl;
+  Print_Corr_FV_u<<Corr_FV_u<<endl;
+
+
+  Print_Cov_FA_u.close();
+  Print_Cov_FV_u.close();
+  Print_Corr_FA_u.close();
+  Print_Corr_FV_u.close();
+
+
+
+
+
+  //############ down-quark CONTRIBUTION #########################
+  //FIT FA(d) for all xg
+  Vfloat ch2_FA_d;
+  distr_t_list F0_d_A_list(UseJack);
+  distr_t_list D1_d_A_list(UseJack);
+  distr_t_list D2_d_A_list(UseJack);
+  for(int ixg=1;ixg<num_xg;ixg++) {
+
+    
+  //fill the data
+  vector<vector<ipar_FF_Nissa>> data(Njacks);
+  vector<vector<ipar_FF_Nissa>> data_ch2(1);
+  //allocate space for output result
+  boot_fit_data<fpar_FF_Nissa> Bt_fit;
+  boot_fit_data<fpar_FF_Nissa> Bt_fit_ch2;
+  for(auto &data_iboot: data) data_iboot.resize(Nens);
+  for(auto &data_iboot: data_ch2) data_iboot.resize(Nens);
+  for(int ijack=0;ijack<Njacks;ijack++) {
+    for(int iens=0;iens<Nens;iens++) {
+      data[ijack][iens].FF= FA_d_per_ens[iens].distr_list[ixg-1].distr[ijack];
+      data[ijack][iens].FF_err= FA_d_per_ens[iens].err(ixg-1);
+      if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
+      else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
+
+      //mean values
+      if(ijack==0) {
+	data_ch2[ijack][iens].FF= FA_d_per_ens[iens].ave(ixg-1);
+	data_ch2[ijack][iens].FF_err= FA_d_per_ens[iens].err(ixg-1);
+	if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
+	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
+      }
+    }
+  }
+    
+  //append
+  bf_FF.Append_to_input_par(data);
+  bf_FF_ch2.Append_to_input_par(data_ch2);
+  //fit
+  cout<<"Fitting FA(u), xg: "<<ixg<<endl;
+  Bt_fit= bf_FF.Perform_bootstrap_fit();
+  Bt_fit_ch2= bf_FF_ch2.Perform_bootstrap_fit();
+
+  
+  //retrieve parameters
+  distr_t F0(UseJack), D1(UseJack), D2(UseJack);
+  for(int ijack=0;ijack<Njacks;ijack++) { F0.distr.push_back( Bt_fit.par[ijack].F0); D1.distr.push_back( Bt_fit.par[ijack].D1); D2.distr.push_back( Bt_fit.par[ijack].D2);}
+  //push_back retrieved parameters
+  F0_d_A_list.distr_list.push_back(F0);
+  D1_d_A_list.distr_list.push_back(D1);
+  D2_d_A_list.distr_list.push_back(D2);
+  //push_back ch2
+  ch2_FA_d.push_back( Bt_fit_ch2.get_ch2_ave());
+
+ 
+  //print fit func
+  distr_t_list FA_xg_to_print(UseJack);
+  for(auto &a: a_to_print) FA_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
+  Print_To_File({}, {a_to_print, FA_xg_to_print.ave(), FA_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
+ 
+  }
+
+
+  
+  //FIT FV for all xg
+  Vfloat ch2_FV_d;
+  bf_FF.Set_par_val("F0", -0.1, 0.001);
+  bf_FF.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF.Set_par_val("D2", 1.0, 0.1);
+  bf_FF_ch2.Set_par_val("F0", -0.1, 0.001);
+  bf_FF_ch2.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF_ch2.Set_par_val("D2", 1.0, 0.1);
+  distr_t_list F0_d_V_list(UseJack);
+  distr_t_list D1_d_V_list(UseJack);
+  distr_t_list D2_d_V_list(UseJack);
+  for(int ixg=1;ixg<num_xg;ixg++) {
+
+    //fill the data
+    vector<vector<ipar_FF_Nissa>> data(Njacks);
+    vector<vector<ipar_FF_Nissa>> data_ch2(1);
+    //allocate space for output result
+    boot_fit_data<fpar_FF_Nissa> Bt_fit;
+    boot_fit_data<fpar_FF_Nissa> Bt_fit_ch2;
+    for(auto &data_iboot: data) data_iboot.resize(Nens);
+    for(auto &data_iboot: data_ch2) data_iboot.resize(Nens);
+    for(int ijack=0;ijack<Njacks;ijack++) {
+      for(int iens=0;iens<Nens;iens++) {
+	data[ijack][iens].FF= FV_d_per_ens[iens].distr_list[ixg-1].distr[ijack];
+	data[ijack][iens].FF_err= FV_d_per_ens[iens].err(ixg-1);
+	if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
+	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
+
+	if(ijack==0) {
+	  	data_ch2[ijack][iens].FF= FV_d_per_ens[iens].ave(ixg-1);
+		data_ch2[ijack][iens].FF_err= FV_d_per_ens[iens].err(ixg-1);
+		if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
+		else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
+		else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
+		else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
+		else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
+	}
+      }
+    }
+    
+  //append
+  bf_FF.Append_to_input_par(data);
+  bf_FF_ch2.Append_to_input_par(data_ch2);
+  //fit
+  cout<<"Fitting FV(d), xg: "<<ixg<<endl;
+  Bt_fit= bf_FF.Perform_bootstrap_fit();
+  Bt_fit_ch2= bf_FF_ch2.Perform_bootstrap_fit();
+  //retrieve parameters
+  distr_t F0(UseJack), D1(UseJack), D2(UseJack);
+  for(int ijack=0;ijack<Njacks;ijack++) { F0.distr.push_back( Bt_fit.par[ijack].F0); D1.distr.push_back( Bt_fit.par[ijack].D1); D2.distr.push_back( Bt_fit.par[ijack].D2);}
+  //push_back retrieved parameters
+  F0_d_V_list.distr_list.push_back(F0);
+  D1_d_V_list.distr_list.push_back(D1);
+  D2_d_V_list.distr_list.push_back(D2);
+  //push_back ch2
+  ch2_FV_d.push_back( Bt_fit_ch2.get_ch2_ave());
+
+  //print fit func
+  distr_t_list FV_xg_to_print(UseJack);
+  for(auto &a: a_to_print) FV_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
+  Print_To_File({}, {a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
+  }
+
+  //Print continuum extrapolated form factors
+  Print_To_File({}, {xg_t_list, F0_d_A_list.ave(), F0_d_A_list.err(), (D1_d_A_list/F0_d_A_list).ave(), (D1_d_A_list/F0_d_A_list).err(), (D2_d_A_list/F0_d_A_list).ave(), (D2_d_A_list/F0_d_A_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
+  Print_To_File({}, {xg_t_list, F0_d_V_list.ave(), F0_d_V_list.err(), (D1_d_V_list/F0_d_V_list).ave(), (D1_d_V_list/F0_d_V_list).err(), (D2_d_V_list/F0_d_V_list).ave(), (D2_d_V_list/F0_d_V_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+  
+
+  Eigen::MatrixXd Cov_FA_d(num_xg-1, num_xg-1);
+  Eigen::MatrixXd Cov_FV_d(num_xg-1, num_xg-1);
+  Eigen::MatrixXd Corr_FA_d(num_xg-1, num_xg-1);
+  Eigen::MatrixXd Corr_FV_d(num_xg-1, num_xg-1);
+
+  for(int x_xg=1; x_xg<num_xg;x_xg++) {
+    for(int y_xg=1; y_xg<num_xg;y_xg++) {
+      Cov_FA_d(x_xg-1, y_xg-1) = F0_d_A_list.distr_list[x_xg-1]%F0_d_A_list.distr_list[y_xg-1];
+      Cov_FV_d(x_xg-1, y_xg-1) = F0_d_V_list.distr_list[x_xg-1]%F0_d_V_list.distr_list[y_xg-1];
+      Corr_FA_d(x_xg-1, y_xg-1) = Cov_FA_d(x_xg-1,y_xg-1)/(F0_d_A_list.err(x_xg-1)*F0_d_A_list.err(y_xg-1));
+      Corr_FV_d(x_xg-1, y_xg-1) = Cov_FV_d(x_xg-1,y_xg-1)/(F0_d_V_list.err(x_xg-1)*F0_d_V_list.err(y_xg-1));
+    }
+  }
+
+  //Print To File
+  ofstream Print_Cov_FA_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Analysis_tag+".cov");
+  ofstream Print_Cov_FV_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Analysis_tag+".cov");
+  ofstream Print_Corr_FA_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Analysis_tag+".corr");
+  ofstream Print_Corr_FV_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Analysis_tag+".corr");
+
+  Print_Cov_FA_d<<Cov_FA_d<<endl;
+  Print_Cov_FV_d<<Cov_FV_d<<endl;
+  Print_Corr_FA_d<<Corr_FA_d<<endl;
+  Print_Corr_FV_d<<Corr_FV_d<<endl;
+
+
+  Print_Cov_FA_d.close();
+  Print_Cov_FV_d.close();
+  Print_Corr_FA_d.close();
+  Print_Corr_FV_d.close();
 
 
 
@@ -1369,8 +1785,8 @@ void Compute_form_factors_Nissa() {
 
    string header_FA= "Ampl: "+to_string_with_precision(Ampl_FA.ave(),5)+" +- "+to_string_with_precision(Ampl_FA.err(),5)+" M^res/Mp: "+to_string_with_precision(pole_FA.ave(), 5)+" +- "+to_string_with_precision(pole_FA.err(), 5)+" ch2/dof: "+to_string_with_precision(ch2_red_FA_VMD  ,5);
    string header_FV= "Ampl: "+to_string_with_precision(Ampl_FV.ave(),5)+" +- "+to_string_with_precision(Ampl_FV.err(),5)+" M^res/Mp: "+to_string_with_precision(pole_FV.ave(), 5)+" +- "+to_string_with_precision(pole_FV.err(), 5)+" ch2/dof: "+to_string_with_precision(ch2_red_FV_VMD  ,5);
-   Print_To_File({},{ xg_to_spline_VMD, FA_VMD_fit.ave(), FA_VMD_fit.err()} , "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_VMD.fit" , "", header_FA);
-   Print_To_File({},{ xg_to_spline_VMD, FV_VMD_fit.ave(), FV_VMD_fit.err()} , "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_VMD.fit" , "", header_FV);
+   Print_To_File({},{ xg_to_spline_VMD, FA_VMD_fit.ave(), FA_VMD_fit.err()} , "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"VMD.fit" , "", header_FA);
+   Print_To_File({},{ xg_to_spline_VMD, FV_VMD_fit.ave(), FV_VMD_fit.err()} , "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"VMD.fit" , "", header_FV);
 
 
 
@@ -1389,49 +1805,107 @@ void Compute_form_factors_Nissa() {
   for(int ijack=0;ijack<Njacks;ijack++) {
 
     Vfloat FV_cont_ij, FA_cont_ij;
+    Vfloat FV_u_cont_ij, FA_u_cont_ij;
+    Vfloat FV_d_cont_ij, FA_d_cont_ij;
     for(int ixg=1;ixg<num_xg;ixg++) {
       FA_cont_ij.push_back( F0_A_list.distr_list[ixg-1].distr[ijack]);
       FV_cont_ij.push_back( F0_V_list.distr_list[ixg-1].distr[ijack]);
+
+      //u contribution
+      FA_u_cont_ij.push_back( F0_u_A_list.distr_list[ixg-1].distr[ijack]);
+      FV_u_cont_ij.push_back( F0_u_V_list.distr_list[ixg-1].distr[ijack]);
+
+      //d contribution
+      FA_d_cont_ij.push_back( F0_d_A_list.distr_list[ixg-1].distr[ijack]);
+      FV_d_cont_ij.push_back( F0_d_V_list.distr_list[ixg-1].distr[ijack]);
     }
 
     FA_cont_interpol_jacks.emplace_back( FA_cont_ij.begin(), FA_cont_ij.end(), 0.1, 0.1);
     FV_cont_interpol_jacks.emplace_back( FV_cont_ij.begin(), FV_cont_ij.end(), 0.1, 0.1);
 
+    //u contribution
+    FA_u_cont_interpol_jacks.emplace_back( FA_u_cont_ij.begin(), FA_u_cont_ij.end(), 0.1, 0.1);
+    FV_u_cont_interpol_jacks.emplace_back( FV_u_cont_ij.begin(), FV_u_cont_ij.end(), 0.1, 0.1);
+
+    //d contribution
+    FA_d_cont_interpol_jacks.emplace_back( FA_d_cont_ij.begin(), FA_d_cont_ij.end(), 0.1, 0.1);
+    FV_d_cont_interpol_jacks.emplace_back( FV_d_cont_ij.begin(), FV_d_cont_ij.end(), 0.1, 0.1);
+
   }
 
 
   auto FA_cont_interpol_distr= [&FA_cont_interpol_jacks](double xg) -> distr_t {
-
-
-				 distr_t return_distr(UseJack);
-
-				 for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FA_cont_interpol_jacks[ijack](xg));}
-
-				 return return_distr;
-
-
-			       };
+    distr_t return_distr(UseJack);
+    for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FA_cont_interpol_jacks[ijack](xg));}
+    return return_distr;
+  };
   auto FV_cont_interpol_distr= [&FV_cont_interpol_jacks](double xg) -> distr_t {
+    distr_t return_distr(UseJack);
+    for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FV_cont_interpol_jacks[ijack](xg));}
+    return return_distr;
+  };
 
-				 
-				 distr_t return_distr(UseJack);
 
-				 for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FV_cont_interpol_jacks[ijack](xg));}
+  //u contribution
+  auto FA_u_cont_interpol_distr= [&FA_u_cont_interpol_jacks](double xg) -> distr_t {
+    distr_t return_distr(UseJack);
+    for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FA_u_cont_interpol_jacks[ijack](xg));}
+    return return_distr;
+  };
+  auto FV_u_cont_interpol_distr= [&FV_u_cont_interpol_jacks](double xg) -> distr_t {
+    distr_t return_distr(UseJack);
+    for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FV_u_cont_interpol_jacks[ijack](xg));}
+    return return_distr;
+  };
+  
 
-				 return return_distr;
-
-			       };
+  //d contribution
+  auto FA_d_cont_interpol_distr= [&FA_d_cont_interpol_jacks](double xg) -> distr_t {
+    distr_t return_distr(UseJack);
+    for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FA_d_cont_interpol_jacks[ijack](xg));}
+    return return_distr;
+  };
+  auto FV_d_cont_interpol_distr= [&FV_d_cont_interpol_jacks](double xg) -> distr_t {
+    distr_t return_distr(UseJack);
+    for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FV_d_cont_interpol_jacks[ijack](xg));}
+    return return_distr;
+  };
 
  
   distr_t_list FA_interpol_cont_to_print_distr(UseJack);
   distr_t_list FV_interpol_cont_to_print_distr(UseJack);
+
+  //u contribution
+  distr_t_list FA_u_interpol_cont_to_print_distr(UseJack);
+  distr_t_list FV_u_interpol_cont_to_print_distr(UseJack);
+
+  //d contribution
+  distr_t_list FA_d_interpol_cont_to_print_distr(UseJack);
+  distr_t_list FV_d_interpol_cont_to_print_distr(UseJack);
+  
   for(auto &X: xg_to_spline) {
     FA_interpol_cont_to_print_distr.distr_list.push_back( FA_cont_interpol_distr(X));
     FV_interpol_cont_to_print_distr.distr_list.push_back( FV_cont_interpol_distr(X));
+
+    //u contribution
+    FA_u_interpol_cont_to_print_distr.distr_list.push_back( FA_u_cont_interpol_distr(X));
+    FV_u_interpol_cont_to_print_distr.distr_list.push_back( FV_u_cont_interpol_distr(X));
+
+    //d contribution
+    FA_d_interpol_cont_to_print_distr.distr_list.push_back( FA_d_cont_interpol_distr(X));
+    FV_d_interpol_cont_to_print_distr.distr_list.push_back( FV_d_cont_interpol_distr(X));
   }
 
-  Print_To_File({}, {xg_to_spline, FA_interpol_cont_to_print_distr.ave(), FA_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_interpol.dat", "", "#xg FA FA_err");
-  Print_To_File({}, {xg_to_spline, FV_interpol_cont_to_print_distr.ave(), FV_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_interpol.dat", "", "#xg FV FV_err");
+  Print_To_File({}, {xg_to_spline, FA_interpol_cont_to_print_distr.ave(), FA_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"interpol.dat", "", "#xg FA FA_err");
+  Print_To_File({}, {xg_to_spline, FV_interpol_cont_to_print_distr.ave(), FV_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"interpol.dat", "", "#xg FV FV_err");
+
+  //u contribution
+  Print_To_File({}, {xg_to_spline, FA_u_interpol_cont_to_print_distr.ave(), FA_u_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Fit_tag+"interpol.dat", "", "#xg FA FA_err");
+  Print_To_File({}, {xg_to_spline, FV_u_interpol_cont_to_print_distr.ave(), FV_u_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Fit_tag+"interpol.dat", "", "#xg FV FV_err");
+
+  //d contribution
+  Print_To_File({}, {xg_to_spline, FA_d_interpol_cont_to_print_distr.ave(), FA_d_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Fit_tag+"interpol.dat", "", "#xg FA FA_err");
+  Print_To_File({}, {xg_to_spline, FV_d_interpol_cont_to_print_distr.ave(), FV_d_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Fit_tag+"interpol.dat", "", "#xg FV FV_err");
 
 
   //#################################################################################
@@ -1448,11 +1922,14 @@ void Compute_form_factors_Nissa() {
   //MP
   bf_FF.Set_par_val("F0", MP_list.ave(0), MP_list.ave(0)/10);
   bf_FF.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF.Set_par_val("D2", 1.0, 0.1);
   bf_FF_ch2.Set_par_val("F0", MP_list.ave(0), MP_list.ave(0)/10);
   bf_FF_ch2.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF_ch2.Set_par_val("D2", 1.0, 0.1);
   double ch2_MP;
   distr_t F0_MP(UseJack);
   distr_t D1_MP(UseJack);
+  distr_t D2_MP(UseJack);
   vector<vector<ipar_FF_Nissa>> data_MP(Njacks);
   vector<vector<ipar_FF_Nissa>> data_MP_ch2(1);
   //allocate space for output result
@@ -1490,7 +1967,7 @@ void Compute_form_factors_Nissa() {
   Bt_fit_MP= bf_FF.Perform_bootstrap_fit();
   Bt_fit_MP_ch2 = bf_FF_ch2.Perform_bootstrap_fit();
   //retrieve parameters
-  for(int ijack=0;ijack<Njacks;ijack++) { F0_MP.distr.push_back( Bt_fit_MP.par[ijack].F0); D1_MP.distr.push_back( Bt_fit_MP.par[ijack].D1);}
+  for(int ijack=0;ijack<Njacks;ijack++) { F0_MP.distr.push_back( Bt_fit_MP.par[ijack].F0); D1_MP.distr.push_back( Bt_fit_MP.par[ijack].D1); D2_MP.distr.push_back( Bt_fit_MP.par[ijack].D2);}
   //get ch2
   ch2_MP= Bt_fit_MP_ch2.get_ch2_ave();
 
@@ -1499,10 +1976,13 @@ void Compute_form_factors_Nissa() {
   double ch2_FP;
   bf_FF.Set_par_val("F0", FP_list.ave(0), FP_list.ave(0)/10);
   bf_FF.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF.Set_par_val("D2", 1.0, 0.1);
   bf_FF_ch2.Set_par_val("F0", FP_list.ave(0), FP_list.ave(0)/10);
   bf_FF_ch2.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF_ch2.Set_par_val("D2", 1.0, 0.1);
   distr_t F0_FP(UseJack);
   distr_t D1_FP(UseJack);
+  distr_t D2_FP(UseJack);
   vector<vector<ipar_FF_Nissa>> data_FP(Njacks);
   vector<vector<ipar_FF_Nissa>> data_FP_ch2(1);
   //allocate space for output result
@@ -1540,7 +2020,7 @@ void Compute_form_factors_Nissa() {
   Bt_fit_FP= bf_FF.Perform_bootstrap_fit();
   Bt_fit_FP_ch2= bf_FF_ch2.Perform_bootstrap_fit();
   //retrieve parameters
-  for(int ijack=0;ijack<Njacks;ijack++) { F0_FP.distr.push_back( Bt_fit_FP.par[ijack].F0); D1_FP.distr.push_back( Bt_fit_FP.par[ijack].D1);}
+  for(int ijack=0;ijack<Njacks;ijack++) { F0_FP.distr.push_back( Bt_fit_FP.par[ijack].F0); D1_FP.distr.push_back( Bt_fit_FP.par[ijack].D1); D2_FP.distr.push_back( Bt_fit_FP.par[ijack].D2);}
   //get ch2
   ch2_FP = Bt_fit_FP_ch2.get_ch2_ave();
 
@@ -1550,10 +2030,13 @@ void Compute_form_factors_Nissa() {
   double ch2_MP_ov_FP;
   bf_FF.Set_par_val("F0", MP_ov_FP_list.ave(0), MP_ov_FP_list.ave(0)/10);
   bf_FF.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF.Set_par_val("D2", 1.0, 0.1);
   bf_FF_ch2.Set_par_val("F0", MP_ov_FP_list.ave(0), MP_ov_FP_list.ave(0)/10);
   bf_FF_ch2.Set_par_val("D1", 1.0, 0.1);
+  if(Include_a4) bf_FF_ch2.Set_par_val("D2", 1.0, 0.1);
   distr_t F0_MP_ov_FP(UseJack);
   distr_t D1_MP_ov_FP(UseJack);
+  distr_t D2_MP_ov_FP(UseJack);
   vector<vector<ipar_FF_Nissa>> data_MP_ov_FP(Njacks);
   vector<vector<ipar_FF_Nissa>> data_MP_ov_FP_ch2(1);
   //allocate space for output result
@@ -1590,7 +2073,7 @@ void Compute_form_factors_Nissa() {
   Bt_fit_MP_ov_FP= bf_FF.Perform_bootstrap_fit();
   Bt_fit_MP_ov_FP_ch2= bf_FF_ch2.Perform_bootstrap_fit();
   //retrieve parameters
-  for(int ijack=0;ijack<Njacks;ijack++) { F0_MP_ov_FP.distr.push_back( Bt_fit_MP_ov_FP.par[ijack].F0); D1_MP_ov_FP.distr.push_back( Bt_fit_MP_ov_FP.par[ijack].D1);}
+  for(int ijack=0;ijack<Njacks;ijack++) { F0_MP_ov_FP.distr.push_back( Bt_fit_MP_ov_FP.par[ijack].F0); D1_MP_ov_FP.distr.push_back( Bt_fit_MP_ov_FP.par[ijack].D1); D2_MP_ov_FP.distr.push_back(Bt_fit_MP_ov_FP.par[ijack].D2);}
   //get ch2
   ch2_MP_ov_FP = Bt_fit_MP_ov_FP_ch2.get_ch2_ave();
 
@@ -1600,12 +2083,12 @@ void Compute_form_factors_Nissa() {
   distr_t_list FP_to_print(UseJack);
   distr_t_list MP_ov_FP_to_print(UseJack);
   for(auto &a: a_to_print) {
-    MP_to_print.distr_list.push_back( F0_MP + D1_MP*pow(a*fmTGeV*Lambda_QCD,2));
-    FP_to_print.distr_list.push_back( F0_FP + D1_FP*pow(a*fmTGeV*Lambda_QCD,2));
-    MP_ov_FP_to_print.distr_list.push_back( F0_MP_ov_FP + D1_MP_ov_FP*pow(a*fmTGeV*Lambda_QCD,2));
+    MP_to_print.distr_list.push_back( F0_MP + D1_MP*pow(a*fmTGeV*Lambda_QCD,2) + D2_MP*pow(a*fmTGeV*Lambda_QCD,4));
+    FP_to_print.distr_list.push_back( F0_FP + D1_FP*pow(a*fmTGeV*Lambda_QCD,2) + D2_FP*pow(a*fmTGeV*Lambda_QCD,4));
+    MP_ov_FP_to_print.distr_list.push_back( F0_MP_ov_FP + D1_MP_ov_FP*pow(a*fmTGeV*Lambda_QCD,2) + D2_MP_ov_FP*pow(a*fmTGeV*Lambda_QCD,4));
   }
-  Print_To_File({}, {a_to_print, MP_to_print.ave(), MP_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/mass/masses.fit_func", "", "#a[fm]  MP MP_err");
-  Print_To_File({}, {a_to_print, FP_to_print.ave(), FP_to_print.err(), MP_ov_FP_to_print.ave(), MP_ov_FP_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/decay_const/fP.fit_func", "", "#a[fm]  FP FP_err   MP/FP  MP/FP_err");
+  Print_To_File({}, {a_to_print, MP_to_print.ave(), MP_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/mass/masses"+_Fit_tag+".fit_func", "", "#a[fm]  MP MP_err");
+  Print_To_File({}, {a_to_print, FP_to_print.ave(), FP_to_print.err(), MP_ov_FP_to_print.ave(), MP_ov_FP_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/decay_const/fP"+_Fit_tag+".fit_func", "", "#a[fm]  FP FP_err   MP/FP  MP/FP_err");
 
 
   //print ch2 summary
