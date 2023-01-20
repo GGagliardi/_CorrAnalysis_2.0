@@ -14,8 +14,8 @@ const double qu = 2.0/3.0; //electric charge of u-type quark
 const double qd = -1.0/3.0; //electric charge of d-type quark
 const string Meson="Ds";
 double L_QCD= 0.3; //300 MeV
-int n_xg=2;
-int n_xg_rev=1;
+int n_xg=4;
+int n_xg_rev=3;
 Vfloat virt_list;
 bool verbose_lev=0;
 bool P5_ON_SOURCE=true;
@@ -232,13 +232,13 @@ void Get_radiative_form_factors_3d() {
   Vfloat E0_List({0.6,0.8,0.9,0.6,0.8,0.9,0.8,0.9});
   */
 
-  Vfloat beta_List({0.0, 0.0});
-  vector<bool> Integrate_Up_To_Emax_List({0,0});
-  Vfloat Emax_List({10,10});
-  vector<bool> Perform_theta_average_List({1,1});
-  vector<string> SM_TYPE_List({"FF_Sinh", "FF_Sinh"});
-  vector<bool> CONS_EM_CURR_LIST({false,true});
-  Vfloat E0_List({0.9,0.9});
+  Vfloat beta_List({0.0});
+  vector<bool> Integrate_Up_To_Emax_List({0});
+  Vfloat Emax_List({10});
+  vector<bool> Perform_theta_average_List({1});
+  vector<string> SM_TYPE_List({"FF_Gauss"});
+  vector<bool> CONS_EM_CURR_LIST({false});
+  Vfloat E0_List({0.8});
   
   int N= beta_List.size();
 
@@ -267,7 +267,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
   cout<<"max possible exponent: "<<PrecFloat::getEmax_max()<<endl;
   cout<<"current max exponent: "<<PrecFloat::getEmax()<<endl;
 
-  int t_weak=25;
+  int t_weak=22;
 
   string TAG_CURR="";
   if(CONS_EM_CURR==false) TAG_CURR="LOC_";
