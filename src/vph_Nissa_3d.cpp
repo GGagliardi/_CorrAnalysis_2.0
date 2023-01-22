@@ -4,8 +4,8 @@ using namespace std;
 
 
 const double M2PiPhys=pow(0.135,2);
-const double alpha= 1/137.04;
-const double e2 = alpha*4.0*M_PI;
+const double alpha_em= 1/137.04;
+const double e2 = alpha_em*4.0*M_PI;
 const int Nboots= 800;
 const bool UseJack=1;
 const int nboots=150;
@@ -24,11 +24,17 @@ Vfloat sigmas({0.6, 0.5, 0.4, 0.3, 0.2}); //sigma in GeV
 int prec=128;
 const string MODE_FF="TANT";
 bool CONS_EM_CURR=false;
-const bool Skip_spectral_reconstruction=false;
+const bool Skip_spectral_reconstruction=true;
 const bool Reconstruct_axial_part=true;
 const bool Reconstruct_vector_part=true;
-const double Mjpsi= 3.0969;
-const double Mphi= 1.019461;
+const bool Perform_FF_and_Br_reconstruction=true;
+const double Mjpsi= 3.0969; //GeV
+const double Mphi= 1.019461; //GeV
+const double MDs_phys= 1.96847; //GeV
+const double rDs_mu=  0.10565837/MDs_phys;
+const double rDs_e= 0.000510998950/MDs_phys;
+const double rDs_tau= 1.77686/MDs_phys;
+const double GFermi= 1.1663787*1e-5; //GeV^-2
 
 void Get_virt_list() {
 
@@ -212,6 +218,68 @@ void Integrate_over_photon_insertion_w_subtraction(const distr_t_list &W, vector
 }
 
 
+void GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR( distr_t_list &FA_distr_list, distr_t_list &H1_distr_list, distr_t_list &H2_distr_list, const distr_t_list &HA_11_distr_list, const distr_t_list &HA_33_distr_list, const distr_t_list &HA_03_distr_list, const distr_t_list &HA_30_distr_list, double kz, double Eg, const distr_t &MP_distr,const distr_t &FP_distr) {
+
+ 
+  
+  
+  for(int ixk=0; ixk < (signed)virt_list.size(); ixk++) {
+    
+    double virt= MP_distr.ave()*virt_list[ixk];
+    double Eg_v= sqrt( Eg*Eg + virt*virt);
+    double k2= virt*virt;
+
+    distr_t H11= HA_11_distr_list.distr_list[ixk];
+    distr_t H33= HA_33_distr_list.distr_list[ixk];
+    distr_t H03= HA_03_distr_list.distr_list[ixk];
+    distr_t H30= HA_30_distr_list.distr_list[ixk];
+    distr_t Hbar_30 = H30 -H03*(MP_distr - Eg_v)/(2.0*MP_distr - Eg_v);
+
+    distr_t FA(UseJack), H1(UseJack), H2(UseJack);
+
+    for(int ijack=0;ijack<Njacks;ijack++) {
+
+      Eigen::MatrixXd A(3,3); //coefficient matrix
+
+      
+      //   [   H1    ]     =    [           ]^-1       [       H30 -H03*(MP-Eg)/(2MP-Eg)          ]
+      //   [   H2    ]     =    [     A     ]     *    [              H33                         ]
+      //   [   FA    ]     =    [           ]          [              H11                         ]
+       
+
+      //                   [  -Eg*kz/(2MP-Eg)            -kz*(MP-Eg)/(2MP -Eg)           kz*MP/(2MP-Eg)                 ]
+      //         A  =      [  -Eg*Eg/MP                   Eg*kz^2/(2MP*Eg -k^2)         -Eg*(MP-Eg)/MP                  ]
+      //                   [  -k^2/MP                             0                     -(MP*Eg -k^2)/MP                ]
+
+      double MP= MP_distr.distr[ijack];
+      //double FP= FP_distr.distr[ijack];
+
+      A(0,0) =  -Eg_v*kz/(2*MP-Eg_v);          A(0,1) = -kz*(MP-Eg_v)/(2*MP-Eg_v);              A(0,2) = kz*MP/(2*MP-Eg_v);
+
+      A(1,0) = -Eg_v*Eg_v/MP;                  A(1,1) = Eg_v*kz*kz/(2*MP*Eg_v - k2);            A(1,2) = -Eg_v*(MP-Eg_v)/MP;
+
+      A(2,0) = -k2/MP;                         A(2,1) = 0.0;                                    A(2,2) = -(MP*Eg_v - k2)/MP;
+
+      Eigen::VectorXd X(3);
+      X(0) = Hbar_30.distr[ijack]; X(1)=H33.distr[ijack]; X(2)= H11.distr[ijack];
+       
+      Eigen::VectorXd Y = A.inverse()*X;
+
+      H1.distr.push_back( Y(0));
+      H2.distr.push_back( Y(1));
+      FA.distr.push_back( Y(2));
+
+    }
+    
+    FA_distr_list.distr_list.push_back(FA);
+    H1_distr_list.distr_list.push_back(H1);
+    H2_distr_list.distr_list.push_back(H2);
+  }
+
+  return ;
+}
+
+
 
 void Get_radiative_form_factors_3d() {
 
@@ -236,9 +304,9 @@ void Get_radiative_form_factors_3d() {
   vector<bool> Integrate_Up_To_Emax_List({0});
   Vfloat Emax_List({10});
   vector<bool> Perform_theta_average_List({1});
-  vector<string> SM_TYPE_List({"FF_Gauss"});
-  vector<bool> CONS_EM_CURR_LIST({false});
-  Vfloat E0_List({0.8});
+  vector<string> SM_TYPE_List({"FF_Sinh"});
+  vector<bool> CONS_EM_CURR_LIST({true});
+  Vfloat E0_List({0.9});
   
   int N= beta_List.size();
 
@@ -290,10 +358,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/covariance");
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/decay_const");
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FF");
+  boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FORM_FACTORS");
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FF/continuum");
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FF/per_kin");
-  boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FF_u");
-  boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FF_d");
+ 
    
   //axial
   vector<vector<vector<data_t>>> C_A_u_data(size_mu_nu), C_A_d_data(size_mu_nu);
@@ -616,9 +684,86 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
   
   
-  
+  //vector where to store unsmeared form factors first TO
+  vector<vector<vector<vector<distr_t_list>>>>  HA_u_TO_1(Nens);
+  vector<vector<vector<vector<distr_t_list>>>>  HA_d_TO_1(Nens);
+  vector<vector<vector<vector<distr_t_list>>>>  HV_u_TO_1(Nens);
+  vector<vector<vector<vector<distr_t_list>>>>  HV_d_TO_1(Nens);
 
 
+  //cascade resize
+  for(int i=0;i<Nens;i++) {
+
+    HA_u_TO_1[i].resize(size_mu_nu);
+    HA_d_TO_1[i].resize(size_mu_nu);
+    HV_u_TO_1[i].resize(size_mu_nu);
+    HV_d_TO_1[i].resize(size_mu_nu);
+    
+    for(int mu=0;mu<size_mu_nu;mu++) {
+
+      HA_u_TO_1[i][mu].resize(size_mu_nu);
+      HA_d_TO_1[i][mu].resize(size_mu_nu);
+      HV_u_TO_1[i][mu].resize(size_mu_nu);
+      HV_d_TO_1[i][mu].resize(size_mu_nu);
+
+      for(int nu=0;nu<size_mu_nu;nu++) {
+
+	for(int ixg=0;ixg<n_xg;ixg++) {
+
+	  HA_u_TO_1[i][mu][nu].emplace_back(UseJack, virt_list.size());
+	  HA_d_TO_1[i][mu][nu].emplace_back(UseJack, virt_list.size());
+	  HV_u_TO_1[i][mu][nu].emplace_back(UseJack, virt_list.size());
+	  HV_d_TO_1[i][mu][nu].emplace_back(UseJack, virt_list.size());
+	  
+	}
+      }
+    }
+  }
+
+
+  //vector where to store unsmeared form factors second TO
+  vector<vector<vector<vector<distr_t_list>>>>  HA_u_TO_2(Nens);
+  vector<vector<vector<vector<distr_t_list>>>>  HA_d_TO_2(Nens);
+  vector<vector<vector<vector<distr_t_list>>>>  HV_u_TO_2(Nens);
+  vector<vector<vector<vector<distr_t_list>>>>  HV_d_TO_2(Nens);
+
+
+  //cascade resize
+  for(int i=0;i<Nens;i++) {
+
+    HA_u_TO_2[i].resize(size_mu_nu);
+    HA_d_TO_2[i].resize(size_mu_nu);
+    HV_u_TO_2[i].resize(size_mu_nu);
+    HV_d_TO_2[i].resize(size_mu_nu);
+    
+    for(int mu=0;mu<size_mu_nu;mu++) {
+
+      HA_u_TO_2[i][mu].resize(size_mu_nu);
+      HA_d_TO_2[i][mu].resize(size_mu_nu);
+      HV_u_TO_2[i][mu].resize(size_mu_nu);
+      HV_d_TO_2[i][mu].resize(size_mu_nu);
+
+      for(int nu=0;nu<size_mu_nu;nu++) {
+
+	for(int ixg=0;ixg<n_xg;ixg++) {
+
+	  HA_u_TO_2[i][mu][nu].emplace_back(UseJack, virt_list.size());
+	  HA_d_TO_2[i][mu][nu].emplace_back(UseJack, virt_list.size());
+	  HV_u_TO_2[i][mu][nu].emplace_back(UseJack, virt_list.size());
+	  HV_d_TO_2[i][mu][nu].emplace_back(UseJack, virt_list.size());
+	  
+	}
+      }
+    }
+  }
+
+  //distr_t_listS where to store 2pt-related observables
+  distr_t_list MP_LIST(UseJack), FP_LIST(UseJack);
+  //infos about kinematics
+  vector<vector<double>> kz_list(Nens), Eg_list(Nens);
+  //resize
+  for(auto &kz_per_ens: kz_list) kz_per_ens.resize(n_xg,0);
+  for(auto &Eg_per_ens: Eg_list) Eg_per_ens.resize(n_xg,0);
 
 
   //smeared kernel of the real part
@@ -690,11 +835,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/covariance/"+Ens_tags[iens]);
     boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]);
     boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]);
-    boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/fit_results");
-    boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_u/"+Ens_tags[iens]);
-    boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_u/"+Ens_tags[iens]+"/fit_results");
-    boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_d/"+Ens_tags[iens]);
-    boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_d/"+Ens_tags[iens]+"/fit_results");
+    boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]);
     boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/mass/"+Ens_tags[iens]);
     boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/decay_const/"+Ens_tags[iens]);
 
@@ -770,6 +911,9 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     distr_t MP= Corr.Fit_distr(eff_mass);
     distr_t FP= Corr.Fit_distr(fp_distr);
 
+    MP_LIST.distr_list.push_back(MP);
+    FP_LIST.distr_list.push_back(FP);
+
     cout<<"MP: "<<MP.ave()<<" +- "<<MP.err()<<endl;
     cout<<"FP: "<<FP.ave()<<" +- "<<FP.err()<<endl;
 
@@ -806,6 +950,9 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     distr_t FP_bare_3pt_d= (ax_0_d_sum/2.0);
     distr_t renorm_V = renorm_A*(Za/Zv);
     Corr.Perform_Nt_t_average=1;
+    cout<<"renorm_A: "<<renorm_A.ave()<<" +- "<<renorm_A.err()<<endl;
+    cout<<"FP_3pt: "<<(ax_0_sum/2.0).ave()<<" +- "<<(ax_0_sum/2.0).err()<<endl;
+    cout<<"FP_tm: "<<FP.ave()<<" +- "<<FP.err()<<endl;
     //#################################################################################
 
 
@@ -819,6 +966,9 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
       double Eg= pt3_mom.Egamma();
       double kz = pt3_mom.k()[2];
 
+      kz_list[iens][ixg]=kz;
+      Eg_list[iens][ixg]=Eg;
+
 
       //check if opposite theta is present
       bool theta_rev_present=false;
@@ -830,7 +980,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
        
        
 
-      cout<<"##### Considering kinematic with......"<<endl;
+      cout<<"##### Considering kinematic with..."<<endl;
       cout<<"Eg: "<<Eg<<endl;
       cout<<"thz: "<<theta<<endl;
       cout<<"kz: "<<kz<<endl;
@@ -1004,8 +1154,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	Integrate_over_photon_insertion_w_subtraction(vec_d, HV_d_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass,  out_path, obs_d);
 	
 	
-	
-	 
+		 
 
 	//loop over virtualities and renormalize contributions
 	for(int iv=0;iv<(signed)virt_list.size();iv++) {
@@ -1017,6 +1166,16 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  HV_d_2_TO[iv]= HV_d_2_TO[iv]*renorm_V_w_kz;
 	  HV_u_2_TO_w_sub[iv] = HV_u_2_TO_w_sub[iv]*renorm_V_w_kz;
 	  HV_d_2_TO_w_sub[iv] = HV_d_2_TO_w_sub[iv]*renorm_V_w_kz;
+	  
+	  //store hadronic-tensor for t_cut = T
+	  //#########################################
+	  HV_u_TO_1[iens][mu][nu][ixg].distr_list[iv] = HV_u_1_TO[iv].distr_list[Nts[iens]-1];
+	  HV_d_TO_1[iens][mu][nu][ixg].distr_list[iv] = HV_d_1_TO[iv].distr_list[Nts[iens]-1];
+	  HV_u_TO_2[iens][mu][nu][ixg].distr_list[iv] = HV_u_2_TO[iv].distr_list[Nts[iens]-1];
+	  HV_d_TO_2[iens][mu][nu][ixg].distr_list[iv] = HV_d_2_TO[iv].distr_list[Nts[iens]-1];
+	  //#########################################
+
+	  
 	  //sum ud contributions
 	  HV_tot[iv]= HV_u[iv] +HV_d[iv];
 	  HV_tot_1_TO[iv]= HV_u_1_TO[iv] +  HV_d_1_TO[iv];
@@ -1343,6 +1502,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	Integrate_over_photon_insertion_w_subtraction(ax_u, HA_u_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass, out_path, obs_u);
 	Integrate_over_photon_insertion_w_subtraction(ax_d, HA_d_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass, out_path, obs_d);
 
+		
        	 
 	//loop over virtualities and renormalize contributions
 	for(int iv=0;iv<(signed)virt_list.size();iv++) {
@@ -1352,6 +1512,15 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  HA_d_1_TO[iv] = renorm_A*( HA_d_1_TO[iv] - FP_bare_3pt_d*kin_fact_point_sub.distr_list[iv]);
 	  HA_u_2_TO[iv]= HA_u_2_TO[iv]*renorm_A;
 	  HA_d_2_TO[iv]= HA_d_2_TO[iv]*renorm_A;
+
+	  //store hadronic-tensor for t_cut = T
+	  //#########################################
+	  HA_u_TO_1[iens][mu][nu][ixg].distr_list[iv] = HA_u_1_TO[iv].distr_list[Nts[iens]-1];
+	  HA_d_TO_1[iens][mu][nu][ixg].distr_list[iv] = HA_d_1_TO[iv].distr_list[Nts[iens]-1];
+	  HA_u_TO_2[iens][mu][nu][ixg].distr_list[iv] = HA_u_2_TO[iv].distr_list[Nts[iens]-1];
+	  HA_d_TO_2[iens][mu][nu][ixg].distr_list[iv] = HA_d_2_TO[iv].distr_list[Nts[iens]-1];
+	  //#########################################
+	  
 	  HA_u_2_TO_w_sub[iv] = HA_u_2_TO_w_sub[iv]*renorm_A;
 	  HA_d_2_TO_w_sub[iv] = HA_d_2_TO_w_sub[iv]*renorm_A;
 	  //sum ud contributions
@@ -1363,7 +1532,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	}
 
 
-
+		
 	//print as a function of tcut for fixed virtuality
 	for(int iv=0;iv<(signed)virt_list.size();iv++) {
 	  //1+2 time orderings
@@ -1525,6 +1694,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  cout<<"done!"<<endl<<flush;
 	}
       }
+      cout<<"ixg: "<<ixg<<" computed!"<<endl;
     }
   }
 
@@ -1568,11 +1738,532 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
    
 
 
+  if(Perform_FF_and_Br_reconstruction) {
 
 
-  
+    //allocate data where to store decay rates
+    //mu+mu- e+ nu_e
+    vector<vector<distr_t_list>> RATE_mumue_TOTAL(Nens);
+    vector<vector<distr_t_list>> RATE_mumue_QUADRATIC(Nens);
+    vector<vector<distr_t_list>> RATE_mumue_INTERFERENCE(Nens);
+    vector<vector<distr_t_list>> RATE_mumue_PT(Nens);
+    //e+e- mu+ nu_mu
+    vector<vector<distr_t_list>> RATE_eemu_TOTAL(Nens);
+    vector<vector<distr_t_list>> RATE_eemu_QUADRATIC(Nens);
+    vector<vector<distr_t_list>> RATE_eemu_INTERFERENCE(Nens);
+    vector<vector<distr_t_list>> RATE_eemu_PT(Nens);
+    //e+e- tau+ nu_tau
+    vector<vector<distr_t_list>> RATE_eetau_TOTAL(Nens);
+    vector<vector<distr_t_list>> RATE_eetau_QUADRATIC(Nens);
+    vector<vector<distr_t_list>> RATE_eetau_INTERFERENCE(Nens);
+    vector<vector<distr_t_list>> RATE_eetau_PT(Nens);
+
+    //RESIZE
+    for(int iens=0;iens<Nens;iens++) {
+      for(int ixg=1;ixg<n_xg;ixg++) {
+	RATE_mumue_TOTAL[iens].emplace_back(UseJack, sigmas.size());
+	RATE_mumue_QUADRATIC[iens].emplace_back(UseJack, sigmas.size());
+	RATE_mumue_INTERFERENCE[iens].emplace_back(UseJack, sigmas.size());
+	RATE_mumue_PT[iens].emplace_back(UseJack, sigmas.size());
+
+	RATE_eemu_TOTAL[iens].emplace_back(UseJack, sigmas.size());
+	RATE_eemu_QUADRATIC[iens].emplace_back(UseJack, sigmas.size());
+	RATE_eemu_INTERFERENCE[iens].emplace_back(UseJack, sigmas.size());
+	RATE_eemu_PT[iens].emplace_back(UseJack, sigmas.size());
+
+	RATE_eetau_TOTAL[iens].emplace_back(UseJack, sigmas.size());
+	RATE_eetau_QUADRATIC[iens].emplace_back(UseJack, sigmas.size());
+	RATE_eetau_INTERFERENCE[iens].emplace_back(UseJack, sigmas.size());
+	RATE_eetau_PT[iens].emplace_back(UseJack, sigmas.size());
+      }
+    }
+    
+    //load jackknife data
+    string TAG_CURR_NEW= ((CONS_EM_CURR==0)?"LOC":"CONS");
+    for(int iens=0; iens<Nens;iens++) {
+      for(int ixg=1; ixg<n_xg;ixg++) {
+	for(int isg=0;isg<(signed)sigmas.size();isg++) {	  
+
+	  //loop over virtuality and store jackknife distribution
+	  distr_t_list RE_FV_d_sm_2_TO(UseJack), IM_FV_sm(UseJack);
+	  distr_t_list HA_RE_11_d_sm(UseJack), HA_IM_11_d_sm(UseJack);
+	  distr_t_list HA_RE_33_d_sm(UseJack), HA_IM_33_d_sm(UseJack);
+	  distr_t_list HA_RE_03_d_sm(UseJack), HA_IM_03_d_sm(UseJack);
+	  distr_t_list HA_RE_30_d_sm(UseJack), HA_IM_30_d_sm(UseJack);
+	  
+	  for(int ixk=0;ixk<(signed)virt_list.size();ixk++) {
+
+	    //vector
+	    distr_t HV_RE_d_sm_ixk(UseJack,Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Vd_mu_1_nu_2.jack", 1 , 3));
+	    distr_t HV_IM_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Vd_mu_1_nu_2.jack", 2 , 3));
+	    RE_FV_d_sm_2_TO.distr_list.push_back(HV_RE_d_sm_ixk); IM_FV_sm.distr_list.push_back(HV_IM_d_sm_ixk);
+
+	    //axial
+
+	    distr_t HA_RE_11_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_1_nu_1.jack",1,3));
+	    distr_t HA_IM_11_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_1_nu_1.jack",2,3));
+				  
+	    distr_t HA_RE_33_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_3.jack",1,3));
+	    distr_t HA_IM_33_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_3.jack",2,3));
+
+	    distr_t HA_RE_03_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_0_nu_3.jack",1,3));
+	    distr_t HA_IM_03_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_0_nu_3.jack",2,3));
+
+	    distr_t HA_RE_30_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_0.jack",1,3));
+	    distr_t HA_IM_30_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_0.jack",2,3));
+
+	    HA_RE_11_d_sm.distr_list.push_back( HA_RE_11_d_sm_ixk); HA_IM_11_d_sm.distr_list.push_back( HA_IM_11_d_sm_ixk);
+	    HA_RE_33_d_sm.distr_list.push_back( HA_RE_33_d_sm_ixk); HA_IM_33_d_sm.distr_list.push_back( HA_IM_33_d_sm_ixk);
+	    HA_RE_30_d_sm.distr_list.push_back( HA_RE_30_d_sm_ixk); HA_IM_30_d_sm.distr_list.push_back( HA_IM_30_d_sm_ixk);
+	    HA_RE_03_d_sm.distr_list.push_back( HA_RE_03_d_sm_ixk); HA_IM_03_d_sm.distr_list.push_back( HA_IM_03_d_sm_ixk);
+	  }
+
+	  cout<<"spectral data for ixg: "<<ixg<<" sigma: "<<sigmas[isg]<<" GeV Read! distr_t_list size: "<<HA_RE_11_d_sm.size()<<" Njacks: "<<HA_RE_11_d_sm.distr_list[0].size()<<endl;
+
+	  //###############################################################################################################
 
 
+
+	  ////////////////////        COMPUTE FORM FACTORS     /////////////////////////
+
+	  cout<<"Computing form factors for ixg: "<<ixg<<" sigma: "<<sigmas[isg]<<" GeV..."; 
+
+	  //vector
+	  //REAL PART
+	  distr_t_list RE_FV_d_sm= RE_FV_d_sm_2_TO + HV_d_TO_1[iens][1][2][ixg];
+	  distr_t_list RE_FV_sm= RE_FV_d_sm + HV_u_TO_1[iens][1][2][ixg]+ HV_u_TO_2[iens][1][2][ixg];
+	 
+
+	  distr_t_list RE_FA_d_sm_2_TO(UseJack), RE_H1_d_sm_2_TO(UseJack), RE_H2_d_sm_2_TO(UseJack);
+	  distr_t_list RE_FA_d_sm(UseJack), RE_H1_d_sm(UseJack), RE_H2_d_sm(UseJack);
+	  distr_t_list RE_FA_sm(UseJack), RE_H1_sm(UseJack), RE_H2_sm(UseJack);
+
+	  distr_t_list IM_FA_sm(UseJack), IM_H1_sm(UseJack), IM_H2_sm(UseJack);
+
+	  //REAL PART
+	  GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(RE_FA_d_sm_2_TO, RE_H1_d_sm_2_TO, RE_H2_d_sm_2_TO, -1*HA_RE_11_d_sm, -1*HA_RE_33_d_sm, -1*HA_RE_03_d_sm, -1*HA_RE_30_d_sm, kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+
+	  GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(RE_FA_d_sm, RE_H1_d_sm, RE_H2_d_sm, -1*HA_RE_11_d_sm + -1*HA_d_TO_1[iens][1][1][ixg] , -1*HA_RE_33_d_sm + -1*HA_d_TO_1[iens][3][3][ixg], -1*HA_RE_03_d_sm -1*HA_d_TO_1[iens][0][3][ixg], -1*HA_RE_30_d_sm -1*HA_d_TO_1[iens][3][0][ixg], kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+
+	  GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(RE_FA_sm, RE_H1_sm, RE_H2_sm, -1*HA_RE_11_d_sm  -1*HA_d_TO_1[iens][1][1][ixg] + HA_u_TO_1[iens][1][1][ixg] + HA_u_TO_2[iens][1][1][ixg], -1*HA_RE_33_d_sm -1*HA_d_TO_1[iens][3][3][ixg] + HA_u_TO_1[iens][3][3][ixg] + HA_u_TO_2[iens][3][3][ixg], -1*HA_RE_03_d_sm -1*HA_d_TO_1[iens][0][3][ixg] + HA_u_TO_1[iens][0][3][ixg] + HA_u_TO_2[iens][0][3][ixg], -1*HA_RE_30_d_sm -1*HA_d_TO_1[iens][3][0][ixg]+ HA_u_TO_1[iens][3][0][ixg] + HA_u_TO_2[iens][3][0][ixg], kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+
+
+	  //IMAG PART
+
+	  GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(IM_FA_sm, IM_H1_sm, IM_H2_sm, -1*HA_IM_11_d_sm, -1*HA_IM_33_d_sm, -1*HA_IM_03_d_sm, -1*HA_IM_30_d_sm, kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+
+	  cout<<"done!"<<endl;
+
+	  //###############################################################################################################
+
+
+
+	  
+
+
+	  
+
+
+
+	  //###############################################################################################################
+
+	  ////////////////////        PRINT FORM FACTORS     /////////////////////////
+
+
+	  cout<<"Printing form factors to file for ixg: "<<ixg<<" sigma: "<<sigmas[isg]<<" GeV..."; 
+	  
+	  //FV
+	  Print_To_File({}, {virt_list, RE_FV_d_sm_2_TO.ave(), RE_FV_d_sm_2_TO.err(), RE_FV_d_sm.ave(), RE_FV_d_sm.err(), RE_FV_sm.ave(), RE_FV_sm.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_FV_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  2-TO-d    d     u+d");
+	  Print_To_File({}, {virt_list, IM_FV_sm.ave(), IM_FV_sm.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_FV_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  IM");
+
+
+	  //FA
+	  Print_To_File({}, {virt_list, RE_FA_d_sm_2_TO.ave(), RE_FA_d_sm_2_TO.err(), RE_FA_d_sm.ave(), RE_FA_d_sm.err(), RE_FA_sm.ave(), RE_FA_sm.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_FA_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  2-TO-d    d     u+d");
+	  Print_To_File({}, {virt_list, IM_FA_sm.ave(), IM_FA_sm.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_FA_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk IM");
+
+
+
+	  //H1
+	  Print_To_File({}, {virt_list, RE_H1_d_sm_2_TO.ave(), RE_H1_d_sm_2_TO.err(), RE_H1_d_sm.ave(), RE_H1_d_sm.err(), RE_H1_sm.ave(), RE_H1_sm.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_H1_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  2-TO-d    d     u+d");
+	  Print_To_File({}, {virt_list, IM_H1_sm.ave(), IM_H1_sm.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_H1_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  IM");
+	  
+
+
+	  //H2
+	  Print_To_File({}, {virt_list, RE_H2_d_sm_2_TO.ave(), RE_H2_d_sm_2_TO.err(), RE_H2_d_sm.ave(), RE_H2_d_sm.err(), RE_H2_sm.ave(), RE_H2_sm.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_H2_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  2-TO-d    d     u+d");
+	  Print_To_File({}, {virt_list, IM_H2_sm.ave(), IM_H2_sm.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_H2_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  IM");
+
+
+	  cout<<"done!"<<endl;
+
+
+	  //###############################################################################################################
+
+
+
+
+	  //###############################################################################################################
+
+	  //COMPUTE RATE
+
+	  cout<<"Computing decay rate"<<endl;
+	  cout<<"Performing spline interpolation to form factors for ixg: "<<ixg<<" sigma: "<<sigmas[isg]<<" GeV...";
+	  cout<<"Npoints: "<<virt_list.size()<<" x[0]: "<<virt_list[0]<<" Dx: "<<(virt_list[1]-virt_list[0])<<endl;
+
+	  //interpolate the form factors
+	  //FV
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_FV_d_sm_2_TO_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_FV_d_sm_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_FV_sm_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> IM_FV_sm_spline;
+	  //FA
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_FA_d_sm_2_TO_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_FA_d_sm_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_FA_sm_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> IM_FA_sm_spline;
+	  //H1
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_H1_d_sm_2_TO_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_H1_d_sm_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_H1_sm_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> IM_H1_sm_spline;
+	  //H2
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_H2_d_sm_2_TO_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_H2_d_sm_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> RE_H2_sm_spline;
+	  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> IM_H2_sm_spline;
+
+
+	  for(int ijack=0;ijack<Njacks;ijack++) {
+
+	    Vfloat RE_FV_d_sm_2_TO_jk, RE_FV_d_sm_jk, RE_FV_sm_jk, IM_FV_sm_jk;
+	    Vfloat RE_FA_d_sm_2_TO_jk, RE_FA_d_sm_jk, RE_FA_sm_jk, IM_FA_sm_jk;
+	    Vfloat RE_H1_d_sm_2_TO_jk, RE_H1_d_sm_jk, RE_H1_sm_jk, IM_H1_sm_jk;
+	    Vfloat RE_H2_d_sm_2_TO_jk, RE_H2_d_sm_jk, RE_H2_sm_jk, IM_H2_sm_jk;
+
+	    for(int ixk=0;ixk<(signed)virt_list.size();ixk++) {
+	      
+	      RE_FV_d_sm_2_TO_jk.push_back( RE_FV_d_sm_2_TO.distr_list[ixk].distr[ijack]);
+	      RE_FV_d_sm_jk.push_back( RE_FV_d_sm.distr_list[ixk].distr[ijack]);
+	      RE_FV_sm_jk.push_back( RE_FV_sm.distr_list[ixk].distr[ijack]);
+	      IM_FV_sm_jk.push_back( IM_FV_sm.distr_list[ixk].distr[ijack]);
+
+	      RE_FA_d_sm_2_TO_jk.push_back( RE_FA_d_sm_2_TO.distr_list[ixk].distr[ijack]);
+	      RE_FA_d_sm_jk.push_back( RE_FA_d_sm.distr_list[ixk].distr[ijack]);
+	      RE_FA_sm_jk.push_back( RE_FA_sm.distr_list[ixk].distr[ijack]);
+	      IM_FA_sm_jk.push_back( IM_FA_sm.distr_list[ixk].distr[ijack]);
+
+	      
+	      RE_H1_d_sm_2_TO_jk.push_back( RE_H1_d_sm_2_TO.distr_list[ixk].distr[ijack]);
+	      RE_H1_d_sm_jk.push_back( RE_H1_d_sm.distr_list[ixk].distr[ijack]);
+	      RE_H1_sm_jk.push_back( RE_H1_sm.distr_list[ixk].distr[ijack]);
+	      IM_H1_sm_jk.push_back( IM_H1_sm.distr_list[ixk].distr[ijack]);
+
+	      
+	      RE_H2_d_sm_2_TO_jk.push_back( RE_H2_d_sm_2_TO.distr_list[ixk].distr[ijack]);
+	      RE_H2_d_sm_jk.push_back( RE_H2_d_sm.distr_list[ixk].distr[ijack]);
+	      RE_H2_sm_jk.push_back( RE_H2_sm.distr_list[ixk].distr[ijack]);
+	      IM_H2_sm_jk.push_back( IM_H2_sm.distr_list[ixk].distr[ijack]);
+
+	    }
+
+	    //interpolate
+	    RE_FV_d_sm_2_TO_spline.emplace_back( RE_FV_d_sm_2_TO_jk.begin(), RE_FV_d_sm_2_TO_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    RE_FV_d_sm_spline.emplace_back( RE_FV_d_sm_jk.begin(), RE_FV_d_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    RE_FV_sm_spline.emplace_back( RE_FV_sm_jk.begin(), RE_FV_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    IM_FV_sm_spline.emplace_back( IM_FV_sm_jk.begin(), IM_FV_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+
+	    
+	    RE_FA_d_sm_2_TO_spline.emplace_back( RE_FA_d_sm_2_TO_jk.begin(), RE_FA_d_sm_2_TO_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    RE_FA_d_sm_spline.emplace_back( RE_FA_d_sm_jk.begin(), RE_FA_d_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    RE_FA_sm_spline.emplace_back( RE_FA_sm_jk.begin(), RE_FA_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    IM_FA_sm_spline.emplace_back( IM_FA_sm_jk.begin(), IM_FA_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+
+
+	    RE_H1_d_sm_2_TO_spline.emplace_back( RE_H1_d_sm_2_TO_jk.begin(), RE_H1_d_sm_2_TO_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    RE_H1_d_sm_spline.emplace_back( RE_H1_d_sm_jk.begin(), RE_H1_d_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    RE_H1_sm_spline.emplace_back( RE_H1_sm_jk.begin(), RE_H1_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    IM_H1_sm_spline.emplace_back( IM_H1_sm_jk.begin(), IM_H1_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+
+
+	    RE_H2_d_sm_2_TO_spline.emplace_back( RE_H2_d_sm_2_TO_jk.begin(), RE_H2_d_sm_2_TO_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    RE_H2_d_sm_spline.emplace_back( RE_H2_d_sm_jk.begin(), RE_H2_d_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    RE_H2_sm_spline.emplace_back( RE_H2_sm_jk.begin(), RE_H2_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    IM_H2_sm_spline.emplace_back( IM_H2_sm_jk.begin(), IM_H2_sm_jk.end(), virt_list[0], virt_list[1]-virt_list[0]);
+	    
+	  }
+
+
+	  cout<<"Spline computed!"<<endl;
+
+	  
+
+	  double tk= fabs(kz_list[iens][ixg]/MP_LIST.distr_list[iens].ave());
+
+	  cout<<"akz: "<<kz_list[iens][ixg]<<" kz/Mds: "<<tk<<endl;
+	  cout<<"aMP: "<<MP_LIST.distr_list[iens].ave()<<", aFP: "<<FP_LIST.distr_list[iens].ave()<<endl;
+
+	  
+	  double rl=0;
+	  double rll=0;
+	  string MODE="TOTAL";
+
+	  //loop over jackknife and compute the decay rate
+	  for(int ijack=0;ijack<Njacks;ijack++) {
+
+	    double m= MP_LIST.distr_list[iens].distr[ijack];
+	    double fp= FP_LIST.distr_list[iens].distr[ijack];
+	    
+	    //define double differential decay rate
+	    auto Rt_diff = [&MODE, &tk, &rl, &rll, &m, &fp, RE_FV=RE_FV_sm_spline[ijack], IM_FV=IM_FV_sm_spline[ijack], RE_FA=RE_FA_sm_spline[ijack], IM_FA=IM_FA_sm_spline[ijack], RE_H1=RE_H1_sm_spline[ijack], IM_H1=IM_H1_sm_spline[ijack], RE_H2=RE_H2_sm_spline[ijack], IM_H2=IM_H2_sm_spline[ijack] ](double x) -> double {
+
+	      if( (1+ x*x - 2*sqrt(x*x+tk*tk)) < 0) return 0.0;
+	      
+	      double xq = sqrt( 1+ x*x -2*sqrt( x*x + tk*tk));
+	      
+	      //check whether xq is in the integration domain
+	      if( (xq < rl) || ( xq > 1 - x)) return 0.0;
+	      
+
+	      
+	      double Int= ptrate(x,xq, rl*rl, rll*rll, m, fp);
+	      double interference= RE_H1(x)*kern1(x, xq, rl*rl, rll*rll, m,fp) + RE_H2(x)*kern2(x, xq, rl*rl, rll*rll, m,fp) + RE_FA(x)*kernA(x,xq,rl*rl,rll*rll,m,fp) +RE_FV(x)*kernV(x,xq,rl*rl,rll*rll,m,fp);
+
+	      
+	      double quadratic= pow(RE_H1(x),2)*kern11(x,xq,rl*rl,rll*rll,m) + pow(RE_H2(x),2)*kern22(x,xq,rl*rl,rll*rll,m) + pow(RE_FA(x),2)*kernAA(x,xq,rl*rl,rll*rll,m) + pow(RE_FV(x),2)*kernVV(x,xq,rl*rl,rll*rll,m) + RE_H1(x)*RE_H2(x)*kern12(x,xq,rl*rl,rll*rll,m) + RE_H1(x)*RE_FA(x)*kernA1(x,xq,rl*rl,rll*rll,m);
+
+	      quadratic += pow(IM_H1(x),2)*kern11(x,xq,rl*rl,rll*rll,m) + pow(IM_H2(x),2)*kern22(x,xq,rl*rl,rll*rll,m) + pow(IM_FA(x),2)*kernAA(x,xq,rl*rl,rll*rll,m) + pow(IM_FV(x),2)*kernVV(x,xq,rl*rl,rll*rll,m) + IM_H1(x)*IM_H2(x)*kern12(x,xq,rl*rl,rll*rll,m) + IM_H1(x)*IM_FA(x)*kernA1(x,xq,rl*rl,rll*rll,m);
+	      
+	      double jacobian= 4.0*x*xq;
+	      double jaco_bis = 2.0*fabs(tk)/(sqrt(tk*tk + x*x)*xq); //the two accounts for kz, -kz and the remaining integral over kz is defined between [kmin, kmax] with kmin,kmax > 0
+	      jacobian *=jaco_bis;
+
+	      /*
+		cout<<"jaco("<<x<<","<<xq<<"): "<<jacobian<<endl;
+		cout<<"pt("<<x<<","<<xq<<"): "<<Int*jacobian*pow(MDs_phys/m,5)<<endl;
+		cout<<"int("<<x<<","<<xq<<"): "<<interference*jacobian*pow(MDs_phys/m,5)<<endl;
+		cout<<"Quad("<<x<<","<<xq<<"): "<<quadratic*jacobian*pow(MDs_phys/m,5)<<endl;
+	      */
+	      
+	      if(MODE=="PT") return Int*jacobian*pow(MDs_phys/m,5);
+	      else if(MODE=="INTERFERENCE") return interference*jacobian*pow(MDs_phys/m,5);
+	      else if(MODE=="QUADRATIC") return quadratic*jacobian*pow(MDs_phys/m,5);
+	      else if(MODE=="SD") return (quadratic+interference)*jacobian*pow(MDs_phys/m,5);
+	      else if(MODE=="TOTAL") return (Int+interference+quadratic)*jacobian*pow(MDs_phys/m,5);
+	      else crash(" In Rt_diff MODE: "+MODE+" not yet implemented");
+
+	      return 0;
+	    };
+
+	    //variable where we store integration results
+	    double res_GSL, err_GSL;
+
+
+	    
+	    // mu+ mu- e+ nu_e
+	    rl= rDs_e;
+	    rll=rDs_mu;
+	   
+	    cout<<"Computing mu+mu- e+nu_e+ decay-rate for ixg: "<<ixg<<" sigma: "<<sigmas[isg]<<" GeV, ijack: "<<ijack<<" rl: "<<rl<<", rll: "<<rll;
+
+
+	    MODE="PT";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_mumue_PT(Rt_diff);
+	    gsl_integration_workspace * w_mumue_PT = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_mumue_PT = static_cast<gsl_function*>(&DIFF_RATE_mumue_PT);
+	    gsl_integration_qags(G_mumue_PT, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_mumue_PT, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_mumue_PT);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE mumue_PT could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_mumue_PT[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+	    
+	    cout<<".";
+	    
+	    MODE="TOTAL";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_mumue_TOTAL(Rt_diff);
+	    gsl_integration_workspace * w_mumue_TOTAL = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_mumue_TOTAL = static_cast<gsl_function*>(&DIFF_RATE_mumue_TOTAL);
+	    gsl_integration_qags(G_mumue_TOTAL, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_mumue_TOTAL, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_mumue_TOTAL);
+	    if(err_GSL/fabs(res_GSL) > 0.0001) crash("RATE mumue_TOTAL could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_mumue_TOTAL[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	    MODE="QUADRATIC";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_mumue_QUADRATIC(Rt_diff);
+	    gsl_integration_workspace * w_mumue_QUADRATIC = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_mumue_QUADRATIC = static_cast<gsl_function*>(&DIFF_RATE_mumue_QUADRATIC);
+	    gsl_integration_qags(G_mumue_QUADRATIC, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_mumue_QUADRATIC, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_mumue_QUADRATIC);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE mumue_QUADRATIC could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_mumue_QUADRATIC[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	    MODE="INTERFERENCE";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_mumue_INTERFERENCE(Rt_diff);
+	    gsl_integration_workspace * w_mumue_INTERFERENCE = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_mumue_INTERFERENCE = static_cast<gsl_function*>(&DIFF_RATE_mumue_INTERFERENCE);
+	    gsl_integration_qags(G_mumue_INTERFERENCE, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_mumue_INTERFERENCE, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_mumue_INTERFERENCE);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE mumue_INTERFERENCE could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_mumue_INTERFERENCE[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	  
+	    
+	    cout<<"done!"<<endl; 
+
+
+	    // e+ e-   mu+  nu_mu
+
+	    rl=rDs_mu;
+	    rll= rDs_e;
+
+	    cout<<"Computing e+e- mu+nu_mu+ decay-rate for ixg: "<<ixg<<" sigma: "<<sigmas[isg]<<" GeV, ijack: "<<ijack<<" rl: "<<rl<<", rll: "<<rll;
+
+	    MODE="PT";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_eemu_PT(Rt_diff);
+	    gsl_integration_workspace * w_eemu_PT = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_eemu_PT = static_cast<gsl_function*>(&DIFF_RATE_eemu_PT);
+	    gsl_integration_qags(G_eemu_PT, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_eemu_PT, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_eemu_PT);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE eemu_PT could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_eemu_PT[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	    MODE="TOTAL";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_eemu_TOTAL(Rt_diff);
+	    gsl_integration_workspace * w_eemu_TOTAL = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_eemu_TOTAL = static_cast<gsl_function*>(&DIFF_RATE_eemu_TOTAL);
+	    gsl_integration_qags(G_eemu_TOTAL, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_eemu_TOTAL, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_eemu_TOTAL);
+	    if(err_GSL/fabs(res_GSL) > 0.0001) crash("RATE eemu_TOTAL could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_eemu_TOTAL[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	    MODE="QUADRATIC";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_eemu_QUADRATIC(Rt_diff);
+	    gsl_integration_workspace * w_eemu_QUADRATIC = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_eemu_QUADRATIC = static_cast<gsl_function*>(&DIFF_RATE_eemu_QUADRATIC);
+	    gsl_integration_qags(G_eemu_QUADRATIC, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_eemu_QUADRATIC, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_eemu_QUADRATIC);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE eemu_QUADRATIC could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_eemu_QUADRATIC[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	    MODE="INTERFERENCE";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_eemu_INTERFERENCE(Rt_diff);
+	    gsl_integration_workspace * w_eemu_INTERFERENCE = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_eemu_INTERFERENCE = static_cast<gsl_function*>(&DIFF_RATE_eemu_INTERFERENCE);
+	    gsl_integration_qags(G_eemu_INTERFERENCE, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_eemu_INTERFERENCE, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_eemu_INTERFERENCE);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE eemu_INTERFERENCE could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_eemu_INTERFERENCE[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	   
+
+	    cout<<"done!"<<endl;
+
+
+	    
+	    // e+ e-   tau+ nu_tau
+	    rl=rDs_tau;
+	    rll=rDs_e;
+
+	    
+	    cout<<"Computing e+e- tau+nu_tau+ decay-rate for ixg: "<<ixg<<" sigma: "<<sigmas[isg]<<" GeV, ijack: "<<ijack<<" rl: "<<rl<<", rll: "<<rll;
+	       
+	    MODE="PT";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_eetau_PT(Rt_diff);
+	    gsl_integration_workspace * w_eetau_PT = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_eetau_PT = static_cast<gsl_function*>(&DIFF_RATE_eetau_PT);
+	    gsl_integration_qags(G_eetau_PT, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_eetau_PT, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_eetau_PT);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE eetau_PT could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_eetau_PT[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	    MODE="TOTAL";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_eetau_TOTAL(Rt_diff);
+	    gsl_integration_workspace * w_eetau_TOTAL = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_eetau_TOTAL = static_cast<gsl_function*>(&DIFF_RATE_eetau_TOTAL);
+	    gsl_integration_qags(G_eetau_TOTAL, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_eetau_TOTAL, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_eetau_TOTAL);
+	    if(err_GSL/fabs(res_GSL) > 0.0001) crash("RATE eetau_TOTAL could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_eetau_TOTAL[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	    MODE="QUADRATIC";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_eetau_QUADRATIC(Rt_diff);
+	    gsl_integration_workspace * w_eetau_QUADRATIC = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_eetau_QUADRATIC = static_cast<gsl_function*>(&DIFF_RATE_eetau_QUADRATIC);
+	    gsl_integration_qags(G_eetau_QUADRATIC, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_eetau_QUADRATIC, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_eetau_QUADRATIC);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE eetau_QUADRATIC could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_eetau_QUADRATIC[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	    MODE="INTERFERENCE";
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_eetau_INTERFERENCE(Rt_diff);
+	    gsl_integration_workspace * w_eetau_INTERFERENCE = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_eetau_INTERFERENCE = static_cast<gsl_function*>(&DIFF_RATE_eetau_INTERFERENCE);
+	    gsl_integration_qags(G_eetau_INTERFERENCE, 2*rll, 1-rl, 0.0, 1e-5, 10000, w_eetau_INTERFERENCE, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_eetau_INTERFERENCE);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE eetau_INTERFERENCE could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_eetau_INTERFERENCE[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    cout<<".";
+
+	   
+
+	    cout<<"done!"<<endl;
+
+	   
+	  }
+
+
+	  //###############################################################################################################
+
+	}
+
+
+	
+
+	//###############################################################################################################
+
+	cout<<"Printing decay rate for ixg: "<<ixg<<"...";
+
+	//////////////////////            PRINT DECAY RATES            ////////////////////
+
+	boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES");
+	boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]);
+	boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW);
+	boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE);
+
+
+	Print_To_File({}, {sigmas, RATE_mumue_TOTAL[iens][ixg-1].ave(), RATE_mumue_TOTAL[iens][ixg-1].err(), RATE_mumue_QUADRATIC[iens][ixg-1].ave(), RATE_mumue_QUADRATIC[iens][ixg-1].err(), RATE_mumue_INTERFERENCE[iens][ixg-1].ave(), RATE_mumue_INTERFERENCE[iens][ixg-1].err() , RATE_mumue_PT[iens][ixg-1].ave(), RATE_mumue_PT[iens][ixg-1].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"_mumue.dat", "" , "#sigma TOT  QUAD  INT   PT");
+
+	Print_To_File({}, {sigmas,RATE_eemu_TOTAL[iens][ixg-1].ave(), RATE_eemu_TOTAL[iens][ixg-1].err(), RATE_eemu_QUADRATIC[iens][ixg-1].ave(), RATE_eemu_QUADRATIC[iens][ixg-1].err(), RATE_eemu_INTERFERENCE[iens][ixg-1].ave(), RATE_eemu_INTERFERENCE[iens][ixg-1].err() , RATE_eemu_PT[iens][ixg-1].ave(), RATE_eemu_PT[iens][ixg-1].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"_eemu.dat", "" , "#sigma TOT  QUAD  INT   PT");
+
+	Print_To_File({}, {sigmas, RATE_eetau_TOTAL[iens][ixg-1].ave(), RATE_eetau_TOTAL[iens][ixg-1].err(), RATE_eetau_QUADRATIC[iens][ixg-1].ave(), RATE_eetau_QUADRATIC[iens][ixg-1].err(), RATE_eetau_INTERFERENCE[iens][ixg-1].ave(), RATE_eetau_INTERFERENCE[iens][ixg-1].err() , RATE_eetau_PT[iens][ixg-1].ave(), RATE_eetau_PT[iens][ixg-1].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"_eetau.dat", "" , "#sigma TOT  QUAD  INT   PT");
+
+	cout<<"done!"<<endl;
+
+	//###############################################################################################################
+	
+      }
+    }
+  }
+    
   cout<<"Bye!"<<endl;
   return;
 }

@@ -15,7 +15,7 @@ const string Meson="Ds";
 double Lambda_QCD= 0.3; //300 MeV
 bool Is_reph=true;
 bool Perform_continuum_extrapolation=true;
-bool Include_a4=true;
+bool Include_a4=false;
 string Fit_tag= ( (Include_a4==true)?"wa4_":"");
 string _Fit_tag= ( (Include_a4==true)?"_wa4":"");
 int num_xg=11;
@@ -690,6 +690,8 @@ void Compute_form_factors_Nissa() {
       cout<<"thz: "<<theta<<endl;
       cout<<"kz: "<<kz<<endl;
 
+      
+
     
     
 
@@ -868,17 +870,17 @@ void Compute_form_factors_Nissa() {
 
 
       //Print FV and FAt
-      Print_To_File({}, {FA_distr.ave(), FA_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_distr.ave(), FA_distr.err(), FA0_distr.ave(), FA0_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {FV_distr.ave(), FV_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {FV_sub_distr.ave(), FV_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
 
       //Print FV and FA (up-component)
-      Print_To_File({}, {FA_u_distr.ave(), FA_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_u_distr.ave(), FA_u_distr.err(), FA0_u_distr.ave(), FA0_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {FV_u_distr.ave(), FV_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {FV_u_sub_distr.ave(), FV_u_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       
       //Print FV and FA (d-component)
-      Print_To_File({}, {FA_d_distr.ave(), FA_d_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_d_distr.ave(), FA_d_distr.err(), FA0_d_distr.ave(), FA0_d_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {(-1.0*FV_d_distr).ave(), (-1.0*FV_d_distr).err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {(-1.0*FV_d_sub_distr).ave(), (-1.0*FV_d_sub_distr).err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
 
