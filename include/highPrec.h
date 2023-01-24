@@ -551,153 +551,149 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
     PrecFloat maxAttainableStability= InitialmaxAttainableStability;
   
   
-  //const PrecFloat piHalf=
-  //  precPi()/2;
-  
-  auto c=
-    [&f,&xMin](const PrecFloat& t)
-    {
-      const PrecFloat piHalf= precPi()/2;
-      const PrecFloat s=sinh(t);
-      const PrecFloat x=exp(piHalf*s)+xMin;
-      const PrecFloat x_m= exp(-piHalf*s) + xMin;
-      const PrecFloat fx= f(x);
-      const PrecFloat f_x_m= f(x_m);
-     
-      const PrecFloat jac=piHalf*exp(piHalf*s)*cosh(t);
-      const PrecFloat jac_m = piHalf*exp(-piHalf*s)*cosh(t);
-      const PrecFloat res=fx*jac + f_x_m*jac_m;
-
-      /*
-      if(isnan(jac.get())) crash("jacobian is nan for x: "+to_string_with_precision(x.get(),5));
-      if(isnan(fx.get())) crash("f(x) is nan for x: "+to_string_with_precision(x.get(),5));
-      if(isnan(jac_m.get())) crash("jacobian is nan for x_m: "+to_string_with_precision(x_m.get(),5));
-      if(isnan(f_x_m.get())) crash("f(x_m) is nan for x_m: "+to_string_with_precision(x_m.get(),5));
-      if(isnan(res.get())) crash("res is nan for x: "+to_string_with_precision(x.get(),5)+", x_m: "+to_string_with_precision(x_m.get(),5));
-      */
-      
-      return res;
-
-      /*
-      const PrecFloat log_jac=log_piHalf +piHalf*s + log(cosh(t));
-      const PrecFloat log_jack_m= log_jac -2*piHalf*s;
-      const PrecFloat fx= f(x);
-      const PrecFloat fx_m= f(x_m);
-      const int sign= (fx > 0)?1:-1;
-      const int sign_m= (fx_m >0)?1:-1;
-      const PrecFloat log_res = log(abs(fx)) + log_jac;
-      const PrecFloat log_res_m = log(abs(fx_m)) + log_jack_m;
-      //cout<<" t: "<<t<<" x: "<<x<<" f(x): "<<fx<<" jac: "<<exp(log_jac)<<"res: "<<sign*(exp(log_res)+sign_m*sign*exp(log_res_m))<<endl<<flush;
-      
-      return sign*(exp(log_res)+ sign_m*sign*exp(log_res_m));
-      */
-    };
-
-  PrecFloat step_old=1;
-  bool RESTART=false;
-  PrecFloat stability;
-
-  do {
-    int it=0;
-    RESTART=false;  
-    PrecFloat sum=c(0)*step_old;
-    PrecFloat extreme=0;
-    PrecFloat step=step_old;
-    PrecFloat precSum;
-     
-    do
+   
+    auto c=
+      [&f,&xMin](const PrecFloat& t)
       {
-	precSum=sum;
+	const PrecFloat piHalf= precPi()/2;
+	const PrecFloat s=sinh(t);
+	const PrecFloat x=exp(piHalf*s)+xMin;
+	const PrecFloat x_m= exp(-piHalf*s) + xMin;
+	const PrecFloat fx= f(x);
+	const PrecFloat f_x_m= f(x_m);
+     
+	const PrecFloat jac=piHalf*exp(piHalf*s)*cosh(t);
+	const PrecFloat jac_m = piHalf*exp(-piHalf*s)*cosh(t);
+	const PrecFloat res=fx*jac + f_x_m*jac_m;
+
+	/*
+	  if(isnan(jac.get())) crash("jacobian is nan for x: "+to_string_with_precision(x.get(),5));
+	  if(isnan(fx.get())) crash("f(x) is nan for x: "+to_string_with_precision(x.get(),5));
+	  if(isnan(jac_m.get())) crash("jacobian is nan for x_m: "+to_string_with_precision(x_m.get(),5));
+	  if(isnan(f_x_m.get())) crash("f(x_m) is nan for x_m: "+to_string_with_precision(x_m.get(),5));
+	  if(isnan(res.get())) crash("res is nan for x: "+to_string_with_precision(x.get(),5)+", x_m: "+to_string_with_precision(x_m.get(),5));
+	*/
       
-	bool converged=
-	  false;
+	return res;
+
+	/*
+	  const PrecFloat log_jac=log_piHalf +piHalf*s + log(cosh(t));
+	  const PrecFloat log_jack_m= log_jac -2*piHalf*s;
+	  const PrecFloat fx= f(x);
+	  const PrecFloat fx_m= f(x_m);
+	  const int sign= (fx > 0)?1:-1;
+	  const int sign_m= (fx_m >0)?1:-1;
+	  const PrecFloat log_res = log(abs(fx)) + log_jac;
+	  const PrecFloat log_res_m = log(abs(fx_m)) + log_jack_m;
+	  //cout<<" t: "<<t<<" x: "<<x<<" f(x): "<<fx<<" jac: "<<exp(log_jac)<<"res: "<<sign*(exp(log_res)+sign_m*sign*exp(log_res_m))<<endl<<flush;
       
-	sum/=2;
-	PrecFloat t=step;
-      
-	const PrecFloat doubleStep=
-	  step*2;
-	
-	bool exitTheLoop=
-	  false;
-      
-	while(not exitTheLoop)
+	  return sign*(exp(log_res)+ sign_m*sign*exp(log_res_m));
+	*/
+      };
+
+    PrecFloat step_old=1;
+    bool RESTART=false;
+    PrecFloat stability;
+    
+    do {
+      int it=0;
+      RESTART=false;  
+      PrecFloat sum=c(0)*step_old;
+      PrecFloat extreme=0;
+      PrecFloat step=step_old;
+      PrecFloat precSum;
+     
+      do
 	{
-	  const PrecFloat contr=
-	    c(t);
+	  precSum=sum;
 	  
-	  PrecFloat newSum= sum;
-	  newSum += contr*step;
-
+	  bool converged=
+	    false;
 	  
-	  converged= ( abs(contr*step/(sum)) < PrecFloat(0.1)*PrecFloat::getEpsilon());
-
-
-	  if(verbose) {
-	    cout<<"RESTART: "<<COUNT_RESTART<<" t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" extreme: "<<extreme<<" converged: "<<converged<<endl<<flush;
-	    cout<<"LOOPING: sum: "<<newSum<<" precSum: "<<sum<<endl<<flush;
-	    cout.precision( 2*numDigits);
-	    cout<<"LOOPING(x2 prec): sum: "<<newSum<<" precSum: "<<sum<<endl<<flush;
-	    cout.precision( numDigits);
-	  }
+	  sum/=2;
+	  PrecFloat t=step;
 	  
+	  const PrecFloat doubleStep=
+	    step*2;
+	  
+	  bool exitTheLoop=
+	    false;
+	  
+	  while(not exitTheLoop)
+	    {
+	      const PrecFloat contr=
+		c(t);
+	      
+	      PrecFloat newSum= sum;
+	      newSum += contr*step;
+
+	      
+	      converged= ( abs(contr*step/(sum)) < PrecFloat(0.1)*PrecFloat::getEpsilon());
+
+	      
+	      if(verbose) {
+		cout<<"RESTART: "<<COUNT_RESTART<<" t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" extreme: "<<extreme<<" converged: "<<converged<<endl<<flush;
+		cout<<"LOOPING: sum: "<<newSum<<" precSum: "<<sum<<endl<<flush;
+		cout.precision( 2*numDigits);
+		cout<<"LOOPING(x2 prec): sum: "<<newSum<<" precSum: "<<sum<<endl<<flush;
+		cout.precision( numDigits);
+	      }
+	      
 		  
 	
 	  
-	  exitTheLoop=
-	    (converged and t>extreme);
+	      exitTheLoop=
+		(converged and t>extreme);
 	  
-	  if(t>extreme)
-	    {
-	      extreme=t;
-	      t+=step;
-	    }
-	  else
-	    t+=doubleStep;
+	      if(t>extreme)
+		{
+		  extreme=t;
+		  t+=step;
+		}
+	      else
+		t+=doubleStep;
 	  
-	  sum=newSum;
-	};
+	      sum=newSum;
+	    };
 	
-	step/=2;
+	  step/=2;
 	
-	if(verbose) cout<<"LOOP EXITED: sum: "<<sum<<" precSum: "<<precSum<<", extreme: "<<extreme<<" step: "<<step*2<<endl<<flush;
-      
-	stability=abs(sum/precSum-1);
-	if(verbose) cout<<"Stability: "<<stability<<" MaxAttainable: "<<maxAttainableStability<<endl<<flush;
-	maxAttainableStability*=2;
+	  if(verbose) cout<<"LOOP EXITED: sum: "<<sum<<" precSum: "<<precSum<<", extreme: "<<extreme<<" step: "<<step*2<<endl<<flush;
+	  
+	  stability=abs(sum/precSum-1);
+	  if(verbose) cout<<"Stability: "<<stability<<" MaxAttainable: "<<maxAttainableStability<<endl<<flush;
+	  maxAttainableStability*=2;
 
-	if( stability <= maxAttainableStability) {sum_final=sum; RESTART=false; CHANGE_PRECISION=false;}
-	else if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step; COUNT_RESTART++; CHANGE_PRECISION=false;}
+	  if( stability <= maxAttainableStability) {sum_final=sum; RESTART=false; CHANGE_PRECISION=false;}
+	  else if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step; COUNT_RESTART++; CHANGE_PRECISION=false;}
 
-
-	if( stability > maxAttainableStability) {
-	  if( (COUNT_RESTART ==1) && (it >=5) ) CHANGE_PRECISION=true;
-	  if( COUNT_RESTART == 2) CHANGE_PRECISION=true;
+	  
+	  if( stability > maxAttainableStability) {
+	    if( (COUNT_RESTART ==1) && (it >=5) ) CHANGE_PRECISION=true;
+	    if( COUNT_RESTART == 2) CHANGE_PRECISION=true;
+	  }
+	
+	  it++;
 	}
-	
-	it++;
-      }
-    while( (stability>maxAttainableStability) && !RESTART);
+      while( (stability>maxAttainableStability) && (!RESTART)  && (!CHANGE_PRECISION) );
 
-    if(verbose) {
-      if(RESTART) cout<<"Restarting..."<<endl<<flush;
-      else cout<<"Restart not needed!"<<endl<<flush; }
-  }
-  while(RESTART && !CHANGE_PRECISION);
-  i++;
+      if(verbose) {
+	if(RESTART) cout<<"Restarting..."<<endl<<flush;
+	else cout<<"Restart not needed!"<<endl<<flush; }
+    }
+    while(RESTART && !CHANGE_PRECISION);
+    i++;
 
-  if(CHANGE_PRECISION && verbose) cout<<"Changing precision"<<endl<<flush;
-  if(!CHANGE_PRECISION && verbose) cout<<"Attained precision: "<<stability<<endl<<flush;
-  
+    if(CHANGE_PRECISION && verbose) cout<<"Changing precision"<<endl<<flush;
+    if(!CHANGE_PRECISION && verbose) cout<<"Attained precision: "<<stability<<endl<<flush;
+    
   } while( CHANGE_PRECISION );
-
-  PrecFloat::setDefaultPrecision(original_precision);
-
-  if(verbose) {
-  cout<<"final sum: "<<sum_final<<endl<<flush;
-  cout<<"integral computed"<<endl<<flush;
-  //exit(-1);
   
+  PrecFloat::setDefaultPrecision(original_precision);
+  
+  if(verbose) {
+    cout<<"final sum: "<<sum_final<<endl<<flush;
+    cout<<"integral computed"<<endl<<flush;
   }
   
   if(isnan(sum_final.get())) crash("In integrateUpToInfinity res is nan");
@@ -715,136 +711,164 @@ template <typename F>
 PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1,const int& verbose=0)
 {
 
-  int COUNT_RESTART=0;
+  int numDigits= PrecFloat::getNDigits();
+  int original_precision = PrecFloat::getDefaultPrecision();
+  auto old_cout_precision= cout.precision( numDigits);
 
-  auto old_cout_precision= cout.precision( PrecFloat::getNDigits());
 
-  if(verbose) cout<<"integrateUpToXmax called with xMin: "<<xMin<<", xMax: "<<xMax<<endl<<flush;
-  //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-  /// We compute up to the highest precision possible, which needs to
-  /// be adjusted in terms of the number of iterations (maybe it might
-  /// be enough to increase with the square root?)
-  PrecFloat maxAttainableStability=
-    PrecFloat::getEpsilon()*10;
 
-  PrecFloat xMin_prec= xMin;
-  PrecFloat xMax_prec= xMax;
-  
-  const PrecFloat piHalf=
-    precPi()/2;
+  if(verbose) cout<<"integrateUpToXmax called with: xMin: "<<xMin<<endl;
+  //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);                                                                                                                                             
+  /// We compute up to the highest precision possible, which needs to                                                                                                                                    
+  /// be adjusted in terms of the number of iterations (maybe it might                                                                                                                                   
+  /// be enough to increase with the square root?)                                                                                                                                                       
 
-  const PrecFloat log_piHalf= log(piHalf);
+  PrecFloat InitialmaxAttainableStability= PrecFloat::getEpsilon()*10;
 
-  const PrecFloat log_int_ave= log( (xMax_prec-xMin_prec)/2);
-  
-  auto c=
-    [&f,&piHalf,&log_piHalf, &log_int_ave, &xMin_prec, &xMax_prec](const PrecFloat& t)
-    {
-      //tanh-sinh to map [xMin, xMax] into [-infinite, +infinite]
-      const PrecFloat s=sinh(t);
-      const PrecFloat g=tanh(piHalf*s);
-      const PrecFloat x=g*(xMax_prec-xMin_prec)/2+(xMax_prec +xMin_prec)/2;
-      const PrecFloat jac=((xMax_prec-xMin_prec)/2)*piHalf*(1 - g*g)*cosh(t);
-      //if(isnan(jac.get())) crash("jacobian is nan for x: "+to_string_with_precision(x.get(),5));
-      //if(isnan(f(x).get())) crash("f(x) is nan for x: "+to_string_with_precision(x.get(),5));
-	
-      return f(x)*jac;
-
-      /*
-      const PrecFloat log_jac= log_int_ave + log_piHalf -2*log( cosh(piHalf*s)) + log(cosh(t));
-      const PrecFloat fx= f(x);
-      const int sign= (fx > 0)?1:-1;
-      const PrecFloat log_res= log(abs(fx)) + log_jac;
-      
-      
-      //cout<<" t: "<<t<<" x: "<<x<<" res: "<<res<<" jac: "<<jac<<"res impr: "<<sign*exp(log_res)<<endl<<flush;
-      
-      return sign*exp(log_res);
-      */
-    };
-  
-  PrecFloat step_old=1;
   PrecFloat sum_final;
-  bool RESTART=false;
+  bool CHANGE_PRECISION=false;
+  int i=0;
 
   do {
 
-    RESTART=false;  
-    PrecFloat sum=c(0)*2*step_old;
-    PrecFloat extreme=0;
-    PrecFloat step=step_old;
-    PrecFloat precSum;
-    PrecFloat stability;
-  
-    do
-      {
-	precSum=sum;
-      
-	bool converged=
-	  false;
-      
-	sum/=2;
-	PrecFloat t=step;
-      
-	const PrecFloat doubleStep=
-	  step*2;
-	
-	bool exitTheLoop=
-	  false;
-      
-	while(not exitTheLoop)
-	{
-	  const PrecFloat contr=
-	    c(t)+c(-t);
-	  
-	  PrecFloat newSum= sum;
-	  
-	  newSum += contr*step;
-
-	  converged= ( abs(contr*step/sum) < PrecFloat(0.1)*PrecFloat::getEpsilon());
-	  
-	  if(verbose) {
-	    cout<<"RESTART: "<<COUNT_RESTART<<" t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" extreme: "<<extreme<<" converged: "<<converged<<endl<<flush;
-	    cout<<"LOOPING: sum: "<<newSum<<" precSum: "<<sum<<endl<<flush;
-	    cout.precision( 2*(PrecFloat::getNDigits()));
-	    cout<<"LOOPING(x2 prec): sum: "<<newSum<<" precSum: "<<sum<<endl<<flush;
-	    cout.precision( PrecFloat::getNDigits());
-	  }
-	  
-	  
-	  exitTheLoop=
-	    (converged and t>extreme);
-	  
-	  if(t>extreme)
-	    {
-	      extreme=t;
-	      t+=step;
-	    }
-	  else
-	    t+=doubleStep;
-	  
-	  sum=newSum;
-	};
-	
-	step/=2;
-	
-	if(verbose) cout<<"LOOP EXITED: sum: "<<sum<<" precSum: "<<precSum<<", extreme: "<<extreme<<" step: "<<step*2<<endl<<flush;
-      
-	stability=abs(sum/precSum-1);
-	if(verbose) cout<<"Stability: "<<stability<<" MaxAttainable: "<<maxAttainableStability<<endl<<flush;
-	maxAttainableStability*=2;
-
-	if( stability <= maxAttainableStability) {sum_final=sum; RESTART=false;}
-	else if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step; COUNT_RESTART++;}
+    CHANGE_PRECISION=false;
+    int COUNT_RESTART=0;
+    if(verbose) cout<<"Precision set to : "<<(original_precision+original_precision*i/2)<<endl<<flush;
+    PrecFloat::setDefaultPrecision( original_precision + original_precision*i/2);
+    PrecFloat maxAttainableStability= InitialmaxAttainableStability;
+    
+ 
    
-      }
-    while( (stability>maxAttainableStability) && !RESTART);
+    auto c=
+      [&f, &xMin, &xMax](const PrecFloat& t)
+      {
+	//tanh-sinh to map [xMin, xMax] into [-infinite, +infinite]
+	PrecFloat xMin_prec=xMin; PrecFloat xMax_prec=xMax;
+	PrecFloat piHalf= precPi()/2;
+      
+	const PrecFloat s=sinh(t);
+	const PrecFloat g=tanh(piHalf*s);
+	const PrecFloat x=g*(xMax_prec-xMin_prec)/2+(xMax_prec +xMin_prec)/2;
+	const PrecFloat jac=((xMax_prec-xMin_prec)/2)*piHalf*(1 - g*g)*cosh(t);
+	//if(isnan(jac.get())) crash("jacobian is nan for x: "+to_string_with_precision(x.get(),5));
+	//if(isnan(f(x).get())) crash("f(x) is nan for x: "+to_string_with_precision(x.get(),5));
+	
+	return f(x)*jac;
 
-    if(verbose) {
-      if(RESTART) cout<<"Restarting..."<<endl<<flush;
-      else cout<<"Restart not needed!"<<endl<<flush; }
-  }
-  while(RESTART);
+	/*
+	  const PrecFloat log_jac= log_int_ave + log_piHalf -2*log( cosh(piHalf*s)) + log(cosh(t));
+	  const PrecFloat fx= f(x);
+	  const int sign= (fx > 0)?1:-1;
+	  const PrecFloat log_res= log(abs(fx)) + log_jac;
+      
+      
+	  //cout<<" t: "<<t<<" x: "<<x<<" res: "<<res<<" jac: "<<jac<<"res impr: "<<sign*exp(log_res)<<endl<<flush;
+      
+	  return sign*exp(log_res);
+	*/
+      };
+  
+    PrecFloat step_old=1;
+    PrecFloat stability;
+    bool RESTART=false;
+
+    do {
+
+      int it=0;
+      RESTART=false;  
+      PrecFloat sum=c(0)*2*step_old;
+      PrecFloat extreme=0;
+      PrecFloat step=step_old;
+      PrecFloat precSum;
+   
+  
+      do
+	{
+	  precSum=sum;
+      
+	  bool converged=
+	    false;
+      
+	  sum/=2;
+	  PrecFloat t=step;
+      
+	  const PrecFloat doubleStep=
+	    step*2;
+	
+	  bool exitTheLoop=
+	    false;
+      
+	  while(not exitTheLoop)
+	    {
+	      const PrecFloat contr=
+		c(t)+c(-t);
+	  
+	      PrecFloat newSum= sum;
+	  
+	      newSum += contr*step;
+
+	      converged= ( abs(contr*step/sum) < PrecFloat(0.1)*PrecFloat::getEpsilon());
+	      
+	      if(verbose) {
+		cout<<"RESTART: "<<COUNT_RESTART<<" t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" extreme: "<<extreme<<" converged: "<<converged<<endl<<flush;
+		cout<<"LOOPING: sum: "<<newSum<<" precSum: "<<sum<<endl<<flush;
+		cout.precision( 2*(PrecFloat::getNDigits()));
+		cout<<"LOOPING(x2 prec): sum: "<<newSum<<" precSum: "<<sum<<endl<<flush;
+		cout.precision( PrecFloat::getNDigits());
+	      }
+	  
+	  
+	      exitTheLoop=
+		(converged and t>extreme);
+	  
+	      if(t>extreme)
+		{
+		  extreme=t;
+		  t+=step;
+		}
+	      else
+		t+=doubleStep;
+	      
+	      sum=newSum;
+	    };
+	  
+	  step/=2;
+	
+	  if(verbose) cout<<"LOOP EXITED: sum: "<<sum<<" precSum: "<<precSum<<", extreme: "<<extreme<<" step: "<<step*2<<endl<<flush;
+      
+	  stability=abs(sum/precSum-1);
+	  if(verbose) cout<<"Stability: "<<stability<<" MaxAttainable: "<<maxAttainableStability<<endl<<flush;
+	  maxAttainableStability*=2;
+	  
+	  if( stability <= maxAttainableStability) {sum_final=sum; RESTART=false; CHANGE_PRECISION=false;}
+	  else if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step; COUNT_RESTART++; CHANGE_PRECISION=false;}
+
+
+	  it++;
+
+	  if( stability > maxAttainableStability) {
+	    if( (COUNT_RESTART ==1) && (it >=5) ) CHANGE_PRECISION=true;
+	    if( COUNT_RESTART == 2) CHANGE_PRECISION=true;
+	  }
+	   
+	}
+      while( (stability>maxAttainableStability) && (!RESTART) && (!CHANGE_PRECISION)   );
+
+      if(verbose) {
+	if(RESTART) cout<<"Restarting..."<<endl<<flush;
+	else cout<<"Restart not needed!"<<endl<<flush; }
+    }
+    while(RESTART && !CHANGE_PRECISION);
+
+    i++;
+
+    if(CHANGE_PRECISION && verbose) cout<<"Changing precision"<<endl<<flush;
+    if(!CHANGE_PRECISION && verbose) cout<<"Attained precision: "<<stability<<endl<<flush;
+
+  } while( CHANGE_PRECISION );
+
+  PrecFloat::setDefaultPrecision(original_precision);
+
 
   if(verbose) {
     cout<<"final sum: "<<sum_final<<endl<<flush;
@@ -852,9 +876,9 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1,con
   }
   
   if(isnan(sum_final.get())) crash("In integrateUpToXmax res is nan");
-
+  
   cout.precision(old_cout_precision);
-    
+  
   
   return sum_final;
 }

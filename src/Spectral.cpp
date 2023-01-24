@@ -394,14 +394,14 @@ void Get_G_matrix(PrecMatr &G,const PrecMatr &Atr_inv, vector<PrecVect> &Rt_n) {
   
 }
 
-void Compute_covariance_matrix(PrecMatr &B,const PrecMatr &Atr, const distr_t_list &corr, int tmin, int tmax, PrecFloat m, string analysis_name,  string MODE, Vfloat &covariance) {
+void Compute_covariance_matrix(PrecMatr &B,const PrecMatr &Atr, const distr_t_list &corr, int tmin, int tmax, PrecFloat m, PrecFloat s,  string analysis_name,  string MODE, Vfloat &covariance) {
 
   
   PrecFloat norm= sqr(PrecFloat(corr.ave(0)));
 
   
   if(analysis_name.substr(0,7)=="R_ratio") norm = sqr(PrecFloat(corr.ave(1)))*pow(m,-6);
-  if(analysis_name.substr(0,10)=="virtual_FF") norm= sqr(PrecFloat(corr.ave(1)))*pow(m,-2);
+  if(analysis_name.substr(0,10)=="virtual_FF") norm= sqr(PrecFloat(corr.ave(1)))*pow(m+PrecFloat(0.08),-2);
 
   B.resize(tmax-tmin+1, tmax-tmin+1);
 
@@ -1457,7 +1457,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
   }
 
-  if(INCLUDE_ERRORS) Compute_covariance_matrix(B,Atr, corr,1,tmax, m, analysis_name, MODE, covariance);
+  if(INCLUDE_ERRORS) Compute_covariance_matrix(B,Atr, corr,1,tmax, m,s, analysis_name, MODE, covariance);
 
   double lambda_opt= lambda;
   double lambda_opt_10=lambda;

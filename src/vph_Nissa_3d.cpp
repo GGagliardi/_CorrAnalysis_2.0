@@ -41,7 +41,7 @@ void Get_virt_list() {
   int Nvirts=40;
   for(int nv=0;nv<Nvirts;nv++) {
     double v= nv/(Nvirts-1.0);
-    if(v<= 0.4) virt_list.push_back(v);
+    if(v < 0.4) virt_list.push_back(v);
   }
   
   return;
@@ -185,7 +185,7 @@ void Integrate_over_photon_insertion_w_subtraction(const distr_t_list &W, vector
     distr_t_list exp_eff_mass= distr_t_list::f_of_distr(EXP, eff_mass, Corr_tcut.Nt+1);
     for(int tcut=tmin;tcut<Nt/2;tcut++) overlap_distr.distr_list.push_back( V_tcut.distr_list[tcut]/exp_eff_mass.distr_list[tcut-tmin]);
     //time interval for effective residue fit
-    if(ixg >= 1) {
+    if(ixg >= 0) {
       if(nv <=10) { Corr_tcut.Tmin=25; Corr_tcut.Tmax=35;}
       else if(nv==11) {Corr_tcut.Tmin=28; Corr_tcut.Tmax=35;}
       else if(nv==12) {Corr_tcut.Tmin=25; Corr_tcut.Tmax=35;}
@@ -309,8 +309,8 @@ void Get_radiative_form_factors_3d() {
   vector<bool> Integrate_Up_To_Emax_List({0,0});
   Vfloat Emax_List({10,10});
   vector<bool> Perform_theta_average_List({1,1});
-  vector<string> SM_TYPE_List({"FF_Sinh", "FF_Cauchy"});
-  vector<bool> CONS_EM_CURR_LIST({false,false});
+  vector<string> SM_TYPE_List({"FF_Sinh", "FF_Sinh"});
+  vector<bool> CONS_EM_CURR_LIST({true,true});
   Vfloat E0_List({0.9,0.9});
   
   int N= beta_List.size();
@@ -580,6 +580,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
   
   GaussianMersenne GM(652205123);
  
+  //vector where to store zero three-momentum axial correlator for FP subtraction
+
+  vector<distr_t_list> ax_0_SUB_u_xx, ax_0_SUB_d_xx, ax_0_SUB_u_zz, ax_0_SUB_d_zz;
+    
 
 
 
@@ -694,7 +698,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
   vector<vector<vector<vector<distr_t_list>>>>  HA_d_TO_1(Nens);
   vector<vector<vector<vector<distr_t_list>>>>  HV_u_TO_1(Nens);
   vector<vector<vector<vector<distr_t_list>>>>  HV_d_TO_1(Nens);
-
+  //same with point-like subtraction included
+  vector<vector<vector<vector<distr_t_list>>>>  HA_u_TO_1_SUB(Nens);
+  vector<vector<vector<vector<distr_t_list>>>>  HA_d_TO_1_SUB(Nens);
+ 
 
   //cascade resize
   for(int i=0;i<Nens;i++) {
@@ -703,6 +710,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     HA_d_TO_1[i].resize(size_mu_nu);
     HV_u_TO_1[i].resize(size_mu_nu);
     HV_d_TO_1[i].resize(size_mu_nu);
+
+    HA_u_TO_1_SUB[i].resize(size_mu_nu);
+    HA_d_TO_1_SUB[i].resize(size_mu_nu);
+ 
     
     for(int mu=0;mu<size_mu_nu;mu++) {
 
@@ -710,6 +721,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
       HA_d_TO_1[i][mu].resize(size_mu_nu);
       HV_u_TO_1[i][mu].resize(size_mu_nu);
       HV_d_TO_1[i][mu].resize(size_mu_nu);
+
+      HA_u_TO_1_SUB[i][mu].resize(size_mu_nu);
+      HA_d_TO_1_SUB[i][mu].resize(size_mu_nu);
+ 
 
       for(int nu=0;nu<size_mu_nu;nu++) {
 
@@ -719,6 +734,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  HA_d_TO_1[i][mu][nu].emplace_back(UseJack, virt_list.size());
 	  HV_u_TO_1[i][mu][nu].emplace_back(UseJack, virt_list.size());
 	  HV_d_TO_1[i][mu][nu].emplace_back(UseJack, virt_list.size());
+
+	  HA_u_TO_1_SUB[i][mu][nu].emplace_back(UseJack, virt_list.size());
+          HA_d_TO_1_SUB[i][mu][nu].emplace_back(UseJack, virt_list.size());
+ 
 	  
 	}
       }
@@ -731,7 +750,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
   vector<vector<vector<vector<distr_t_list>>>>  HA_d_TO_2(Nens);
   vector<vector<vector<vector<distr_t_list>>>>  HV_u_TO_2(Nens);
   vector<vector<vector<vector<distr_t_list>>>>  HV_d_TO_2(Nens);
-
+  //same with point-like subtraction included
+  vector<vector<vector<vector<distr_t_list>>>>  HA_u_TO_2_SUB(Nens);
+  vector<vector<vector<vector<distr_t_list>>>>  HA_d_TO_2_SUB(Nens);
+ 
 
   //cascade resize
   for(int i=0;i<Nens;i++) {
@@ -740,6 +762,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     HA_d_TO_2[i].resize(size_mu_nu);
     HV_u_TO_2[i].resize(size_mu_nu);
     HV_d_TO_2[i].resize(size_mu_nu);
+
+    HA_u_TO_2_SUB[i].resize(size_mu_nu);
+    HA_d_TO_2_SUB[i].resize(size_mu_nu);
+ 
     
     for(int mu=0;mu<size_mu_nu;mu++) {
 
@@ -747,6 +773,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
       HA_d_TO_2[i][mu].resize(size_mu_nu);
       HV_u_TO_2[i][mu].resize(size_mu_nu);
       HV_d_TO_2[i][mu].resize(size_mu_nu);
+
+      HA_u_TO_2_SUB[i][mu].resize(size_mu_nu);
+      HA_d_TO_2_SUB[i][mu].resize(size_mu_nu);
+       
 
       for(int nu=0;nu<size_mu_nu;nu++) {
 
@@ -756,7 +786,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  HA_d_TO_2[i][mu][nu].emplace_back(UseJack, virt_list.size());
 	  HV_u_TO_2[i][mu][nu].emplace_back(UseJack, virt_list.size());
 	  HV_d_TO_2[i][mu][nu].emplace_back(UseJack, virt_list.size());
-	  
+
+	  HA_u_TO_2_SUB[i][mu][nu].emplace_back(UseJack, virt_list.size());
+          HA_d_TO_2_SUB[i][mu][nu].emplace_back(UseJack, virt_list.size());
+ 	  
 	}
       }
     }
@@ -942,18 +975,67 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     
     distr_t_list ax_0_u = qu*( Corr.corr_t(C_A_u_data[1][1][0].col(0)[iens],"") + Corr.corr_t(C_A_u_data[2][2][0].col(0)[iens],""));
     distr_t_list ax_0_d = qd*( Corr.corr_t(C_A_d_data[1][1][0].col(0)[iens],"") + Corr.corr_t(C_A_d_data[2][2][0].col(0)[iens],""));
+    distr_t_list ax_0_u_zz= qu*Corr.corr_t(C_A_u_data[3][3][0].col(0)[iens],"");
+    distr_t_list ax_0_d_zz= qd*Corr.corr_t(C_A_d_data[3][3][0].col(0)[iens],"");
+
+    ax_0_SUB_u_xx.push_back( ax_0_u);
+    ax_0_SUB_d_xx.push_back( ax_0_d);
+    ax_0_SUB_u_zz.push_back( ax_0_u_zz);
+    ax_0_SUB_d_zz.push_back( ax_0_d_zz);
+    
     distr_t_list ax_0 = ax_0_u - ax_0_d;
     distr_t ax_0_sum(UseJack, UseJack?Njacks:Nboots);
-    distr_t ax_0_u_sum(UseJack, UseJack?Njacks:Nboots);
-    distr_t ax_0_d_sum(UseJack, UseJack?Njacks:Nboots);
     for(int ty=0;ty<Corr.Nt;ty++) ax_0_sum = ax_0_sum + ax_0.distr_list[ty];
-    for(int ty=0;ty<Corr.Nt;ty++) ax_0_u_sum = ax_0_u_sum + ax_0_u.distr_list[ty];
-    for(int ty=0;ty<Corr.Nt;ty++) ax_0_d_sum = ax_0_d_sum + ax_0_d.distr_list[ty];
     distr_t renorm_A = FP/(ax_0_sum/2.0);
-    distr_t FP_bare_3pt= (ax_0_sum/2.0);
-    distr_t FP_bare_3pt_u= (ax_0_u_sum/2.0);
-    distr_t FP_bare_3pt_d= (ax_0_d_sum/2.0);
     distr_t renorm_V = renorm_A*(Za/Zv);
+
+    
+    distr_t ax_0_sum_zz(UseJack, UseJack?Njacks:Nboots);
+
+    // I TO
+    distr_t ax_0_u_sum_I_TO(UseJack, UseJack?Njacks:Nboots);
+    distr_t ax_0_d_sum_I_TO(UseJack, UseJack?Njacks:Nboots);
+    distr_t ax_0_u_sum_I_TO_zz(UseJack, UseJack?Njacks:Nboots);
+    distr_t ax_0_d_sum_I_TO_zz(UseJack, UseJack?Njacks:Nboots);
+
+    // II TO
+    distr_t ax_0_u_sum_II_TO(UseJack, UseJack?Njacks:Nboots);
+    distr_t ax_0_d_sum_II_TO(UseJack, UseJack?Njacks:Nboots);
+    distr_t ax_0_u_sum_II_TO_zz(UseJack, UseJack?Njacks:Nboots);
+    distr_t ax_0_d_sum_II_TO_zz(UseJack, UseJack?Njacks:Nboots);
+
+
+    for(int ty=0;ty<Corr.Nt;ty++) ax_0_sum_zz = ax_0_sum_zz + (ax_0_u_zz-ax_0_d_zz).distr_list[ty];
+
+    // I TO
+    for(int ty=0;ty<=t_weak;ty++) ax_0_u_sum_I_TO = ax_0_u_sum_I_TO + ax_0_u.distr_list[ty];
+    for(int ty=0;ty<=t_weak;ty++) ax_0_d_sum_I_TO = ax_0_d_sum_I_TO + ax_0_d.distr_list[ty];
+    for(int ty=0;ty<=t_weak;ty++) ax_0_u_sum_I_TO_zz = ax_0_u_sum_I_TO_zz + ax_0_u_zz.distr_list[ty];
+    for(int ty=0;ty<=t_weak;ty++) ax_0_d_sum_I_TO_zz = ax_0_d_sum_I_TO_zz + ax_0_d_zz.distr_list[ty];
+    // II TO
+    for(int ty=t_weak+1;ty<Corr.Nt;ty++) ax_0_u_sum_II_TO = ax_0_u_sum_II_TO + ax_0_u.distr_list[ty];
+    for(int ty=t_weak+1;ty<Corr.Nt;ty++) ax_0_d_sum_II_TO = ax_0_d_sum_II_TO + ax_0_d.distr_list[ty];
+    for(int ty=t_weak+1;ty<Corr.Nt;ty++) ax_0_u_sum_II_TO_zz = ax_0_u_sum_II_TO_zz + ax_0_u_zz.distr_list[ty];
+    for(int ty=t_weak+1;ty<Corr.Nt;ty++) ax_0_d_sum_II_TO_zz = ax_0_d_sum_II_TO_zz + ax_0_d_zz.distr_list[ty];
+
+    
+    distr_t FP_bare_3pt= (ax_0_sum/2.0);
+    distr_t FP_bare_3pt_zz= ax_0_sum_zz;
+
+    // I TO
+    distr_t FP_bare_3pt_u_I_TO_xx= (ax_0_u_sum_I_TO/2.0);
+    distr_t FP_bare_3pt_d_I_TO_xx= (ax_0_d_sum_I_TO/2.0);
+    distr_t FP_bare_3pt_u_I_TO_zz= (ax_0_u_sum_I_TO_zz);
+    distr_t FP_bare_3pt_d_I_TO_zz= (ax_0_d_sum_I_TO_zz);
+
+    // II TO
+    distr_t FP_bare_3pt_u_II_TO_xx= (ax_0_u_sum_II_TO/2.0);
+    distr_t FP_bare_3pt_d_II_TO_xx= (ax_0_d_sum_II_TO/2.0);
+    distr_t FP_bare_3pt_u_II_TO_zz= (ax_0_u_sum_II_TO_zz);
+    distr_t FP_bare_3pt_d_II_TO_zz= (ax_0_d_sum_II_TO_zz);
+
+    
+    
     Corr.Perform_Nt_t_average=1;
     cout<<"renorm_A: "<<renorm_A.ave()<<" +- "<<renorm_A.err()<<endl;
     cout<<"FP_3pt: "<<(Zv*ax_0_sum/2.0).ave()<<" +- "<<(Zv*ax_0_sum/2.0).err()<<endl;
@@ -963,7 +1045,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 			  
 
-    for(int ixg=1;ixg<n_xg;ixg++) {
+    for(int ixg=0;ixg<n_xg;ixg++) {
 
       //get xg, Eg, kz from thetas
       double theta=thetas[ixg];
@@ -991,7 +1073,6 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
       cout<<"kz: "<<kz<<endl;
       cout<<"Opposite kz present: "<<(theta_rev_present?"true":"false")<<endl;
 
-      distr_t renorm_V_w_kz= renorm_V/kz;
 
       PrecFloat precK=PrecFloat(kz);
       PrecFloat Ep_u= sqrt( pow(PrecFloat(1.249),2) + pow(precK,2));
@@ -1056,647 +1137,655 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 
       //vector
-      for(auto &pair_V:red_mu_nu_pair_V) {
+      if(ixg > 0 ) {
+	for(auto &pair_V:red_mu_nu_pair_V) {
 
-	int mu=pair_V.first;
-	int nu=pair_V.second;
+	  int mu=pair_V.first;
+	  int nu=pair_V.second;
 
-	double rev_theta_sign=-1;
+	  double rev_theta_sign=-1;
 
-	//vector
-	int Im_Re;
-	Corr.Reflection_sign = -1;
-	Im_Re=1;
-	Corr.Perform_Nt_t_average = 0;
-	Corr_boot.Reflection_sign=-1;
-	Corr_boot.Perform_Nt_t_average=0;
+	  distr_t renorm_V_w_kz= renorm_V/kz;
+
+	
+	  //vector
+	  int Im_Re;
+	  Corr.Reflection_sign = -1;
+	  Im_Re=1;
+	  Corr.Perform_Nt_t_average = 0;
+	  Corr_boot.Reflection_sign=-1;
+	  Corr_boot.Perform_Nt_t_average=0;
 	 
 	 
-	distr_t_list vec_u = 0.5*qu*Corr.corr_t(summ_master(C_V_u_data[mu][nu][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_u_data[nu][mu][ixg].col(Im_Re)[iens], -1.0)),"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
-	distr_t_list vec_d = 0.5*qd*Corr.corr_t(summ_master(C_V_d_data[mu][nu][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_d_data[nu][mu][ixg].col(Im_Re)[iens], -1.0)) ,"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
+	  distr_t_list vec_u = 0.5*qu*Corr.corr_t(summ_master(C_V_u_data[mu][nu][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_u_data[nu][mu][ixg].col(Im_Re)[iens], -1.0)),"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
+	  distr_t_list vec_d = 0.5*qd*Corr.corr_t(summ_master(C_V_d_data[mu][nu][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_d_data[nu][mu][ixg].col(Im_Re)[iens], -1.0)) ,"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
 
 	
 
-	distr_t_list vec_u_boot= 0.5*qu*Corr_boot.corr_t(summ_master(C_V_u_data[mu][nu][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_u_data[nu][mu][ixg].col(Im_Re)[iens], -1.0)),"");
-	distr_t_list vec_d_boot= 0.5*qd*Corr_boot.corr_t(summ_master(C_V_d_data[mu][nu][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_d_data[nu][mu][ixg].col(Im_Re)[iens], -1.0)),"");
+	  distr_t_list vec_u_boot= 0.5*qu*Corr_boot.corr_t(summ_master(C_V_u_data[mu][nu][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_u_data[nu][mu][ixg].col(Im_Re)[iens], -1.0)),"");
+	  distr_t_list vec_d_boot= 0.5*qd*Corr_boot.corr_t(summ_master(C_V_d_data[mu][nu][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_d_data[nu][mu][ixg].col(Im_Re)[iens], -1.0)),"");
 
 
-	if(theta_rev_present && Perform_theta_average) {
+	  if(theta_rev_present && Perform_theta_average) {
 
-	  //jackknife
-	  distr_t_list vec_u_rev=  rev_theta_sign*0.5*qu*Corr.corr_t(summ_master(C_V_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_u_data_rev[nu][mu][ixg_rev].col(Im_Re)[iens], -1.0)),"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
-	  distr_t_list vec_d_rev = rev_theta_sign*0.5*qd*Corr.corr_t(summ_master(C_V_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_d_data_rev[nu][mu][ixg_rev].col(Im_Re)[iens], -1.0)) ,"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
+	    //jackknife
+	    distr_t_list vec_u_rev=  rev_theta_sign*0.5*qu*Corr.corr_t(summ_master(C_V_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_u_data_rev[nu][mu][ixg_rev].col(Im_Re)[iens], -1.0)),"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
+	    distr_t_list vec_d_rev = rev_theta_sign*0.5*qd*Corr.corr_t(summ_master(C_V_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_d_data_rev[nu][mu][ixg_rev].col(Im_Re)[iens], -1.0)) ,"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
 
-	  //bootstrap
-	  distr_t_list vec_u_boot_rev= rev_theta_sign*0.5*qu*Corr_boot.corr_t(summ_master(C_V_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_u_data[nu][mu][ixg_rev].col(Im_Re)[iens], -1.0)),"");
-	  distr_t_list vec_d_boot_rev= rev_theta_sign*0.5*qd*Corr_boot.corr_t(summ_master(C_V_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_d_data[nu][mu][ixg_rev].col(Im_Re)[iens], -1.0)),"");
+	    //bootstrap
+	    distr_t_list vec_u_boot_rev= rev_theta_sign*0.5*qu*Corr_boot.corr_t(summ_master(C_V_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_u_data[nu][mu][ixg_rev].col(Im_Re)[iens], -1.0)),"");
+	    distr_t_list vec_d_boot_rev= rev_theta_sign*0.5*qd*Corr_boot.corr_t(summ_master(C_V_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_V_d_data[nu][mu][ixg_rev].col(Im_Re)[iens], -1.0)),"");
 
-	  //compute difference between kz and -kz
+	    //compute difference between kz and -kz
 
-	  distr_t_list vec_u_diff= vec_u - vec_u_rev;
-	  distr_t_list vec_d_diff= vec_d - vec_d_rev;
+	    distr_t_list vec_u_diff= vec_u - vec_u_rev;
+	    distr_t_list vec_d_diff= vec_d - vec_d_rev;
 
 	  
-	  //average kz and -kz contributions
+	    //average kz and -kz contributions
 
-	  //jackknife
-	  vec_u= 0.5*(vec_u + vec_u_rev);
-	  vec_d= 0.5*(vec_d + vec_d_rev);
+	    //jackknife
+	    vec_u= 0.5*(vec_u + vec_u_rev);
+	    vec_d= 0.5*(vec_d + vec_d_rev);
 
-	  //bootstrap
-	  vec_u_boot= 0.5*(vec_u_boot + vec_u_boot_rev);
-	  vec_d_boot= 0.5*(vec_d_boot + vec_d_boot_rev);
+	    //bootstrap
+	    vec_u_boot= 0.5*(vec_u_boot + vec_u_boot_rev);
+	    vec_d_boot= 0.5*(vec_d_boot + vec_d_boot_rev);
 
-	  //print averaged kz -kz
-	  Print_To_File({}, { (vec_u/(0.5*qu)).ave(), (vec_u/(0.5*qu)).err(), (vec_u_diff/(0.5*qu)).ave(), (vec_u_diff/(0.5*qu)).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ave.t", "", "");
-	  Print_To_File({}, { (vec_d/(0.5*qd)).ave(), (vec_d/(0.5*qd)).err(), (vec_d_diff/(0.5*qd)).ave(), (vec_d_diff/(0.5*qd)).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ave.t", "", "");
+	    //print averaged kz -kz
+	    Print_To_File({}, { (vec_u/(0.5*qu)).ave(), (vec_u/(0.5*qu)).err(), (vec_u_diff/(0.5*qu)).ave(), (vec_u_diff/(0.5*qu)).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ave.t", "", "");
+	    Print_To_File({}, { (vec_d/(0.5*qd)).ave(), (vec_d/(0.5*qd)).err(), (vec_d_diff/(0.5*qd)).ave(), (vec_d_diff/(0.5*qd)).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"V_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ave.t", "", "");
 	    
-	}
+	  }
 	
 
-	vector<distr_t_list>  HV_u, HV_d, HV_tot;
-	vector<distr_t_list>  HV_u_1_TO, HV_d_1_TO, HV_tot_1_TO;
-	vector<distr_t_list>  HV_u_2_TO, HV_d_2_TO, HV_tot_2_TO;
-	vector<distr_t_list>  HV_u_2_TO_w_sub, HV_d_2_TO_w_sub, HV_tot_2_TO_w_sub;
+	  vector<distr_t_list>  HV_u, HV_d, HV_tot;
+	  vector<distr_t_list>  HV_u_1_TO, HV_d_1_TO, HV_tot_1_TO;
+	  vector<distr_t_list>  HV_u_2_TO, HV_d_2_TO, HV_tot_2_TO;
+	  vector<distr_t_list>  HV_u_2_TO_w_sub, HV_d_2_TO_w_sub, HV_tot_2_TO_w_sub;
 
 
-	for(int iv=0;iv<(signed)virt_list.size();iv++) {
-	  HV_u.emplace_back( UseJack);
-	  HV_d.emplace_back( UseJack);
-	  HV_tot.emplace_back(UseJack);
-	  HV_u_1_TO.emplace_back(UseJack);
-	  HV_d_1_TO.emplace_back(UseJack);
-	  HV_tot_1_TO.emplace_back(UseJack);
-	  HV_u_2_TO.emplace_back(UseJack);
-	  HV_d_2_TO.emplace_back(UseJack);
-	  HV_tot_2_TO.emplace_back(UseJack);
-	  HV_u_2_TO_w_sub.emplace_back(UseJack);
-	  HV_d_2_TO_w_sub.emplace_back(UseJack);
-	  HV_tot_2_TO_w_sub.emplace_back(UseJack);
-	}
+	  for(int iv=0;iv<(signed)virt_list.size();iv++) {
+	    HV_u.emplace_back( UseJack);
+	    HV_d.emplace_back( UseJack);
+	    HV_tot.emplace_back(UseJack);
+	    HV_u_1_TO.emplace_back(UseJack);
+	    HV_d_1_TO.emplace_back(UseJack);
+	    HV_tot_1_TO.emplace_back(UseJack);
+	    HV_u_2_TO.emplace_back(UseJack);
+	    HV_d_2_TO.emplace_back(UseJack);
+	    HV_tot_2_TO.emplace_back(UseJack);
+	    HV_u_2_TO_w_sub.emplace_back(UseJack);
+	    HV_d_2_TO_w_sub.emplace_back(UseJack);
+	    HV_tot_2_TO_w_sub.emplace_back(UseJack);
+	  }
 	 
-	//standard integration
-	Integrate_over_photon_insertion(vec_u, HV_u, Eg, t_weak,MP.ave(),0); 
-	Integrate_over_photon_insertion(vec_d, HV_d, Eg, t_weak,MP.ave(),0);
-	//first time ordering
-	Integrate_over_photon_insertion(vec_u, HV_u_1_TO, Eg, t_weak,MP.ave(),1); 
-	Integrate_over_photon_insertion(vec_d, HV_d_1_TO, Eg, t_weak,MP.ave(),1);
-	//second time ordering
-	Integrate_over_photon_insertion(vec_u, HV_u_2_TO, Eg, t_weak,MP.ave(),2); 
-	Integrate_over_photon_insertion(vec_d, HV_d_2_TO, Eg, t_weak,MP.ave(),2);
-	//second time ordering w substraction of exponential
-	string obs_u="u_V_mu_"+to_string(mu)+"_nu_"+to_string(nu);
-	string obs_d="d_V_mu_"+to_string(mu)+"_nu_"+to_string(nu);
-	string out_path="../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/mass/"+Ens_tags[iens];
-	//set time intervals for masses and residue
-	int Tmin_mass, Tmax_mass;
-	if(ixg==1) { Tmin_mass=7; Tmax_mass=16; }
-	else if(ixg==2) { Tmin_mass=7; Tmax_mass=16; }
-	else if(ixg==3) { Tmin_mass=7; Tmax_mass=16; }
-	else if(ixg==4) { Tmin_mass=7; Tmax_mass=16; }
-	else crash("ixg: "+to_string(ixg)+" has no associate Tmin-Tmax interval for masses and residue in 2nd TO");
-	Integrate_over_photon_insertion_w_subtraction(vec_u, HV_u_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass,  out_path, obs_u);
-	Integrate_over_photon_insertion_w_subtraction(vec_d, HV_d_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass,  out_path, obs_d);
+	  //standard integration
+	  Integrate_over_photon_insertion(vec_u, HV_u, Eg, t_weak,MP.ave(),0); 
+	  Integrate_over_photon_insertion(vec_d, HV_d, Eg, t_weak,MP.ave(),0);
+	  //first time ordering
+	  Integrate_over_photon_insertion(vec_u, HV_u_1_TO, Eg, t_weak,MP.ave(),1); 
+	  Integrate_over_photon_insertion(vec_d, HV_d_1_TO, Eg, t_weak,MP.ave(),1);
+	  //second time ordering
+	  Integrate_over_photon_insertion(vec_u, HV_u_2_TO, Eg, t_weak,MP.ave(),2); 
+	  Integrate_over_photon_insertion(vec_d, HV_d_2_TO, Eg, t_weak,MP.ave(),2);
+	  //second time ordering w substraction of exponential
+	  string obs_u="u_V_mu_"+to_string(mu)+"_nu_"+to_string(nu);
+	  string obs_d="d_V_mu_"+to_string(mu)+"_nu_"+to_string(nu);
+	  string out_path="../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/mass/"+Ens_tags[iens];
+	  //set time intervals for masses and residue
+	  int Tmin_mass, Tmax_mass;
+	  if(ixg==1) { Tmin_mass=7; Tmax_mass=16; }
+	  else if(ixg==2) { Tmin_mass=7; Tmax_mass=16; }
+	  else if(ixg==3) { Tmin_mass=7; Tmax_mass=16; }
+	  else if(ixg==4) { Tmin_mass=7; Tmax_mass=16; }
+	  else crash("ixg: "+to_string(ixg)+" has no associate Tmin-Tmax interval for masses and residue in 2nd TO");
+	  Integrate_over_photon_insertion_w_subtraction(vec_u, HV_u_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass,  out_path, obs_u);
+	  Integrate_over_photon_insertion_w_subtraction(vec_d, HV_d_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass,  out_path, obs_d);
 	
 	
 		 
 
-	//loop over virtualities and renormalize contributions
-	for(int iv=0;iv<(signed)virt_list.size();iv++) {
-	  HV_u[iv] = renorm_V_w_kz*HV_u[iv];
-	  HV_d[iv] = renorm_V_w_kz*HV_d[iv];
-	  HV_u_1_TO[iv] = renorm_V_w_kz*HV_u_1_TO[iv];
-	  HV_d_1_TO[iv] = renorm_V_w_kz*HV_d_1_TO[iv];
-	  HV_u_2_TO[iv]= HV_u_2_TO[iv]*renorm_V_w_kz;
-	  HV_d_2_TO[iv]= HV_d_2_TO[iv]*renorm_V_w_kz;
-	  HV_u_2_TO_w_sub[iv] = HV_u_2_TO_w_sub[iv]*renorm_V_w_kz;
-	  HV_d_2_TO_w_sub[iv] = HV_d_2_TO_w_sub[iv]*renorm_V_w_kz;
-	  
-	  //store hadronic-tensor for t_cut = T
-	  //#########################################
-	  HV_u_TO_1[iens][mu][nu][ixg].distr_list[iv] = HV_u_1_TO[iv].distr_list[Nts[iens]-1];
-	  HV_d_TO_1[iens][mu][nu][ixg].distr_list[iv] = HV_d_1_TO[iv].distr_list[Nts[iens]-1];
-	  HV_u_TO_2[iens][mu][nu][ixg].distr_list[iv] = HV_u_2_TO[iv].distr_list[Nts[iens]-1];
-	  HV_d_TO_2[iens][mu][nu][ixg].distr_list[iv] = HV_d_2_TO[iv].distr_list[Nts[iens]-1];
-	  //#########################################
-
-	  
-	  //sum ud contributions
-	  HV_tot[iv]= HV_u[iv] +HV_d[iv];
-	  HV_tot_1_TO[iv]= HV_u_1_TO[iv] +  HV_d_1_TO[iv];
-	  HV_tot_2_TO[iv]= HV_u_2_TO[iv] +  HV_d_2_TO[iv];
-	  HV_tot_2_TO_w_sub[iv] = HV_u_2_TO_w_sub[iv] + HV_d_2_TO_w_sub[iv];
-	  
-	}
-
-
-	//print as a function of tcut for fixed virtuality
-	for(int iv=0;iv<(signed)virt_list.size();iv++) {
-	  //1+2 time orderings
-	  Print_To_File({}, { HV_u[iv].ave(), HV_u[iv].err(), HV_d[iv].ave(), HV_d[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Vu  Vd");
-	  Print_To_File({}, { HV_tot[iv].ave(), HV_tot[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin V");
-	  //1 time ordering
-	  Print_To_File({}, { HV_u_1_TO[iv].ave(), HV_u_1_TO[iv].err(), HV_d_1_TO[iv].ave(), HV_d_1_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Vu  Vd");
-	  Print_To_File({}, {   HV_tot_1_TO[iv].ave(), HV_tot_1_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin V");
-	  //2 time ordering
-	  Print_To_File({}, {  HV_u_2_TO[iv].ave(), HV_u_2_TO[iv].err(), HV_d_2_TO[iv].ave(), HV_d_2_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Vu  Vd");
-	  Print_To_File({}, {   HV_tot_2_TO[iv].ave(), HV_tot_2_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin V");
-	  //2 time ordering w sub
-	  Print_To_File({}, {  HV_u_2_TO_w_sub[iv].ave(), HV_u_2_TO_w_sub[iv].err(), HV_d_2_TO_w_sub[iv].ave(), HV_d_2_TO_w_sub[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Vu  Vd");
-	  Print_To_File({}, {   HV_tot_2_TO_w_sub[iv].ave(), HV_tot_2_TO_w_sub[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin V");
-	}
-
-	//print as a function of virtuality for fixed tcut
-	for(int tcut=0;tcut<Nts[iens];tcut++) {
-	   
-	  distr_t_list HV_u_tcut(UseJack), HV_d_tcut(UseJack), HV_tot_tcut(UseJack);
-	  distr_t_list HV_u_1_TO_tcut(UseJack), HV_d_1_TO_tcut(UseJack), HV_tot_1_TO_tcut(UseJack);
-	  distr_t_list HV_u_2_TO_tcut(UseJack), HV_d_2_TO_tcut(UseJack), HV_tot_2_TO_tcut(UseJack);
-	  distr_t_list HV_u_2_TO_tcut_w_sub(UseJack), HV_d_2_TO_tcut_w_sub(UseJack), HV_tot_2_TO_tcut_w_sub(UseJack);
-	   
+	  //loop over virtualities and renormalize contributions
 	  for(int iv=0;iv<(signed)virt_list.size();iv++) {
-	    HV_u_tcut.distr_list.push_back( HV_u[iv].distr_list[tcut]);
-	    HV_d_tcut.distr_list.push_back( HV_d[iv].distr_list[tcut]);
-	    HV_u_1_TO_tcut.distr_list.push_back( HV_u_1_TO[iv].distr_list[tcut]);
-	    HV_d_1_TO_tcut.distr_list.push_back( HV_d_1_TO[iv].distr_list[tcut]);
-	    HV_u_2_TO_tcut.distr_list.push_back( HV_u_2_TO[iv].distr_list[tcut]);
-	    HV_d_2_TO_tcut.distr_list.push_back( HV_d_2_TO[iv].distr_list[tcut]);
-	    if(tcut <= Nts[iens]/2) {
-	    HV_u_2_TO_tcut_w_sub.distr_list.push_back( HV_u_2_TO_w_sub[iv].distr_list[tcut]);
-	    HV_d_2_TO_tcut_w_sub.distr_list.push_back( HV_d_2_TO_w_sub[iv].distr_list[tcut]);
-	    }
+	    HV_u[iv] = renorm_V_w_kz*HV_u[iv];
+	    HV_d[iv] = renorm_V_w_kz*HV_d[iv];
+	    HV_u_1_TO[iv] = renorm_V_w_kz*HV_u_1_TO[iv];
+	    HV_d_1_TO[iv] = renorm_V_w_kz*HV_d_1_TO[iv];
+	    HV_u_2_TO[iv]= HV_u_2_TO[iv]*renorm_V_w_kz;
+	    HV_d_2_TO[iv]= HV_d_2_TO[iv]*renorm_V_w_kz;
+	    HV_u_2_TO_w_sub[iv] = HV_u_2_TO_w_sub[iv]*renorm_V_w_kz;
+	    HV_d_2_TO_w_sub[iv] = HV_d_2_TO_w_sub[iv]*renorm_V_w_kz;
+	  
+	    //store hadronic-tensor for t_cut = T
+	    //#########################################
+	    HV_u_TO_1[iens][mu][nu][ixg].distr_list[iv] = HV_u_1_TO[iv].distr_list[Nts[iens]-1];
+	    HV_d_TO_1[iens][mu][nu][ixg].distr_list[iv] = HV_d_1_TO[iv].distr_list[Nts[iens]-1];
+	    HV_u_TO_2[iens][mu][nu][ixg].distr_list[iv] = HV_u_2_TO[iv].distr_list[Nts[iens]-1];
+	    HV_d_TO_2[iens][mu][nu][ixg].distr_list[iv] = HV_d_2_TO[iv].distr_list[Nts[iens]-1];
+	    //#########################################
+
+	  
+	    //sum ud contributions
+	    HV_tot[iv]= HV_u[iv] +HV_d[iv];
+	    HV_tot_1_TO[iv]= HV_u_1_TO[iv] +  HV_d_1_TO[iv];
+	    HV_tot_2_TO[iv]= HV_u_2_TO[iv] +  HV_d_2_TO[iv];
+	    HV_tot_2_TO_w_sub[iv] = HV_u_2_TO_w_sub[iv] + HV_d_2_TO_w_sub[iv];
+	  
 	  }
-	  HV_tot_tcut= HV_u_tcut + HV_d_tcut;
-	  HV_tot_1_TO_tcut= HV_u_1_TO_tcut + HV_d_1_TO_tcut;
-	  HV_tot_2_TO_tcut= HV_u_2_TO_tcut + HV_d_2_TO_tcut;
-	  if(tcut<=Nts[iens]/2) HV_tot_2_TO_tcut_w_sub = HV_u_2_TO_tcut_w_sub + HV_d_2_TO_tcut_w_sub;
-	  //1+2 time orderings
-	  Print_To_File({}, { virt_list, HV_u_tcut.ave(), HV_u_tcut.err(), HV_d_tcut.ave(), HV_d_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Vu  Vd");
-	  Print_To_File({}, { virt_list, HV_tot_tcut.ave(), HV_tot_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off V");
-	  //1 time ordering
-	  Print_To_File({}, { virt_list, HV_u_1_TO_tcut.ave(), HV_u_1_TO_tcut.err(), HV_d_1_TO_tcut.ave(), HV_d_1_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Vu  Vd");
-	  Print_To_File({}, { virt_list,  HV_tot_1_TO_tcut.ave(), HV_tot_1_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off V");
-	  //2 time ordering
-	  Print_To_File({}, { virt_list, HV_u_2_TO_tcut.ave(), HV_u_2_TO_tcut.err(), HV_d_2_TO_tcut.ave(), HV_d_2_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Vu  Vd");
-	  Print_To_File({}, { virt_list,  HV_tot_2_TO_tcut.ave(), HV_tot_2_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off V");
-	  //2 time ordering w sub
-	  if(tcut<=Nts[iens]/2) {
-	  Print_To_File({}, { virt_list, HV_u_2_TO_tcut_w_sub.ave(), HV_u_2_TO_tcut_w_sub.err(), HV_d_2_TO_tcut_w_sub.ave(), HV_d_2_TO_tcut_w_sub.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Vu  Vd");
-	  Print_To_File({}, { virt_list,  HV_tot_2_TO_tcut_w_sub.ave(), HV_tot_2_TO_tcut_w_sub.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off V");
+
+
+	  //print as a function of tcut for fixed virtuality
+	  for(int iv=0;iv<(signed)virt_list.size();iv++) {
+	    //1+2 time orderings
+	    Print_To_File({}, { HV_u[iv].ave(), HV_u[iv].err(), HV_d[iv].ave(), HV_d[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Vu  Vd");
+	    Print_To_File({}, { HV_tot[iv].ave(), HV_tot[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin V");
+	    //1 time ordering
+	    Print_To_File({}, { HV_u_1_TO[iv].ave(), HV_u_1_TO[iv].err(), HV_d_1_TO[iv].ave(), HV_d_1_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Vu  Vd");
+	    Print_To_File({}, {   HV_tot_1_TO[iv].ave(), HV_tot_1_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin V");
+	    //2 time ordering
+	    Print_To_File({}, {  HV_u_2_TO[iv].ave(), HV_u_2_TO[iv].err(), HV_d_2_TO[iv].ave(), HV_d_2_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Vu  Vd");
+	    Print_To_File({}, {   HV_tot_2_TO[iv].ave(), HV_tot_2_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin V");
+	    //2 time ordering w sub
+	    Print_To_File({}, {  HV_u_2_TO_w_sub[iv].ave(), HV_u_2_TO_w_sub[iv].err(), HV_d_2_TO_w_sub[iv].ave(), HV_d_2_TO_w_sub[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Vu  Vd");
+	    Print_To_File({}, {   HV_tot_2_TO_w_sub[iv].ave(), HV_tot_2_TO_w_sub[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin V");
 	  }
+
+	  //print as a function of virtuality for fixed tcut
+	  for(int tcut=0;tcut<Nts[iens];tcut++) {
 	   
-	}
+	    distr_t_list HV_u_tcut(UseJack), HV_d_tcut(UseJack), HV_tot_tcut(UseJack);
+	    distr_t_list HV_u_1_TO_tcut(UseJack), HV_d_1_TO_tcut(UseJack), HV_tot_1_TO_tcut(UseJack);
+	    distr_t_list HV_u_2_TO_tcut(UseJack), HV_d_2_TO_tcut(UseJack), HV_tot_2_TO_tcut(UseJack);
+	    distr_t_list HV_u_2_TO_tcut_w_sub(UseJack), HV_d_2_TO_tcut_w_sub(UseJack), HV_tot_2_TO_tcut_w_sub(UseJack);
+	   
+	    for(int iv=0;iv<(signed)virt_list.size();iv++) {
+	      HV_u_tcut.distr_list.push_back( HV_u[iv].distr_list[tcut]);
+	      HV_d_tcut.distr_list.push_back( HV_d[iv].distr_list[tcut]);
+	      HV_u_1_TO_tcut.distr_list.push_back( HV_u_1_TO[iv].distr_list[tcut]);
+	      HV_d_1_TO_tcut.distr_list.push_back( HV_d_1_TO[iv].distr_list[tcut]);
+	      HV_u_2_TO_tcut.distr_list.push_back( HV_u_2_TO[iv].distr_list[tcut]);
+	      HV_d_2_TO_tcut.distr_list.push_back( HV_d_2_TO[iv].distr_list[tcut]);
+	      if(tcut <= Nts[iens]/2) {
+		HV_u_2_TO_tcut_w_sub.distr_list.push_back( HV_u_2_TO_w_sub[iv].distr_list[tcut]);
+		HV_d_2_TO_tcut_w_sub.distr_list.push_back( HV_d_2_TO_w_sub[iv].distr_list[tcut]);
+	      }
+	    }
+	    HV_tot_tcut= HV_u_tcut + HV_d_tcut;
+	    HV_tot_1_TO_tcut= HV_u_1_TO_tcut + HV_d_1_TO_tcut;
+	    HV_tot_2_TO_tcut= HV_u_2_TO_tcut + HV_d_2_TO_tcut;
+	    if(tcut<=Nts[iens]/2) HV_tot_2_TO_tcut_w_sub = HV_u_2_TO_tcut_w_sub + HV_d_2_TO_tcut_w_sub;
+	    //1+2 time orderings
+	    Print_To_File({}, { virt_list, HV_u_tcut.ave(), HV_u_tcut.err(), HV_d_tcut.ave(), HV_d_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Vu  Vd");
+	    Print_To_File({}, { virt_list, HV_tot_tcut.ave(), HV_tot_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off V");
+	    //1 time ordering
+	    Print_To_File({}, { virt_list, HV_u_1_TO_tcut.ave(), HV_u_1_TO_tcut.err(), HV_d_1_TO_tcut.ave(), HV_d_1_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Vu  Vd");
+	    Print_To_File({}, { virt_list,  HV_tot_1_TO_tcut.ave(), HV_tot_1_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off V");
+	    //2 time ordering
+	    Print_To_File({}, { virt_list, HV_u_2_TO_tcut.ave(), HV_u_2_TO_tcut.err(), HV_d_2_TO_tcut.ave(), HV_d_2_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Vu  Vd");
+	    Print_To_File({}, { virt_list,  HV_tot_2_TO_tcut.ave(), HV_tot_2_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off V");
+	    //2 time ordering w sub
+	    if(tcut<=Nts[iens]/2) {
+	      Print_To_File({}, { virt_list, HV_u_2_TO_tcut_w_sub.ave(), HV_u_2_TO_tcut_w_sub.err(), HV_d_2_TO_tcut_w_sub.ave(), HV_d_2_TO_tcut_w_sub.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_V_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Vu  Vd");
+	      Print_To_File({}, { virt_list,  HV_tot_2_TO_tcut_w_sub.ave(), HV_tot_2_TO_tcut_w_sub.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_V_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off V");
+	    }
+	   
+	  }
 	 
 
-	//define vec_u and vec_d in 2nd time ordering
-	distr_t_list vec_u_TO_2(UseJack);
-	distr_t_list vec_d_TO_2(UseJack);
-	//boostrap
-	distr_t_list vec_u_TO_2_boot(0);
-	distr_t_list vec_d_TO_2_boot(0);
+	  //define vec_u and vec_d in 2nd time ordering
+	  distr_t_list vec_u_TO_2(UseJack);
+	  distr_t_list vec_d_TO_2(UseJack);
+	  //boostrap
+	  distr_t_list vec_u_TO_2_boot(0);
+	  distr_t_list vec_d_TO_2_boot(0);
 
-	for(int t=t_weak;t<=Nts[iens]/2;t++) {
-	  vec_u_TO_2.distr_list.push_back( vec_u.distr_list[t]);
-	  vec_d_TO_2.distr_list.push_back( vec_d.distr_list[t]);
-	  vec_u_TO_2_boot.distr_list.push_back( vec_u_boot.distr_list[t]);
-	  vec_d_TO_2_boot.distr_list.push_back( vec_d_boot.distr_list[t]);
-	}
-
-	int tmax_reco_u= vec_u_TO_2.size();
-	int tmax_reco_d= vec_d_TO_2.size();
-	 
-	//generate covariance matrix
-	Vfloat cov_vec_u, cov_vec_d, corr_vec_u, corr_vec_d;
-	Vfloat TT, RR;
-	for(int tt=0;tt< tmax_reco_u;tt++)
-	  for(int rr=0;rr< tmax_reco_u;rr++) {
-	    TT.push_back(tt);
-	    RR.push_back(rr);
-	    cov_vec_u.push_back( vec_u_TO_2_boot.distr_list[tt]%vec_u_TO_2_boot.distr_list[rr]);
-	    cov_vec_d.push_back( vec_d_TO_2_boot.distr_list[tt]%vec_d_TO_2_boot.distr_list[rr]);
-	    corr_vec_u.push_back( (vec_u_TO_2_boot.distr_list[tt]%vec_u_TO_2_boot.distr_list[rr])/(vec_u_TO_2_boot.err(tt)*vec_u_TO_2_boot.err(rr)));
-	    corr_vec_d.push_back( (vec_d_TO_2_boot.distr_list[tt]%vec_d_TO_2_boot.distr_list[rr])/(vec_d_TO_2_boot.err(tt)*vec_d_TO_2_boot.err(rr)));
+	  for(int t=t_weak;t<=Nts[iens]/2;t++) {
+	    vec_u_TO_2.distr_list.push_back( vec_u.distr_list[t]);
+	    vec_d_TO_2.distr_list.push_back( vec_d.distr_list[t]);
+	    vec_u_TO_2_boot.distr_list.push_back( vec_u_boot.distr_list[t]);
+	    vec_d_TO_2_boot.distr_list.push_back( vec_d_boot.distr_list[t]);
 	  }
 
+	  int tmax_reco_u= vec_u_TO_2.size();
+	  int tmax_reco_d= vec_d_TO_2.size();
+	 
+	  //generate covariance matrix
+	  Vfloat cov_vec_u, cov_vec_d, corr_vec_u, corr_vec_d;
+	  Vfloat TT, RR;
+	  for(int tt=0;tt< tmax_reco_u;tt++)
+	    for(int rr=0;rr< tmax_reco_u;rr++) {
+	      TT.push_back(tt);
+	      RR.push_back(rr);
+	      cov_vec_u.push_back( vec_u_TO_2_boot.distr_list[tt]%vec_u_TO_2_boot.distr_list[rr]);
+	      cov_vec_d.push_back( vec_d_TO_2_boot.distr_list[tt]%vec_d_TO_2_boot.distr_list[rr]);
+	      corr_vec_u.push_back( (vec_u_TO_2_boot.distr_list[tt]%vec_u_TO_2_boot.distr_list[rr])/(vec_u_TO_2_boot.err(tt)*vec_u_TO_2_boot.err(rr)));
+	      corr_vec_d.push_back( (vec_d_TO_2_boot.distr_list[tt]%vec_d_TO_2_boot.distr_list[rr])/(vec_d_TO_2_boot.err(tt)*vec_d_TO_2_boot.err(rr)));
+	    }
 
-	//print covariance matrix
-	Print_To_File({},{TT,RR, cov_vec_u, corr_vec_u}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
-	Print_To_File({},{TT,RR, cov_vec_d, corr_vec_d}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
 
-	if(!Skip_spectral_reconstruction && Reconstruct_vector_part) {
+	  //print covariance matrix
+	  Print_To_File({},{TT,RR, cov_vec_u, corr_vec_u}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
+	  Print_To_File({},{TT,RR, cov_vec_d, corr_vec_d}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
+
+	  if(!Skip_spectral_reconstruction && Reconstruct_vector_part) {
 
 	
 	 
-	  //spectral reconstruction for second time ordering
-	  for(int isg=0;isg<(signed)sigmas.size();isg++) {
-	    cout<<"Calling spectral reconstruction 2nd-TO with sigma= "<<sigmas[isg]<<" GeV, vector channel, (mu,nu) : ("<<mu<<", "<<nu<<")"<<endl<<flush;
-	    Vfloat syst_re_u(virt_list.size()), syst_re_d(virt_list.size()), syst_im_u(virt_list.size()), syst_im_d(virt_list.size());
+	    //spectral reconstruction for second time ordering
+	    for(int isg=0;isg<(signed)sigmas.size();isg++) {
+	      cout<<"Calling spectral reconstruction 2nd-TO with sigma= "<<sigmas[isg]<<" GeV, vector channel, (mu,nu) : ("<<mu<<", "<<nu<<")"<<endl<<flush;
+	      Vfloat syst_re_u(virt_list.size()), syst_re_d(virt_list.size()), syst_im_u(virt_list.size()), syst_im_d(virt_list.size());
 	   
 #pragma omp parallel for schedule(dynamic)
-	    for(int ie=0;ie<(signed)virt_list.size();ie++) {
+	      for(int ie=0;ie<(signed)virt_list.size();ie++) {
 	   
-	      double mult_re_u=1e-2;
-	      double mult_re_d=1e-2;
-	      double mult_im_u=1e-2;
-	      double mult_im_d=1e-2;
-	      double s= sigmas[isg]*a_distr.ave();
-	      double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ie],2));
-	      double E0_u_RE= E0_fact_u*sqrt( pow(Mjpsi*a_distr.ave(),2) + pow(kz,2));
-	      double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
-	      double E0_u_IM= min( Eg+3*s, E0_u_RE);
-	      double E0_d_IM= min( Eg+3*s, E0_d_RE);
-	      double l_re_u, l_re_d;
-	      double l_im_u, l_im_d;
+		double mult_re_u=1e-2;
+		double mult_re_d=1e-2;
+		double mult_im_u=1e-2;
+		double mult_im_d=1e-2;
+		double s= sigmas[isg]*a_distr.ave();
+		double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ie],2));
+		double E0_u_RE= E0_fact_u*sqrt( pow(Mjpsi*a_distr.ave(),2) + pow(kz,2));
+		double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
+		double E0_u_IM= min( Eg+3*s, E0_u_RE);
+		double E0_d_IM= min( Eg+3*s, E0_d_RE);
+		double l_re_u, l_re_d;
+		double l_im_u, l_im_d;
 
-	      cout<<"Computing V mu: "<<mu<<" nu: "<<nu<<" ixg: "<<ixg<<" ixk: "<<ie<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
-	      cout<<"MV_u*a "<<Mjpsi*a_distr.ave()<<" MV_d*a "<<Mphi*a_distr.ave()<<endl<<flush;
+		cout<<"Computing V mu: "<<mu<<" nu: "<<nu<<" ixg: "<<ixg<<" ixk: "<<ie<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
+		cout<<"MV_u*a "<<Mjpsi*a_distr.ave()<<" MV_d*a "<<Mphi*a_distr.ave()<<endl<<flush;
 
-	      if((fabs(sigmas[isg]) < 1e-10) && (E0_d_RE < Eg_virt)) crash("Cannot call HLT-reconstruction with sigma=0.0 and Eg > E0 ");
+		if((fabs(sigmas[isg]) < 1e-10) && (E0_d_RE < Eg_virt)) crash("Cannot call HLT-reconstruction with sigma=0.0 and Eg > E0 ");
 	      
+		//Real part
+		syst_re_u[ie]=0.0;
+		RE_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks);
+		//RE_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u_RE,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_RE",K_RE, vec_u_TO_2, syst_re_u[ie], mult_re_u, l_re_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF_Tw_"+to_string(t_weak), cov_vec_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u );
+		RE_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_RE,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_RE",K_RE, vec_d_TO_2, syst_re_d[ie], mult_re_d, l_re_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF_Tw_"+to_string(t_weak), cov_vec_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d);
+
+		//Imag part
+		syst_im_u[ie]= 0.0;
+		IM_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks) ;
+		//IM_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_IM",K_IM, vec_u_TO_2, syst_im_u[ie], mult_im_u, l_im_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF_Tw_", cov_vec_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u);
+		if(fabs(sigmas[isg]) > 1e-10) {
+		  IM_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_IM,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_IM",K_IM, vec_d_TO_2, syst_im_d[ie], mult_im_d, l_im_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF_Tw_"+to_string(t_weak), cov_vec_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d); }
+		else {   syst_im_d[ie] = 0.0; IM_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks);}
+
+
+		cout<<"Computed V mu: "<<mu<<" nu: "<<nu<<" ixg: "<<ixg<<" ixk: "<<ie<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
+
+
+	      }
+
+	      //print to file
 	      //Real part
-	      syst_re_u[ie]=0.0;
-	      RE_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks);
-	      //RE_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u_RE,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_RE",K_RE, vec_u_TO_2, syst_re_u[ie], mult_re_u, l_re_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF_Tw_"+to_string(t_weak), cov_vec_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u );
-	      RE_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_RE,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_RE",K_RE, vec_d_TO_2, syst_re_d[ie], mult_re_d, l_re_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF_Tw_"+to_string(t_weak), cov_vec_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d);
-
+	      Print_To_File({}, {virt_list, RE_HV_sm_u[iens][mu][nu][ixg][isg].ave(), RE_HV_sm_u[iens][mu][nu][ixg][isg].err(), syst_re_u, RE_HV_sm_d[iens][mu][nu][ixg][isg].ave(), RE_HV_sm_d[iens][mu][nu][ixg][isg].err(), syst_re_d, (RE_HV_sm_u[iens][mu][nu][ixg][isg] + RE_HV_sm_d[iens][mu][nu][ixg][isg]).ave(), (RE_HV_sm_u[iens][mu][nu][ixg][isg] + RE_HV_sm_d[iens][mu][nu][ixg][isg]).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_V_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "xk u d  u+d");
 	      //Imag part
-	      syst_im_u[ie]= 0.0;
-	      IM_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks) ;
-	      //IM_HV_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_IM",K_IM, vec_u_TO_2, syst_im_u[ie], mult_im_u, l_im_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Vu_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF_Tw_", cov_vec_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u);
-	      if(fabs(sigmas[isg]) > 1e-10) {
-		IM_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_IM,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_IM",K_IM, vec_d_TO_2, syst_im_d[ie], mult_im_d, l_im_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_V_w_kz, "virtual_FF_Tw_"+to_string(t_weak), cov_vec_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d); }
-	      else {   syst_im_d[ie] = 0.0; IM_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks);}
+	      Print_To_File({}, {virt_list, IM_HV_sm_u[iens][mu][nu][ixg][isg].ave(), IM_HV_sm_u[iens][mu][nu][ixg][isg].err(), syst_im_u, IM_HV_sm_d[iens][mu][nu][ixg][isg].ave(), IM_HV_sm_d[iens][mu][nu][ixg][isg].err(), syst_im_d, (IM_HV_sm_u[iens][mu][nu][ixg][isg]+ IM_HV_sm_d[iens][mu][nu][ixg][isg]).ave(), (IM_HV_sm_u[iens][mu][nu][ixg][isg]+ IM_HV_sm_d[iens][mu][nu][ixg][isg]).err() }, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_V_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "xk u d u+d");
 
-
-	      cout<<"Computed V mu: "<<mu<<" nu: "<<nu<<" ixg: "<<ixg<<" ixk: "<<ie<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
-
-
-	    }
-
-	    //print to file
-	    //Real part
-	    Print_To_File({}, {virt_list, RE_HV_sm_u[iens][mu][nu][ixg][isg].ave(), RE_HV_sm_u[iens][mu][nu][ixg][isg].err(), syst_re_u, RE_HV_sm_d[iens][mu][nu][ixg][isg].ave(), RE_HV_sm_d[iens][mu][nu][ixg][isg].err(), syst_re_d, (RE_HV_sm_u[iens][mu][nu][ixg][isg] + RE_HV_sm_d[iens][mu][nu][ixg][isg]).ave(), (RE_HV_sm_u[iens][mu][nu][ixg][isg] + RE_HV_sm_d[iens][mu][nu][ixg][isg]).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_V_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "xk u d  u+d");
-	    //Imag part
-	    Print_To_File({}, {virt_list, IM_HV_sm_u[iens][mu][nu][ixg][isg].ave(), IM_HV_sm_u[iens][mu][nu][ixg][isg].err(), syst_im_u, IM_HV_sm_d[iens][mu][nu][ixg][isg].ave(), IM_HV_sm_d[iens][mu][nu][ixg][isg].err(), syst_im_d, (IM_HV_sm_u[iens][mu][nu][ixg][isg]+ IM_HV_sm_d[iens][mu][nu][ixg][isg]).ave(), (IM_HV_sm_u[iens][mu][nu][ixg][isg]+ IM_HV_sm_d[iens][mu][nu][ixg][isg]).err() }, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_V_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "xk u d u+d");
-
-	    cout<<"sigma: "<<sigmas[isg]<<" computed!"<<endl;
+	      cout<<"sigma: "<<sigmas[isg]<<" computed!"<<endl;
 	   
-	  }
+	    }
 	
-	cout<<"done!"<<endl<<flush;
+	    cout<<"done!"<<endl<<flush;
+	  }
 	}
       }
 
       
       
-      //axial
+      //axial 
       for(auto &pair_A:red_mu_nu_pair_A) {
 
-	int mu=pair_A.first;
-	int nu=pair_A.second;
-	double rev_theta_sign= ( (mu==0 || nu==0) && (mu != 0 || nu != 0))?-1.0:1.0;
+	if( (ixg > 0) || ( (pair_A==make_pair(1,1)) || (pair_A == make_pair(3,3)) ) ) {
+	
+	  int mu=pair_A.first;
+	  int nu=pair_A.second;
+	  double rev_theta_sign= ( (mu==0 || nu==0) && (mu != 0 || nu != 0))?-1.0:1.0;
 
-	//axial
-	int Im_Re;
-	double parity;
-	Corr.Perform_Nt_t_average=0;
-	Corr_boot.Perform_Nt_t_average=0;
-	if( (mu==0 || nu==0) && (mu != 0 || nu != 0)) {Im_Re=1; Corr.Reflection_sign=-1; Corr_boot.Reflection_sign=-1;  parity=1.0;}
-	else { Im_Re=0; Corr.Reflection_sign=1; Corr_boot.Reflection_sign=1; parity=1.0;}
+	  //axial
+	  int Im_Re;
+	  double parity;
+	  Corr.Perform_Nt_t_average=0;
+	  Corr_boot.Perform_Nt_t_average=0;
+	  if( (mu==0 || nu==0) && (mu != 0 || nu != 0)) {Im_Re=1; Corr.Reflection_sign=-1; Corr_boot.Reflection_sign=-1;  parity=1.0;}
+	  else { Im_Re=0; Corr.Reflection_sign=1; Corr_boot.Reflection_sign=1; parity=1.0;}
 
-	distr_t_list ax_u(UseJack), ax_d(UseJack), ax_u_boot(0), ax_d_boot(0);
-
-	if((mu != 1) || (nu != 1)) {
-
-	  ax_u = parity*qu*Corr.corr_t(C_A_u_data[mu][nu][ixg].col(Im_Re)[iens],"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
-	  ax_d = parity*qd*Corr.corr_t(C_A_d_data[mu][nu][ixg].col(Im_Re)[iens],"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
-
-	  ax_u_boot= parity*qu*Corr_boot.corr_t(C_A_u_data[mu][nu][ixg].col(Im_Re)[iens],"");
-	  ax_d_boot= parity*qd*Corr_boot.corr_t(C_A_d_data[mu][nu][ixg].col(Im_Re)[iens],"");
-
-	}
-	else {
-	  ax_u = 0.5*parity*qu*Corr.corr_t(summ_master(C_A_u_data[mu][nu][ixg].col(Im_Re)[iens], C_A_u_data[mu+1][nu+1][ixg].col(Im_Re)[iens]),"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
-	  ax_d = 0.5*parity*qd*Corr.corr_t(summ_master(C_A_d_data[mu][nu][ixg].col(Im_Re)[iens], C_A_d_data[mu+1][nu+1][ixg].col(Im_Re)[iens]) ,"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
-
-	  ax_u_boot= 0.5*parity*qu*Corr_boot.corr_t(summ_master(C_A_u_data[mu][nu][ixg].col(Im_Re)[iens], C_A_u_data[mu+1][nu+1][ixg].col(Im_Re)[iens]),"");
-	  ax_d_boot= 0.5*parity*qd*Corr_boot.corr_t(summ_master(C_A_d_data[mu][nu][ixg].col(Im_Re)[iens], C_A_d_data[mu+1][nu+1][ixg].col(Im_Re)[iens]),"");
-
-	}
-
-
-	if(theta_rev_present && Perform_theta_average) {
-
-	  distr_t_list ax_u_rev(UseJack), ax_d_rev(UseJack);
-	  distr_t_list ax_u_boot_rev(0), ax_d_boot_rev(0);
+	  distr_t_list ax_u(UseJack), ax_d(UseJack), ax_u_boot(0), ax_d_boot(0);
 
 	  if((mu != 1) || (nu != 1)) {
 
-	    ax_u_rev = rev_theta_sign*parity*qu*Corr.corr_t(C_A_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens],"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
-	    ax_d_rev = rev_theta_sign*parity*qd*Corr.corr_t(C_A_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens],"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
+	    ax_u = parity*qu*Corr.corr_t(C_A_u_data[mu][nu][ixg].col(Im_Re)[iens],"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
+	    ax_d = parity*qd*Corr.corr_t(C_A_d_data[mu][nu][ixg].col(Im_Re)[iens],"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
 
-	    ax_u_boot_rev= rev_theta_sign*parity*qu*Corr_boot.corr_t(C_A_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens],"");
-	    ax_d_boot_rev= rev_theta_sign*parity*qd*Corr_boot.corr_t(C_A_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens],"");
+	    ax_u_boot= parity*qu*Corr_boot.corr_t(C_A_u_data[mu][nu][ixg].col(Im_Re)[iens],"");
+	    ax_d_boot= parity*qd*Corr_boot.corr_t(C_A_d_data[mu][nu][ixg].col(Im_Re)[iens],"");
 
 	  }
 	  else {
-	    ax_u_rev = rev_theta_sign*0.5*parity*qu*Corr.corr_t(summ_master(C_A_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], C_A_u_data_rev[mu+1][nu+1][ixg_rev].col(Im_Re)[iens]),"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
-	    ax_d_rev = rev_theta_sign*0.5*parity*qd*Corr.corr_t(summ_master(C_A_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], C_A_d_data_rev[mu+1][nu+1][ixg_rev].col(Im_Re)[iens]) ,"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
-	     
-	    ax_u_boot_rev= rev_theta_sign*0.5*parity*qu*Corr_boot.corr_t(summ_master(C_A_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], C_A_u_data_rev[mu+1][nu+1][ixg_rev].col(Im_Re)[iens]),"");
-	    ax_d_boot_rev= rev_theta_sign*0.5*parity*qd*Corr_boot.corr_t(summ_master(C_A_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], C_A_d_data_rev[mu+1][nu+1][ixg_rev].col(Im_Re)[iens]),"");
+	    ax_u = 0.5*parity*qu*Corr.corr_t(summ_master(C_A_u_data[mu][nu][ixg].col(Im_Re)[iens], C_A_u_data[mu+1][nu+1][ixg].col(Im_Re)[iens]),"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
+	    ax_d = 0.5*parity*qd*Corr.corr_t(summ_master(C_A_d_data[mu][nu][ixg].col(Im_Re)[iens], C_A_d_data[mu+1][nu+1][ixg].col(Im_Re)[iens]) ,"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg));
+
+	    ax_u_boot= 0.5*parity*qu*Corr_boot.corr_t(summ_master(C_A_u_data[mu][nu][ixg].col(Im_Re)[iens], C_A_u_data[mu+1][nu+1][ixg].col(Im_Re)[iens]),"");
+	    ax_d_boot= 0.5*parity*qd*Corr_boot.corr_t(summ_master(C_A_d_data[mu][nu][ixg].col(Im_Re)[iens], C_A_d_data[mu+1][nu+1][ixg].col(Im_Re)[iens]),"");
 
 	  }
+
+
+	  if(theta_rev_present && Perform_theta_average) {
+
+	    distr_t_list ax_u_rev(UseJack), ax_d_rev(UseJack);
+	    distr_t_list ax_u_boot_rev(0), ax_d_boot_rev(0);
+
+	    if((mu != 1) || (nu != 1)) {
+
+	      ax_u_rev = rev_theta_sign*parity*qu*Corr.corr_t(C_A_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens],"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
+	      ax_d_rev = rev_theta_sign*parity*qd*Corr.corr_t(C_A_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens],"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
+
+	      ax_u_boot_rev= rev_theta_sign*parity*qu*Corr_boot.corr_t(C_A_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens],"");
+	      ax_d_boot_rev= rev_theta_sign*parity*qd*Corr_boot.corr_t(C_A_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens],"");
+
+	    }
+	    else {
+	      ax_u_rev = rev_theta_sign*0.5*parity*qu*Corr.corr_t(summ_master(C_A_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], C_A_u_data_rev[mu+1][nu+1][ixg_rev].col(Im_Re)[iens]),"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
+	      ax_d_rev = rev_theta_sign*0.5*parity*qd*Corr.corr_t(summ_master(C_A_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], C_A_d_data_rev[mu+1][nu+1][ixg_rev].col(Im_Re)[iens]) ,"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_rev");
+	     
+	      ax_u_boot_rev= rev_theta_sign*0.5*parity*qu*Corr_boot.corr_t(summ_master(C_A_u_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], C_A_u_data_rev[mu+1][nu+1][ixg_rev].col(Im_Re)[iens]),"");
+	      ax_d_boot_rev= rev_theta_sign*0.5*parity*qd*Corr_boot.corr_t(summ_master(C_A_d_data_rev[mu][nu][ixg_rev].col(Im_Re)[iens], C_A_d_data_rev[mu+1][nu+1][ixg_rev].col(Im_Re)[iens]),"");
+
+	    }
 	    
-	  //compute difference between kz and -kz
+	    //compute difference between kz and -kz
 
-	  distr_t_list ax_u_diff= ax_u - ax_u_rev;
-	  distr_t_list ax_d_diff= ax_d - ax_d_rev;
+	    distr_t_list ax_u_diff= ax_u - ax_u_rev;
+	    distr_t_list ax_d_diff= ax_d - ax_d_rev;
 	  
-	  //average kz and -kz contributions
+	    //average kz and -kz contributions
 
-	  //jackknife
-	  ax_u= 0.5*(ax_u + ax_u_rev);
-	  ax_d= 0.5*(ax_d + ax_d_rev);
+	    //jackknife
+	    ax_u= 0.5*(ax_u + ax_u_rev);
+	    ax_d= 0.5*(ax_d + ax_d_rev);
 
 	  
 
-	  //bootstrap
-	  ax_u_boot= 0.5*(ax_u_boot + ax_u_boot_rev);
-	  ax_d_boot= 0.5*(ax_d_boot + ax_d_boot_rev);
+	    //bootstrap
+	    ax_u_boot= 0.5*(ax_u_boot + ax_u_boot_rev);
+	    ax_d_boot= 0.5*(ax_d_boot + ax_d_boot_rev);
 
-	  double resc_fact= (mu==1 && nu==1)?0.5:1.0;
+	    double resc_fact= (mu==1 && nu==1)?0.5:1.0;
 
-	  //print averaged kz -kz
-	  Print_To_File({}, { (ax_u/(parity*resc_fact*qu)).ave(), (ax_u/(parity*resc_fact*qu)).err(), (ax_u_diff/(parity*resc_fact*qu)).ave(), (ax_u_diff/(parity*resc_fact*qu)).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ave.t", "", "");
-	  Print_To_File({}, { (ax_d/(parity*resc_fact*qd)).ave(), (ax_d/(parity*resc_fact*qd)).err(), (ax_d_diff/(parity*resc_fact*qd)).ave(), (ax_d_diff/(parity*resc_fact*qd)).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ave.t", "", "");
+	    //print averaged kz -kz
+	    Print_To_File({}, { (ax_u/(parity*resc_fact*qu)).ave(), (ax_u/(parity*resc_fact*qu)).err(), (ax_u_diff/(parity*resc_fact*qu)).ave(), (ax_u_diff/(parity*resc_fact*qu)).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_u_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ave.t", "", "");
+	    Print_To_File({}, { (ax_d/(parity*resc_fact*qd)).ave(), (ax_d/(parity*resc_fact*qd)).err(), (ax_d_diff/(parity*resc_fact*qd)).ave(), (ax_d_diff/(parity*resc_fact*qd)).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/C/"+Ens_tags[iens]+"/"+TAG_CURR+"A_d_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ave.t", "", "");
 	    
-	}
+	  }
 
 	
-	vector<distr_t_list>  HA_u, HA_d, HA_tot;
-	vector<distr_t_list>  HA_u_1_TO, HA_d_1_TO, HA_tot_1_TO;
-	vector<distr_t_list>  HA_u_2_TO, HA_d_2_TO, HA_tot_2_TO;
-	vector<distr_t_list>  HA_u_2_TO_w_sub, HA_d_2_TO_w_sub, HA_tot_2_TO_w_sub;
-
-	for(int iv=0;iv<(signed)virt_list.size();iv++) {
-	  HA_u.emplace_back( UseJack);
-	  HA_d.emplace_back( UseJack);
-	  HA_tot.emplace_back(UseJack);
-	  HA_u_1_TO.emplace_back(UseJack);
-	  HA_d_1_TO.emplace_back(UseJack);
-	  HA_tot_1_TO.emplace_back(UseJack);
-	  HA_u_2_TO.emplace_back(UseJack);
-	  HA_d_2_TO.emplace_back(UseJack);
-	  HA_tot_2_TO.emplace_back(UseJack);
-	  HA_u_2_TO_w_sub.emplace_back(UseJack);
-	  HA_d_2_TO_w_sub.emplace_back(UseJack);
-	  HA_tot_2_TO_w_sub.emplace_back(UseJack);
-	}
-
-	distr_t_list kin_fact_point_sub(UseJack);
-
-	if( (pair_A == make_pair(1,1)) || (pair_A == make_pair(2,2))) {
-	  for(auto &virt: virt_list)  kin_fact_point_sub.distr_list.push_back(FP/FP);}
-	else if( pair_A == make_pair(3,0)) {
-	  for(auto &virt: virt_list) {
-	    double off2= pow(MP.ave()*virt,2);
-	    double Eg_virt= sqrt( Eg*Eg+ off2);	     
-	    kin_fact_point_sub.distr_list.push_back( 0.0*kz*(MP-Eg_virt)/(2*MP*Eg_virt -off2) );
-	  }
-	}
-	else if( pair_A == make_pair(0,3)) {
-	  for(auto &virt: virt_list) {
-	    double off2= pow(MP.ave()*virt,2);
-	    double Eg_virt= sqrt( Eg*Eg+ off2);
-	    
-	    kin_fact_point_sub.distr_list.push_back( 0.0*kz*(2*MP - Eg_virt)/(2*MP*Eg_virt - off2) );
-	  }
-	}
-	else if( pair_A == make_pair(3,3)) {
-	  for(auto &virt: virt_list) {
-	    double off2= pow(MP.ave()*virt,2);
-	    double Eg_virt= sqrt( Eg*Eg+ off2);
-	    kin_fact_point_sub.distr_list.push_back( Eg_virt*( 2*MP-Eg_virt)/(2*MP*Eg_virt - off2));
-	  }
-	}
-	else crash("(mu,nu) = ("+to_string(mu)+", "+to_string(nu)+") is not a valid pair in axial channel");
-
-
-		 
-	//standard integration
-	Integrate_over_photon_insertion(ax_u, HA_u, Eg, t_weak, MP.ave(), 0); 
-	Integrate_over_photon_insertion(ax_d, HA_d, Eg, t_weak,MP.ave(),0);
-	//first time ordering
-	Integrate_over_photon_insertion(ax_u, HA_u_1_TO, Eg, t_weak, MP.ave(), 1); 
-	Integrate_over_photon_insertion(ax_d, HA_d_1_TO, Eg, t_weak,MP.ave(),1);
-	//second time ordering
-	Integrate_over_photon_insertion(ax_u, HA_u_2_TO, Eg, t_weak,MP.ave(),2); 
-	Integrate_over_photon_insertion(ax_d, HA_d_2_TO, Eg, t_weak,MP.ave(),2);
-	//second time ordering w substraction of exponential
-	string obs_u="u_A_mu_"+to_string(mu)+"_nu_"+to_string(nu);
-	string obs_d="d_A_mu_"+to_string(mu)+"_nu_"+to_string(nu);
-	string out_path="../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/mass/"+Ens_tags[iens];
-	//set time intervals for masses and residue
-	int Tmin_mass, Tmax_mass;
-	if(ixg==1) { Tmin_mass=7; Tmax_mass=16; }
-	else if(ixg==2) { Tmin_mass=7; Tmax_mass=16;}
-	else if(ixg==3) { Tmin_mass=7; Tmax_mass=16;}
-	else if(ixg==4) { Tmin_mass=7; Tmax_mass=16;}
-	else crash("ixg: "+to_string(ixg)+" has no associate Tmin-Tmax interval for masses and residue in 2nd TO");
-	Integrate_over_photon_insertion_w_subtraction(ax_u, HA_u_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass, out_path, obs_u);
-	Integrate_over_photon_insertion_w_subtraction(ax_d, HA_d_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass, out_path, obs_d);
-
-		
-       	 
-	//loop over virtualities and renormalize contributions
-	for(int iv=0;iv<(signed)virt_list.size();iv++) {
-	  HA_u[iv] = renorm_A*(HA_u[iv] - FP_bare_3pt_u*kin_fact_point_sub.distr_list[iv]);
-	  HA_d[iv] = renorm_A*(HA_d[iv] - FP_bare_3pt_d*kin_fact_point_sub.distr_list[iv]);
-	  HA_u_1_TO[iv] = renorm_A*( HA_u_1_TO[iv] - FP_bare_3pt_u*kin_fact_point_sub.distr_list[iv]);
-	  HA_d_1_TO[iv] = renorm_A*( HA_d_1_TO[iv] - FP_bare_3pt_d*kin_fact_point_sub.distr_list[iv]);
-	  HA_u_2_TO[iv]= HA_u_2_TO[iv]*renorm_A;
-	  HA_d_2_TO[iv]= HA_d_2_TO[iv]*renorm_A;
-
-	  //store hadronic-tensor for t_cut = T
-	  //#########################################
-	  HA_u_TO_1[iens][mu][nu][ixg].distr_list[iv] = HA_u_1_TO[iv].distr_list[Nts[iens]-1];
-	  HA_d_TO_1[iens][mu][nu][ixg].distr_list[iv] = HA_d_1_TO[iv].distr_list[Nts[iens]-1];
-	  HA_u_TO_2[iens][mu][nu][ixg].distr_list[iv] = HA_u_2_TO[iv].distr_list[Nts[iens]-1];
-	  HA_d_TO_2[iens][mu][nu][ixg].distr_list[iv] = HA_d_2_TO[iv].distr_list[Nts[iens]-1];
-	  //#########################################
-	  
-	  HA_u_2_TO_w_sub[iv] = HA_u_2_TO_w_sub[iv]*renorm_A;
-	  HA_d_2_TO_w_sub[iv] = HA_d_2_TO_w_sub[iv]*renorm_A;
-	  //sum ud contributions
-	  HA_tot[iv]= HA_u[iv] -HA_d[iv];
-	  HA_tot_1_TO[iv]= HA_u_1_TO[iv] - HA_d_1_TO[iv];
-	  HA_tot_2_TO[iv]= HA_u_2_TO[iv] - HA_d_2_TO[iv];
-	  HA_tot_2_TO_w_sub[iv] = HA_u_2_TO_w_sub[iv] - HA_d_2_TO_w_sub[iv];
-
-	}
-
-
-		
-	//print as a function of tcut for fixed virtuality
-	for(int iv=0;iv<(signed)virt_list.size();iv++) {
-	  //1+2 time orderings
-	  Print_To_File({}, { HA_u[iv].ave(), HA_u[iv].err(), HA_d[iv].ave(), HA_d[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
-	  Print_To_File({}, { HA_tot[iv].ave(), HA_tot[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin A");
-	  //1 time ordering
-	  Print_To_File({}, { HA_u_1_TO[iv].ave(), HA_u_1_TO[iv].err(), HA_d_1_TO[iv].ave(), HA_d_1_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
-	  Print_To_File({}, {   HA_tot_1_TO[iv].ave(), HA_tot_1_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin A");
-	  //2 time ordering
-	  Print_To_File({}, {  HA_u_2_TO[iv].ave(), HA_u_2_TO[iv].err(), HA_d_2_TO[iv].ave(), HA_d_2_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
-	  Print_To_File({}, {   HA_tot_2_TO[iv].ave(), HA_tot_2_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin A");
-	  //2 time ordering w sub
-	  Print_To_File({}, {  HA_u_2_TO_w_sub[iv].ave(), HA_u_2_TO_w_sub[iv].err(), HA_d_2_TO_w_sub[iv].ave(), HA_d_2_TO_w_sub[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
-	  Print_To_File({}, {   HA_tot_2_TO_w_sub[iv].ave(), HA_tot_2_TO_w_sub[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin A");
-	  
-	}
-
-	//print as a function of virtuality for fixed tcut
-	for(int tcut=0;tcut<Nts[iens];tcut++) {
-	   
-	  distr_t_list HA_u_tcut(UseJack), HA_d_tcut(UseJack), HA_tot_tcut(UseJack);
-	  distr_t_list HA_u_1_TO_tcut(UseJack), HA_d_1_TO_tcut(UseJack), HA_tot_1_TO_tcut(UseJack);
-	  distr_t_list HA_u_2_TO_tcut(UseJack), HA_d_2_TO_tcut(UseJack), HA_tot_2_TO_tcut(UseJack);
-	  distr_t_list HA_u_2_TO_tcut_w_sub(UseJack), HA_d_2_TO_tcut_w_sub(UseJack), HA_tot_2_TO_tcut_w_sub(UseJack);
+	  vector<distr_t_list>  HA_u, HA_d, HA_tot;
+	  vector<distr_t_list>  HA_u_1_TO, HA_d_1_TO, HA_tot_1_TO;
+	  vector<distr_t_list>  HA_u_2_TO, HA_d_2_TO, HA_tot_2_TO;
+	  vector<distr_t_list>  HA_u_2_TO_w_sub, HA_d_2_TO_w_sub, HA_tot_2_TO_w_sub;
 
 	  for(int iv=0;iv<(signed)virt_list.size();iv++) {
-	    HA_u_tcut.distr_list.push_back( HA_u[iv].distr_list[tcut]);
-	    HA_d_tcut.distr_list.push_back( HA_d[iv].distr_list[tcut]);
-	    HA_u_1_TO_tcut.distr_list.push_back( HA_u_1_TO[iv].distr_list[tcut]);
-	    HA_d_1_TO_tcut.distr_list.push_back( HA_d_1_TO[iv].distr_list[tcut]);
-	    HA_u_2_TO_tcut.distr_list.push_back( HA_u_2_TO[iv].distr_list[tcut]);
-	    HA_d_2_TO_tcut.distr_list.push_back( HA_d_2_TO[iv].distr_list[tcut]);
-	    if(tcut<= Nts[iens]/2) {
-	    HA_u_2_TO_tcut_w_sub.distr_list.push_back( HA_u_2_TO_w_sub[iv].distr_list[tcut]);
-	    HA_d_2_TO_tcut_w_sub.distr_list.push_back( HA_d_2_TO_w_sub[iv].distr_list[tcut]);
-	    }
-	  }
-	  HA_tot_tcut= HA_u_tcut - HA_d_tcut;
-	  HA_tot_1_TO_tcut= HA_u_1_TO_tcut- HA_d_1_TO_tcut;
-	  HA_tot_2_TO_tcut= HA_u_2_TO_tcut - HA_d_2_TO_tcut;
-	  if(tcut<= Nts[iens]/2) HA_tot_2_TO_tcut_w_sub= HA_u_2_TO_tcut_w_sub - HA_d_2_TO_tcut_w_sub;
-	  //1+2 time orderings
-	  Print_To_File({}, { virt_list, HA_u_tcut.ave(), HA_u_tcut.err(), HA_d_tcut.ave(), HA_d_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Au  Ad");
-	  Print_To_File({}, { virt_list, HA_tot_tcut.ave(), HA_tot_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off A");
-	  //1 time ordering
-	  Print_To_File({}, { virt_list, HA_u_1_TO_tcut.ave(), HA_u_1_TO_tcut.err(), HA_d_1_TO_tcut.ave(), HA_d_1_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Au  Ad");
-	  Print_To_File({}, { virt_list,  HA_tot_1_TO_tcut.ave(), HA_tot_1_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off A");
-	  //2 time ordering
-	  Print_To_File({}, { virt_list, HA_u_2_TO_tcut.ave(), HA_u_2_TO_tcut.err(), HA_d_2_TO_tcut.ave(), HA_d_2_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Au  Ad");
-	  Print_To_File({}, { virt_list,  HA_tot_2_TO_tcut.ave(), HA_tot_2_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off A");
-	  //2 time ordering w sub
-	  if(tcut<=Nts[iens]/2) {
-	   Print_To_File({}, { virt_list, HA_u_2_TO_tcut_w_sub.ave(), HA_u_2_TO_tcut_w_sub.err(), HA_d_2_TO_tcut_w_sub.ave(), HA_d_2_TO_tcut_w_sub.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Au  Ad");
-	   Print_To_File({}, { virt_list,  HA_tot_2_TO_tcut_w_sub.ave(), HA_tot_2_TO_tcut_w_sub.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off A");
+	    HA_u.emplace_back( UseJack);
+	    HA_d.emplace_back( UseJack);
+	    HA_tot.emplace_back(UseJack);
+	    HA_u_1_TO.emplace_back(UseJack);
+	    HA_d_1_TO.emplace_back(UseJack);
+	    HA_tot_1_TO.emplace_back(UseJack);
+	    HA_u_2_TO.emplace_back(UseJack);
+	    HA_d_2_TO.emplace_back(UseJack);
+	    HA_tot_2_TO.emplace_back(UseJack);
+	    HA_u_2_TO_w_sub.emplace_back(UseJack);
+	    HA_d_2_TO_w_sub.emplace_back(UseJack);
+	    HA_tot_2_TO_w_sub.emplace_back(UseJack);
 	  }
 
-	}
+	  distr_t_list kin_fact_point_sub(UseJack);
+
+	  if( (pair_A == make_pair(1,1)) || (pair_A == make_pair(2,2))) {
+	    for(auto &virt: virt_list)  kin_fact_point_sub.distr_list.push_back(Get_id_jack_distr(Njacks));}
+	  else if( pair_A == make_pair(3,3)) {
+	    for(auto &virt: virt_list) {
+	      double off2= pow(MP.ave()*virt,2);
+	      double Eg_virt= sqrt( Eg*Eg+ off2);
+	      if( Eg == 0) kin_fact_point_sub.distr_list.push_back( Get_id_jack_distr(Njacks));
+	      else kin_fact_point_sub.distr_list.push_back( Eg_virt*( 2*MP-Eg_virt)/(2*MP*Eg_virt - off2));
+	    }
+	  }
+	  else {
+	    for(auto &virt: virt_list) kin_fact_point_sub.distr_list.push_back( 0.0*Get_id_jack_distr(Njacks));
+	  }
+	  
+		 
+	  //standard integration
+	  Integrate_over_photon_insertion(ax_u, HA_u, Eg, t_weak, MP.ave(), 0); 
+	  Integrate_over_photon_insertion(ax_d, HA_d, Eg, t_weak,MP.ave(),0);
+	  //first time ordering
+	  Integrate_over_photon_insertion(ax_u, HA_u_1_TO, Eg, t_weak, MP.ave(), 1); 
+	  Integrate_over_photon_insertion(ax_d, HA_d_1_TO, Eg, t_weak,MP.ave(),1);
+	  //second time ordering
+	  Integrate_over_photon_insertion(ax_u, HA_u_2_TO, Eg, t_weak,MP.ave(),2); 
+	  Integrate_over_photon_insertion(ax_d, HA_d_2_TO, Eg, t_weak,MP.ave(),2);
+	  //second time ordering w substraction of exponential
+	  string obs_u="u_A_mu_"+to_string(mu)+"_nu_"+to_string(nu);
+	  string obs_d="d_A_mu_"+to_string(mu)+"_nu_"+to_string(nu);
+	  string out_path="../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/mass/"+Ens_tags[iens];
+	  //set time intervals for masses and residue
+	  int Tmin_mass, Tmax_mass;
+	  if(ixg==0) { Tmin_mass=7; Tmax_mass=16; }
+	  else if(ixg==1) { Tmin_mass=7; Tmax_mass=16;}
+	  else if(ixg==2) { Tmin_mass=7; Tmax_mass=16;}
+	  else if(ixg==3) { Tmin_mass=7; Tmax_mass=16;}
+	  else if(ixg==4) { Tmin_mass=7; Tmax_mass=16;}
+	  else crash("ixg: "+to_string(ixg)+" has no associate Tmin-Tmax interval for masses and residue in 2nd TO");
+	  Integrate_over_photon_insertion_w_subtraction(ax_u, HA_u_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass, out_path, obs_u);
+	  Integrate_over_photon_insertion_w_subtraction(ax_d, HA_d_2_TO_w_sub, Eg, t_weak, MP.ave(), ixg, Tmin_mass, Tmax_mass, out_path, obs_d);
+
+	
+	  //sub I TO
+	  distr_t FP_bare_3pt_sub_u_I_TO= ((mu==3 && nu==3)?FP_bare_3pt_u_I_TO_zz:FP_bare_3pt_u_I_TO_xx);
+	  distr_t FP_bare_3pt_sub_d_I_TO= ((mu==3 && nu==3)?FP_bare_3pt_d_I_TO_zz:FP_bare_3pt_d_I_TO_xx);
+	  //sub II TO
+	  distr_t FP_bare_3pt_sub_u_II_TO= ((mu==3 && nu==3)?FP_bare_3pt_u_II_TO_zz:FP_bare_3pt_u_II_TO_xx);
+	  distr_t FP_bare_3pt_sub_d_II_TO= ((mu==3 && nu==3)?FP_bare_3pt_d_II_TO_zz:FP_bare_3pt_d_II_TO_xx);
+
+       	 
+	  //loop over virtualities and renormalize contributions
+	  for(int iv=0;iv<(signed)virt_list.size();iv++) {
+	    HA_u[iv] = renorm_A*(HA_u[iv]);
+	    HA_d[iv] = renorm_A*(HA_d[iv]);
+	    HA_u_1_TO[iv] = renorm_A*( HA_u_1_TO[iv] );
+	    HA_d_1_TO[iv] = renorm_A*( HA_d_1_TO[iv] );
+	    HA_u_2_TO[iv]= HA_u_2_TO[iv]*renorm_A;
+	    HA_d_2_TO[iv]= HA_d_2_TO[iv]*renorm_A;
+
+	    //store hadronic-tensor for t_cut = T
+	    //#########################################
+	    HA_u_TO_1[iens][mu][nu][ixg].distr_list[iv] = HA_u_1_TO[iv].distr_list[Nts[iens]-1];
+	    HA_d_TO_1[iens][mu][nu][ixg].distr_list[iv] = HA_d_1_TO[iv].distr_list[Nts[iens]-1];
+	    HA_u_TO_2[iens][mu][nu][ixg].distr_list[iv] = HA_u_2_TO[iv].distr_list[Nts[iens]-1];
+	    HA_d_TO_2[iens][mu][nu][ixg].distr_list[iv] = HA_d_2_TO[iv].distr_list[Nts[iens]-1];
+	    //w subtraction of PT-term
+	    HA_u_TO_1_SUB[iens][mu][nu][ixg].distr_list[iv] = HA_u_1_TO[iv].distr_list[Nts[iens]-1] - renorm_A*FP_bare_3pt_sub_u_I_TO*kin_fact_point_sub.distr_list[iv];
+	    HA_d_TO_1_SUB[iens][mu][nu][ixg].distr_list[iv] = HA_d_1_TO[iv].distr_list[Nts[iens]-1] - renorm_A*FP_bare_3pt_sub_d_I_TO*kin_fact_point_sub.distr_list[iv];
+	    HA_u_TO_2_SUB[iens][mu][nu][ixg].distr_list[iv] = HA_u_2_TO[iv].distr_list[Nts[iens]-1] - renorm_A*FP_bare_3pt_sub_u_II_TO*kin_fact_point_sub.distr_list[iv];
+	    HA_d_TO_2_SUB[iens][mu][nu][ixg].distr_list[iv] = HA_d_2_TO[iv].distr_list[Nts[iens]-1] - renorm_A*FP_bare_3pt_sub_d_II_TO*kin_fact_point_sub.distr_list[iv];
+	    //#########################################
+	  
+	    HA_u_2_TO_w_sub[iv] = HA_u_2_TO_w_sub[iv]*renorm_A;
+	    HA_d_2_TO_w_sub[iv] = HA_d_2_TO_w_sub[iv]*renorm_A;
+	    //sum ud contributions
+	    HA_tot[iv]= HA_u[iv] -HA_d[iv];
+	    HA_tot_1_TO[iv]= HA_u_1_TO[iv] - HA_d_1_TO[iv];
+	    HA_tot_2_TO[iv]= HA_u_2_TO[iv] - HA_d_2_TO[iv];
+	    HA_tot_2_TO_w_sub[iv] = HA_u_2_TO_w_sub[iv] - HA_d_2_TO_w_sub[iv];
+
+	  }
+
+
+		
+	  //print as a function of tcut for fixed virtuality
+	  for(int iv=0;iv<(signed)virt_list.size();iv++) {
+	    //1+2 time orderings
+	    Print_To_File({}, { HA_u[iv].ave(), HA_u[iv].err(), HA_d[iv].ave(), HA_d[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
+	    Print_To_File({}, { HA_tot[iv].ave(), HA_tot[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin A");
+	    //1 time ordering
+	    Print_To_File({}, { HA_u_1_TO[iv].ave(), HA_u_1_TO[iv].err(), HA_d_1_TO[iv].ave(), HA_d_1_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
+	    Print_To_File({}, {   HA_tot_1_TO[iv].ave(), HA_tot_1_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin A");
+	    //2 time ordering
+	    Print_To_File({}, {  HA_u_2_TO[iv].ave(), HA_u_2_TO[iv].err(), HA_d_2_TO[iv].ave(), HA_d_2_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
+	    Print_To_File({}, {   HA_tot_2_TO[iv].ave(), HA_tot_2_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin A");
+	    //2 time ordering w sub
+	    Print_To_File({}, {  HA_u_2_TO_w_sub[iv].ave(), HA_u_2_TO_w_sub[iv].err(), HA_d_2_TO_w_sub[iv].ave(), HA_d_2_TO_w_sub[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
+	    Print_To_File({}, {   HA_tot_2_TO_w_sub[iv].ave(), HA_tot_2_TO_w_sub[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin A");
+	  
+	  }
+
+	  //print as a function of virtuality for fixed tcut
+	  for(int tcut=0;tcut<Nts[iens];tcut++) {
+	   
+	    distr_t_list HA_u_tcut(UseJack), HA_d_tcut(UseJack), HA_tot_tcut(UseJack);
+	    distr_t_list HA_u_1_TO_tcut(UseJack), HA_d_1_TO_tcut(UseJack), HA_tot_1_TO_tcut(UseJack);
+	    distr_t_list HA_u_2_TO_tcut(UseJack), HA_d_2_TO_tcut(UseJack), HA_tot_2_TO_tcut(UseJack);
+	    distr_t_list HA_u_2_TO_tcut_w_sub(UseJack), HA_d_2_TO_tcut_w_sub(UseJack), HA_tot_2_TO_tcut_w_sub(UseJack);
+
+	    for(int iv=0;iv<(signed)virt_list.size();iv++) {
+	      HA_u_tcut.distr_list.push_back( HA_u[iv].distr_list[tcut]);
+	      HA_d_tcut.distr_list.push_back( HA_d[iv].distr_list[tcut]);
+	      HA_u_1_TO_tcut.distr_list.push_back( HA_u_1_TO[iv].distr_list[tcut]);
+	      HA_d_1_TO_tcut.distr_list.push_back( HA_d_1_TO[iv].distr_list[tcut]);
+	      HA_u_2_TO_tcut.distr_list.push_back( HA_u_2_TO[iv].distr_list[tcut]);
+	      HA_d_2_TO_tcut.distr_list.push_back( HA_d_2_TO[iv].distr_list[tcut]);
+	      if(tcut<= Nts[iens]/2) {
+		HA_u_2_TO_tcut_w_sub.distr_list.push_back( HA_u_2_TO_w_sub[iv].distr_list[tcut]);
+		HA_d_2_TO_tcut_w_sub.distr_list.push_back( HA_d_2_TO_w_sub[iv].distr_list[tcut]);
+	      }
+	    }
+	    HA_tot_tcut= HA_u_tcut - HA_d_tcut;
+	    HA_tot_1_TO_tcut= HA_u_1_TO_tcut- HA_d_1_TO_tcut;
+	    HA_tot_2_TO_tcut= HA_u_2_TO_tcut - HA_d_2_TO_tcut;
+	    if(tcut<= Nts[iens]/2) HA_tot_2_TO_tcut_w_sub= HA_u_2_TO_tcut_w_sub - HA_d_2_TO_tcut_w_sub;
+	    //1+2 time orderings
+	    Print_To_File({}, { virt_list, HA_u_tcut.ave(), HA_u_tcut.err(), HA_d_tcut.ave(), HA_d_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Au  Ad");
+	    Print_To_File({}, { virt_list, HA_tot_tcut.ave(), HA_tot_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off A");
+	    //1 time ordering
+	    Print_To_File({}, { virt_list, HA_u_1_TO_tcut.ave(), HA_u_1_TO_tcut.err(), HA_d_1_TO_tcut.ave(), HA_d_1_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Au  Ad");
+	    Print_To_File({}, { virt_list,  HA_tot_1_TO_tcut.ave(), HA_tot_1_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off A");
+	    //2 time ordering
+	    Print_To_File({}, { virt_list, HA_u_2_TO_tcut.ave(), HA_u_2_TO_tcut.err(), HA_d_2_TO_tcut.ave(), HA_d_2_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Au  Ad");
+	    Print_To_File({}, { virt_list,  HA_tot_2_TO_tcut.ave(), HA_tot_2_TO_tcut.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_2_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off A");
+	    //2 time ordering w sub
+	    if(tcut<=Nts[iens]/2) {
+	      Print_To_File({}, { virt_list, HA_u_2_TO_tcut_w_sub.ave(), HA_u_2_TO_tcut_w_sub.err(), HA_d_2_TO_tcut_w_sub.ave(), HA_d_2_TO_tcut_w_sub.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off   Au  Ad");
+	      Print_To_File({}, { virt_list,  HA_tot_2_TO_tcut_w_sub.ave(), HA_tot_2_TO_tcut_w_sub.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"sub_A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_xg_"+to_string(ixg)+"_tcut_"+to_string(tcut), "", "#off A");
+	    }
+
+	  }
 
 		 
 	
-	//define ax_u and ax_d in 2nd time ordering
-	distr_t_list ax_u_TO_2(UseJack);
-	distr_t_list ax_d_TO_2(UseJack);
-	//bootstrap
-	distr_t_list ax_u_TO_2_boot(0);
-	distr_t_list ax_d_TO_2_boot(0);
+	  //define ax_u and ax_d in 2nd time ordering
+	  distr_t_list ax_u_TO_2(UseJack);
+	  distr_t_list ax_d_TO_2(UseJack);
+	  //bootstrap
+	  distr_t_list ax_u_TO_2_boot(0);
+	  distr_t_list ax_d_TO_2_boot(0);
 
-	for(int t=t_weak;t<=Nts[iens]/2;t++) {
-	  ax_u_TO_2.distr_list.push_back( ax_u.distr_list[t]);
-	  ax_d_TO_2.distr_list.push_back( ax_d.distr_list[t]);
-	  ax_u_TO_2_boot.distr_list.push_back( ax_u_boot.distr_list[t]);
-	  ax_d_TO_2_boot.distr_list.push_back( ax_d_boot.distr_list[t]);
-	}
-
-	int tmax_reco_u= ax_u_TO_2.size();
-	int tmax_reco_d= ax_d_TO_2.size();
-	 
-	//generate covariance matrix
-	Vfloat cov_ax_u, cov_ax_d, corr_ax_u, corr_ax_d;
-	Vfloat TT, RR;
-	for(int tt=0;tt<tmax_reco_u;tt++)
-	  for(int rr=0;rr<tmax_reco_u;rr++) {
-	    TT.push_back(tt);
-	    RR.push_back(rr);
-	    cov_ax_u.push_back( ax_u_TO_2_boot.distr_list[tt]%ax_u_TO_2_boot.distr_list[rr]);
-	    cov_ax_d.push_back( ax_d_TO_2_boot.distr_list[tt]%ax_d_TO_2_boot.distr_list[rr]);
-	    corr_ax_u.push_back( (ax_u_TO_2_boot.distr_list[tt]%ax_u_TO_2_boot.distr_list[rr])/(ax_u_TO_2_boot.err(tt)*ax_u_TO_2_boot.err(rr)));
-	    corr_ax_d.push_back( (ax_d_TO_2_boot.distr_list[tt]%ax_d_TO_2_boot.distr_list[rr])/(ax_d_TO_2_boot.err(tt)*ax_d_TO_2_boot.err(rr)));
+	  for(int t=t_weak;t<=Nts[iens]/2;t++) {
+	    ax_u_TO_2.distr_list.push_back( ax_u.distr_list[t]);
+	    ax_d_TO_2.distr_list.push_back( ax_d.distr_list[t]);
+	    ax_u_TO_2_boot.distr_list.push_back( ax_u_boot.distr_list[t]);
+	    ax_d_TO_2_boot.distr_list.push_back( ax_d_boot.distr_list[t]);
 	  }
 
-	//print covariance matrix
-	Print_To_File({},{TT,RR, cov_ax_u, corr_ax_u}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
-	Print_To_File({},{TT,RR, cov_ax_d, corr_ax_d}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
-
-	if(!Skip_spectral_reconstruction && Reconstruct_axial_part) {
-		 
-	  //spectral reconstruction for second time ordering
-	  for(int isg=0;isg<(signed)sigmas.size();isg++) {
-	    cout<<"Calling spectral reconstruction 2nd-TO with sigma= "<<sigmas[isg]<<" GeV, axial channel, (mu,nu) : ("<<mu<<", "<<nu<<")"<<endl<<flush;
-	    Vfloat syst_re_u(virt_list.size()), syst_re_d(virt_list.size()), syst_im_u(virt_list.size()), syst_im_d(virt_list.size());
-
-#pragma omp parallel for schedule(dynamic)
-	    for(int ie=0;ie<(signed)virt_list.size();ie++) {
-
-
-	      
-	      double mult_re_u=1e-2;
-	      double mult_re_d=1e-2;
-	      double mult_im_u=1e-2;
-	      double mult_im_d=1e-2;
-	      double s= sigmas[isg]*a_distr.ave();
-	      double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ie],2));
-	      double E0_u_RE= E0_fact_u*sqrt( pow(Mjpsi*a_distr.ave(),2) + pow(kz,2));
-	      double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
-	      double E0_u_IM= min( Eg + 3*s, E0_u_RE);
-	      double E0_d_IM= min( Eg + 3*s, E0_d_RE);
-	      cout<<"Eg: "<<Eg_virt<<" sigma: "<<s<<endl;
-	      double l_re_u, l_re_d;
-	      double l_im_u, l_im_d;
-
-	      cout<<"Computing A mu: "<<mu<<" nu: "<<nu<<" ixg: "<<ixg<<" ixk: "<<ie<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
-              cout<<"MV_u*a "<<Mjpsi*a_distr.ave()<<" MV_d*a "<<Mphi*a_distr.ave()<<endl<<flush;
-
-	      if((fabs(sigmas[isg]) < 1e-10) && (E0_d_RE < Eg_virt)) crash("Cannot call HLT-reconstruction with sigma=0.0 and Eg > E0 ");
-
-	      //Real part
-	      syst_re_u[ie] = 0;
-	      RE_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks);
-	      //RE_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u_RE,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_RE",K_RE, ax_u_TO_2, syst_re_u[ie], mult_re_u, l_re_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF_Tw_"+to_string(t_weak), cov_ax_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u);
-	      cout<<"Re HA u, computed"<<endl;
-	      RE_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_RE,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_RE",K_RE, ax_d_TO_2, syst_re_d[ie], mult_re_d, l_re_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF_Tw_"+to_string(t_weak), cov_ax_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d);
-	      cout<<"Re HA d, computed"<<endl;
-	      
-	      //Imag part
-	      syst_im_u[ie] = 0;
-	      IM_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie]= 0.0*Get_id_jack_distr(Njacks);
-	      //IM_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_IM",K_IM, ax_u_TO_2, syst_im_u[ie], mult_im_u, l_im_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF_Tw_"+to_string(t_weak), cov_ax_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u);
-	      cout<<"Im HA u, computed"<<endl;
-	      if(fabs(sigmas[isg]) > 1e-10) {
-		IM_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_IM,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_IM",K_IM, ax_d_TO_2, syst_im_d[ie], mult_im_d, l_im_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF_Tw_"+to_string(t_weak), cov_ax_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d);}
-	      else {   syst_im_d[ie] = 0.0; IM_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks);}
-	      cout<<"Im HA d, computed"<<endl;
-
-
-	      cout<<"Computed A mu: "<<mu<<" nu: "<<nu<<" ixg: "<<ixg<<" ixk: "<<ie<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
-
-	     	     
+	  int tmax_reco_u= ax_u_TO_2.size();
+	  int tmax_reco_d= ax_d_TO_2.size();
+	 
+	  //generate covariance matrix
+	  Vfloat cov_ax_u, cov_ax_d, corr_ax_u, corr_ax_d;
+	  Vfloat TT, RR;
+	  for(int tt=0;tt<tmax_reco_u;tt++)
+	    for(int rr=0;rr<tmax_reco_u;rr++) {
+	      TT.push_back(tt);
+	      RR.push_back(rr);
+	      cov_ax_u.push_back( ax_u_TO_2_boot.distr_list[tt]%ax_u_TO_2_boot.distr_list[rr]);
+	      cov_ax_d.push_back( ax_d_TO_2_boot.distr_list[tt]%ax_d_TO_2_boot.distr_list[rr]);
+	      corr_ax_u.push_back( (ax_u_TO_2_boot.distr_list[tt]%ax_u_TO_2_boot.distr_list[rr])/(ax_u_TO_2_boot.err(tt)*ax_u_TO_2_boot.err(rr)));
+	      corr_ax_d.push_back( (ax_d_TO_2_boot.distr_list[tt]%ax_d_TO_2_boot.distr_list[rr])/(ax_d_TO_2_boot.err(tt)*ax_d_TO_2_boot.err(rr)));
 	    }
 
-	    //print to file
-	    //Real part
-	    Print_To_File({}, {virt_list, RE_HA_sm_u[iens][mu][nu][ixg][isg].ave(), RE_HA_sm_u[iens][mu][nu][ixg][isg].err(), syst_re_u,  RE_HA_sm_d[iens][mu][nu][ixg][isg].ave(), RE_HA_sm_d[iens][mu][nu][ixg][isg].err(), syst_re_d, (RE_HA_sm_u[iens][mu][nu][ixg][isg]-RE_HA_sm_d[iens][mu][nu][ixg][isg]).ave(), (RE_HA_sm_u[iens][mu][nu][ixg][isg]-RE_HA_sm_d[iens][mu][nu][ixg][isg]).err() }, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_A_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "#xk  u d  u+d");
-	    //Imag part
-	    Print_To_File({}, {virt_list, IM_HA_sm_u[iens][mu][nu][ixg][isg].ave(), IM_HA_sm_u[iens][mu][nu][ixg][isg].err(), syst_im_u, IM_HA_sm_d[iens][mu][nu][ixg][isg].ave(), IM_HA_sm_d[iens][mu][nu][ixg][isg].err(), syst_im_d, (IM_HA_sm_u[iens][mu][nu][ixg][isg] - IM_HA_sm_d[iens][mu][nu][ixg][isg]).ave(),  (IM_HA_sm_u[iens][mu][nu][ixg][isg] - IM_HA_sm_d[iens][mu][nu][ixg][isg]).err()   }, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_A_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "#xk  u   d   u+d"); 
+	  //print covariance matrix
+	  Print_To_File({},{TT,RR, cov_ax_u, corr_ax_u}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
+	  Print_To_File({},{TT,RR, cov_ax_d, corr_ax_d}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/covariance/"+Ens_tags[iens]+"/"+TAG_CURR+"cov_Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".cov", "" , "");
 
-	    cout<<"sigma: "<<sigmas[isg]<<" computed!"<<endl;
+	  if(!Skip_spectral_reconstruction && Reconstruct_axial_part) {
+		 
+	    //spectral reconstruction for second time ordering
+	    for(int isg=0;isg<(signed)sigmas.size();isg++) {
+	      cout<<"Calling spectral reconstruction 2nd-TO with sigma= "<<sigmas[isg]<<" GeV, axial channel, (mu,nu) : ("<<mu<<", "<<nu<<")"<<endl<<flush;
+	      Vfloat syst_re_u(virt_list.size()), syst_re_d(virt_list.size()), syst_im_u(virt_list.size()), syst_im_d(virt_list.size());
+
+#pragma omp parallel for schedule(dynamic)
+	      for(int ie=0;ie<(signed)virt_list.size();ie++) {
+
+
+	      
+		double mult_re_u=1e-2;
+		double mult_re_d=1e-2;
+		double mult_im_u=1e-2;
+		double mult_im_d=1e-2;
+		double s= sigmas[isg]*a_distr.ave();
+		double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ie],2));
+		double E0_u_RE= E0_fact_u*sqrt( pow(Mjpsi*a_distr.ave(),2) + pow(kz,2));
+		double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
+		double E0_u_IM= min( Eg + 3*s, E0_u_RE);
+		double E0_d_IM= min( Eg + 3*s, E0_d_RE);
+		cout<<"Eg: "<<Eg_virt<<" sigma: "<<s<<endl;
+		double l_re_u, l_re_d;
+		double l_im_u, l_im_d;
+
+		cout<<"Computing A mu: "<<mu<<" nu: "<<nu<<" ixg: "<<ixg<<" ixk: "<<ie<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
+		cout<<"MV_u*a "<<Mjpsi*a_distr.ave()<<" MV_d*a "<<Mphi*a_distr.ave()<<endl<<flush;
+
+		if((fabs(sigmas[isg]) < 1e-10) && (E0_d_RE < Eg_virt)) crash("Cannot call HLT-reconstruction with sigma=0.0 and Eg > E0 ");
+
+		//Real part
+		syst_re_u[ie] = 0;
+		RE_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks);
+		//RE_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u_RE,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_RE",K_RE, ax_u_TO_2, syst_re_u[ie], mult_re_u, l_re_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF_Tw_"+to_string(t_weak), cov_ax_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u);
+		cout<<"Re HA u, computed"<<endl;
+		RE_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_RE,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_RE",K_RE, ax_d_TO_2, syst_re_d[ie], mult_re_d, l_re_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF_Tw_"+to_string(t_weak), cov_ax_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d);
+		cout<<"Re HA d, computed"<<endl;
+	      
+		//Imag part
+		syst_im_u[ie] = 0;
+		IM_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie]= 0.0*Get_id_jack_distr(Njacks);
+		//IM_HA_sm_u[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_u,  Nts[iens], tmax_reco_u-1, prec, SM_TYPE+"_IM",K_IM, ax_u_TO_2, syst_im_u[ie], mult_im_u, l_im_u, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_u,1), TAG_CURR+"Au_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF_Tw_"+to_string(t_weak), cov_ax_u, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_u, Atr_GEN_u);
+		cout<<"Im HA u, computed"<<endl;
+		if(fabs(sigmas[isg]) > 1e-10) {
+		  IM_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = Get_Laplace_transfo(  Eg_virt,  s, E0_d_IM,  Nts[iens], tmax_reco_d-1, prec, SM_TYPE+"_IM",K_IM, ax_d_TO_2, syst_im_d[ie], mult_im_d, l_im_d, MODE_FF, "Ef_"+to_string_with_precision(E0_fact_d,1), TAG_CURR+"Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_"+Ens_tags[iens], -1,0, renorm_A, "virtual_FF_Tw_"+to_string(t_weak), cov_ax_d, fake_func,0, fake_func_d ,  Integrate_Up_To_Emax, Emax, beta, 1,0, F_NORM_d, Atr_GEN_d);}
+		else {   syst_im_d[ie] = 0.0; IM_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ie] = 0.0*Get_id_jack_distr(Njacks);}
+		cout<<"Im HA d, computed"<<endl;
+
+
+		cout<<"Computed A mu: "<<mu<<" nu: "<<nu<<" ixg: "<<ixg<<" ixk: "<<ie<<" xk: "<<virt_list[ie]<<" Eg: "<<Eg_virt<<" E0_fact_u: "<<E0_fact_u<<", E0_fact_d: "<<E0_fact_d<<" sigma: "<<sigmas[isg]<<" SM_TYPE: "<<SM_TYPE<<" CONS CURRENT: "<<CONS_EM_CURR<<endl<<flush;
+
+	     	     
+	      }
+
+	      //print to file
+	      //Real part
+	      Print_To_File({}, {virt_list, RE_HA_sm_u[iens][mu][nu][ixg][isg].ave(), RE_HA_sm_u[iens][mu][nu][ixg][isg].err(), syst_re_u,  RE_HA_sm_d[iens][mu][nu][ixg][isg].ave(), RE_HA_sm_d[iens][mu][nu][ixg][isg].err(), syst_re_d, (RE_HA_sm_u[iens][mu][nu][ixg][isg]-RE_HA_sm_d[iens][mu][nu][ixg][isg]).ave(), (RE_HA_sm_u[iens][mu][nu][ixg][isg]-RE_HA_sm_d[iens][mu][nu][ixg][isg]).err() }, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"RE_A_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "#xk  u d  u+d");
+	      //Imag part
+	      Print_To_File({}, {virt_list, IM_HA_sm_u[iens][mu][nu][ixg][isg].ave(), IM_HA_sm_u[iens][mu][nu][ixg][isg].err(), syst_im_u, IM_HA_sm_d[iens][mu][nu][ixg][isg].ave(), IM_HA_sm_d[iens][mu][nu][ixg][isg].err(), syst_im_d, (IM_HA_sm_u[iens][mu][nu][ixg][isg] - IM_HA_sm_d[iens][mu][nu][ixg][isg]).ave(),  (IM_HA_sm_u[iens][mu][nu][ixg][isg] - IM_HA_sm_d[iens][mu][nu][ixg][isg]).err()   }, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"IM_A_alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_"+SM_TYPE+"_ixg_"+to_string(ixg)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", "#xk  u   d   u+d"); 
+
+	      cout<<"sigma: "<<sigmas[isg]<<" computed!"<<endl;
 	   
+	    }
+	    cout<<"done!"<<endl<<flush;
 	  }
-	  cout<<"done!"<<endl<<flush;
 	}
       }
       cout<<"ixg: "<<ixg<<" computed!"<<endl;
@@ -1706,13 +1795,13 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
  
   if( !Skip_spectral_reconstruction) {
-    cout<<"Storing jackknives distributions for spectral quantities..."<<endl;
+    cout<<"Storing jackknife distributions for spectral quantities..."<<endl;
     for(int iens=0;iens<Nens;iens++) {
       string TAG_CURR_NEW= ((CONS_EM_CURR==0)?"LOC":"CONS");
       boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW);
       boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives");
       boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE);
-      for(int ixg=1;ixg<n_xg;ixg++) {
+      for(int ixg=0;ixg<n_xg;ixg++) {
 	boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg));
 	for(int isg=0; isg < (signed)sigmas.size();isg++) {
 	  boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3));
@@ -1722,23 +1811,25 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	      for( auto &pair_V:red_mu_nu_pair_V) {
 		int mu= pair_V.first;
 		int nu= pair_V.second;
-		Print_To_File({}, {RE_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr, IM_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".jack", "", "");
-	       
+		if(ixg > 0) {
+		  Print_To_File({}, {RE_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr, IM_HV_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Vd_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".jack", "", "");
+		}
 	      }
 	    }
 	    if(Reconstruct_axial_part) {
 	       for( auto &pair_A:red_mu_nu_pair_A) {
 		int mu=	pair_A.first;
 		int nu=	pair_A.second;
-		Print_To_File({}, {RE_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr, IM_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr},	"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".jack",	"", "");
-
+		if(ixg > 0 || ( (pair_A == make_pair(1,1)) || (pair_A==make_pair(3,3)) ) ) {
+		  Print_To_File({}, {RE_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr, IM_HA_sm_d[iens][mu][nu][ixg][isg].distr_list[ixk].distr},	"../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".jack",	"", "");
+		}
 	       }
 	    }
 	  }
 	}
       }
     }
-    cout<<"Jackknives distribution printed! "<<endl;
+    cout<<"Jackknife distributions printed! "<<endl;
   }
    
 
@@ -1814,16 +1905,16 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	double axial_glb_sign= -1.0;
 	
 	//axial
-	GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(FA_d_2_TO, H1_d_2_TO, H2_d_2_TO, axial_glb_sign*(-1*HA_d_TO_2[iens][1][1][ixg]), axial_glb_sign*(-1*HA_d_TO_2[iens][3][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2[iens][0][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+	GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(FA_d_2_TO, H1_d_2_TO, H2_d_2_TO, axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][1][1][ixg]), axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][3][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][0][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
 
-	GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(FA_d, H1_d, H2_d, axial_glb_sign*(-1*HA_d_TO_2[iens][1][1][ixg] -1*HA_d_TO_1[iens][1][1][ixg]) , axial_glb_sign*(-1*HA_d_TO_2[iens][3][3][ixg]  -1*HA_d_TO_1[iens][3][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2[iens][0][3][ixg] -1*HA_d_TO_1[iens][0][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2[iens][3][0][ixg] -1*HA_d_TO_1[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+	GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(FA_d, H1_d, H2_d, axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][1][1][ixg] -1*HA_d_TO_1_SUB[iens][1][1][ixg]) , axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][3][3][ixg]  -1*HA_d_TO_1_SUB[iens][3][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][0][3][ixg] -1*HA_d_TO_1_SUB[iens][0][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][3][0][ixg] -1*HA_d_TO_1_SUB[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
 
-	GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(FA_u_2_TO, H1_u_2_TO, H2_u_2_TO, axial_glb_sign*HA_u_TO_2[iens][1][1][ixg], axial_glb_sign*HA_u_TO_2[iens][3][3][ixg], axial_glb_sign*HA_u_TO_2[iens][0][3][ixg], axial_glb_sign*HA_u_TO_2[iens][3][0][ixg], kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+	GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(FA_u_2_TO, H1_u_2_TO, H2_u_2_TO, axial_glb_sign*HA_u_TO_2_SUB[iens][1][1][ixg], axial_glb_sign*HA_u_TO_2_SUB[iens][3][3][ixg], axial_glb_sign*HA_u_TO_2_SUB[iens][0][3][ixg], axial_glb_sign*HA_u_TO_2_SUB[iens][3][0][ixg], kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
 
-	GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(FA_u, H1_u, H2_u, axial_glb_sign*(HA_u_TO_2[iens][1][1][ixg] + HA_u_TO_1[iens][1][1][ixg]) , axial_glb_sign*(HA_u_TO_2[iens][3][3][ixg] + HA_u_TO_1[iens][3][3][ixg]), axial_glb_sign*(HA_u_TO_2[iens][0][3][ixg] + HA_u_TO_1[iens][0][3][ixg]), axial_glb_sign*(HA_u_TO_2[iens][3][0][ixg] + HA_u_TO_1[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+	GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(FA_u, H1_u, H2_u, axial_glb_sign*(HA_u_TO_2_SUB[iens][1][1][ixg] + HA_u_TO_1_SUB[iens][1][1][ixg]) , axial_glb_sign*(HA_u_TO_2_SUB[iens][3][3][ixg] + HA_u_TO_1_SUB[iens][3][3][ixg]), axial_glb_sign*(HA_u_TO_2_SUB[iens][0][3][ixg] + HA_u_TO_1_SUB[iens][0][3][ixg]), axial_glb_sign*(HA_u_TO_2_SUB[iens][3][0][ixg] + HA_u_TO_1_SUB[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
 
 	
-	GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(FA, H1, H2, axial_glb_sign*(-1*HA_d_TO_2[iens][1][1][ixg]  -1*HA_d_TO_1[iens][1][1][ixg] + HA_u_TO_1[iens][1][1][ixg] + HA_u_TO_2[iens][1][1][ixg]), axial_glb_sign*(-1*HA_d_TO_2[iens][3][3][ixg] -1*HA_d_TO_1[iens][3][3][ixg] + HA_u_TO_1[iens][3][3][ixg] + HA_u_TO_2[iens][3][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2[iens][0][3][ixg] -1*HA_d_TO_1[iens][0][3][ixg] + HA_u_TO_1[iens][0][3][ixg] + HA_u_TO_2[iens][0][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2[iens][3][0][ixg] -1*HA_d_TO_1[iens][3][0][ixg]+ HA_u_TO_1[iens][3][0][ixg] + HA_u_TO_2[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+	GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(FA, H1, H2, axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][1][1][ixg]  -1*HA_d_TO_1_SUB[iens][1][1][ixg] + HA_u_TO_1_SUB[iens][1][1][ixg] + HA_u_TO_2_SUB[iens][1][1][ixg]), axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][3][3][ixg] -1*HA_d_TO_1_SUB[iens][3][3][ixg] + HA_u_TO_1_SUB[iens][3][3][ixg] + HA_u_TO_2_SUB[iens][3][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][0][3][ixg] -1*HA_d_TO_1_SUB[iens][0][3][ixg] + HA_u_TO_1_SUB[iens][0][3][ixg] + HA_u_TO_2_SUB[iens][0][3][ixg]), axial_glb_sign*(-1*HA_d_TO_2_SUB[iens][3][0][ixg] -1*HA_d_TO_1_SUB[iens][3][0][ixg]+ HA_u_TO_1_SUB[iens][3][0][ixg] + HA_u_TO_2_SUB[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
 
 	
 	cout<<"done!"<<endl;
@@ -1862,6 +1953,15 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  distr_t_list HA_RE_33_d_sm(UseJack), HA_IM_33_d_sm(UseJack);
 	  distr_t_list HA_RE_03_d_sm(UseJack), HA_IM_03_d_sm(UseJack);
 	  distr_t_list HA_RE_30_d_sm(UseJack), HA_IM_30_d_sm(UseJack);
+
+	  //load kz=0 for PT subtraction for 11 and 33 component of axial tensor
+
+	  distr_t HA_RE_11_d_sm_Eg0(UseJack,  Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_0/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_0/Ad_mu_1_nu_1.jack",1,3));
+	  distr_t HA_IM_11_d_sm_Eg0(UseJack,  Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_0/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_0/Ad_mu_1_nu_1.jack",2,3));
+	  
+	  distr_t HA_RE_33_d_sm_Eg0(UseJack,  Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_0/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_0/Ad_mu_3_nu_3.jack",1,3));
+	  distr_t HA_IM_33_d_sm_Eg0(UseJack,  Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_0/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_0/Ad_mu_3_nu_3.jack",2,3));
+	  
 	  
 	  for(int ixk=0;ixk<(signed)virt_list.size();ixk++) {
 
@@ -1884,8 +1984,14 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	    distr_t HA_RE_30_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_0.jack",1,3));
 	    distr_t HA_IM_30_d_sm_ixk(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_0.jack",2,3));
 
-	    HA_RE_11_d_sm.distr_list.push_back( HA_RE_11_d_sm_ixk); HA_IM_11_d_sm.distr_list.push_back( HA_IM_11_d_sm_ixk);
-	    HA_RE_33_d_sm.distr_list.push_back( HA_RE_33_d_sm_ixk); HA_IM_33_d_sm.distr_list.push_back( HA_IM_33_d_sm_ixk);
+	    double off2= pow(MP_LIST.ave(iens)*virt_list[ixk],2);
+	    double Eg_virt= sqrt( pow(Eg_list[iens][ixg],2) + off2);
+	    distr_t kin_fact_33(UseJack);
+	    if(Eg_list[iens][ixg] == 0) kin_fact_33 = Get_id_jack_distr(Njacks);
+	    else kin_fact_33 = Eg_virt*( 2*MP_LIST.distr_list[iens]-Eg_virt)/(2*MP_LIST.distr_list[iens]*Eg_virt - off2);
+	    
+	    HA_RE_11_d_sm.distr_list.push_back( HA_RE_11_d_sm_ixk -HA_RE_11_d_sm_Eg0); HA_IM_11_d_sm.distr_list.push_back( HA_IM_11_d_sm_ixk - HA_IM_11_d_sm_Eg0);
+	    HA_RE_33_d_sm.distr_list.push_back( HA_RE_33_d_sm_ixk -kin_fact_33*HA_RE_33_d_sm_Eg0); HA_IM_33_d_sm.distr_list.push_back( HA_IM_33_d_sm_ixk - kin_fact_33*HA_IM_33_d_sm_Eg0);
 	    HA_RE_30_d_sm.distr_list.push_back( HA_RE_30_d_sm_ixk); HA_IM_30_d_sm.distr_list.push_back( HA_IM_30_d_sm_ixk);
 	    HA_RE_03_d_sm.distr_list.push_back( HA_RE_03_d_sm_ixk); HA_IM_03_d_sm.distr_list.push_back( HA_IM_03_d_sm_ixk);
 	  }
@@ -1895,7 +2001,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 
 	  
-
+	  
 
 	  
 
@@ -1925,9 +2031,9 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  
 	  GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(RE_FA_d_sm_2_TO, RE_H1_d_sm_2_TO, RE_H2_d_sm_2_TO, axial_glb_sign*(-1*HA_RE_11_d_sm), axial_glb_sign*(-1*HA_RE_33_d_sm), axial_glb_sign*(-1*HA_RE_03_d_sm), axial_glb_sign*(-1*HA_RE_30_d_sm), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
 
-	  GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(RE_FA_d_sm, RE_H1_d_sm, RE_H2_d_sm, axial_glb_sign*(-1*HA_RE_11_d_sm + -1*HA_d_TO_1[iens][1][1][ixg]) , axial_glb_sign*(-1*HA_RE_33_d_sm + -1*HA_d_TO_1[iens][3][3][ixg]), axial_glb_sign*(-1*HA_RE_03_d_sm -1*HA_d_TO_1[iens][0][3][ixg]), axial_glb_sign*(-1*HA_RE_30_d_sm -1*HA_d_TO_1[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+	  GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(RE_FA_d_sm, RE_H1_d_sm, RE_H2_d_sm, axial_glb_sign*(-1*HA_RE_11_d_sm + -1*HA_d_TO_1_SUB[iens][1][1][ixg]) , axial_glb_sign*(-1*HA_RE_33_d_sm + -1*HA_d_TO_1_SUB[iens][3][3][ixg]), axial_glb_sign*(-1*HA_RE_03_d_sm -1*HA_d_TO_1_SUB[iens][0][3][ixg]), axial_glb_sign*(-1*HA_RE_30_d_sm -1*HA_d_TO_1_SUB[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
 
-	  GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(RE_FA_sm, RE_H1_sm, RE_H2_sm, axial_glb_sign*(-1*HA_RE_11_d_sm  -1*HA_d_TO_1[iens][1][1][ixg] + HA_u_TO_1[iens][1][1][ixg] + HA_u_TO_2[iens][1][1][ixg]), axial_glb_sign*(-1*HA_RE_33_d_sm -1*HA_d_TO_1[iens][3][3][ixg] + HA_u_TO_1[iens][3][3][ixg] + HA_u_TO_2[iens][3][3][ixg]), axial_glb_sign*(-1*HA_RE_03_d_sm -1*HA_d_TO_1[iens][0][3][ixg] + HA_u_TO_1[iens][0][3][ixg] + HA_u_TO_2[iens][0][3][ixg]), axial_glb_sign*(-1*HA_RE_30_d_sm -1*HA_d_TO_1[iens][3][0][ixg]+ HA_u_TO_1[iens][3][0][ixg] + HA_u_TO_2[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
+	  GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR(RE_FA_sm, RE_H1_sm, RE_H2_sm, axial_glb_sign*(-1*HA_RE_11_d_sm  -1*HA_d_TO_1_SUB[iens][1][1][ixg] + HA_u_TO_1_SUB[iens][1][1][ixg] + HA_u_TO_2_SUB[iens][1][1][ixg]), axial_glb_sign*(-1*HA_RE_33_d_sm -1*HA_d_TO_1_SUB[iens][3][3][ixg] + HA_u_TO_1_SUB[iens][3][3][ixg] + HA_u_TO_2_SUB[iens][3][3][ixg]), axial_glb_sign*(-1*HA_RE_03_d_sm -1*HA_d_TO_1_SUB[iens][0][3][ixg] + HA_u_TO_1_SUB[iens][0][3][ixg] + HA_u_TO_2_SUB[iens][0][3][ixg]), axial_glb_sign*(-1*HA_RE_30_d_sm -1*HA_d_TO_1_SUB[iens][3][0][ixg]+ HA_u_TO_1_SUB[iens][3][0][ixg] + HA_u_TO_2_SUB[iens][3][0][ixg]), kz_list[iens][ixg], Eg_list[iens][ixg], MP_LIST.distr_list[iens], FP_LIST.distr_list[iens]);
 
 
 	  //IMAG PART
