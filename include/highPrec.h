@@ -544,11 +544,11 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
   
   do {
 
-    
-  int COUNT_RESTART=0;
-  if(verbose) cout<<"Precision set to : "<<(original_precision+original_precision*i/2)<<endl<<flush;
-  PrecFloat::setDefaultPrecision( original_precision + original_precision*i/2);
-  PrecFloat maxAttainableStability= InitialmaxAttainableStability;
+    CHANGE_PRECISION=false;  
+    int COUNT_RESTART=0;
+    if(verbose) cout<<"Precision set to : "<<(original_precision+original_precision*i/2)<<endl<<flush;
+    PrecFloat::setDefaultPrecision( original_precision + original_precision*i/2);
+    PrecFloat maxAttainableStability= InitialmaxAttainableStability;
   
   
   //const PrecFloat piHalf=
@@ -672,7 +672,7 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
 
 	if( stability > maxAttainableStability) {
 	  if( (COUNT_RESTART ==1) && (it >=5) ) CHANGE_PRECISION=true;
-	  if(COUNT_RESTART == 2) CHANGE_PRECISION=true;
+	  if( COUNT_RESTART == 2) CHANGE_PRECISION=true;
 	}
 	
 	it++;

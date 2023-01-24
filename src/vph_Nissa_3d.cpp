@@ -20,7 +20,7 @@ Vfloat virt_list;
 bool verbose_lev=0;
 bool P5_ON_SOURCE=true;
 bool Is_rep=false;
-Vfloat sigmas({0.4}); //sigma in GeV
+Vfloat sigmas({0.0}); //sigma in GeV
 int prec=128;
 const string MODE_FF="TANT";
 bool CONS_EM_CURR=false;
@@ -39,7 +39,10 @@ const double GFermi= 1.1663787*1e-5; //GeV^-2
 void Get_virt_list() {
 
   int Nvirts=40;
-  for(int nv=0;nv<Nvirts;nv++) virt_list.push_back( nv/(Nvirts-1.0));
+  for(int nv=0;nv<Nvirts;nv++) {
+    double v= nv/(Nvirts-1.0);
+    if(v<= 0.4) virt_list.push_back(v);
+  }
   
   return;
 }
@@ -302,13 +305,13 @@ void Get_radiative_form_factors_3d() {
   Vfloat E0_List({0.6,0.8,0.9,0.6,0.8,0.9,0.8,0.9});
   */
 
-  Vfloat beta_List({0.0});
-  vector<bool> Integrate_Up_To_Emax_List({0});
-  Vfloat Emax_List({10});
-  vector<bool> Perform_theta_average_List({1});
-  vector<string> SM_TYPE_List({"FF_Sinh"});
-  vector<bool> CONS_EM_CURR_LIST({true});
-  Vfloat E0_List({0.9});
+  Vfloat beta_List({0.0,0.0});
+  vector<bool> Integrate_Up_To_Emax_List({0,0});
+  Vfloat Emax_List({10,10});
+  vector<bool> Perform_theta_average_List({1,1});
+  vector<string> SM_TYPE_List({"FF_Sinh", "FF_Cauchy"});
+  vector<bool> CONS_EM_CURR_LIST({false,false});
+  Vfloat E0_List({0.9,0.9});
   
   int N= beta_List.size();
 
@@ -960,7 +963,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 			  
 
-    for(int ixg=3;ixg<n_xg;ixg++) {
+    for(int ixg=1;ixg<n_xg;ixg++) {
 
       //get xg, Eg, kz from thetas
       double theta=thetas[ixg];
