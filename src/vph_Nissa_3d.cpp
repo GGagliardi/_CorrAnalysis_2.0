@@ -20,7 +20,7 @@ Vfloat virt_list;
 bool verbose_lev=1;
 bool P5_ON_SOURCE=true;
 bool Is_rep=false;
-Vfloat sigmas({0.6,0.5,0.4,0.3,0.2,0.1,0.05,0.025}); //sigma in GeV
+Vfloat sigmas({0.6,0.5,0.4,0.3,0.2,0.1,0.05}); //sigma in GeV
 int prec=128;
 const string MODE_FF="TANT";
 bool CONS_EM_CURR=false;
@@ -53,6 +53,7 @@ void Integrate_over_photon_insertion(const distr_t_list &W, vector<distr_t_list>
   int Nt= W.size();
   if(verbose_lev==1) {
     cout<<"Call to: Integrate_over_photon_insertion: "<<endl;
+
     cout<<"T: "<<Nt<<", t_weak: "<<t_weak<<", Eg: "<<Eg<<endl;
     cout<<"######################"<<endl;
   }
@@ -287,6 +288,53 @@ void GET_AXIAL_FORM_FACTORS_FROM_HADRONIC_TENSOR( distr_t_list &FA_distr_list, d
 }
 
 
+void GET_FORM_FACTORS_FROM_HADRONIC_TENSOR_DOUBLE( double xk, double &FA, double &H1, double &H2, double &FV,  double HA_11 , double HA_11_0, double HA_33, double HA_33_0, double HA_03, double HA_30, double HV_12, double kz, double Eg, double MP, double F) {
+
+  //FV
+  FV= HV_12;
+
+  double Eg_v= sqrt( Eg*Eg + MP*MP*xk*xk);
+  double k2= MP*MP*xk*xk;
+  //AXIAL
+  double Hbar_30 = HA_30 -HA_03*(MP - Eg_v)/(2.0*MP - Eg_v);
+  
+  
+  Eigen::MatrixXd A(3,3); //coefficient matrix
+
+      
+  //   [   H1    ]     =    [           ]^-1       [       H30 -H03*(MP-Eg)/(2MP-Eg)          ]
+  //   [   H2    ]     =    [     A     ]     *    [              H33                         ]
+  //   [   FA    ]     =    [           ]          [              H11                         ]
+       
+
+  //                   [  -Eg*kz/(2MP-Eg)            -kz*(MP-Eg)/(2MP -Eg)           kz*MP/(2MP-Eg)                 ]
+  //         A  =      [  -Eg*Eg/MP                   Eg*kz^2/(2MP*Eg -k^2)         -Eg*(MP-Eg)/MP                  ]
+  //                   [  -k^2/MP                             0                     -(MP*Eg -k^2)/MP                ]
+  
+ 
+ 
+  A(0,0) =  -Eg_v*kz/(2*MP-Eg_v);          A(0,1) = -kz*(MP-Eg_v)/(2*MP-Eg_v);              A(0,2) = kz*MP/(2*MP-Eg_v);
+  
+  A(1,0) = -Eg_v*Eg_v/MP;                  A(1,1) = Eg_v*kz*kz/(2*MP*Eg_v - k2);            A(1,2) = -Eg_v*(MP-Eg_v)/MP;
+
+  A(2,0) = -k2/MP;                         A(2,1) = 0.0;                                    A(2,2) = -(MP*Eg_v - k2)/MP;
+
+
+  double kin_fact_33 = (Eg==0)?1:Eg_v*( 2*MP-Eg_v)/(2*MP*Eg_v - k2);
+  Eigen::VectorXd X(3);
+  X(0) = Hbar_30; X(1)=HA_33 -kin_fact_33*HA_33_0 ; X(2)= HA_11 - HA_11_0;
+
+  Eigen::VectorXd Y = A.inverse()*X;
+
+  H1= Y(0);
+  H2= Y(1);
+  FA= Y(2);
+  
+
+  return;
+}
+
+
 
 void Get_radiative_form_factors_3d() {
 
@@ -307,13 +355,13 @@ void Get_radiative_form_factors_3d() {
   Vfloat E0_List({0.6,0.8,0.9,0.6,0.8,0.9,0.8,0.9});
   */
 
-  Vfloat beta_List({0.0,0.0});
-  vector<bool> Integrate_Up_To_Emax_List({0,0});
-  Vfloat Emax_List({10,10});
-  vector<bool> Perform_theta_average_List({1,1});
-  vector<string> SM_TYPE_List({"FF_Exp", "FF_Exp"});
-  vector<bool> CONS_EM_CURR_LIST({true,false});
-  Vfloat E0_List({0.9,0.9});
+  Vfloat beta_List({0.0});
+  vector<bool> Integrate_Up_To_Emax_List({0});
+  Vfloat Emax_List({10});
+  vector<bool> Perform_theta_average_List({1});
+  vector<string> SM_TYPE_List({"FF_Sinh_half"});
+  vector<bool> CONS_EM_CURR_LIST({false});
+  Vfloat E0_List({0.9});
   
   int N= beta_List.size();
 
@@ -365,7 +413,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/covariance");
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/decay_const");
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FF");
-    boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FF_VMD");
+  boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FF_VMD");
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FORM_FACTORS");
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FF/continuum");
   boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type+"/"+Meson+"/FF/per_kin");
@@ -770,6 +818,14 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
   vector<vector<vector<vector<distr_t_list>>>>  HV_d_TO_2_IM_VMD_s0(Nens);
 
   
+  vector<vector<vector<distr_t_list>>> residue_vec_HA_d(Nens);
+  vector<vector<vector<distr_t_list>>> mass_vec_HA_d(Nens);
+  vector<vector<vector<distr_t_list>>> residue_vec_HV_d(Nens);
+  vector<vector<vector<distr_t_list>>> mass_vec_HV_d(Nens);
+  
+  
+
+  
  
 
   //cascade resize
@@ -793,9 +849,17 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     HV_d_TO_2_RE_VMD_s0[i].resize(size_mu_nu);
     HA_d_TO_2_IM_VMD_s0[i].resize(size_mu_nu);
     HV_d_TO_2_IM_VMD_s0[i].resize(size_mu_nu);
+
+    
+    residue_vec_HA_d[i].resize(size_mu_nu);
+    mass_vec_HA_d[i].resize(size_mu_nu);
+    residue_vec_HV_d[i].resize(size_mu_nu);
+    mass_vec_HV_d[i].resize(size_mu_nu);
+    
     
     for(int mu=0;mu<size_mu_nu;mu++) {
 
+      
       HA_u_TO_2[i][mu].resize(size_mu_nu);
       HA_d_TO_2[i][mu].resize(size_mu_nu);
       HV_u_TO_2[i][mu].resize(size_mu_nu);
@@ -813,7 +877,9 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
       HV_d_TO_2_RE_VMD_s0[i][mu].resize(size_mu_nu);
       HA_d_TO_2_IM_VMD_s0[i][mu].resize(size_mu_nu);
       HV_d_TO_2_IM_VMD_s0[i][mu].resize(size_mu_nu);
-       
+
+   
+      
 
       for(int nu=0;nu<size_mu_nu;nu++) {
 
@@ -821,6 +887,13 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	HV_d_TO_2_RE_VMD[i][mu][nu].resize(n_xg);
 	HA_d_TO_2_IM_VMD[i][mu][nu].resize(n_xg);
 	HV_d_TO_2_IM_VMD[i][mu][nu].resize(n_xg);
+
+	
+	residue_vec_HA_d[i][mu].emplace_back(UseJack, n_xg);
+	mass_vec_HA_d[i][mu].emplace_back(UseJack, n_xg);
+	residue_vec_HV_d[i][mu].emplace_back(UseJack, n_xg);
+	mass_vec_HV_d[i][mu].emplace_back(UseJack, n_xg);
+	
 	
 
 	for(int ixg=0;ixg<n_xg;ixg++) {
@@ -855,6 +928,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     }
   }
 
+  
   //distr_t_listS where to store 2pt-related observables
   distr_t_list MP_LIST(UseJack), FP_LIST(UseJack);
   //infos about kinematics
@@ -1449,7 +1523,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	    vec_u_TO_2_boot.distr_list.push_back( vec_u_boot.distr_list[t]);
 	    vec_d_TO_2_boot.distr_list.push_back( vec_d_boot.distr_list[t]);
 	  }
-
+	  
 
 	  //get phi_meson mass and coupling
 	  CorrAnalysis Corr_VMD(UseJack, Njacks,Nboots);
@@ -1471,16 +1545,21 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  Print_To_File({}, { (renorm_V_w_kz*residue_phi_distr).ave(), (renorm_V_w_kz*residue_phi_distr).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_VMD/"+Ens_tags[iens]+"/"+TAG_CURR+"V_residue_phi_ixg_"+to_string(ixg)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", ""); 
 	  distr_t residue_phi = renorm_V_w_kz*Corr_VMD.Fit_distr(residue_phi_distr);
 
+
+	  residue_vec_HV_d[iens][mu][nu].distr_list[ixg] =residue_phi ;
+	  mass_vec_HV_d[iens][mu][nu].distr_list[ixg] = eff_mass_phi_3pt;
+	  
+
 	  Vfloat virt_list_new;
 	  for(int ixk=0;ixk<(signed)virt_list.size();ixk++) {
-	    for(int i=0;i<10;i++) virt_list_new.push_back( virt_list[ixk]+ (virt_list[1]-virt_list[0])*i*0.1);
+	    for(int i=0;i<200;i++) virt_list_new.push_back( virt_list[ixk]+ (virt_list[1]-virt_list[0])*i*0.005);
 	  }
 
 
+	  
 	  //determine prediction from phi-meson pole dominance at sigma \sim 0
 	  distr_t_list RE_phi_VMD_s0(UseJack, virt_list.size()), IM_phi_VMD_s0(UseJack, virt_list.size());
-	  vector<distr_t_list> RE_phi_VMD_sigma, IM_phi_VMD_sigma;
-						
+	 						
 
 	  for(int ixk=0;ixk<(signed)virt_list.size();ixk++) {
 
@@ -1490,8 +1569,8 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	    double ss_min= 0.001*a_distr.ave(); //1MeV
 	    for(int ijack=0;ijack<Njacks;ijack++) {
 
-	      RE_phi_VMD_s0.distr_list[ixk].distr.push_back((residue_phi.distr[1])*K_RE(PrecFloat(eff_mass_phi_3pt.distr[1]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_RE),  -1).get());
-	      IM_phi_VMD_s0.distr_list[ixk].distr.push_back((residue_phi.distr[1])*K_IM(PrecFloat(eff_mass_phi_3pt.distr[1]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_IM),  -1).get());
+	      RE_phi_VMD_s0.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_RE(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_RE),  -1).get());
+	      IM_phi_VMD_s0.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_IM(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_IM),  -1).get());
 	    }
 	  }
 
@@ -1509,7 +1588,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	      double ss= sigmas[isg]*a_distr.ave();
 	      double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ixk],2));
 	      double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
-	      double E0_d_IM= min( Eg + 3*ss, E0_d_RE);
+	      double E0_d_IM= min( Eg_virt + 3*ss, E0_d_RE);
 	      for(int ijack=0;ijack<Njacks;ijack++) {
 		RE_phi_VMD_sigma.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_RE(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss), PrecFloat(E0_d_RE),  -1).get()); 
 		IM_phi_VMD_sigma.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_IM(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss), PrecFloat(E0_d_RE),  -1).get());
@@ -1519,6 +1598,28 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	    HV_d_TO_2_RE_VMD[iens][mu][nu][ixg][isg] = RE_phi_VMD_sigma;
 	    HV_d_TO_2_IM_VMD[iens][mu][nu][ixg][isg] = IM_phi_VMD_sigma;
 	  }
+
+
+	  
+
+	  //determine prediction from phi-meson pole dominance at sigma \sim 0 (finer sampling in x_k)
+	  distr_t_list RE_phi_VMD_s0_finer(UseJack, virt_list_new.size()), IM_phi_VMD_s0_finer(UseJack, virt_list_new.size());
+
+	  for(int ixk=0;ixk<(signed)virt_list_new.size();ixk++) {
+	    double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list_new[ixk],2));
+	    double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
+	    double E0_d_IM= E0_d_RE;
+	    double ss_min= 0.001*a_distr.ave(); //1MeV
+	    for(int ijack=0;ijack<Njacks;ijack++) {
+
+	      RE_phi_VMD_s0_finer.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_RE(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_RE),  -1).get());
+	      IM_phi_VMD_s0_finer.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_IM(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_IM),  -1).get());
+	    }
+	  }
+
+	  //Print to File
+	  Print_To_File({},{virt_list_new, RE_phi_VMD_s0_finer.ave(), RE_phi_VMD_s0_finer.err(), IM_phi_VMD_s0_finer.ave(), IM_phi_VMD_s0_finer.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_VMD/"+Ens_tags[iens]+"/"+TAG_CURR+"V_FF_VMD_phi_ixg_"+to_string(ixg)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#ixk RE IM");
+	  
 
 	  //determine prediction from phi-meson pole dominance at finite sigma (finer sampling in x_k )
 	  for(int isg=0;isg<(signed)sigmas.size();isg++) {
@@ -1531,7 +1632,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	      double ss= sigmas[isg]*a_distr.ave();
 	      double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list_new[ixk],2));
 	      double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
-	      double E0_d_IM= min( Eg + 3*ss, E0_d_RE);
+	      double E0_d_IM= min( Eg_virt + 3*ss, E0_d_RE);
 	      
 	      for(int ijack=0;ijack<Njacks;ijack++) {
 
@@ -1543,7 +1644,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 	    }
 	    //Print to File
-	    Print_To_File({},{virt_list_new, RE_phi_VMD.ave(), RE_phi_VMD.err(), IM_phi_VMD.ave(), IM_phi_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_VMD/"+Ens_tags[iens]+"/"+TAG_CURR+"V_FF_VMD_phi_ixg_"+to_string(ixg)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+".dat", "", "#ixk RE IM");
+	    Print_To_File({},{virt_list_new, RE_phi_VMD.ave(), RE_phi_VMD.err(), IM_phi_VMD.ave(), IM_phi_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_VMD/"+Ens_tags[iens]+"/"+TAG_CURR+"V_FF_VMD_phi_ixg_"+to_string(ixg)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#ixk RE IM");
 	  }
 	
 	     
@@ -1591,8 +1692,8 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 		double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ie],2));
 		double E0_u_RE= E0_fact_u*sqrt( pow(Mjpsi*a_distr.ave(),2) + pow(kz,2));
 		double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
-		double E0_u_IM= min( Eg+3*s, E0_u_RE);
-		double E0_d_IM= min( Eg+3*s, E0_d_RE);
+		double E0_u_IM= min( Eg_virt+3*s, E0_u_RE);
+		double E0_d_IM= min( Eg_virt+3*s, E0_d_RE);
 		double l_re_u, l_re_d;
 		double l_im_u, l_im_d;
 
@@ -1925,10 +2026,16 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  Print_To_File({}, { (residue_phi_distr*renorm_A).ave(), (residue_phi_distr*renorm_A).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_VMD/"+Ens_tags[iens]+"/"+TAG_CURR+"A_residue_phi_ixg_"+to_string(ixg)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+".dat", "", ""); 
 	  distr_t residue_phi = renorm_A*Corr_VMD.Fit_distr(residue_phi_distr);
 
+
+	  residue_vec_HA_d[iens][mu][nu].distr_list[ixg] =residue_phi ;
+	  mass_vec_HA_d[iens][mu][nu].distr_list[ixg] = eff_mass_phi_3pt;
+
+
+
 	  
 	  Vfloat virt_list_new;
 	  for(int ixk=0;ixk<(signed)virt_list.size();ixk++) {
-	    for(int i=0;i<10;i++) virt_list_new.push_back( virt_list[ixk]+ (virt_list[1]-virt_list[0])*i*0.1);
+	    for(int i=0;i<200;i++) virt_list_new.push_back( virt_list[ixk]+ (virt_list[1]-virt_list[0])*i*0.005);
 	  }
 
 
@@ -1943,8 +2050,8 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	    double ss_min= 0.001*a_distr.ave();
 	    for(int ijack=0;ijack<Njacks;ijack++) {
 
-	      RE_phi_VMD_s0.distr_list[ixk].distr.push_back((residue_phi.distr[1])*K_RE(PrecFloat(eff_mass_phi_3pt.distr[1]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_RE),  -1).get());
-	      IM_phi_VMD_s0.distr_list[ixk].distr.push_back((residue_phi.distr[1])*K_IM(PrecFloat(eff_mass_phi_3pt.distr[1]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_IM),  -1).get());
+	      RE_phi_VMD_s0.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_RE(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_RE),  -1).get());
+	      IM_phi_VMD_s0.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_IM(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_IM),  -1).get());
 	    }
 	  }
 
@@ -1961,7 +2068,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	      double ss= sigmas[isg]*a_distr.ave();
 	      double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ixk],2));
 	      double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
-	      double E0_d_IM= min( Eg + 3*ss, E0_d_RE);
+	      double E0_d_IM= min( Eg_virt + 3*ss, E0_d_RE);
 	      for(int ijack=0;ijack<Njacks;ijack++) {
 		RE_phi_VMD_sigma.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_RE(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss), PrecFloat(E0_d_RE),  -1).get()); 
 		IM_phi_VMD_sigma.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_IM(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss), PrecFloat(E0_d_RE),  -1).get());
@@ -1974,6 +2081,26 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 	  
 
+	  	  
+
+	  //determine prediction from phi-meson pole dominance at sigma \sim 0 (finer sampling in x_k)
+	  distr_t_list RE_phi_VMD_s0_finer(UseJack, virt_list_new.size()), IM_phi_VMD_s0_finer(UseJack, virt_list_new.size());
+
+	  for(int ixk=0;ixk<(signed)virt_list_new.size();ixk++) {
+	    double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list_new[ixk],2));
+	    double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
+	    double E0_d_IM= E0_d_RE;
+	    double ss_min= 0.001*a_distr.ave(); //1MeV
+	    for(int ijack=0;ijack<Njacks;ijack++) {
+	      
+	      RE_phi_VMD_s0_finer.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_RE(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_RE),  -1).get());
+	      IM_phi_VMD_s0_finer.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_IM(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_IM),  -1).get());
+	    }
+	  }
+
+	  //Print to File
+	  Print_To_File({},{virt_list_new, RE_phi_VMD_s0_finer.ave(), RE_phi_VMD_s0_finer.err(), IM_phi_VMD_s0_finer.ave(), IM_phi_VMD_s0_finer.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_VMD/"+Ens_tags[iens]+"/"+TAG_CURR+"A_FF_VMD_phi_ixg_"+to_string(ixg)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#ixk RE IM");
+	  
 	  
 	  //determine prediction from phi-meson pole dominance at finite sigma (finer sampling in x_k)
 	  for(int isg=0;isg<(signed)sigmas.size();isg++) {
@@ -1985,7 +2112,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	      double ss= sigmas[isg]*a_distr.ave();
 	      double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list_new[ixk],2));
 	      double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
-	      double E0_d_IM= min( Eg + 3*ss, E0_d_RE);
+	      double E0_d_IM= min( Eg_virt + 3*ss, E0_d_RE);
 
 	      for(int ijack=0;ijack<Njacks;ijack++) {
 
@@ -1996,7 +2123,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	     
 	    }
 	    //Print to File
-	    Print_To_File({},{virt_list_new, RE_phi_VMD.ave(), RE_phi_VMD.err(), IM_phi_VMD.ave(), IM_phi_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_VMD/"+Ens_tags[iens]+"/"+TAG_CURR+"A_FF_VMD_phi_ixg_"+to_string(ixg)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+".dat", "", "#ixk RE IM");
+	    Print_To_File({},{virt_list_new, RE_phi_VMD.ave(), RE_phi_VMD.err(), IM_phi_VMD.ave(), IM_phi_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_VMD/"+Ens_tags[iens]+"/"+TAG_CURR+"A_FF_VMD_phi_ixg_"+to_string(ixg)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_sigma_"+to_string_with_precision(sigmas[isg],3)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#ixk RE IM");
 	  }
 
 	  
@@ -2041,8 +2168,8 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 		double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ie],2));
 		double E0_u_RE= E0_fact_u*sqrt( pow(Mjpsi*a_distr.ave(),2) + pow(kz,2));
 		double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
-		double E0_u_IM= min( Eg + 3*s, E0_u_RE);
-		double E0_d_IM= min( Eg + 3*s, E0_d_RE);
+		double E0_u_IM= min( Eg_virt + 3*s, E0_u_RE);
+		double E0_d_IM= min( Eg_virt + 3*s, E0_d_RE);
 		cout<<"Eg: "<<Eg_virt<<" sigma: "<<s<<endl;
 		double l_re_u, l_re_d;
 		double l_im_u, l_im_d;
@@ -2141,19 +2268,23 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     //allocate data where to store decay rates
     //mu+mu- e+ nu_e
     vector<vector<distr_t_list>> RATE_mumue_TOTAL(Nens);
+    vector<vector<distr_t_list>> RATE_mumue_TOTAL_PRECONDITIONED(Nens);
     vector<vector<distr_t_list>> RATE_mumue_QUADRATIC(Nens);
     vector<vector<distr_t_list>> RATE_mumue_QUADRATIC_IM(Nens);
     vector<vector<distr_t_list>> RATE_mumue_INTERFERENCE(Nens);
     vector<vector<distr_t_list>> RATE_mumue_PT(Nens);
     vector<vector<distr_t_list>> RATE_mumue_TOTAL_VMD(Nens);
+    vector<vector<distr_t_list>> RATE_mumue_TOTAL_VMD_PRECONDITIONED(Nens);
     
     //e+e- mu+ nu_mu
     vector<vector<distr_t_list>> RATE_eemu_TOTAL(Nens);
+    vector<vector<distr_t_list>> RATE_eemu_TOTAL_PRECONDITIONED(Nens);
     vector<vector<distr_t_list>> RATE_eemu_QUADRATIC(Nens);
     vector<vector<distr_t_list>> RATE_eemu_QUADRATIC_IM(Nens);
     vector<vector<distr_t_list>> RATE_eemu_INTERFERENCE(Nens);
     vector<vector<distr_t_list>> RATE_eemu_PT(Nens);
     vector<vector<distr_t_list>> RATE_eemu_TOTAL_VMD(Nens);
+    vector<vector<distr_t_list>> RATE_eemu_TOTAL_VMD_PRECONDITIONED(Nens);
     //e+e- tau+ nu_tau
     vector<vector<distr_t_list>> RATE_eetau_TOTAL(Nens);
     vector<vector<distr_t_list>> RATE_eetau_QUADRATIC(Nens);
@@ -2195,18 +2326,22 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     for(int iens=0;iens<Nens;iens++) {
       for(int ixg=1;ixg<n_xg;ixg++) {
 	RATE_mumue_TOTAL[iens].emplace_back(UseJack, sigmas.size());
+	RATE_mumue_TOTAL_PRECONDITIONED[iens].emplace_back(UseJack, sigmas.size());
 	RATE_mumue_QUADRATIC[iens].emplace_back(UseJack, sigmas.size());
 	RATE_mumue_QUADRATIC_IM[iens].emplace_back(UseJack, sigmas.size());
 	RATE_mumue_INTERFERENCE[iens].emplace_back(UseJack, sigmas.size());
 	RATE_mumue_PT[iens].emplace_back(UseJack, sigmas.size());
 	RATE_mumue_TOTAL_VMD[iens].emplace_back(UseJack, sigmas.size());
+	RATE_mumue_TOTAL_VMD_PRECONDITIONED[iens].emplace_back(UseJack, sigmas.size());
 
 	RATE_eemu_TOTAL[iens].emplace_back(UseJack, sigmas.size());
+	RATE_eemu_TOTAL_PRECONDITIONED[iens].emplace_back(UseJack, sigmas.size());
 	RATE_eemu_QUADRATIC[iens].emplace_back(UseJack, sigmas.size());
 	RATE_eemu_QUADRATIC_IM[iens].emplace_back(UseJack, sigmas.size());
 	RATE_eemu_INTERFERENCE[iens].emplace_back(UseJack, sigmas.size());
 	RATE_eemu_PT[iens].emplace_back(UseJack, sigmas.size());
 	RATE_eemu_TOTAL_VMD[iens].emplace_back(UseJack, sigmas.size());
+	RATE_eemu_TOTAL_VMD_PRECONDITIONED[iens].emplace_back(UseJack, sigmas.size());
 
 	RATE_eetau_TOTAL[iens].emplace_back(UseJack, sigmas.size());
 	RATE_eetau_QUADRATIC[iens].emplace_back(UseJack, sigmas.size());
@@ -2282,10 +2417,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 
 
-	distr_t_list HA_11_RE_VMD_SUB = -1*(HA_d_TO_2_RE_VMD_s0[iens][1][1][ixg] - HA_d_TO_2_RE_VMD_s0[iens][1][1][0] + HA_d_TO_1_SUB[iens][1][1][ixg]) + HA_u_TO_1_SUB[iens][1][1][ixg] + HA_u_TO_2_SUB[iens][1][1][ixg];
-	distr_t_list HA_11_IM_VMD_SUB = -1*(HA_d_TO_2_IM_VMD_s0[iens][1][1][ixg] - HA_d_TO_2_IM_VMD_s0[iens][1][1][0]);
-	distr_t_list HA_33_RE_VMD_SUB = -1*(HA_d_TO_2_RE_VMD_s0[iens][3][3][ixg] - kin_fact_33_list*HA_d_TO_2_RE_VMD_s0[iens][3][3][0] + HA_d_TO_1_SUB[iens][3][3][ixg]) + HA_u_TO_1_SUB[iens][3][3][ixg] + HA_u_TO_2_SUB[iens][3][3][ixg];
-	distr_t_list HA_33_IM_VMD_SUB = -1*(HA_d_TO_2_IM_VMD_s0[iens][3][3][ixg] - kin_fact_33_list*HA_d_TO_2_IM_VMD_s0[iens][3][3][0]);
+	distr_t_list HA_11_RE_VMD_SUB = -1*(HA_d_TO_2_RE_VMD_s0[iens][1][1][ixg] - HA_d_TO_2_RE_VMD_s0[iens][1][1][0].distr_list[0] + HA_d_TO_1_SUB[iens][1][1][ixg]) + HA_u_TO_1_SUB[iens][1][1][ixg] + HA_u_TO_2_SUB[iens][1][1][ixg];
+	distr_t_list HA_11_IM_VMD_SUB = -1*(HA_d_TO_2_IM_VMD_s0[iens][1][1][ixg] - HA_d_TO_2_IM_VMD_s0[iens][1][1][0].distr_list[0]);
+	distr_t_list HA_33_RE_VMD_SUB = -1*(HA_d_TO_2_RE_VMD_s0[iens][3][3][ixg] - kin_fact_33_list*HA_d_TO_2_RE_VMD_s0[iens][3][3][0].distr_list[0] + HA_d_TO_1_SUB[iens][3][3][ixg]) + HA_u_TO_1_SUB[iens][3][3][ixg] + HA_u_TO_2_SUB[iens][3][3][ixg];
+	distr_t_list HA_33_IM_VMD_SUB = -1*(HA_d_TO_2_IM_VMD_s0[iens][3][3][ixg] - kin_fact_33_list*HA_d_TO_2_IM_VMD_s0[iens][3][3][0].distr_list[0]);
 	distr_t_list HA_03_RE_VMD_SUB = -1*(HA_d_TO_2_RE_VMD_s0[iens][0][3][ixg] + HA_d_TO_1_SUB[iens][0][3][ixg]) + HA_u_TO_1_SUB[iens][0][3][ixg] + HA_u_TO_2_SUB[iens][0][3][ixg];
 	distr_t_list HA_03_IM_VMD_SUB = -1*HA_d_TO_2_IM_VMD_s0[iens][0][3][ixg];
 	distr_t_list HA_30_RE_VMD_SUB = -1*(HA_d_TO_2_RE_VMD_s0[iens][3][0][ixg] + HA_d_TO_1_SUB[iens][3][0][ixg]) + HA_u_TO_1_SUB[iens][3][0][ixg] + HA_u_TO_2_SUB[iens][3][0][ixg];
@@ -2345,22 +2480,22 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 	//FV
 
-	Print_To_File({}, {virt_list, FV_RE_VMD.ave(), FV_RE_VMD.err(), FV_IM_VMD.ave(), FV_IM_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"FV_VMD_ixg_"+to_string(ixg)+".dat", "", "#xk  RE IM");
+	Print_To_File({}, {virt_list, FV_RE_VMD.ave(), FV_RE_VMD.err(), FV_IM_VMD.ave(), FV_IM_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"FV_VMD_ixg_"+to_string(ixg)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  RE IM");
 
 
 	//FA
 
-	Print_To_File({}, {virt_list, FA_RE_VMD.ave(), FA_RE_VMD.err(), FA_IM_VMD.ave(), FA_IM_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"FA_VMD_ixg_"+to_string(ixg)+".dat", "", "#xk  RE IM");
+	Print_To_File({}, {virt_list, FA_RE_VMD.ave(), FA_RE_VMD.err(), FA_IM_VMD.ave(), FA_IM_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"FA_VMD_ixg_"+to_string(ixg)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  RE IM");
 
 
 	//H1
 
-	Print_To_File({}, {virt_list, H1_RE_VMD.ave(), H1_RE_VMD.err(), H1_IM_VMD.ave(), H1_IM_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"H1_VMD_ixg_"+to_string(ixg)+".dat", "", "#xk  RE IM");
+	Print_To_File({}, {virt_list, H1_RE_VMD.ave(), H1_RE_VMD.err(), H1_IM_VMD.ave(), H1_IM_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"H1_VMD_ixg_"+to_string(ixg)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  RE IM");
 
 
 	//H2
 
-	Print_To_File({}, {virt_list, H2_RE_VMD.ave(), H2_RE_VMD.err(), H2_IM_VMD.ave(), H2_IM_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"H2_VMD_ixg_"+to_string(ixg)+".dat", "", "#xk  RE IM");
+	Print_To_File({}, {virt_list, H2_RE_VMD.ave(), H2_RE_VMD.err(), H2_IM_VMD.ave(), H2_IM_VMD.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FORM_FACTORS/"+Ens_tags[iens]+"/"+TAG_CURR+"H2_VMD_ixg_"+to_string(ixg)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#xk  RE IM");
 
 
 	cout<<"done!"<<endl;
@@ -2940,10 +3075,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 	  cout<<"Computing smeared form factors from phi-meson pole dominance for ixg: "<<ixg<<" sigma: "<<sigmas[isg]<<" GeV...";
 
-	  distr_t_list HA_11_SUB_RE_VMD= -1*( HA_d_TO_2_RE_VMD[iens][1][1][ixg][isg] - HA_d_TO_2_RE_VMD[iens][1][1][0][isg] + HA_d_TO_1_SUB[iens][1][1][ixg]) + HA_u_TO_1_SUB[iens][1][1][ixg] + HA_u_TO_2_SUB[iens][1][1][ixg];
-	  distr_t_list HA_11_SUB_IM_VMD= -1*( HA_d_TO_2_IM_VMD[iens][1][1][ixg][isg] - HA_d_TO_2_IM_VMD[iens][1][1][0][isg]);
-	  distr_t_list HA_33_SUB_RE_VMD= -1*( HA_d_TO_2_RE_VMD[iens][3][3][ixg][isg] - kin_fact_33_list*HA_d_TO_2_RE_VMD[iens][3][3][0][isg] + HA_d_TO_1_SUB[iens][3][3][ixg]) + HA_u_TO_1_SUB[iens][3][3][ixg] + HA_u_TO_2_SUB[iens][3][3][ixg];
-	  distr_t_list HA_33_SUB_IM_VMD= -1*( HA_d_TO_2_IM_VMD[iens][3][3][ixg][isg] - kin_fact_33_list*HA_d_TO_2_IM_VMD[iens][3][3][0][isg]);
+	  distr_t_list HA_11_SUB_RE_VMD= -1*( HA_d_TO_2_RE_VMD[iens][1][1][ixg][isg] - HA_d_TO_2_RE_VMD[iens][1][1][0][isg].distr_list[0] + HA_d_TO_1_SUB[iens][1][1][ixg]) + HA_u_TO_1_SUB[iens][1][1][ixg] + HA_u_TO_2_SUB[iens][1][1][ixg];
+	  distr_t_list HA_11_SUB_IM_VMD= -1*( HA_d_TO_2_IM_VMD[iens][1][1][ixg][isg] - HA_d_TO_2_IM_VMD[iens][1][1][0][isg].distr_list[0]);
+	  distr_t_list HA_33_SUB_RE_VMD= -1*( HA_d_TO_2_RE_VMD[iens][3][3][ixg][isg] - kin_fact_33_list*HA_d_TO_2_RE_VMD[iens][3][3][0][isg].distr_list[0] + HA_d_TO_1_SUB[iens][3][3][ixg]) + HA_u_TO_1_SUB[iens][3][3][ixg] + HA_u_TO_2_SUB[iens][3][3][ixg];
+	  distr_t_list HA_33_SUB_IM_VMD= -1*( HA_d_TO_2_IM_VMD[iens][3][3][ixg][isg] - kin_fact_33_list*HA_d_TO_2_IM_VMD[iens][3][3][0][isg].distr_list[0]);
 	  distr_t_list HA_03_SUB_RE_VMD= -1*( HA_d_TO_2_RE_VMD[iens][0][3][ixg][isg]  + HA_d_TO_1_SUB[iens][0][3][ixg]) + HA_u_TO_1_SUB[iens][0][3][ixg] + HA_u_TO_2_SUB[iens][0][3][ixg];
 	  distr_t_list HA_03_SUB_IM_VMD= -1*( HA_d_TO_2_IM_VMD[iens][0][3][ixg][isg]);
 	  distr_t_list HA_30_SUB_RE_VMD= -1*( HA_d_TO_2_RE_VMD[iens][3][0][ixg][isg]  + HA_d_TO_1_SUB[iens][3][0][ixg]) + HA_u_TO_1_SUB[iens][3][0][ixg] + HA_u_TO_2_SUB[iens][3][0][ixg];
@@ -3245,14 +3380,74 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  double rll=0;
 	  string MODE="TOTAL";
 
+
+
+	  auto FORM_FACTORS_FROM_VMD_MODEL= [ residue_V = residue_vec_HV_d[iens][1][2].ave(ixg), residue_A_11= residue_vec_HA_d[iens][1][1].ave(ixg), residue_A_33 = residue_vec_HA_d[iens][3][3].ave(ixg), residue_A_03 = residue_vec_HA_d[iens][0][3].ave(ixg), residue_A_30 = residue_vec_HA_d[iens][3][0].ave(ixg), mass_V = mass_vec_HV_d[iens][1][2].ave(ixg), mass_A_11 = mass_vec_HA_d[iens][1][1].ave(ixg), mass_A_33 = mass_vec_HA_d[iens][3][3].ave(ixg), mass_A_03 = mass_vec_HA_d[iens][0][3].ave(ixg), mass_A_30 = mass_vec_HA_d[iens][3][0].ave(ixg), residue_A_11_0 = residue_vec_HA_d[iens][1][1].ave(0), residue_A_33_0 = residue_vec_HA_d[iens][3][3].ave(0), mass_A_11_0= mass_vec_HA_d[iens][1][1].ave(0), mass_A_33_0 = mass_vec_HA_d[iens][3][3].ave(0),  Eg= Eg_list[iens][ixg] ,kz = kz_list[iens][ixg], M=MP_LIST.ave(iens), F=FP_LIST.ave(iens), &K_RE, &K_IM ](double xk, double eps, string FF_TYPE, string RE_IM) -> double {
+
+	    double Eg_v = sqrt( Eg*Eg + M*M*xk*xk) ;
+
+	    double HV_12=0;
+	    double HA_11=0;
+	    double HA_33=0;
+	    double HA_03=0;
+	    double HA_30=0;
+	    double HA_11_0=0;
+	    double HA_33_0=0;
+	    
+	    if(RE_IM=="RE") {
+
+	      HV_12= residue_V*K_RE(PrecFloat(mass_A_11), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_11 = residue_A_11*K_RE(PrecFloat(mass_A_11), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_33 = residue_A_33*K_RE(PrecFloat(mass_A_11), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_03 = residue_A_03*K_RE(PrecFloat(mass_A_11), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_30 = residue_A_30*K_RE(PrecFloat(mass_A_11), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_11_0 = residue_A_11_0*K_RE(PrecFloat(mass_A_11_0), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_33_0 = residue_A_33_0*K_RE(PrecFloat(mass_A_11_0), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	    }
+	    else if(RE_IM =="IM") {
+	      
+	      HV_12= residue_V*K_IM(PrecFloat(mass_A_11), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_11 = residue_A_11*K_IM(PrecFloat(mass_A_11), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_33 = residue_A_33*K_IM(PrecFloat(mass_A_11), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_03 = residue_A_03*K_IM(PrecFloat(mass_A_11), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_30 = residue_A_30*K_IM(PrecFloat(mass_A_11), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_11_0 = residue_A_11_0*K_IM(PrecFloat(mass_A_11_0), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      HA_33_0 = residue_A_33_0*K_IM(PrecFloat(mass_A_11_0), PrecFloat(Eg_v), PrecFloat(eps), PrecFloat(0.0), -1).get();
+	      
+	    }
+
+	    else crash("RE_IM: "+RE_IM+" not yet implemented");
+
+	    double FA, H1, H2, FV;
+
+	    
+	    GET_FORM_FACTORS_FROM_HADRONIC_TENSOR_DOUBLE( xk, FA, H1, H2, FV,  HA_11 , HA_11_0, HA_33, HA_33_0, HA_03, HA_30, HV_12, kz, Eg, M, F);
+
+	    if(FF_TYPE=="FA") return FA;
+	    else if(FF_TYPE=="H1") return H1;
+	    else if(FF_TYPE=="H2") return H2;
+	    else if(FF_TYPE=="FV") return FV;
+	    else crash("FF_TYPE: "+FF_TYPE+" not yet implemented");
+
+
+	    return -1;
+
+	  };
+
+
+	  
+
 	  //loop over jackknife and compute the decay rate
 	  for(int ijack=0;ijack<Njacks;ijack++) {
 
 	    double m= MP_LIST.distr_list[iens].distr[ijack];
 	    double fp= FP_LIST.distr_list[iens].distr[ijack];
+
+	    bool USE_PRECONDITIONING=false;
+	   
 	    
 	    //define double differential decay rate
-	    auto Rt_diff = [&MODE, &tk, &rl, &rll, &m, &fp, &x0_d, RE_FV=RE_FV_sm_spline[ijack], IM_FV=IM_FV_sm_spline[ijack], RE_FA=RE_FA_sm_spline[ijack], IM_FA=IM_FA_sm_spline[ijack], RE_H1=RE_H1_sm_spline[ijack], IM_H1=IM_H1_sm_spline[ijack], RE_H2=RE_H2_sm_spline[ijack], IM_H2=IM_H2_sm_spline[ijack] ](double x) -> double {
+	    auto Rt_diff = [&MODE, &USE_PRECONDITIONING, &tk, &rl, &rll, &m, &fp, &x0_d, RE_FV=RE_FV_sm_spline[ijack], IM_FV=IM_FV_sm_spline[ijack], RE_FA=RE_FA_sm_spline[ijack], IM_FA=IM_FA_sm_spline[ijack], RE_H1=RE_H1_sm_spline[ijack], IM_H1=IM_H1_sm_spline[ijack], RE_H2=RE_H2_sm_spline[ijack], IM_H2=IM_H2_sm_spline[ijack], FF_MODEL=FORM_FACTORS_FROM_VMD_MODEL,  m_ave= MP_LIST.ave(iens), fp_ave = FP_LIST.ave(iens), kz=kz_list[iens][ixg], eps= (sigmas[isg]*a_distr.ave()), alat= a_distr.ave()  ](double x) -> double {
 
 	      if( (1+ x*x - 2*sqrt(x*x+ tk*tk) ) < 0) return 0.0;
 	      
@@ -3261,16 +3456,41 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	      //check whether xq is in the integration domain
 	      if( xq < rl) return 0.0;
 	      if( xq > 1 - x) crash("xq > 1 -xk , xq: "+to_string_with_precision(xq,3)+", xk: "+to_string_with_precision(x,3));
-	      
 
-	      
+
+	      double PREC_RE_H1=0;
+	      double PREC_RE_FA=0;
+	      double PREC_RE_H2=0;
+	      double PREC_RE_FV=0;
+	      double PREC_IM_H1=0;
+	      double PREC_IM_FA=0;
+	      double PREC_IM_H2=0;
+	      double PREC_IM_FV=0;
+
+	      if(USE_PRECONDITIONING) {
+
+		PREC_RE_FV= -1*FF_MODEL(x, eps, "FV", "RE") + FF_MODEL(x,0.0005*alat, "FV", "RE");
+		PREC_RE_FA= -1*FF_MODEL(x, eps, "FA", "RE") + FF_MODEL(x,0.0005*alat, "FA", "RE");
+		PREC_RE_H1= -1*FF_MODEL(x, eps, "H1", "RE") + FF_MODEL(x,0.0005*alat, "H1", "RE");
+		PREC_RE_H2= -1*FF_MODEL(x, eps, "H2", "RE") + FF_MODEL(x,0.0005*alat, "H2", "RE");
+
+
+		PREC_IM_FV= -1*FF_MODEL(x, eps, "FV", "IM") + FF_MODEL(x,0.0005*alat, "FV", "IM");
+		PREC_IM_FA= -1*FF_MODEL(x, eps, "FA", "IM") + FF_MODEL(x,0.0005*alat, "FA", "IM");
+		PREC_IM_H1= -1*FF_MODEL(x, eps, "H1", "IM") + FF_MODEL(x,0.0005*alat, "H1", "IM");
+		PREC_IM_H2= -1*FF_MODEL(x, eps, "H2", "IM") + FF_MODEL(x,0.0005*alat, "H2", "IM");
+	
+
+	      }
+
+	 	      
 	      double Int= ptrate(x,xq, rl*rl, rll*rll, m, fp);
-	      double interference= RE_H1(x)*kern1(x, xq, rl*rl, rll*rll, m,fp) + RE_H2(x)*kern2(x, xq, rl*rl, rll*rll, m,fp) + RE_FA(x)*kernA(x,xq,rl*rl,rll*rll,m,fp) +RE_FV(x)*kernV(x,xq,rl*rl,rll*rll,m,fp);
+	      double interference= (RE_H1(x) +PREC_RE_H1)*kern1(x, xq, rl*rl, rll*rll, m,fp) + (RE_H2(x)+PREC_RE_H2)*kern2(x, xq, rl*rl, rll*rll, m,fp) + (RE_FA(x)+PREC_RE_FA)*kernA(x,xq,rl*rl,rll*rll,m,fp) +(RE_FV(x)+PREC_RE_FV)*kernV(x,xq,rl*rl,rll*rll,m,fp);
 
 	      
-	      double quadratic= pow(RE_H1(x),2)*kern11(x,xq,rl*rl,rll*rll,m) + 0.0*pow(RE_H2(x),2)*kern22(x,xq,rl*rl,rll*rll,m) + pow(RE_FA(x),2)*kernAA(x,xq,rl*rl,rll*rll,m) + pow(RE_FV(x),2)*kernVV(x,xq,rl*rl,rll*rll,m) + 0.0*RE_H1(x)*RE_H2(x)*kern12(x,xq,rl*rl,rll*rll,m) + RE_H1(x)*RE_FA(x)*kernA1(x,xq,rl*rl,rll*rll,m);
+	      double quadratic= pow(RE_H1(x)+PREC_RE_H1,2)*kern11(x,xq,rl*rl,rll*rll,m) + pow(RE_H2(x)+PREC_RE_H2,2)*kern22(x,xq,rl*rl,rll*rll,m) + pow(RE_FA(x)+PREC_RE_FA,2)*kernAA(x,xq,rl*rl,rll*rll,m) + pow(RE_FV(x)+PREC_RE_FV,2)*kernVV(x,xq,rl*rl,rll*rll,m) + (RE_H1(x)+PREC_RE_H1)*(RE_H2(x)+PREC_RE_H2)*kern12(x,xq,rl*rl,rll*rll,m) + (RE_H1(x)+PREC_RE_H1)*(RE_FA(x)+PREC_RE_FA)*kernA1(x,xq,rl*rl,rll*rll,m);
 
-	      double quadratic_imag = pow(IM_H1(x),2)*kern11(x,xq,rl*rl,rll*rll,m) + 0.0*pow(IM_H2(x),2)*kern22(x,xq,rl*rl,rll*rll,m) + pow(IM_FA(x),2)*kernAA(x,xq,rl*rl,rll*rll,m) + pow(IM_FV(x),2)*kernVV(x,xq,rl*rl,rll*rll,m) + 0.0*IM_H1(x)*IM_H2(x)*kern12(x,xq,rl*rl,rll*rll,m) + IM_H1(x)*IM_FA(x)*kernA1(x,xq,rl*rl,rll*rll,m);
+	      double quadratic_imag = pow(IM_H1(x)+PREC_IM_H1,2)*kern11(x,xq,rl*rl,rll*rll,m) + pow(IM_H2(x)+PREC_IM_H2,2)*kern22(x,xq,rl*rl,rll*rll,m) + pow(IM_FA(x)+PREC_IM_FA,2)*kernAA(x,xq,rl*rl,rll*rll,m) + pow(IM_FV(x)+PREC_IM_FV,2)*kernVV(x,xq,rl*rl,rll*rll,m) + (IM_H1(x)+PREC_IM_H1)*(IM_H2(x) + PREC_IM_H2  )*kern12(x,xq,rl*rl,rll*rll,m) + (IM_H1(x)+PREC_IM_H1)*(IM_FA(x) + PREC_IM_FA)*kernA1(x,xq,rl*rl,rll*rll,m);
 
 	      if( sqrt( x*x + tk*tk) <= x0_d ) quadratic_imag=0.0;
 	      
@@ -3290,7 +3510,11 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	      return 0;
 	    };
 
-	      auto Rt_diff_VMD = [&MODE, &tk, &rl, &rll, &m, &fp, &x0_d, RE_FV=RE_FV_VMD_sm_spline[ijack], IM_FV=IM_FV_VMD_sm_spline[ijack], RE_FA=RE_FA_VMD_sm_spline[ijack], IM_FA=IM_FA_VMD_sm_spline[ijack], RE_H1=RE_H1_VMD_sm_spline[ijack], IM_H1=IM_H1_VMD_sm_spline[ijack], RE_H2=RE_H2_VMD_sm_spline[ijack], IM_H2=IM_H2_VMD_sm_spline[ijack] ](double x) -> double {
+
+
+	    
+
+	    auto Rt_diff_VMD = [&MODE, &USE_PRECONDITIONING, &tk, &rl, &rll, &m, &fp, &x0_d, RE_FV=RE_FV_VMD_sm_spline[ijack], IM_FV=IM_FV_VMD_sm_spline[ijack], RE_FA=RE_FA_VMD_sm_spline[ijack], IM_FA=IM_FA_VMD_sm_spline[ijack], RE_H1=RE_H1_VMD_sm_spline[ijack], IM_H1=IM_H1_VMD_sm_spline[ijack], RE_H2=RE_H2_VMD_sm_spline[ijack], IM_H2=IM_H2_VMD_sm_spline[ijack], FF_MODEL=FORM_FACTORS_FROM_VMD_MODEL,  m_ave= MP_LIST.ave(iens), fp_ave = FP_LIST.ave(iens), kz=kz_list[iens][ixg], eps= (sigmas[isg]*a_distr.ave()), alat= a_distr.ave()  ](double x) -> double {
 
 	      if( (1+ x*x - 2*sqrt(x*x+ tk*tk) ) < 0) return 0.0;
 	      
@@ -3299,16 +3523,50 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	      //check whether xq is in the integration domain
 	      if( xq < rl) return 0.0;
 	      if( xq > 1 - x) crash("xq > 1 -xk , xq: "+to_string_with_precision(xq,3)+", xk: "+to_string_with_precision(x,3));
-	      
+
 
 	      
+	      double PREC_RE_H1=0;
+	      double PREC_RE_FA=0;
+	      double PREC_RE_H2=0;
+	      double PREC_RE_FV=0;
+	      double PREC_IM_H1=0;
+	      double PREC_IM_FA=0;
+	      double PREC_IM_H2=0;
+	      double PREC_IM_FV=0;
+
+	      double ff=1.0;
+
+	      if(USE_PRECONDITIONING) {
+
+		ff=0.0;
+		
+		PREC_RE_FV= FF_MODEL(x,0.0005*alat, "FV", "RE");
+		PREC_RE_FA= FF_MODEL(x,0.0005*alat, "FA", "RE");
+		PREC_RE_H1= FF_MODEL(x,0.0005*alat, "H1", "RE");
+		PREC_RE_H2= FF_MODEL(x,0.0005*alat, "H2", "RE");
+
+
+		PREC_IM_FV= FF_MODEL(x,0.0005*alat, "FV", "IM");
+		PREC_IM_FA= FF_MODEL(x,0.0005*alat, "FA", "IM");
+		PREC_IM_H1= FF_MODEL(x,0.0005*alat, "H1", "IM");
+		PREC_IM_H2= FF_MODEL(x,0.0005*alat, "H2", "IM");
+	
+
+	      }
+
 	      double Int= ptrate(x,xq, rl*rl, rll*rll, m, fp);
-	      double interference= RE_H1(x)*kern1(x, xq, rl*rl, rll*rll, m,fp) + RE_H2(x)*kern2(x, xq, rl*rl, rll*rll, m,fp) + RE_FA(x)*kernA(x,xq,rl*rl,rll*rll,m,fp) +RE_FV(x)*kernV(x,xq,rl*rl,rll*rll,m,fp);
+	      double interference= (ff*RE_H1(x) +PREC_RE_H1)*kern1(x, xq, rl*rl, rll*rll, m,fp) + (ff*RE_H2(x)+PREC_RE_H2)*kern2(x, xq, rl*rl, rll*rll, m,fp) + (ff*RE_FA(x)+PREC_RE_FA)*kernA(x,xq,rl*rl,rll*rll,m,fp) +(ff*RE_FV(x)+PREC_RE_FV)*kernV(x,xq,rl*rl,rll*rll,m,fp);
 
 	      
-	      double quadratic= pow(RE_H1(x),2)*kern11(x,xq,rl*rl,rll*rll,m) + 0.0*pow(RE_H2(x),2)*kern22(x,xq,rl*rl,rll*rll,m) + pow(RE_FA(x),2)*kernAA(x,xq,rl*rl,rll*rll,m) + pow(RE_FV(x),2)*kernVV(x,xq,rl*rl,rll*rll,m) + 0.0*RE_H1(x)*RE_H2(x)*kern12(x,xq,rl*rl,rll*rll,m) + RE_H1(x)*RE_FA(x)*kernA1(x,xq,rl*rl,rll*rll,m);
+	      double quadratic= pow(ff*RE_H1(x)+PREC_RE_H1,2)*kern11(x,xq,rl*rl,rll*rll,m) + pow(ff*RE_H2(x)+PREC_RE_H2,2)*kern22(x,xq,rl*rl,rll*rll,m) + pow(ff*RE_FA(x)+PREC_RE_FA,2)*kernAA(x,xq,rl*rl,rll*rll,m) + pow(ff*RE_FV(x)+PREC_RE_FV,2)*kernVV(x,xq,rl*rl,rll*rll,m) + (ff*RE_H1(x)+PREC_RE_H1)*(ff*RE_H2(x)+PREC_RE_H2)*kern12(x,xq,rl*rl,rll*rll,m) + (ff*RE_H1(x)+PREC_RE_H1)*(ff*RE_FA(x)+PREC_RE_FA)*kernA1(x,xq,rl*rl,rll*rll,m);
 
-	      double quadratic_imag = pow(IM_H1(x),2)*kern11(x,xq,rl*rl,rll*rll,m) + 0.0*pow(IM_H2(x),2)*kern22(x,xq,rl*rl,rll*rll,m) + pow(IM_FA(x),2)*kernAA(x,xq,rl*rl,rll*rll,m) + pow(IM_FV(x),2)*kernVV(x,xq,rl*rl,rll*rll,m) + 0.0*IM_H1(x)*IM_H2(x)*kern12(x,xq,rl*rl,rll*rll,m) + IM_H1(x)*IM_FA(x)*kernA1(x,xq,rl*rl,rll*rll,m);
+	      double quadratic_imag = pow(ff*IM_H1(x)+PREC_IM_H1,2)*kern11(x,xq,rl*rl,rll*rll,m) + pow(ff*IM_H2(x)+PREC_IM_H2,2)*kern22(x,xq,rl*rl,rll*rll,m) + pow(ff*IM_FA(x)+PREC_IM_FA,2)*kernAA(x,xq,rl*rl,rll*rll,m) + pow(ff*IM_FV(x)+PREC_IM_FV,2)*kernVV(x,xq,rl*rl,rll*rll,m) + (ff*IM_H1(x)+PREC_IM_H1)*(ff*IM_H2(x) + PREC_IM_H2  )*kern12(x,xq,rl*rl,rll*rll,m) + (ff*IM_H1(x)+PREC_IM_H1)*(ff*IM_FA(x) + PREC_IM_FA)*kernA1(x,xq,rl*rl,rll*rll,m);
+
+	      
+
+	      
+	      
 
 	      if( sqrt( x*x + tk*tk) <= x0_d ) quadratic_imag=0.0;
 	      
@@ -3418,7 +3676,23 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	      cout<<".";
 	    }
 
+
+	    MODE="TOTAL";
+	    USE_PRECONDITIONING=true;
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_mumue_TOTAL_PRECONDITIONED(Rt_diff);
+	    gsl_integration_workspace * w_mumue_TOTAL_PRECONDITIONED = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_mumue_TOTAL_PRECONDITIONED = static_cast<gsl_function*>(&DIFF_RATE_mumue_TOTAL_PRECONDITIONED);
+	    gsl_integration_qags(G_mumue_TOTAL_PRECONDITIONED, 2*rll, xk_max, 0.0, 1e-5, 10000, w_mumue_TOTAL_PRECONDITIONED, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_mumue_TOTAL_PRECONDITIONED);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE mumue_TOTAL_PRECONDITIONED could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_mumue_TOTAL_PRECONDITIONED[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    if(verbose_lev==1) {
+	      cout<<".";
+	    }
+
 	    //VMD
+	    USE_PRECONDITIONING=false;
 	    MODE="TOTAL";
 	    gsl_function_pp<decltype(Rt_diff_VMD)> DIFF_RATE_mumue_TOTAL_VMD(Rt_diff_VMD);
 	    gsl_integration_workspace * w_mumue_TOTAL_VMD = gsl_integration_workspace_alloc (10000);
@@ -3430,6 +3704,27 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 	    if(verbose_lev==1) {
 	      cout<<".";
+	    }
+
+	    if(ijack==0) {
+
+
+	      //VMD
+	      USE_PRECONDITIONING=true;
+	      MODE="TOTAL";
+	      gsl_function_pp<decltype(Rt_diff_VMD)> DIFF_RATE_mumue_TOTAL_VMD_PRECONDITIONED(Rt_diff_VMD);
+	      gsl_integration_workspace * w_mumue_TOTAL_VMD_PRECONDITIONED = gsl_integration_workspace_alloc (10000);
+	      gsl_function *G_mumue_TOTAL_VMD_PRECONDITIONED = static_cast<gsl_function*>(&DIFF_RATE_mumue_TOTAL_VMD_PRECONDITIONED);
+	      gsl_integration_qags(G_mumue_TOTAL_VMD_PRECONDITIONED, 2*rll, xk_max, 0.0, 1e-5, 10000, w_mumue_TOTAL_VMD_PRECONDITIONED, &res_GSL, &err_GSL);
+	      gsl_integration_workspace_free(w_mumue_TOTAL_VMD_PRECONDITIONED);
+	      if(err_GSL/fabs(res_GSL) > 0.0001) crash("RATE mumue_TOTAL_PRECONDITIONED VMD could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	      RATE_mumue_TOTAL_VMD_PRECONDITIONED[iens][ixg-1].distr_list[isg] = res_GSL*Get_id_jack_distr(Njacks);
+
+	      if(verbose_lev==1) {
+		cout<<".";
+	      }
+
+	      USE_PRECONDITIONING=false;
 	    }
 
 
@@ -3517,8 +3812,23 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	    cout<<".";
 	    }
 
+	    MODE="TOTAL";
+	    USE_PRECONDITIONING=true;
+	    gsl_function_pp<decltype(Rt_diff)> DIFF_RATE_eemu_TOTAL_PRECONDITIONED(Rt_diff);
+	    gsl_integration_workspace * w_eemu_TOTAL_PRECONDITIONED = gsl_integration_workspace_alloc (10000);
+	    gsl_function *G_eemu_TOTAL_PRECONDITIONED = static_cast<gsl_function*>(&DIFF_RATE_eemu_TOTAL_PRECONDITIONED);
+	    gsl_integration_qags(G_eemu_TOTAL_PRECONDITIONED, 2*rll, xk_max, 0.0, 1e-5, 10000, w_eemu_TOTAL_PRECONDITIONED, &res_GSL, &err_GSL);
+	    gsl_integration_workspace_free(w_eemu_TOTAL_PRECONDITIONED);
+	    if(err_GSL/fabs(res_GSL) > 0.001) crash("RATE eemu_TOTAL_PRECONDITIONED could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	    RATE_eemu_TOTAL_PRECONDITIONED[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
+
+	    if(verbose_lev==1) {
+	    cout<<".";
+	    }
+
 	    //VMD
 	    MODE="TOTAL";
+	    USE_PRECONDITIONING=false;
 	    gsl_function_pp<decltype(Rt_diff_VMD)> DIFF_RATE_eemu_TOTAL_VMD(Rt_diff_VMD);
 	    gsl_integration_workspace * w_eemu_TOTAL_VMD = gsl_integration_workspace_alloc (10000);
 	    gsl_function *G_eemu_TOTAL_VMD = static_cast<gsl_function*>(&DIFF_RATE_eemu_TOTAL_VMD);
@@ -3527,8 +3837,35 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	    if(err_GSL/fabs(res_GSL) > 0.0001) crash("RATE eemu_TOTAL VMD could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
 	    RATE_eemu_TOTAL_VMD[iens][ixg-1].distr_list[isg].distr.push_back(res_GSL);
 
+
+	    
+
 	    if(verbose_lev==1) {
 	      cout<<".";
+	    }
+
+
+	    if(ijack==0) {
+
+	      //VMD
+	      MODE="TOTAL";
+	      USE_PRECONDITIONING=true;
+	      gsl_function_pp<decltype(Rt_diff_VMD)> DIFF_RATE_eemu_TOTAL_VMD_PRECONDITIONED(Rt_diff_VMD);
+	      gsl_integration_workspace * w_eemu_TOTAL_VMD_PRECONDITIONED = gsl_integration_workspace_alloc (10000);
+	      gsl_function *G_eemu_TOTAL_VMD_PRECONDITIONED = static_cast<gsl_function*>(&DIFF_RATE_eemu_TOTAL_VMD_PRECONDITIONED);
+	      gsl_integration_qags(G_eemu_TOTAL_VMD_PRECONDITIONED, 2*rll, xk_max, 0.0, 1e-5, 10000, w_eemu_TOTAL_VMD_PRECONDITIONED, &res_GSL, &err_GSL);
+	      gsl_integration_workspace_free(w_eemu_TOTAL_VMD_PRECONDITIONED);
+	      if(err_GSL/fabs(res_GSL) > 0.0001) crash("RATE eemu_TOTAL_PRECONDITIONED VMD could not evaluate with sub-permille accuracy for jack: "+to_string(ijack));
+	      RATE_eemu_TOTAL_VMD_PRECONDITIONED[iens][ixg-1].distr_list[isg] = res_GSL*Get_id_jack_distr(Njacks);
+	    
+
+	      if(verbose_lev==1) {
+		cout<<".";
+	      }
+
+
+	      USE_PRECONDITIONING=false;
+
 	    }
 
 	   
@@ -3644,6 +3981,8 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	}
 
 
+	/*
+						       
 	
 	//push_back the sigma=0 unsmeared result up to xmax=0.4
 
@@ -3672,9 +4011,11 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	RATE_eemu_TOTAL_VMD[iens][ixg-1].distr_list.push_back( RATE_UNSMEARED_eemu_TOTAL_VMD[iens][ixg-1]);
 	RATE_eetau_TOTAL_VMD[iens][ixg-1].distr_list.push_back( RATE_UNSMEARED_eetau_TOTAL_VMD[iens][ixg-1]);
 
+	*/
 
-	distr_t_list RATE_mumue_TOTAL_IMPROVED=  RATE_mumue_TOTAL[iens][ixg-1]/RATE_mumue_TOTAL_VMD[iens][ixg-1];  //RATE_UNSMEARED_mumue_TOTAL_VMD[iens][ixg-1]*(RATE_mumue_TOTAL[iens][ixg-1]/RATE_mumue_TOTAL_VMD[iens][ixg-1]);
-	distr_t_list RATE_eemu_TOTAL_IMPROVED =  RATE_eemu_TOTAL[iens][ixg-1]/RATE_eemu_TOTAL_VMD[iens][ixg-1]; //  RATE_UNSMEARED_eemu_TOTAL_VMD[iens][ixg-1]*(RATE_eemu_TOTAL[iens][ixg-1]/RATE_eemu_TOTAL_VMD[iens][ixg-1]);
+
+	distr_t_list RATE_mumue_TOTAL_IMPROVED=  RATE_mumue_TOTAL_VMD_PRECONDITIONED[iens][ixg-1]*RATE_mumue_TOTAL[iens][ixg-1]/RATE_mumue_TOTAL_VMD[iens][ixg-1];  //RATE_UNSMEARED_mumue_TOTAL_VMD[iens][ixg-1]*(RATE_mumue_TOTAL[iens][ixg-1]/RATE_mumue_TOTAL_VMD[iens][ixg-1]);
+	distr_t_list RATE_eemu_TOTAL_IMPROVED =  RATE_eemu_TOTAL_VMD_PRECONDITIONED[iens][ixg-1]*RATE_eemu_TOTAL[iens][ixg-1]/RATE_eemu_TOTAL_VMD[iens][ixg-1]; //  RATE_UNSMEARED_eemu_TOTAL_VMD[iens][ixg-1]*(RATE_eemu_TOTAL[iens][ixg-1]/RATE_eemu_TOTAL_VMD[iens][ixg-1]);
 	distr_t_list RATE_eetau_TOTAL_IMPROVED=  RATE_eetau_TOTAL[iens][ixg-1]/RATE_eetau_TOTAL_VMD[iens][ixg-1]; // RATE_UNSMEARED_eetau_TOTAL_VMD[iens][ixg-1]*(RATE_eetau_TOTAL[iens][ixg-1]/RATE_eetau_TOTAL_VMD[iens][ixg-1]);
 
 
@@ -3691,7 +4032,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 	Vfloat sigmas_bis= sigmas;
 
-	sigmas_bis.push_back(0.0);
+	//sigmas_bis.push_back(0.0);
 
 
 
@@ -3706,9 +4047,9 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE);
 
 
-	Print_To_File({}, {sigmas_bis, RATE_mumue_TOTAL[iens][ixg-1].ave(), RATE_mumue_TOTAL[iens][ixg-1].err(), RATE_mumue_TOTAL_IMPROVED.ave(), RATE_mumue_TOTAL_IMPROVED.err(), RATE_mumue_QUADRATIC[iens][ixg-1].ave(), RATE_mumue_QUADRATIC[iens][ixg-1].err(),  RATE_mumue_QUADRATIC_IM[iens][ixg-1].ave(), RATE_mumue_QUADRATIC_IM[iens][ixg-1].err(), RATE_mumue_INTERFERENCE[iens][ixg-1].ave(), RATE_mumue_INTERFERENCE[iens][ixg-1].err() , RATE_mumue_PT[iens][ixg-1].ave(), RATE_mumue_PT[iens][ixg-1].err(), RATE_mumue_TOTAL_VMD[iens][ixg-1].ave(), RATE_mumue_TOTAL_VMD[iens][ixg-1].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"_mumue.dat", "" , "#sigma TOT TOT_IMPR  QUAD  QUAD(IM)  INT   PT  VMD    xg^max: "+to_string_with_precision(xg_max_mumue,5));
+	Print_To_File({}, {sigmas_bis, RATE_mumue_TOTAL[iens][ixg-1].ave(), RATE_mumue_TOTAL[iens][ixg-1].err(), RATE_mumue_TOTAL_PRECONDITIONED[iens][ixg-1].ave(), RATE_mumue_TOTAL_PRECONDITIONED[iens][ixg-1].err(), RATE_mumue_TOTAL_IMPROVED.ave(), RATE_mumue_TOTAL_IMPROVED.err(), RATE_mumue_QUADRATIC[iens][ixg-1].ave(), RATE_mumue_QUADRATIC[iens][ixg-1].err(),  RATE_mumue_QUADRATIC_IM[iens][ixg-1].ave(), RATE_mumue_QUADRATIC_IM[iens][ixg-1].err(), RATE_mumue_INTERFERENCE[iens][ixg-1].ave(), RATE_mumue_INTERFERENCE[iens][ixg-1].err() , RATE_mumue_PT[iens][ixg-1].ave(), RATE_mumue_PT[iens][ixg-1].err(), RATE_mumue_TOTAL_VMD[iens][ixg-1].ave(), RATE_mumue_TOTAL_VMD[iens][ixg-1].err(), RATE_mumue_TOTAL_VMD_PRECONDITIONED[iens][ixg-1].ave(), RATE_mumue_TOTAL_VMD_PRECONDITIONED[iens][ixg-1].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"_mumue.dat", "" , "#sigma TOT TOT_PREC TOT_PREC_II  QUAD  QUAD(IM)  INT   PT  VMD VMD(eps=0, noerr)    xg^max: "+to_string_with_precision(xg_max_mumue,5));
 
-	Print_To_File({}, {sigmas_bis,RATE_eemu_TOTAL[iens][ixg-1].ave(), RATE_eemu_TOTAL[iens][ixg-1].err(), RATE_eemu_TOTAL_IMPROVED.ave(), RATE_eemu_TOTAL_IMPROVED.err(), RATE_eemu_QUADRATIC[iens][ixg-1].ave(), RATE_eemu_QUADRATIC[iens][ixg-1].err(), RATE_eemu_QUADRATIC_IM[iens][ixg-1].ave(), RATE_eemu_QUADRATIC_IM[iens][ixg-1].err(), RATE_eemu_INTERFERENCE[iens][ixg-1].ave(), RATE_eemu_INTERFERENCE[iens][ixg-1].err() , RATE_eemu_PT[iens][ixg-1].ave(), RATE_eemu_PT[iens][ixg-1].err(), RATE_eemu_TOTAL_VMD[iens][ixg-1].ave(), RATE_eemu_TOTAL_VMD[iens][ixg-1].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"_eemu.dat", "" , "#sigma TOT TOT_IMPR  QUAD  QUAD(IM)  INT   PT VMD    xg^max: "+to_string_with_precision(xg_max_eemu,5));
+	Print_To_File({}, {sigmas_bis,RATE_eemu_TOTAL[iens][ixg-1].ave(), RATE_eemu_TOTAL[iens][ixg-1].err(), RATE_eemu_TOTAL_PRECONDITIONED[iens][ixg-1].ave(), RATE_eemu_TOTAL_PRECONDITIONED[iens][ixg-1].err(), RATE_eemu_TOTAL_IMPROVED.ave(), RATE_eemu_TOTAL_IMPROVED.err(), RATE_eemu_QUADRATIC[iens][ixg-1].ave(), RATE_eemu_QUADRATIC[iens][ixg-1].err(), RATE_eemu_QUADRATIC_IM[iens][ixg-1].ave(), RATE_eemu_QUADRATIC_IM[iens][ixg-1].err(), RATE_eemu_INTERFERENCE[iens][ixg-1].ave(), RATE_eemu_INTERFERENCE[iens][ixg-1].err() , RATE_eemu_PT[iens][ixg-1].ave(), RATE_eemu_PT[iens][ixg-1].err(), RATE_eemu_TOTAL_VMD[iens][ixg-1].ave(), RATE_eemu_TOTAL_VMD[iens][ixg-1].err(), RATE_eemu_TOTAL_VMD_PRECONDITIONED[iens][ixg-1].ave(), RATE_eemu_TOTAL_VMD_PRECONDITIONED[iens][ixg-1].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"_eemu.dat", "" , "#sigma TOT TOT_PREC TOT_PREC_II  QUAD  QUAD(IM)  INT   PT VMD VMD(eps=0, noerr)    xg^max: "+to_string_with_precision(xg_max_eemu,5));
 
 	Print_To_File({}, {sigmas_bis, RATE_eetau_TOTAL[iens][ixg-1].ave(), RATE_eetau_TOTAL[iens][ixg-1].err(), RATE_eetau_TOTAL_IMPROVED.ave(), RATE_eetau_TOTAL_IMPROVED.err(), RATE_eetau_QUADRATIC[iens][ixg-1].ave(), RATE_eetau_QUADRATIC[iens][ixg-1].err(),  RATE_eetau_QUADRATIC_IM[iens][ixg-1].ave(), RATE_eetau_QUADRATIC_IM[iens][ixg-1].err(), RATE_eetau_INTERFERENCE[iens][ixg-1].ave(), RATE_eetau_INTERFERENCE[iens][ixg-1].err() , RATE_eetau_PT[iens][ixg-1].ave(), RATE_eetau_PT[iens][ixg-1].err(), RATE_eetau_TOTAL_VMD[iens][ixg-1].ave(), RATE_eetau_TOTAL_VMD[iens][ixg-1].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/DECAY_RATES/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"_eetau.dat", "" , "#sigma TOT TOT_IMPR  QUAD  QUAD(IM)  INT   PT VMD     xg^max: "+to_string_with_precision(xg_max_eetau,5));
 
@@ -3810,9 +4151,16 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 	
       }
+      
     }
   }
-    
+
+
+  //print kz_list and Eg_list
+  for(int iens=0;iens<Nens;iens++) {
+    Print_To_File({}, {kz_list[iens], Eg_list[iens]}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/"+Ens_tags[iens]+"_kin.list", "", "kz Eg");
+  }
+  
   cout<<"Bye!"<<endl;
   return;
 }

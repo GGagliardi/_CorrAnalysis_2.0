@@ -63,7 +63,7 @@ void Get_xg_to_spline_VMD() {
 
 void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
-
+   /*
    if(Ens == "cA211a.12.48") {
 
     if(ixg==0) {
@@ -322,6 +322,282 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     else if(ixg==10) {
       if(W=="A") {Tmin= 29; Tmax=54;}
       else {Tmin=45;Tmax=67;}
+
+    }
+
+    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
+
+
+  }
+
+  else crash("Ensemble: "+Ens+" does not have definite time intervals for FV and FA");
+
+
+  
+
+  return; 
+   */
+
+
+
+   if(Ens == "cA211a.12.48") {
+
+    if(ixg==0) {
+      if(W=="A") {Tmin= 16; Tmax=22;}
+      else {Tmin=20;Tmax=32;}
+
+    }
+    else if(ixg==1) {
+      if(W=="A") {Tmin= 16; Tmax=22;}
+      else {Tmin=20;Tmax=32;}
+
+    }
+    else if(ixg==2) {
+      if(W=="A") {Tmin= 16; Tmax=23;}
+      else {Tmin=12;Tmax=25;}
+
+    }
+    else if(ixg==3) {
+      if(W=="A") {Tmin= 16; Tmax=23;}
+      else {Tmin=18;Tmax=28;}
+    
+    }
+    else if(ixg==4) {
+      if(W=="A") {Tmin= 17; Tmax=23;}
+      else {Tmin=18;Tmax=28;}
+    
+    }
+    else if(ixg==5) {
+      if(W=="A") {Tmin= 17; Tmax=23;}
+      else {Tmin=18;Tmax=26;}
+    
+    }
+    else if(ixg==6) {
+      if(W=="A") {Tmin= 17; Tmax=26;}
+      else {Tmin=17;Tmax=26;}
+    
+    }
+    else if(ixg==7) {
+      if(W=="A") {Tmin= 17; Tmax=28;}
+      else {Tmin=17;Tmax=26;}
+    
+    }
+    else if(ixg==8) {
+      if(W=="A") {Tmin= 17; Tmax=29;}
+      else {Tmin=15;Tmax=26;}
+    
+    }
+    else if(ixg==9) {
+      if(W=="A") {Tmin= 15; Tmax=28;}
+      else {Tmin=16;Tmax=26;}
+    
+    }
+    else if(ixg==10) {
+      if(W=="A") {Tmin= 14; Tmax=28;}
+      else {Tmin=16;Tmax=26;}
+
+    }
+    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
+
+  }
+
+
+  
+
+   else if(Ens == "cB211b.072.64") {
+
+    if(ixg==0) {
+      if(W=="A") {Tmin= 20; Tmax=30;}
+      else {Tmin=20;Tmax=30;}
+
+    }
+    else if(ixg==1) {
+      if(W=="A") {Tmin= 17; Tmax=24;}
+      else {Tmin=21;Tmax=45;}
+
+    }
+    else if(ixg==2) {
+      if(W=="A") {Tmin= 17; Tmax=29;}
+      else {Tmin=23;Tmax=45;}
+
+    }
+    else if(ixg==3) {
+      if(W=="A") {Tmin= 18; Tmax=28;}
+      else {Tmin=23;Tmax=45;}
+    
+    }
+    else if(ixg==4) {
+      if(W=="A") {Tmin= 18; Tmax=29;}
+      else {Tmin=18;Tmax=38;}
+    
+    }
+    else if(ixg==5) {
+      if(W=="A") {Tmin= 17; Tmax=30;}
+      else {Tmin=18;Tmax=38;}
+    
+    }
+    else if(ixg==6) {
+      if(W=="A") {Tmin= 17; Tmax=29;}
+      else {Tmin=18;Tmax=38;}
+    
+    }
+    else if(ixg==7) {
+      if(W=="A") {Tmin= 14; Tmax=29;}
+      else {Tmin=18;Tmax=38;}
+    
+    }
+    else if(ixg==8) {
+      if(W=="A") {Tmin= 10; Tmax=29;}
+      else {Tmin=12;Tmax=38;}
+    
+    }
+    else if(ixg==9) {
+      if(W=="A") {Tmin= 10; Tmax=29;}
+      else {Tmin=12;Tmax=38;}
+    
+    }
+    else if(ixg==10) {
+      if(W=="A") {Tmin= 14; Tmax=30;}
+      else {Tmin=12;Tmax=38;}
+
+    }
+    else if(ixg==11) {
+      if(W=="A") {Tmin= 20; Tmax=30;}
+      else {Tmin=20;Tmax=30;}
+
+    }
+    else if(ixg==12) {
+      if(W=="A") {Tmin= 20; Tmax=30;}
+      else {Tmin=20;Tmax=30;}
+
+    }
+    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
+
+  }
+
+
+  //############ ENSEMBLE C80  ####################
+
+  else  if(Ens == "cC211a.06.80") {
+
+    if(ixg==0) {
+      if(W=="A") {Tmin= 19; Tmax=29;}
+      else {Tmin=28;Tmax=55;}
+
+    }
+    else if(ixg==1) {
+      if(W=="A") {Tmin= 19; Tmax=29;}
+      else {Tmin=28;Tmax=55;}
+
+    }
+    else if(ixg==2) {
+      if(W=="A") {Tmin= 21; Tmax=29;}
+      else {Tmin=28;Tmax=55;}
+
+    }
+    else if(ixg==3) {
+      if(W=="A") {Tmin= 21; Tmax=29;}
+      else {Tmin=28;Tmax=55;}
+    
+    }
+    else if(ixg==4) {
+      if(W=="A") {Tmin= 21; Tmax=30;}
+      else {Tmin=28;Tmax=55;}
+    
+    }
+    else if(ixg==5) {
+      if(W=="A") {Tmin= 21; Tmax=30;}
+      else {Tmin=25;Tmax=55;}
+    
+    }
+    else if(ixg==6) {
+      if(W=="A") {Tmin= 21; Tmax=30;}
+      else {Tmin=28;Tmax=47;}
+    
+    }
+    else if(ixg==7) {
+      if(W=="A") {Tmin= 21; Tmax=31;}
+      else {Tmin=16;Tmax=40;}
+    
+    }
+    else if(ixg==8) {
+      if(W=="A") {Tmin= 21; Tmax=37;}
+      else {Tmin=15;Tmax=47;}
+    
+    }
+    else if(ixg==9) {
+      if(W=="A") {Tmin= 14; Tmax=46;}
+      else {Tmin=11;Tmax=39;}
+    
+    }
+    else if(ixg==10) {
+      if(W=="A") {Tmin= 15; Tmax=42;}
+      else {Tmin=15;Tmax=35;}
+
+    }
+
+    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
+
+  }
+
+  else if(Ens=="cD211a.054.96") {
+
+   
+
+
+    if(ixg==0) {
+      if(W=="A") {Tmin= 21; Tmax=28;}
+      else {Tmin=28;Tmax=55;}
+
+    }
+    else if(ixg==1) {
+      if(W=="A") {Tmin= 19; Tmax=35;}
+      else {Tmin=29;Tmax=45;}
+
+    }
+    else if(ixg==2) {
+      if(W=="A") {Tmin= 19; Tmax=35;}
+      else {Tmin=29;Tmax=45;}
+
+    }
+    else if(ixg==3) {
+      if(W=="A") {Tmin= 20; Tmax=35;}
+      else {Tmin=29;Tmax=45;}
+    
+    }
+    else if(ixg==4) {
+      if(W=="A") {Tmin= 20; Tmax=35;}
+      else {Tmin=29;Tmax=49;}
+    
+    }
+    else if(ixg==5) {
+      if(W=="A") {Tmin= 20; Tmax=36;}
+      else {Tmin=30;Tmax=49;}
+    
+    }
+    else if(ixg==6) {
+      if(W=="A") {Tmin= 20; Tmax=35;}
+      else {Tmin=30;Tmax=50;}
+    
+    }
+    else if(ixg==7) {
+      if(W=="A") {Tmin= 21; Tmax=37;}
+      else {Tmin=29;Tmax=49;}
+    
+    }
+    else if(ixg==8) {
+      if(W=="A") {Tmin= 19; Tmax=45;}
+      else {Tmin=14;Tmax=42;}
+    
+    }
+    else if(ixg==9) {
+      if(W=="A") {Tmin= 21; Tmax=44;}
+      else {Tmin=10;Tmax=58;}
+    
+    }
+    else if(ixg==10) {
+      if(W=="A") {Tmin= 21; Tmax=45;}
+      else {Tmin=10;Tmax=58;}
 
     }
 

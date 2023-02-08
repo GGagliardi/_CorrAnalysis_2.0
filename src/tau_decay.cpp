@@ -57,9 +57,12 @@ void get_sigma_list() {
   double s_max= 0.2;
   double s_min= 0.004420;
 
-  sigma_list.push_back(s_max);
-  double s=s_max;
-  while (s>= s_min +1.0e-6) { s /= pow(2,0.25); sigma_list.push_back(s);}
+  sigma_list= {0.004, 0.02, 0.03, 0.04, 0.06, 0.08, 0.10, 0.12, 0.14, 0.16, 0.18, 0.20};
+  return;
+
+  //sigma_list.push_back(s_max);
+  //double s=s_max;
+  //while (s>= s_min +1.0e-6) { s /= pow(2,0.25); sigma_list.push_back(s);}
 
   return;
 
@@ -74,9 +77,9 @@ void tau_decay_analysis() {
 
   get_sigma_list();
   
-  Vfloat betas({ 1.99,  2.99});
-  Vfloat Emax_list({4.0, 4.0});
-  vector<bool> Is_Emax_Finite({0,1});
+  Vfloat betas({ 1.99, 2.99, 3.99, 2.99, 3.99, 2.99});
+  Vfloat Emax_list({4.0, 4.0, 4.0, 5.0, 5.0, 6.0 });
+  vector<bool> Is_Emax_Finite({0,1,1,1,1,1});
 
   int rank, size;
 
@@ -548,11 +551,11 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       }
 
     Print_To_File({}, {TT,RR,cov_A0_tm, corr_m_A0_tm}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/A0_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
-    Print_To_File({}, {TT,RR,cov_Ak_tm, corr_m_Ak_tm}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Ak_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
-    Print_To_File({}, {TT,RR,cov_Vk_tm, corr_m_Vk_tm}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Vk_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_Ak_tm, corr_m_Ak_tm}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Aii_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_Vk_tm, corr_m_Vk_tm}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Vii_tm_"+Vk_data_tm.Tag[iens]+".dat", "", "");
     Print_To_File({}, {TT,RR,cov_A0_OS, corr_m_A0_OS}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/A0_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
-    Print_To_File({}, {TT,RR,cov_Ak_OS, corr_m_Ak_OS}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Ak_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
-    Print_To_File({}, {TT,RR,cov_Vk_OS, corr_m_Vk_OS}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Vk_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_Ak_OS, corr_m_Ak_OS}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Aii_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_Vk_OS, corr_m_Vk_OS}, "../data/tau_decay/"+Tag_reco_type+"/light/covariance/Vii_OS_"+Vk_data_tm.Tag[iens]+".dat", "", "");
 
        
 
@@ -976,8 +979,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double syst_A0_tm, syst_Aii_tm, syst_Vii_tm;
       double syst_A0_OS, syst_Aii_OS, syst_Vii_OS;
       double mult=1e4;
-      if(MODE=="SANF") mult= 1e3;
-
+      if( (beta > 2) && (s < 0.15) ) mult=1e5;
+     
       
       auto start = chrono::system_clock::now();
       Br_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm, syst_Aii_tm, 1e4, lAii_tm, MODE, "tm", "Aii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
