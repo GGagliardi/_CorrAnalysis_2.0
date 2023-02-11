@@ -8,7 +8,7 @@ const bool FIND_OPTIMAL_LAMBDA= true;
 const string COV_MATRIX_MODE = "";
 const int Nmoms=0;
 const int alpha=0;
-const int verbosity_lev=2;
+const int verbosity_lev=3;
 double Beta= 0.0; //1.99;
 const bool mult_estimated_from_norm0=false;
 const bool print_reco_in_stability_analysis=false;
@@ -159,7 +159,10 @@ void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFlo
       [&f, &m,&s,&E0, &t, &T, &jack_id, &F_NORM](const PrecFloat& x) -> PrecFloat
       {
 	if(USE_GENERALIZED_NORM) return F_NORM(x,m,s,E0,jack_id)*f(x,m,s,E0, jack_id)*(exp(-x*(-PrecFloat(Beta)+t)) + ((ONLY_FORWARD)?PrecFloat(0):exp(-x*(-PrecFloat(Beta)+T-t)))) ;
-	return f(x,m,s,E0,jack_id)*( exp(-x*(-PrecFloat(Beta)+PrecFloat(t))) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(-PrecFloat(Beta)+PrecFloat(T-t)))));
+
+
+	return exp(PrecFloat(Beta)*x)*f(x,m,s,E0,jack_id)*( exp(-x*t) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(T-t))));
+	//return f(x,m,s,E0,jack_id)*( exp(-x*(-PrecFloat(Beta)+PrecFloat(t))) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(-PrecFloat(Beta)+PrecFloat(T-t)))));
       };
 
     if(Integrate_up_to_max_energy) {
@@ -177,7 +180,9 @@ void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFlo
 	cout<<"f("<<t<<"): EXACT: "<<ft(t-tmin)<<", NUM: "<<test<<endl<<flush;
       }
       else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get(), verbosity_lev-2);
+
     }
+    
     if(verbosity_lev>=2) cout<<"done!"<<endl<<flush;
   }
  
@@ -517,7 +522,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       return g_B_g ;
     };
 
-  
+
   //bisection search
   PrecFloat l_low =0;
   PrecFloat l_up = 1;

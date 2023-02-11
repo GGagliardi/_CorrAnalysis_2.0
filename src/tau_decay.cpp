@@ -40,8 +40,8 @@ const int sm_func_mode= 0;
 const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake;
-int Num_LUSCH=17;
-int Nres= 15;
+int Num_LUSCH=17;//17;
+int Nres= 15;//15;
 int pts_spline=200;
 bool COMPUTE_SPEC_DENS_FREE=false;
 using namespace std;
@@ -171,7 +171,9 @@ void tau_decay_analysis() {
 
 void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_functions &LL) {
 
-
+  PrecFloat::setDefaultPrecision(prec);
+  cout<<"max possible exponent: "<<PrecFloat::getEmax_max()<<endl;
+  cout<<"current max exponent: "<<PrecFloat::getEmax()<<endl;
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -278,7 +280,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
   data_t Vk_data_tm, V0_data_tm, Ak_data_tm, A0_data_tm;
   data_t Vk_data_OS, V0_data_OS, Ak_data_OS, A0_data_OS;
 
-
+  
   //light 
   //tm
   Vk_data_tm.Read("../R_ratio_data/light", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
@@ -846,18 +848,17 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
 
 
-
     // lambda function to be used as a smearing func.
   
     const auto K0 = [&a_distr](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
 
-
+      
 		      
 		      PrecFloat X;
 		      PrecFloat X_ave = E/(m_tau*a_distr.ave());
 		      if(X_ave < E0) return 0.0;
-
 		      
+		      //if(X_ave > 1e4) return 0.0;
 		      
 		      if(ijack==-1) {
 			X=X_ave;
@@ -880,6 +881,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		      PrecFloat X;
 		      PrecFloat X_ave = E/(m_tau*a_distr.ave());
 		      if( X_ave < E0) return 0.0;
+
+		      //if(X_ave > 1e4) return 0.0;
 
 
 		      if(ijack==-1) {

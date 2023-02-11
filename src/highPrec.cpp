@@ -10,7 +10,9 @@ PrecFloat ExpEiComplexSum(PrecFloat MOD, PrecFloat PH, PrecFloat s,  bool MODE) 
   PrecFloat RE_Log= log(MOD);
   PrecFloat IM_Log= PH;
 
-  
+
+
+ 
   //evaluate sum_k=1,infty  z^k /( k * k! )
 
   PrecFloat START_SUM, SUM_OLD;
@@ -20,7 +22,6 @@ PrecFloat ExpEiComplexSum(PrecFloat MOD, PrecFloat PH, PrecFloat s,  bool MODE) 
   PrecFloat SUM=START_SUM;
   SUM_OLD=0.0;
 
-  
   
   bool Arg_zero = (MOD==0);
   
@@ -74,6 +75,7 @@ PrecFloat Erfi( PrecFloat x) {
   //cout<<"nsteps to evaluate Erfi(x="<<x<<"): "<<n<<endl<<flush;
   return preF*SUMM;
 }
+
 
 
 PrecFloat DawsonF(PrecFloat x) {

@@ -528,6 +528,9 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
   int original_precision = PrecFloat::getDefaultPrecision();
   auto old_cout_precision= cout.precision( numDigits);
 
+  
+  const PrecFloat piHalf=
+    precPi()/2;
  
 
   if(verbose) cout<<"integrateUpToInfinite called with: xMin: "<<xMin<<endl;
@@ -553,42 +556,24 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
   
    
     auto c=
-      [&f,&xMin](const PrecFloat& t)
+      [&f,&xMin, &piHalf, &verbose](const PrecFloat& t)
       {
-	const PrecFloat piHalf= precPi()/2;
 	const PrecFloat s=sinh(t);
 	const PrecFloat x=exp(piHalf*s)+xMin;
-	const PrecFloat x_m= exp(-piHalf*s) + xMin;
-	const PrecFloat fx= f(x);
-	const PrecFloat f_x_m= f(x_m);
-     
+	const PrecFloat fx= f(x);     
 	const PrecFloat jac=piHalf*exp(piHalf*s)*cosh(t);
-	const PrecFloat jac_m = piHalf*exp(-piHalf*s)*cosh(t);
-	const PrecFloat res=fx*jac + f_x_m*jac_m;
+	const PrecFloat res=fx*jac; 
 
 	/*
-	  if(isnan(jac.get())) crash("jacobian is nan for x: "+to_string_with_precision(x.get(),5));
-	  if(isnan(fx.get())) crash("f(x) is nan for x: "+to_string_with_precision(x.get(),5));
-	  if(isnan(jac_m.get())) crash("jacobian is nan for x_m: "+to_string_with_precision(x_m.get(),5));
-	  if(isnan(f_x_m.get())) crash("f(x_m) is nan for x_m: "+to_string_with_precision(x_m.get(),5));
-	  if(isnan(res.get())) crash("res is nan for x: "+to_string_with_precision(x.get(),5)+", x_m: "+to_string_with_precision(x_m.get(),5));
+	if(verbose) {
+	  cout<<"##########"<<endl;
+	  cout<<"t: "<<t<<" s: "<<sinh(t)<<" x: "<<x<<endl;
+	  cout<<"x: "<<x<<" f(x): "<<fx<<", jac(x): "<<jac<<endl;
+	}
 	*/
+	
       
 	return res;
-
-	/*
-	  const PrecFloat log_jac=log_piHalf +piHalf*s + log(cosh(t));
-	  const PrecFloat log_jack_m= log_jac -2*piHalf*s;
-	  const PrecFloat fx= f(x);
-	  const PrecFloat fx_m= f(x_m);
-	  const int sign= (fx > 0)?1:-1;
-	  const int sign_m= (fx_m >0)?1:-1;
-	  const PrecFloat log_res = log(abs(fx)) + log_jac;
-	  const PrecFloat log_res_m = log(abs(fx_m)) + log_jack_m;
-	  //cout<<" t: "<<t<<" x: "<<x<<" f(x): "<<fx<<" jac: "<<exp(log_jac)<<"res: "<<sign*(exp(log_res)+sign_m*sign*exp(log_res_m))<<endl<<flush;
-      
-	  return sign*(exp(log_res)+ sign_m*sign*exp(log_res_m));
-	*/
       };
 
     PrecFloat step_old=1;
@@ -598,7 +583,7 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
     do {
       int it=0;
       RESTART=false;  
-      PrecFloat sum=c(0)*step_old;
+      PrecFloat sum=c(0)*2*step_old;
       PrecFloat extreme=0;
       PrecFloat step=step_old;
       PrecFloat precSum;
@@ -610,6 +595,9 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
 	  bool converged=
 	    false;
 	  
+	  //bool converged_minus=false;
+	  //bool converged_plus=false;
+	  
 	  sum/=2;
 	  PrecFloat t=step;
 	  
@@ -618,19 +606,21 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
 	  
 	  bool exitTheLoop=
 	    false;
+
+	  int nsteps=0;
 	  
 	  while(not exitTheLoop)
 	    {
-	      const PrecFloat contr=
-		c(t);
-	      
-	      PrecFloat newSum= sum;
-	      newSum += contr*step;
-
+	      nsteps++;
+	      const PrecFloat contr=c(t)+c(-t);
+	      PrecFloat newSum= sum + contr*step;
+	    
+	      //converged_plus= ( abs(contr_plus*step/sum) < PrecFloat(0.1)*PrecFloat::getEpsilon());
+	      //converged_minus= ( abs(contr_minus*step/sum) < PrecFloat(0.1)*PrecFloat::getEpsilon());
 	      
 	      converged= ( abs(contr*step/(sum)) < PrecFloat(0.1)*PrecFloat::getEpsilon());
-
-	      
+	      //converged = (sum==newSum);
+	      /*
 	      if(verbose) {
 		cout<<"RESTART: "<<COUNT_RESTART<<" t: "<<t<<" step: "<<step<<" contr: "<<contr<<" t>extreme: "<<(t>extreme)<<" extreme: "<<extreme<<" converged: "<<converged<<endl<<flush;
 		cout<<"LOOPING: sum: "<<newSum<<" precSum: "<<sum<<endl<<flush;
@@ -638,13 +628,14 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
 		cout<<"LOOPING(x2 prec): sum: "<<newSum<<" precSum: "<<sum<<endl<<flush;
 		cout.precision( numDigits);
 	      }
-	      
+	      */
 		  
 	
 	  
 	      exitTheLoop=
 		(converged and t>extreme);
-	  
+
+	    	  
 	      if(t>extreme)
 		{
 		  extreme=t;
@@ -658,20 +649,30 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
 	
 	  step/=2;
 	
-	  if(verbose) cout<<"LOOP EXITED: sum: "<<sum<<" precSum: "<<precSum<<", extreme: "<<extreme<<" step: "<<step*2<<endl<<flush;
+
 	  
 	  stability=abs(sum/precSum-1);
-	  if(verbose) cout<<"Stability: "<<stability<<" MaxAttainable: "<<maxAttainableStability<<endl<<flush;
+	  
+	  if(verbose) {
+	    cout<<"LOOP EXITED: sum: "<<sum<<" precSum: "<<precSum<<", extreme: "<<extreme<<" step: "<<step*2<<endl<<flush;
+	    cout<<"Stability: "<<stability<<" MaxAttainable: "<<maxAttainableStability<<endl<<flush;
+	  }
+	  
 	  maxAttainableStability*=2;
 
 	  if( stability <= maxAttainableStability) {sum_final=sum; RESTART=false; CHANGE_PRECISION=false;}
-	  else if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step; COUNT_RESTART++; CHANGE_PRECISION=false;}
-
-	  
-	  if( stability > maxAttainableStability) {
-	    if( (COUNT_RESTART ==1) && (it >=5) ) CHANGE_PRECISION=true;
-	    if( COUNT_RESTART == 2) CHANGE_PRECISION=true;
+	  else {
+	    if(COUNT_RESTART==0) {
+	       if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step; CHANGE_PRECISION=false;}
+	    }
+	    else {
+	      if( (COUNT_RESTART >=1) && (it >=5) ) CHANGE_PRECISION=true;
+	    }
 	  }
+
+	  if(RESTART) COUNT_RESTART++;
+	 
+	  
 	
 	  it++;
 	}
@@ -699,7 +700,8 @@ PrecFloat integrateUpToInfinite(F&& f,const double& xMin=0.0,const int& verbose=
   if(isnan(sum_final.get())) crash("In integrateUpToInfinity res is nan");
 
   cout.precision(old_cout_precision);
-   
+
+  exit(-1);
   
   return sum_final;
 }
@@ -781,7 +783,7 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1,con
       PrecFloat step=step_old;
       PrecFloat precSum;
    
-  
+ 
       do
 	{
 	  precSum=sum;
@@ -803,10 +805,8 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1,con
 	      const PrecFloat contr=
 		c(t)+c(-t);
 	  
-	      PrecFloat newSum= sum;
-	  
-	      newSum += contr*step;
-
+	      PrecFloat newSum= sum + contr*step;
+		
 	      converged= ( abs(contr*step/sum) < PrecFloat(0.1)*PrecFloat::getEpsilon());
 	      
 	      if(verbose) {
@@ -841,16 +841,20 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1,con
 	  maxAttainableStability*=2;
 	  
 	  if( stability <= maxAttainableStability) {sum_final=sum; RESTART=false; CHANGE_PRECISION=false;}
-	  else if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step; COUNT_RESTART++; CHANGE_PRECISION=false;}
+	  else {
+	    if(COUNT_RESTART==0) {
+	      if(step_old/step > PrecFloat(5e3)) {RESTART=true; step_old=step; CHANGE_PRECISION=false;}
+	    }
+	    else {
+	      if( (COUNT_RESTART >=1) && (it >=5) ) CHANGE_PRECISION=true;
+	    }
+	  }
 
+	  if(RESTART) COUNT_RESTART++;
 
 	  it++;
 
-	  if( stability > maxAttainableStability) {
-	    if( (COUNT_RESTART ==1) && (it >=5) ) CHANGE_PRECISION=true;
-	    if( COUNT_RESTART == 2) CHANGE_PRECISION=true;
-	  }
-	   
+		   
 	}
       while( (stability>maxAttainableStability) && (!RESTART) && (!CHANGE_PRECISION)   );
 
@@ -878,11 +882,12 @@ PrecFloat integrateUpToXmax(F&& f,const double& xMin=0, const double& xMax=1,con
   if(isnan(sum_final.get())) crash("In integrateUpToXmax res is nan");
   
   cout.precision(old_cout_precision);
+
+
   
   
   return sum_final;
 }
-
 
 
 
