@@ -1,6 +1,5 @@
 #include "../include/highPrec.h"
 
-
 using namespace std;
 
 PrecFloat ExpEiComplexSum(PrecFloat MOD, PrecFloat PH, PrecFloat s,  bool MODE) {
@@ -10,9 +9,6 @@ PrecFloat ExpEiComplexSum(PrecFloat MOD, PrecFloat PH, PrecFloat s,  bool MODE) 
   PrecFloat RE_Log= log(MOD);
   PrecFloat IM_Log= PH;
 
-
-
- 
   //evaluate sum_k=1,infty  z^k /( k * k! )
 
   PrecFloat START_SUM, SUM_OLD;

@@ -70,13 +70,12 @@ void get_sigma_list() {
 
 
 
-
 void tau_decay_analysis() {
 
 
 
   get_sigma_list();
-  
+
   Vfloat betas({ 1.99, 2.99, 3.99, 2.99, 3.99, 2.99});
   Vfloat Emax_list({4.0, 4.0, 4.0, 5.0, 5.0, 6.0 });
   vector<bool> Is_Emax_Finite({0,1,1,1,1,1});
@@ -964,7 +963,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     //loop over sigma
     vector<tuple<int,double, double, double>> thread_times_tm(sigma_list.size()), thread_times_OS(sigma_list.size());
     
-#pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic)
     for(int is=0; is < (signed)sigma_list.size(); is++) {
 
       double s= sigma_list[is];
@@ -984,7 +983,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double mult=1e4;
       if( (beta > 2) && (s < 0.15) ) mult=1e5;
      
-      
+  
       auto start = chrono::system_clock::now();
       Br_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm, syst_Aii_tm, 1e4, lAii_tm, MODE, "tm", "Aii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       auto end = chrono::system_clock::now();
@@ -993,11 +992,11 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_Aii_tm= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[Aii_tm, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Aii_tm<<" s"<<endl<<flush;
+	cout<<"Elapsed time[Aii_tm, sigma: "<<s<<", Ens: "<<Vk_data_tm.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Aii_tm<<" s"<<endl<<flush;
       }
-      cout<<"."<<flush;
+      else cout<<"."<<flush;
 
-      
+     
       start = chrono::system_clock::now();
       Br_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS, syst_Aii_OS, 1e4, lAii_OS, MODE, "OS", "Aii_light_"+Vk_data_tm.Tag[iens], -1,0,resc_GeV*Za*Za, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       end = chrono::system_clock::now();
@@ -1005,10 +1004,12 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_Aii_OS= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[Aii_OS, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Aii_OS<<" s"<<endl<<flush;
+	cout<<"Elapsed time[Aii_OS, sigma: "<<s<<", Ens: "<<Vk_data_tm.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Aii_OS<<" s"<<endl<<flush;
       }
-      cout<<"."<<flush;
+      else cout<<"."<<flush;
+      
 
+     
       start = chrono::system_clock::now();
       Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, 1e4, lVii_tm, MODE, "tm", "Vii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, f_syst_V_tm,1, model_V_tm, Is_Emax_Finite, Emax, beta);
       end = chrono::system_clock::now();
@@ -1016,10 +1017,11 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_Vii_tm= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[Vii_tm, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Vii_tm<<" s"<<endl<<flush;
+	cout<<"Elapsed time[Vii_tm, sigma: "<<s<<", Ens: "<<Vk_data_tm.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Vii_tm<<" s"<<endl<<flush;
       }
-      cout<<"."<<flush;
+      else cout<<"."<<flush;
 
+     
       start = chrono::system_clock::now();
       Br_sigma_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_OS, syst_Vii_OS, 1e4, lVii_OS, MODE, "OS", "Vii_light_"+Vk_data_tm.Tag[iens],-1,0, resc_GeV*Zv*Zv, "tau_decay", cov_Vk_OS, f_syst_V_OS,1, model_V_OS ,  Is_Emax_Finite, Emax, beta);
       end = chrono::system_clock::now();
@@ -1027,11 +1029,12 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_Vii_OS= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[Vii_OS, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Vii_OS<<" s"<<endl<<flush;
+	cout<<"Elapsed time[Vii_OS, sigma: "<<s<<", Ens: "<<Vk_data_tm.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Vii_OS<<" s"<<endl<<flush;
       }
-      cout<<"."<<flush;
+      else cout<<"."<<flush;
 
-      
+
+
       start = chrono::system_clock::now();
       Br_sigma_A0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_0, prec, SM_TYPE_0,K0, -1*A0_tm, syst_A0_tm, 1e4, lA0_tm, MODE, "tm", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Zv*Zv, "tau_decay", cov_A0_tm, f_syst_A0_tm,1, model_A0_tm,  Is_Emax_Finite, Emax, beta );
       end = chrono::system_clock::now();
@@ -1039,9 +1042,10 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_A0_tm= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[A0_tm, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_A0_tm<<" s"<<endl<<flush;
+	cout<<"Elapsed time[A0_tm, sigma: "<<s<<", Ens: "<<Vk_data_tm.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_A0_tm<<" s"<<endl<<flush;
       }
-      cout<<"."<<flush;
+      else cout<<"."<<flush;
+      
 
       start = chrono::system_clock::now();
       Br_sigma_A0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_0, prec, SM_TYPE_0,K0, -1*A0_OS, syst_A0_OS, 1e4, lA0_OS, MODE, "OS", "A0_light_"+Vk_data_tm.Tag[iens], -1, 0, resc_GeV*Za*Za, "tau_decay", cov_A0_OS, f_syst_A0_OS,1, model_A0_OS,  Is_Emax_Finite, Emax, beta );
@@ -1050,9 +1054,9 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       double time_A0_OS= elapsed_seconds.count();
       if(tau_verbosity_lev) {
 	cout<<endl<<flush;
-	cout<<"Elapsed time[A0_OS, rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_A0_OS<<" s"<<endl<<flush;
+	cout<<"Elapsed time[A0_OS, sigma: "<<s<<", Ens: "<<Vk_data_tm.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_A0_OS<<" s"<<endl<<flush;
       }
-      cout<<"."<<flush;
+      else cout<<"."<<flush;
 
       thread_times_tm[is] = make_tuple(omp_get_thread_num(), time_A0_tm, time_Aii_tm, time_Vii_tm);
       thread_times_OS[is] = make_tuple(omp_get_thread_num(), time_A0_OS, time_Aii_OS, time_Vii_OS);
@@ -1080,10 +1084,13 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       Br_Vii_tau_OS[iens].distr_list[is] = Br_sigma_Vii_OS;
       Br_A0_tau_OS[iens].distr_list[is] = Br_sigma_A0_OS;
 
+
+      cout<<"Ensemble: "<<Vk_data_tm.Tag[iens]<<", sigma: "<<s<<" completed!"<<endl<<flush;
      
    
      
     }
+    
     cout<<endl;
     cout<<"Finished ensemble: "<<Vk_data_tm.Tag[iens]<<"########################"<<endl<<flush;
     cout<<"Summary of performances: "<<endl<<flush;

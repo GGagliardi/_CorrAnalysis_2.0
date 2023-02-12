@@ -1,6 +1,5 @@
 #include "../include/Spectral.h"
 
-
 double step_size = 0.01; //in units of sigma
 const bool INCLUDE_ERRORS= true;
 const double lambda= INCLUDE_ERRORS?0.9:0.0;
@@ -8,7 +7,7 @@ const bool FIND_OPTIMAL_LAMBDA= true;
 const string COV_MATRIX_MODE = "";
 const int Nmoms=0;
 const int alpha=0;
-const int verbosity_lev=3;
+const int verbosity_lev=0;
 double Beta= 0.0; //1.99;
 const bool mult_estimated_from_norm0=false;
 const bool print_reco_in_stability_analysis=false;
@@ -170,16 +169,16 @@ void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFlo
       if(SMEARING_FUNC=="FF_Gauss_IM") {
 	ft(t-tmin) = precPi()*(exp(t_n*(t_n*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+t_n*s*s)/(sqrt(PrecFloat(2))*s))  - erf((E0-m+t_n*s*s)/(sqrt(PrecFloat(2))*s)))/2
 			       + ((ONLY_FORWARD)?PrecFloat(0):(exp(T_n*(T_n*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+T_n*s*s)/(sqrt(PrecFloat(2))*s))  - erf((E0-m+T_n*s*s)/(sqrt(PrecFloat(2))*s)))/2 ) )); }
-      else ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int, verbosity_lev-2);
+      else ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int, (verbosity_lev > 1));
       
     }
     else {
       if(SMEARING_FUNC=="FF_Gauss_IM") { ft(t-tmin) = precPi()*( exp(t_n*(t_n*s*s -2*m)/2)*( 1 - erf((E0-m+t_n*s*s)/(sqrt(PrecFloat(2))*s)))/2    + ((ONLY_FORWARD)?PrecFloat(0):( exp(T_n*(T_n*s*s -2*m)/2)*( 1 - erf((E0-m+T_n*s*s)/(sqrt(PrecFloat(2))*s)))/2  )))  ;
-	PrecFloat test= integrateUpToInfinite(ftT, E0.get(), verbosity_lev-2);
+	PrecFloat test= integrateUpToInfinite(ftT, E0.get(), (verbosity_lev > 1));
 	cout.precision(100);
 	cout<<"f("<<t<<"): EXACT: "<<ft(t-tmin)<<", NUM: "<<test<<endl<<flush;
       }
-      else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get(), verbosity_lev-2);
+      else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get(), (verbosity_lev > 1));
 
     }
     
@@ -208,7 +207,7 @@ void Get_ft_std(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const Pre
       };
 
     if(SMEARING_FUNC=="FF_Gauss_IM")  ft(t-tmin) = precPi()*( exp(t*(t*s*s -2*m)/2)*(1 - erf((E0-m+t*s*s)/(sqrt(PrecFloat(2))*s)))/2  + ((ONLY_FORWARD)?PrecFloat(0):(exp(tr*(tr*s*s -2*m)/2)*(1 - erf((E0-m+tr*s*s)/(sqrt(PrecFloat(2))*s)))/2   )))  ;
-    else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get(), verbosity_lev-2);
+    else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get(), (verbosity_lev > 1));
   }
 
 
@@ -235,7 +234,7 @@ void Get_ft_std_Emax(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, cons
     if(SMEARING_FUNC=="FF_Gauss_IM") {
       ft(t-tmin) = precPi()*( exp(t*(t*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+t*s*s)/(sqrt(PrecFloat(2))*s)) - erf((E0-m+t*s*s)/(sqrt(PrecFloat(2))*s)))/2
 		 + ((ONLY_FORWARD)?PrecFloat(0):( exp(tr*(tr*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+tr*s*s)/(sqrt(PrecFloat(2))*s)) - erf((E0-m+tr*s*s)/(sqrt(PrecFloat(2))*s)))/2  )));   }
-    else ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int, verbosity_lev-2);
+    else ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int, (verbosity_lev > 1));
   }
   
 
@@ -267,8 +266,8 @@ PrecFloat Get_norm_constraint(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jac
       return f(x, m, s, E0, jack_id) ;
     };
 
-  if(Integrate_up_to_max_energy) return integrateUpToXmax(f1, E0.get(), Emax_int, verbosity_lev-2);
-  else return  integrateUpToInfinite(f1, E0.get(), verbosity_lev-2);
+  if(Integrate_up_to_max_energy) return integrateUpToXmax(f1, E0.get(), Emax_int, (verbosity_lev > 1));
+  else return  integrateUpToInfinite(f1, E0.get(), (verbosity_lev > 1));
   
 }
 
@@ -284,12 +283,12 @@ PrecFloat Get_M2(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id,  const 
     };
 
   if(USE_GENERALIZED_NORM) {
-    if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, 0.0, Emax_int, verbosity_lev-2);
-    else return integrateUpToInfinite(f2, 0.0, verbosity_lev-2);
+    if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, 0.0, Emax_int, (verbosity_lev > 1));
+    else return integrateUpToInfinite(f2, 0.0, (verbosity_lev > 1));
   }
   else{
-    if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, E0.get(), Emax_int, verbosity_lev-2);
-    else return  integrateUpToInfinite(f2, E0.get(), verbosity_lev-2);
+    if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, E0.get(), Emax_int, (verbosity_lev > 1));
+    else return  integrateUpToInfinite(f2, E0.get(), (verbosity_lev > 1));
   }
 
   return PrecFloat(0.0);
@@ -305,7 +304,7 @@ PrecFloat Get_M2_std_norm(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id
       return pow(f(x, m, s, E0, jack_id),2);
     };
 
-  return  integrateUpToInfinite(f2, E0.get(), verbosity_lev-2);
+  return  integrateUpToInfinite(f2, E0.get(), (verbosity_lev > 1));
 
 }
 
@@ -318,8 +317,8 @@ PrecFloat Get_M2_std_norm_Emax(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int ja
       return pow(f(x, m, s, E0, jack_id),2);
     };
 
-  return integrateUpToXmax(f2, E0.get(), Emax_int, verbosity_lev-2);
-  integrateUpToInfinite(f2, E0.get(), verbosity_lev-2);
+  return integrateUpToXmax(f2, E0.get(), Emax_int, (verbosity_lev > 1));
+  integrateUpToInfinite(f2, E0.get(), (verbosity_lev > 1));
 
 }
 
@@ -337,8 +336,8 @@ void Get_M_N(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id,  const func
 	return f(x, m, s, E0, jack_id)*pow(x,PrecFloat(n)) ;
       };
 
-    if(Integrate_up_to_max_energy) M_n(n) = integrateUpToXmax(fn, E0.get(), Emax_int, verbosity_lev-2);
-    else M_n(n) = integrateUpToInfinite(fn,E0.get(), verbosity_lev-2);   
+    if(Integrate_up_to_max_energy) M_n(n) = integrateUpToXmax(fn, E0.get(), Emax_int, (verbosity_lev > 1));
+    else M_n(n) = integrateUpToInfinite(fn,E0.get(), (verbosity_lev > 1));   
      
   }
 
