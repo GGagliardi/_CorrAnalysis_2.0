@@ -106,6 +106,9 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
     //do nothing
   }
 
+  else if(Analysis_Mode == "Semileptonic") {
+    //do nothing
+  }
 
   
     
@@ -227,6 +230,10 @@ void MasterClass_analysis::Analysis_manager() {
   if(Analysis_Mode == "tau_decay") {
 
     tau_decay_analysis();
+  }
+
+  if(Analysis_Mode == "Semileptonic") {
+    semileptonic_FF_analysis();
   }
   
   return;

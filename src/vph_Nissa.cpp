@@ -14,15 +14,17 @@ const double qd = -1.0/3.0; //electric charge of d-type quark
 const string Meson="Ds";
 double Lambda_QCD= 0.3; //300 MeV
 bool Is_reph=true;
-bool Perform_continuum_extrapolation=true;
+bool Perform_continuum_extrapolation=false;
 bool Include_a4=false;
 string Fit_tag= ( (Include_a4==true)?"wa4_":"");
 string _Fit_tag= ( (Include_a4==true)?"_wa4":"");
-int num_xg=11;
+int num_xg=8;
 Vfloat xg_t_list;
 Vfloat xg_to_spline;
 Vfloat xg_to_spline_VMD;
 Vfloat a_to_print;
+Vfloat num_xg_per_ens_list;
+Vfloat Is_large_vol;
 
 
 void Get_xg_t_list() {
@@ -63,62 +65,117 @@ void Get_xg_to_spline_VMD() {
 
 void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
-   /*
+   
    if(Ens == "cA211a.12.48") {
 
     if(ixg==0) {
       if(W=="A") {Tmin= 16; Tmax=22;}
-      else {Tmin=20;Tmax=32;}
+      else if(W=="V") {Tmin=20;Tmax=32;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==1) {
       if(W=="A") {Tmin= 16; Tmax=22;}
-      else {Tmin=20;Tmax=32;}
+      else if(W=="V") {Tmin=20;Tmax=32;}
+      else if(W=="Ad") {Tmin=25; Tmax=29;}
+      else if(W=="Vd") { Tmin=25; Tmax=36;}
+      else if(W=="Au") { Tmin=19; Tmax=23;}
+      else if(W=="Vu") { Tmin=30; Tmax=36;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==2) {
       if(W=="A") {Tmin= 16; Tmax=23;}
-      else {Tmin=12;Tmax=25;}
+      else if(W=="V") {Tmin=12;Tmax=25;}
+      else if(W=="Ad") {Tmin=24; Tmax=29;}
+      else if(W=="Vd") { Tmin=25; Tmax=38;}
+      else if(W=="Au") { Tmin=20; Tmax=23;}
+      else if(W=="Vu") { Tmin=27; Tmax=36;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==3) {
       if(W=="A") {Tmin= 16; Tmax=23;}
-      else {Tmin=18;Tmax=28;}
+      else if(W=="V") {Tmin=18;Tmax=28;}
+      else if(W=="Ad") {Tmin=24; Tmax=29;}
+      else if(W=="Vd") { Tmin=25; Tmax=38;}
+      else if(W=="Au") { Tmin=20; Tmax=23;}
+      else if(W=="Vu") { Tmin=25; Tmax=36;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==4) {
       if(W=="A") {Tmin= 17; Tmax=23;}
-      else {Tmin=18;Tmax=28;}
+      else if(W=="V") {Tmin=18;Tmax=28;}
+      else if(W=="Ad") {Tmin=24; Tmax=29;}
+      else if(W=="Vd") { Tmin=19; Tmax=28;}
+      else if(W=="Au") { Tmin=20; Tmax=23;}
+      else if(W=="Vu") { Tmin=25; Tmax=36;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==5) {
       if(W=="A") {Tmin= 17; Tmax=23;}
-      else {Tmin=18;Tmax=26;}
+      else if(W=="V") {Tmin=18;Tmax=26;}
+      else if(W=="Ad") {Tmin=24; Tmax=29;}
+      else if(W=="Vd") { Tmin=12; Tmax=23;}
+      else if(W=="Au") { Tmin=20; Tmax=23;}
+      else if(W=="Vu") { Tmin=25; Tmax=36;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 17; Tmax=26;}
-      else {Tmin=17;Tmax=26;}
+      else if(W=="V") {Tmin=17;Tmax=26;}
+      else if(W=="Ad") { Tmin=23; Tmax=29;}
+      else if(W=="Vd") { Tmin=17; Tmax=26;}
+      else if(W=="Au") { Tmin=20; Tmax=23;}
+      else if(W=="Vu") { Tmin=15; Tmax=36;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==7) {
       if(W=="A") {Tmin= 17; Tmax=28;}
-      else {Tmin=17;Tmax=26;}
+      else if(W=="V") {Tmin=17;Tmax=26;}
+      else if(W=="Ad") { Tmin=23; Tmax=29;}
+      else if(W=="Vd") { Tmin=17; Tmax=26;}
+      else if(W=="Au") { Tmin=20; Tmax=23;}
+      else if(W=="Vu") { Tmin=12; Tmax=29;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==8) {
       if(W=="A") {Tmin= 17; Tmax=29;}
-      else {Tmin=15;Tmax=26;}
+      else if(W=="V") {Tmin=15;Tmax=26;}
+      else if(W=="Ad") { Tmin=14; Tmax=24;}
+      else if(W=="Vd") { Tmin=17; Tmax=26;}
+      else if(W=="Au") { Tmin=20; Tmax=23;}
+      else if(W=="Vu") { Tmin=12; Tmax=29;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==9) {
       if(W=="A") {Tmin= 14; Tmax=29;}
-      else {Tmin=15;Tmax=26;}
+      else if(W=="V") {Tmin=15;Tmax=26;}
+      else if(W=="Ad") { Tmin=14; Tmax=24;}
+      else if(W=="Vd") { Tmin=16; Tmax=26;}
+      else if(W=="Au") { Tmin=19; Tmax=23;}
+      else if(W=="Vu") { Tmin=12; Tmax=29;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==10) {
       if(W=="A") {Tmin= 14; Tmax=25;}
-      else {Tmin=15;Tmax=27;}
+      else if(W=="V") {Tmin=15;Tmax=27;}
+      else if(W=="Ad") { Tmin=14; Tmax=24;}
+      else if(W=="Vd") { Tmin=16; Tmax=26;}
+      else if(W=="Au") { Tmin=19; Tmax=23;}
+      else if(W=="Vu") { Tmin=12; Tmax=29;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
@@ -128,71 +185,136 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
   
 
-   else if(Ens == "cB211b.072.64") {
+   else if( (Ens == "cB211b.072.64") || (Ens == "cB211b.072.96")) {
 
     if(ixg==0) {
       if(W=="A") {Tmin= 20; Tmax=30;}
-      else {Tmin=20;Tmax=30;}
+      else if(W=="V") {Tmin=20;Tmax=30;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==1) {
       if(W=="A") {Tmin= 17; Tmax=24;}
-      else {Tmin=21;Tmax=45;}
+      else if(W=="V") {Tmin=21;Tmax=45;}
+      else if(W=="Ad") { Tmin=24; Tmax=34;}
+      else if(W=="Vd") { Tmin=36; Tmax=48;}
+      else if(W=="Au") { Tmin=28; Tmax=42;}
+      else if(W=="Vu") { Tmin=35; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==2) {
       if(W=="A") {Tmin= 17; Tmax=29;}
-      else {Tmin=23;Tmax=45;}
+      else if(W=="V") {Tmin=23;Tmax=45;}
+      else if(W=="Ad") { Tmin=24; Tmax=34;}
+      else if(W=="Vd") { Tmin=36; Tmax=49;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=33; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==3) {
       if(W=="A") {Tmin= 18; Tmax=28;}
-      else {Tmin=23;Tmax=45;}
+      else if(W=="V") {Tmin=23;Tmax=45;}
+      else if(W=="Ad") { Tmin=24; Tmax=34;}
+      else if(W=="Vd") { Tmin=36; Tmax=42;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=32; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==4) {
       if(W=="A") {Tmin= 18; Tmax=29;}
-      else {Tmin=18;Tmax=38;}
+      else if(W=="V") {Tmin=18;Tmax=38;}
+      else if(W=="Ad") { Tmin=24; Tmax=34;}
+      else if(W=="Vd") { Tmin=36; Tmax=42;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=23; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==5) {
       if(W=="A") {Tmin= 17; Tmax=30;}
-      else {Tmin=18;Tmax=38;}
+      else if(W=="V") {Tmin=18;Tmax=38;}
+      else if(W=="Ad") { Tmin=24; Tmax=34;}
+      else if(W=="Vd") { Tmin=36; Tmax=45;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=22; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 17; Tmax=29;}
-      else {Tmin=18;Tmax=38;}
+      else if(W=="V") {Tmin=18;Tmax=38;}
+      else if(W=="Ad") { Tmin=24; Tmax=34;}
+      else if(W=="Vd") { Tmin=36; Tmax=45;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=17; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==7) {
       if(W=="A") {Tmin= 14; Tmax=29;}
-      else {Tmin=18;Tmax=38;}
+      else if(W=="V") {Tmin=18;Tmax=38;}
+      else if(W=="Ad") { Tmin=24; Tmax=35;}
+      else if(W=="Vd") { Tmin=28; Tmax=39;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=17; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==8) {
       if(W=="A") {Tmin= 10; Tmax=29;}
-      else {Tmin=12;Tmax=38;}
+      else if(W=="V") {Tmin=12;Tmax=38;}
+      else if(W=="Ad") { Tmin=24; Tmax=35;}
+      else if(W=="Vd") { Tmin=23; Tmax=38;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=15; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==9) {
       if(W=="A") {Tmin= 10; Tmax=30;}
-      else {Tmin=26;Tmax=39;}
+      else if(W=="V") {Tmin=26;Tmax=39;}
+      else if(W=="Ad") { Tmin=24; Tmax=35;}
+      else if(W=="Vd") { Tmin=23; Tmax=38;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=15; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==10) {
       if(W=="A") {Tmin= 10; Tmax=34;}
-      else {Tmin=26;Tmax=39;}
+      else if(W=="V") {Tmin=26;Tmax=39;}
+      else if(W=="Ad") { Tmin=24; Tmax=35;}
+      else if(W=="Vd") { Tmin=23; Tmax=38;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=7; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==11) {
       if(W=="A") {Tmin= 20; Tmax=30;}
-      else {Tmin=20;Tmax=30;}
+      else if(W=="V") {Tmin=20;Tmax=30;}
+      else if(W=="Ad") { Tmin=24; Tmax=35;}
+      else if(W=="Vd") { Tmin=23; Tmax=38;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=7; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==12) {
       if(W=="A") {Tmin= 20; Tmax=30;}
-      else {Tmin=20;Tmax=30;}
+      else if(W=="V") {Tmin=20;Tmax=30;}
+      else if(W=="Ad") { Tmin=20; Tmax=35;}
+      else if(W=="Vd") { Tmin=23; Tmax=38;}
+      else if(W=="Au") { Tmin=28; Tmax=41;}
+      else if(W=="Vu") { Tmin=7; Tmax=42;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
@@ -206,57 +328,112 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     if(ixg==0) {
       if(W=="A") {Tmin= 19; Tmax=29;}
-      else {Tmin=28;Tmax=55;}
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==1) {
       if(W=="A") {Tmin= 19; Tmax=29;}
-      else {Tmin=28;Tmax=55;}
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=32; Tmax=52;}
+      else if(W=="Vd") { Tmin=35; Tmax=54;}
+      else if(W=="Au") { Tmin=29; Tmax=49;}
+      else if(W=="Vu") { Tmin=36; Tmax=54;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==2) {
       if(W=="A") {Tmin= 21; Tmax=29;}
-      else {Tmin=28;Tmax=55;}
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=30; Tmax=52;}
+      else if(W=="Vd") { Tmin=36; Tmax=54;}
+      else if(W=="Au") { Tmin=29; Tmax=54;}
+      else if(W=="Vu") { Tmin=36; Tmax=54;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==3) {
       if(W=="A") {Tmin= 21; Tmax=29;}
-      else {Tmin=28;Tmax=55;}
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=30; Tmax=52;}
+      else if(W=="Vd") { Tmin=36; Tmax=54;}
+      else if(W=="Au") { Tmin=29; Tmax=54;}
+      else if(W=="Vu") { Tmin=38; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==4) {
       if(W=="A") {Tmin= 21; Tmax=30;}
-      else {Tmin=28;Tmax=55;}
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=30; Tmax=51;}
+      else if(W=="Vd") { Tmin=36; Tmax=55;}
+      else if(W=="Au") { Tmin=29; Tmax=54;}
+      else if(W=="Vu") { Tmin=38; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==5) {
       if(W=="A") {Tmin= 21; Tmax=30;}
-      else {Tmin=25;Tmax=55;}
+      else if(W=="V") {Tmin=25;Tmax=55;}
+      else if(W=="Ad") { Tmin=30; Tmax=51;}
+      else if(W=="Vd") { Tmin=36; Tmax=55;}
+      else if(W=="Au") { Tmin=29; Tmax=54;}
+      else if(W=="Vu") { Tmin=38; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 21; Tmax=30;}
-      else {Tmin=28;Tmax=47;}
+      else if(W=="V") {Tmin=28;Tmax=47;}
+      else if(W=="Ad") { Tmin=30; Tmax=51;}
+      else if(W=="Vd") { Tmin=32; Tmax=53;}
+      else if(W=="Au") { Tmin=29; Tmax=51;}
+      else if(W=="Vu") { Tmin=21; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==7) {
       if(W=="A") {Tmin= 21; Tmax=31;}
-      else {Tmin=16;Tmax=40;}
+      else if(W=="V") {Tmin=16;Tmax=40;}
+      else if(W=="Ad") { Tmin=30; Tmax=51;}
+      else if(W=="Vd") { Tmin=32; Tmax=53;}
+      else if(W=="Au") { Tmin=29; Tmax=51;}
+      else if(W=="Vu") { Tmin=19; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==8) {
       if(W=="A") {Tmin= 21; Tmax=37;}
-      else {Tmin=15;Tmax=47;}
+      else if(W=="V") {Tmin=15;Tmax=47;}
+      else if(W=="Ad") { Tmin=23; Tmax=47;}
+      else if(W=="Vd") { Tmin=30; Tmax=53;}
+      else if(W=="Au") { Tmin=29; Tmax=51;}
+      else if(W=="Vu") { Tmin=16; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==9) {
       if(W=="A") {Tmin= 35; Tmax=47;}
-      else {Tmin=24;Tmax=46;}
+      else if(W=="V") {Tmin=24;Tmax=46;}
+      else if(W=="Ad") { Tmin=22; Tmax=46;}
+      else if(W=="Vd") { Tmin=30; Tmax=53;}
+      else if(W=="Au") { Tmin=29; Tmax=54;}
+      else if(W=="Vu") { Tmin=15; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==10) {
       if(W=="A") {Tmin= 35; Tmax=47;}
-      else {Tmin=25;Tmax=46;}
+      else if(W=="V") {Tmin=25;Tmax=46;}
+      else if(W=="Ad") { Tmin=22; Tmax=46;}
+      else if(W=="Vd") { Tmin=30; Tmax=56;}
+      else if(W=="Au") { Tmin=29; Tmax=54;}
+      else if(W=="Vu") { Tmin=15; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
 
@@ -271,57 +448,112 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     if(ixg==0) {
       if(W=="A") {Tmin= 21; Tmax=28;}
-      else {Tmin=28;Tmax=55;}
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==1) {
       if(W=="A") {Tmin= 19; Tmax=35;}
-      else {Tmin=29;Tmax=45;}
+      else if(W=="V") {Tmin=29;Tmax=45;}
+      else if(W=="Ad") { Tmin=32; Tmax=45;}
+      else if(W=="Vd") { Tmin=60; Tmax=75;}
+      else if(W=="Au") { Tmin=29; Tmax=50;}
+      else if(W=="Vu") { Tmin=39; Tmax=59;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==2) {
       if(W=="A") {Tmin= 19; Tmax=35;}
-      else {Tmin=29;Tmax=45;}
+      else if(W=="V") {Tmin=29;Tmax=45;}
+      else if(W=="Ad") { Tmin=28; Tmax=45;}
+      else if(W=="Vd") { Tmin=57; Tmax=69;}
+      else if(W=="Au") { Tmin=29; Tmax=50;}
+      else if(W=="Vu") { Tmin=38; Tmax=56;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==3) {
       if(W=="A") {Tmin= 20; Tmax=35;}
-      else {Tmin=29;Tmax=45;}
+      else if(W=="V") {Tmin=29;Tmax=45;}
+      else if(W=="Ad") { Tmin=28; Tmax=45;}
+      else if(W=="Vd") { Tmin=38; Tmax=68;}
+      else if(W=="Au") { Tmin=29; Tmax=50;}
+      else if(W=="Vu") { Tmin=37; Tmax=56;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==4) {
       if(W=="A") {Tmin= 20; Tmax=35;}
-      else {Tmin=29;Tmax=49;}
+      else if(W=="V") {Tmin=29;Tmax=49;}
+      else if(W=="Ad") { Tmin=28; Tmax=45;}
+      else if(W=="Vd") { Tmin=33; Tmax=68;}
+      else if(W=="Au") { Tmin=29; Tmax=50;}
+      else if(W=="Vu") { Tmin=35; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==5) {
       if(W=="A") {Tmin= 20; Tmax=36;}
-      else {Tmin=30;Tmax=49;}
+      else if(W=="V") {Tmin=30;Tmax=49;}
+      else if(W=="Ad") { Tmin=28; Tmax=45;}
+      else if(W=="Vd") { Tmin=32; Tmax=68;}
+      else if(W=="Au") { Tmin=29; Tmax=50;}
+      else if(W=="Vu") { Tmin=27; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 20; Tmax=35;}
-      else {Tmin=30;Tmax=50;}
+      else if(W=="V") {Tmin=30;Tmax=50;}
+      else if(W=="Ad") { Tmin=28; Tmax=45;}
+      else if(W=="Vd") { Tmin=31; Tmax=68;}
+      else if(W=="Au") { Tmin=29; Tmax=50;}
+      else if(W=="Vu") { Tmin=27; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==7) {
       if(W=="A") {Tmin= 21; Tmax=37;}
-      else {Tmin=29;Tmax=49;}
+      else if(W=="V")  {Tmin=29;Tmax=49;}
+      else if(W=="Ad") { Tmin=25; Tmax=44;}
+      else if(W=="Vd") { Tmin=30; Tmax=68;}
+      else if(W=="Au") { Tmin=29; Tmax=50;}
+      else if(W=="Vu") { Tmin=21; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==8) {
       if(W=="A") {Tmin= 19; Tmax=45;}
-      else {Tmin=14;Tmax=42;}
+      else if(W=="V") {Tmin=14;Tmax=42;}
+      else if(W=="Ad") { Tmin=19; Tmax=43;}
+      else if(W=="Vd") { Tmin=18; Tmax=65;}
+      else if(W=="Au") { Tmin=29; Tmax=50;}
+      else if(W=="Vu") { Tmin=20; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==9) {
       if(W=="A") {Tmin= 20; Tmax=44;}
-      else {Tmin=33;Tmax=67;}
+      else if(W=="V") {Tmin=33;Tmax=67;}
+      else if(W=="Ad") { Tmin=10; Tmax=44;}
+      else if(W=="Vd") { Tmin=11; Tmax=65;}
+      else if(W=="Au") { Tmin=29; Tmax=50;}
+      else if(W=="Vu") { Tmin=13; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     
     }
     else if(ixg==10) {
       if(W=="A") {Tmin= 29; Tmax=54;}
-      else {Tmin=45;Tmax=67;}
+      else if(W=="V") {Tmin=45;Tmax=67;}
+      else if(W=="Ad") { Tmin=21; Tmax=44;}
+      else if(W=="Vd") { Tmin=26; Tmax=58;}
+      else if(W=="Au") { Tmin=29; Tmax=50;}
+      else if(W=="Vu") { Tmin=23; Tmax=52;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
 
@@ -336,66 +568,112 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
   
 
   return; 
-   */
+   
 
 
-
+  /*
    if(Ens == "cA211a.12.48") {
 
     if(ixg==0) {
       if(W=="A") {Tmin= 16; Tmax=22;}
-      else {Tmin=20;Tmax=32;}
-
+      else if(W=="V") {Tmin=20;Tmax=32;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
+	     
     }
     else if(ixg==1) {
       if(W=="A") {Tmin= 16; Tmax=22;}
-      else {Tmin=20;Tmax=32;}
+      else if(W=="V") {Tmin=20;Tmax=32;}
+      else if(W=="Ad") { Tmin=25; Tmax=29;}
+      else if(W=="Vd") { Tmin=25; Tmax=36;}
+      else if(W=="Au") { Tmin=19; Tmax=23;}
+      else if(W=="Vu") { Tmin=30; Tmax=36;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
 
     }
     else if(ixg==2) {
       if(W=="A") {Tmin= 16; Tmax=23;}
-      else {Tmin=12;Tmax=25;}
-
+      else if(W=="V") {Tmin=12;Tmax=25;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==3) {
       if(W=="A") {Tmin= 16; Tmax=23;}
-      else {Tmin=18;Tmax=28;}
-    
+      else if(W=="V") {Tmin=18;Tmax=28;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==4) {
       if(W=="A") {Tmin= 17; Tmax=23;}
-      else {Tmin=18;Tmax=28;}
-    
+      else if(W=="V") {Tmin=18;Tmax=28;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==5) {
       if(W=="A") {Tmin= 17; Tmax=23;}
-      else {Tmin=18;Tmax=26;}
-    
+      else if(W=="V") {Tmin=18;Tmax=26;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 17; Tmax=26;}
-      else {Tmin=17;Tmax=26;}
-    
+      else if(W=="V") {Tmin=17;Tmax=26;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==7) {
       if(W=="A") {Tmin= 17; Tmax=28;}
-      else {Tmin=17;Tmax=26;}
-    
+      else if(W=="V") {Tmin=17;Tmax=26;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==8) {
       if(W=="A") {Tmin= 17; Tmax=29;}
-      else {Tmin=15;Tmax=26;}
-    
+      else if(W=="V") {Tmin=15;Tmax=26;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==9) {
       if(W=="A") {Tmin= 15; Tmax=28;}
-      else {Tmin=16;Tmax=26;}
-    
+      else if(W=="V") {Tmin=16;Tmax=26;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==10) {
       if(W=="A") {Tmin= 14; Tmax=28;}
-      else {Tmin=16;Tmax=26;}
-
+      else if(W=="V") {Tmin=16;Tmax=26;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
 
@@ -408,68 +686,120 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     if(ixg==0) {
       if(W=="A") {Tmin= 20; Tmax=30;}
-      else {Tmin=20;Tmax=30;}
-
+      else if(W=="V") {Tmin=20;Tmax=30;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==1) {
       if(W=="A") {Tmin= 17; Tmax=24;}
-      else {Tmin=21;Tmax=45;}
-
+      else if(W=="V") {Tmin=21;Tmax=45;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==2) {
       if(W=="A") {Tmin= 17; Tmax=29;}
-      else {Tmin=23;Tmax=45;}
-
+      else if(W=="V") {Tmin=23;Tmax=45;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==3) {
       if(W=="A") {Tmin= 18; Tmax=28;}
-      else {Tmin=23;Tmax=45;}
-    
+      else if(W=="V") {Tmin=23;Tmax=45;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==4) {
       if(W=="A") {Tmin= 18; Tmax=29;}
-      else {Tmin=18;Tmax=38;}
-    
+      else if(W=="V") {Tmin=18;Tmax=38;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==5) {
       if(W=="A") {Tmin= 17; Tmax=30;}
-      else {Tmin=18;Tmax=38;}
-    
+      else if(W=="V") {Tmin=18;Tmax=38;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 17; Tmax=29;}
-      else {Tmin=18;Tmax=38;}
-    
+      else if(W=="V") {Tmin=18;Tmax=38;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==7) {
       if(W=="A") {Tmin= 14; Tmax=29;}
-      else {Tmin=18;Tmax=38;}
-    
+      else if(W=="V") {Tmin=18;Tmax=38;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==8) {
       if(W=="A") {Tmin= 10; Tmax=29;}
-      else {Tmin=12;Tmax=38;}
-    
+      else if(W=="V") {Tmin=12;Tmax=38;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==9) {
       if(W=="A") {Tmin= 10; Tmax=29;}
-      else {Tmin=12;Tmax=38;}
-    
+      else if(W=="V") {Tmin=12;Tmax=38;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==10) {
       if(W=="A") {Tmin= 14; Tmax=30;}
-      else {Tmin=12;Tmax=38;}
-
+      else if(W=="V") {Tmin=12;Tmax=38;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==11) {
       if(W=="A") {Tmin= 20; Tmax=30;}
-      else {Tmin=20;Tmax=30;}
-
+      else if(W=="V") {Tmin=20;Tmax=30;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==12) {
       if(W=="A") {Tmin= 20; Tmax=30;}
-      else {Tmin=20;Tmax=30;}
-
+      else if(W=="V") {Tmin=20;Tmax=30;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
 
@@ -482,58 +812,102 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     if(ixg==0) {
       if(W=="A") {Tmin= 19; Tmax=29;}
-      else {Tmin=28;Tmax=55;}
-
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==1) {
       if(W=="A") {Tmin= 19; Tmax=29;}
-      else {Tmin=28;Tmax=55;}
-
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==2) {
       if(W=="A") {Tmin= 21; Tmax=29;}
-      else {Tmin=28;Tmax=55;}
-
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==3) {
       if(W=="A") {Tmin= 21; Tmax=29;}
-      else {Tmin=28;Tmax=55;}
-    
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==4) {
       if(W=="A") {Tmin= 21; Tmax=30;}
-      else {Tmin=28;Tmax=55;}
-    
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==5) {
       if(W=="A") {Tmin= 21; Tmax=30;}
-      else {Tmin=25;Tmax=55;}
-    
+      else if(W=="V") {Tmin=25;Tmax=55;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 21; Tmax=30;}
-      else {Tmin=28;Tmax=47;}
-    
+      else if(W=="V") {Tmin=28;Tmax=47;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==7) {
       if(W=="A") {Tmin= 21; Tmax=31;}
-      else {Tmin=16;Tmax=40;}
-    
+      else if(W=="V") {Tmin=16;Tmax=40;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==8) {
       if(W=="A") {Tmin= 21; Tmax=37;}
-      else {Tmin=15;Tmax=47;}
-    
+      else if(W=="V") {Tmin=15;Tmax=47;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==9) {
       if(W=="A") {Tmin= 14; Tmax=46;}
-      else {Tmin=11;Tmax=39;}
-    
+      else if(W=="V") {Tmin=11;Tmax=39;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==10) {
       if(W=="A") {Tmin= 15; Tmax=42;}
-      else {Tmin=15;Tmax=35;}
-
+      else if(W=="V") {Tmin=15;Tmax=35;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
 
     else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
@@ -547,58 +921,102 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     if(ixg==0) {
       if(W=="A") {Tmin= 21; Tmax=28;}
-      else {Tmin=28;Tmax=55;}
-
+      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==1) {
       if(W=="A") {Tmin= 19; Tmax=35;}
-      else {Tmin=29;Tmax=45;}
-
+      else if(W=="V") {Tmin=29;Tmax=45;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==2) {
       if(W=="A") {Tmin= 19; Tmax=35;}
-      else {Tmin=29;Tmax=45;}
-
+      else if(W=="V") {Tmin=29;Tmax=45;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==3) {
       if(W=="A") {Tmin= 20; Tmax=35;}
-      else {Tmin=29;Tmax=45;}
-    
+      else if(W=="V") {Tmin=29;Tmax=45;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==4) {
       if(W=="A") {Tmin= 20; Tmax=35;}
-      else {Tmin=29;Tmax=49;}
-    
+      else if(W=="V") {Tmin=29;Tmax=49;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==5) {
       if(W=="A") {Tmin= 20; Tmax=36;}
-      else {Tmin=30;Tmax=49;}
-    
+      else if(W=="V") {Tmin=30;Tmax=49;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 20; Tmax=35;}
-      else {Tmin=30;Tmax=50;}
-    
+      else if(W=="V") {Tmin=30;Tmax=50;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==7) {
       if(W=="A") {Tmin= 21; Tmax=37;}
-      else {Tmin=29;Tmax=49;}
-    
+      else if(W=="V") {Tmin=29;Tmax=49;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==8) {
       if(W=="A") {Tmin= 19; Tmax=45;}
-      else {Tmin=14;Tmax=42;}
-    
+      else if(W=="V") {Tmin=14;Tmax=42;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==9) {
       if(W=="A") {Tmin= 21; Tmax=44;}
-      else {Tmin=10;Tmax=58;}
-    
+      else if(W=="V") {Tmin=10;Tmax=58;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
     else if(ixg==10) {
       if(W=="A") {Tmin= 21; Tmax=45;}
-      else {Tmin=10;Tmax=58;}
-
+      else if(W=="V") {Tmin=10;Tmax=58;}
+      else if(W=="Ad") { Tmin=20; Tmax=32;}
+      else if(W=="Vd") { Tmin=20; Tmax=32;}
+      else if(W=="Au") { Tmin=20; Tmax=32;}
+      else if(W=="Vu") { Tmin=20; Tmax=32;}
+      else crash("time intervals for fits in channel: "+W+" not implemented");
     }
 
     else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
@@ -612,6 +1030,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
   
 
   return; 
+  */
 }
 
 
@@ -650,6 +1069,46 @@ void Compute_form_factors_Nissa() {
   //vector
   vector<vector<vector<data_t>>> C_V_Fu_data(size_mu_nu), C_V_Fd_data(size_mu_nu), C_V_Bu_data(size_mu_nu), C_V_Bd_data(size_mu_nu);
 
+
+
+  auto Sort_light_confs = [](string A, string B) {
+
+
+    //return A<B;
+			     
+    int conf_length_A= A.length();
+    int conf_length_B= B.length();
+
+    int pos_a_slash=-1;
+    int pos_b_slash=-1;
+    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+    
+    string A_bis= A.substr(pos_a_slash+1);
+    string B_bis= B.substr(pos_b_slash+1);
+
+			     
+    string conf_num_A = A_bis.substr(0,4);
+    string conf_num_B = B_bis.substr(0,4);
+
+    if(A_bis.length() <= 4) return A_bis < B_bis;
+     
+    string rA = A_bis.substr(A_bis.length()-5);
+    string rB = B_bis.substr(B_bis.length()-5);
+    if(rA.substr(0,1) == "r") { 
+      int n1 = stoi(rA.substr(1,1));
+      int n2 = stoi(rB.substr(1,1));
+      if(rA == rB) {
+	if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+	else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+	else crash("stream not recognized");
+      }
+      else return n1<n2;
+    }
+    return A_bis<B_bis;
+  };
+  
+  
  
 
   
@@ -721,22 +1180,22 @@ void Compute_form_factors_Nissa() {
 
 	//vector
 	//Fu
-	C_V_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
+	C_V_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Fd
-	C_V_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
+	C_V_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bu
-	C_V_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
+	C_V_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bd
-	C_V_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5");
+	C_V_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 
 	//axial
-	C_A_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
+	C_A_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Fd
-	C_A_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
+	C_A_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bu
-	C_A_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
+	C_A_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bd
-	C_A_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5");
+	C_A_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 
       }
     }
@@ -750,6 +1209,8 @@ void Compute_form_factors_Nissa() {
   vector<distr_t_list> FA_per_ens(Nens), FV_per_ens(Nens), FA_u_per_ens(Nens), FV_u_per_ens(Nens), FA_d_per_ens(Nens), FV_d_per_ens(Nens);
   vector<distr_t_list> FA_per_kin(num_xg-1), FV_per_kin(num_xg-1), FA_u_per_kin(num_xg-1), FV_u_per_kin(num_xg-1), FA_d_per_kin(num_xg-1), FV_d_per_kin(num_xg-1); //num_xg -1 is to exclude xg=0 which is undefined
   distr_t_list a_distr_list(UseJack);
+  distr_t_list a_distr_list_red(UseJack);
+  Vfloat L_list, L_list_red;
   //M_Ds, F_Ds
   distr_t_list MP_list(UseJack);
   distr_t_list FP_list(UseJack);
@@ -830,9 +1291,11 @@ void Compute_form_factors_Nissa() {
 
     cout<<"pars_list.dat: Read!"<<endl;
 
-    if((signed)thetas.size() != num_xg) crash("Number of rows in pars_list.dat does not match num_xg"); 
+    //if((signed)thetas.size() != num_xg) crash("Number of rows in pars_list.dat does not match num_xg"); 
 
-
+    int num_xg_per_ens= (signed)thetas.size();
+    num_xg_per_ens_list.push_back(num_xg_per_ens);
+    
     //RCs
     distr_t Za, Zv, a_distr;
     if(data_2pts.Tag[iens].substr(1,1)=="A") { Za= ZA_A; Zv=ZV_A;a_distr=a_A;}
@@ -843,20 +1306,32 @@ void Compute_form_factors_Nissa() {
 
 
     a_distr_list.distr_list.push_back(a_distr);
-
+    L_list.push_back(L_info.L);
+    
+    if(data_2pts.Tag[iens] != "cB211b.072.96") {
+      a_distr_list_red.distr_list.push_back(a_distr);
+      L_list_red.push_back(L_info.L);
+    }
+   
+    
 
     //read masses
     double mu= masses_u[0];
     double md= masses_d[0];
 
-
+    
     cout<<"ZA: "<<Za.ave()<<" +- "<<Za.err()<<endl;
     cout<<"ZV: "<<Zv.ave()<<" +- "<<Zv.err()<<endl;
     cout<<"mu: "<<mu<<endl;
     cout<<"md: "<<md<<endl;
+    cout<<"Number of kinematic present: "<<num_xg_per_ens<<endl;
+    cout<<"Number of kinematic analyzed: "<<num_xg<<endl;
     
     
-
+    
+    //check if is large volume
+    if(data_2pts.Tag[iens]=="cB211b.072.96") Is_large_vol.push_back(1);
+    else Is_large_vol.push_back(0);
     
     
    
@@ -864,7 +1339,8 @@ void Compute_form_factors_Nissa() {
 
     //set time interval for eff_mass_fit
     if(data_2pts.Tag[iens].substr(1,1) =="A") {Corr.Tmin=19; Corr.Tmax=35;}
-    else if(data_2pts.Tag[iens].substr(1,1) =="B") {Corr.Tmin=25; Corr.Tmax=40;}
+    else if(data_2pts.Tag[iens] =="cB211b.072.64") {Corr.Tmin=25; Corr.Tmax=45;}
+    else if(data_2pts.Tag[iens] =="cB211b.072.96") {Corr.Tmin=25; Corr.Tmax=45;}
     else if(data_2pts.Tag[iens].substr(1,1) == "C") {Corr.Tmin=33;Corr.Tmax=51;}
     else if(data_2pts.Tag[iens].substr(1,1) == "D") {Corr.Tmin=35;Corr.Tmax=54;}
     else crash("In fixing [Tmin, Tmax] for MP, Ensemble: "+data_2pts.Tag[iens]+" not recognized");
@@ -884,7 +1360,8 @@ void Compute_form_factors_Nissa() {
     
     //set time interval for eff_mass_fit SM
     if(data_2pts.Tag[iens].substr(1,1) =="A") {Corr.Tmin=24; Corr.Tmax=35;}
-    else if(data_2pts.Tag[iens].substr(1,1) =="B") {Corr.Tmin=20; Corr.Tmax=36;}
+    else if(data_2pts.Tag[iens] =="cB211b.072.64") {Corr.Tmin=20; Corr.Tmax=36;}
+    else if(data_2pts.Tag[iens] =="cB211b.072.96") {Corr.Tmin=20; Corr.Tmax=36;}
     else if(data_2pts.Tag[iens].substr(1,1) == "C")  {Corr.Tmin=33;Corr.Tmax=51;}
     else if(data_2pts.Tag[iens].substr(1,1) == "D")  {Corr.Tmin=41;Corr.Tmax=54;}
     else crash("In fixing [Tmin, Tmax] for smeared MP, Ensemble: "+data_2pts.Tag[iens]+" not recognized");
@@ -927,6 +1404,12 @@ void Compute_form_factors_Nissa() {
 
     Vfloat ax_Tmin, ax_Tmax;
     Vfloat vec_Tmin, vec_Tmax;
+
+    Vfloat ax_u_Tmin, ax_u_Tmax;
+    Vfloat vec_u_Tmin, vec_u_Tmax;
+
+    Vfloat ax_d_Tmin, ax_d_Tmax;
+    Vfloat vec_d_Tmin, vec_d_Tmax;
     
 
     for(int ixg=0;ixg<num_xg;ixg++) {
@@ -955,8 +1438,9 @@ void Compute_form_factors_Nissa() {
 
       //define photon exponential to be removed
       Vfloat EXP_PH(Corr.Nt,0.0);
+      Vfloat EXP_PH_RED(Corr.Nt, 0.0);
       for(int t=0; t < Corr.Nt;t++) EXP_PH[t] = exp( Eg*abs( Corr.Nt/2 - t));
-      
+      for(int t=0; t < Corr.Nt;t++) EXP_PH_RED[t] = exp( -Eg*t);
      
 
 
@@ -1076,6 +1560,30 @@ void Compute_form_factors_Nissa() {
 	  Print_To_File({}, {ax_u_symm.ave() ,ax_u_symm.err(), ax_d_symm.ave(), ax_d_symm.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/quark_contr_A_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "#   ax_u    ax_d");
 	  Print_To_File({}, {vec_u_symm.ave() ,vec_u_symm.err(), vec_d_symm.ave(), vec_d_symm.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/quark_contr_V_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "#   vec_u    vec_d");
 
+	  //error scaling of C^munu(t)
+	  for(int t=1;t< Corr.Nt/2;t++) {
+
+	    if(ixg==0) {
+	      ofstream Print_scaling_A("../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/C_scaling_A_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_t_"+to_string(t)+".dat");
+	      Print_scaling_A<<xg.ave()<<" "<<(ax_u_symm*EXP_PH).err(t)<<" "<<(ax_d_symm*EXP_PH).err(t)<<endl;
+	      Print_scaling_A.close();
+
+	      ofstream Print_scaling_V("../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/C_scaling_V_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_t_"+to_string(t)+".dat");
+	      Print_scaling_V<<xg.ave()<<" "<<(vec_u_symm*EXP_PH).err(t)<<" "<<(vec_d_symm*EXP_PH).err(t)<<endl;
+	      Print_scaling_V.close();
+	    }
+	    else {
+	      ofstream Print_scaling_A("../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/C_scaling_A_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_t_"+to_string(t)+".dat", ofstream::app);
+	      Print_scaling_A<<xg.ave()<<" "<<(ax_u_symm*EXP_PH).err(t)<<" "<<(ax_d_symm*EXP_PH).err(t)<<endl;
+	      Print_scaling_A.close();
+
+	      ofstream Print_scaling_V("../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/C_scaling_V_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_t_"+to_string(t)+".dat", ofstream::app);
+	      Print_scaling_V<<xg.ave()<<" "<<(vec_u_symm*EXP_PH).err(t)<<" "<<(vec_d_symm*EXP_PH).err(t)<<endl;
+	      Print_scaling_V.close();
+	    }
+
+	  }
+
 	  //total contribution without symmetrization to C
 
 	  Print_To_File({}, {ax.ave(), ax.err(), vec.ave(), vec.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/wo_T_symm_mu_"+to_string(mu+off_i)+"_nu_"+to_string(nu+off_i)+"_xg_"+to_string_with_precision(xg.ave(),2)+".dat" , "", "#  t    A     V");
@@ -1145,7 +1653,7 @@ void Compute_form_factors_Nissa() {
       distr_t_list FV_d_sub_distr= -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH - (Vec_d_glb[0][1-off_i][2-off_i] + Vec_d_glb[0][2-off_i][1-off_i])*1.0)/kz;
 
 
-      //Print FV and FAt
+      //Print FV and FA
       Print_To_File({}, {FA_distr.ave(), FA_distr.err(), FA0_distr.ave(), FA0_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {FV_distr.ave(), FV_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {FV_sub_distr.ave(), FV_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
@@ -1173,26 +1681,55 @@ void Compute_form_factors_Nissa() {
       //axial
       Corr.Tmin= Tmin_A; Corr.Tmax= Tmax_A;
       if(xg.ave() > 1e-10) { //exclude xg=0
-      FA.distr_list.push_back( Corr.Fit_distr(FA_distr));
-      FA_u.distr_list.push_back(Corr.Fit_distr(FA_u_distr));
-      FA_d.distr_list.push_back(Corr.Fit_distr(FA_d_distr));
-      FA_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_distr));
-      FA_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_u_distr));
-      FA_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_d_distr));
-      ax_Tmin.push_back(Tmin_A);
-      ax_Tmax.push_back(Tmax_A);
+	    Get_Tmin_Tmax("A", Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
+	    Corr.Tmin=Tmin_A; Corr.Tmax=Tmax_A;
+	    FA.distr_list.push_back( Corr.Fit_distr(FA_distr));
+	    FA_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_distr));
+	    ax_Tmin.push_back(Tmin_A);
+	    ax_Tmax.push_back(Tmax_A);
+
+	    
+	    Get_Tmin_Tmax("Au", Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
+	    Corr.Tmin=Tmin_A; Corr.Tmax=Tmax_A;
+	    FA_u.distr_list.push_back(Corr.Fit_distr(FA_u_distr));
+	    FA_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_u_distr));
+	    ax_u_Tmin.push_back(Tmin_A);
+	    ax_u_Tmax.push_back(Tmax_A);
+
+	    
+	    Get_Tmin_Tmax("Ad", Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
+	    Corr.Tmin=Tmin_A; Corr.Tmax=Tmax_A;
+	    FA_d.distr_list.push_back(Corr.Fit_distr(FA_d_distr));
+	    FA_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_d_distr));
+	    ax_d_Tmin.push_back(Tmin_A);
+	    ax_d_Tmax.push_back(Tmax_A);
+	  
       }
       //vector
       if(xg.ave() > 1e-10) { //exclude xg=0
-      Corr.Tmin= Tmin_V; Corr.Tmax= Tmax_V;
-      FV.distr_list.push_back( Corr.Fit_distr(FV_distr));
-      FV_u.distr_list.push_back( Corr.Fit_distr(FV_u_distr));
-      FV_d.distr_list.push_back( Corr.Fit_distr(FV_d_distr));
-      FV_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_distr));
-      FV_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_u_distr));
-      FV_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_u_distr));
-      vec_Tmin.push_back(Tmin_V);
-      vec_Tmax.push_back(Tmax_V);
+	Get_Tmin_Tmax("V", Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
+	Corr.Tmin= Tmin_V; Corr.Tmax= Tmax_V;
+	FV.distr_list.push_back( Corr.Fit_distr(FV_distr));
+	FV_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_distr));
+	vec_Tmin.push_back(Tmin_V);
+	vec_Tmax.push_back(Tmax_V);
+
+	
+	Get_Tmin_Tmax("Vu", Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
+	Corr.Tmin= Tmin_V; Corr.Tmax= Tmax_V;	
+	FV_u.distr_list.push_back( Corr.Fit_distr(FV_u_distr));
+	FV_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_u_distr));
+	vec_u_Tmin.push_back(Tmin_V);
+	vec_u_Tmax.push_back(Tmax_V);
+
+
+	
+	Get_Tmin_Tmax("Vd", Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
+	Corr.Tmin= Tmin_V; Corr.Tmax= Tmax_V;
+	FV_d.distr_list.push_back( Corr.Fit_distr(FV_d_distr));
+	FV_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_u_distr));
+	vec_d_Tmin.push_back(Tmin_V);
+	vec_d_Tmax.push_back(Tmax_V);
       }
       
       
@@ -1213,11 +1750,11 @@ void Compute_form_factors_Nissa() {
     Print_To_File({}, {xg_list.ave(), xg_list.err(), FV.ave(), FV.err(), vec_Tmin, vec_Tmax}, "../data/ph_emission/"+ph_type_mes+"/FF/"+data_2pts.Tag[iens]+"/fit_results/FV.dat", "", "#xg Dxg  FV DFV Tmin Tmax");
     Print_To_File({}, {xg_list.ave(), xg_list.err(), FA.ave(), FA.err(), ax_Tmin, ax_Tmax}, "../data/ph_emission/"+ph_type_mes+"/FF/"+data_2pts.Tag[iens]+"/fit_results/FA.dat", "", "#xg Dxg  FA DFA Tmin Tmax");
 
-    Print_To_File({}, {xg_list.ave(), xg_list.err(), FV_u.ave(), FV_u.err()}, "../data/ph_emission/"+ph_type_mes+"/FF_u/"+data_2pts.Tag[iens]+"/fit_results/FV.dat", "", "#xg Dxg  FV DFV");
-    Print_To_File({}, {xg_list.ave(), xg_list.err(), FA_u.ave(), FA_u.err()}, "../data/ph_emission/"+ph_type_mes+"/FF_u/"+data_2pts.Tag[iens]+"/fit_results/FA.dat", "", "#xg Dxg  FA DFA");
+    Print_To_File({}, {xg_list.ave(), xg_list.err(), FV_u.ave(), FV_u.err(), vec_u_Tmin, vec_u_Tmax}, "../data/ph_emission/"+ph_type_mes+"/FF_u/"+data_2pts.Tag[iens]+"/fit_results/FV.dat", "", "#xg Dxg  FV DFV");
+    Print_To_File({}, {xg_list.ave(), xg_list.err(), FA_u.ave(), FA_u.err(), ax_u_Tmin, ax_u_Tmax}, "../data/ph_emission/"+ph_type_mes+"/FF_u/"+data_2pts.Tag[iens]+"/fit_results/FA.dat", "", "#xg Dxg  FA DFA");
 
-    Print_To_File({}, {xg_list.ave(), xg_list.err(), (-1.0*FV_d).ave(), (-1.0*FV_d).err()}, "../data/ph_emission/"+ph_type_mes+"/FF_d/"+data_2pts.Tag[iens]+"/fit_results/FV.dat", "", "#xg Dxg  FV DFV");
-    Print_To_File({}, {xg_list.ave(), xg_list.err(), FA_d.ave(), FA_d.err()}, "../data/ph_emission/"+ph_type_mes+"/FF_d/"+data_2pts.Tag[iens]+"/fit_results/FA.dat", "", "#xg Dxg  FA DFA");
+    Print_To_File({}, {xg_list.ave(), xg_list.err(), (-1.0*FV_d).ave(), (-1.0*FV_d).err(), vec_d_Tmin, vec_d_Tmax}, "../data/ph_emission/"+ph_type_mes+"/FF_d/"+data_2pts.Tag[iens]+"/fit_results/FV.dat", "", "#xg Dxg  FV DFV");
+    Print_To_File({}, {xg_list.ave(), xg_list.err(), FA_d.ave(), FA_d.err(), ax_d_Tmin, ax_d_Tmax}, "../data/ph_emission/"+ph_type_mes+"/FF_d/"+data_2pts.Tag[iens]+"/fit_results/FA.dat", "", "#xg Dxg  FA DFA");
 
 
   }
@@ -1231,8 +1768,10 @@ void Compute_form_factors_Nissa() {
 
   //Print all ensembles for given xg
   for(int ixg=1;ixg<num_xg;ixg++) {
-    Print_To_File({}, {(a_distr_list/fmTGeV).ave(), FA_per_kin[ixg-1].ave(), FA_per_kin[ixg-1].err()}, "../data/ph_emission/"+ph_type_mes+"/FF/per_kin/FA_ixg_"+to_string(ixg)+".dat", "", "#a[fm]  FA FA_err");
-    Print_To_File({}, {(a_distr_list/fmTGeV).ave(), FV_per_kin[ixg-1].ave(), FV_per_kin[ixg-1].err()}, "../data/ph_emission/"+ph_type_mes+"/FF/per_kin/FV_ixg_"+to_string(ixg)+".dat", "", "#a[fm]  FA FA_err");
+
+    Print_To_File({}, {(a_distr_list/fmTGeV).ave(), FA_per_kin[ixg-1].ave(), FA_per_kin[ixg-1].err(), L_list}, "../data/ph_emission/"+ph_type_mes+"/FF/per_kin/FA_ixg_"+to_string(ixg)+".dat", "", "#a[fm]  FA FA_err L/a");
+    Print_To_File({}, {(a_distr_list/fmTGeV).ave(), FV_per_kin[ixg-1].ave(), FV_per_kin[ixg-1].err(), L_list}, "../data/ph_emission/"+ph_type_mes+"/FF/per_kin/FV_ixg_"+to_string(ixg)+".dat", "", "#a[fm]  FA FA_err L/a");
+    
   }
 
   //################################################################################################
@@ -1244,10 +1783,13 @@ void Compute_form_factors_Nissa() {
 
   for(int iens=0;iens<Nens;iens++) {
 
+    int num_xg_iens= FA_per_ens[iens].size();
+
     for(int ijack=0;ijack<Njacks;ijack++) {
 
+      
       Vfloat FA_jacks, FV_jacks;
-      for(int ixg=1;ixg<num_xg;ixg++) { FA_jacks.push_back( FA_per_ens[iens].distr_list[ixg-1].distr[ijack]); FV_jacks.push_back( FV_per_ens[iens].distr_list[ixg-1].distr[ijack]);}
+      for(int ixg=1;ixg<num_xg_iens;ixg++) { FA_jacks.push_back( FA_per_ens[iens].distr_list[ixg-1].distr[ijack]); FV_jacks.push_back( FV_per_ens[iens].distr_list[ixg-1].distr[ijack]);}
       FA_interpol_jacks[iens].emplace_back( FA_jacks.begin(), FA_jacks.end(), 0.1, 0.1);
       FV_interpol_jacks[iens].emplace_back( FV_jacks.begin(), FV_jacks.end(), 0.1, 0.1);
     }
@@ -1354,8 +1896,10 @@ void Compute_form_factors_Nissa() {
   bf_FF_ch2.Add_par("D1", 1.0, 0.1);
   bf_FF_ch2.Add_par("D2", 1.0, 0.1);
 
+  //count number of dof
+  int dof= Nens-2;
   if(Include_a4==false) { bf_FF.Fix_par("D2", 0.0); bf_FF_ch2.Fix_par("D2",0.0);}
-  
+  else dof-- ;
 
   //ansatz
   bf_FF.ansatz=  [ ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
@@ -1397,6 +1941,7 @@ void Compute_form_factors_Nissa() {
       data[ijack][iens].FF_err= FA_per_ens[iens].err(ixg-1);
       if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
       else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
       else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
       else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1407,6 +1952,7 @@ void Compute_form_factors_Nissa() {
 	data_ch2[ijack][iens].FF_err= FA_per_ens[iens].err(ixg-1);
 	if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1431,7 +1977,7 @@ void Compute_form_factors_Nissa() {
   D1_A_list.distr_list.push_back(D1);
   D2_A_list.distr_list.push_back(D2);
   //push_back ch2
-  ch2_FA.push_back( Bt_fit_ch2.get_ch2_ave());
+  ch2_FA.push_back( Bt_fit_ch2.get_ch2_ave()/dof);
 
  
   //print fit func
@@ -1470,6 +2016,7 @@ void Compute_form_factors_Nissa() {
 	data[ijack][iens].FF_err= FV_per_ens[iens].err(ixg-1);
 	if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1479,6 +2026,7 @@ void Compute_form_factors_Nissa() {
 		data_ch2[ijack][iens].FF_err= FV_per_ens[iens].err(ixg-1);
 		if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
 		else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
+		else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
 		else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
 		else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
 		else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1501,7 +2049,7 @@ void Compute_form_factors_Nissa() {
   D1_V_list.distr_list.push_back(D1);
   D2_V_list.distr_list.push_back(D2);
   //push_back ch2
-  ch2_FV.push_back( Bt_fit_ch2.get_ch2_ave());
+  ch2_FV.push_back( Bt_fit_ch2.get_ch2_ave()/dof);
 
   //print fit func
   distr_t_list FV_xg_to_print(UseJack);
@@ -1510,8 +2058,8 @@ void Compute_form_factors_Nissa() {
   }
 
   //Print continuum extrapolated form factors
-  Print_To_File({}, {xg_t_list, F0_A_list.ave(), F0_A_list.err(), (D1_A_list/F0_A_list).ave(), (D1_A_list/F0_A_list).err(), (D2_A_list/F0_A_list).ave(), (D2_A_list/F0_A_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
-  Print_To_File({}, {xg_t_list, F0_V_list.ave(), F0_V_list.err(), (D1_V_list/F0_V_list).ave(), (D1_V_list/F0_V_list).err(), (D2_V_list/F0_V_list).ave(), (D2_V_list/F0_V_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
+  Print_To_File({}, {xg_t_list, F0_A_list.ave(), F0_A_list.err(), (D1_A_list/F0_A_list).ave(), (D1_A_list/F0_A_list).err(), (D2_A_list/F0_A_list).ave(), (D2_A_list/F0_A_list).err(), ch2_FA}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
+  Print_To_File({}, {xg_t_list, F0_V_list.ave(), F0_V_list.err(), (D1_V_list/F0_V_list).ave(), (D1_V_list/F0_V_list).err(), (D2_V_list/F0_V_list).ave(), (D2_V_list/F0_V_list).err(), ch2_FV}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
 
 
   //Print covariance matrix
@@ -1576,6 +2124,7 @@ void Compute_form_factors_Nissa() {
       data[ijack][iens].FF_err= FA_u_per_ens[iens].err(ixg-1);
       if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
       else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
       else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
       else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1586,6 +2135,7 @@ void Compute_form_factors_Nissa() {
 	data_ch2[ijack][iens].FF_err= FA_u_per_ens[iens].err(ixg-1);
 	if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1610,7 +2160,7 @@ void Compute_form_factors_Nissa() {
   D1_u_A_list.distr_list.push_back(D1);
   D2_u_A_list.distr_list.push_back(D2);
   //push_back ch2
-  ch2_FA_u.push_back( Bt_fit_ch2.get_ch2_ave());
+  ch2_FA_u.push_back( Bt_fit_ch2.get_ch2_ave()/dof);
 
  
   //print fit func
@@ -1649,6 +2199,7 @@ void Compute_form_factors_Nissa() {
 	data[ijack][iens].FF_err= FV_u_per_ens[iens].err(ixg-1);
 	if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1658,6 +2209,7 @@ void Compute_form_factors_Nissa() {
 		data_ch2[ijack][iens].FF_err= FV_u_per_ens[iens].err(ixg-1);
 		if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
 		else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
+		else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
 		else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
 		else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
 		else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1680,7 +2232,7 @@ void Compute_form_factors_Nissa() {
   D1_u_V_list.distr_list.push_back(D1);
   D2_u_V_list.distr_list.push_back(D2);
   //push_back ch2
-  ch2_FV_u.push_back( Bt_fit_ch2.get_ch2_ave());
+  ch2_FV_u.push_back( Bt_fit_ch2.get_ch2_ave()/dof);
 
   //print fit func
   distr_t_list FV_xg_to_print(UseJack);
@@ -1689,8 +2241,8 @@ void Compute_form_factors_Nissa() {
   }
 
   //Print continuum extrapolated form factors
-  Print_To_File({}, {xg_t_list, F0_u_A_list.ave(), F0_u_A_list.err(), (D1_u_A_list/F0_u_A_list).ave(), (D1_u_A_list/F0_u_A_list).err(), (D2_u_A_list/F0_u_A_list).ave(), (D2_u_A_list/F0_u_A_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
-  Print_To_File({}, {xg_t_list, F0_u_V_list.ave(), F0_u_V_list.err(), (D1_u_V_list/F0_u_V_list).ave(), (D1_u_V_list/F0_u_V_list).err(), (D2_u_V_list/F0_u_V_list).ave(), (D2_u_V_list/F0_u_V_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
+  Print_To_File({}, {xg_t_list, F0_u_A_list.ave(), F0_u_A_list.err(), (D1_u_A_list/F0_u_A_list).ave(), (D1_u_A_list/F0_u_A_list).err(), (D2_u_A_list/F0_u_A_list).ave(), (D2_u_A_list/F0_u_A_list).err(), ch2_FA_u}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
+  Print_To_File({}, {xg_t_list, F0_u_V_list.ave(), F0_u_V_list.err(), (D1_u_V_list/F0_u_V_list).ave(), (D1_u_V_list/F0_u_V_list).err(), (D2_u_V_list/F0_u_V_list).ave(), (D2_u_V_list/F0_u_V_list).err(), ch2_FV_u}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1753,6 +2305,7 @@ void Compute_form_factors_Nissa() {
       data[ijack][iens].FF_err= FA_d_per_ens[iens].err(ixg-1);
       if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
       else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
       else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
       else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1763,6 +2316,7 @@ void Compute_form_factors_Nissa() {
 	data_ch2[ijack][iens].FF_err= FA_d_per_ens[iens].err(ixg-1);
 	if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1787,7 +2341,7 @@ void Compute_form_factors_Nissa() {
   D1_d_A_list.distr_list.push_back(D1);
   D2_d_A_list.distr_list.push_back(D2);
   //push_back ch2
-  ch2_FA_d.push_back( Bt_fit_ch2.get_ch2_ave());
+  ch2_FA_d.push_back( Bt_fit_ch2.get_ch2_ave()/dof);
 
  
   //print fit func
@@ -1826,6 +2380,7 @@ void Compute_form_factors_Nissa() {
 	data[ijack][iens].FF_err= FV_d_per_ens[iens].err(ixg-1);
 	if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1835,6 +2390,7 @@ void Compute_form_factors_Nissa() {
 		data_ch2[ijack][iens].FF_err= FV_d_per_ens[iens].err(ixg-1);
 		if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
 		else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
+		else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
 		else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
 		else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
 		else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -1857,7 +2413,7 @@ void Compute_form_factors_Nissa() {
   D1_d_V_list.distr_list.push_back(D1);
   D2_d_V_list.distr_list.push_back(D2);
   //push_back ch2
-  ch2_FV_d.push_back( Bt_fit_ch2.get_ch2_ave());
+  ch2_FV_d.push_back( Bt_fit_ch2.get_ch2_ave()/dof);
 
   //print fit func
   distr_t_list FV_xg_to_print(UseJack);
@@ -1866,8 +2422,8 @@ void Compute_form_factors_Nissa() {
   }
 
   //Print continuum extrapolated form factors
-  Print_To_File({}, {xg_t_list, F0_d_A_list.ave(), F0_d_A_list.err(), (D1_d_A_list/F0_d_A_list).ave(), (D1_d_A_list/F0_d_A_list).err(), (D2_d_A_list/F0_d_A_list).ave(), (D2_d_A_list/F0_d_A_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
-  Print_To_File({}, {xg_t_list, F0_d_V_list.ave(), F0_d_V_list.err(), (D1_d_V_list/F0_d_V_list).ave(), (D1_d_V_list/F0_d_V_list).err(), (D2_d_V_list/F0_d_V_list).ave(), (D2_d_V_list/F0_d_V_list).err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2");
+  Print_To_File({}, {xg_t_list, F0_d_A_list.ave(), F0_d_A_list.err(), (D1_d_A_list/F0_d_A_list).ave(), (D1_d_A_list/F0_d_A_list).err(), (D2_d_A_list/F0_d_A_list).ave(), (D2_d_A_list/F0_d_A_list).err(), ch2_FA_d}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
+  Print_To_File({}, {xg_t_list, F0_d_V_list.ave(), F0_d_V_list.err(), (D1_d_V_list/F0_d_V_list).ave(), (D1_d_V_list/F0_d_V_list).err(), (D2_d_V_list/F0_d_V_list).ave(), (D2_d_V_list/F0_d_V_list).err(), ch2_FV_d}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -2221,6 +2777,7 @@ void Compute_form_factors_Nissa() {
       data_MP[ijack][iens].FF_err= MP_list.err(iens);
       if(data_2pts.Tag[iens] == "cA211a.12.48") data_MP[ijack][iens].a = a_A.distr[ijack];
       else if(data_2pts.Tag[iens] == "cB211b.072.64") data_MP[ijack][iens].a = a_B.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") data_MP[ijack][iens].a = a_B.distr[ijack];
       else if(data_2pts.Tag[iens] == "cC211a.06.80") data_MP[ijack][iens].a = a_C.distr[ijack];
       else if(data_2pts.Tag[iens] == "cD211a.054.96") data_MP[ijack][iens].a = a_D.distr[ijack];
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -2230,6 +2787,7 @@ void Compute_form_factors_Nissa() {
 	data_MP_ch2[ijack][iens].FF_err= MP_list.err(iens);
 	if(data_2pts.Tag[iens] == "cA211a.12.48") data_MP_ch2[ijack][iens].a = a_A.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_MP_ch2[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_MP_ch2[ijack][iens].a = a_B.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_MP_ch2[ijack][iens].a = a_C.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_MP_ch2[ijack][iens].a = a_D.distr[ijack];
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -2245,7 +2803,7 @@ void Compute_form_factors_Nissa() {
   Bt_fit_MP= bf_FF.Perform_bootstrap_fit();
   Bt_fit_MP_ch2 = bf_FF_ch2.Perform_bootstrap_fit();
   //retrieve parameters
-  for(int ijack=0;ijack<Njacks;ijack++) { F0_MP.distr.push_back( Bt_fit_MP.par[ijack].F0); D1_MP.distr.push_back( Bt_fit_MP.par[ijack].D1); D2_MP.distr.push_back( Bt_fit_MP.par[ijack].D2);}
+  for(int ijack=0;ijack<Njacks;ijack++) { F0_MP.distr.push_back( Bt_fit_MP.par[ijack].F0 ); D1_MP.distr.push_back( Bt_fit_MP.par[ijack].D1 ); D2_MP.distr.push_back( Bt_fit_MP.par[ijack].D2 );}
   //get ch2
   ch2_MP= Bt_fit_MP_ch2.get_ch2_ave();
 
@@ -2274,6 +2832,7 @@ void Compute_form_factors_Nissa() {
       data_FP[ijack][iens].FF_err= FP_list.err(iens);
       if(data_2pts.Tag[iens] == "cA211a.12.48") data_FP[ijack][iens].a = a_A.distr[ijack];
       else if(data_2pts.Tag[iens] == "cB211b.072.64") data_FP[ijack][iens].a = a_B.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") data_FP[ijack][iens].a = a_B.distr[ijack];
       else if(data_2pts.Tag[iens] == "cC211a.06.80") data_FP[ijack][iens].a = a_C.distr[ijack];
       else if(data_2pts.Tag[iens] == "cD211a.054.96") data_FP[ijack][iens].a = a_D.distr[ijack];
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -2283,6 +2842,7 @@ void Compute_form_factors_Nissa() {
 	data_FP_ch2[ijack][iens].FF_err= FP_list.err(iens);
 	if(data_2pts.Tag[iens] == "cA211a.12.48") data_FP_ch2[ijack][iens].a = a_A.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_FP_ch2[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_FP_ch2[ijack][iens].a = a_B.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_FP_ch2[ijack][iens].a = a_C.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_FP_ch2[ijack][iens].a = a_D.distr[ijack];
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -2328,6 +2888,7 @@ void Compute_form_factors_Nissa() {
       data_MP_ov_FP[ijack][iens].FF_err= MP_ov_FP_list.err(iens);
       if(data_2pts.Tag[iens] == "cA211a.12.48") data_MP_ov_FP[ijack][iens].a = a_A.distr[ijack];
       else if(data_2pts.Tag[iens] == "cB211b.072.64") data_MP_ov_FP[ijack][iens].a = a_B.distr[ijack];
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") data_MP_ov_FP[ijack][iens].a = a_B.distr[ijack];
       else if(data_2pts.Tag[iens] == "cC211a.06.80") data_MP_ov_FP[ijack][iens].a = a_C.distr[ijack];
       else if(data_2pts.Tag[iens] == "cD211a.054.96") data_MP_ov_FP[ijack][iens].a = a_D.distr[ijack];
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
@@ -2337,6 +2898,7 @@ void Compute_form_factors_Nissa() {
 	data_MP_ov_FP_ch2[ijack][iens].FF_err= MP_ov_FP_list.err(iens);
 	if(data_2pts.Tag[iens] == "cA211a.12.48") data_MP_ov_FP_ch2[ijack][iens].a = a_A.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_MP_ov_FP_ch2[ijack][iens].a = a_B.distr[ijack];
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_MP_ov_FP_ch2[ijack][iens].a = a_B.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_MP_ov_FP_ch2[ijack][iens].a = a_C.distr[ijack];
 	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_MP_ov_FP_ch2[ijack][iens].a = a_D.distr[ijack];
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");

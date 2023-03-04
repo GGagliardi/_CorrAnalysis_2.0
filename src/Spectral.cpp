@@ -1321,7 +1321,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
   
 
-
+  lambda_opt_10= lambda_balance_10;
   lambda_opt =  lambda_balance;
  
   Print_R_at_lambda.close();
@@ -1463,9 +1463,8 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
   if(INCLUDE_ERRORS) Compute_covariance_matrix(B,Atr, corr,1,tmax, m,s, analysis_name, MODE, covariance);
 
-  double lambda_opt= lambda;
-  double lambda_opt_10=lambda;
-
+  double lambda_opt, lambda_opt_10;
+ 
   if(INCLUDE_ERRORS && FIND_OPTIMAL_LAMBDA) Get_optimal_lambda(Atr, Atr_std, Atr_std_Emax,  B, ft, ft_jack, ft_std, ft_std_Emax, M2, M2_std, M2_std_Emax, mean, sigma, Estart, lambda_opt , lambda_opt_10, Rt_n, M_n, M_n_jack, corr, T , 1 , tmax, mult,  MODE, reg_type, SMEARING_FUNC,  CORR_NAME, Ag_ov_A0_target, JackOnKer, Prefact, analysis_name, f, syst_func, Use_guess_density, guess_density);
 
 
@@ -1666,7 +1665,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
     
         
-    syst = erf(fabs( (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave()/(sqrt(2)*Spec_dens_at_E_star_10.err())))*fabs( (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave());
+    syst = erf(fabs( (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave()/(sqrt(2.0)*Spec_dens_at_E_star_10.err())))*fabs( (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave());
   }
     
 
