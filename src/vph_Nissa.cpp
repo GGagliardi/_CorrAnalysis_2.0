@@ -25,6 +25,7 @@ Vfloat xg_to_spline_VMD;
 Vfloat a_to_print;
 Vfloat num_xg_per_ens_list;
 Vfloat Is_large_vol;
+const int shift=0;
 
 
 void Get_xg_t_list() {
@@ -89,8 +90,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==2) {
-      if(W=="A") {Tmin= 16; Tmax=23;}
-      else if(W=="V") {Tmin=12;Tmax=25;}
+      if(W=="A") {Tmin= 17; Tmax=23;}
+      else if(W=="V") {Tmin=16;Tmax=25;}
       else if(W=="Ad") {Tmin=24; Tmax=29;}
       else if(W=="Vd") { Tmin=25; Tmax=38;}
       else if(W=="Au") { Tmin=20; Tmax=23;}
@@ -99,7 +100,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==3) {
-      if(W=="A") {Tmin= 16; Tmax=23;}
+      if(W=="A") {Tmin= 17; Tmax=23;}
       else if(W=="V") {Tmin=18;Tmax=28;}
       else if(W=="Ad") {Tmin=24; Tmax=29;}
       else if(W=="Vd") { Tmin=25; Tmax=38;}
@@ -149,7 +150,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==8) {
-      if(W=="A") {Tmin= 17; Tmax=29;}
+      if(W=="A") {Tmin= 19; Tmax=29;}
       else if(W=="V") {Tmin=15;Tmax=26;}
       else if(W=="Ad") { Tmin=14; Tmax=24;}
       else if(W=="Vd") { Tmin=17; Tmax=26;}
@@ -159,9 +160,9 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==9) {
-      if(W=="A") {Tmin= 14; Tmax=29;}
+      if(W=="A") {Tmin= 17; Tmax=30;}
       else if(W=="V") {Tmin=15;Tmax=26;}
-      else if(W=="Ad") { Tmin=14; Tmax=24;}
+      else if(W=="Ad") { Tmin=14; Tmax=26;}
       else if(W=="Vd") { Tmin=16; Tmax=26;}
       else if(W=="Au") { Tmin=19; Tmax=23;}
       else if(W=="Vu") { Tmin=12; Tmax=29;}
@@ -169,7 +170,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==10) {
-      if(W=="A") {Tmin= 14; Tmax=25;}
+      if(W=="A") {Tmin= 15; Tmax=28;}
       else if(W=="V") {Tmin=15;Tmax=27;}
       else if(W=="Ad") { Tmin=14; Tmax=24;}
       else if(W=="Vd") { Tmin=16; Tmax=26;}
@@ -198,8 +199,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==1) {
-      if(W=="A") {Tmin= 17; Tmax=24;}
-      else if(W=="V") {Tmin=21;Tmax=45;}
+      if(W=="A") {Tmin= 19; Tmax=30;}
+      else if(W=="V") {Tmin=24;Tmax=40;}
       else if(W=="Ad") { Tmin=24; Tmax=34;}
       else if(W=="Vd") { Tmin=36; Tmax=48;}
       else if(W=="Au") { Tmin=28; Tmax=42;}
@@ -208,8 +209,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==2) {
-      if(W=="A") {Tmin= 17; Tmax=29;}
-      else if(W=="V") {Tmin=23;Tmax=45;}
+      if(W=="A") {Tmin= 20; Tmax=30;}
+      else if(W=="V") {Tmin=23;Tmax=43;}
       else if(W=="Ad") { Tmin=24; Tmax=34;}
       else if(W=="Vd") { Tmin=36; Tmax=49;}
       else if(W=="Au") { Tmin=28; Tmax=41;}
@@ -218,8 +219,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==3) {
-      if(W=="A") {Tmin= 18; Tmax=28;}
-      else if(W=="V") {Tmin=23;Tmax=45;}
+      if(W=="A") {Tmin= 20; Tmax=30;}
+      else if(W=="V") {Tmin=23;Tmax=42;}
       else if(W=="Ad") { Tmin=24; Tmax=34;}
       else if(W=="Vd") { Tmin=36; Tmax=42;}
       else if(W=="Au") { Tmin=28; Tmax=41;}
@@ -228,8 +229,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==4) {
-      if(W=="A") {Tmin= 18; Tmax=29;}
-      else if(W=="V") {Tmin=18;Tmax=38;}
+      if(W=="A") {Tmin= 21; Tmax=32;}
+      else if(W=="V") {Tmin=23;Tmax=43;}
       else if(W=="Ad") { Tmin=24; Tmax=34;}
       else if(W=="Vd") { Tmin=36; Tmax=42;}
       else if(W=="Au") { Tmin=28; Tmax=41;}
@@ -238,8 +239,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==5) {
-      if(W=="A") {Tmin= 17; Tmax=30;}
-      else if(W=="V") {Tmin=18;Tmax=38;}
+      if(W=="A") {Tmin= 21; Tmax=29;}
+      else if(W=="V") {Tmin=20;Tmax=40;}
       else if(W=="Ad") { Tmin=24; Tmax=34;}
       else if(W=="Vd") { Tmin=36; Tmax=45;}
       else if(W=="Au") { Tmin=28; Tmax=41;}
@@ -248,8 +249,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==6) {
-      if(W=="A") {Tmin= 17; Tmax=29;}
-      else if(W=="V") {Tmin=18;Tmax=38;}
+      if(W=="A") {Tmin= 20; Tmax=32;}
+      else if(W=="V") {Tmin=20;Tmax=32;}
       else if(W=="Ad") { Tmin=24; Tmax=34;}
       else if(W=="Vd") { Tmin=36; Tmax=45;}
       else if(W=="Au") { Tmin=28; Tmax=41;}
@@ -258,8 +259,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==7) {
-      if(W=="A") {Tmin= 14; Tmax=29;}
-      else if(W=="V") {Tmin=18;Tmax=38;}
+      if(W=="A") {Tmin= 19; Tmax=33;}
+      else if(W=="V") {Tmin=18;Tmax=32;}
       else if(W=="Ad") { Tmin=24; Tmax=35;}
       else if(W=="Vd") { Tmin=28; Tmax=39;}
       else if(W=="Au") { Tmin=28; Tmax=41;}
@@ -268,8 +269,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==8) {
-      if(W=="A") {Tmin= 10; Tmax=29;}
-      else if(W=="V") {Tmin=12;Tmax=38;}
+      if(W=="A") {Tmin= 20; Tmax=33;}
+      else if(W=="V") {Tmin=14;Tmax=32;}
       else if(W=="Ad") { Tmin=24; Tmax=35;}
       else if(W=="Vd") { Tmin=23; Tmax=38;}
       else if(W=="Au") { Tmin=28; Tmax=41;}
@@ -278,8 +279,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==9) {
-      if(W=="A") {Tmin= 10; Tmax=30;}
-      else if(W=="V") {Tmin=26;Tmax=39;}
+      if(W=="A") {Tmin= 19; Tmax=33;}
+      else if(W=="V") {Tmin=16;Tmax=29;}
       else if(W=="Ad") { Tmin=24; Tmax=35;}
       else if(W=="Vd") { Tmin=23; Tmax=38;}
       else if(W=="Au") { Tmin=28; Tmax=41;}
@@ -288,8 +289,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==10) {
-      if(W=="A") {Tmin= 10; Tmax=34;}
-      else if(W=="V") {Tmin=26;Tmax=39;}
+      if(W=="A") {Tmin= 17; Tmax=32;}
+      else if(W=="V") {Tmin=17;Tmax=31;}
       else if(W=="Ad") { Tmin=24; Tmax=35;}
       else if(W=="Vd") { Tmin=23; Tmax=38;}
       else if(W=="Au") { Tmin=28; Tmax=41;}
@@ -328,7 +329,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     if(ixg==0) {
       if(W=="A") {Tmin= 19; Tmax=29;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
+      else if(W=="V") {Tmin=30;Tmax=47;}
       else if(W=="Ad") { Tmin=20; Tmax=32;}
       else if(W=="Vd") { Tmin=20; Tmax=32;}
       else if(W=="Au") { Tmin=20; Tmax=32;}
@@ -337,8 +338,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==1) {
-      if(W=="A") {Tmin= 19; Tmax=29;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
+      if(W=="A") {Tmin= 22; Tmax=29;}
+      else if(W=="V") {Tmin=30;Tmax=47;}
       else if(W=="Ad") { Tmin=32; Tmax=52;}
       else if(W=="Vd") { Tmin=35; Tmax=54;}
       else if(W=="Au") { Tmin=29; Tmax=49;}
@@ -347,8 +348,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==2) {
-      if(W=="A") {Tmin= 21; Tmax=29;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
+      if(W=="A") {Tmin= 22; Tmax=29;}
+      else if(W=="V") {Tmin=27;Tmax=47;}
       else if(W=="Ad") { Tmin=30; Tmax=52;}
       else if(W=="Vd") { Tmin=36; Tmax=54;}
       else if(W=="Au") { Tmin=29; Tmax=54;}
@@ -357,8 +358,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==3) {
-      if(W=="A") {Tmin= 21; Tmax=29;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
+      if(W=="A") {Tmin= 22; Tmax=29;}
+      else if(W=="V") {Tmin=27;Tmax=45;}
       else if(W=="Ad") { Tmin=30; Tmax=52;}
       else if(W=="Vd") { Tmin=36; Tmax=54;}
       else if(W=="Au") { Tmin=29; Tmax=54;}
@@ -367,8 +368,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==4) {
-      if(W=="A") {Tmin= 21; Tmax=30;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
+      if(W=="A") {Tmin= 24; Tmax=30;}
+      else if(W=="V") {Tmin=27;Tmax=55;}
       else if(W=="Ad") { Tmin=30; Tmax=51;}
       else if(W=="Vd") { Tmin=36; Tmax=55;}
       else if(W=="Au") { Tmin=29; Tmax=54;}
@@ -377,7 +378,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==5) {
-      if(W=="A") {Tmin= 21; Tmax=30;}
+      if(W=="A") {Tmin= 24; Tmax=30;}
       else if(W=="V") {Tmin=25;Tmax=55;}
       else if(W=="Ad") { Tmin=30; Tmax=51;}
       else if(W=="Vd") { Tmin=36; Tmax=55;}
@@ -387,8 +388,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==6) {
-      if(W=="A") {Tmin= 21; Tmax=30;}
-      else if(W=="V") {Tmin=28;Tmax=47;}
+      if(W=="A") {Tmin= 23; Tmax=30;}
+      else if(W=="V") {Tmin=26;Tmax=47;}
       else if(W=="Ad") { Tmin=30; Tmax=51;}
       else if(W=="Vd") { Tmin=32; Tmax=53;}
       else if(W=="Au") { Tmin=29; Tmax=51;}
@@ -397,8 +398,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==7) {
-      if(W=="A") {Tmin= 21; Tmax=31;}
-      else if(W=="V") {Tmin=16;Tmax=40;}
+      if(W=="A") {Tmin= 23; Tmax=31;}
+      else if(W=="V") {Tmin=21;Tmax=40;}
       else if(W=="Ad") { Tmin=30; Tmax=51;}
       else if(W=="Vd") { Tmin=32; Tmax=53;}
       else if(W=="Au") { Tmin=29; Tmax=51;}
@@ -407,8 +408,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==8) {
-      if(W=="A") {Tmin= 21; Tmax=37;}
-      else if(W=="V") {Tmin=15;Tmax=47;}
+      if(W=="A") {Tmin= 26; Tmax=34;}
+      else if(W=="V") {Tmin=19;Tmax=47;}
       else if(W=="Ad") { Tmin=23; Tmax=47;}
       else if(W=="Vd") { Tmin=30; Tmax=53;}
       else if(W=="Au") { Tmin=29; Tmax=51;}
@@ -417,8 +418,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==9) {
-      if(W=="A") {Tmin= 35; Tmax=47;}
-      else if(W=="V") {Tmin=24;Tmax=46;}
+      if(W=="A") {Tmin= 23; Tmax=40;}
+      else if(W=="V") {Tmin=23;Tmax=34;}
       else if(W=="Ad") { Tmin=22; Tmax=46;}
       else if(W=="Vd") { Tmin=30; Tmax=53;}
       else if(W=="Au") { Tmin=29; Tmax=54;}
@@ -427,8 +428,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==10) {
-      if(W=="A") {Tmin= 35; Tmax=47;}
-      else if(W=="V") {Tmin=25;Tmax=46;}
+      if(W=="A") {Tmin= 20; Tmax=37;}
+      else if(W=="V") {Tmin=20;Tmax=37;}
       else if(W=="Ad") { Tmin=22; Tmax=46;}
       else if(W=="Vd") { Tmin=30; Tmax=56;}
       else if(W=="Au") { Tmin=29; Tmax=54;}
@@ -457,8 +458,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==1) {
-      if(W=="A") {Tmin= 19; Tmax=35;}
-      else if(W=="V") {Tmin=29;Tmax=45;}
+      if(W=="A") {Tmin= 26; Tmax=34;}
+      else if(W=="V") {Tmin=30;Tmax=46;}
       else if(W=="Ad") { Tmin=32; Tmax=45;}
       else if(W=="Vd") { Tmin=60; Tmax=75;}
       else if(W=="Au") { Tmin=29; Tmax=50;}
@@ -467,8 +468,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==2) {
-      if(W=="A") {Tmin= 19; Tmax=35;}
-      else if(W=="V") {Tmin=29;Tmax=45;}
+      if(W=="A") {Tmin= 26; Tmax=34;}
+      else if(W=="V") {Tmin=30;Tmax=47;}
       else if(W=="Ad") { Tmin=28; Tmax=45;}
       else if(W=="Vd") { Tmin=57; Tmax=69;}
       else if(W=="Au") { Tmin=29; Tmax=50;}
@@ -477,8 +478,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
     }
     else if(ixg==3) {
-      if(W=="A") {Tmin= 20; Tmax=35;}
-      else if(W=="V") {Tmin=29;Tmax=45;}
+      if(W=="A") {Tmin= 26; Tmax=34;}
+      else if(W=="V") {Tmin=30;Tmax=47;}
       else if(W=="Ad") { Tmin=28; Tmax=45;}
       else if(W=="Vd") { Tmin=38; Tmax=68;}
       else if(W=="Au") { Tmin=29; Tmax=50;}
@@ -487,8 +488,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==4) {
-      if(W=="A") {Tmin= 20; Tmax=35;}
-      else if(W=="V") {Tmin=29;Tmax=49;}
+      if(W=="A") {Tmin= 26; Tmax=34;}
+      else if(W=="V") {Tmin=30;Tmax=47;}
       else if(W=="Ad") { Tmin=28; Tmax=45;}
       else if(W=="Vd") { Tmin=33; Tmax=68;}
       else if(W=="Au") { Tmin=29; Tmax=50;}
@@ -497,7 +498,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==5) {
-      if(W=="A") {Tmin= 20; Tmax=36;}
+      if(W=="A") {Tmin= 26; Tmax=34;}
       else if(W=="V") {Tmin=30;Tmax=49;}
       else if(W=="Ad") { Tmin=28; Tmax=45;}
       else if(W=="Vd") { Tmin=32; Tmax=68;}
@@ -507,7 +508,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==6) {
-      if(W=="A") {Tmin= 20; Tmax=35;}
+      if(W=="A") {Tmin= 26; Tmax=34;}
       else if(W=="V") {Tmin=30;Tmax=50;}
       else if(W=="Ad") { Tmin=28; Tmax=45;}
       else if(W=="Vd") { Tmin=31; Tmax=68;}
@@ -517,8 +518,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==7) {
-      if(W=="A") {Tmin= 21; Tmax=37;}
-      else if(W=="V")  {Tmin=29;Tmax=49;}
+      if(W=="A") {Tmin= 26; Tmax=35;}
+      else if(W=="V")  {Tmin=27;Tmax=47;}
       else if(W=="Ad") { Tmin=25; Tmax=44;}
       else if(W=="Vd") { Tmin=30; Tmax=68;}
       else if(W=="Au") { Tmin=29; Tmax=50;}
@@ -537,8 +538,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==9) {
-      if(W=="A") {Tmin= 20; Tmax=44;}
-      else if(W=="V") {Tmin=33;Tmax=67;}
+      if(W=="A") {Tmin= 27; Tmax=47;}
+      else if(W=="V") {Tmin=24;Tmax=42;}
       else if(W=="Ad") { Tmin=10; Tmax=44;}
       else if(W=="Vd") { Tmin=11; Tmax=65;}
       else if(W=="Au") { Tmin=29; Tmax=50;}
@@ -547,8 +548,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==10) {
-      if(W=="A") {Tmin= 29; Tmax=54;}
-      else if(W=="V") {Tmin=45;Tmax=67;}
+      if(W=="A") {Tmin= 24; Tmax=44;}
+      else if(W=="V") {Tmin=24;Tmax=44;}
       else if(W=="Ad") { Tmin=21; Tmax=44;}
       else if(W=="Vd") { Tmin=26; Tmax=58;}
       else if(W=="Au") { Tmin=29; Tmax=50;}
@@ -1157,17 +1158,17 @@ void Compute_form_factors_Nissa() {
 
   //2pts function
 
-  data_2pts.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "P5P5");
-  data_2pts_SM.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_SM_3", "P5P5");
-  data_2pts_V1.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "V1V1");
-  data_2pts_V2.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "V2V2");
-  data_2pts_V3.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "V3V3");
-  data_2pts_d_V1.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_1", "V1V1");
-  data_2pts_d_V2.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_1", "V2V2");
-  data_2pts_d_V3.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_1", "V3V3");
-  data_2pts_u_V1.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_2", "V1V1");
-  data_2pts_u_V2.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_2", "V2V2");
-  data_2pts_u_V3.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_2", "V3V3");
+  data_2pts.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_3", "P5P5");
+  data_2pts_SM.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_SM_3", "P5P5");
+  data_2pts_V1.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_3", "V1V1");
+  data_2pts_V2.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_3", "V2V2");
+  data_2pts_V3.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_3", "V3V3");
+  data_2pts_d_V1.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_1", "V1V1");
+  data_2pts_d_V2.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_1", "V2V2");
+  data_2pts_d_V3.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_1", "V3V3");
+  data_2pts_u_V1.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_2", "V1V1");
+  data_2pts_u_V2.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_2", "V2V2");
+  data_2pts_u_V3.Read("../new_vph_gpu_data_w_123_w_B96", "mes_contr_2pts_2", "V3V3");
   
 
   //read data
@@ -1180,22 +1181,22 @@ void Compute_form_factors_Nissa() {
 
 	//vector
 	//Fu
-	C_V_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123_w_B96", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Fd
-	C_V_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123_w_B96", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bu
-	C_V_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123_w_B96", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bd
-	C_V_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123_w_B96", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 
 	//axial
-	C_A_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123_w_B96", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Fd
-	C_A_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123_w_B96", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bu
-	C_A_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123_w_B96", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bd
-	C_A_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123_w_B96", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 
       }
     }
@@ -1213,6 +1214,7 @@ void Compute_form_factors_Nissa() {
   Vfloat L_list, L_list_red;
   //M_Ds, F_Ds
   distr_t_list MP_list(UseJack);
+  distr_t_list MP_list_red(UseJack);
   distr_t_list FP_list(UseJack);
   distr_t_list MP_ov_FP_list(UseJack);
   //resize
@@ -1284,10 +1286,10 @@ void Compute_form_factors_Nissa() {
     //read theta values and loop over them
     Vfloat thetas, masses_u, masses_d, virts;
 
-    thetas= Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 1 , 5);
-    virts=  Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 2 , 5);
-    masses_u= Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 3 , 5);
-    masses_d= Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 4 , 5);
+    thetas= Read_From_File("../new_vph_gpu_data_w_123_w_B96/"+data_2pts.Tag[iens]+"/pars_list.dat", 1 , 5);
+    virts=  Read_From_File("../new_vph_gpu_data_w_123_w_B96/"+data_2pts.Tag[iens]+"/pars_list.dat", 2 , 5);
+    masses_u= Read_From_File("../new_vph_gpu_data_w_123_w_B96/"+data_2pts.Tag[iens]+"/pars_list.dat", 3 , 5);
+    masses_d= Read_From_File("../new_vph_gpu_data_w_123_w_B96/"+data_2pts.Tag[iens]+"/pars_list.dat", 4 , 5);
 
     cout<<"pars_list.dat: Read!"<<endl;
 
@@ -1353,6 +1355,9 @@ void Compute_form_factors_Nissa() {
     MP_list.distr_list.push_back(M_P/a_distr);
     FP_list.distr_list.push_back(F_P/a_distr);
     MP_ov_FP_list.distr_list.push_back( M_P/F_P);
+    if(data_2pts.Tag[iens] != "cB211b.072.96") {
+      MP_list_red.distr_list.push_back(M_P/a_distr);
+    }
 
 
     
@@ -1672,17 +1677,14 @@ void Compute_form_factors_Nissa() {
 
       //set interval depending on xg
       int Tmin_V, Tmax_V, Tmin_A, Tmax_A;
-      Get_Tmin_Tmax("A", Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
-      Get_Tmin_Tmax("V", Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
-
-    
+        
 
 
       //axial
       Corr.Tmin= Tmin_A; Corr.Tmax= Tmax_A;
       if(xg.ave() > 1e-10) { //exclude xg=0
 	    Get_Tmin_Tmax("A", Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
-	    Corr.Tmin=Tmin_A; Corr.Tmax=Tmax_A;
+	    Corr.Tmin=Tmin_A+shift; Corr.Tmax=Tmax_A+shift;
 	    FA.distr_list.push_back( Corr.Fit_distr(FA_distr));
 	    FA_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_distr));
 	    ax_Tmin.push_back(Tmin_A);
@@ -1690,7 +1692,7 @@ void Compute_form_factors_Nissa() {
 
 	    
 	    Get_Tmin_Tmax("Au", Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
-	    Corr.Tmin=Tmin_A; Corr.Tmax=Tmax_A;
+	    Corr.Tmin=Tmin_A+shift; Corr.Tmax=Tmax_A+shift;
 	    FA_u.distr_list.push_back(Corr.Fit_distr(FA_u_distr));
 	    FA_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_u_distr));
 	    ax_u_Tmin.push_back(Tmin_A);
@@ -1698,7 +1700,7 @@ void Compute_form_factors_Nissa() {
 
 	    
 	    Get_Tmin_Tmax("Ad", Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
-	    Corr.Tmin=Tmin_A; Corr.Tmax=Tmax_A;
+	    Corr.Tmin=Tmin_A+shift; Corr.Tmax=Tmax_A+shift;
 	    FA_d.distr_list.push_back(Corr.Fit_distr(FA_d_distr));
 	    FA_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_d_distr));
 	    ax_d_Tmin.push_back(Tmin_A);
@@ -1708,7 +1710,7 @@ void Compute_form_factors_Nissa() {
       //vector
       if(xg.ave() > 1e-10) { //exclude xg=0
 	Get_Tmin_Tmax("V", Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
-	Corr.Tmin= Tmin_V; Corr.Tmax= Tmax_V;
+	Corr.Tmin= Tmin_V+shift; Corr.Tmax= Tmax_V+shift;
 	FV.distr_list.push_back( Corr.Fit_distr(FV_distr));
 	FV_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_distr));
 	vec_Tmin.push_back(Tmin_V);
@@ -1716,7 +1718,7 @@ void Compute_form_factors_Nissa() {
 
 	
 	Get_Tmin_Tmax("Vu", Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
-	Corr.Tmin= Tmin_V; Corr.Tmax= Tmax_V;	
+	Corr.Tmin= Tmin_V+shift; Corr.Tmax= Tmax_V+shift;	
 	FV_u.distr_list.push_back( Corr.Fit_distr(FV_u_distr));
 	FV_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_u_distr));
 	vec_u_Tmin.push_back(Tmin_V);
@@ -1725,7 +1727,7 @@ void Compute_form_factors_Nissa() {
 
 	
 	Get_Tmin_Tmax("Vd", Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
-	Corr.Tmin= Tmin_V; Corr.Tmax= Tmax_V;
+	Corr.Tmin= Tmin_V+shift; Corr.Tmax= Tmax_V+shift;
 	FV_d.distr_list.push_back( Corr.Fit_distr(FV_d_distr));
 	FV_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_u_distr));
 	vec_d_Tmin.push_back(Tmin_V);
@@ -1834,12 +1836,93 @@ void Compute_form_factors_Nissa() {
 
 
   //Print MP, FP, MP_ov_FP
-  Print_To_File({}, {a_distr_list.ave(), MP_list.ave(), MP_list.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/mass/masses.list", "", "#a MP MP_err");
+  Print_To_File({}, {a_distr_list_red.ave(), MP_list_red.ave(), MP_list_red.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/mass/masses.list", "", "#a MP MP_err");
   Print_To_File({}, {a_distr_list.ave(), FP_list.ave(), FP_list.err(), MP_ov_FP_list.ave(), MP_ov_FP_list.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/decay_const/fP.list", "", "#a FP FP_err MP/FP MP/FP_err  ");
 
 
   //#################################################################################################
 
+
+
+  //If ensemble B96 is present estimate FSEs
+  int iens_B64=-1;
+  int iens_B96=-1;
+  for(int iens=0;iens<Nens;iens++) {
+    if(data_2pts.Tag[iens] == "cB211b.072.64") iens_B64=iens;
+    else if(data_2pts.Tag[iens] == "cB211b.072.96") iens_B96=iens;
+  }
+
+  if( (iens_B64 > -1)  && (iens_B96 > -1)) { //compute FSE
+
+    ofstream Print_FVE("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE.dat");
+    for(int ixg=1;ixg<num_xg;ixg++) {
+
+      double sA_max= sqrt( pow(FA_per_ens[iens_B96].err(ixg-1),2) +pow(FA_per_ens[iens_B64].err(ixg-1),2));
+      double FA_corr= fabs(FA_per_ens[iens_B96].ave(ixg-1)-FA_per_ens[iens_B64].ave(ixg-1));
+      double sV_max= sqrt( pow(FV_per_ens[iens_B96].err(ixg-1),2) +pow(FV_per_ens[iens_B64].err(ixg-1),2));
+      double FV_corr= fabs(FV_per_ens[iens_B96].ave(ixg-1)-FV_per_ens[iens_B64].ave(ixg-1));
+      FA_corr= fabs((FA_corr/FA_per_ens[iens_B64].ave(ixg-1))*erf( FA_corr/(sqrt(2.0)*sA_max)));
+      FV_corr= fabs((FV_corr/FV_per_ens[iens_B64].ave(ixg-1))*erf( FV_corr/(sqrt(2.0)*sV_max)));
+      Print_FVE<<to_string_with_precision(ixg*0.1,2)<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_per_ens[iens_B64].ave(ixg-1))/FA_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_per_ens[iens_B64].ave(ixg-1))/FV_per_ens[iens_B64].err(ixg-1))<<endl;
+
+      if(ixg==7) {
+	 Print_FVE<<"0.80"<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_per_ens[iens_B64].ave(ixg-1))/FA_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_per_ens[iens_B64].ave(ixg-1))/FV_per_ens[iens_B64].err(ixg-1))<<endl;
+	 Print_FVE<<"0.90"<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_per_ens[iens_B64].ave(ixg-1))/FA_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_per_ens[iens_B64].ave(ixg-1))/FV_per_ens[iens_B64].err(ixg-1))<<endl;
+	 Print_FVE<<"1.00"<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_per_ens[iens_B64].ave(ixg-1))/FA_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_per_ens[iens_B64].ave(ixg-1))/FV_per_ens[iens_B64].err(ixg-1))<<endl;
+      }
+
+      
+    }
+   
+    Print_FVE.close();
+
+
+
+    //u contribution
+    ofstream Print_FVE_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_u.dat");
+    for(int ixg=1;ixg<num_xg;ixg++) {
+
+      double sA_max= sqrt( pow(FA_u_per_ens[iens_B96].err(ixg-1),2) +pow(FA_u_per_ens[iens_B64].err(ixg-1),2));
+      double FA_corr= fabs(FA_u_per_ens[iens_B96].ave(ixg-1)-FA_u_per_ens[iens_B64].ave(ixg-1));
+      double sV_max= sqrt( pow(FV_u_per_ens[iens_B96].err(ixg-1),2) +pow(FV_u_per_ens[iens_B64].err(ixg-1),2));
+      double FV_corr= fabs(FV_u_per_ens[iens_B96].ave(ixg-1)-FV_u_per_ens[iens_B64].ave(ixg-1));
+      FA_corr= fabs((FA_corr/FA_u_per_ens[iens_B64].ave(ixg-1))*erf( FA_corr/(sqrt(2.0)*sA_max)));
+      FV_corr= fabs((FV_corr/FV_u_per_ens[iens_B64].ave(ixg-1))*erf( FV_corr/(sqrt(2.0)*sV_max)));
+      Print_FVE_u<<to_string_with_precision(ixg*0.1,2)<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_u_per_ens[iens_B64].ave(ixg-1))/FA_u_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_u_per_ens[iens_B64].ave(ixg-1))/FV_u_per_ens[iens_B64].err(ixg-1))<<endl;
+
+      
+    }
+    Print_FVE_u<<"0.80"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
+    Print_FVE_u<<"0.90"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
+    Print_FVE_u<<"1.00"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
+    Print_FVE_u.close();
+
+
+
+    //d contribution
+    ofstream Print_FVE_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_d.dat");
+    for(int ixg=1;ixg<num_xg;ixg++) {
+
+      double sA_max= sqrt( pow(FA_d_per_ens[iens_B96].err(ixg-1),2) +pow(FA_d_per_ens[iens_B64].err(ixg-1),2));
+      double FA_corr= fabs(FA_d_per_ens[iens_B96].ave(ixg-1)-FA_d_per_ens[iens_B64].ave(ixg-1));
+      double sV_max= sqrt( pow(FV_d_per_ens[iens_B96].err(ixg-1),2) +pow(FV_d_per_ens[iens_B64].err(ixg-1),2));
+      double FV_corr= fabs(FV_d_per_ens[iens_B96].ave(ixg-1)-FV_d_per_ens[iens_B64].ave(ixg-1));
+      FA_corr= fabs((FA_corr/FA_d_per_ens[iens_B64].ave(ixg-1))*erf( FA_corr/(sqrt(2.0)*sA_max)));
+      FV_corr= fabs((FV_corr/FV_d_per_ens[iens_B64].ave(ixg-1))*erf( FV_corr/(sqrt(2.0)*sV_max)));
+      Print_FVE_d<<to_string_with_precision(ixg*0.1,2)<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_d_per_ens[iens_B64].ave(ixg-1))/FA_d_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_d_per_ens[iens_B64].ave(ixg-1))/FV_d_per_ens[iens_B64].err(ixg-1))<<endl;
+
+      
+    }
+    Print_FVE_d<<"0.80"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
+    Print_FVE_d<<"0.90"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
+    Print_FVE_d<<"1.00"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
+    Print_FVE_d.close();
+
+
+
+    
+  }
+   
   //continuum extrapolation
 
   
@@ -1857,8 +1940,58 @@ void Compute_form_factors_Nissa() {
     //d contribution
     vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FA_d_cont_interpol_jacks;
     vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FV_d_cont_interpol_jacks;
-    
 
+
+
+    //load FVE
+
+    ifstream Read_FVE("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE.dat");
+    for(int ixg=1;ixg<num_xg;ixg++) {
+      distr_t FVE_V(UseJack), FVE_A;
+      double xx, sV, sA, srel_V, srel_A;
+      Read_FVE>>xx>>sA>>sV>>srel_A>>srel_V;
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_A.distr.push_back( 1.0 + sA*GM()/sqrt(Njacks-1.0));   }
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_V.distr.push_back( 1.0 + sV*GM()/sqrt(Njacks-1.0));   }
+    for(int iens=0;iens<Nens;iens++) {
+      FA_per_ens[iens].distr_list[ixg-1] = FA_per_ens[iens].distr_list[ixg-1]*FVE_A;
+      FV_per_ens[iens].distr_list[ixg-1] = FV_per_ens[iens].distr_list[ixg-1]*FVE_V;
+    }
+    }
+    Read_FVE.close();
+
+
+
+    //u contribution
+    ifstream Read_FVE_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_u.dat");
+    for(int ixg=1;ixg<num_xg;ixg++) {
+      distr_t FVE_V(UseJack), FVE_A;
+      double xx, sV, sA, srel_V, srel_A;
+      Read_FVE_u>>xx>>sA>>sV>>srel_A>>srel_V;
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_A.distr.push_back( 1.0 + sA*GM()/sqrt(Njacks-1.0));   }
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_V.distr.push_back( 1.0 + sV*GM()/sqrt(Njacks-1.0));   }
+    for(int iens=0;iens<Nens;iens++) {
+      FA_u_per_ens[iens].distr_list[ixg-1] = FA_u_per_ens[iens].distr_list[ixg-1]*FVE_A;
+      FV_u_per_ens[iens].distr_list[ixg-1] = FV_u_per_ens[iens].distr_list[ixg-1]*FVE_V;
+    }
+    }
+    Read_FVE_u.close();
+
+
+    //d contribution
+    ifstream Read_FVE_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_d.dat");
+    for(int ixg=1;ixg<num_xg;ixg++) {
+      distr_t FVE_V(UseJack), FVE_A(UseJack);
+      double xx, sV, sA, srel_V, srel_A;
+      Read_FVE_d>>xx>>sA>>sV>>srel_A>>srel_V;
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_A.distr.push_back( 1.0 + sA*GM()/sqrt(Njacks-1.0));   }
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_V.distr.push_back( 1.0 + sV*GM()/sqrt(Njacks-1.0));   }
+    for(int iens=0;iens<Nens;iens++) {
+      FA_d_per_ens[iens].distr_list[ixg-1] = FA_d_per_ens[iens].distr_list[ixg-1]*FVE_A;
+      FV_d_per_ens[iens].distr_list[ixg-1] = FV_d_per_ens[iens].distr_list[ixg-1]*FVE_V;
+    }
+    }
+    Read_FVE_d.close();
+    
 
   class ipar_FF_Nissa {
   public:
