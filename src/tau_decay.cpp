@@ -36,7 +36,7 @@ const double C_V = 2*M_PI/(pow(m_tau,3));
 const double GAMMA_FACT= 12*M_PI; //12*M_PI*pow(Vud*GF,2);
 const string MODE="TANT";
 bool Use_t_up_to_T_half=true;
-const int sm_func_mode= 0;
+const int sm_func_mode= 2;
 const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake;
@@ -1011,7 +1011,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
      
       start = chrono::system_clock::now();
-      Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm,mult, lVii_tm, MODE, "tm", "Vii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, f_syst_V_tm,1, model_V_tm, Is_Emax_Finite, Emax, beta);
+      Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, mult, lVii_tm, MODE, "tm", "Vii_light_"+Vk_data_tm.Tag[iens], -1,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, f_syst_V_tm,1, model_V_tm, Is_Emax_Finite, Emax, beta);
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
       double time_Vii_tm= elapsed_seconds.count();
@@ -1114,9 +1114,9 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
   //Print to File
   for(int iens=0; iens<Nens;iens++) {
-    Print_To_File({}, {sigma_list, Br_tau_tm[iens].ave(), Br_tau_tm[iens].err(), syst_per_ens_tm[iens] , Br_tau_OS[iens].ave(), Br_tau_OS[iens].err(), syst_per_ens_OS[iens]}, "../data/tau_decay/"+Tag_reco_type+"/light/Br/br_"+MODE+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br[tm] Br[OS]");
-    Print_To_File({}, {sigma_list, Br_A0_tau_tm[iens].ave(), Br_A0_tau_tm[iens].err(), syst_per_ens_tm_A0[iens], Br_Aii_tau_tm[iens].ave(), Br_Aii_tau_tm[iens].err(), syst_per_ens_tm_Ak[iens], Br_Vii_tau_tm[iens].ave(), Br_Vii_tau_tm[iens].err(), syst_per_ens_tm_Vk[iens]}, "../data/tau_decay/"+Tag_reco_type+"/light/Br/br_contrib_tm_"+MODE+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br_A0 Br_Aii Br_Vii");
-    Print_To_File({}, {sigma_list, Br_A0_tau_OS[iens].ave(), Br_A0_tau_OS[iens].err(), syst_per_ens_OS_A0[iens], Br_Aii_tau_OS[iens].ave(), Br_Aii_tau_OS[iens].err(), syst_per_ens_OS_Ak[iens], Br_Vii_tau_OS[iens].ave(), Br_Vii_tau_OS[iens].err(), syst_per_ens_OS_Vk[iens]}, "../data/tau_decay/"+Tag_reco_type+"/light/Br/br_contrib_OS_"+MODE+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br_A0 Br_Aii Br_Vii");
+    Print_To_File({}, {sigma_list, Br_tau_tm[iens].ave(), Br_tau_tm[iens].err(), syst_per_ens_tm[iens] , Br_tau_OS[iens].ave(), Br_tau_OS[iens].err(), syst_per_ens_OS[iens]}, "../data/tau_decay/"+Tag_reco_type+"/light/Br/br_"+MODE+"_sm_func_mode_"+to_string(sm_func_mode)+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br[tm] Br[OS]");
+    Print_To_File({}, {sigma_list, Br_A0_tau_tm[iens].ave(), Br_A0_tau_tm[iens].err(), syst_per_ens_tm_A0[iens], Br_Aii_tau_tm[iens].ave(), Br_Aii_tau_tm[iens].err(), syst_per_ens_tm_Ak[iens], Br_Vii_tau_tm[iens].ave(), Br_Vii_tau_tm[iens].err(), syst_per_ens_tm_Vk[iens]}, "../data/tau_decay/"+Tag_reco_type+"/light/Br/br_contrib_tm_"+MODE+"_sm_func_mode_"+to_string(sm_func_mode)+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br_A0 Br_Aii Br_Vii");
+    Print_To_File({}, {sigma_list, Br_A0_tau_OS[iens].ave(), Br_A0_tau_OS[iens].err(), syst_per_ens_OS_A0[iens], Br_Aii_tau_OS[iens].ave(), Br_Aii_tau_OS[iens].err(), syst_per_ens_OS_Ak[iens], Br_Vii_tau_OS[iens].ave(), Br_Vii_tau_OS[iens].err(), syst_per_ens_OS_Vk[iens]}, "../data/tau_decay/"+Tag_reco_type+"/light/Br/br_contrib_OS_"+MODE+"_sm_func_mode_"+to_string(sm_func_mode)+"_"+Vk_data_tm.Tag[iens]+".dat", "", "#sigma Br_A0 Br_Aii Br_Vii");
   }
 
   cout<<"Output per ensemble printed!"<<endl;
@@ -1133,7 +1133,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       syst_OS.push_back( syst_per_ens_OS[iens][is]);
     }
 
-    Print_To_File(Vk_data_tm.Tag,{ Br_tau_tm_fixed_sigma.ave(), Br_tau_tm_fixed_sigma.err(), syst_tm, Br_tau_OS_fixed_sigma.ave(), Br_tau_OS_fixed_sigma.err(), syst_OS},"../data/tau_decay/"+Tag_reco_type+"/light/Br/br_sigma_"+to_string_with_precision(sigma_list[is],3)+".dat", "", "#Ens tm  OS");
+    Print_To_File(Vk_data_tm.Tag,{ Br_tau_tm_fixed_sigma.ave(), Br_tau_tm_fixed_sigma.err(), syst_tm, Br_tau_OS_fixed_sigma.ave(), Br_tau_OS_fixed_sigma.err(), syst_OS},"../data/tau_decay/"+Tag_reco_type+"/light/Br/br_sigma_"+to_string_with_precision(sigma_list[is],3)+"__sm_func_mode_"+to_string(sm_func_mode)+".dat", "", "#Ens tm  OS");
     
   }
 
@@ -1150,6 +1150,14 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/A0A0/"+Vk_data_tm.Tag[i_ens]);
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/AkAk/"+Vk_data_tm.Tag[i_ens]);
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/VkVk/"+Vk_data_tm.Tag[i_ens]);
+
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/A0A0/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/AkAk/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/VkVk/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/A0A0/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/AkAk/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/VkVk/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
+
   
     for(int is=0; is<(signed)sigma_list.size();is++) {
       //print jackknife distribution for tm and OS
