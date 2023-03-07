@@ -1161,13 +1161,13 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
   
     for(int is=0; is<(signed)sigma_list.size();is++) {
       //print jackknife distribution for tm and OS
-      ofstream Print_tm_A0A0("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/A0A0/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
-      ofstream Print_tm_AkAk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/AkAk/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
-      ofstream Print_tm_VkVk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/VkVk/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+      ofstream Print_tm_A0A0("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/A0A0/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+      ofstream Print_tm_AkAk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/AkAk/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+      ofstream Print_tm_VkVk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/tm/VkVk/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
 
-      ofstream Print_OS_A0A0("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/A0A0/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
-      ofstream Print_OS_AkAk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/AkAk/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
-      ofstream Print_OS_VkVk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/VkVk/"+Vk_data_tm.Tag[i_ens]+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+      ofstream Print_OS_A0A0("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/A0A0/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+      ofstream Print_OS_AkAk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/AkAk/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
+      ofstream Print_OS_VkVk("../data/tau_decay/"+Tag_reco_type+"/light/jackknife/OS/VkVk/"+Vk_data_tm.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list[is],3)+".jack");
      
       for(int ijack=0; ijack<Njacks;ijack++) {
 	Print_tm_A0A0<<Br_A0_tau_tm[i_ens].distr_list[is].distr[ijack]<<endl;
