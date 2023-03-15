@@ -1,5 +1,7 @@
 #include "../include/tau_decay.h"
 
+// Use (void) to silence unused warnings.
+#define assertm(exp, msg) assert(((void)msg, exp))
 
 const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
@@ -40,8 +42,8 @@ const int sm_func_mode= 0;
 const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake;
-int Num_LUSCH=3; //17;//17;
-int Nres= 2; //  15;//15;
+int Num_LUSCH=17; //3;;
+int Nres= 15; //2;
 int pts_spline=200;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
 bool COMPUTE_SPEC_DENS_FREE=false;
@@ -183,7 +185,7 @@ double Customized_plateaux_tau_spectre( double alpha, string channel, string reg
 
   }
 
-  assert(Ra0 > 0);
+  assertm(Ra0 > 0, "Assert Ra0 > 0");
   return Ra0;
 
 
