@@ -75,8 +75,7 @@ class file_t {
 };
 
 
-
-Vfloat Read_From_File(string Path, int icol, int ncols);
+Vfloat Read_From_File(string Path, int icol, int ncols, int rows_to_skip=0);
 
 
 

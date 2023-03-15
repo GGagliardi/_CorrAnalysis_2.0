@@ -12,7 +12,7 @@ const double alpha = 1/137.04;
 const double e2 = alpha*4.0*M_PI;
 const int Nboots= 800;
 const bool UseJack=1;
-const int Njacks=((UseJack==true)?10:Nboots);
+const int Njacks=((UseJack==true)?25:Nboots);
 const string channel="D_Klnu";
 //Tseps 64, 44, 36, 30
 
@@ -53,20 +53,20 @@ void Get_semileptonic_FF(int Tsep) {
   //2pts function
     
 
-  data_2pts_SM_P.Read("../D_Klnu_data_sm_test/sm_30", "mes_contr_MES_CONTR_2_PT_D", "P5P5");
-  data_2pts_SSM_P.Read("../D_Klnu_data_sm_test/sm_30", "mes_contr_MES_CONTR_2_PT_D_SM", "P5P5");
-  data_2pts_SM_K.Read("../D_Klnu_data_sm_test/sm_30", "mes_contr_MES_CONTR_2_PT_K", "P5P5");
-  data_2pts_SSM_K.Read("../D_Klnu_data_sm_test/sm_30", "mes_contr_MES_CONTR_2_PT_K_SM", "P5P5");
+  data_2pts_SM_P.Read("../D_Klnu_data", "mes_contr_MES_CONTR_2_PT_D", "P5P5");
+  data_2pts_SSM_P.Read("../D_Klnu_data", "mes_contr_MES_CONTR_2_PT_D_SM", "P5P5");
+  data_2pts_SM_K.Read("../D_Klnu_data", "mes_contr_MES_CONTR_2_PT_K", "P5P5");
+  data_2pts_SSM_K.Read("../D_Klnu_data", "mes_contr_MES_CONTR_2_PT_K_SM", "P5P5");
   
   //3pts function
-  data_3pts_V0_F.Read("../D_Klnu_data_sm_test/sm_30", "mes_contr_MES_CONTR_3_PT_F_"+tg_3pt, "V0P5");
-  data_3pts_V0_B.Read("../D_Klnu_data_sm_test/sm_30", "mes_contr_MES_CONTR_3_PT_B_"+tg_3pt, "V0P5");
+  data_3pts_V0_F.Read("../D_Klnu_data", "mes_contr_MES_CONTR_3_PT_F_"+tg_3pt, "V0P5");
+  data_3pts_V0_B.Read("../D_Klnu_data", "mes_contr_MES_CONTR_3_PT_B_"+tg_3pt, "V0P5");
 
-  data_3pts_S0_F.Read("../D_Klnu_data_sm_test/sm_30", "mes_contr_MES_CONTR_3_PT_F_"+tg_3pt, "S0P5");
-  data_3pts_S0_B.Read("../D_Klnu_data_sm_test/sm_30", "mes_contr_MES_CONTR_3_PT_B_"+tg_3pt, "S0P5");
+  data_3pts_S0_F.Read("../D_Klnu_data", "mes_contr_MES_CONTR_3_PT_F_"+tg_3pt, "S0P5");
+  data_3pts_S0_B.Read("../D_Klnu_data", "mes_contr_MES_CONTR_3_PT_B_"+tg_3pt, "S0P5");
 
-  data_3pts_V0_P.Read("../D_Klnu_data_sm_test/sm_30", "mes_contr_MES_CONTR_3_PT_DIAG_c_"+tg_3pt, "V0P5");
-  data_3pts_V0_K.Read("../D_Klnu_data_sm_test/sm_30", "mes_contr_MES_CONTR_3_PT_DIAG_s_"+tg_3pt, "V0P5");
+  data_3pts_V0_P.Read("../D_Klnu_data", "mes_contr_MES_CONTR_3_PT_DIAG_c_"+tg_3pt, "V0P5");
+  data_3pts_V0_K.Read("../D_Klnu_data", "mes_contr_MES_CONTR_3_PT_DIAG_s_"+tg_3pt, "V0P5");
   
 
   

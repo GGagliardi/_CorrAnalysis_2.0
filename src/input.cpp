@@ -176,12 +176,17 @@ void data_t::Read() {
 
 
 
-Vfloat Read_From_File(string path, int icol, int ncols) {
+Vfloat Read_From_File(string path, int icol, int ncols, int rows_to_skip) {
 
   ifstream Read(path);
   Vfloat res;
 
+ 
+
   if(!boost::filesystem::is_regular_file(path)) crash("In Read_From_File cannot open file name: "+path);
+
+  string fake_string;
+  for(int iskip=0;iskip<rows_to_skip;iskip++) getline(Read, fake_string); 
   
   do {
 
