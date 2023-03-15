@@ -250,7 +250,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 20; Tmax=28;}
-      else if(W=="V") {Tmin=19;Tmax=30;}
+      else if(W=="V") {Tmin=20;Tmax=31;}
       else if(W=="Ad") { Tmin=40; Tmax=46;}
       else if(W=="Vd") { Tmin=29; Tmax=39;}
       else if(W=="Au") { Tmin=26; Tmax=33;}
@@ -389,7 +389,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 22; Tmax=30;}
-      else if(W=="V") {Tmin=24;Tmax=36;}
+      else if(W=="V") {Tmin=23;Tmax=37;}
       else if(W=="Ad") { Tmin=41; Tmax=55;}
       else if(W=="Vd") { Tmin=33; Tmax=53;}
       else if(W=="Au") { Tmin=26; Tmax=34;}
@@ -509,7 +509,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=28;Tmax=42;}
+      else if(W=="V") {Tmin=28;Tmax=44;}
       else if(W=="Ad") { Tmin=50; Tmax=55;}
       else if(W=="Vd") { Tmin=57; Tmax=68;}
       else if(W=="Au") { Tmin=29; Tmax=37;}
@@ -519,7 +519,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     }
     else if(ixg==7) {
       if(W=="A") {Tmin= 25; Tmax=35;}
-      else if(W=="V")  {Tmin=25;Tmax=43;}
+      else if(W=="V")  {Tmin=27;Tmax=44;}
       else if(W=="Ad") { Tmin=48; Tmax=54;}
       else if(W=="Vd") { Tmin=56; Tmax=68;}
       else if(W=="Au") { Tmin=29; Tmax=37;}

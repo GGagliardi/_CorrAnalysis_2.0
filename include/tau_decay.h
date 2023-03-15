@@ -17,7 +17,7 @@
 
 using namespace std;
 
-
+double Customized_plateaux_tau_spectre( double alpha, string channel, string reg, double s, string Ens );
 void tau_decay_analysis();
 void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_functions &LL);
 void get_sigma_list();
