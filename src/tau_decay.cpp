@@ -42,13 +42,13 @@ const int sm_func_mode= 0;
 const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake;
-int Num_LUSCH=17; //3;;
-int Nres= 15; //2;
+int Num_LUSCH=17; //17; //3;;
+int Nres= 15; //15; //2;
 int pts_spline=200;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
 bool COMPUTE_SPEC_DENS_FREE=false;
-bool Skip_spectral_density_analysis=false;
-const bool Perform_continuum_extrapolation=false;
+bool Skip_spectral_density_analysis=true;
+const bool Perform_continuum_extrapolation=true;
 bool Use_Customized_plateaux=true;
 using namespace std;
 
@@ -59,7 +59,7 @@ double Customized_plateaux_tau_spectre( double alpha, string channel, string reg
   int alpha_m= (int)(alpha+1);
 
   if(alpha_m < 3) crash("Customized_plateaux_tau_spectre called with alpha = "+to_string_with_precision(alpha,2));
-  if( (alpha_m != 3) && (alpha_m != 4)) crash("Customized_plateaux_tau_spectre called with (int)alpha: "+to_string(alpha_m));
+  if( (alpha_m != 3) && (alpha_m != 4) && (alpha_m != 5) ) crash("Customized_plateaux_tau_spectre called with (int)alpha: "+to_string(alpha_m));
 
 
   //SMALL    SIGMA 
@@ -69,13 +69,13 @@ double Customized_plateaux_tau_spectre( double alpha, string channel, string reg
       if(channel=="Aii") {
 	if(Ens == "cB211b.072.64") {  Ra0 =1e6;  }
 	else if(Ens == "cB211b.072.96") { Ra0= ((alpha_m==3)?2e5:2e6);   }
-	else if(Ens == "cC211a.06.80") { Ra0 = 1e5;   }  //THIS IS THE PROBLEMATIC ONE
+	else if(Ens == "cC211a.06.80") { Ra0= 3e7;   }  //THIS IS THE PROBLEMATIC ONE, OLD VALUE WAS Ra0= 1e5
 	else if(Ens == "cD211a.054.96") {  Ra0=1e6;  }
 	else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
       }
       else if(channel=="Vii") {
 	if(Ens == "cB211b.072.64") { Ra0=3e5;   }
-	else if(Ens == "cB211b.072.96") { Ra0=1e5;   }
+	else if(Ens == "cB211b.072.96") { Ra0= ((alpha_m==3)?1e7:2e7);    } //THIS IS PROBLEMATIC, OLD VALUE WAS Ra0=1e5
 	else if(Ens == "cC211a.06.80") {  Ra0=1e5;  }
 	else if(Ens == "cD211a.054.96") {  Ra0= ((alpha_m==3)?1e5:1e6);   }
 	else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
@@ -84,7 +84,7 @@ double Customized_plateaux_tau_spectre( double alpha, string channel, string reg
 	if(Ens == "cB211b.072.64") { Ra0=1e7;   }
 	else if(Ens == "cB211b.072.96") { Ra0=1e7;   }
 	else if(Ens == "cC211a.06.80") {  Ra0=3e6;  }
-	else if(Ens == "cD211a.054.96") { Ra0=1e7;   }
+	else if(Ens == "cD211a.054.96") { Ra0=9e7;   } //THIS IS PROBLEMATIC, OLD VALUE WAS 1e7
 	else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
       }
       else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -110,7 +110,7 @@ double Customized_plateaux_tau_spectre( double alpha, string channel, string reg
 	if(Ens == "cB211b.072.64") { Ra0=1e6;   }
 	else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
 	else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
-	else if(Ens == "cD211a.054.96") { Ra0=1e6;   }
+	else if(Ens == "cD211a.054.96") { Ra0=9e6;   } //THIS IS PROBLEMATIC, OLD VALUE WAS 1e6
 	else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
       }
       else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -185,7 +185,7 @@ double Customized_plateaux_tau_spectre( double alpha, string channel, string reg
 
   }
 
-  assertm(Ra0 > 0, "Assert Ra0 > 0");
+  assertm(Ra0 > 0, "Assertion Ra0 > 0 failed");
   return Ra0;
 
 
@@ -221,9 +221,9 @@ void tau_decay_analysis() {
 
   get_sigma_list();
 
-  Vfloat betas({ 1.99, 2.99, 3.99, 2.99, 3.99, 2.99});
-  Vfloat Emax_list({4.0, 4.0, 4.0, 5.0, 5.0, 6.0 });
-  vector<bool> Is_Emax_Finite({0,1,1,1,1,1});
+  Vfloat betas({ 1.99, 2.99, 3.99, 4.99, 2.99, 3.99, 2.99, 4.99});
+  Vfloat Emax_list({4.0, 4.0, 4.0, 4.0, 5.0, 5.0, 6.0, 5.0 });
+  vector<bool> Is_Emax_Finite({0,1,1,1,1,1,1,1});
   
   
 
