@@ -110,7 +110,7 @@ double Customized_plateaux_tau_spectre( double alpha, double Emax, string channe
 	if(Ens == "cB211b.072.64") { Ra0=1e6;   }
 	else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
 	else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
-	else if(Ens == "cD211a.054.96") { if( (Emax> 5.0 - 1e-4 && Emax < 5.0 +1e-4) && (alpha_m==3)  ) Ra0= 2e6; else  Ra0=9e6;   } //THIS IS PROBLEMATIC, OLD VALUE WAS 1e6
+	else if(Ens == "cD211a.054.96") { if( ( (Emax > (5.0-1e-4)) && (Emax < (5.0 +1e-4))) && (alpha_m==3)  ) Ra0= 2e6; else  Ra0=9e6;   } //THIS IS PROBLEMATIC, OLD VALUE WAS 1e6
 	else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
       }
       else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
