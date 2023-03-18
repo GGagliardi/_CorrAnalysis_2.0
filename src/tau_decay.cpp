@@ -76,7 +76,7 @@ double Customized_plateaux_tau_spectre( double alpha, double Emax, string channe
       else if(channel=="Vii") {
 	if(Ens == "cB211b.072.64") { Ra0=3e5;   }
 	else if(Ens == "cB211b.072.96") { Ra0= ((alpha_m==3)?1e7:2e7);    } //THIS IS PROBLEMATIC, OLD VALUE WAS Ra0=1e5
-	else if(Ens == "cC211a.06.80") {  Ra0=1e5;  }
+	else if(Ens == "cC211a.06.80") {  Ra0=1e7;  }  //PREVIOUS WAS Ra0=1e5
 	else if(Ens == "cD211a.054.96") {  Ra0= ((alpha_m==3)?1e5:1e6);   }
 	else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
       }

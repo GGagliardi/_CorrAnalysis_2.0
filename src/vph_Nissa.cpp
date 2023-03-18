@@ -15,9 +15,11 @@ const string Meson="Ds";
 double Lambda_QCD= 0.3; //300 MeV
 bool Is_reph=true;
 bool Perform_continuum_extrapolation=true;
-bool Include_a4=true;
+bool Include_a4=false;
+bool Use_three_finest=true;
 string Fit_tag= ( (Include_a4==true)?"wa4_":"");
 string _Fit_tag= ( (Include_a4==true)?"_wa4":"");
+
 int num_xg=11;
 Vfloat xg_t_list;
 Vfloat xg_to_spline;
@@ -459,7 +461,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     }
     else if(ixg==1) {
       if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=30;Tmax=46;}
+      else if(W=="V") {Tmin=32;Tmax=53;}
       else if(W=="Ad") { Tmin=51; Tmax=55;}
       else if(W=="Vd") { Tmin=61; Tmax=76;}
       else if(W=="Au") { Tmin=29; Tmax=35;}
@@ -469,7 +471,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     }
     else if(ixg==2) {
       if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=30;Tmax=47;}
+      else if(W=="V") {Tmin=32;Tmax=47;}
       else if(W=="Ad") { Tmin=51; Tmax=55;}
       else if(W=="Vd") { Tmin=57; Tmax=68;}
       else if(W=="Au") { Tmin=29; Tmax=35;}
@@ -479,7 +481,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     }
     else if(ixg==3) {
       if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=30;Tmax=47;}
+      else if(W=="V") {Tmin=32;Tmax=47;}
       else if(W=="Ad") { Tmin=51; Tmax=55;}
       else if(W=="Vd") { Tmin=57; Tmax=68;}
       else if(W=="Au") { Tmin=29; Tmax=35;}
@@ -509,7 +511,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     }
     else if(ixg==6) {
       if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=28;Tmax=44;}
+      else if(W=="V") {Tmin=27;Tmax=45;}
       else if(W=="Ad") { Tmin=50; Tmax=55;}
       else if(W=="Vd") { Tmin=57; Tmax=68;}
       else if(W=="Au") { Tmin=29; Tmax=37;}
@@ -519,7 +521,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     }
     else if(ixg==7) {
       if(W=="A") {Tmin= 25; Tmax=35;}
-      else if(W=="V")  {Tmin=27;Tmax=44;}
+      else if(W=="V")  {Tmin=25;Tmax=44;}
       else if(W=="Ad") { Tmin=48; Tmax=54;}
       else if(W=="Vd") { Tmin=56; Tmax=68;}
       else if(W=="Au") { Tmin=29; Tmax=37;}
@@ -1040,6 +1042,9 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
 void Compute_form_factors_Nissa() {
 
+
+  Fit_tag = ( (Use_three_finest==true)?"wtf_":Fit_tag);
+  _Fit_tag= ( (Use_three_finest==true)?"_wtf":_Fit_tag);
   
 
   Get_xg_t_list();
@@ -2044,6 +2049,7 @@ void Compute_form_factors_Nissa() {
   public:
     ipar_FF_Nissa() : FF(0.0), FF_err(0.0) {}
     double FF, FF_err, a;
+    int is;
   };
   
   class fpar_FF_Nissa {
@@ -2081,16 +2087,25 @@ void Compute_form_factors_Nissa() {
   if(Include_a4==false) { bf_FF.Fix_par("D2", 0.0); bf_FF_ch2.Fix_par("D2",0.0);}
   else dof-- ;
 
+  if( Use_three_finest) dof--;
+
   //ansatz
   bf_FF.ansatz=  [ ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
 
+    if( (ip.is==0) && Use_three_finest) return 0.0;
 		  
     return p.F0 + p.D1*pow(ip.a*Lambda_QCD,2) + p.D2*pow(ip.a*Lambda_QCD,4);
-		 };
-  bf_FF.measurement=  [ ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
 
-		 return ip.FF;
-		 };
+  };
+
+  
+  bf_FF.measurement=  [ ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
+    
+    if( (ip.is==0) && Use_three_finest) return 0.0;
+    
+    return ip.FF;
+       
+  };
   bf_FF.error=  [ ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
 
 		 return ip.FF_err;
@@ -2119,22 +2134,22 @@ void Compute_form_factors_Nissa() {
     for(int iens=0;iens<Nens;iens++) {
       data[ijack][iens].FF= FA_per_ens[iens].distr_list[ixg-1].distr[ijack];
       data[ijack][iens].FF_err= FA_per_ens[iens].err(ixg-1);
-      if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
+      if(data_2pts.Tag[iens] == "cA211a.12.48") { data[ijack][iens].a = a_A.distr[ijack]; data[ijack][iens].is=0; }
+      else if(data_2pts.Tag[iens] == "cB211b.072.64") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1;}
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1; }
+      else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data[ijack][iens].a = a_C.distr[ijack]; data[ijack][iens].is=2; }
+      else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data[ijack][iens].a = a_D.distr[ijack]; data[ijack][iens].is=3; }
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 
       //mean values
       if(ijack==0) {
 	data_ch2[ijack][iens].FF= FA_per_ens[iens].ave(ixg-1);
 	data_ch2[ijack][iens].FF_err= FA_per_ens[iens].err(ixg-1);
-	if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
+	if(data_2pts.Tag[iens] == "cA211a.12.48") { data_ch2[ijack][iens].a = a_A.distr[ijack]; data_ch2[ijack][iens].is=0; }
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1;}
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1; }
+	else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_ch2[ijack][iens].a = a_C.distr[ijack]; data_ch2[ijack][iens].is=2; }
+	else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_ch2[ijack][iens].a = a_D.distr[ijack]; data_ch2[ijack][iens].is=3; }
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
       }
     }
@@ -2194,21 +2209,21 @@ void Compute_form_factors_Nissa() {
       for(int iens=0;iens<Nens;iens++) {
 	data[ijack][iens].FF= FV_per_ens[iens].distr_list[ixg-1].distr[ijack];
 	data[ijack][iens].FF_err= FV_per_ens[iens].err(ixg-1);
-	if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
+	if(data_2pts.Tag[iens] == "cA211a.12.48") { data[ijack][iens].a = a_A.distr[ijack]; data[ijack][iens].is=0; }
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1;}
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1; }
+	else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data[ijack][iens].a = a_C.distr[ijack]; data[ijack][iens].is=2; }
+	else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data[ijack][iens].a = a_D.distr[ijack]; data[ijack][iens].is=3; }
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 
 	if(ijack==0) {
 	  	data_ch2[ijack][iens].FF= FV_per_ens[iens].ave(ixg-1);
 		data_ch2[ijack][iens].FF_err= FV_per_ens[iens].err(ixg-1);
-		if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
+		if(data_2pts.Tag[iens] == "cA211a.12.48") { data_ch2[ijack][iens].a = a_A.distr[ijack]; data_ch2[ijack][iens].is=0; }
+		else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1;}
+		else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1; }
+		else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_ch2[ijack][iens].a = a_C.distr[ijack]; data_ch2[ijack][iens].is=2; }
+		else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_ch2[ijack][iens].a = a_D.distr[ijack]; data_ch2[ijack][iens].is=3; }
 		else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 	}
       }
@@ -2302,22 +2317,22 @@ void Compute_form_factors_Nissa() {
     for(int iens=0;iens<Nens;iens++) {
       data[ijack][iens].FF= FA_u_per_ens[iens].distr_list[ixg-1].distr[ijack];
       data[ijack][iens].FF_err= FA_u_per_ens[iens].err(ixg-1);
-      if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
+      if(data_2pts.Tag[iens] == "cA211a.12.48") { data[ijack][iens].a = a_A.distr[ijack]; data[ijack][iens].is=0; }
+      else if(data_2pts.Tag[iens] == "cB211b.072.64") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1;}
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1; }
+      else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data[ijack][iens].a = a_C.distr[ijack]; data[ijack][iens].is=2; }
+      else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data[ijack][iens].a = a_D.distr[ijack]; data[ijack][iens].is=3; }
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 
       //mean values
       if(ijack==0) {
 	data_ch2[ijack][iens].FF= FA_u_per_ens[iens].ave(ixg-1);
 	data_ch2[ijack][iens].FF_err= FA_u_per_ens[iens].err(ixg-1);
-	if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
+	if(data_2pts.Tag[iens] == "cA211a.12.48") { data_ch2[ijack][iens].a = a_A.distr[ijack]; data_ch2[ijack][iens].is=0; }
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1;}
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1; }
+	else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_ch2[ijack][iens].a = a_C.distr[ijack]; data_ch2[ijack][iens].is=2; }
+	else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_ch2[ijack][iens].a = a_D.distr[ijack]; data_ch2[ijack][iens].is=3; }
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
       }
     }
@@ -2377,21 +2392,21 @@ void Compute_form_factors_Nissa() {
       for(int iens=0;iens<Nens;iens++) {
 	data[ijack][iens].FF= FV_u_per_ens[iens].distr_list[ixg-1].distr[ijack];
 	data[ijack][iens].FF_err= FV_u_per_ens[iens].err(ixg-1);
-	if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
+	if(data_2pts.Tag[iens] == "cA211a.12.48") { data[ijack][iens].a = a_A.distr[ijack]; data[ijack][iens].is=0; }
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1;}
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1; }
+	else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data[ijack][iens].a = a_C.distr[ijack]; data[ijack][iens].is=2; }
+	else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data[ijack][iens].a = a_D.distr[ijack]; data[ijack][iens].is=3; }
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 
 	if(ijack==0) {
 	  	data_ch2[ijack][iens].FF= FV_u_per_ens[iens].ave(ixg-1);
 		data_ch2[ijack][iens].FF_err= FV_u_per_ens[iens].err(ixg-1);
-		if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
+		if(data_2pts.Tag[iens] == "cA211a.12.48") { data_ch2[ijack][iens].a = a_A.distr[ijack]; data_ch2[ijack][iens].is=0; }
+		else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1;}
+		else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1; }
+		else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_ch2[ijack][iens].a = a_C.distr[ijack]; data_ch2[ijack][iens].is=2; }
+		else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_ch2[ijack][iens].a = a_D.distr[ijack]; data_ch2[ijack][iens].is=3; }
 		else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 	}
       }
@@ -2483,22 +2498,22 @@ void Compute_form_factors_Nissa() {
     for(int iens=0;iens<Nens;iens++) {
       data[ijack][iens].FF= FA_d_per_ens[iens].distr_list[ixg-1].distr[ijack];
       data[ijack][iens].FF_err= FA_d_per_ens[iens].err(ixg-1);
-      if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
+      if(data_2pts.Tag[iens] == "cA211a.12.48") { data[ijack][iens].a = a_A.distr[ijack]; data[ijack][iens].is=0; }
+      else if(data_2pts.Tag[iens] == "cB211b.072.64") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1;}
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1; }
+      else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data[ijack][iens].a = a_C.distr[ijack]; data[ijack][iens].is=2; }
+      else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data[ijack][iens].a = a_D.distr[ijack]; data[ijack][iens].is=3; }
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 
       //mean values
       if(ijack==0) {
 	data_ch2[ijack][iens].FF= FA_d_per_ens[iens].ave(ixg-1);
 	data_ch2[ijack][iens].FF_err= FA_d_per_ens[iens].err(ixg-1);
-	if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
+	if(data_2pts.Tag[iens] == "cA211a.12.48") { data_ch2[ijack][iens].a = a_A.distr[ijack]; data_ch2[ijack][iens].is=0; }
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1;}
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1; }
+	else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_ch2[ijack][iens].a = a_C.distr[ijack]; data_ch2[ijack][iens].is=2; }
+	else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_ch2[ijack][iens].a = a_D.distr[ijack]; data_ch2[ijack][iens].is=3; }
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
       }
     }
@@ -2558,21 +2573,21 @@ void Compute_form_factors_Nissa() {
       for(int iens=0;iens<Nens;iens++) {
 	data[ijack][iens].FF= FV_d_per_ens[iens].distr_list[ixg-1].distr[ijack];
 	data[ijack][iens].FF_err= FV_d_per_ens[iens].err(ixg-1);
-	if(data_2pts.Tag[iens] == "cA211a.12.48") data[ijack][iens].a = a_A.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.64") data[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.96") data[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cC211a.06.80") data[ijack][iens].a = a_C.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cD211a.054.96") data[ijack][iens].a = a_D.distr[ijack];
+	if(data_2pts.Tag[iens] == "cA211a.12.48") { data[ijack][iens].a = a_A.distr[ijack]; data[ijack][iens].is=0; }
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1;}
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") { data[ijack][iens].a = a_B.distr[ijack]; data[ijack][iens].is=1; }
+	else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data[ijack][iens].a = a_C.distr[ijack]; data[ijack][iens].is=2; }
+	else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data[ijack][iens].a = a_D.distr[ijack]; data[ijack][iens].is=3; }
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 
 	if(ijack==0) {
 	  	data_ch2[ijack][iens].FF= FV_d_per_ens[iens].ave(ixg-1);
 		data_ch2[ijack][iens].FF_err= FV_d_per_ens[iens].err(ixg-1);
-		if(data_2pts.Tag[iens] == "cA211a.12.48") data_ch2[ijack][iens].a = a_A.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cB211b.072.64") data_ch2[ijack][iens].a = a_B.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cB211b.072.96") data_ch2[ijack][iens].a = a_B.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cC211a.06.80") data_ch2[ijack][iens].a = a_C.distr[ijack];
-		else if(data_2pts.Tag[iens] == "cD211a.054.96") data_ch2[ijack][iens].a = a_D.distr[ijack];
+		if(data_2pts.Tag[iens] == "cA211a.12.48") { data_ch2[ijack][iens].a = a_A.distr[ijack]; data_ch2[ijack][iens].is=0; }
+		else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1;}
+		else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_ch2[ijack][iens].a = a_B.distr[ijack]; data_ch2[ijack][iens].is=1; }
+		else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_ch2[ijack][iens].a = a_C.distr[ijack]; data_ch2[ijack][iens].is=2; }
+		else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_ch2[ijack][iens].a = a_D.distr[ijack]; data_ch2[ijack][iens].is=3; }
 		else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 	}
       }
@@ -2955,21 +2970,21 @@ void Compute_form_factors_Nissa() {
     for(int iens=0;iens<Nens;iens++) {
       data_MP[ijack][iens].FF= MP_list.distr_list[iens].distr[ijack];
       data_MP[ijack][iens].FF_err= MP_list.err(iens);
-      if(data_2pts.Tag[iens] == "cA211a.12.48") data_MP[ijack][iens].a = a_A.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.64") data_MP[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.96") data_MP[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cC211a.06.80") data_MP[ijack][iens].a = a_C.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cD211a.054.96") data_MP[ijack][iens].a = a_D.distr[ijack];
+      if(data_2pts.Tag[iens] == "cA211a.12.48") { data_MP[ijack][iens].a = a_A.distr[ijack]; data_MP[ijack][iens].is=0; }
+      else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_MP[ijack][iens].a = a_B.distr[ijack]; data_MP[ijack][iens].is=1;}
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_MP[ijack][iens].a = a_B.distr[ijack]; data_MP[ijack][iens].is=1; }
+      else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_MP[ijack][iens].a = a_C.distr[ijack]; data_MP[ijack][iens].is=2; }
+      else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_MP[ijack][iens].a = a_D.distr[ijack]; data_MP[ijack][iens].is=3; }
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 
       if(ijack==0) {
 	data_MP_ch2[ijack][iens].FF= MP_list.ave(iens);
 	data_MP_ch2[ijack][iens].FF_err= MP_list.err(iens);
-	if(data_2pts.Tag[iens] == "cA211a.12.48") data_MP_ch2[ijack][iens].a = a_A.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_MP_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_MP_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_MP_ch2[ijack][iens].a = a_C.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_MP_ch2[ijack][iens].a = a_D.distr[ijack];
+	if(data_2pts.Tag[iens] == "cA211a.12.48") { data_MP_ch2[ijack][iens].a = a_A.distr[ijack]; data_MP_ch2[ijack][iens].is=0; }
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_MP_ch2[ijack][iens].a = a_B.distr[ijack]; data_MP_ch2[ijack][iens].is=1;}
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_MP_ch2[ijack][iens].a = a_B.distr[ijack]; data_MP_ch2[ijack][iens].is=1; }
+	else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_MP_ch2[ijack][iens].a = a_C.distr[ijack]; data_MP_ch2[ijack][iens].is=2; }
+	else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_MP_ch2[ijack][iens].a = a_D.distr[ijack]; data_MP_ch2[ijack][iens].is=3; }
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 	
       }
@@ -3010,21 +3025,21 @@ void Compute_form_factors_Nissa() {
     for(int iens=0;iens<Nens;iens++) {
       data_FP[ijack][iens].FF= FP_list.distr_list[iens].distr[ijack];
       data_FP[ijack][iens].FF_err= FP_list.err(iens);
-      if(data_2pts.Tag[iens] == "cA211a.12.48") data_FP[ijack][iens].a = a_A.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.64") data_FP[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.96") data_FP[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cC211a.06.80") data_FP[ijack][iens].a = a_C.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cD211a.054.96") data_FP[ijack][iens].a = a_D.distr[ijack];
+      if(data_2pts.Tag[iens] == "cA211a.12.48") { data_FP[ijack][iens].a = a_A.distr[ijack]; data_FP[ijack][iens].is=0; }
+      else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_FP[ijack][iens].a = a_B.distr[ijack]; data_FP[ijack][iens].is=1;}
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_FP[ijack][iens].a = a_B.distr[ijack]; data_FP[ijack][iens].is=1; }
+      else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_FP[ijack][iens].a = a_C.distr[ijack]; data_FP[ijack][iens].is=2; }
+      else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_FP[ijack][iens].a = a_D.distr[ijack]; data_FP[ijack][iens].is=3; }
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 
       if(ijack==0) {
 	data_FP_ch2[ijack][iens].FF= FP_list.ave(iens);
 	data_FP_ch2[ijack][iens].FF_err= FP_list.err(iens);
-	if(data_2pts.Tag[iens] == "cA211a.12.48") data_FP_ch2[ijack][iens].a = a_A.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_FP_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_FP_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_FP_ch2[ijack][iens].a = a_C.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_FP_ch2[ijack][iens].a = a_D.distr[ijack];
+	if(data_2pts.Tag[iens] == "cA211a.12.48") { data_FP_ch2[ijack][iens].a = a_A.distr[ijack]; data_FP_ch2[ijack][iens].is=0; }
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_FP_ch2[ijack][iens].a = a_B.distr[ijack]; data_FP_ch2[ijack][iens].is=1;}
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_FP_ch2[ijack][iens].a = a_B.distr[ijack]; data_FP_ch2[ijack][iens].is=1; }
+	else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_FP_ch2[ijack][iens].a = a_C.distr[ijack]; data_FP_ch2[ijack][iens].is=2; }
+	else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_FP_ch2[ijack][iens].a = a_D.distr[ijack]; data_FP_ch2[ijack][iens].is=3; }
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 	
       }
@@ -3066,21 +3081,21 @@ void Compute_form_factors_Nissa() {
     for(int iens=0;iens<Nens;iens++) {
       data_MP_ov_FP[ijack][iens].FF= MP_ov_FP_list.distr_list[iens].distr[ijack];
       data_MP_ov_FP[ijack][iens].FF_err= MP_ov_FP_list.err(iens);
-      if(data_2pts.Tag[iens] == "cA211a.12.48") data_MP_ov_FP[ijack][iens].a = a_A.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.64") data_MP_ov_FP[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cB211b.072.96") data_MP_ov_FP[ijack][iens].a = a_B.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cC211a.06.80") data_MP_ov_FP[ijack][iens].a = a_C.distr[ijack];
-      else if(data_2pts.Tag[iens] == "cD211a.054.96") data_MP_ov_FP[ijack][iens].a = a_D.distr[ijack];
+      if(data_2pts.Tag[iens] == "cA211a.12.48") { data_MP_ov_FP[ijack][iens].a = a_A.distr[ijack]; data_MP_ov_FP[ijack][iens].is=0; }
+      else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_MP_ov_FP[ijack][iens].a = a_B.distr[ijack]; data_MP_ov_FP[ijack][iens].is=1;}
+      else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_MP_ov_FP[ijack][iens].a = a_B.distr[ijack]; data_MP_ov_FP[ijack][iens].is=1; }
+      else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_MP_ov_FP[ijack][iens].a = a_C.distr[ijack]; data_MP_ov_FP[ijack][iens].is=2; }
+      else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_MP_ov_FP[ijack][iens].a = a_D.distr[ijack]; data_MP_ov_FP[ijack][iens].is=3; }
       else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
 
       if(ijack==0) {
 	data_MP_ov_FP_ch2[ijack][iens].FF= MP_ov_FP_list.ave(iens);
 	data_MP_ov_FP_ch2[ijack][iens].FF_err= MP_ov_FP_list.err(iens);
-	if(data_2pts.Tag[iens] == "cA211a.12.48") data_MP_ov_FP_ch2[ijack][iens].a = a_A.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.64") data_MP_ov_FP_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cB211b.072.96") data_MP_ov_FP_ch2[ijack][iens].a = a_B.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cC211a.06.80") data_MP_ov_FP_ch2[ijack][iens].a = a_C.distr[ijack];
-	else if(data_2pts.Tag[iens] == "cD211a.054.96") data_MP_ov_FP_ch2[ijack][iens].a = a_D.distr[ijack];
+	if(data_2pts.Tag[iens] == "cA211a.12.48") { data_MP_ov_FP_ch2[ijack][iens].a = a_A.distr[ijack]; data_MP_ov_FP_ch2[ijack][iens].is=0; }
+	else if(data_2pts.Tag[iens] == "cB211b.072.64") { data_MP_ov_FP_ch2[ijack][iens].a = a_B.distr[ijack]; data_MP_ov_FP_ch2[ijack][iens].is=1;}
+	else if(data_2pts.Tag[iens] == "cB211b.072.96") { data_MP_ov_FP_ch2[ijack][iens].a = a_B.distr[ijack]; data_MP_ov_FP_ch2[ijack][iens].is=1; }
+	else if(data_2pts.Tag[iens] == "cC211a.06.80")  {data_MP_ov_FP_ch2[ijack][iens].a = a_C.distr[ijack]; data_MP_ov_FP_ch2[ijack][iens].is=2; }
+	else if(data_2pts.Tag[iens] == "cD211a.054.96")  {data_MP_ov_FP_ch2[ijack][iens].a = a_D.distr[ijack]; data_MP_ov_FP_ch2[ijack][iens].is=3; }
 	else crash("Ens_tag: "+data_2pts.Tag[iens]+" not recognized");
       }
     }
