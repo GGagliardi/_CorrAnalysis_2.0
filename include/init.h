@@ -15,6 +15,7 @@
 #include "vph_Nissa_3d.h"
 #include "tau_decay.h"
 #include "semileptonic.h"
+#include "Bs_mumu_gamma.h"
 
 using namespace std;
 

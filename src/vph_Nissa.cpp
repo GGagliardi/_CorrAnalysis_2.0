@@ -5,32 +5,28 @@ using namespace std;
 const double M2PiPhys=pow(0.135,2);
 const double alpha = 1/137.04;
 const double e2 = alpha*4.0*M_PI;
-const int Nboots= 800;
-const bool UseJack=1;
-const int Njacks=((UseJack==true)?30:Nboots);
-
+const int Nboots= 2000;
+const int NJ=30;
 const double qu = 2.0/3.0; //electric charge of u-type quark
 const double qd = -1.0/3.0; //electric charge of d-type quark
 const string Meson="Ds";
 double Lambda_QCD= 0.3; //300 MeV
 bool Is_reph=true;
-bool Perform_continuum_extrapolation=true;
-bool Include_a4=false;
-bool Use_three_finest=true;
-string Fit_tag= ( (Include_a4==true)?"wa4_":"");
-string _Fit_tag= ( (Include_a4==true)?"_wa4":"");
-
-int num_xg=11;
 Vfloat xg_t_list;
 Vfloat xg_to_spline;
 Vfloat xg_to_spline_VMD;
 Vfloat a_to_print;
-Vfloat num_xg_per_ens_list;
-Vfloat Is_large_vol;
 const int shift=0;
+int size_mu_nu= Is_reph?2:4;
+string ph_type = Is_reph ? "rph" : "vph";
+const double fDs_star = 0.2688;
+const double fDs_star_err = 0.0066;
 
 
-void Get_xg_t_list() {
+
+
+
+void Get_xg_t_list(int num_xg) {
 
   for(int ixg=1;ixg<num_xg;ixg++) xg_t_list.push_back( ixg*0.1);
   return;
@@ -298,7 +294,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
       else if(W=="Au") { Tmin=26; Tmax=33;}
       else if(W=="Vu") { Tmin=36; Tmax=41;}
       else crash("time intervals for fits in channel: "+W+" not implemented");
-
+      
     }
     else if(ixg==11) {
       if(W=="A") {Tmin= 20; Tmax=30;}
@@ -420,8 +416,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==9) {
-      if(W=="A") {Tmin= 20; Tmax=39;}
-      else if(W=="V") {Tmin=23;Tmax=34;}
+      if(W=="A") {Tmin= 18; Tmax=37;}
+      else if(W=="V") {Tmin=20;Tmax=35;}
       else if(W=="Ad") { Tmin=26; Tmax=46;}
       else if(W=="Vd") { Tmin=30; Tmax=56;}
       else if(W=="Au") { Tmin=26; Tmax=34;}
@@ -430,8 +426,8 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     
     }
     else if(ixg==10) {
-      if(W=="A") {Tmin= 18; Tmax=33;}
-      else if(W=="V") {Tmin=20;Tmax=36;}
+      if(W=="A") {Tmin= 16; Tmax=31;}
+      else if(W=="V") {Tmin=18;Tmax=34;}
       else if(W=="Ad") { Tmin=26; Tmax=46;}
       else if(W=="Vd") { Tmin=34; Tmax=62;}
       else if(W=="Au") { Tmin=26; Tmax=34;}
@@ -531,7 +527,7 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
     }
     else if(ixg==8) {
       if(W=="A") {Tmin= 27; Tmax=47;}
-      else if(W=="V") {Tmin=22;Tmax=43;}
+      else if(W=="V") {Tmin=24;Tmax=43;}
       else if(W=="Ad") { Tmin=47; Tmax=54;}
       else if(W=="Vd") { Tmin=52; Tmax=66;}
       else if(W=="Au") { Tmin=29; Tmax=37;}
@@ -572,487 +568,13 @@ void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
   return; 
    
-   
-
-
-  /*
-   if(Ens == "cA211a.12.48") {
-
-    if(ixg==0) {
-      if(W=="A") {Tmin= 16; Tmax=22;}
-      else if(W=="V") {Tmin=20;Tmax=32;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-	     
-    }
-    else if(ixg==1) {
-      if(W=="A") {Tmin= 16; Tmax=22;}
-      else if(W=="V") {Tmin=20;Tmax=32;}
-      else if(W=="Ad") { Tmin=25; Tmax=29;}
-      else if(W=="Vd") { Tmin=25; Tmax=36;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=30; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-
-    }
-    else if(ixg==2) {
-      if(W=="A") {Tmin= 16; Tmax=23;}
-      else if(W=="V") {Tmin=12;Tmax=25;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==3) {
-      if(W=="A") {Tmin= 16; Tmax=23;}
-      else if(W=="V") {Tmin=18;Tmax=28;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==4) {
-      if(W=="A") {Tmin= 17; Tmax=23;}
-      else if(W=="V") {Tmin=18;Tmax=28;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==5) {
-      if(W=="A") {Tmin= 17; Tmax=23;}
-      else if(W=="V") {Tmin=18;Tmax=26;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==6) {
-      if(W=="A") {Tmin= 17; Tmax=26;}
-      else if(W=="V") {Tmin=17;Tmax=26;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==7) {
-      if(W=="A") {Tmin= 17; Tmax=28;}
-      else if(W=="V") {Tmin=17;Tmax=26;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==8) {
-      if(W=="A") {Tmin= 17; Tmax=29;}
-      else if(W=="V") {Tmin=15;Tmax=26;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==9) {
-      if(W=="A") {Tmin= 15; Tmax=28;}
-      else if(W=="V") {Tmin=16;Tmax=26;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==10) {
-      if(W=="A") {Tmin= 14; Tmax=28;}
-      else if(W=="V") {Tmin=16;Tmax=26;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
-
-  }
-
-
   
 
-   else if(Ens == "cB211b.072.64") {
-
-    if(ixg==0) {
-      if(W=="A") {Tmin= 20; Tmax=30;}
-      else if(W=="V") {Tmin=20;Tmax=30;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==1) {
-      if(W=="A") {Tmin= 17; Tmax=24;}
-      else if(W=="V") {Tmin=21;Tmax=45;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==2) {
-      if(W=="A") {Tmin= 17; Tmax=29;}
-      else if(W=="V") {Tmin=23;Tmax=45;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==3) {
-      if(W=="A") {Tmin= 18; Tmax=28;}
-      else if(W=="V") {Tmin=23;Tmax=45;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==4) {
-      if(W=="A") {Tmin= 18; Tmax=29;}
-      else if(W=="V") {Tmin=18;Tmax=38;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==5) {
-      if(W=="A") {Tmin= 17; Tmax=30;}
-      else if(W=="V") {Tmin=18;Tmax=38;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==6) {
-      if(W=="A") {Tmin= 17; Tmax=29;}
-      else if(W=="V") {Tmin=18;Tmax=38;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==7) {
-      if(W=="A") {Tmin= 14; Tmax=29;}
-      else if(W=="V") {Tmin=18;Tmax=38;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==8) {
-      if(W=="A") {Tmin= 10; Tmax=29;}
-      else if(W=="V") {Tmin=12;Tmax=38;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==9) {
-      if(W=="A") {Tmin= 10; Tmax=29;}
-      else if(W=="V") {Tmin=12;Tmax=38;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==10) {
-      if(W=="A") {Tmin= 14; Tmax=30;}
-      else if(W=="V") {Tmin=12;Tmax=38;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==11) {
-      if(W=="A") {Tmin= 20; Tmax=30;}
-      else if(W=="V") {Tmin=20;Tmax=30;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==12) {
-      if(W=="A") {Tmin= 20; Tmax=30;}
-      else if(W=="V") {Tmin=20;Tmax=30;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
-
-  }
-
-
-  //############ ENSEMBLE C80  ####################
-
-  else  if(Ens == "cC211a.06.80") {
-
-    if(ixg==0) {
-      if(W=="A") {Tmin= 19; Tmax=29;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==1) {
-      if(W=="A") {Tmin= 19; Tmax=29;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==2) {
-      if(W=="A") {Tmin= 21; Tmax=29;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==3) {
-      if(W=="A") {Tmin= 21; Tmax=29;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==4) {
-      if(W=="A") {Tmin= 21; Tmax=30;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==5) {
-      if(W=="A") {Tmin= 21; Tmax=30;}
-      else if(W=="V") {Tmin=25;Tmax=55;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==6) {
-      if(W=="A") {Tmin= 21; Tmax=30;}
-      else if(W=="V") {Tmin=28;Tmax=47;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==7) {
-      if(W=="A") {Tmin= 21; Tmax=31;}
-      else if(W=="V") {Tmin=16;Tmax=40;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==8) {
-      if(W=="A") {Tmin= 21; Tmax=37;}
-      else if(W=="V") {Tmin=15;Tmax=47;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==9) {
-      if(W=="A") {Tmin= 14; Tmax=46;}
-      else if(W=="V") {Tmin=11;Tmax=39;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==10) {
-      if(W=="A") {Tmin= 15; Tmax=42;}
-      else if(W=="V") {Tmin=15;Tmax=35;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-
-    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
-
-  }
-
-  else if(Ens=="cD211a.054.96") {
-
-   
-
-
-    if(ixg==0) {
-      if(W=="A") {Tmin= 21; Tmax=28;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==1) {
-      if(W=="A") {Tmin= 19; Tmax=35;}
-      else if(W=="V") {Tmin=29;Tmax=45;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==2) {
-      if(W=="A") {Tmin= 19; Tmax=35;}
-      else if(W=="V") {Tmin=29;Tmax=45;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==3) {
-      if(W=="A") {Tmin= 20; Tmax=35;}
-      else if(W=="V") {Tmin=29;Tmax=45;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==4) {
-      if(W=="A") {Tmin= 20; Tmax=35;}
-      else if(W=="V") {Tmin=29;Tmax=49;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==5) {
-      if(W=="A") {Tmin= 20; Tmax=36;}
-      else if(W=="V") {Tmin=30;Tmax=49;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==6) {
-      if(W=="A") {Tmin= 20; Tmax=35;}
-      else if(W=="V") {Tmin=30;Tmax=50;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==7) {
-      if(W=="A") {Tmin= 21; Tmax=37;}
-      else if(W=="V") {Tmin=29;Tmax=49;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==8) {
-      if(W=="A") {Tmin= 19; Tmax=45;}
-      else if(W=="V") {Tmin=14;Tmax=42;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==9) {
-      if(W=="A") {Tmin= 21; Tmax=44;}
-      else if(W=="V") {Tmin=10;Tmax=58;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-    else if(ixg==10) {
-      if(W=="A") {Tmin= 21; Tmax=45;}
-      else if(W=="V") {Tmin=10;Tmax=58;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    }
-
-    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
-
-
-  }
-
-  else crash("Ensemble: "+Ens+" does not have definite time intervals for FV and FA");
-
-
-  
-
-  return; 
-  */
+ 
 }
-
-
-
 
 void Compute_form_factors_Nissa() {
 
-
-  Fit_tag = ( (Use_three_finest==true)?"wtf_":Fit_tag);
-  _Fit_tag= ( (Use_three_finest==true)?"_wtf":_Fit_tag);
-  
-
-  Get_xg_t_list();
-  Get_xg_to_spline();
-  Get_xg_to_spline_VMD();
-  Get_lattice_spacings_to_print();
-  int size_mu_nu= Is_reph?2:4;
-  string ph_type= Is_reph?"rph":"vph";
 
   //create directories
   boost::filesystem::create_directory("../data/ph_emission");
@@ -1064,9 +586,641 @@ void Compute_form_factors_Nissa() {
   boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/decay_const");
   boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF");
   boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum");
+  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA");
+  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform");
+  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC");
+  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/random");
   boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/per_kin");
   boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF_u");
   boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF_d");
+
+  
+  Get_xg_to_spline();
+  Get_xg_to_spline_VMD();
+  Get_lattice_spacings_to_print();
+
+  GaussianMersenne GM(65622223);
+
+
+  vector<rt_FF> FF_ret_list;
+
+  vector<bool> Use_three_finest_list({0,0,0,0,1,1});
+  vector<bool> Include_a4_list({0,0,0,1,0,0});
+  vector<bool> UseJack_list({1,0,1,1,0,1});
+  vector<int>  num_xg_list({8,11,11,11,11,11});
+  vector<double> Perform_continuum_extrapolation_list({0,1,1,1,1,1});
+  vector<string> Corr_path_list({"_w_B96", "", "", "", "", ""});
+
+  int N= UseJack_list.size();
+  for(int i=0;i<N;i++) {
+    xg_t_list.clear();
+    Get_xg_t_list(num_xg_list[i]);
+    string Fit_tag= ( (Include_a4_list[i]==true)?"wa4_":"");
+    Fit_tag = ( (Use_three_finest_list[i]==true)?"wtf_":Fit_tag);
+    FF_ret_list.push_back(Get_form_factors_Nissa(num_xg_list[i], Perform_continuum_extrapolation_list[i], Use_three_finest_list[i], Include_a4_list[i], UseJack_list[i], Fit_tag, Corr_path_list[i]));
+  }
+
+
+  //combine measurement with weight w_1,2
+  vector<string> contribs({"FA", "FV", "FA_u", "FV_u", "FA_d", "FV_d"});
+
+  
+  
+   xg_t_list.clear();
+   int nxg=FF_ret_list[2].num_xg;
+   Get_xg_t_list(nxg);
+
+   distr_t FDs_star_distr(1);
+   GaussianMersenne GM_FDs_star(424233);
+   for(int ij=0;ij<NJ;ij++) FDs_star_distr.distr.push_back(fDs_star + GM_FDs_star()*fDs_star_err/sqrt(NJ -1.0));
+  
+
+  for( int i=0; i<(signed)contribs.size(); i++) {
+
+   
+
+    distr_t_list FF_jack(1), FF_boot(0);
+    distr_t_list FF_jack_AIC(1), FF_boot_AIC(0);
+
+    for(int ixg=1; ixg<nxg;ixg++) {
+
+      rt_FF Fit_A_jack = FF_ret_list[2];
+      rt_FF Fit_B_jack = FF_ret_list[5];
+      rt_FF Fit_A_boot = FF_ret_list[1];
+      rt_FF Fit_B_boot = FF_ret_list[4];
+
+      double wA = 1.0;
+      double wB = 1.0;
+      double sum=wA+wB;
+      wA /= sum;
+      wB /= sum;
+
+      double wA_AIC= exp(-0.5*(Fit_A_jack.Get_ch2(i)[ixg-1]*Fit_A_jack.Ndof + 2*Fit_A_jack.Npars - 2*Fit_A_jack.Nmeas));
+      double wB_AIC =exp(-0.5*(Fit_B_jack.Get_ch2(i)[ixg-1]*Fit_B_jack.Ndof + 2*Fit_B_jack.Npars - 2*Fit_B_jack.Nmeas));
+      double sum_AIC= wA_AIC+wB_AIC;
+      wA_AIC /= sum_AIC;
+      wB_AIC /= sum_AIC;
+
+    
+      
+
+      distr_t D_FF_jack= wA*Fit_A_jack.Get_FF(i).distr_list[ixg-1] + wB*Fit_B_jack.Get_FF(i).distr_list[ixg-1];
+      distr_t D_FF_boot= wA*Fit_A_boot.Get_FF(i).distr_list[ixg-1] + wB*Fit_B_boot.Get_FF(i).distr_list[ixg-1];
+
+      distr_t D_FF_jack_AIC= wA_AIC*Fit_A_jack.Get_FF(i).distr_list[ixg-1] + wB_AIC*Fit_B_jack.Get_FF(i).distr_list[ixg-1];
+      distr_t D_FF_boot_AIC= wA_AIC*Fit_A_boot.Get_FF(i).distr_list[ixg-1] + wB_AIC*Fit_B_boot.Get_FF(i).distr_list[ixg-1];
+
+
+      
+
+      double syst= wA*pow( Fit_A_jack.Get_FF(i).ave(ixg-1) - D_FF_jack.ave(),2) + wB*pow( Fit_B_jack.Get_FF(i).ave(ixg-1) - D_FF_jack.ave(),2);
+      syst = sqrt(syst);
+      distr_t syst_jack(1), syst_boot(0);
+
+      double syst_AIC= wA_AIC*pow( Fit_A_jack.Get_FF(i).ave(ixg-1) - D_FF_jack_AIC.ave(),2) + wB_AIC*pow( Fit_B_jack.Get_FF(i).ave(ixg-1) - D_FF_jack_AIC.ave(),2);
+      syst_AIC = sqrt(syst_AIC);
+      distr_t syst_AIC_jack(1), syst_AIC_boot(0);
+
+      for(int iboot=0;iboot<Nboots;iboot++) { double rn= GM();  syst_boot.distr.push_back( rn*syst); syst_AIC_boot.distr.push_back( rn*syst_AIC);}
+
+      string contrib_new= contribs[i];
+
+      if(contribs[i].size() > 3 ) { 
+	if(contribs[i].substr(3,1) == "d") contrib_new= contrib_new.substr(0,3)+"strange";
+	if(contribs[i].substr(3,1) == "u") contrib_new= contrib_new.substr(0,3)+"charm";
+      }
+
+      ofstream PrintRand("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/random/"+contrib_new+"_xg"+to_string_with_precision(ixg*0.1,1)+".rand");
+      for(int ijack=0;ijack<NJ;ijack++)  {
+	double rn= GM();
+	PrintRand<<rn<<endl;
+	syst_jack.distr.push_back( rn*syst/sqrt(NJ-1.0)); syst_AIC_jack.distr.push_back( rn*syst_AIC/sqrt(NJ-1.0));
+      }
+      PrintRand.close();
+
+      double stat_jack = D_FF_jack.err();
+      double stat_jack_AIC= D_FF_jack_AIC.err();
+
+      D_FF_jack = D_FF_jack + syst_jack;
+      D_FF_boot = D_FF_boot + syst_boot;
+
+      
+
+      D_FF_jack_AIC = D_FF_jack_AIC + syst_AIC_jack;
+      D_FF_boot_AIC = D_FF_boot_AIC + syst_AIC_boot;
+      
+      FF_jack.distr_list.push_back(  D_FF_jack );
+      FF_boot.distr_list.push_back(  D_FF_boot );
+      FF_jack_AIC.distr_list.push_back( D_FF_jack_AIC );
+      FF_boot_AIC.distr_list.push_back( D_FF_boot_AIC );
+
+
+
+      cout<<"#########################"<<endl;
+      cout<<"Performing BMA for contrib: "<<contribs[i]<<" ixg: "<<0.1*ixg<<endl;
+      cout<<"Four lattice spacings (Meas A): "<<endl;
+      cout<<"w(U): "<<wA<<" w(AIC): "<<wA_AIC<<endl;
+      cout<<"Nmeas: "<<Fit_A_jack.Nmeas<<endl;
+      cout<<"Ndof: "<<Fit_A_jack.Ndof<<endl;
+      cout<<"Npars: "<<Fit_A_jack.Npars<<endl;
+      cout<<"ch2/dof: "<<Fit_A_jack.Get_ch2(i)[ixg-1]<<endl;
+      cout<<"Three finest (Meas B): "<<endl;
+      cout<<"w(U): "<<wB<<" w(AIC): "<<wB_AIC<<endl;
+      cout<<"Nmeas: "<<Fit_B_jack.Nmeas<<endl;
+      cout<<"Ndof: "<<Fit_B_jack.Ndof<<endl;
+      cout<<"Npars: "<<Fit_B_jack.Npars<<endl;
+      cout<<"ch2/dof: "<<Fit_B_jack.Get_ch2(i)[ixg-1]<<endl;
+      cout<<"Meas A: "<<Fit_A_jack.Get_FF(i).ave(ixg-1)<<" +- "<<Fit_A_jack.Get_FF(i).err(ixg-1)<<endl;
+      cout<<"Meas B: "<<Fit_B_jack.Get_FF(i).ave(ixg-1)<<" +- "<<Fit_B_jack.Get_FF(i).err(ixg-1)<<endl;
+      
+      cout<<"Combined(U): "<<D_FF_jack.ave()<<" +- "<<D_FF_jack.err()<<endl;
+      cout<<"Expected error stat(U): "<< sqrt( wA*pow(Fit_A_jack.Get_FF(i).err(ixg-1),2) + wB*pow(Fit_B_jack.Get_FF(i).err(ixg-1),2))<<endl;
+      cout<<"Expected error syst(U): "<< syst<<endl;
+      cout<<"stat(U): "<<stat_jack<<endl;
+      cout<<"stat+syst(U): "<< sqrt( syst*syst + wA*pow(Fit_A_jack.Get_FF(i).err(ixg-1),2) + wB*pow(Fit_B_jack.Get_FF(i).err(ixg-1),2))<<endl;
+      
+      cout<<"Combined(AIC): "<<D_FF_jack_AIC.ave()<<" +- "<<D_FF_jack_AIC.err()<<endl;
+      cout<<"Expected error stat(AIC): "<< sqrt( wA_AIC*pow(Fit_A_jack.Get_FF(i).err(ixg-1),2) + wB_AIC*pow(Fit_B_jack.Get_FF(i).err(ixg-1),2))<<endl;
+      cout<<"Expected error syst(AIC): "<< syst_AIC<<endl;
+      cout<<"stat(AIC): "<<stat_jack_AIC<<endl;
+      cout<<"stat+syst(AIC): "<< sqrt( syst_AIC*syst_AIC + wA_AIC*pow(Fit_A_jack.Get_FF(i).err(ixg-1),2) + wB_AIC*pow(Fit_B_jack.Get_FF(i).err(ixg-1),2))<<endl;
+      cout<<"#########################"<<endl;
+      
+      
+    }
+
+
+    //print form factors
+
+    Print_To_File({}, {xg_t_list, FF_jack.ave(), FF_jack.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_jack.dat", "", "");
+    Print_To_File({}, {xg_t_list, FF_boot.ave(), FF_boot.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_boot.dat", "", "");
+    
+    Print_To_File({}, {xg_t_list, FF_jack_AIC.ave(), FF_jack_AIC.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_jack.dat", "", "");
+    Print_To_File({}, {xg_t_list, FF_boot_AIC.ave(), FF_boot_AIC.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_boot.dat", "", "");
+
+
+    //print covariance matrix
+
+    Eigen::MatrixXd Cov_boot(nxg-1, nxg-1);
+    Eigen::MatrixXd Cov_jack(nxg-1, nxg-1);
+    Eigen::MatrixXd Cov_boot_AIC(nxg-1, nxg-1);
+    Eigen::MatrixXd Cov_jack_AIC(nxg-1, nxg-1);
+
+    Eigen::MatrixXd Corr_boot(nxg-1, nxg-1);
+    Eigen::MatrixXd Corr_jack(nxg-1, nxg-1);
+    Eigen::MatrixXd Corr_boot_AIC(nxg-1, nxg-1);
+    Eigen::MatrixXd Corr_jack_AIC(nxg-1, nxg-1);
+ 
+  for(int x_xg=1; x_xg<nxg;x_xg++) {
+    for(int y_xg=1; y_xg<nxg;y_xg++) {
+
+      
+      Cov_boot(x_xg-1, y_xg-1) = FF_boot.distr_list[x_xg-1]%FF_boot.distr_list[y_xg-1];
+      Cov_jack(x_xg-1, y_xg-1) = FF_jack.distr_list[x_xg-1]%FF_jack.distr_list[y_xg-1];
+      Cov_boot_AIC(x_xg-1, y_xg-1) = FF_boot_AIC.distr_list[x_xg-1]%FF_boot_AIC.distr_list[y_xg-1];
+      Cov_jack_AIC(x_xg-1, y_xg-1) = FF_jack_AIC.distr_list[x_xg-1]%FF_jack_AIC.distr_list[y_xg-1];
+
+      
+      Corr_boot(x_xg-1, y_xg-1) = Cov_boot(x_xg-1,y_xg-1)/(FF_boot.err(x_xg-1)*FF_boot.err(y_xg-1));
+      Corr_jack(x_xg-1, y_xg-1) = Cov_jack(x_xg-1,y_xg-1)/(FF_jack.err(x_xg-1)*FF_jack.err(y_xg-1));
+      Corr_boot_AIC(x_xg-1, y_xg-1) = Cov_boot_AIC(x_xg-1,y_xg-1)/(FF_boot_AIC.err(x_xg-1)*FF_boot_AIC.err(y_xg-1));
+      Corr_jack_AIC(x_xg-1, y_xg-1) = Cov_jack_AIC(x_xg-1,y_xg-1)/(FF_jack_AIC.err(x_xg-1)*FF_jack_AIC.err(y_xg-1));
+    }
+  }
+
+  //Print To File
+  
+  ofstream Print_Cov_boot("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_boot.cov");
+  ofstream Print_Cov_jack("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_jack.cov");
+  ofstream Print_Cov_boot_AIC("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_boot.cov");
+  ofstream Print_Cov_jack_AIC("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_jack.cov");
+
+  ofstream Print_Corr_boot("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_boot.corr");
+  ofstream Print_Corr_jack("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_jack.corr");
+  ofstream Print_Corr_boot_AIC("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_boot.corr");
+  ofstream Print_Corr_jack_AIC("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_jack.corr");
+
+
+
+  Print_Cov_boot<<Cov_boot<<endl;
+  Print_Cov_boot.close();
+  Print_Cov_jack<<Cov_jack<<endl;
+  Print_Cov_jack.close();
+  Print_Cov_boot_AIC<<Cov_boot_AIC<<endl;
+  Print_Cov_boot_AIC.close();
+  Print_Cov_jack_AIC<<Cov_jack_AIC<<endl;
+  Print_Cov_jack_AIC.close();
+
+
+  
+  Print_Corr_boot<<Corr_boot<<endl;
+  Print_Corr_boot.close();
+  Print_Corr_jack<<Corr_jack<<endl;
+  Print_Corr_jack.close();
+  Print_Corr_boot_AIC<<Corr_boot_AIC<<endl;
+  Print_Corr_boot_AIC.close();
+  Print_Corr_jack_AIC<<Corr_jack_AIC<<endl;
+  Print_Corr_jack_AIC.close();
+
+
+    
+  //interpolate the form factors
+
+   vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FF_cont_interpol_jacks;
+   vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FF_AIC_cont_interpol_jacks;
+
+  //interpolate continuum extrapolated form factors
+  for(int ijack=0;ijack<NJ;ijack++) {
+
+    Vfloat FF_ij, FF_AIC_ij;
+  
+    for(int ixg=1;ixg<nxg;ixg++) {
+      FF_ij.push_back( FF_jack.distr_list[ixg-1].distr[ijack]);
+      FF_AIC_ij.push_back( FF_jack_AIC.distr_list[ixg-1].distr[ijack]);
+    }
+
+    FF_cont_interpol_jacks.emplace_back( FF_ij.begin(), FF_ij.end(), 0.1, 0.1);
+    FF_AIC_cont_interpol_jacks.emplace_back( FF_AIC_ij.begin(), FF_AIC_ij.end(), 0.1, 0.1);
+
+  }
+
+
+  auto FF_cont_interpol_distr= [&FF_cont_interpol_jacks](double xg) -> distr_t {
+    distr_t return_distr(1);
+    for(int ijack=0; ijack<NJ;ijack++) { return_distr.distr.push_back( FF_cont_interpol_jacks[ijack](xg));}
+    return return_distr;
+  };
+
+  auto FF_AIC_cont_interpol_distr= [&FF_AIC_cont_interpol_jacks](double xg) -> distr_t {
+    distr_t return_distr(1);
+    for(int ijack=0; ijack<NJ;ijack++) { return_distr.distr.push_back( FF_AIC_cont_interpol_jacks[ijack](xg));}
+    return return_distr;
+  };
+  
+ 
+  distr_t_list FF_interpol_cont_to_print_distr(1);
+  distr_t_list FF_AIC_interpol_cont_to_print_distr(1);
+  
+  
+  for(auto &X: xg_to_spline) {
+    FF_interpol_cont_to_print_distr.distr_list.push_back( FF_cont_interpol_distr(X));
+    FF_AIC_interpol_cont_to_print_distr.distr_list.push_back( FF_AIC_cont_interpol_distr(X));
+  }
+
+  Print_To_File({}, {xg_to_spline, FF_interpol_cont_to_print_distr.ave(), FF_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_interpol.dat", "", "#xg "+contribs[i]+" "+contribs[i]+"_err");
+
+  Print_To_File({}, {xg_to_spline, FF_AIC_interpol_cont_to_print_distr.ave(), FF_AIC_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_interpol.dat", "", "#xg "+contribs[i]+" "+contribs[i]+"_err");
+
+
+  //#############################################################################
+
+
+  vector<string> VMD_fit_types({"single_pole", "double_pole", "pure_VMD", "VMD_background", "double_pole_background", "VMD_background_linear"});
+  vector<bool> cov_matrix_mode({true, false});
+  vector<bool> Full_ranges({true,false});
+
+  distr_t_list g_list(1), R1_list(1), R2_list(1), B_list(1), B_xg_list(1);
+  vector<double> ch2_list;
+  vector<double> Npars_list;
+  vector<string> FF_t;
+  vector<double> cmod;
+  vector<double> full_mode;
+  vector<double> det_boot_AIC_list;
+  vector<double> det_jack_AIC_list;
+
+  
+  for( auto VMD_fit_type:VMD_fit_types) 
+    for(auto Add_cov_matrix: cov_matrix_mode )
+      for(auto full_range: Full_ranges) {
+      
+  
+  
+
+
+   
+
+  //###########################################################
+  //###########################################################
+  //###########################################################
+  //###########################################################
+  //###########################################################
+  //################                          #################
+  //################                          #################
+  //################      POLE-FITS           #################
+  //################                          #################
+  //################                          #################
+  //###########################################################
+  //###########################################################
+  //###########################################################
+  //###########################################################
+  //###########################################################
+
+  class ipar_VMD {
+  public:
+    ipar_VMD() : FF(0.0), FF_err(0.0) {}
+    double FF, FF_err, xg;
+  };
+  
+  class fpar_VMD {
+  public:
+    fpar_VMD() {}
+    fpar_VMD(const Vfloat &par) {
+      if((signed)par.size() != 6) crash("In class fpar_VMD  class constructor Vfloat par has size != 5");
+      A=par[0];
+      M=par[1];
+      A2=par[2];
+      M2=par[3];
+      B=par[4];
+      Bxg=par[5];
+    }
+    double A, M, A2, M2,B, Bxg;
+  };
+
+  
+  //init bootstrap fit
+  bootstrap_fit<fpar_VMD,ipar_VMD> bf_VMD(NJ);
+  bf_VMD.set_warmup_lev(0); //sets warmup
+  bf_VMD.Set_number_of_measurements(xg_t_list.size());
+  bf_VMD.Set_verbosity(1);
+ 
+  
+  //################################################
+  //define initial condition for params
+  double A_guess, M_guess, M2_guess;
+  if( contribs[i].substr(1,1) == "V") { M_guess=1.073; M2_guess= 1.38 ; }
+  else if( contribs[i].substr(1,1) == "A") { M_guess=1.25; M2_guess= 1.29 ;}
+  else crash("FF: "+contribs[i]+" is not V or A");
+  A_guess= FF_jack_AIC.ave(0)*M_guess*(M_guess-1.0);
+  //###############################################
+
+  
+  bf_VMD.Add_par("A", A_guess, A_guess/10);
+  bf_VMD.Add_par("M", M_guess, M_guess/10);
+  bf_VMD.Add_par("A2", A_guess, A_guess/10);
+  bf_VMD.Add_par("M2", M2_guess, M2_guess/10);
+  bf_VMD.Add_par("B", A_guess, A_guess/10);
+  bf_VMD.Add_par("Bxg", A_guess, A_guess/10);
+  //fit on mean values to get ch2
+  bootstrap_fit<fpar_VMD,ipar_VMD> bf_VMD_ch2(1);
+  bf_VMD_ch2.set_warmup_lev(0); //sets warmup
+  bf_VMD_ch2.Set_number_of_measurements(xg_t_list.size());
+  bf_VMD_ch2.Set_verbosity(1);
+  bf_VMD_ch2.Add_par("A", A_guess, A_guess/10);
+  bf_VMD_ch2.Add_par("M", M_guess, M_guess/10);
+  bf_VMD_ch2.Add_par("A2", A_guess, A_guess/10);
+  bf_VMD_ch2.Add_par("M2", M2_guess, M2_guess/10);
+  bf_VMD_ch2.Add_par("B", A_guess, A_guess/10);
+  bf_VMD_ch2.Add_par("Bxg", A_guess, A_guess/10);
+  int Npars=0;
+
+  if(Add_cov_matrix) bf_VMD.Add_covariance_matrix(Cov_boot_AIC);
+  if(Add_cov_matrix) bf_VMD_ch2.Add_covariance_matrix(Cov_boot_AIC);
+
+
+  double det_boot_AIC=1;
+  double det_jack_AIC=1;
+  if(Add_cov_matrix) {
+    det_boot_AIC= Corr_boot_AIC.determinant();
+    det_jack_AIC= Corr_jack_AIC.determinant();
+  }
+  
+  if(VMD_fit_type =="pure_VMD") {
+    
+    bf_VMD.Fix_par("M", M_guess);
+    bf_VMD.Fix_par("M2", M2_guess);
+    bf_VMD.Fix_par("A2", 0.0);
+    bf_VMD.Fix_par("B", 0.0);
+    bf_VMD.Fix_par("Bxg",0.0);
+
+    bf_VMD_ch2.Fix_par("M", M_guess);
+    bf_VMD_ch2.Fix_par("M2", M2_guess);
+    bf_VMD_ch2.Fix_par("A2", 0.0);
+    bf_VMD_ch2.Fix_par("B", 0.0);
+    bf_VMD_ch2.Fix_par("Bxg",0.0);
+
+    Npars=1;
+  }
+  else if(VMD_fit_type == "single_pole") {
+
+    bf_VMD.Fix_par("M2", M2_guess);
+    bf_VMD.Fix_par("A2", 0.0);
+    bf_VMD.Fix_par("B", 0.0);
+    bf_VMD.Fix_par("Bxg",0.0);
+
+    bf_VMD_ch2.Fix_par("M2", M2_guess);
+    bf_VMD_ch2.Fix_par("A2", 0.0);
+    bf_VMD_ch2.Fix_par("B", 0.0);
+    bf_VMD_ch2.Fix_par("Bxg",0.0);
+
+    Npars=2;
+  }
+  else if(VMD_fit_type == "double_pole") {
+
+    bf_VMD.Fix_par("M", M_guess);
+    bf_VMD.Fix_par("M2", M2_guess);
+    bf_VMD.Fix_par("B", 0.0);
+    bf_VMD.Fix_par("Bxg",0.0);
+   
+    bf_VMD_ch2.Fix_par("M", M_guess);
+    bf_VMD_ch2.Fix_par("M2", M2_guess);
+    bf_VMD_ch2.Fix_par("B", 0.0);
+    bf_VMD_ch2.Fix_par("Bxg",0.0);
+    
+    Npars=2;
+  }
+  else if(VMD_fit_type == "VMD_background") {
+
+    bf_VMD.Fix_par("M", M_guess);
+    bf_VMD.Fix_par("M2", M2_guess);
+    bf_VMD.Fix_par("A2", 0.0);
+    bf_VMD.Fix_par("Bxg",0.0);
+    
+    bf_VMD_ch2.Fix_par("M", M_guess);
+    bf_VMD_ch2.Fix_par("M2", M2_guess);
+    bf_VMD_ch2.Fix_par("A2", 0.0);
+    bf_VMD_ch2.Fix_par("Bxg",0.0);
+    
+    Npars=2;
+
+  }
+  else if(VMD_fit_type == "double_pole_background") {
+
+    bf_VMD.Fix_par("M", M_guess);
+    bf_VMD.Fix_par("M2", M2_guess);
+    bf_VMD.Fix_par("Bxg",0.0);
+    
+    bf_VMD_ch2.Fix_par("M", M_guess);
+    bf_VMD_ch2.Fix_par("M2", M2_guess);
+    bf_VMD_ch2.Fix_par("Bxg",0.0);
+       
+    Npars=3;
+
+  }
+  else if(VMD_fit_type == "VMD_background_linear") {
+
+    bf_VMD.Fix_par("M", M_guess);
+    bf_VMD.Fix_par("M2", M2_guess);
+    bf_VMD.Fix_par("A2",0.0);
+
+
+    bf_VMD_ch2.Fix_par("M", M_guess);
+    bf_VMD_ch2.Fix_par("M2", M2_guess);
+    bf_VMD_ch2.Fix_par("A2",0.0);
+
+    Npars=3;
+
+    
+
+  }
+  else crash("Fit type: "+VMD_fit_type+" not yet implemented");
+  
+ 
+  //ansatz
+  bf_VMD.ansatz=  [&full_range](const fpar_VMD &p, const ipar_VMD &ip) {
+
+    if( (full_range==false) && (ip.xg > 0.5)) return 0.0;
+
+    double E_res= sqrt( p.M*p.M + ip.xg*ip.xg/4.0);
+    double E_res_2= sqrt( p.M2*p.M2 + ip.xg*ip.xg/4.0);
+    return  p.A/( E_res*( E_res - (1.0 - ip.xg/2.0)) )  + p.A2/(E_res_2*( E_res_2 - (1.0 - ip.xg/2.0)) ) + p.B + p.Bxg*ip.xg  ;
+  };
+  bf_VMD.measurement=  [&full_range](const fpar_VMD &p, const ipar_VMD &ip) {
+    if( (full_range==false) && (ip.xg > 0.5)) return 0.0;
+    return ip.FF;
+  };
+  bf_VMD.error=  [ ](const fpar_VMD &p, const ipar_VMD &ip) {
+
+		 return ip.FF_err;
+		 };
+
+  bf_VMD_ch2.ansatz= bf_VMD.ansatz;
+  bf_VMD_ch2.measurement = bf_VMD.measurement;
+  bf_VMD_ch2.error = bf_VMD.error;
+
+
+  //start fitting FA
+  //fill the data
+  vector<vector<ipar_VMD>> data_VMD(NJ);
+  vector<vector<ipar_VMD>> data_VMD_ch2(1);
+  //allocate space for output result
+  boot_fit_data<fpar_VMD> Bt_fit_VMD;
+  boot_fit_data<fpar_VMD> Bt_fit_VMD_ch2;
+  for(auto &data_iboot: data_VMD) data_iboot.resize(xg_t_list.size());
+  for(auto &data_iboot: data_VMD_ch2) data_iboot.resize(xg_t_list.size());
+  for(int ijack=0;ijack<NJ;ijack++) {
+    for(int ix=0;ix<(signed)xg_t_list.size();ix++) {
+      data_VMD[ijack][ix].FF = FF_jack_AIC.distr_list[ix].distr[ijack];
+      data_VMD[ijack][ix].FF_err= FF_jack_AIC.err(ix);
+      data_VMD[ijack][ix].xg= xg_t_list[ix];
+      if(ijack==0) {
+	data_VMD_ch2[ijack][ix].FF = FF_jack_AIC.ave(ix);
+	data_VMD_ch2[ijack][ix].FF_err= FF_jack_AIC.err(ix);
+	data_VMD_ch2[ijack][ix].xg= xg_t_list[ix];
+
+      }
+    }
+  }
+
+  //append
+  bf_VMD.Append_to_input_par(data_VMD);
+  bf_VMD_ch2.Append_to_input_par(data_VMD_ch2);
+  //fit
+  cout<<"Fitting "<<contribs[i]<<" using VMD ansatz"<<endl;
+  Bt_fit_VMD= bf_VMD.Perform_bootstrap_fit();
+  Bt_fit_VMD_ch2= bf_VMD_ch2.Perform_bootstrap_fit();
+  int num_eff_xg= (full_range==true)?xg_t_list.size():5;
+  double ch2_red_VMD= Bt_fit_VMD_ch2.get_ch2_ave()/( 1.0*num_eff_xg -1.0*Npars);
+
+  //retrieve params
+  distr_t Ampl_F(1), pole_F(1), Ampl_F2(1), pole_F2(1), Bg_F(1), Bg_xg_F(1);
+  for(int ijack=0;ijack<NJ;ijack++) {
+    Ampl_F.distr.push_back( Bt_fit_VMD.par[ijack].A); pole_F.distr.push_back( Bt_fit_VMD.par[ijack].M);
+    Ampl_F2.distr.push_back( Bt_fit_VMD.par[ijack].A2); pole_F2.distr.push_back( Bt_fit_VMD.par[ijack].M2);
+    Bg_F.distr.push_back( Bt_fit_VMD.par[ijack].B);
+    Bg_xg_F.distr.push_back( Bt_fit_VMD.par[ijack].Bxg);
+
+  }
+
+
+  distr_t_list F_VMD_fit(1);
+  //plot fit function
+  for(auto &X: xg_to_spline_VMD) {
+    ipar_VMD pp_VMD;
+    pp_VMD.xg=X;
+    distr_t F_VMD_xg(1);
+    for(int ijack=0;ijack<NJ;ijack++) {
+      F_VMD_xg.distr.push_back( bf_VMD.ansatz( Bt_fit_VMD.par[ijack], pp_VMD));
+    }
+
+     F_VMD_fit.distr_list.push_back( F_VMD_xg);
+  }
+
+  //print
+  distr_t g= -2*Ampl_F/(pole_F*FDs_star_distr); 
+  string header_F= "#g: "+to_string_with_precision(g.ave(),5)+" +- "+to_string_with_precision(g.err(),5)+"  Ampl1: "+to_string_with_precision(Ampl_F.ave(),5)+" +- "+to_string_with_precision(Ampl_F.err(),5)+" M^res1/Mp: "+to_string_with_precision(pole_F.ave(), 5)+" +- "+to_string_with_precision(pole_F.err(), 5)+" Ampl2: "+to_string_with_precision(Ampl_F2.ave(),5)+" +- "+to_string_with_precision(Ampl_F2.err(),5)+" M^res2/Mp: "+to_string_with_precision(pole_F2.ave(), 5)+" +- "+to_string_with_precision(pole_F2.err(), 5)+" B: "+to_string_with_precision(Bg_F.ave(),5)+" +- "+to_string_with_precision(Bg_F.err(),5)+"Bxg: "+to_string_with_precision(Bg_xg_F.ave(),5)+" +- "+to_string_with_precision(Bg_xg_F.err(),5)+"   ch2/dof: "+to_string_with_precision(ch2_red_VMD  ,5)+" dof: "+to_string(xg_t_list.size()-Npars);
+
+  string red="";
+  if(full_range == false) red="_xg_upto_0.5";
+  
+  Print_To_File({},{ xg_to_spline_VMD, F_VMD_fit.ave(), F_VMD_fit.err()} , "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_"+VMD_fit_type+"_corr_"+to_string(Add_cov_matrix)+red+".fit" , "", header_F);
+
+  g_list.distr_list.push_back(g);
+  ch2_list.push_back(ch2_red_VMD);
+  R1_list.distr_list.push_back( pole_F);
+  R2_list.distr_list.push_back( pole_F2);
+  B_list.distr_list.push_back(Bg_F);
+  B_xg_list.distr_list.push_back(Bg_xg_F);
+  cmod.push_back(Add_cov_matrix);
+  full_mode.push_back(full_range);
+  FF_t.push_back( VMD_fit_type);
+  Npars_list.push_back(Npars);
+  det_boot_AIC_list.push_back( det_boot_AIC);
+  det_jack_AIC_list.push_back( det_jack_AIC);
+  
+
+   
+  //###########################################################
+  //###########################################################
+  //###########################################################
+  //###########################################################
+  //###########################################################
+  //###########################################################
+
+
+
+
+  //##################################################################
+
+    }
+  
+  
+
+  //Print_info to file
+  Print_To_File({FF_t}, { g_list.ave(), g_list.err(), R1_list.ave(), R1_list.err(), B_list.ave(), B_list.err(), B_xg_list.ave(), B_xg_list.err(), ch2_list, Npars_list, cmod, full_mode, det_boot_AIC_list, det_jack_AIC_list}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_VMD.info", "", "#fit_type  g  R1 B  Bxg   ch2/dof  Npars  Cov_added Full_range? det_corr_boot  det_corr_jack");
+  }
+  
+
+  
+  return;
+}
+
+
+rt_FF Get_form_factors_Nissa(int num_xg, int Perform_continuum_extrapolation, bool Use_three_finest, bool Include_a4, bool UseJack, string Fit_tag, string path_list ) {
+
+  cout<<"CALLING Get_form_factors_Nissa"<<endl;
+  
+  //return type
+  rt_FF rt_fit(UseJack);
+  rt_fit.Use_three_finest=Use_three_finest;
+  rt_fit.Include_a4 = Include_a4;
+  rt_fit.num_xg=num_xg;
+  
+  string _Fit_tag = "";
+
+  if(Fit_tag.size() > 0) { _Fit_tag= "_"+Fit_tag.substr(0, Fit_tag.size()-1); } 
+
+  const int Njacks=((UseJack==true)?NJ:Nboots);
+
    
   string ph_type_mes=ph_type+"/"+Meson;
   
@@ -1099,7 +1253,7 @@ void Compute_form_factors_Nissa() {
     string conf_num_B = B_bis.substr(0,4);
 
   
-    if(A_bis.length() <= 4) return A_bis < B_bis;
+    if(A_bis.length() <= 4) return A_bis < B_bis;  // ################## BE CAREFUL, JUST MODIFIED STANDARD ORDERING!!! ############ return A_bis < B_bis;
      
     string rA = A_bis.substr(A_bis.length()-2);
     string rB = B_bis.substr(B_bis.length()-2);
@@ -1115,8 +1269,9 @@ void Compute_form_factors_Nissa() {
       }
       else return n1<n2;
     }
-    return A_bis<B_bis;
-  };
+    // return A_bis<B_bis;  ################## BE CAREFUL, JUST MODIFIED STANDARD ORDERING!!! ############àà
+    return A_bis < B_bis;
+   };
   
   
  
@@ -1167,17 +1322,17 @@ void Compute_form_factors_Nissa() {
 
   //2pts function
 
-  data_2pts.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "P5P5", Sort_light_confs);
-  data_2pts_SM.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_SM_3", "P5P5", Sort_light_confs);
-  data_2pts_V1.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "V1V1", Sort_light_confs);
-  data_2pts_V2.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "V2V2", Sort_light_confs);
-  data_2pts_V3.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_3", "V3V3", Sort_light_confs);
-  data_2pts_d_V1.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_1", "V1V1", Sort_light_confs);
-  data_2pts_d_V2.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_1", "V2V2", Sort_light_confs);
-  data_2pts_d_V3.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_1", "V3V3", Sort_light_confs);
-  data_2pts_u_V1.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_2", "V1V1" , Sort_light_confs);
-  data_2pts_u_V2.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_2", "V2V2", Sort_light_confs);
-  data_2pts_u_V3.Read("../new_vph_gpu_data_w_123", "mes_contr_2pts_2", "V3V3", Sort_light_confs);
+  data_2pts.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_3", "P5P5", Sort_light_confs);
+  data_2pts_SM.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_SM_3", "P5P5", Sort_light_confs);
+  data_2pts_V1.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_3", "V1V1", Sort_light_confs);
+  data_2pts_V2.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_3", "V2V2", Sort_light_confs);
+  data_2pts_V3.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_3", "V3V3", Sort_light_confs);
+  data_2pts_d_V1.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_1", "V1V1", Sort_light_confs);
+  data_2pts_d_V2.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_1", "V2V2", Sort_light_confs);
+  data_2pts_d_V3.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_1", "V3V3", Sort_light_confs);
+  data_2pts_u_V1.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "V1V1" , Sort_light_confs);
+  data_2pts_u_V2.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "V2V2", Sort_light_confs);
+  data_2pts_u_V3.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "V3V3", Sort_light_confs);
   
 
   //read data
@@ -1190,22 +1345,22 @@ void Compute_form_factors_Nissa() {
 
 	//vector
 	//Fu
-	C_V_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Fd
-	C_V_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bu
-	C_V_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bd
-	C_V_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 
 	//axial
-	C_A_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Fd
-	C_A_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bu
-	C_A_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bd
-	C_A_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123", "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 
       }
     }
@@ -1295,18 +1450,17 @@ void Compute_form_factors_Nissa() {
     //read theta values and loop over them
     Vfloat thetas, masses_u, masses_d, virts;
 
-    thetas= Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 1 , 5);
-    virts=  Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 2 , 5);
-    masses_u= Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 3 , 5);
-    masses_d= Read_From_File("../new_vph_gpu_data_w_123/"+data_2pts.Tag[iens]+"/pars_list.dat", 4 , 5);
+    thetas= Read_From_File("../new_vph_gpu_data_w_123"+path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 1 , 5);
+    virts=  Read_From_File("../new_vph_gpu_data_w_123"+path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 2 , 5);
+    masses_u= Read_From_File("../new_vph_gpu_data_w_123"+path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 3 , 5);
+    masses_d= Read_From_File("../new_vph_gpu_data_w_123"+path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 4 , 5);
 
     cout<<"pars_list.dat: Read!"<<endl;
 
     //if((signed)thetas.size() != num_xg) crash("Number of rows in pars_list.dat does not match num_xg"); 
 
     int num_xg_per_ens= (signed)thetas.size();
-    num_xg_per_ens_list.push_back(num_xg_per_ens);
-    
+       
     //RCs
     distr_t Za, Zv, a_distr;
     if(data_2pts.Tag[iens].substr(1,1)=="A") { Za= ZA_A; Zv=ZV_A;a_distr=a_A;}
@@ -1340,9 +1494,7 @@ void Compute_form_factors_Nissa() {
     
     
     
-    //check if is large volume
-    if(data_2pts.Tag[iens]=="cB211b.072.96") Is_large_vol.push_back(1);
-    else Is_large_vol.push_back(0);
+   
     
     
    
@@ -1656,13 +1808,16 @@ void Compute_form_factors_Nissa() {
       distr_t_list FV_sub_distr= -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH - (Vec_glb[0][1-off_i][2-off_i] + Vec_glb[0][2-off_i][1-off_i])*1.0)/kz;
       //compute FV and FA (up-component)
       distr_t_list FA0_u_distr= 0.5*(Ax_u_glb[0][1-off_i][1-off_i] + Ax_u_glb[0][2-off_i][2-off_i]);
-      distr_t_list FA_u_distr = (0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH - FA0_u_distr)*(1.0/Eg)*F_P/FA0_distr;
+      //distr_t_list FA0_d_distr= 0.5*(Ax_d_glb[0][1-off_i][1-off_i] + Ax_d_glb[0][2-off_i][2-off_i]);
+      distr_t_list FA_u_distr = (0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH - qu*FA0_distr )*(1.0/Eg)*F_P/FA0_distr;
+      //distr_t_list FA_u_distr = (0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH/(0.5*FA0_u_distr/qu +0.5*FA0_d_distr/qd) - qu )*(1.0/Eg)*F_P;
       distr_t_list FV_u_distr = -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH/kz;
       distr_t_list FV_u_sub_distr= -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH - (Vec_u_glb[0][1-off_i][2-off_i] + Vec_u_glb[0][2-off_i][1-off_i])*1.0)/kz;
 
       //compute FV and FA (d-component)
       distr_t_list FA0_d_distr= 0.5*(Ax_d_glb[0][1-off_i][1-off_i] + Ax_d_glb[0][2-off_i][2-off_i]);
-      distr_t_list FA_d_distr = (0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH - FA0_d_distr)*(1.0/Eg)*F_P/FA0_distr;
+      distr_t_list FA_d_distr = (0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH -qd*FA0_distr)*(1.0/Eg)*F_P/FA0_distr;
+      //distr_t_list FA_d_distr = (0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH/(0.5*FA0_u_distr/qu +0.5*FA0_d_distr/qd) - qd )*(1.0/Eg)*F_P;
       distr_t_list FV_d_distr = -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH/kz;
       distr_t_list FV_d_sub_distr= -0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH - (Vec_d_glb[0][1-off_i][2-off_i] + Vec_d_glb[0][2-off_i][1-off_i])*1.0)/kz;
 
@@ -1849,7 +2004,7 @@ void Compute_form_factors_Nissa() {
     }
   }
 
-  auto FA_interpol_distr = [&FA_interpol_jacks](double xg, int iens) -> distr_t {
+  auto FA_interpol_distr = [&FA_interpol_jacks, &UseJack, &Njacks](double xg, int iens) -> distr_t {
 
 			     distr_t return_distr(UseJack);
 
@@ -1859,7 +2014,7 @@ void Compute_form_factors_Nissa() {
 
 			   };
 
-  auto FV_interpol_distr = [&FV_interpol_jacks](double xg, int iens) -> distr_t {
+  auto FV_interpol_distr = [&FV_interpol_jacks, &UseJack, &Njacks](double xg, int iens) -> distr_t {
 
 			     distr_t return_distr(UseJack);
 
@@ -1942,11 +2097,16 @@ void Compute_form_factors_Nissa() {
       FV_corr= fabs((FV_corr/FV_u_per_ens[iens_B64].ave(ixg-1))*erf( FV_corr/(sqrt(2.0)*sV_max)));
       Print_FVE_u<<to_string_with_precision(ixg*0.1,2)<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_u_per_ens[iens_B64].ave(ixg-1))/FA_u_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_u_per_ens[iens_B64].ave(ixg-1))/FV_u_per_ens[iens_B64].err(ixg-1))<<endl;
 
+
+      if(ixg==7) {
+	Print_FVE_u<<"0.80"<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_u_per_ens[iens_B64].ave(ixg-1))/FA_u_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_u_per_ens[iens_B64].ave(ixg-1))/FV_u_per_ens[iens_B64].err(ixg-1))<<endl;
+	Print_FVE_u<<"0.90"<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_u_per_ens[iens_B64].ave(ixg-1))/FA_u_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_u_per_ens[iens_B64].ave(ixg-1))/FV_u_per_ens[iens_B64].err(ixg-1))<<endl;
+	Print_FVE_u<<"1.00"<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_u_per_ens[iens_B64].ave(ixg-1))/FA_u_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_u_per_ens[iens_B64].ave(ixg-1))/FV_u_per_ens[iens_B64].err(ixg-1))<<endl;
+      }
+
       
     }
-    Print_FVE_u<<"0.80"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
-    Print_FVE_u<<"0.90"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
-    Print_FVE_u<<"1.00"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
+    
     Print_FVE_u.close();
 
 
@@ -1963,11 +2123,16 @@ void Compute_form_factors_Nissa() {
       FV_corr= fabs((FV_corr/FV_d_per_ens[iens_B64].ave(ixg-1))*erf( FV_corr/(sqrt(2.0)*sV_max)));
       Print_FVE_d<<to_string_with_precision(ixg*0.1,2)<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_d_per_ens[iens_B64].ave(ixg-1))/FA_d_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_d_per_ens[iens_B64].ave(ixg-1))/FV_d_per_ens[iens_B64].err(ixg-1))<<endl;
 
+
+      if(ixg==7) {
+	Print_FVE_d<<"0.80"<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_d_per_ens[iens_B64].ave(ixg-1))/FA_d_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_d_per_ens[iens_B64].ave(ixg-1))/FV_d_per_ens[iens_B64].err(ixg-1))<<endl;
+	Print_FVE_d<<"0.90"<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_d_per_ens[iens_B64].ave(ixg-1))/FA_d_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_d_per_ens[iens_B64].ave(ixg-1))/FV_d_per_ens[iens_B64].err(ixg-1))<<endl;
+	Print_FVE_d<<"1.00"<<" "<<FA_corr<<" "<<FV_corr<<" "<<(FA_corr*fabs(FA_d_per_ens[iens_B64].ave(ixg-1))/FA_d_per_ens[iens_B64].err(ixg-1))<<" "<<(FV_corr*fabs(FV_d_per_ens[iens_B64].ave(ixg-1))/FV_d_per_ens[iens_B64].err(ixg-1))<<endl;
+      }
+
       
     }
-    Print_FVE_d<<"0.80"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
-    Print_FVE_d<<"0.90"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
-    Print_FVE_d<<"1.00"<<" "<<"0"<<" "<<"0"<<" 0 0"<<endl;
+ 
     Print_FVE_d.close();
 
 
@@ -1981,6 +2146,9 @@ void Compute_form_factors_Nissa() {
  
 
   if(Perform_continuum_extrapolation) {
+
+
+   
   
     vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FA_cont_interpol_jacks;
     vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FV_cont_interpol_jacks;
@@ -1998,18 +2166,50 @@ void Compute_form_factors_Nissa() {
     //load FVE
 
     ifstream Read_FVE("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE.dat");
+    for(int iens=0;iens<Nens;iens++) {
+      
+      ofstream Print_F_after_FVE("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/"+data_2pts.Tag[iens]+"/fit_results/FV_w_FVE.dat");
+      Print_F_after_FVE<<"#xg FV DFV"<<endl;
+      Print_F_after_FVE.close();
+      Print_F_after_FVE.open("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/"+data_2pts.Tag[iens]+"/fit_results/FA_w_FVE.dat");
+      Print_F_after_FVE<<"#xg FA DFA"<<endl;
+      Print_F_after_FVE.close();
+    }
+
+    Vfloat GM_FVE_V(Njacks), GM_FVE_A(Njacks);
+    double sum_A=0;
+    double sum_V=0;
+    for(int ijack=0;ijack<Njacks;ijack++) { double rn_A=GM(); double rn_V=GM();  GM_FVE_V[ijack] = GM(); GM_FVE_A[ijack] = GM();}
+    ofstream Print_GM("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_jack.dat");
+    for(int ijack=0;ijack<Njacks;ijack++) Print_GM<<GM_FVE_V[ijack]<<" "<<GM_FVE_A[ijack]<<endl;
+    Print_GM.close();
+
+
+    
+    GM_FVE_V = {0.735329, -0.299985, -1.35741, -1.66874, -0.262508, -0.671406 , 0.666785, 1.3346, -0.363563, -0.461873, 1.69269, -0.376367, 0.251096, -0.056725, 0.0406796, 1.27152, 0.801355, 0.193717, 0.821933, -1.61115, -0.24308, -0.271379, 1.22812, -1.88447, 1.33931, -0.955272, -0.768544, -1.06358, 2.11891, -0.721769};
+    
+    GM_FVE_A = {-0.852467, 1.14618, -2.11582, -0.527966, 0.354243, 0.809818, -0.531842, -1.88762, 0.0162903, -2.18775, -0.556247, -0.0706603,  -0.402653, 0.799146, 2.29603, -2.65147, -0.417837, 1.092, 2.25395, 1.84766, -1.36045, 0.751123, 1.75308, 1.44755, -0.226214, 1.41985, -0.312688,  -0.268878, -1.46655, -0.411726};
+       
     for(int ixg=1;ixg<num_xg;ixg++) {
       distr_t FVE_V(UseJack), FVE_A;
       double xx, sV, sA, srel_V, srel_A;
       Read_FVE>>xx>>sA>>sV>>srel_A>>srel_V;
-      for(int ijack=0;ijack<Njacks;ijack++) { FVE_A.distr.push_back( 1.0 + sA*GM()/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
-      for(int ijack=0;ijack<Njacks;ijack++) { FVE_V.distr.push_back( 1.0 + sV*GM()/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
+      cout<<ixg<<" "<<sA<<" "<<sV<<endl;
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_A.distr.push_back( sA*GM_FVE_A[ijack]/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_V.distr.push_back( sV*GM_FVE_V[ijack]/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
     for(int iens=0;iens<Nens;iens++) {
-      FA_per_ens[iens].distr_list[ixg-1] = FA_per_ens[iens].distr_list[ixg-1]*FVE_A;
-      FV_per_ens[iens].distr_list[ixg-1] = FV_per_ens[iens].distr_list[ixg-1]*FVE_V;
+      ofstream Print_FA_after_FVE("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/"+data_2pts.Tag[iens]+"/fit_results/FA_w_FVE.dat", ofstream::app);
+      ofstream Print_FV_after_FVE("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/"+data_2pts.Tag[iens]+"/fit_results/FV_w_FVE.dat", ofstream::app);
+      FA_per_ens[iens].distr_list[ixg-1] = FA_per_ens[iens].distr_list[ixg-1] + FA_per_ens[iens].ave(ixg-1)*FVE_A;
+      FV_per_ens[iens].distr_list[ixg-1] = FV_per_ens[iens].distr_list[ixg-1] + FV_per_ens[iens].ave(ixg-1)*FVE_V;
+      Print_FA_after_FVE<<ixg*0.1<<" "<<FA_per_ens[iens].ave(ixg-1)<<" "<<FA_per_ens[iens].err(ixg-1)<<"  "<<FVE_A.ave()<<" "<<FVE_A.err()<<" "<<sA<<endl;
+      Print_FV_after_FVE<<ixg*0.1<<" "<<FV_per_ens[iens].ave(ixg-1)<<" "<<FV_per_ens[iens].err(ixg-1)<<"  "<<FVE_V.ave()<<" "<<FVE_V.err()<<" "<<sV<<endl;
+      Print_FA_after_FVE.close();
+      Print_FV_after_FVE.close();
     }
     }
     Read_FVE.close();
+    
 
 
 
@@ -2019,11 +2219,12 @@ void Compute_form_factors_Nissa() {
       distr_t FVE_V(UseJack), FVE_A;
       double xx, sV, sA, srel_V, srel_A;
       Read_FVE_u>>xx>>sA>>sV>>srel_A>>srel_V;
-      for(int ijack=0;ijack<Njacks;ijack++) { FVE_A.distr.push_back( 1.0 + sA*GM()/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
-      for(int ijack=0;ijack<Njacks;ijack++) { FVE_V.distr.push_back( 1.0 + sV*GM()/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_A.distr.push_back( sA*GM_FVE_A[ijack]/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_V.distr.push_back( sV*GM_FVE_V[ijack]/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
     for(int iens=0;iens<Nens;iens++) {
-      FA_u_per_ens[iens].distr_list[ixg-1] = FA_u_per_ens[iens].distr_list[ixg-1]*FVE_A;
-      FV_u_per_ens[iens].distr_list[ixg-1] = FV_u_per_ens[iens].distr_list[ixg-1]*FVE_V;
+      FA_u_per_ens[iens].distr_list[ixg-1] = FA_u_per_ens[iens].distr_list[ixg-1] + FA_u_per_ens[iens].ave(ixg-1)*FVE_A;
+      FV_u_per_ens[iens].distr_list[ixg-1] = FV_u_per_ens[iens].distr_list[ixg-1] + FV_u_per_ens[iens].ave(ixg-1)*FVE_V;
+      
     }
     }
     Read_FVE_u.close();
@@ -2035,11 +2236,11 @@ void Compute_form_factors_Nissa() {
       distr_t FVE_V(UseJack), FVE_A(UseJack);
       double xx, sV, sA, srel_V, srel_A;
       Read_FVE_d>>xx>>sA>>sV>>srel_A>>srel_V;
-      for(int ijack=0;ijack<Njacks;ijack++) { FVE_A.distr.push_back( 1.0 + sA*GM()/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
-      for(int ijack=0;ijack<Njacks;ijack++) { FVE_V.distr.push_back( 1.0 + sV*GM()/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_A.distr.push_back( sA*GM_FVE_A[ijack]/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
+      for(int ijack=0;ijack<Njacks;ijack++) { FVE_V.distr.push_back( sV*GM_FVE_V[ijack]/((UseJack==true)?sqrt(Njacks -1.0):1.0));   }
     for(int iens=0;iens<Nens;iens++) {
-      FA_d_per_ens[iens].distr_list[ixg-1] = FA_d_per_ens[iens].distr_list[ixg-1]*FVE_A;
-      FV_d_per_ens[iens].distr_list[ixg-1] = FV_d_per_ens[iens].distr_list[ixg-1]*FVE_V;
+      FA_d_per_ens[iens].distr_list[ixg-1] = FA_d_per_ens[iens].distr_list[ixg-1] + FA_d_per_ens[iens].ave(ixg-1)*FVE_A;
+      FV_d_per_ens[iens].distr_list[ixg-1] = FV_d_per_ens[iens].distr_list[ixg-1] + FV_d_per_ens[iens].ave(ixg-1)*FVE_V;
     }
     }
     Read_FVE_d.close();
@@ -2067,7 +2268,7 @@ void Compute_form_factors_Nissa() {
   
   //init bootstrap fit
   bootstrap_fit<fpar_FF_Nissa,ipar_FF_Nissa> bf_FF(Njacks);
-  bf_FF.set_warmup_lev(0); //sets warmup
+  bf_FF.set_warmup_lev(1); //sets warmup
   bf_FF.Set_number_of_measurements(Nens);
   bf_FF.Set_verbosity(1);
   bf_FF.Add_par("F0", 0.07, 0.001);
@@ -2089,8 +2290,15 @@ void Compute_form_factors_Nissa() {
 
   if( Use_three_finest) dof--;
 
+
+  //push_back info
+  rt_fit.Nmeas=Nens-(Use_three_finest==true);
+  rt_fit.Ndof= dof;
+  rt_fit.Npars= rt_fit.Nmeas-dof;
+  
+
   //ansatz
-  bf_FF.ansatz=  [ ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
+  bf_FF.ansatz=  [&Use_three_finest ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
 
     if( (ip.is==0) && Use_three_finest) return 0.0;
 		  
@@ -2099,7 +2307,7 @@ void Compute_form_factors_Nissa() {
   };
 
   
-  bf_FF.measurement=  [ ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
+  bf_FF.measurement=  [&Use_three_finest ](const fpar_FF_Nissa &p, const ipar_FF_Nissa &ip) {
     
     if( (ip.is==0) && Use_three_finest) return 0.0;
     
@@ -2252,13 +2460,15 @@ void Compute_form_factors_Nissa() {
   Print_To_File({}, {a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
   }
 
+ 
+
   //Print continuum extrapolated form factors
   Print_To_File({}, {xg_t_list, F0_A_list.ave(), F0_A_list.err(), (D1_A_list/F0_A_list).ave(), (D1_A_list/F0_A_list).err(), (D2_A_list/F0_A_list).ave(), (D2_A_list/F0_A_list).err(), ch2_FA}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
   Print_To_File({}, {xg_t_list, F0_V_list.ave(), F0_V_list.err(), (D1_V_list/F0_V_list).ave(), (D1_V_list/F0_V_list).err(), (D2_V_list/F0_V_list).ave(), (D2_V_list/F0_V_list).err(), ch2_FV}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
 
 
   //Print covariance matrix
-  string Analysis_tag= ( (UseJack==true)?"jack":"boot");
+  string Analysis_tag= ( (UseJack==true)?"jack":"boot")+_Fit_tag;
   Eigen::MatrixXd Cov_FA(num_xg-1, num_xg-1);
   Eigen::MatrixXd Cov_FV(num_xg-1, num_xg-1);
   Eigen::MatrixXd Corr_FA(num_xg-1, num_xg-1);
@@ -2657,6 +2867,29 @@ void Compute_form_factors_Nissa() {
 
 
 
+
+  //##########################################
+
+ 
+  //push_back FIT INFO
+  rt_fit.Ch2_FA= ch2_FA;
+  rt_fit.Ch2_FV= ch2_FV;
+  rt_fit.Ch2_FA_u = ch2_FA_u;
+  rt_fit.Ch2_FV_u = ch2_FV_u;
+  rt_fit.Ch2_FA_d = ch2_FA_d;
+  rt_fit.Ch2_FV_d = ch2_FV_d;
+  rt_fit.FA = F0_A_list;
+  rt_fit.FV = F0_V_list;
+  rt_fit.FA_u = F0_u_A_list;
+  rt_fit.FV_u = F0_u_V_list;
+  rt_fit.FA_d = F0_d_A_list;
+  rt_fit.FV_d = F0_d_V_list;
+
+
+  //##########################################
+
+
+
   //VMD-like fit for FV and FA
   //###############################################################################################################
 
@@ -2863,12 +3096,12 @@ void Compute_form_factors_Nissa() {
   }
 
 
-  auto FA_cont_interpol_distr= [&FA_cont_interpol_jacks](double xg) -> distr_t {
+  auto FA_cont_interpol_distr= [&FA_cont_interpol_jacks, &UseJack, &Njacks](double xg) -> distr_t {
     distr_t return_distr(UseJack);
     for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FA_cont_interpol_jacks[ijack](xg));}
     return return_distr;
   };
-  auto FV_cont_interpol_distr= [&FV_cont_interpol_jacks](double xg) -> distr_t {
+  auto FV_cont_interpol_distr= [&FV_cont_interpol_jacks,  &UseJack, &Njacks](double xg) -> distr_t {
     distr_t return_distr(UseJack);
     for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FV_cont_interpol_jacks[ijack](xg));}
     return return_distr;
@@ -2876,12 +3109,12 @@ void Compute_form_factors_Nissa() {
 
 
   //u contribution
-  auto FA_u_cont_interpol_distr= [&FA_u_cont_interpol_jacks](double xg) -> distr_t {
+  auto FA_u_cont_interpol_distr= [&FA_u_cont_interpol_jacks, &UseJack, &Njacks](double xg) -> distr_t {
     distr_t return_distr(UseJack);
     for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FA_u_cont_interpol_jacks[ijack](xg));}
     return return_distr;
   };
-  auto FV_u_cont_interpol_distr= [&FV_u_cont_interpol_jacks](double xg) -> distr_t {
+  auto FV_u_cont_interpol_distr= [&FV_u_cont_interpol_jacks, &UseJack, &Njacks](double xg) -> distr_t {
     distr_t return_distr(UseJack);
     for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FV_u_cont_interpol_jacks[ijack](xg));}
     return return_distr;
@@ -2889,12 +3122,12 @@ void Compute_form_factors_Nissa() {
   
 
   //d contribution
-  auto FA_d_cont_interpol_distr= [&FA_d_cont_interpol_jacks](double xg) -> distr_t {
+  auto FA_d_cont_interpol_distr= [&FA_d_cont_interpol_jacks, &UseJack, &Njacks](double xg) -> distr_t {
     distr_t return_distr(UseJack);
     for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FA_d_cont_interpol_jacks[ijack](xg));}
     return return_distr;
   };
-  auto FV_d_cont_interpol_distr= [&FV_d_cont_interpol_jacks](double xg) -> distr_t {
+  auto FV_d_cont_interpol_distr= [&FV_d_cont_interpol_jacks, &UseJack, &Njacks](double xg) -> distr_t {
     distr_t return_distr(UseJack);
     for(int ijack=0; ijack<Njacks;ijack++) { return_distr.distr.push_back( FV_d_cont_interpol_jacks[ijack](xg));}
     return return_distr;
@@ -3156,7 +3389,7 @@ void Compute_form_factors_Nissa() {
  
 
 
-  return;
+  return rt_fit;
 
 
 

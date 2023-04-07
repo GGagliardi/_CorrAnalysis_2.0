@@ -358,6 +358,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/continuum/fit_data");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/continuum/cov");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/continuum/corr");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/continuum/AIC");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/continuum/fit_data/A0A0");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/continuum/fit_data/A0A0/tm");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/continuum/fit_data/A0A0/OS");
@@ -1382,6 +1383,9 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     distr_t_list test(UseJack);
     map< tuple<string,string,string> , distr_t_list> res_map;
     map< tuple<string, string,string>, vector<double>> ch2_map;
+    map< tuple<string, string,string>, vector<int>> Ndof_map;
+    map< tuple<string, string,string>, vector<int>> Nmeas_map;
+     
      
     for(auto &contr: Contribs) {
       for(auto &ftype: Fit_types) {
@@ -1390,6 +1394,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 	  tuple<string,string,string> Keey= {contr,ftype,ptype};
 	  res_map.emplace(Keey, distr_t_list(UseJack) );
 	  ch2_map.emplace(Keey,vector<double>{});
+	  Ndof_map.emplace(Keey, vector<int>{});
+	  Nmeas_map.emplace(Keey, vector<int>{});
 	}
       }
     }
@@ -1639,14 +1645,16 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 	    
 	    bootstrap_fit<fpar_TAU,ipar_TAU> bf_TAU(Njacks);
 	    bootstrap_fit<fpar_TAU,ipar_TAU> bf_TAU_ch2(1);
+	    //bf_TAU.Disable_correlated_fit();
+	    //bf_TAU_ch2.Disable_correlated_fit();
 	    bf_TAU.Set_number_of_measurements(Nmeas);
 	    bf_TAU.Set_verbosity(1);
 	    //ch2
 	    bf_TAU_ch2.Set_number_of_measurements(Nmeas);
 	    bf_TAU_ch2.Set_verbosity(1);
 
-	    bf_TAU.set_warmup_lev(2);
-	    bf_TAU_ch2.set_warmup_lev(2);
+	    //bf_TAU.set_warmup_lev(1);
+	    //bf_TAU_ch2.set_warmup_lev(1);
 
 	    //add fit parameters
 	    bf_TAU.Add_par("D", 3.0, 0.1);
@@ -1831,9 +1839,9 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
 		  if((fit_type=="OS") || (fit_type=="comb")) {
 		    data[ijack][iens+off_OS].Br = (VkVk_OS_red+AkAk_OS_red+A0A0_OS_red).distr_list[iens].distr[ijack];
-		    data[ijack][iens].Br_err= (VkVk_OS_red+AkAk_OS_red+A0A0_OS_red).err(iens);
-		    data[ijack][iens].Is_tm = false;
-		    data[ijack][iens].a = a_distr_list_red.distr_list[iens].distr[ijack];
+		    data[ijack][iens+off_OS].Br_err= (VkVk_OS_red+AkAk_OS_red+A0A0_OS_red).err(iens);
+		    data[ijack][iens+off_OS].Is_tm = false;
+		    data[ijack][iens+off_OS].a = a_distr_list_red.distr_list[iens].distr[ijack];
 		  }
 		 
 		}
@@ -1950,6 +1958,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
 	    res_map.find({contr, fit_type, poly_type})->second.distr_list.push_back(D);
 	    ch2_map.find({contr, fit_type, poly_type})->second.push_back(ch2);
+	    Nmeas_map.find({contr, fit_type, poly_type})->second.push_back(Nmeas);
+	    Ndof_map.find({contr, fit_type, poly_type})->second.push_back(Ndof);
 	    
 
 
@@ -1983,9 +1993,13 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), AkAk_OS_red.ave(), AkAk_OS_red.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/light/continuum/fit_data/AkAk/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list[is],3)+".dat"  , "", "");
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), VkVk_OS_red.ave(), VkVk_OS_red.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/light/continuum/fit_data/VkVk/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list[is],3)+".dat"  , "", "");
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (VkVk_OS_red+AkAk_OS_red+A0A0_OS_red).ave(), (VkVk_OS_red+AkAk_OS_red+A0A0_OS_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/light/continuum/fit_data/tot/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list[is],3)+".dat"  , "", "");
+
+
        
+      
        
     }
+    
 
     //here I should print the result
     for (auto const& [tag,Br] : res_map) {
@@ -1993,6 +2007,100 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       Vfloat ch2 = ch2_map.find(tag)->second;
       Print_To_File({}, { sigma_list, Br.ave(), Br.err(), ch2 }, "../data/tau_decay/"+Tag_reco_type+"/light/continuum/Extr_"+out_tag+".dat", "", "#sigma ave err ch2/dof ");
     }
+
+
+
+
+    //###############################################
+    //###############################################
+    //###############################################
+    //##############                  ###############
+    //##############  Akaike analysis ###############
+    //##############                  ###############
+    //###############################################
+    //###############################################
+    //###############################################
+
+    vector<distr_t_list> Br_finals;
+    VVfloat Br_final_systs(4);
+    for(int c=0; c<(signed)Contribs.size(); c++)  { Br_finals.emplace_back(UseJack, sigma_list.size()); Br_final_systs[c].resize(sigma_list.size(), 0);}
+ 
+    for(int is=0; is < (signed)sigma_list.size();is++) {
+
+      //create directory for AIC output
+      boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/light/continuum/AIC/sigma_"+to_string_with_precision(sigma_list[is],3));
+       
+      int c=0;
+      //loop over contributions
+      for(auto &contr: Contribs ) {
+
+	map< tuple<string,string> , double> AIC_map;
+	Vfloat weight_list, ch2_list, Nmeas_list, Npars_list;
+	vector<string> ftpt_list;
+	
+	double w_tot=0;
+	
+	for(auto &ftype: Fit_types)
+	  for(auto &ptype: poly_types) {
+
+	  
+	    
+	    double ch2_i = ch2_map.find({contr,ftype,ptype})->second[is];
+	    double Nmeas_i = Nmeas_map.find({contr, ftype,ptype})->second[is];
+	    double Ndof_i = Ndof_map.find({contr, ftype, ptype})->second[is];
+	    double Npars_i = Nmeas_i - Ndof_i;
+	    double w= exp(-0.5*( ch2_i*Ndof_i +2*Npars_i -Nmeas_i));
+
+	    ftpt_list.push_back( ftype+"_"+ptype);
+	    weight_list.push_back( w);
+	    ch2_list.push_back( ch2_i);
+	    Nmeas_list.push_back( Nmeas_i);
+	    Npars_list.push_back( Npars_i);
+	    
+	    AIC_map.insert( { {ftype, ptype}, w });
+	    w_tot += w;
+		
+	  }
+	
+	//normalize AIC weights
+	for (auto &[tag,w] : AIC_map) w/= w_tot;
+	  
+	  
+	  distr_t Br(UseJack, UseJack?Njacks:Nboots); //constructor automatically sets Br to zero
+	  for (auto &[tag,w] : AIC_map) Br = Br + w*res_map.find({contr, get<0>(tag), get<1>(tag)})->second.distr_list[is] ;
+	  
+	  double syst=0;
+	  double global_ave= Br.ave();
+	  for (auto &[tag,w] : AIC_map) syst += w*pow( res_map.find({contr, get<0>(tag), get<1>(tag)})->second.ave(is) - global_ave,2);
+	  
+	  Br_finals[c].distr_list[is]= Br;
+	  Br_final_systs[c][is] = sqrt(syst);
+	  
+	  
+	  c++;
+
+	  //print details on AIC
+	  Print_To_File({ftpt_list}, {weight_list, ch2_list, Nmeas_list, Npars_list } , "../data/tau_decay/"+Tag_reco_type+"/light/continuum/AIC/sigma_"+to_string_with_precision(sigma_list[is],3)+"/"+contr+".out", "", "#ftpt   w(AIC)   ch2/dof  Nmeas  Npars");
+	    
+	    
+	    
+      }
+    }
+
+
+    //print results
+    for(int c=0;c<(signed)Contribs.size();c++) {
+      string contr= Contribs[c];
+      Print_To_File({}, { sigma_list, Br_finals[c].ave(), Br_finals[c].err(), Br_final_systs[c]}, "../data/tau_decay/"+Tag_reco_type+"/light/continuum/Extr_AIC_"+contr+".dat", "", "#sigma ave err_stat  err_syst ");
+    }
+
+    
+    //###############################################
+    //###############################################
+    //###############################################
+
+
+    
     
   }
 	

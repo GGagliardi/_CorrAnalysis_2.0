@@ -368,12 +368,13 @@ void Get_radiative_form_factors_3d() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   /*
-    Vfloat beta_List({0.0, 0.0, 0.0, 0.99, 0.99, 0.99, -0.99, -0.99});
-    vector<bool> Integrate_Up_To_Emax_List({0,0,0,0,0,0,0,0});
-    Vfloat Emax_List({10,10,10,10,10,10,10,10});
-    vector<bool> Perform_theta_average_List({1,1,1,1,1,1,1,1});
-    vector<string> SM_TYPE_List({"FF_Sinh", "FF_Sinh", "FF_Sinh", "FF_Sinh", "FF_Sinh", "FF_Sinh", "FF_Sinh", "FF_Sinh"});
-    Vfloat E0_List({0.6,0.8,0.9,0.6,0.8,0.9,0.8,0.9});
+    Vfloat beta_List({0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+    vector<bool> Integrate_Up_To_Emax_List({0,0,0,0,0,0});
+    Vfloat Emax_List({10,10,10,10,10,10});
+    vector<bool> Perform_theta_average_List({1,1,1,1,1,1});
+    vector<string> SM_TYPE_List({"FF_Sinh_half", "FF_Sinh_half", "FF_Sinh_half","FF_Exp","FF_Exp", "FF_Gauss_Schwartz"});
+    Vfloat E0_List({0.6,0.8,0.9,0.8,0.9,0.9});
+    vector<bool> CONS_EM_CURR_LIST({false, false, false, false, false, false});
   */
 
   Vfloat beta_List({0.0});
@@ -968,6 +969,27 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
       return sqrt(2)*DawsonF(x)/s;
     }
 
+    if(SM_TYPE=="FF_Gauss_Schwartz") {
+
+      PrecFloat x = (E-m);
+      if( abs(x) > s) return ( 1 - exp( -x*x/(2*s*s)))/x;
+      else {
+	int n=2;
+	bool converged=false;
+	PrecFloat fact = -pow((x/(sqrt(PrecFloat(2))*s)),2);
+	PrecFloat sum= x/(2*s*s);
+	PrecFloat prec_sum;
+	while(!converged) {
+	  prec_sum=sum;
+	  sum += sum*fact/n;
+	  n++;
+	  if(prec_sum==sum) converged=true;
+	}
+	return sum;
+      }
+      
+    }
+
     if(SM_TYPE=="FF_Cauchy") {
       PrecFloat t = (E-m);
       return t/( t*t + s*s);
@@ -977,12 +999,12 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
       PrecFloat x= (E-m);
 
-      PrecFloat phi= abs(atan( sin(s)/(1-cos(s))));
+      //PrecFloat phi= abs(atan( sin(s)/(1-cos(s))));
 
       
-      PrecFloat norm= PrecFloat(2)*phi/precPi() ;
+      //PrecFloat norm= PrecFloat(2)*phi/precPi() ;
 
-      return (exp(-x)/norm)*( 1 - cos(s)*exp(-x))/( 1 + exp(-2*x) -2*cos(s)*exp(-x));
+      return ( cos(s)*exp(x)-1)/( 1 + exp(2*x) -2*cos(s)*exp(x));
     }
 
     if(SM_TYPE=="FF_Sinh_half") {
@@ -1020,6 +1042,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
   auto K_IM = [&SM_TYPE](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
 
     if(SM_TYPE=="FF_Gauss") return precPi()*Get_exact_gauss(E, m, s, E0);
+    if(SM_TYPE=="FF_Gauss_Schwartz") return precPi()*Get_exact_gauss(E, m, s, E0);
     if(SM_TYPE=="FF_Cauchy") {
       PrecFloat t= (E-m);
       return s/( t*t + s*s);
@@ -1029,11 +1052,11 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
       PrecFloat x= (E-m);
 
-      PrecFloat phi= abs(atan( sin(s)/(1-cos(s))));
+      //PrecFloat phi= abs(atan( sin(s)/(1-cos(s))));
       
-      PrecFloat norm= PrecFloat(2)*phi/precPi() ;
+      //PrecFloat norm= PrecFloat(2)*phi/precPi() ;
 
-      return (exp(-2*x)*sin(s)/norm)/( 1 + exp(-2*x) -2*cos(s)*exp(-x));
+      return (exp(x)*sin(s))/( 1 + exp(2*x) -2*cos(s)*exp(x));
 
     }
 
@@ -4248,6 +4271,11 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 		if( (fit_types[ifit] == "const") ) { bf_EPS.Fix_par("D1",0); bf_EPS_ch2.Fix_par("D1",0) ;}
 
+		//if below threshold and fitting the real part then set linear term to zero. rho'(E) = 0
+
+		bool fixing_lin_only_for_real=false;
+		if( (fit_types[ifit] != "lin") && (virt_list[ixk] < Mphi/MDs_phys)) { fixing_lin_only_for_real=true; bf_EPS.Fix_par("D1",0.0); bf_EPS_ch2.Fix_par("D1",0.0);}
+
 
 		//ansatz
 		bf_EPS.ansatz=  [ ](const fpar_EPS &p, const ipar_EPS &ip) {
@@ -4320,7 +4348,9 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 		Bt_fit_RE_ch2= bf_EPS_ch2.Perform_bootstrap_fit();
 
 		//set params for imag part
+		if(fixing_lin_only_for_real) { bf_EPS.Release_par("D1"); bf_EPS_ch2.Release_par("D1");}
 		bf_EPS.Set_par_val("D", IM_HV_12.ave(sigmas.size()-1), 0.1*IM_HV_12.ave(sigmas.size()-1));
+		bf_EPS_ch2.Set_par_val("D", IM_HV_12.ave(sigmas.size()-1), 0.1*IM_HV_12.ave( sigmas.size()-1));
 
 		//append
 		bf_EPS.Append_to_input_par(data_IM);
@@ -4338,7 +4368,9 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 		distr_t D_RE(UseJack), D1_RE(UseJack), D2_RE(UseJack), D3_RE(UseJack), D4_RE(UseJack);
 		for(int ijack=0;ijack<Njacks;ijack++) { D_RE.distr.push_back( Bt_fit_RE.par[ijack].D); D1_RE.distr.push_back( Bt_fit_RE.par[ijack].D1); D2_RE.distr.push_back( Bt_fit_RE.par[ijack].D2); D3_RE.distr.push_back( Bt_fit_RE.par[ijack].D3); D4_RE.distr.push_back( Bt_fit_RE.par[ijack].D4);  }
 		//reduced ch2
+		if(fixing_lin_only_for_real) Ndof++;
 		double ch2_RE= ((Ndof==0)?Bt_fit_RE_ch2.get_ch2_ave():(Bt_fit_RE_ch2.get_ch2_ave()/Ndof));
+		if(fixing_lin_only_for_real) Ndof--;
 		//IM
 		distr_t D_IM(UseJack), D1_IM(UseJack), D2_IM(UseJack), D3_IM(UseJack), D4_IM(UseJack);
 		for(int ijack=0;ijack<Njacks;ijack++) { D_IM.distr.push_back( Bt_fit_IM.par[ijack].D); D1_IM.distr.push_back( Bt_fit_IM.par[ijack].D1); D2_IM.distr.push_back( Bt_fit_IM.par[ijack].D2); D3_IM.distr.push_back( Bt_fit_IM.par[ijack].D3); D4_IM.distr.push_back( Bt_fit_IM.par[ijack].D4);  }

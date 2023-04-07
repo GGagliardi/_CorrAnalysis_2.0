@@ -32,6 +32,13 @@ class CorrAnalysis {
   distr_t_list residue_t_wo_m_fit(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of the residue of the pole wo fitting the effective mass "acts on distributions"
   distr_t_list decay_constant_t(const VVfloat &corr, string Obs); //returns jackknife or boostrap distribution of a decay constant "acts on data"
   distr_t_list decay_constant_t(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of a decay constant "acts on distribution"
+
+  distr_t_list matrix_element_t(const VVfloat &corr_A, string Obs); //returns jackknife or boostrap distribution of the matrix element "acts on data"
+  distr_t_list matrix_element_t(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of the matrix element "acts on distributions"
+
+  distr_t_list mel_ov_mass_t(const VVfloat &corr_A, string Obs); //returns jackknife or boostrap distribution of the matrix element over the mass "acts on data"
+  distr_t_list mel_ov_mass_t(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of the matrix element over the mass "acts on distributions"
+  
  
   distr_t effective_slope_t_tanh_fit(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr, string OBS); //effective slope from a + dm*(T/2-t)*tanh((T/2-t)*meff)
   distr_t_list effective_slope_t_sub_t2(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr,const distr_t_list& corr_C_distr,string OBS);

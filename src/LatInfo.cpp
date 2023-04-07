@@ -169,6 +169,11 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_WI_charm_extr_err=0.000634;
     Za_WI_charm_extr = 0.66016;
     Za_WI_charm_extr_err = 0.0014;
+
+    ZT_RI2 = 0.8173;
+    ZT_RI2_err = sqrt(pow(0.0013,2) + pow(0.0008,2));
+
+    
     if(Tag == "cA211a.53.24") {
       Za_WI_strange= 0.728393; // 0.728838 ;
       Za_WI_strange_err = 0.0018; // 0.00160579;
@@ -208,6 +213,9 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_nucleon_err=0.00032;
     Za=0.746;
     Za_err=0.008;
+
+    ZT_RI2 = 0.8403;
+    ZT_RI2_err = sqrt(pow(0.0017,2) + pow(0.0008,2));
     
     if(Tag == "cB211b.072.64") {
       Za_WI = 0.71403 ;
@@ -263,7 +271,13 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Za_WI_strange_err = 0.00016;
 
     Zv_WI_strange = 0.725404;
-    Zv_WI_strange_err = 1.9e-5; 
+    Zv_WI_strange_err = 1.9e-5;
+
+
+    ZT_RI2 = 0.8623;
+    ZT_RI2_err = sqrt(pow(0.0019,2) + pow(0.0008,2));
+
+   
     
     ms_L= 0.01600; ms_M= 0.01800;
     mc_L=0.17500; mc_M=0.19500; mc_H=0.21500;
@@ -291,6 +305,9 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     
     Zv_WI_strange = 0.744106;
     Zv_WI_strange_err = 1.2e-5;
+
+    ZT_RI2 = 0.8872;
+    ZT_RI2_err = sqrt(pow(0.0008,2) + pow(0.0008,2));
 
       
     ms_L= 0.014; ms_M= 0.015;

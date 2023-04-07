@@ -515,6 +515,150 @@ distr_t_list CorrAnalysis::residue_t(const distr_t_list &corr_A_distr, string Ob
 
 }
 
+//#############################################################
+
+
+
+
+
+
+
+distr_t_list CorrAnalysis::matrix_element_t(const VVfloat &corr_A, string Obs) {
+
+  distr_t_list matrix_element_t(UseJack,Nt);
+  VPfloat result;
+
+  distr_t_list residue = residue_t(corr_A, "");
+  distr_t effective_mass_fit_distr = Fit_distr( effective_mass_t(corr_A, ""));
+
+     
+  
+  for(int t=0;t<Nt;t++) {
+    for(int is=0; is < effective_mass_fit_distr.size(); is++) {
+      double el = effective_mass_fit_distr.distr[is];
+      double Z = residue.distr_list[t].distr[is];
+      matrix_element_t.distr_list[t].distr.push_back(sqrt(Z));
+    }
+  }
+
+
+  
+  result = matrix_element_t.ave_err();
+  
+  if(Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for(unsigned int t=0; t<corr_A.size(); t++) Print<<t<<setw(20)<<result[t].first<<setw(20)<<result[t].second<<endl;
+    Print.close();
+  }
+  
+  return matrix_element_t;
+}
+
+//overloading function matrix_element_t
+
+distr_t_list CorrAnalysis::matrix_element_t(const distr_t_list &corr_A, string Obs) {
+
+  distr_t_list matrix_element_t(UseJack,Nt);
+  VPfloat result;
+
+
+  distr_t_list residue = residue_t(corr_A, "");
+  distr_t effective_mass_fit_distr = Fit_distr( effective_mass_t(corr_A, ""));
+  
+  
+  for(int t=0;t<Nt;t++) {
+    for(int is=0; is < effective_mass_fit_distr.size(); is++) {
+      double el = effective_mass_fit_distr.distr[is];
+      double Z = residue.distr_list[t].distr[is];
+      matrix_element_t.distr_list[t].distr.push_back(sqrt(Z));
+    }
+  }
+  
+
+  result = matrix_element_t.ave_err();
+  
+  if(Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for(int t=0; t<corr_A.size(); t++) Print<<t<<setw(20)<<result[t].first<<setw(20)<<result[t].second<<endl;
+    Print.close();
+  }
+  
+  return matrix_element_t;
+}
+
+//
+
+
+distr_t_list CorrAnalysis::mel_ov_mass_t(const VVfloat &corr_A, string Obs) {
+
+  distr_t_list mel_ov_mass_t(UseJack,Nt);
+  VPfloat result;
+
+  distr_t_list residue = residue_t(corr_A, "");
+  distr_t effective_mass_fit_distr = Fit_distr( effective_mass_t(corr_A, ""));
+
+     
+  
+  for(int t=0;t<Nt;t++) {
+    for(int is=0; is < effective_mass_fit_distr.size(); is++) {
+      double el = effective_mass_fit_distr.distr[is];
+      double Z = residue.distr_list[t].distr[is];
+      mel_ov_mass_t.distr_list[t].distr.push_back(sqrt(Z)/el);
+    }
+  }
+
+
+  
+  result = mel_ov_mass_t.ave_err();
+  
+  if(Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for(unsigned int t=0; t<corr_A.size(); t++) Print<<t<<setw(20)<<result[t].first<<setw(20)<<result[t].second<<endl;
+    Print.close();
+  }
+  
+  return mel_ov_mass_t;
+}
+
+//overloading function mel_ov_mass_t
+
+distr_t_list CorrAnalysis::mel_ov_mass_t(const distr_t_list &corr_A, string Obs) {
+
+  distr_t_list mel_ov_mass_t(UseJack,Nt);
+  VPfloat result;
+
+
+  distr_t_list residue = residue_t(corr_A, "");
+  distr_t effective_mass_fit_distr = Fit_distr( effective_mass_t(corr_A, ""));
+  
+  
+  for(int t=0;t<Nt;t++) {
+    for(int is=0; is < effective_mass_fit_distr.size(); is++) {
+      double el = effective_mass_fit_distr.distr[is];
+      double Z = residue.distr_list[t].distr[is];
+      mel_ov_mass_t.distr_list[t].distr.push_back(sqrt(Z)/el);
+    }
+  }
+  
+
+  result = mel_ov_mass_t.ave_err();
+  
+  if(Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for(int t=0; t<corr_A.size(); t++) Print<<t<<setw(20)<<result[t].first<<setw(20)<<result[t].second<<endl;
+    Print.close();
+  }
+  
+  return mel_ov_mass_t;
+}
+
+
+//##############################################################
+
 
 
 

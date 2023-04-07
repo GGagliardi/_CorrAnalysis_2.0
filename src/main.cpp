@@ -2,7 +2,7 @@
 
 using namespace std;
 
-bool DEBUG=false;
+bool DEBUG = false;
 
 
 int main(int narg, char** argv)

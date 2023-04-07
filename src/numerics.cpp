@@ -544,8 +544,11 @@ void debug_loop()
 
 double Get_4l_alpha_s( double Q, double Nf) {
 
+  double zeta_3 = riemann_zeta(3);
   double B0= 11.0 -(2.0/3.0)*Nf;
   double B1= 102.0 - (38.0/3)*Nf;
+  double B2= 2857.0/2.0 - Nf*5033.0/18.0 + Nf*Nf*325.0/54.0;
+  double B3= 149753.0/6.0 + 3564*zeta_3 -(1078361.0/162.0 + zeta_3*6508.0/27.0)*Nf + (50065.0/162.0 + zeta_3*6472.0/81.0)*Nf*Nf + pow(Nf,3)*1093.0/729.0;
   double Q2= pow(Q,2);
   double L2= pow(0.340,2);
 
