@@ -14,13 +14,13 @@ const double qu = 2.0/3.0; //electric charge of u-type quark
 const double qd = -1.0/3.0; //electric charge of d-type quark
 const string Meson="Ds";
 double L_QCD= 0.3; //300 MeV
-int n_xg=4;
-int n_xg_rev=3;
+int n_xg=2;
+int n_xg_rev=1;
 Vfloat virt_list;
 bool verbose_lev=1;
 bool P5_ON_SOURCE=true;
-bool Is_rep=false;
-Vfloat sigmas({0.6,0.5,0.4,0.3,0.2,0.1,0.05}); //sigma in GeV
+bool Is_rep = false;
+Vfloat sigmas({0.6,0.5,0.4,0.35,0.3,0.25,0.2,0.15, 0.1,0.05}); //sigma in GeV  
 int prec=128;
 const string MODE_FF="TANT";
 bool CONS_EM_CURR=false;
@@ -377,13 +377,13 @@ void Get_radiative_form_factors_3d() {
     vector<bool> CONS_EM_CURR_LIST({false, false, false, false, false, false});
   */
 
-  Vfloat beta_List({0.0});
-  vector<bool> Integrate_Up_To_Emax_List({0});
-  Vfloat Emax_List({10});
-  vector<bool> Perform_theta_average_List({1});
-  vector<string> SM_TYPE_List({"FF_Sinh_half"});
-  vector<bool> CONS_EM_CURR_LIST({false});
-  Vfloat E0_List({0.9});
+  Vfloat beta_List({0.0,0.0});
+  vector<bool> Integrate_Up_To_Emax_List({0,0});
+  Vfloat Emax_List({10,10});
+  vector<bool> Perform_theta_average_List({1,1});
+  vector<string> SM_TYPE_List({"FF_Exp", "FF_Sinh_half"});
+  vector<bool> CONS_EM_CURR_LIST({false,false});
+  Vfloat E0_List({0.9, 0.9});
   
   int N= beta_List.size();
 
@@ -969,27 +969,31 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
       return sqrt(2)*DawsonF(x)/s;
     }
 
+
     if(SM_TYPE=="FF_Gauss_Schwartz") {
 
       PrecFloat x = (E-m);
-      if( abs(x) > s) return ( 1 - exp( -x*x/(2*s*s)))/x;
+      if( abs(x)/s > 0.1) return ( 1 - exp( -x*x/(2*s*s)))/x;
       else {
-	int n=2;
-	bool converged=false;
-	PrecFloat fact = -pow((x/(sqrt(PrecFloat(2))*s)),2);
-	PrecFloat sum= x/(2*s*s);
-	PrecFloat prec_sum;
-	while(!converged) {
-	  prec_sum=sum;
-	  sum += sum*fact/n;
-	  n++;
-	  if(prec_sum==sum) converged=true;
-	}
-	return sum;
+        int n=2;
+        bool converged=false;
+        PrecFloat fact = -pow(x/(sqrt(PrecFloat(2))*s),2);
+        PrecFloat sum= x/(2*s*s);
+        PrecFloat M= sum;
+        PrecFloat prec_sum;
+        while(!converged) {
+          M *= fact/n;
+          prec_sum=sum;
+          sum += M;
+          n++;
+          if(prec_sum==sum) converged=true;
+        }
+        return sum;
       }
-      
+
     }
 
+   
     if(SM_TYPE=="FF_Cauchy") {
       PrecFloat t = (E-m);
       return t/( t*t + s*s);
@@ -1004,7 +1008,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
       
       //PrecFloat norm= PrecFloat(2)*phi/precPi() ;
 
-      return ( cos(s)*exp(x)-1)/( 1 + exp(2*x) -2*cos(s)*exp(x));
+      return ( cos(s)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(s)*exp(-x));
     }
 
     if(SM_TYPE=="FF_Sinh_half") {
@@ -1056,7 +1060,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
       
       //PrecFloat norm= PrecFloat(2)*phi/precPi() ;
 
-      return (exp(x)*sin(s))/( 1 + exp(2*x) -2*cos(s)*exp(x));
+      return (exp(-x)*sin(s))/( 1 + exp(-2*x) -2*cos(s)*exp(-x));
 
     }
 
@@ -1130,8 +1134,8 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
     cout<<"pars_list.dat: Read!"<<endl;
 
-    if((signed)thetas.size() != n_xg) crash("Number of rows in pars_list.dat does not match n_xg");
-    if((signed)thetas_rev.size() != n_xg_rev) crash("Number of rows in pars_list_rev.dat does not match n_xg_rev");
+    //if((signed)thetas.size() != n_xg) crash("Number of rows in pars_list.dat does not match n_xg");
+    //if((signed)thetas_rev.size() != n_xg_rev) crash("Number of rows in pars_list_rev.dat does not match n_xg_rev");
 
     //load smeared 2-pt function
 
@@ -1728,7 +1732,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 #pragma omp parallel for schedule(dynamic)
 	      for(int ie=0;ie<(signed)virt_list.size();ie++) {
 	   
-		double mult_re_u=1e-2;
+		double mult_re_u=5e-2;
 		double mult_re_d=1e-2;
 		double mult_im_u=1e-2;
 		double mult_im_d=1e-2;
@@ -4173,18 +4177,27 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 			    
 	    //axial
+            /*
+            RE_HA_11.distr_list.emplace_back(UseJack,
+Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_1_nu_1.jack",1,3));
+            IM_HA_11.distr_list.emplace_back(UseJack,
+Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_1_nu_1.jack",2,3));
 
-	    RE_HA_11.distr_list.emplace_back(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_1_nu_1.jack",1,3));
-	    IM_HA_11.distr_list.emplace_back(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_1_nu_1.jack",2,3));
-				  
-	    RE_HA_33.distr_list.emplace_back(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_3.jack",1,3));
-	    IM_HA_33.distr_list.emplace_back(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_3.jack",2,3));
+            RE_HA_33.distr_list.emplace_back(UseJack,
+Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_3.jack",1,3));
+            IM_HA_33.distr_list.emplace_back(UseJack,
+Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_3.jack",2,3));
 
-	    RE_HA_03.distr_list.emplace_back(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_0_nu_3.jack",1,3));
-	    IM_HA_03.distr_list.emplace_back(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_0_nu_3.jack",2,3));
+            RE_HA_03.distr_list.emplace_back(UseJack,
+Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_0_nu_3.jack",1,3));
+            IM_HA_03.distr_list.emplace_back(UseJack,
+Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_0_nu_3.jack",2,3));
 
-	    RE_HA_30.distr_list.emplace_back(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_0.jack",1,3));
-	    IM_HA_30.distr_list.emplace_back(UseJack, Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_0.jack",2,3));
+            RE_HA_30.distr_list.emplace_back(UseJack,
+Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_0.jack",1,3));
+            IM_HA_30.distr_list.emplace_back(UseJack,
+Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_0.jack",2,3));
+	    */
 
 	    
 
@@ -4219,7 +4232,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 	  vector<string> fit_types({"const", "lin", "quad", "cub", "quart"});
 
-	  vector<int> cuts({0,1,2,3,4,5});
+	  vector<int> cuts({0,1,2,3,4,5,6,7,8});
 
 	  for(int ifit=0; ifit<(signed)fit_types.size(); ifit++) {
 
@@ -4368,9 +4381,13 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 		distr_t D_RE(UseJack), D1_RE(UseJack), D2_RE(UseJack), D3_RE(UseJack), D4_RE(UseJack);
 		for(int ijack=0;ijack<Njacks;ijack++) { D_RE.distr.push_back( Bt_fit_RE.par[ijack].D); D1_RE.distr.push_back( Bt_fit_RE.par[ijack].D1); D2_RE.distr.push_back( Bt_fit_RE.par[ijack].D2); D3_RE.distr.push_back( Bt_fit_RE.par[ijack].D3); D4_RE.distr.push_back( Bt_fit_RE.par[ijack].D4);  }
 		//reduced ch2
-		if(fixing_lin_only_for_real) Ndof++;
+		if(fixing_lin_only_for_real && (fit_types[ifit] != "const")) Ndof++;
+		int Ndof_RE=Ndof;
+		int Nmeas_eff_RE= Nmeas;
 		double ch2_RE= ((Ndof==0)?Bt_fit_RE_ch2.get_ch2_ave():(Bt_fit_RE_ch2.get_ch2_ave()/Ndof));
-		if(fixing_lin_only_for_real) Ndof--;
+		if(fixing_lin_only_for_real && (fit_types[ifit] != "const")) Ndof--;
+		int Ndof_IM=Ndof;
+		int Nmeas_eff_IM= Nmeas;
 		//IM
 		distr_t D_IM(UseJack), D1_IM(UseJack), D2_IM(UseJack), D3_IM(UseJack), D4_IM(UseJack);
 		for(int ijack=0;ijack<Njacks;ijack++) { D_IM.distr.push_back( Bt_fit_IM.par[ijack].D); D1_IM.distr.push_back( Bt_fit_IM.par[ijack].D1); D2_IM.distr.push_back( Bt_fit_IM.par[ijack].D2); D3_IM.distr.push_back( Bt_fit_IM.par[ijack].D3); D4_IM.distr.push_back( Bt_fit_IM.par[ijack].D4);  }
@@ -4396,8 +4413,8 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 		
 	
-		Print_To_File({}, {sigma_to_print, RE_HV_12_to_print.ave(), RE_HV_12_to_print.err()},Fit_RE_tt, "", "#eps[GeV] FF, ch2/dof: "+to_string_with_precision(ch2_RE,4));
-		Print_To_File({}, {sigma_to_print, IM_HV_12_to_print.ave(), IM_HV_12_to_print.err()},Fit_IM_tt, "", "#eps[GeV] FF, ch2/dof: "+to_string_with_precision(ch2_IM,4));
+		Print_To_File({}, {sigma_to_print, RE_HV_12_to_print.ave(), RE_HV_12_to_print.err()},Fit_RE_tt, "", "#eps[GeV] FF, ch2/dof: "+to_string_with_precision(ch2_RE,4)+" Ndof: "+to_string(Ndof_RE)+" Nmeas: "+to_string(Nmeas_eff_RE));
+		Print_To_File({}, {sigma_to_print, IM_HV_12_to_print.ave(), IM_HV_12_to_print.err()},Fit_IM_tt, "", "#eps[GeV] FF, ch2/dof: "+to_string_with_precision(ch2_IM,4)+" Ndof: "+to_string(Ndof_IM)+" Nmeas: "+to_string(Nmeas_eff_IM));
 		
 
 	      }

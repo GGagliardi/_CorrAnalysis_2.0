@@ -69,13 +69,13 @@ double Customized_plateaux_tau_spectre( double alpha, double Emax, string channe
       if(channel=="Aii") {
 	if(Ens == "cB211b.072.64") {  Ra0 =1e6;  }
 	else if(Ens == "cB211b.072.96") { Ra0= ((alpha_m==3)?2e5:2e6);   }
-	else if(Ens == "cC211a.06.80") { Ra0= 3e7;   }  //THIS IS THE PROBLEMATIC ONE, OLD VALUE WAS Ra0= 1e5
+	else if(Ens == "cC211a.06.80") { Ra0= 3e7;   }  //THIS IS TRICKY, OLD VALUE WAS Ra0= 1e5
 	else if(Ens == "cD211a.054.96") {  Ra0=1e6;  }
 	else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
       }
       else if(channel=="Vii") {
 	if(Ens == "cB211b.072.64") { Ra0=3e5;   }
-	else if(Ens == "cB211b.072.96") { Ra0= ((alpha_m==3)?1e7:2e7);    } //THIS IS PROBLEMATIC, OLD VALUE WAS Ra0=1e5
+	else if(Ens == "cB211b.072.96") { Ra0= ((alpha_m==3)?1e7:2e7);    } //THIS IS TRICKY, OLD VALUE WAS Ra0=1e5
 	else if(Ens == "cC211a.06.80") {  Ra0=1e7;  }  //PREVIOUS WAS Ra0=1e5
 	else if(Ens == "cD211a.054.96") {  Ra0= ((alpha_m==3)?1e5:1e6);   }
 	else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
@@ -84,7 +84,7 @@ double Customized_plateaux_tau_spectre( double alpha, double Emax, string channe
 	if(Ens == "cB211b.072.64") { Ra0=1e7;   }
 	else if(Ens == "cB211b.072.96") { Ra0=1e7;   }
 	else if(Ens == "cC211a.06.80") {  Ra0=3e6;  }
-	else if(Ens == "cD211a.054.96") { Ra0=9e7;   } //THIS IS PROBLEMATIC, OLD VALUE WAS 1e7
+	else if(Ens == "cD211a.054.96") { Ra0=9e7;   } //THIS IS TRICKY, OLD VALUE WAS 1e7
 	else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
       }
       else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -110,7 +110,7 @@ double Customized_plateaux_tau_spectre( double alpha, double Emax, string channe
 	if(Ens == "cB211b.072.64") { Ra0=1e6;   }
 	else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
 	else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
-	else if(Ens == "cD211a.054.96") { if( ( (Emax > (5.0-1e-4)) && (Emax < (5.0 +1e-4))) && (alpha_m==3)  ) Ra0= 2e6; else  Ra0=9e6;   } //THIS IS PROBLEMATIC, OLD VALUE WAS 1e6
+	else if(Ens == "cD211a.054.96") { if( ( (Emax > (5.0-1e-4)) && (Emax < (5.0 +1e-4))) && (alpha_m==3)  ) Ra0= 2e6; else  Ra0=9e6;   } //THIS IS TRICKY, OLD VALUE WAS 1e6
 	else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
       }
       else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -1076,6 +1076,9 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     const auto K1_sharp= [&a_distr](const double &E, const double &E0) {
 
       if( E > m_tau*a_distr.ave() || E < E0) return 0.0;
+
+
+
       double X= E/(m_tau*a_distr.ave());
       return  (1 + 2*pow(X,2))*(1/(X))*pow(( 1 -pow(X,2)),2); 
     };
