@@ -23,8 +23,7 @@ string ph_type = Is_reph ? "rph" : "vph";
 const double fDs_star = 0.2688;
 const double fDs_star_err = 0.0066;
 bool Enhanced_xg_only_B64 = false;
-const string parameterization_to_be_used_in_Br = "single_pole"
-    ";
+const string parameterization_to_be_used_in_Br = "single_pole";
 
 
 
