@@ -94,7 +94,7 @@ double Compute_Ds_lnugamma_differential_decay_rate(double xg, int jk, int Nj,  T
   //define prefactor in decay rate
   double K = pow(GF,2)*(pow(MDs,3))*alpha_em*rl*rl*pow(1-(rl*rl),2)/(M_PI*M_PI*32*Gamma_Ds);
 
-  double F_pt= -(1.0/xg)*(  ( pow(2-xg,2)/(1.0-xg) -4*rl*rl)*(1-xg-rl*rl) -(2*(1-rl*rl)*(1+rl*rl-xg)+xg*xg)*log( (1-xg)/(rl*rl)))*(2.0/pow(1-rl*rl,2));
+  double F_pt= -(1.0/xg)*(  ( pow(2-xg,2)/(1.0-xg) -4*rl*rl)*(1-xg-rl*rl) -(2*(1-rl*rl)*(1+rl*rl-xg)+xg*xg)*log( (1-xg)/(rl*rl)))*(2.0/pow(1- (rl*rl),2));
   
   double F_SD= pow(xg,3)*((2+rl*rl-2*xg)*pow(1-xg-rl*rl,2)/(6.0*pow(1-xg,2)))*pow(MDs,2)/(2.0*rl*rl*pow(1-rl*rl,2));
   

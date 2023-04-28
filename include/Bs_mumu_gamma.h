@@ -20,21 +20,24 @@ using namespace std;
 
 
 //######### LIST OF INPUT PARAMETERS TO COMPUTE DECAY RATE      ################
-const double MBs= 5.36688; //GeV
-const double tBs=1.520e-12; //seconds
+const double MBs= 5.36692; //GeV
+const double tBs = 1.526e-12; // seconds
+const double tBs_err= 0.015e-12; //second                              //  
 const double hbar =6.582119569e-25; //GeV * seconds
-const double Gamma_Bs= hbar/tBs; //total width of the Bs in GeV
-const double FBs=0.2303; //
-const double mb=4.18;//GeV
-const double mc=1.27;//GeV
-const double mb_pole= 4.78; //GeV
+const double Gamma_Bs = hbar / tBs; // total width of the Bs in GeV                                    //
+const double FBs = 0.2303;          //
+const double FBs_err= 0.0013;   //
+const double mb = 4.18;         // GeV mb(mb) in \bar{MS}
+const double mb_err = 0.03;                        //  
+//const double mc=1.27;//GeV
 const double Eg_min= 0.5*MBs*(1- pow(MBs/MBs,2)); //GeV
 const double Eg_max= 0.5*MBs*(1- pow(4.2/MBs,2)); //Eg_max
 const double xg_min= 2*Eg_min/MBs; 
 const double xg_max= 2*Eg_max/MBs; 
 const double m_mu= 0.10565837; //GeV
 const double x_mu= m_mu/MBs;
-const double x_b= mb/MBs;
+const double x_b = mb / MBs;
+const double x_b_err = mb_err/MBs;
 const double alpha_em = 1/137.04;
 const double e2 = alpha_em*4.0*M_PI;
 const double GF= 1.1663787*1e-5; //[GeV^-2]
@@ -48,7 +51,7 @@ const double Vtd=8.6e-3;  const double Vtd_err=0.2e-3;
 const double Vts=41.5e-3; const double Vts_err=0.9e-3;
 const double Vtb=1.014;   const double Vtb_err=0.029;
 const double Vtbs = Vts*Vtb; const double Vtbs_err= sqrt( pow( Vtb*Vts_err,2) + pow(Vts*Vtb_err,2));
-//const double Vtbs=4.7e-2; const double Vtbs_err= 0.8e-2;
+//#################################################################################
 
 
 
@@ -91,14 +94,14 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6>
-double Compute_AFB(double xg, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T) {
+double Compute_AFB(int ijack, int NJ, double xg, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T) {
 
-  double diff_br= Compute_Bs_mumugamma_differential_decay_rate(xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T , FA_IM_T); 
+  double diff_br= Compute_Bs_mumugamma_differential_decay_rate(ijack, NJ, xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T , FA_IM_T); 
 
   double val_FW, err_FW, val_BW, err_BW;
   double prec=1e-7;
 
-  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate(xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T);};
+  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate(ijack, NJ, xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T);};
 
   gsl_function_pp<decltype(FUNC_DOUBLE_DIFF_RATE)> integrand(FUNC_DOUBLE_DIFF_RATE);
 		      gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
@@ -118,9 +121,9 @@ double Compute_AFB(double xg, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&&
 
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5 , typename T6> 
-double Compute_Bs_mumugamma_decay_rate(T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T, double xmax=xg_max,  double xmin=xg_min   ) {
+double Compute_Bs_mumugamma_decay_rate(int ijack, int NJ, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T, double xmax=xg_max,  double xmin=xg_min   ) {
 
-  auto FUNC_DIFF_RATE = [&](double xg) { return Compute_Bs_mumugamma_differential_decay_rate(xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T);};
+  auto FUNC_DIFF_RATE = [&](double xg) { return Compute_Bs_mumugamma_differential_decay_rate(ijack, NJ, xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T);};
 
   
   double val, err;
@@ -140,13 +143,13 @@ double Compute_Bs_mumugamma_decay_rate(T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_R
 
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5 , typename T6 > 
-double Compute_Bs_mumugamma_differential_decay_rate( double xg,  T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T) {
+double Compute_Bs_mumugamma_differential_decay_rate(int ijack, int NJ,  double xg,  T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T) {
 
   //integrate at fixed xg
 
   //integration variable is costheta
 
-  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate(xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T);};
+  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate(ijack, NJ, xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T);};
 
   
   double val, err;
@@ -165,8 +168,26 @@ double Compute_Bs_mumugamma_differential_decay_rate( double xg,  T1&& FV, T2&& F
 
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5 , typename T6  > 
-double Compute_Bs_mumugamma_double_differential_decay_rate( double xg, double costh, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T) {
+double Compute_Bs_mumugamma_double_differential_decay_rate( int ijack, int NJ, double xg, double costh, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T) {
 
+
+  //xb
+  //Vts
+  //FB
+  //Gamma
+
+  double dx_b, dVtbs, dFBs, dtBs;
+  GaussianMersenne GPAR(854135);
+  for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dx_b = rn*x_b_err/sqrt(NJ-1.0);}}
+  for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dVtbs = rn*Vtbs_err/sqrt(NJ-1.0);}}
+  for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dFBs = rn*FBs_err/sqrt(NJ-1.0);}}
+  for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dtBs = rn*tBs_err/sqrt(NJ-1.0);}}
+
+
+  double ix_b = x_b + dx_b;
+  double iVtbs = Vtbs + dVtbs;
+  double iFBs = FBs + dFBs;
+  double itBs = tBs+ dtBs;
 
   //define Mandelstam variables in terms of xg and th
   // s = 1-s 
@@ -182,22 +203,22 @@ double Compute_Bs_mumugamma_double_differential_decay_rate( double xg, double co
   double C7 = WC(7,q2).first;
   double C10 = WC(10,q2).first;
   //define prefactor in decay rate
-  double K = pow(Vtbs,2)*pow(GF,2)*(pow(alpha_em,3)*pow(MBs,5)/(pow(2.0,10)*pow(M_PI,4)));
+  double K = pow(iVtbs,2)*pow(GF,2)*(pow(alpha_em,3)*pow(MBs,5)/(pow(2.0,10)*pow(M_PI,4)));
   
   //define F functions
-  auto F1 = [&]() { return  (pow(C9_MOD,2) + pow(C10,2))*pow(FV(xg),2) + pow(2*x_b/s,2)*pow(C7,2)*( pow(FV_RE_T(xg),2) + pow(FV_IM_T(xg),2)) + (4.0*x_b/s)*FV(xg)*C7*( C9_R*FV_RE_T(xg) +C9_I*FV_IM_T(xg));};
-  auto F2 = [&]() { return  (pow(C9_MOD,2) + pow(C10,2))*pow(FA(xg),2) + pow(2*x_b/s,2)*pow(C7,2)*( pow(FA_RE_T(xg),2) + pow(FA_IM_T(xg),2)) + (4.0*x_b/s)*FA(xg)*C7*( C9_R*FA_RE_T(xg) +C9_I*FA_IM_T(xg));};
+  auto F1 = [&]() { return  (pow(C9_MOD,2) + pow(C10,2))*pow(FV(xg),2) + pow(2*ix_b/s,2)*pow(C7,2)*( pow(FV_RE_T(xg),2) + pow(FV_IM_T(xg),2)) + (4.0*ix_b/s)*FV(xg)*C7*( C9_R*FV_RE_T(xg) +C9_I*FV_IM_T(xg));};
+  auto F2 = [&]() { return  (pow(C9_MOD,2) + pow(C10,2))*pow(FA(xg),2) + pow(2*ix_b/s,2)*pow(C7,2)*( pow(FA_RE_T(xg),2) + pow(FA_IM_T(xg),2)) + (4.0*ix_b/s)*FA(xg)*C7*( C9_R*FA_RE_T(xg) +C9_I*FA_IM_T(xg));};
   //define B functions
   auto B0 = [&]() { return (s+4*pow(x_mu,2))*(F1()+F2()) -8*pow(x_mu,2)*pow(C10,2)*( pow(FV(xg),2) + pow(FA(xg),2)); };
-  auto B1 = [&]() { return 8*( s*FV(xg)*FA(xg)*C10*C9_R + x_b*C7*C10*(FV(xg)*FA_RE_T(xg) + FA(xg)*FV_RE_T(xg)));};  
+  auto B1 = [&]() { return 8*( s*FV(xg)*FA(xg)*C10*C9_R + ix_b*C7*C10*(FV(xg)*FA_RE_T(xg) + FA(xg)*FV_RE_T(xg)));};  
   auto B2 = [&]() { return s*(F1()+F2());};
   //define G function
   auto G1 = [&]() { return K*( pow(xg,2)*B0() + xg*csi*B1() + pow(csi,2)*B2()); };
-  auto G2 = [&]() { return K*pow(8*FBs/MBs,2)*pow(C10*x_mu,2)*( (s+xg*xg/2)/( (u-x_mu*x_mu)*(t-x_mu*x_mu)) - pow( (xg*x_mu)/( (u-x_mu*x_mu)*(t-x_mu*x_mu)),2));};
-  auto G12 = [&]() { return -K*(16*FBs/MBs)*(pow(xg*x_mu,2)/( (u-x_mu*x_mu)*(t-x_mu*x_mu )))*( 2*(xg*x_b/s)*C10*C7*FV_RE_T(xg) + csi*FA(xg)*pow(C10,2) + xg*FV(xg)*C10*C9_R);};
+  auto G2 = [&]() { return K*pow(8*iFBs/MBs,2)*pow(C10*x_mu,2)*( (s+xg*xg/2)/( (u-x_mu*x_mu)*(t-x_mu*x_mu)) - pow( (xg*x_mu)/( (u-x_mu*x_mu)*(t-x_mu*x_mu)),2));};
+  auto G12 = [&]() { return -K*(16*iFBs/MBs)*(pow(xg*x_mu,2)/( (u-x_mu*x_mu)*(t-x_mu*x_mu )))*( 2*(xg*ix_b/s)*C10*C7*FV_RE_T(xg) + csi*FA(xg)*pow(C10,2) + xg*FV(xg)*C10*C9_R);};
 
   double Ag= 2.0*sqrt(1.0 -xg)/(xg*sqrt( 1 - xg- 4*pow(x_mu,2)));
-  return (1.0/Ag)*(G1()+0.0*G2()+0.0*G12())/Gamma_Bs;
+  return (1.0/Ag)*(G1()+0.0*G2()+0.0*G12())*itBs/hbar;
   
 
 };
