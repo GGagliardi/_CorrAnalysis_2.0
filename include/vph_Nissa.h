@@ -22,8 +22,8 @@ using namespace std;
 //#LIST OF INPUT PARAMETER TO BE USED IN THE CALCULATION OF THE DECAY RATE
 
 const double MDs= 1.96835; //GeV 
-const double rl = (0.000510998950 / MDs); // electron/Ds mass
-const double rl2 = rl * rl;
+
+
 
 
 class rt_FF {
@@ -57,9 +57,9 @@ rt_FF Get_form_factors_Nissa(int num_xg, int Perform_continuum_extrapolation, bo
 
 
 template<typename T1, typename T2> 
-double Compute_Ds_lnugamma_decay_rate(string MODE,int jk, int Nj,  T1&& FV, T2&& FA, double fp,  double xmin,  double xmax=1.0   ) {
+double Compute_Ds_lnugamma_decay_rate(double rl, string MODE,int jk, int Nj,  T1&& FV, T2&& FA, double fp,  double xmin,  double xmax=1.0   ) {
 
-  auto FUNC_DIFF_RATE = [&](double xg) { return Compute_Ds_lnugamma_differential_decay_rate(xg,jk, Nj, FV, FA, fp, MODE);};
+  auto FUNC_DIFF_RATE = [&](double xg) { return Compute_Ds_lnugamma_differential_decay_rate(rl, xg,jk, Nj, FV, FA, fp, MODE);};
 
   
   double val, err;
@@ -76,9 +76,9 @@ double Compute_Ds_lnugamma_decay_rate(string MODE,int jk, int Nj,  T1&& FV, T2&&
 
 
 template<typename T1, typename T2> 
-double Compute_Ds_lnugamma_differential_decay_rate(double xg, int jk, int Nj,  T1&& FV, T2&& FA, double fp, string MODE) {
+double Compute_Ds_lnugamma_differential_decay_rate(double rl, double xg, int jk, int Nj,  T1&& FV, T2&& FA, double fp, string MODE) {
 
-  if(xg==1.0) return 0.0;
+  if(xg>= 1.0 - rl*rl) return 0.0;
 
   double ran=0;
   GaussianMersenne G_Ds(43539998);
@@ -94,7 +94,7 @@ double Compute_Ds_lnugamma_differential_decay_rate(double xg, int jk, int Nj,  T
   //define prefactor in decay rate
   double K = pow(GF,2)*(pow(MDs,3))*alpha_em*rl*rl*pow(1-(rl*rl),2)/(M_PI*M_PI*32*Gamma_Ds);
 
-  double F_pt= -(1.0/xg)*(  ( pow(2-xg,2)/(1.0-xg) -4*rl*rl)*(1-xg-rl*rl) -(2*(1-rl*rl)*(1+rl*rl-xg)+xg*xg)*log( (1-xg)/(rl*rl)))*(2.0/pow(1- (rl*rl),2));
+  double F_pt= -(1.0/xg)*(  ( (pow(2-xg,2)/(1.0-xg)) -4*rl*rl)*(1-xg-rl*rl) -(2*(1-rl*rl)*(1+rl*rl-xg)+xg*xg)*log( (1-xg)/(rl*rl) ) )*(2.0/pow(1- (rl*rl),2));
   
   double F_SD= pow(xg,3)*((2+rl*rl-2*xg)*pow(1-xg-rl*rl,2)/(6.0*pow(1-xg,2)))*pow(MDs,2)/(2.0*rl*rl*pow(1-rl*rl,2));
   

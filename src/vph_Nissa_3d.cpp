@@ -20,7 +20,7 @@ Vfloat virt_list;
 bool verbose_lev=1;
 bool P5_ON_SOURCE=true;
 bool Is_rep = false;
-Vfloat sigmas({0.6,0.5,0.4,0.35,0.3,0.25,0.2,0.15, 0.1,0.05}); //sigma in GeV  
+Vfloat sigmas({0.6,0.5,0.4,0.35,0.3,0.25,0.2,0.15, 0.1}); //sigma in GeV  
 int prec=128;
 const string MODE_FF="TANT";
 bool CONS_EM_CURR=false;
@@ -377,13 +377,13 @@ void Get_radiative_form_factors_3d() {
     vector<bool> CONS_EM_CURR_LIST({false, false, false, false, false, false});
   */
 
-  Vfloat beta_List({0.0,0.0});
-  vector<bool> Integrate_Up_To_Emax_List({0,0});
-  Vfloat Emax_List({10,10});
-  vector<bool> Perform_theta_average_List({1,1});
-  vector<string> SM_TYPE_List({"FF_Exp", "FF_Sinh_half"});
-  vector<bool> CONS_EM_CURR_LIST({false,false});
-  Vfloat E0_List({0.9, 0.9});
+  Vfloat beta_List({0.0});
+  vector<bool> Integrate_Up_To_Emax_List({0});
+  Vfloat Emax_List({10});
+  vector<bool> Perform_theta_average_List({1});
+  vector<string> SM_TYPE_List({"FF_Exp"});
+  vector<bool> CONS_EM_CURR_LIST({false});
+  Vfloat E0_List({0.9});
   
   int N= beta_List.size();
 
@@ -1003,11 +1003,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
       PrecFloat x= (E-m);
 
-      //PrecFloat phi= abs(atan( sin(s)/(1-cos(s))));
-
-      
-      //PrecFloat norm= PrecFloat(2)*phi/precPi() ;
-
+     
       return ( cos(s)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(s)*exp(-x));
     }
 
@@ -1614,7 +1610,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	    double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list[ixk],2));
 	    double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
 	    double E0_d_IM= E0_d_RE;
-	    double ss_min= 0.001*a_distr.ave(); //1MeV
+	    double ss_min= 0.005*a_distr.ave(); //1MeV
 	    for(int ijack=0;ijack<Njacks;ijack++) {
 
 	      RE_phi_VMD_s0.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_RE(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_RE),  -1).get());
@@ -1652,21 +1648,27 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 	  //determine prediction from phi-meson pole dominance at sigma \sim 0 (finer sampling in x_k)
 	  distr_t_list RE_phi_VMD_s0_finer(UseJack, virt_list_new.size()), IM_phi_VMD_s0_finer(UseJack, virt_list_new.size());
+	  distr_t_list RE_phi_VMD_s0_finer_phi_phys(UseJack, virt_list_new.size()), IM_phi_VMD_s0_finer_phi_phys(UseJack, virt_list_new.size());
 
 	  for(int ixk=0;ixk<(signed)virt_list_new.size();ixk++) {
 	    double Eg_virt= sqrt( Eg*Eg + pow(MP.ave()*virt_list_new[ixk],2));
 	    double E0_d_RE= E0_fact_d*sqrt( pow(Mphi*a_distr.ave(),2) + pow(kz,2));
 	    double E0_d_IM= E0_d_RE;
-	    double ss_min= 0.001*a_distr.ave(); //1MeV
+	    double ss_min= 0.005*a_distr.ave(); //1MeV
+
+	    cout<<"MPHIII: "<<(eff_mass_phi_3pt/a_distr).ave()<<" +- "<<(eff_mass_phi_3pt/a_distr).err()<<endl;
 	    for(int ijack=0;ijack<Njacks;ijack++) {
 
 	      RE_phi_VMD_s0_finer.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_RE(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_RE),  -1).get());
 	      IM_phi_VMD_s0_finer.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_IM(PrecFloat(eff_mass_phi_3pt.distr[ijack]), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_IM),  -1).get());
+
+	      RE_phi_VMD_s0_finer_phi_phys.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_RE(PrecFloat( 1.055*a_distr.ave()), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_RE),  -1).get());
+	      IM_phi_VMD_s0_finer_phi_phys.distr_list[ixk].distr.push_back((residue_phi.distr[ijack])*K_IM(PrecFloat( 1.055*a_distr.ave()), PrecFloat(Eg_virt), PrecFloat(ss_min), PrecFloat(E0_d_IM),  -1).get());
 	    }
 	  }
 
 	  //Print to File
-	  Print_To_File({},{virt_list_new, RE_phi_VMD_s0_finer.ave(), RE_phi_VMD_s0_finer.err(), IM_phi_VMD_s0_finer.ave(), IM_phi_VMD_s0_finer.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_VMD/"+Ens_tags[iens]+"/"+TAG_CURR+"V_FF_VMD_phi_ixg_"+to_string(ixg)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#ixk RE IM");
+	  Print_To_File({},{virt_list_new, RE_phi_VMD_s0_finer.ave(), RE_phi_VMD_s0_finer.err(), IM_phi_VMD_s0_finer.ave(), IM_phi_VMD_s0_finer.err(), RE_phi_VMD_s0_finer_phi_phys.ave(), RE_phi_VMD_s0_finer_phi_phys.err(), IM_phi_VMD_s0_finer_phi_phys.ave(), IM_phi_VMD_s0_finer_phi_phys.err() }, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF_VMD/"+Ens_tags[iens]+"/"+TAG_CURR+"V_FF_VMD_phi_ixg_"+to_string(ixg)+"_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_SM_TYPE_"+SM_TYPE+".dat", "", "#ixk RE IM");
 	  
 
 	  //determine prediction from phi-meson pole dominance at finite sigma (finer sampling in x_k )
@@ -4140,6 +4142,16 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 	boost::filesystem::create_directory("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/eps_extrapolation/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg));
 
+
+
+        distr_t_list Final_extr_RE(true, virt_list.size(), Njacks), Final_extr_IM(true, virt_list.size(), Njacks);
+
+	Vfloat sigma_extr_used(virt_list.size(), 0);
+
+	distr_t_list Final_extr_RE_BW(UseJack), Final_extr_IM_BW(UseJack);
+
+	
+
 	for(int ixk=0;ixk<(signed)virt_list.size();ixk++) {
 
 
@@ -4176,31 +4188,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 
 
 			    
-	    //axial
-            /*
-            RE_HA_11.distr_list.emplace_back(UseJack,
-Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_1_nu_1.jack",1,3));
-            IM_HA_11.distr_list.emplace_back(UseJack,
-Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_1_nu_1.jack",2,3));
-
-            RE_HA_33.distr_list.emplace_back(UseJack,
-Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_3.jack",1,3));
-            IM_HA_33.distr_list.emplace_back(UseJack,
-Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_3.jack",2,3));
-
-            RE_HA_03.distr_list.emplace_back(UseJack,
-Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_0_nu_3.jack",1,3));
-            IM_HA_03.distr_list.emplace_back(UseJack,
-Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_0_nu_3.jack",2,3));
-
-            RE_HA_30.distr_list.emplace_back(UseJack,
-Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_0.jack",1,3));
-            IM_HA_30.distr_list.emplace_back(UseJack,
-Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR_NEW+"/jackknives/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/sigma_"+to_string_with_precision(sigmas[isg],3)+"/ixk_"+to_string(ixk)+"/Ad_mu_3_nu_0.jack",2,3));
-	    */
-
-	    
-
+	   
 	  }
 
 	  class ipar_EPS {
@@ -4208,6 +4196,7 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 	  public:
 	    ipar_EPS()  {}
 	    double FF, FF_err, sigma; //lattice spacing a is in fm
+	    bool Is_re;
 	  };
       
       
@@ -4227,10 +4216,12 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 	    double D,D1,D2,D3,D4;
 	  };
 
+        
+
 	  
 	  //extrapolate hadronic tensor
 
-	  vector<string> fit_types({"const", "lin", "quad", "cub", "quart"});
+	  vector<string> fit_types({"const", "lin", "quad", "cub", "quart", "pole"});
 
 	  vector<int> cuts({0,1,2,3,4,5,6,7,8});
 
@@ -4241,6 +4232,7 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 
 	      int Nmeas = sigmas.size() - cuts[icut];
 	      int Npars = ifit+1;
+	      if(fit_types[ifit] == "pole") Npars=2;
 	      int Ndof  = Nmeas-Npars;
 
 	      if(Ndof >= 0) { //fit
@@ -4254,13 +4246,22 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 
 		bootstrap_fit<fpar_EPS,ipar_EPS> bf_EPS(Njacks);
 		bootstrap_fit<fpar_EPS,ipar_EPS> bf_EPS_ch2(1);
+		bootstrap_fit<fpar_EPS, ipar_EPS> bf_EPSc(Njacks);
+		bootstrap_fit<fpar_EPS, ipar_EPS> bf_EPSc_ch2(1);
+		
 		bf_EPS.Set_number_of_measurements(Nmeas);
 		bf_EPS.Set_verbosity(1);
+		bf_EPSc.Set_number_of_measurements(2*Nmeas);
+		bf_EPSc.Set_verbosity(1);
 		//ch2
 		bf_EPS_ch2.Set_number_of_measurements(Nmeas);
 		bf_EPS_ch2.Set_verbosity(1);
+		bf_EPSc_ch2.Set_number_of_measurements(2*Nmeas);
+		bf_EPSc_ch2.Set_verbosity(1);
 		bf_EPS.set_warmup_lev(2);
 		bf_EPS_ch2.set_warmup_lev(2);
+		bf_EPSc.set_warmup_lev(2);
+		bf_EPSc_ch2.set_warmup_lev(2);
 
 		//add fit parameters
 		bf_EPS.Add_par("D", RE_HV_12.ave(sigmas.size()-1), 0.1*RE_HV_12.ave(sigmas.size()-1));
@@ -4268,6 +4269,13 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 		bf_EPS.Add_par("D2", 1, 0.1);
 		bf_EPS.Add_par("D3", 1, 0.1);
 		bf_EPS.Add_par("D4", 1, 0.1);
+
+		bf_EPSc.Add_par("D", RE_HV_12.ave(sigmas.size()-1), 0.1*RE_HV_12.ave(sigmas.size()-1));
+		bf_EPSc.Add_par("D1", 1, 0.1);
+		bf_EPSc.Add_par("D2", 1, 0.1);
+		bf_EPSc.Add_par("D3", 1, 0.1);
+		bf_EPSc.Add_par("D4", 1, 0.1);
+		
 		//ch2
 		bf_EPS_ch2.Add_par("D", RE_HV_12.ave(sigmas.size()-1), 0.1*RE_HV_12.ave(sigmas.size()-1));
 		bf_EPS_ch2.Add_par("D1", 1, 0.1);
@@ -4275,24 +4283,69 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 		bf_EPS_ch2.Add_par("D3", 1, 0.1);
 		bf_EPS_ch2.Add_par("D4", 1, 0.1);
 
+		bf_EPSc_ch2.Add_par("D", RE_HV_12.ave(sigmas.size()-1), 0.1*RE_HV_12.ave(sigmas.size()-1));
+		bf_EPSc_ch2.Add_par("D1", 1, 0.1);
+		bf_EPSc_ch2.Add_par("D2", 1, 0.1);
+		bf_EPSc_ch2.Add_par("D3", 1, 0.1);
+		bf_EPSc_ch2.Add_par("D4", 1, 0.1);
+
 		//fix parameters depending on fit type
-		if(fit_types[ifit] != "quart") { bf_EPS.Fix_par("D4",0); bf_EPS_ch2.Fix_par("D4",0);}
+		if(fit_types[ifit] != "quart") { bf_EPS.Fix_par("D4",0); bf_EPS_ch2.Fix_par("D4",0); bf_EPSc.Fix_par("D4",0); bf_EPSc_ch2.Fix_par("D4",0);    }
 
-		if( (fit_types[ifit] != "cub") && (fit_types[ifit] != "quart") ) { bf_EPS.Fix_par("D3",0); bf_EPS_ch2.Fix_par("D3",0);}
+		if( (fit_types[ifit] != "cub") && (fit_types[ifit] != "quart") ) { bf_EPS.Fix_par("D3",0); bf_EPS_ch2.Fix_par("D3",0); bf_EPSc.Fix_par("D3",0); bf_EPSc_ch2.Fix_par("D3",0);}
 
-		if( (fit_types[ifit] =="lin") || (fit_types[ifit] == "const")  ) { bf_EPS.Fix_par("D2",0); bf_EPS_ch2.Fix_par("D2",0);}
+		if( (fit_types[ifit] =="lin") || (fit_types[ifit] == "const")  ) { bf_EPS.Fix_par("D2",0); bf_EPS_ch2.Fix_par("D2",0); bf_EPSc.Fix_par("D2",0); bf_EPSc_ch2.Fix_par("D2",0);}
 
-		if( (fit_types[ifit] == "const") ) { bf_EPS.Fix_par("D1",0); bf_EPS_ch2.Fix_par("D1",0) ;}
+		if( (fit_types[ifit] == "const") ) { bf_EPS.Fix_par("D1",0); bf_EPS_ch2.Fix_par("D1",0) ; bf_EPSc.Fix_par("D1",0); bf_EPSc_ch2.Fix_par("D1",0) ;}
+
+		//if( (fit_types[ifit] == "pole")) { bf_EPS.Fix_par("D2",0); bf_EPS_ch2.Fix_par("D2",0); bf_EPSc.Fix_par("D2", 0); bf_EPSc_ch2.Fix_par("D2",0);  };
+
+		double xxg=0.1;
+		if(ixg==2) xxg=0.25;
+		if(ixg==3) xxg=0.35;
+
+		double DE= -1*(sqrt( pow(virt_list[ixk],2) + pow(xxg,2)) - 0.53)*0.79380;
+
+		if( (fit_types[ifit] == "pole")) {
+		  bf_EPS.Fix_par("D1", DE); bf_EPS_ch2.Fix_par("D1", DE);
+		  bf_EPSc.Fix_par("D1", DE); bf_EPSc_ch2.Fix_par("D1", DE);
+
+		  
+		}
 
 		//if below threshold and fitting the real part then set linear term to zero. rho'(E) = 0
+		
 
 		bool fixing_lin_only_for_real=false;
-		if( (fit_types[ifit] != "lin") && (virt_list[ixk] < Mphi/MDs_phys)) { fixing_lin_only_for_real=true; bf_EPS.Fix_par("D1",0.0); bf_EPS_ch2.Fix_par("D1",0.0);}
+		if( fit_types[ifit]  != "pole") {
+		  if( (fit_types[ifit] != "lin") && (virt_list[ixk] < Mphi/MDs_phys)) { fixing_lin_only_for_real=true; bf_EPS.Fix_par("D1",0.0); bf_EPS_ch2.Fix_par("D1",0.0);}
+		}
 
+		string ftt= fit_types[ifit];
+		int cut_employed= cuts[icut];
 
 		//ansatz
-		bf_EPS.ansatz=  [ ](const fpar_EPS &p, const ipar_EPS &ip) {
+		bf_EPS.ansatz=  [ &ftt, &SM_TYPE ](const fpar_EPS &p, const ipar_EPS &ip) {
+
 		  double s= ip.sigma/MDs_phys;
+		  if( ftt == "pole") {
+
+		    double ss=s*0.79380 + 0.0*0.005*0.403259;
+		    double x = p.D1;
+		    
+		    if(ip.Is_re==true) {
+		      if(SM_TYPE=="FF_Exp")  return ( p.D*(cos(ss)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(ss)*exp(-x) ) + p.D2);
+		      if(SM_TYPE=="FF_Sinh_half")  return p.D*exp(-x/2)*2*sinh(x/2)/( pow(2*sinh(x/2),2) + ss*ss) + p.D2;
+		      return p.D*p.D1/(pow(p.D1,2) +ss*ss) + p.D2;
+		    }
+		    else {
+		       if(SM_TYPE=="FF_Exp")       return p.D*(exp(-x)*sin(ss))/( 1 + exp(-2*x) -2*cos(ss)*exp(-x));
+		       if(SM_TYPE=="FF_Sinh_half") return p.D*exp(-x/2)*ss/( pow(2*sinh(x/2),2) + ss*ss);
+		       return ss*p.D/( pow(p.D1,2)+ ss*ss);
+		    }
+		  }
+							  
+		    
 		  return p.D + p.D1*s + p.D2*pow(s,2) + p.D3*pow(s,3) + p.D4*pow(s,4);
 		};
 		//meas
@@ -4303,10 +4356,52 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 		bf_EPS.error=  [ ](const fpar_EPS &p, const ipar_EPS &ip) {
 		  return ip.FF_err;
 		};
+
+		//ansatz
+		bf_EPSc.ansatz=  [ &ftt, &SM_TYPE, &cut_employed ](const fpar_EPS &p, const ipar_EPS &ip) {
+
+		  double s= ip.sigma/MDs_phys;
+
+		  if((cut_employed==0 ) && (ip.Is_re==false) && (ip.sigma > 0.45)) return 0.0;
+
+		  double ss=s*0.79380 + 0.0*0.005*0.403259;
+		  double x = p.D1;
+		  
+		  if(ip.Is_re==true) {
+		    if(SM_TYPE=="FF_Exp")  return ( p.D*(cos(ss)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(ss)*exp(-x) ) + p.D2);
+		    if(SM_TYPE=="FF_Sinh_half")  return p.D*exp(-x/2)*2*sinh(x/2)/( pow(2*sinh(x/2),2) + ss*ss) + p.D2;
+		    return p.D*p.D1/(pow(p.D1,2) +ss*ss) + p.D2;
+		  }
+		  else {
+		    if(SM_TYPE=="FF_Exp")       return p.D*(exp(-x)*sin(ss))/( 1 + exp(-2*x) -2*cos(ss)*exp(-x));
+		    if(SM_TYPE=="FF_Sinh_half") return p.D*exp(-x/2)*ss/( pow(2*sinh(x/2),2) + ss*ss);
+		    return ss*p.D/( pow(p.D1,2)+ ss*ss);
+		  }
+		  
+		  
+		  
+		};
+		//meas
+		bf_EPSc.measurement=  [ &cut_employed ](const fpar_EPS &p, const ipar_EPS &ip) {
+		  
+		  if((cut_employed==0 ) && (ip.Is_re==false) && (ip.sigma > 0.45)) return 0.0;
+		  return ip.FF;
+		};
+		//err
+		bf_EPSc.error=  [ ](const fpar_EPS &p, const ipar_EPS &ip) {
+		  return ip.FF_err;
+		};
+
+	        
 		//ch2
 		bf_EPS_ch2.ansatz= bf_EPS.ansatz;
 		bf_EPS_ch2.measurement= bf_EPS.measurement;
 		bf_EPS_ch2.error= bf_EPS.error;
+		
+		bf_EPSc_ch2.ansatz= bf_EPSc.ansatz;
+		bf_EPSc_ch2.measurement= bf_EPSc.measurement;
+		bf_EPSc_ch2.error= bf_EPSc.error;
+		
 
 
 		//fill the data
@@ -4314,11 +4409,16 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 		vector<vector<ipar_EPS>> data_RE_ch2(1);
 		vector<vector<ipar_EPS>> data_IM(Njacks);
 		vector<vector<ipar_EPS>> data_IM_ch2(1);
+
+		vector<vector<ipar_EPS>> data_c(Njacks);
+		vector<vector<ipar_EPS>> data_c_ch2(1);
 		//allocate space for output result
 		boot_fit_data<fpar_EPS> Bt_fit_RE;
 		boot_fit_data<fpar_EPS> Bt_fit_RE_ch2;
 		boot_fit_data<fpar_EPS> Bt_fit_IM;
 		boot_fit_data<fpar_EPS> Bt_fit_IM_ch2;
+		boot_fit_data<fpar_EPS> Bt_fit_c;
+		boot_fit_data<fpar_EPS> Bt_fit_c_ch2;
 		for(auto &data_iboot: data_RE) data_iboot.resize(Nmeas);
 		for(auto &data_iboot: data_RE_ch2) data_iboot.resize(Nmeas);
 		for(auto &data_iboot: data_IM) data_iboot.resize(Nmeas);
@@ -4332,10 +4432,12 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 		    data_RE[ijack][id].FF = RE_HV_12.distr_list[is].distr[ijack];
 		    data_RE[ijack][id].FF_err= RE_HV_12.err(is);
 		    data_RE[ijack][id].sigma = sigmas[is];
+		    data_RE[ijack][id].Is_re = true;
 		    //IM
 		    data_IM[ijack][id].FF = IM_HV_12.distr_list[is].distr[ijack];
 		    data_IM[ijack][id].FF_err= IM_HV_12.err(is);
 		    data_IM[ijack][id].sigma = sigmas[is];
+		    data_IM[ijack][id].Is_re= false;
 
 
 		    //mean values
@@ -4344,17 +4446,28 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 		      data_RE_ch2[ijack][id].FF = RE_HV_12.ave(is);
 		      data_RE_ch2[ijack][id].FF_err= RE_HV_12.err(is);
 		      data_RE_ch2[ijack][id].sigma = sigmas[is];
+		      data_RE_ch2[ijack][id].Is_re= true;
 		      //IM
 		      data_IM_ch2[ijack][id].FF = IM_HV_12.ave(is);
 		      data_IM_ch2[ijack][id].FF_err= IM_HV_12.err(is);
 		      data_IM_ch2[ijack][id].sigma = sigmas[is];
+		      data_IM_ch2[ijack][id].Is_re= false;
 		    }
+		  }
+
+		  data_c[ijack] = data_RE[ijack];
+		  data_c[ijack].insert( data_c[ijack].end(), data_IM[ijack].begin(), data_IM[ijack].end());
+		  if(ijack==0 ) {
+		    data_c_ch2[0] = data_RE_ch2[0];
+		    data_c_ch2[0].insert( data_c_ch2[0].end(), data_IM_ch2[0].begin(), data_IM_ch2[0].end());
 		  }
 		}
 
 		//append
 		bf_EPS.Append_to_input_par(data_RE);
 		bf_EPS_ch2.Append_to_input_par(data_RE_ch2);
+
+	
 		//fit
 		cout<<"Fitting real part...."<<endl;
 		Bt_fit_RE= bf_EPS.Perform_bootstrap_fit();
@@ -4364,6 +4477,7 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 		if(fixing_lin_only_for_real) { bf_EPS.Release_par("D1"); bf_EPS_ch2.Release_par("D1");}
 		bf_EPS.Set_par_val("D", IM_HV_12.ave(sigmas.size()-1), 0.1*IM_HV_12.ave(sigmas.size()-1));
 		bf_EPS_ch2.Set_par_val("D", IM_HV_12.ave(sigmas.size()-1), 0.1*IM_HV_12.ave( sigmas.size()-1));
+		if( (fit_types[ifit] == "pole")) { bf_EPS.Fix_par("D2",0); bf_EPS_ch2.Fix_par("D2",0);   };
 
 		//append
 		bf_EPS.Append_to_input_par(data_IM);
@@ -4372,6 +4486,14 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 		cout<<"Fitting imaginary part...."<<endl;
 		Bt_fit_IM= bf_EPS.Perform_bootstrap_fit();
 		Bt_fit_IM_ch2= bf_EPS_ch2.Perform_bootstrap_fit();
+
+		if(fit_types[ifit] == "pole") {
+		  cout<<"Combined fit pole ansatz..."<<endl;
+		  bf_EPSc.Append_to_input_par(data_c);
+		  bf_EPSc_ch2.Append_to_input_par(data_c_ch2);
+		  Bt_fit_c = bf_EPSc.Perform_bootstrap_fit();
+		  Bt_fit_c_ch2 = bf_EPSc_ch2.Perform_bootstrap_fit();
+		}
 		
 		
 		
@@ -4393,29 +4515,163 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 		for(int ijack=0;ijack<Njacks;ijack++) { D_IM.distr.push_back( Bt_fit_IM.par[ijack].D); D1_IM.distr.push_back( Bt_fit_IM.par[ijack].D1); D2_IM.distr.push_back( Bt_fit_IM.par[ijack].D2); D3_IM.distr.push_back( Bt_fit_IM.par[ijack].D3); D4_IM.distr.push_back( Bt_fit_IM.par[ijack].D4);  }
 		//reduced ch2
 		double ch2_IM= ((Ndof==0)?Bt_fit_IM_ch2.get_ch2_ave():(Bt_fit_IM_ch2.get_ch2_ave()/Ndof));
-		
+		double ch2_comb, Ndof_comb, Nmeas_comb;
+	
+
+		distr_t Ac(UseJack), Dc(UseJack);
+		if(fit_types[ifit] == "pole") {
+		  for(int ijack=0;ijack<Njacks;ijack++) { Ac.distr.push_back( Bt_fit_c.par[ijack].D); Dc.distr.push_back( Bt_fit_c.par[ijack].D2);}
+
+		  Nmeas_comb= 2*Nmeas;
+		  Ndof_comb= Nmeas_comb - 2;
+		  ch2_comb= ((Ndof_comb==0)?Bt_fit_c_ch2.get_ch2_ave():(Bt_fit_c_ch2.get_ch2_ave()/Ndof_comb));
+		}
+
+
+		//print model prediction if pole model
+		if(fit_types[ifit] == "pole") {
+		  distr_t_list RE_H_mod(UseJack), RE_H_mod_from_IM(UseJack), IM_H_mod(UseJack);
+		  double sm= 0.005*0.79380/MDs_phys;
+		  Vfloat virt_list_new;
+		  for(int m=0;m<(signed)virt_list.size();m++) {
+		    for(int i=0;i<200;i++) virt_list_new.push_back( virt_list[m]+ (virt_list[1]-virt_list[0])*i*0.005);
+		  }
+		  //loop over energy
+		  for(int i=0; i < (signed)virt_list_new.size(); i++) {
+		    double xg=0;
+		    if(ixg==1) xg=0.1;
+		    else if(ixg==2) xg=0.25;
+		    else if(ixg==3) xg=0.35;
+		    else crash("ixg: "+to_string(ixg)+" not recognized");
+		    //compute dE
+		    double DE = -( sqrt( pow(virt_list_new[i],2) + pow(xg,2)) -0.53)*0.79380;
+		    if(SM_TYPE=="FF_Exp") {
+		      if(i==0) {
+			double DE_at= -( sqrt( pow(virt_list[ixk],2) + pow(xg,2)) -0.53)*0.79380;
+			if(cuts[icut] == 0) {
+			  Final_extr_IM_BW.distr_list.push_back( (Ac*exp(-DE_at)*sin(sm))/( 1 + exp(-2*DE_at) -2*cos(sm)*exp(-DE_at)) );
+			  Final_extr_RE_BW.distr_list.push_back( (Ac*(cos(sm)*exp(-DE_at)-exp(-2*DE_at))/( 1 + exp(-2*DE_at) -2*cos(sm)*exp(-DE_at))) );
+			}
+			//if(cuts[icut] == 0)     Final_extr_RE_BW.distr_list.push_back( (D_RE*(cos(sm)*exp(-DE_at)-exp(-2*DE_at))/( 1 + exp(-2*DE_at) -2*cos(sm)*exp(-DE_at))) );
+		      }
+		      RE_H_mod.distr_list.push_back(  Ac*(cos(sm)*exp(-DE)-exp(-2*DE))/( 1 + exp(-2*DE) -2*cos(sm)*exp(-DE)) );
+		      RE_H_mod_from_IM.distr_list.push_back( (Ac*(cos(sm)*exp(-DE)-exp(-2*DE))/( 1 + exp(-2*DE) -2*cos(sm)*exp(-DE))) );
+		      IM_H_mod.distr_list.push_back( (Ac*exp(-DE)*sin(sm))/( 1 + exp(-2*DE) -2*cos(sm)*exp(-DE)));
+		    }
+		    if(SM_TYPE=="FF_Sinh_half") {
+		      if(i==0) {
+			double DE_at= -( sqrt( pow(virt_list[ixk],2) + pow(xg,2)) -0.53)*0.79380;
+			if(cuts[icut] == 1) {
+			  Final_extr_IM_BW.distr_list.push_back( Ac*exp(-DE_at/2)*sm/( pow(2*sinh(DE_at/2),2) + sm*sm) );
+			  Final_extr_RE_BW.distr_list.push_back( Dc+ Ac*exp(-DE_at/2)*2*sinh(DE_at/2)/( pow(2*sinh(DE_at/2),2) + sm*sm));
+			}
+			                     
+			//	if(cuts[icut] == 0)     Final_extr_RE_BW.distr_list.push_back( D_RE*exp(-DE_at/2)*2*sinh(DE_at/2)/( pow(2*sinh(DE_at/2),2) + sm*sm) );
+		      }
+		      RE_H_mod.distr_list.push_back( D_RE*exp(-DE/2)*2*sinh(DE/2)/( pow(2*sinh(DE/2),2) + sm*sm));
+		      RE_H_mod_from_IM.distr_list.push_back( D_IM*exp(-DE/2)*2*sinh(DE/2)/( pow(2*sinh(DE/2),2) + sm*sm));
+		      IM_H_mod.distr_list.push_back( D_IM*exp(-DE/2)*sm/( pow(2*sinh(DE/2),2) + sm*sm));
+		    }
+		    
+		  }
+
+		  string VMD_pred_path = "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/eps_extrapolation/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/ixk_"+to_string(ixk)+"/VMD_pred_ft_cuts_"+to_string(cuts[icut])+".fit_func";
+		  //Print To File
+		  Print_To_File({},{virt_list_new, IM_H_mod.ave(), IM_H_mod.err(), RE_H_mod.ave(), RE_H_mod.err(), RE_H_mod_from_IM.ave(), RE_H_mod_from_IM.err()}, VMD_pred_path , "", "#virt IM  RE RE_from_IM");
+
+		}
 
 		//print fit function
 		distr_t_list RE_HV_12_to_print(UseJack), IM_HV_12_to_print(UseJack);
+		distr_t_list RE_HV_pole_comb(UseJack), IM_HV_pole_comb(UseJack);
+	       
 
 	    
 		for(auto &s: sigma_to_print) {
 		  double x=s/MDs_phys;
+		  if(fit_types[ifit]=="pole") {
+		    double ss= x*0.79380;
+		    distr_t RE_F(UseJack), IM_F(UseJack);
+		    distr_t RE_F_comb(UseJack), IM_F_comb(UseJack);
+		    for(int ijack=0; ijack<Njacks;ijack++) {
+		      double RE_Dj= D_RE.distr[ijack];
+		      double IM_Dj= D_IM.distr[ijack];
+		      double RE_D1j= D1_RE.distr[ijack];
+		      double IM_D1j= D1_IM.distr[ijack];
+		      double RE_D2j= D2_RE.distr[ijack];
+
+		      double Acj = Ac.distr[ijack];
+		      double Dcj = Dc.distr[ijack];
+		      
+		      if(SM_TYPE=="FF_Exp") {
+			RE_F.distr.push_back( (RE_D2j + RE_Dj*(cos(ss)*exp(-RE_D1j)-exp(-2*RE_D1j))/( 1 + exp(-2*RE_D1j) -2*cos(ss)*exp(-RE_D1j))) );
+			IM_F.distr.push_back( (IM_Dj*exp(-IM_D1j)*sin(ss))/( 1 + exp(-2*IM_D1j) -2*cos(ss)*exp(-IM_D1j)));
+
+			RE_F_comb.distr.push_back( (Dcj + Acj*(cos(ss)*exp(-RE_D1j)-exp(-2*RE_D1j))/( 1 + exp(-2*RE_D1j) -2*cos(ss)*exp(-RE_D1j))) );
+			IM_F_comb.distr.push_back( (Acj*exp(-IM_D1j)*sin(ss))/( 1 + exp(-2*IM_D1j) -2*cos(ss)*exp(-IM_D1j)));
+		      }
+		      if(SM_TYPE=="FF_Sinh_half") {
+			RE_F.distr.push_back( RE_D2j + RE_Dj*exp(-RE_D1j/2)*2*sinh(RE_D1j/2)/( pow(2*sinh(RE_D1j/2),2) + ss*ss));
+			IM_F.distr.push_back( IM_Dj*exp(-IM_D1j/2)*ss/( pow(2*sinh(IM_D1j/2),2) + ss*ss));
+
+			RE_F_comb.distr.push_back( Dcj + Acj*exp(-RE_D1j/2)*2*sinh(RE_D1j/2)/( pow(2*sinh(RE_D1j/2),2) + ss*ss));
+			IM_F_comb.distr.push_back( Acj*exp(-IM_D1j/2)*ss/( pow(2*sinh(IM_D1j/2),2) + ss*ss));
+		      }
+		    }
+		  
+		    
+		    RE_HV_12_to_print.distr_list.push_back( RE_F);
+		    IM_HV_12_to_print.distr_list.push_back( IM_F);
+
+		    RE_HV_pole_comb.distr_list.push_back( RE_F_comb);
+		    IM_HV_pole_comb.distr_list.push_back( IM_F_comb);
+
+		  }
+		  else {
 		  RE_HV_12_to_print.distr_list.push_back( D_RE + D1_RE*x + D2_RE*pow(x,2)+ D3_RE*pow(x,3) + D4_RE*pow(x,4) );
 		  IM_HV_12_to_print.distr_list.push_back( D_IM + D1_IM*x + D2_IM*pow(x,2)+ D3_IM*pow(x,3) + D4_IM*pow(x,4) );
+		  }
 		  
 		}
+		
 
+		if(fit_types[ifit] == "lin") {
 
+		  double xg=0;
+		  if(ixg==1) xg=0.1;
+		  else if(ixg==2) xg=0.25;
+		  else if(ixg==3) xg=0.35;
+		  else crash("ixg: "+to_string(ixg)+" not recognized");
+		  //compute dE
+		  double Ep = sqrt( pow(virt_list[ixk],2) + pow(xg,2));
+		  double Estar= sqrt( pow(1.019/1.990,2) + pow(xg,2));
+		  double DE = fabs( Ep-Estar);
+		  int icut_m= (icut==0)?0:(icut-1);
+		  
+		  if( (sigmas[cuts[icut]]/1.990 <= 0.7*DE) && ( (sigmas[cuts[icut_m]]/1.990 > 0.7*DE) || (icut==0 )) )  { sigma_extr_used[ixk] = sigmas[cuts[icut]];  Final_extr_RE.distr_list[ixk] = D_RE; Final_extr_IM.distr_list[ixk] = D_IM;}
+		  
+		  
+
+		}
+
+		
+		
+		
 		string Fit_RE_tt = "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/eps_extrapolation/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/ixk_"+to_string(ixk)+"/RE_ft_"+fit_types[ifit]+"_cuts_"+to_string(cuts[icut])+".fit_func";
 
 		string Fit_IM_tt = "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/eps_extrapolation/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/ixk_"+to_string(ixk)+"/IM_ft_"+fit_types[ifit]+"_cuts_"+to_string(cuts[icut])+".fit_func";
 
 		
 	
-		Print_To_File({}, {sigma_to_print, RE_HV_12_to_print.ave(), RE_HV_12_to_print.err()},Fit_RE_tt, "", "#eps[GeV] FF, ch2/dof: "+to_string_with_precision(ch2_RE,4)+" Ndof: "+to_string(Ndof_RE)+" Nmeas: "+to_string(Nmeas_eff_RE));
+		Print_To_File({}, {sigma_to_print,  RE_HV_12_to_print.ave(), RE_HV_12_to_print.err()},Fit_RE_tt, "", "#eps[GeV] FF, ch2/dof: "+to_string_with_precision(ch2_RE,4)+" Ndof: "+to_string(Ndof_RE)+" Nmeas: "+to_string(Nmeas_eff_RE));
 		Print_To_File({}, {sigma_to_print, IM_HV_12_to_print.ave(), IM_HV_12_to_print.err()},Fit_IM_tt, "", "#eps[GeV] FF, ch2/dof: "+to_string_with_precision(ch2_IM,4)+" Ndof: "+to_string(Ndof_IM)+" Nmeas: "+to_string(Nmeas_eff_IM));
-		
+
+		if(fit_types[ifit] == "pole") {
+
+		  Print_To_File({}, {sigma_to_print,  RE_HV_pole_comb.ave(), RE_HV_pole_comb.err()},Fit_RE_tt+"_comb", "", "#eps[GeV] FF, ch2/dof: "+to_string_with_precision(ch2_comb,4)+" Ndof: "+to_string(Ndof_comb)+" Nmeas: "+to_string(Nmeas_comb));
+		Print_To_File({}, {sigma_to_print, IM_HV_pole_comb.ave(), IM_HV_pole_comb.err()},Fit_IM_tt+"_comb", "", "#eps[GeV] FF, ch2/dof: "+to_string_with_precision(ch2_comb,4)+" Ndof: "+to_string(Ndof_comb)+" Nmeas: "+to_string(Nmeas_comb));
+
+		}
 
 	      }
 	      
@@ -4423,6 +4679,10 @@ Read_From_File("../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/
 	    }
 	  }
 	}
+	string Final_extr_path= "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/eps_extrapolation/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/Final_extr.dat";
+	string Final_extr_BW_path= "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/FF/"+Ens_tags[iens]+"/eps_extrapolation/"+TAG_CURR_NEW+"/alpha_"+to_string_with_precision(beta,2)+"_E0_"+to_string_with_precision(E0_fact,2)+"_SM_TYPE_"+SM_TYPE+"/ixg_"+to_string(ixg)+"/Final_extr_BW.dat";
+	Print_To_File({}, {virt_list, sigma_extr_used, Final_extr_RE.ave(), Final_extr_RE.err(), Final_extr_IM.ave(), Final_extr_IM.err()}, Final_extr_path, "", "#xk Re Im");
+	Print_To_File({}, {virt_list,  Final_extr_RE_BW.ave(), Final_extr_RE_BW.err(), Final_extr_IM_BW.ave(), Final_extr_IM_BW.err()}, Final_extr_BW_path, "", "#xk Re Im");
       }
     }
   }

@@ -35,6 +35,7 @@ class LatticeInfo {
   double Za_WI_charm_extr, Za_WI_charm_extr_err;
   double Zv_WI_charm_extr, Zv_WI_charm_extr_err;
   double ZT_RI2, ZT_RI2_err;
+  double ZT_RI2_M3, ZT_RI2_M3_err;
   int L,T;
   double a_nucleon;
   double a_nucleon_err;

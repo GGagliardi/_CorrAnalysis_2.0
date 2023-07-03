@@ -24,8 +24,11 @@ const double fDs_star = 0.2688;
 const double fDs_star_err = 0.0066;
 bool Enhanced_xg_only_B64 = false;
 const string parameterization_to_be_used_in_Br = "single_pole";
-
-
+double Vcs_FLAG = 0.9741;
+double dVcs_FLAG= 0.0065;
+const double re = (0.000510998950 /1.96835); // electron/Ds mass
+const double rm = (0.105658/1.96835);
+const double rt = (1.77686/1.96835);
 
 // FLAG PARAMETERS
 const double fDs_FLAG = 0.2499; //http://flag.unibe.ch/2021/Media?action=AttachFile&do=get&target=FLAG_2023_webupdate.pdf Eq. 179
@@ -69,7 +72,6 @@ void Get_xg_to_spline_VMD() {
     
   return;
 }
-
 
 void Get_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
 
@@ -1273,19 +1275,23 @@ void Compute_form_factors_Nissa() {
   GaussianMersenne G_FLAGS(8762);
 
   distr_t fDs_FLAG_distr(1);
+  distr_t Vcs_FLAG_distr(1);
   for(int ijack=0;ijack<NJ;ijack++) fDs_FLAG_distr.distr.push_back( fDs_FLAG + fDs_FLAG_err*G_FLAGS()/sqrt(NJ-1.0));
+  for(int ijack=0;ijack<NJ;ijack++) Vcs_FLAG_distr.distr.push_back( Vcs_FLAG + dVcs_FLAG*G_FLAGS()/sqrt(NJ-1.0));
 
   Vfloat xg_cut({2*0.01/1.96835});
   Vfloat xg_diff;
   int Nxg_diff=101;
   int Nxg_cuts=41;
-  for(int ixg_cut=1;ixg_cut<(Nxg_cuts-4);ixg_cut++) xg_cut.push_back( ixg_cut*1.0/(Nxg_cuts-1)); //from 0.025 up to ~0.9 in xg
+  for(int ixg_cut=1;ixg_cut<(Nxg_cuts-1);ixg_cut++) xg_cut.push_back( ixg_cut*1.0/(Nxg_cuts-1)); //from 0.025 up to ~0.9 in xg
   for(int ixg_diff=0;ixg_diff<Nxg_diff;ixg_diff++) xg_diff.push_back( ixg_diff*1.0/(Nxg_diff-1));
  
   distr_t_list Br_TOT(true, xg_cut.size()), Br_PT(true, xg_cut.size() ), Br_INT(true, xg_cut.size()), Br_SD(true, xg_cut.size());
   distr_t_list Br_diff_TOT(true, xg_diff.size()), Br_diff_PT(true, xg_diff.size() ), Br_diff_INT(true, xg_diff.size()), Br_diff_SD(true, xg_diff.size());
 
   distr_t_list Br_spline_TOT(true, xg_cut.size()), Br_spline_PT(true, xg_cut.size() ), Br_spline_INT(true, xg_cut.size()), Br_spline_SD(true, xg_cut.size());
+  distr_t Br_spline_muon_TOT(true), Br_spline_tau_TOT(true);
+  distr_t Br_spline_muon_PT(true), Br_spline_tau_PT(true);
   distr_t_list Br_diff_spline_TOT(true, xg_diff.size()), Br_diff_spline_PT(true, xg_diff.size() ), Br_diff_spline_INT(true, xg_diff.size()), Br_diff_spline_SD(true, xg_diff.size());
   
   for(int ixg_cut=0; ixg_cut<(signed)xg_cut.size(); ixg_cut++) {
@@ -1328,18 +1334,26 @@ void Compute_form_factors_Nissa() {
       auto FV_Br_spline = [&FV_spline_for_Br, &ijack](double x) { return FV_spline_for_Br[ijack](x);};
 
       double fp=fDs_FLAG_distr.distr[ijack];
+      double Vcs_2 = pow(Vcs_FLAG_distr.distr[ijack],2);
       //compute Br
-
-      Br_PT.distr_list[ixg_cut].distr.push_back( Compute_Ds_lnugamma_decay_rate("PT",ijack, NJ,  FV_Br, FA_Br, fp,  xg_cut[ixg_cut] ));
-      Br_INT.distr_list[ixg_cut].distr.push_back( Compute_Ds_lnugamma_decay_rate("INT",ijack, NJ,  FV_Br, FA_Br, fp,  xg_cut[ixg_cut] ));
-      Br_SD.distr_list[ixg_cut].distr.push_back( Compute_Ds_lnugamma_decay_rate("SD",ijack, NJ,  FV_Br, FA_Br, fp,  xg_cut[ixg_cut] ));
-      Br_TOT.distr_list[ixg_cut].distr.push_back( Compute_Ds_lnugamma_decay_rate("TOT",ijack, NJ,  FV_Br, FA_Br, fp,  xg_cut[ixg_cut] ));
-
+     
+      Br_PT.distr_list[ixg_cut].distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(re,"PT",ijack, NJ,  FV_Br, FA_Br, fp,  xg_cut[ixg_cut], 1-re*re ));
+      Br_INT.distr_list[ixg_cut].distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(re,"INT",ijack, NJ,  FV_Br, FA_Br, fp,  xg_cut[ixg_cut], 1-re*re ));
+      Br_SD.distr_list[ixg_cut].distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(re,"SD",ijack, NJ,  FV_Br, FA_Br, fp,  xg_cut[ixg_cut], 1-re*re ));
+      Br_TOT.distr_list[ixg_cut].distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(re,"TOT",ijack, NJ,  FV_Br, FA_Br, fp,  xg_cut[ixg_cut], 1-re*re ));
+     
   
-      Br_spline_PT.distr_list[ixg_cut].distr.push_back( Compute_Ds_lnugamma_decay_rate("PT",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut] ));
-      Br_spline_INT.distr_list[ixg_cut].distr.push_back( Compute_Ds_lnugamma_decay_rate("INT",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut] ));
-      Br_spline_SD.distr_list[ixg_cut].distr.push_back( Compute_Ds_lnugamma_decay_rate("SD",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut] ));
-      Br_spline_TOT.distr_list[ixg_cut].distr.push_back( Compute_Ds_lnugamma_decay_rate("TOT",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut] ));
+      Br_spline_PT.distr_list[ixg_cut].distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(re,"PT",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut], 1-re*re ));
+      Br_spline_INT.distr_list[ixg_cut].distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(re,"INT",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut], 1-re*re ));
+      Br_spline_SD.distr_list[ixg_cut].distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(re,"SD",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut], 1-re*re ));
+      Br_spline_TOT.distr_list[ixg_cut].distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(re, "TOT",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut], 1-re*re ));
+
+      if(ixg_cut==0) {
+	Br_spline_muon_PT.distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(rm, "PT",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut], 1-rm*rm )   );
+	Br_spline_muon_TOT.distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(rm, "TOT",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut], 1-rm*rm ));
+	Br_spline_tau_TOT.distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(rt, "TOT",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut], 1-rt*rt ));
+	Br_spline_tau_PT.distr.push_back( Vcs_2*Compute_Ds_lnugamma_decay_rate(rt, "PT",ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  xg_cut[ixg_cut] , 1-rt*rt));
+      }
 
   	  
     }
@@ -1383,18 +1397,20 @@ void Compute_form_factors_Nissa() {
        
        auto FA_Br_spline = [&FA_spline_for_Br, &ijack](double x) { return FA_spline_for_Br[ijack](x);};
        auto FV_Br_spline = [&FV_spline_for_Br, &ijack](double x) { return FV_spline_for_Br[ijack](x);};
-
-       double fp=fDs_FLAG_distr.distr[ijack];
        
-       Br_diff_PT.distr_list[ixg_d].distr.push_back( Compute_Ds_lnugamma_differential_decay_rate(xg_diff[ixg_d],ijack, NJ,  FV_Br, FA_Br, fp,  "PT" ));
-       Br_diff_INT.distr_list[ixg_d].distr.push_back( Compute_Ds_lnugamma_differential_decay_rate(xg_diff[ixg_d],ijack, NJ,  FV_Br, FA_Br, fp,  "INT" ));
-       Br_diff_SD.distr_list[ixg_d].distr.push_back( Compute_Ds_lnugamma_differential_decay_rate(xg_diff[ixg_d],ijack, NJ,  FV_Br, FA_Br, fp,  "SD" ));
-       Br_diff_TOT.distr_list[ixg_d].distr.push_back( Compute_Ds_lnugamma_differential_decay_rate(xg_diff[ixg_d], ijack, NJ,  FV_Br, FA_Br, fp, "TOT" ));
+       double fp=fDs_FLAG_distr.distr[ijack];
 
-       Br_diff_spline_PT.distr_list[ixg_d].distr.push_back( Compute_Ds_lnugamma_differential_decay_rate(xg_diff[ixg_d],ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  "PT" ));
-       Br_diff_spline_INT.distr_list[ixg_d].distr.push_back( Compute_Ds_lnugamma_differential_decay_rate(xg_diff[ixg_d],ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  "INT" ));
-       Br_diff_spline_SD.distr_list[ixg_d].distr.push_back( Compute_Ds_lnugamma_differential_decay_rate(xg_diff[ixg_d],ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  "SD" ));
-       Br_diff_spline_TOT.distr_list[ixg_d].distr.push_back( Compute_Ds_lnugamma_differential_decay_rate(xg_diff[ixg_d], ijack, NJ,  FV_Br_spline, FA_Br_spline, fp, "TOT" ));
+       double Vcs_2 = pow(Vcs_FLAG_distr.distr[ijack],2);
+       
+       Br_diff_PT.distr_list[ixg_d].distr.push_back( Vcs_2*Compute_Ds_lnugamma_differential_decay_rate(re,xg_diff[ixg_d],ijack, NJ,  FV_Br, FA_Br, fp,  "PT" ));
+       Br_diff_INT.distr_list[ixg_d].distr.push_back( Vcs_2*Compute_Ds_lnugamma_differential_decay_rate(re,xg_diff[ixg_d],ijack, NJ,  FV_Br, FA_Br, fp,  "INT" ));
+       Br_diff_SD.distr_list[ixg_d].distr.push_back( Vcs_2*Compute_Ds_lnugamma_differential_decay_rate(re,xg_diff[ixg_d],ijack, NJ,  FV_Br, FA_Br, fp,  "SD" ));
+       Br_diff_TOT.distr_list[ixg_d].distr.push_back( Vcs_2*Compute_Ds_lnugamma_differential_decay_rate(re,xg_diff[ixg_d], ijack, NJ,  FV_Br, FA_Br, fp, "TOT" ));
+
+       Br_diff_spline_PT.distr_list[ixg_d].distr.push_back( Vcs_2*Compute_Ds_lnugamma_differential_decay_rate(re,xg_diff[ixg_d],ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  "PT" ));
+       Br_diff_spline_INT.distr_list[ixg_d].distr.push_back( Vcs_2*Compute_Ds_lnugamma_differential_decay_rate(re, xg_diff[ixg_d],ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  "INT" ));
+       Br_diff_spline_SD.distr_list[ixg_d].distr.push_back( Vcs_2*Compute_Ds_lnugamma_differential_decay_rate(re,xg_diff[ixg_d],ijack, NJ,  FV_Br_spline, FA_Br_spline, fp,  "SD" ));
+       Br_diff_spline_TOT.distr_list[ixg_d].distr.push_back( Vcs_2*Compute_Ds_lnugamma_differential_decay_rate(re,xg_diff[ixg_d], ijack, NJ,  FV_Br_spline, FA_Br_spline, fp, "TOT" ));
      }
   }
 
@@ -1406,7 +1422,13 @@ void Compute_form_factors_Nissa() {
   Print_To_File({}, { xg_cut, Br_spline_TOT.ave(), Br_spline_TOT.err(), Br_spline_PT.ave(), Br_spline_PT.err(), Br_spline_INT.ave(), Br_spline_INT.err(), Br_spline_SD.ave(), Br_spline_SD.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/rate/rate_Ds_enugamma_spline.dat", "", "#xg_cut TOT   PT    INT     SD");
 
   Print_To_File({}, { xg_diff, Br_diff_spline_TOT.ave(), Br_diff_spline_TOT.err(), Br_diff_spline_PT.ave(), Br_diff_spline_PT.err(), Br_diff_spline_INT.ave(), Br_diff_spline_INT.err(), Br_diff_spline_SD.ave(), Br_diff_spline_SD.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/rate/rate_diff_Ds_enugamma_spline.dat", "", "#xg_cut TOT   PT    INT     SD");
-		
+
+  
+  cout<<"With DE= 10MeV: "<<endl;
+  cout<<"electron: "<<Br_spline_TOT.ave(0)<<" +- "<<Br_spline_TOT.err(0)<<", PT: "<<Br_spline_PT.ave(0)<<" +- "<<Br_spline_PT.err(0)<<endl;
+  cout<<"muon: "<<Br_spline_muon_TOT.ave()<<" +- "<<Br_spline_muon_TOT.err()<<", PT: "<<Br_spline_muon_PT.ave()<<" +- "<<Br_spline_muon_PT.err()<<endl;
+  cout<<"tau: "<<Br_spline_tau_TOT.ave()<<" +- "<<Br_spline_tau_TOT.err()<<", PT: "<<Br_spline_tau_PT.ave()<<" +- "<<Br_spline_tau_PT.err()<<endl;
+   
 
   
   return;

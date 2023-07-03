@@ -86,8 +86,9 @@ void Get_Bs_xg_to_spline();
 void Get_Bs_xg_to_spline_VMD();
 void Get_Bs_lattice_spacings_to_print();
 void Get_Bs_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens);
+void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, string Ens);
 void Compute_Bs_mumu_gamma(); 
-rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrapolation, bool Use_three_finest, bool Include_a4, bool UseJack, string Fit_tag, string path_list );
+rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrapolation, bool Use_three_finest, bool Include_a4, bool UseJack, string Fit_tag, string path_list, string out_tag );
 
 
 

@@ -1,13 +1,14 @@
 #include "../include/Bs_mumu_gamma.h"
+#include "Corr_analysis.h"
 using namespace std;
 
 const int Nboots= 800;
-const int NJ=30;
+const int NJ=15;
 const double Qu = -1.0/3.0; //electric charge of d-type quark
 const double Qd = -1.0/3.0; //electric charge of d-type quark
 const double qqu = 2.0/3.0; //electric charge of u-type quark
 const double qqd = -1.0/3.0; //electric charge of d-type quark
-const string Meson="Bs";
+string MESON = "Bs";
 const double Lambda_QCD= 0.3; //300 MeV
 const bool Is_reph=true;
 Vfloat Bs_xg_t_list;
@@ -139,544 +140,673 @@ void Get_Bs_xg_to_spline_VMD() {
 }
 
 
-void Get_Bs_Tmin_Tmax(string W, int &Tmin, int &Tmax, int ixg, string Ens) {
-  
-   
-  if(Ens == "cA211a.12.48") {
+void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, string Ens) {
 
-    if(ixg==0) {
-      if(W=="A") {Tmin= 16; Tmax=22;}
-      else if(W=="V") {Tmin=20;Tmax=32;}
-      else if(W=="Ad") { Tmin=25; Tmax=33;}
-      else if(W=="Vd") { Tmin=31; Tmax=42;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=30; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
+  if(ixg==0) { Tmin=10; Tmax=15; return;}
 
-    }
-    else if(ixg==1) {
-      if(W=="A") {Tmin= 16; Tmax=22;}
-      else if(W=="V") {Tmin=20;Tmax=32;}
-      else if(W=="Ad") { Tmin=25; Tmax=33;}
-      else if(W=="Vd") { Tmin=31; Tmax=42;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=30; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
 
-    }
-    else if(ixg==2) {
-      if(W=="A") {Tmin= 17; Tmax=23;}
-      else if(W=="V") {Tmin=16;Tmax=25;}
-      else if(W=="Ad") {Tmin=25; Tmax=33;}
-      else if(W=="Vd") { Tmin=25; Tmax=38;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=26; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
+  bool use_old=true;
 
-    }
-    else if(ixg==3) {
-      if(W=="A") {Tmin= 17; Tmax=23;}
-      else if(W=="V") {Tmin=18;Tmax=28;}
-      else if(W=="Ad") {Tmin=25; Tmax=33;}
-      else if(W=="Vd") { Tmin=24; Tmax=38;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=26; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==4) {
-      if(W=="A") {Tmin= 17; Tmax=23;}
-      else if(W=="V") {Tmin=18;Tmax=28;}
-      else if(W=="Ad") {Tmin=25; Tmax=33;}
-      else if(W=="Vd") { Tmin=24; Tmax=34;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=26; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==5) {
-      if(W=="A") {Tmin= 16; Tmax=23;}
-      else if(W=="V") {Tmin=18;Tmax=26;}
-      else if(W=="Ad") {Tmin=25; Tmax=33;}
-      else if(W=="Vd") { Tmin=24; Tmax=34;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=25; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==6) {
-      if(W=="A") {Tmin= 17; Tmax=26;}
-      else if(W=="V") {Tmin=17;Tmax=26;}
-      else if(W=="Ad") { Tmin=25; Tmax=33;}
-      else if(W=="Vd") { Tmin=24; Tmax=34;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=25; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==7) {
-      if(W=="A") {Tmin= 16; Tmax=24;}
-      else if(W=="V") {Tmin=16;Tmax=27;}
-      else if(W=="Ad") { Tmin=23; Tmax=33;}
-      else if(W=="Vd") { Tmin=24; Tmax=34;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=25; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==8) {
-      if(W=="A") {Tmin= 17; Tmax=29;}
-      else if(W=="V") {Tmin=15;Tmax=26;}
-      else if(W=="Ad") { Tmin=19; Tmax=33;}
-      else if(W=="Vd") { Tmin=24; Tmax=34;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=25; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==9) {
-      if(W=="A") {Tmin= 15; Tmax=29;}
-      else if(W=="V") {Tmin=15;Tmax=26;}
-      else if(W=="Ad") { Tmin=14; Tmax=34;}
-      else if(W=="Vd") { Tmin=24; Tmax=34;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=25; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==10) {
-      if(W=="A") {Tmin= 14; Tmax=25;}
-      else if(W=="V") {Tmin=15;Tmax=27;}
-      else if(W=="Ad") { Tmin=14; Tmax=34;}
-      else if(W=="Vd") { Tmin=24; Tmax=34;}
-      else if(W=="Au") { Tmin=19; Tmax=23;}
-      else if(W=="Vu") { Tmin=25; Tmax=36;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
+  if(mh == "Bs") {
 
-    }
-    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
+    if( (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")) {
 
+      if(obs=="FAu") {
+	if(ixg==1) {  Tmin=16; Tmax=36;  }
+	else if(ixg==2) {  Tmin=21; Tmax=32;  }
+	else if(ixg==3) {  Tmin=21; Tmax=30;  }
+	else if(ixg==4) {  Tmin=22; Tmax=32;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FAd") {	
+	if(ixg==1) {  Tmin=18; Tmax=31;  }
+	else if(ixg==2) {  Tmin=19; Tmax=29;  }
+	else if(ixg==3) {  Tmin=19; Tmax=29;  }
+	else if(ixg==4) {  Tmin=19; Tmax=28;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVu") {
+	if(ixg==1) {  Tmin=39; Tmax=50;  }
+	else if(ixg==2) {  Tmin=39; Tmax=49;  }
+	else if(ixg==3) {  Tmin=38; Tmax=48;  }
+	else if(ixg==4) {  Tmin=38; Tmax=48;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVd") {
+	if(ixg==1) {  Tmin=35; Tmax=47;  }
+	else if(ixg==2) {  Tmin=27; Tmax=38;  }
+	else if(ixg==3) {  Tmin=29; Tmax=39;  }
+	else if(ixg==4) {  Tmin=28; Tmax=40;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Tu") {
+	if(ixg==1) {  Tmin=19; Tmax=31;  }
+	else if(ixg==2) {  Tmin=21; Tmax=30;  }
+	else if(ixg==3) {  Tmin=20; Tmax=30;  }
+	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Td") {
+	if(ixg==1) {  Tmin=23; Tmax=35;  }
+	else if(ixg==2) {  Tmin=14; Tmax=30;  }
+	else if(ixg==3) {  Tmin=18; Tmax=31;  }
+	else if(ixg==4) {  Tmin=18; Tmax=29;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Tu") {
+	if(ixg==1) {  Tmin=39; Tmax=50;  }
+	else if(ixg==2) {  Tmin=41; Tmax=50;  }
+	else if(ixg==3) {  Tmin=38; Tmax=46;  }
+	else if(ixg==4) {  Tmin=38; Tmax=44;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Td") {  //quite bad
+	if(ixg==1) {  Tmin=40; Tmax=51;  }
+	else if(ixg==2) {  Tmin=40; Tmax=51;  }
+	else if(ixg==3) {  Tmin=38; Tmax=48;  }
+	else if(ixg==4) {  Tmin=37; Tmax=45;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+    }
+
+    else if(Ens=="cC211a.06.80") {
+
+      if(obs=="FAu") {
+	if(ixg==1) {  Tmin=16; Tmax=36;  }
+	else if(ixg==2) {  Tmin=21; Tmax=32;  }
+	else if(ixg==3) {  Tmin=21; Tmax=30;  }
+	else if(ixg==4) {  Tmin=22; Tmax=32;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FAd") {	
+	if(ixg==1) {  Tmin=18; Tmax=31;  }
+	else if(ixg==2) {  Tmin=19; Tmax=29;  }
+	else if(ixg==3) {  Tmin=19; Tmax=29;  }
+	else if(ixg==4) {  Tmin=19; Tmax=28;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVu") {
+	if(ixg==1) {  Tmin=38; Tmax=55; use_old=false;  }
+	else if(ixg==2) {  Tmin=35; Tmax=54; use_old=false;  }
+	else if(ixg==3) {  Tmin=38; Tmax=48;  }
+	else if(ixg==4) {  Tmin=38; Tmax=48;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVd") {
+	if(ixg==1) {  Tmin=35; Tmax=47;  }
+	else if(ixg==2) {  Tmin=27; Tmax=38;  }
+	else if(ixg==3) {  Tmin=29; Tmax=39;  }
+	else if(ixg==4) {  Tmin=28; Tmax=40;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Tu") {
+	if(ixg==1) {  Tmin=24; Tmax=40; use_old=false;  }
+	else if(ixg==2) {  Tmin=25; Tmax=40; use_old=false;  }
+	else if(ixg==3) {  Tmin=28; Tmax=40; use_old=false;  }
+	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Td") {
+	if(ixg==1) {  Tmin=24; Tmax=36; use_old=false; }
+	else if(ixg==2) {  Tmin=28; Tmax=39; use_old=false;  }
+	else if(ixg==3) {  Tmin=32; Tmax=40; use_old=false;  }
+	else if(ixg==4) {  Tmin=32; Tmax=51; use_old=false;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Tu") {
+	if(ixg==1) {  Tmin=39; Tmax=50;  }
+	else if(ixg==2) {  Tmin=41; Tmax=50;  }
+	else if(ixg==3) {  Tmin=35; Tmax=54; use_old=false;  }
+	else if(ixg==4) {  Tmin=32; Tmax=54; use_old=false;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Td") { 
+	if(ixg==1) {  Tmin=40; Tmax=57; use_old=false;  }
+	else if(ixg==2) {  Tmin=35; Tmax=55; use_old=false;  }
+	else if(ixg==3) {  Tmin=35; Tmax=55; use_old=false; }
+	else if(ixg==4) {  Tmin=32; Tmax=55; use_old=false; }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+    }
+    
+    else crash("Ensemble: "+Ens+" not yet implemented");
   }
 
 
-  
+  else if(mh == "B1s") {
 
-  else if( (Ens == "cB211b.072.64") || (Ens == "cB211b.072.96")) {
+    if( (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96") ) {
 
-    if(ixg==0) {
-      if(W=="A") {Tmin= 20; Tmax=30;}
-      else if(W=="V") {Tmin=20;Tmax=30;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-
+      if(obs=="FAu") {
+       	if(ixg==1) {  Tmin=24; Tmax=34;  }
+	else if(ixg==2) {  Tmin=21; Tmax=29;  }
+	else if(ixg==3) {  Tmin=18; Tmax=26;  }
+	else if(ixg==4) {  Tmin=15; Tmax=26;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FAd") {
+	if(ixg==1) {  Tmin=25; Tmax=30;  }
+	else if(ixg==2) {  Tmin=17; Tmax=25;  }
+	else if(ixg==3) {  Tmin=16; Tmax=29;  }
+	else if(ixg==4) {  Tmin=16; Tmax=29;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVu") {
+	if(ixg==1) {  Tmin=36; Tmax=50;  }
+	else if(ixg==2) {  Tmin=34; Tmax=49;  }
+	else if(ixg==3) {  Tmin=33; Tmax=45;  }
+	else if(ixg==4) {  Tmin=20; Tmax=50;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVd") {
+	if(ixg==1) {  Tmin=33; Tmax=44;  }
+	else if(ixg==2) {  Tmin=27; Tmax=36;  }
+	else if(ixg==3) {  Tmin=26; Tmax=37;  }
+	else if(ixg==4) {  Tmin=17; Tmax=35;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Tu") {
+	if(ixg==1) {  Tmin=20; Tmax=28;  }
+	else if(ixg==2) {  Tmin=18; Tmax=26;  }
+	else if(ixg==3) {  Tmin=18; Tmax=26;  }
+	else if(ixg==4) {  Tmin=18; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Td") {
+	if(ixg==1) {  Tmin=29; Tmax=40;  }
+	else if(ixg==2) {  Tmin=28; Tmax=35;  }
+	else if(ixg==3) {  Tmin=18; Tmax=35;  }
+	else if(ixg==4) {  Tmin=17; Tmax=35;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Tu") {
+	if(ixg==1) {  Tmin=37; Tmax=50;  }
+	else if(ixg==2) {  Tmin=33; Tmax=50;  }
+	else if(ixg==3) {  Tmin=32; Tmax=50;  }
+	else if(ixg==4) {  Tmin=17; Tmax=40;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Td") {
+	if(ixg==1) {  Tmin=34; Tmax=45;  }
+	else if(ixg==2) {  Tmin=27; Tmax=50;  }
+	else if(ixg==3) {  Tmin=22; Tmax=34;  }
+	else if(ixg==4) {  Tmin=17; Tmax=34;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
     }
-    else if(ixg==1) {
-      if(W=="A") {Tmin= 18; Tmax=26;}
-      else if(W=="V") {Tmin=23;Tmax=38;}
-      else if(W=="Ad") { Tmin=36; Tmax=46;}
-      else if(W=="Vd") { Tmin=35; Tmax=43;}
-      else if(W=="Au") { Tmin=26; Tmax=33;}
-      else if(W=="Vu") { Tmin=35; Tmax=41;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
 
-    }
-    else if(ixg==2) {
-      if(W=="A") {Tmin= 19; Tmax=27;}
-      else if(W=="V") {Tmin=22;Tmax=34;}
-      else if(W=="Ad") { Tmin=40; Tmax=46;}
-      else if(W=="Vd") { Tmin=32; Tmax=41;}
-      else if(W=="Au") { Tmin=26; Tmax=33;}
-      else if(W=="Vu") { Tmin=36; Tmax=41;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-
-    }
-    else if(ixg==3) {
-      if(W=="A") {Tmin= 19; Tmax=26;}
-      else if(W=="V") {Tmin=21;Tmax=34;}
-      else if(W=="Ad") { Tmin=40; Tmax=46;}
-      else if(W=="Vd") { Tmin=29; Tmax=41;}
-      else if(W=="Au") { Tmin=26; Tmax=33;}
-      else if(W=="Vu") { Tmin=36; Tmax=41;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
+    else if(Ens=="cC211a.06.80") {
     
+      if(obs=="FAu") {
+       	if(ixg==1) {  Tmin=24; Tmax=34;  }
+	else if(ixg==2) {  Tmin=21; Tmax=29;  }
+	else if(ixg==3) {  Tmin=18; Tmax=26;  }
+	else if(ixg==4) {  Tmin=15; Tmax=26;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FAd") {
+	if(ixg==1) {  Tmin=19; Tmax=37; use_old=false;  }
+	else if(ixg==2) {  Tmin=17; Tmax=25;  }
+	else if(ixg==3) {  Tmin=16; Tmax=29;  }
+	else if(ixg==4) {  Tmin=16; Tmax=29;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVu") {
+	if(ixg==1) {  Tmin=38; Tmax=51; use_old=false;  }
+	else if(ixg==2) {  Tmin=34; Tmax=49;  }
+	else if(ixg==3) {  Tmin=33; Tmax=45;  }
+	else if(ixg==4) {  Tmin=39; Tmax=48; use_old=false;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVd") {
+	if(ixg==1) {  Tmin=32; Tmax=43; use_old=false;  }
+	else if(ixg==2) {  Tmin=27; Tmax=36;  }
+	else if(ixg==3) {  Tmin=26; Tmax=37;  }
+	else if(ixg==4) {  Tmin=17; Tmax=35;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Tu") {
+	if(ixg==1) {  Tmin=20; Tmax=28;  }
+	else if(ixg==2) {  Tmin=18; Tmax=26;  }
+	else if(ixg==3) {  Tmin=18; Tmax=26;  }
+	else if(ixg==4) {  Tmin=18; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Td") {
+	if(ixg==1) {  Tmin=29; Tmax=46; use_old=false;  }
+	else if(ixg==2) {  Tmin=26; Tmax=37; use_old=false;  }
+	else if(ixg==3) {  Tmin=19; Tmax=36; use_old=false;  }
+	else if(ixg==4) {  Tmin=18; Tmax=30; use_old=false;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Tu") {
+	if(ixg==1) {  Tmin=37; Tmax=50;  }
+	else if(ixg==2) {  Tmin=33; Tmax=50;  }
+	else if(ixg==3) {  Tmin=30; Tmax=47; use_old=false;  }
+	else if(ixg==4) {  Tmin=24; Tmax=46; use_old=false;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Td") {
+	if(ixg==1) {  Tmin=31; Tmax=39; use_old=false; }
+	else if(ixg==2) {  Tmin=30; Tmax=44; use_old=false;}
+	else if(ixg==3) {  Tmin=22; Tmax=34;  }
+	else if(ixg==4) {  Tmin=17; Tmax=34;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
     }
-    else if(ixg==4) {
-      if(W=="A") {Tmin= 20; Tmax=27;}
-      else if(W=="V") {Tmin=21;Tmax=33;}
-      else if(W=="Ad") { Tmin=40; Tmax=46;}
-      else if(W=="Vd") { Tmin=29; Tmax=39;}
-      else if(W=="Au") { Tmin=26; Tmax=33;}
-      else if(W=="Vu") { Tmin=36; Tmax=41;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==5) {
-      if(W=="A") {Tmin= 19; Tmax=27;}
-      else if(W=="V") {Tmin=20;Tmax=34;}
-      else if(W=="Ad") { Tmin=40; Tmax=46;}
-      else if(W=="Vd") { Tmin=29; Tmax=39;}
-      else if(W=="Au") { Tmin=26; Tmax=33;}
-      else if(W=="Vu") { Tmin=36; Tmax=41;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==6) {
-      if(W=="A") {Tmin= 20; Tmax=28;}
-      else if(W=="V") {Tmin=20;Tmax=31;}
-      else if(W=="Ad") { Tmin=40; Tmax=46;}
-      else if(W=="Vd") { Tmin=29; Tmax=39;}
-      else if(W=="Au") { Tmin=26; Tmax=33;}
-      else if(W=="Vu") { Tmin=36; Tmax=41;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==7) {
-      if(W=="A") {Tmin= 18; Tmax=27;}
-      else if(W=="V") {Tmin=18;Tmax=31;}
-      else if(W=="Ad") { Tmin=38; Tmax=46;}
-      else if(W=="Vd") { Tmin=29; Tmax=36;}
-      else if(W=="Au") { Tmin=26; Tmax=33;}
-      else if(W=="Vu") { Tmin=36; Tmax=41;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==8) {
-      if(W=="A") {Tmin= 19; Tmax=33;}
-      else if(W=="V") {Tmin=16;Tmax=31;}
-      else if(W=="Ad") { Tmin=27; Tmax=45;}
-      else if(W=="Vd") { Tmin=27; Tmax=36;}
-      else if(W=="Au") { Tmin=26; Tmax=33;}
-      else if(W=="Vu") { Tmin=36; Tmax=41;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==9) {
-      if(W=="A") {Tmin= 17; Tmax=32;}
-      else if(W=="V") {Tmin=16;Tmax=29;}
-      else if(W=="Ad") { Tmin=23; Tmax=38;}
-      else if(W=="Vd") { Tmin=28; Tmax=38;}
-      else if(W=="Au") { Tmin=26; Tmax=33;}
-      else if(W=="Vu") { Tmin=36; Tmax=41;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==10) {
-      if(W=="A") {Tmin= 16; Tmax=29;}
-      else if(W=="V") {Tmin=17;Tmax=31;}
-      else if(W=="Ad") { Tmin=23; Tmax=38;}
-      else if(W=="Vd") { Tmin=38; Tmax=51;}
-      else if(W=="Au") { Tmin=26; Tmax=33;}
-      else if(W=="Vu") { Tmin=36; Tmax=41;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-
-    }
-    else if(ixg==11) {
-      if(W=="A") {Tmin= 20; Tmax=30;}
-      else if(W=="V") {Tmin=20;Tmax=30;}
-      else if(W=="Ad") { Tmin=24; Tmax=35;}
-      else if(W=="Vd") { Tmin=23; Tmax=38;}
-      else if(W=="Au") { Tmin=28; Tmax=41;}
-      else if(W=="Vu") { Tmin=7; Tmax=42;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-
-    }
-    else if(ixg==12) {
-      if(W=="A") {Tmin= 20; Tmax=30;}
-      else if(W=="V") {Tmin=20;Tmax=30;}
-      else if(W=="Ad") { Tmin=20; Tmax=35;}
-      else if(W=="Vd") { Tmin=23; Tmax=38;}
-      else if(W=="Au") { Tmin=28; Tmax=41;}
-      else if(W=="Vu") { Tmin=7; Tmax=42;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-
-    }
-    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
-
+    else crash("Ensemble: "+Ens+" not yet implemented");
   }
 
 
-  //############ ENSEMBLE C80  ####################
+  else if(mh == "B2s") {
 
-  else  if(Ens == "cC211a.06.80") {
+    if(  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
 
-    if(ixg==0) {
-      if(W=="A") {Tmin= 19; Tmax=29;}
-      else if(W=="V") {Tmin=30;Tmax=47;}
-      else if(W=="Ad") { Tmin=40; Tmax=54;}
-      else if(W=="Vd") { Tmin=47; Tmax=56;}
-      else if(W=="Au") { Tmin=26; Tmax=34;}
-      else if(W=="Vu") { Tmin=36; Tmax=50;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-
+      if(obs=="FAu") {
+	if(ixg==1) {  Tmin=23; Tmax=31;  }
+	else if(ixg==2) {  Tmin=24; Tmax=31;  }
+	else if(ixg==3) {  Tmin=23; Tmax=32;  }
+	else if(ixg==4) {  Tmin=24; Tmax=32;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FAd") {
+	if(ixg==1) {  Tmin=23; Tmax=30;  }
+	else if(ixg==2) {  Tmin=24; Tmax=35;  }
+	else if(ixg==3) {  Tmin=24; Tmax=35;  }
+	else if(ixg==4) {  Tmin=24; Tmax=35;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVu") {
+	if(ixg==1) {  Tmin=38; Tmax=50;  }
+	else if(ixg==2) {  Tmin=33; Tmax=43;  }
+	else if(ixg==3) {  Tmin=18; Tmax=30;  }
+	else if(ixg==4) {  Tmin=17; Tmax=32;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVd") {
+	if(ixg==1) {  Tmin=33; Tmax=45;  }
+	else if(ixg==2) {  Tmin=27; Tmax=36;  }
+	else if(ixg==3) {  Tmin=15; Tmax=30;  }
+	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Tu") {
+	if(ixg==1) {  Tmin=20; Tmax=27;  }
+	else if(ixg==2) {  Tmin=20; Tmax=27;  }
+	else if(ixg==3) {  Tmin=20; Tmax=28;  }
+	else if(ixg==4) {  Tmin=21; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Td") {
+	if(ixg==1) {  Tmin=23; Tmax=30;  }
+	else if(ixg==2) {  Tmin=20; Tmax=30;  }
+	else if(ixg==3) {  Tmin=20; Tmax=30;  }
+	else if(ixg==4) {  Tmin=19; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Tu") {
+	if(ixg==1) {  Tmin=31; Tmax=41;  }
+	else if(ixg==2) {  Tmin=31; Tmax=39;  }
+	else if(ixg==3) {  Tmin=19; Tmax=35;  }
+	else if(ixg==4) {  Tmin=24; Tmax=38;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Td") {
+	if(ixg==1) {  Tmin=33; Tmax=45;  }
+	else if(ixg==2) {  Tmin=21; Tmax=34;  }
+	else if(ixg==3) {  Tmin=19; Tmax=34;  }
+	else if(ixg==4) {  Tmin=20; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
     }
-    else if(ixg==1) {
-      if(W=="A") {Tmin= 22; Tmax=29;}
-      else if(W=="V") {Tmin=27;Tmax=44;}
-      else if(W=="Ad") { Tmin=40; Tmax=54;}
-      else if(W=="Vd") { Tmin=47; Tmax=56;}
-      else if(W=="Au") { Tmin=26; Tmax=34;}
-      else if(W=="Vu") { Tmin=36; Tmax=50;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
 
-    }
-    else if(ixg==2) {
-      if(W=="A") {Tmin= 22; Tmax=29;}
-      else if(W=="V") {Tmin=27;Tmax=39;}
-      else if(W=="Ad") { Tmin=41; Tmax=55;}
-      else if(W=="Vd") { Tmin=41; Tmax=54;}
-      else if(W=="Au") { Tmin=26; Tmax=34;}
-      else if(W=="Vu") { Tmin=38; Tmax=52;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
+    else if(Ens=="cC211a.06.80") {
 
+      if(obs=="FAu") {
+	if(ixg==1) {  Tmin=23; Tmax=31;  }
+	else if(ixg==2) {  Tmin=24; Tmax=31;  }
+	else if(ixg==3) {  Tmin=23; Tmax=32;  }
+	else if(ixg==4) {  Tmin=24; Tmax=32;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FAd") {
+	if(ixg==1) {  Tmin=23; Tmax=30;  }
+	else if(ixg==2) {  Tmin=16; Tmax=25;  }
+	else if(ixg==3) {  Tmin=14; Tmax=29;  }
+	else if(ixg==4) {  Tmin=18; Tmax=29;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVu") {
+	if(ixg==1) {  Tmin=38; Tmax=50;  }
+	else if(ixg==2) {  Tmin=33; Tmax=43;  }
+	else if(ixg==3) {  Tmin=18; Tmax=30;  }
+	else if(ixg==4) {  Tmin=17; Tmax=32;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVd") {
+	if(ixg==1) {  Tmin=33; Tmax=45;  }
+	else if(ixg==2) {  Tmin=27; Tmax=36;  }
+	else if(ixg==3) {  Tmin=15; Tmax=30;  }
+	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Tu") {
+	if(ixg==1) {  Tmin=20; Tmax=27;  }
+	else if(ixg==2) {  Tmin=20; Tmax=27;  }
+	else if(ixg==3) {  Tmin=20; Tmax=28;  }
+	else if(ixg==4) {  Tmin=21; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Td") {
+	if(ixg==1) {  Tmin=23; Tmax=30;  }
+	else if(ixg==2) {  Tmin=20; Tmax=30;  }
+	else if(ixg==3) {  Tmin=20; Tmax=30;  }
+	else if(ixg==4) {  Tmin=19; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Tu") {
+	if(ixg==1) {  Tmin=31; Tmax=41;  }
+	else if(ixg==2) {  Tmin=31; Tmax=39;  }
+	else if(ixg==3) {  Tmin=19; Tmax=35;  }
+	else if(ixg==4) {  Tmin=24; Tmax=38;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Td") {
+	if(ixg==1) {  Tmin=33; Tmax=45;  }
+	else if(ixg==2) {  Tmin=21; Tmax=34;  }
+	else if(ixg==3) {  Tmin=19; Tmax=34;  }
+	else if(ixg==4) {  Tmin=20; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
     }
-    else if(ixg==3) {
-      if(W=="A") {Tmin= 22; Tmax=29;}
-      else if(W=="V") {Tmin=26;Tmax=39;}
-      else if(W=="Ad") { Tmin=41; Tmax=55;}
-      else if(W=="Vd") { Tmin=41; Tmax=54;}
-      else if(W=="Au") { Tmin=27; Tmax=34;}
-      else if(W=="Vu") { Tmin=38; Tmax=52;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
     
-    }
-    else if(ixg==4) {
-      if(W=="A") {Tmin= 23; Tmax=30;}
-      else if(W=="V") {Tmin=26;Tmax=39;}
-      else if(W=="Ad") { Tmin=41; Tmax=55;}
-      else if(W=="Vd") { Tmin=36; Tmax=53;}
-      else if(W=="Au") { Tmin=26; Tmax=34;}
-      else if(W=="Vu") { Tmin=38; Tmax=52;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==5) {
-      if(W=="A") {Tmin= 22; Tmax=29;}
-      else if(W=="V") {Tmin=25;Tmax=39;}
-      else if(W=="Ad") { Tmin=41; Tmax=55;}
-      else if(W=="Vd") { Tmin=36; Tmax=53;}
-      else if(W=="Au") { Tmin=26; Tmax=34;}
-      else if(W=="Vu") { Tmin=38; Tmax=52;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==6) {
-      if(W=="A") {Tmin= 22; Tmax=30;}
-      else if(W=="V") {Tmin=23;Tmax=37;}
-      else if(W=="Ad") { Tmin=41; Tmax=55;}
-      else if(W=="Vd") { Tmin=33; Tmax=53;}
-      else if(W=="Au") { Tmin=26; Tmax=34;}
-      else if(W=="Vu") { Tmin=38; Tmax=52;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==7) {
-      if(W=="A") {Tmin= 22; Tmax=31;}
-      else if(W=="V") {Tmin=21;Tmax=36;}
-      else if(W=="Ad") { Tmin=39; Tmax=55;}
-      else if(W=="Vd") { Tmin=33; Tmax=53;}
-      else if(W=="Au") { Tmin=26; Tmax=34;}
-      else if(W=="Vu") { Tmin=38; Tmax=52;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==8) {
-      if(W=="A") {Tmin= 24; Tmax=39;}
-      else if(W=="V") {Tmin=19;Tmax=37;}
-      else if(W=="Ad") { Tmin=35; Tmax=53;}
-      else if(W=="Vd") { Tmin=30; Tmax=53;}
-      else if(W=="Au") { Tmin=26; Tmax=34;}
-      else if(W=="Vu") { Tmin=38; Tmax=52;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==9) {
-      if(W=="A") {Tmin= 18; Tmax=37;}
-      else if(W=="V") {Tmin=20;Tmax=35;}
-      else if(W=="Ad") { Tmin=26; Tmax=46;}
-      else if(W=="Vd") { Tmin=30; Tmax=56;}
-      else if(W=="Au") { Tmin=26; Tmax=34;}
-      else if(W=="Vu") { Tmin=38; Tmax=52;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==10) {
-      if(W=="A") {Tmin= 16; Tmax=31;}
-      else if(W=="V") {Tmin=18;Tmax=34;}
-      else if(W=="Ad") { Tmin=26; Tmax=46;}
-      else if(W=="Vd") { Tmin=34; Tmax=62;}
-      else if(W=="Au") { Tmin=26; Tmax=34;}
-      else if(W=="Vu") { Tmin=38; Tmax=52;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-
-    }
-
-    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
-
+    else crash("Ensemble: "+Ens+" not yet implemented");
   }
 
-  else if(Ens=="cD211a.054.96") {
-
-   
 
 
-    if(ixg==0) {
-      if(W=="A") {Tmin= 21; Tmax=28;}
-      else if(W=="V") {Tmin=28;Tmax=55;}
-      else if(W=="Ad") { Tmin=20; Tmax=32;}
-      else if(W=="Vd") { Tmin=20; Tmax=32;}
-      else if(W=="Au") { Tmin=20; Tmax=32;}
-      else if(W=="Vu") { Tmin=20; Tmax=32;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
+  else if(mh == "B3s") {
 
+    if(  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
+
+      if(obs=="FAu") {
+       if(ixg==1) {  Tmin=22; Tmax=27;  }
+       else if(ixg==2) {  Tmin=22; Tmax=27;  }
+       else if(ixg==3) {  Tmin=22; Tmax=27;  }
+       else if(ixg==4) {  Tmin=22; Tmax=27;  }
+       else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FAd") { //non bellissimi
+	if(ixg==1) {  Tmin=17; Tmax=28;  }
+	else if(ixg==2) {  Tmin=18; Tmax=28;  }
+	else if(ixg==3) {  Tmin=22; Tmax=30;  }
+	else if(ixg==4) {  Tmin=22; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVu") {
+	if(ixg==1) {  Tmin=27; Tmax=40;  }
+	else if(ixg==2) {  Tmin=25; Tmax=32;  }
+	else if(ixg==3) {  Tmin=22; Tmax=30;  }
+	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVd") {
+	if(ixg==1) {  Tmin=26; Tmax=32;  }
+	else if(ixg==2) {  Tmin=22; Tmax=30;  }
+	else if(ixg==3) {  Tmin=16; Tmax=24;  }
+	else if(ixg==4) {  Tmin=14; Tmax=23;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Tu") {
+	if(ixg==1) {  Tmin=17; Tmax=26;  }
+	else if(ixg==2) {  Tmin=13; Tmax=24;  }
+	else if(ixg==3) {  Tmin=11; Tmax=24;  }
+	else if(ixg==4) {  Tmin=10; Tmax=28;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Td") {
+	if(ixg==1) {  Tmin=20; Tmax=27;  }
+	else if(ixg==2) {  Tmin=17; Tmax=27;  }
+	else if(ixg==3) {  Tmin=16; Tmax=27;  }
+	else if(ixg==4) {  Tmin=14; Tmax=22;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Tu") { //two plataux for small xg
+	if(ixg==1) {  Tmin=24; Tmax=30;  }
+	else if(ixg==2) {  Tmin=21; Tmax=28;  }
+	else if(ixg==3) {  Tmin=17; Tmax=28;  }
+	else if(ixg==4) {  Tmin=14; Tmax=25;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Td") {
+	if(ixg==1) {  Tmin=30; Tmax=40;  }
+	else if(ixg==2) {  Tmin=26; Tmax=34;  }
+	else if(ixg==3) {  Tmin=16; Tmax=23;  }
+	else if(ixg==4) {  Tmin=15; Tmax=23;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
     }
-    else if(ixg==1) {
-      if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=32;Tmax=53;}
-      else if(W=="Ad") { Tmin=51; Tmax=55;}
-      else if(W=="Vd") { Tmin=61; Tmax=76;}
-      else if(W=="Au") { Tmin=29; Tmax=35;}
-      else if(W=="Vu") { Tmin=48; Tmax=59;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
 
-    }
-    else if(ixg==2) {
-      if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=32;Tmax=47;}
-      else if(W=="Ad") { Tmin=51; Tmax=55;}
-      else if(W=="Vd") { Tmin=57; Tmax=68;}
-      else if(W=="Au") { Tmin=29; Tmax=35;}
-      else if(W=="Vu") { Tmin=48; Tmax=59;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
+    else if(Ens=="cC211a.06.80") {
 
+      if(obs=="FAu") {
+       if(ixg==1) {  Tmin=22; Tmax=27;  }
+       else if(ixg==2) {  Tmin=22; Tmax=27;  }
+       else if(ixg==3) {  Tmin=22; Tmax=27;  }
+       else if(ixg==4) {  Tmin=22; Tmax=27;  }
+       else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FAd") { //non bellissimi
+	if(ixg==1) {  Tmin=17; Tmax=28;  }
+	else if(ixg==2) {  Tmin=18; Tmax=28;  }
+	else if(ixg==3) {  Tmin=22; Tmax=30;  }
+	else if(ixg==4) {  Tmin=22; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVu") {
+	if(ixg==1) {  Tmin=27; Tmax=40;  }
+	else if(ixg==2) {  Tmin=25; Tmax=32;  }
+	else if(ixg==3) {  Tmin=22; Tmax=30;  }
+	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVd") {
+	if(ixg==1) {  Tmin=26; Tmax=32;  }
+	else if(ixg==2) {  Tmin=22; Tmax=30;  }
+	else if(ixg==3) {  Tmin=16; Tmax=24;  }
+	else if(ixg==4) {  Tmin=14; Tmax=23;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Tu") {
+	if(ixg==1) {  Tmin=17; Tmax=26;  }
+	else if(ixg==2) {  Tmin=13; Tmax=24;  }
+	else if(ixg==3) {  Tmin=11; Tmax=24;  }
+	else if(ixg==4) {  Tmin=10; Tmax=28;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Td") {
+	if(ixg==1) {  Tmin=20; Tmax=27;  }
+	else if(ixg==2) {  Tmin=17; Tmax=27;  }
+	else if(ixg==3) {  Tmin=16; Tmax=27;  }
+	else if(ixg==4) {  Tmin=14; Tmax=22;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Tu") { //two plataux for small xg
+	if(ixg==1) {  Tmin=24; Tmax=30;  }
+	else if(ixg==2) {  Tmin=21; Tmax=28;  }
+	else if(ixg==3) {  Tmin=17; Tmax=28;  }
+	else if(ixg==4) {  Tmin=14; Tmax=25;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Td") {
+	if(ixg==1) {  Tmin=30; Tmax=40;  }
+	else if(ixg==2) {  Tmin=26; Tmax=34;  }
+	else if(ixg==3) {  Tmin=16; Tmax=23;  }
+	else if(ixg==4) {  Tmin=15; Tmax=23;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
     }
-    else if(ixg==3) {
-      if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=32;Tmax=47;}
-      else if(W=="Ad") { Tmin=51; Tmax=55;}
-      else if(W=="Vd") { Tmin=57; Tmax=68;}
-      else if(W=="Au") { Tmin=29; Tmax=35;}
-      else if(W=="Vu") { Tmin=48; Tmax=59;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
     
-    }
-    else if(ixg==4) {
-      if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=30;Tmax=47;}
-      else if(W=="Ad") { Tmin=50; Tmax=55;}
-      else if(W=="Vd") { Tmin=57; Tmax=68;}
-      else if(W=="Au") { Tmin=29; Tmax=37;}
-      else if(W=="Vu") { Tmin=48; Tmax=59;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==5) {
-      if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=28;Tmax=44;}
-      else if(W=="Ad") { Tmin=50; Tmax=55;}
-      else if(W=="Vd") { Tmin=57; Tmax=68;}
-      else if(W=="Au") { Tmin=29; Tmax=37;}
-      else if(W=="Vu") { Tmin=48; Tmax=59;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==6) {
-      if(W=="A") {Tmin= 26; Tmax=34;}
-      else if(W=="V") {Tmin=27;Tmax=45;}
-      else if(W=="Ad") { Tmin=50; Tmax=55;}
-      else if(W=="Vd") { Tmin=57; Tmax=68;}
-      else if(W=="Au") { Tmin=29; Tmax=37;}
-      else if(W=="Vu") { Tmin=48; Tmax=59;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==7) {
-      if(W=="A") {Tmin= 25; Tmax=35;}
-      else if(W=="V")  {Tmin=25;Tmax=44;}
-      else if(W=="Ad") { Tmin=48; Tmax=54;}
-      else if(W=="Vd") { Tmin=56; Tmax=68;}
-      else if(W=="Au") { Tmin=29; Tmax=37;}
-      else if(W=="Vu") { Tmin=49; Tmax=59;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==8) {
-      if(W=="A") {Tmin= 27; Tmax=47;}
-      else if(W=="V") {Tmin=24;Tmax=43;}
-      else if(W=="Ad") { Tmin=47; Tmax=54;}
-      else if(W=="Vd") { Tmin=52; Tmax=66;}
-      else if(W=="Au") { Tmin=29; Tmax=37;}
-      else if(W=="Vu") { Tmin=49; Tmax=59;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-   
-    }
-    else if(ixg==9) {
-      if(W=="A") {Tmin= 26; Tmax=47;}
-      else if(W=="V") {Tmin=24;Tmax=42;}
-      else if(W=="Ad") { Tmin=21; Tmax=50;}
-      else if(W=="Vd") { Tmin=48; Tmax=65;}
-      else if(W=="Au") { Tmin=29; Tmax=37;}
-      else if(W=="Vu") { Tmin=49; Tmax=59;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-    
-    }
-    else if(ixg==10) {
-      if(W=="A") {Tmin= 22; Tmax=40;}
-      else if(W=="V") {Tmin=24;Tmax=43;}
-      else if(W=="Ad") { Tmin=26; Tmax=46;}
-      else if(W=="Vd") { Tmin=48; Tmax=58;}
-      else if(W=="Au") { Tmin=29; Tmax=37;}
-      else if(W=="Vu") { Tmin=49; Tmax=59;}
-      else crash("time intervals for fits in channel: "+W+" not implemented");
-
-    }
-
-    else crash("ixg: "+to_string(ixg)+" does not have an established fit range");
-
-
+    else crash("Ensemble: "+Ens+" not yet implemented");
   }
 
-  else crash("Ensemble: "+Ens+" does not have definite time intervals for FV and FA");
+  
+  else if(mh == "B4s") {
+
+    if(  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
+
+      if(obs=="FAu") { //not very nice
+       if(ixg==1) {  Tmin=19; Tmax=25;  }
+       else if(ixg==2) {  Tmin=17; Tmax=25;  }
+       else if(ixg==3) {  Tmin=17; Tmax=25;  }
+       else if(ixg==4) {  Tmin=17; Tmax=25;  }
+       else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FAd") { //not very nice
+	if(ixg==1) {  Tmin=21; Tmax=24;  }
+	else if(ixg==2) {  Tmin=21; Tmax=24;  }
+	else if(ixg==3) {  Tmin=21; Tmax=25;  }
+	else if(ixg==4) {  Tmin=21; Tmax=26;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVu") {
+	if(ixg==1) {  Tmin=25; Tmax=33;  }
+	else if(ixg==2) {  Tmin=20; Tmax=28;  }
+	else if(ixg==3) {  Tmin=18; Tmax=24;  }
+	else if(ixg==4) {  Tmin=16; Tmax=24;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVd") {
+	if(ixg==1) {  Tmin=21; Tmax=28;  }
+	else if(ixg==2) {  Tmin=19; Tmax=25;  }
+	else if(ixg==3) {  Tmin=17; Tmax=24;  }
+	else if(ixg==4) {  Tmin=12; Tmax=23;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Tu") {
+	if(ixg==1) {  Tmin=15; Tmax=24;  }
+	else if(ixg==2) {  Tmin=13; Tmax=24;  }
+	else if(ixg==3) {  Tmin=11; Tmax=24;  }
+	else if(ixg==4) {  Tmin=10; Tmax=28;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Td") {
+	if(ixg==1) {  Tmin=20; Tmax=27;  }
+	else if(ixg==2) {  Tmin=15; Tmax=25;  }
+	else if(ixg==3) {  Tmin=13; Tmax=23;  }
+	else if(ixg==4) {  Tmin=13; Tmax=22;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Tu") { //bad plateaux at  xg=0.1
+	if(ixg==1) {  Tmin=23; Tmax=30;  }
+	else if(ixg==2) {  Tmin=19; Tmax=25;  }
+	else if(ixg==3) {  Tmin=17; Tmax=24;  }
+	else if(ixg==4) {  Tmin=15; Tmax=25;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Td") {
+	if(ixg==1) {  Tmin=22; Tmax=30;  }
+	else if(ixg==2) {  Tmin=20; Tmax=26;  }
+	else if(ixg==3) {  Tmin=14; Tmax=22;  }
+	else if(ixg==4) {  Tmin=10; Tmax=16;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+    }
+    else if(Ens=="cC211a.06.80") {
+
+      if(obs=="FAu") { //not very nice
+       if(ixg==1) {  Tmin=19; Tmax=25;  }
+       else if(ixg==2) {  Tmin=17; Tmax=25;  }
+       else if(ixg==3) {  Tmin=17; Tmax=25;  }
+       else if(ixg==4) {  Tmin=17; Tmax=25;  }
+       else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FAd") { //not very nice
+	if(ixg==1) {  Tmin=21; Tmax=24;  }
+	else if(ixg==2) {  Tmin=21; Tmax=24;  }
+	else if(ixg==3) {  Tmin=21; Tmax=25;  }
+	else if(ixg==4) {  Tmin=21; Tmax=26;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVu") {
+	if(ixg==1) {  Tmin=25; Tmax=33;  }
+	else if(ixg==2) {  Tmin=20; Tmax=28;  }
+	else if(ixg==3) {  Tmin=18; Tmax=24;  }
+	else if(ixg==4) {  Tmin=16; Tmax=24;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FVd") {
+	if(ixg==1) {  Tmin=21; Tmax=28;  }
+	else if(ixg==2) {  Tmin=19; Tmax=25;  }
+	else if(ixg==3) {  Tmin=17; Tmax=24;  }
+	else if(ixg==4) {  Tmin=12; Tmax=23;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Tu") {
+	if(ixg==1) {  Tmin=15; Tmax=24;  }
+	else if(ixg==2) {  Tmin=13; Tmax=24;  }
+	else if(ixg==3) {  Tmin=11; Tmax=24;  }
+	else if(ixg==4) {  Tmin=10; Tmax=28;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FA_Td") {
+	if(ixg==1) {  Tmin=20; Tmax=27;  }
+	else if(ixg==2) {  Tmin=15; Tmax=25;  }
+	else if(ixg==3) {  Tmin=13; Tmax=23;  }
+	else if(ixg==4) {  Tmin=13; Tmax=22;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Tu") { //bad plateaux at  xg=0.1
+	if(ixg==1) {  Tmin=23; Tmax=30;  }
+	else if(ixg==2) {  Tmin=19; Tmax=25;  }
+	else if(ixg==3) {  Tmin=17; Tmax=24;  }
+	else if(ixg==4) {  Tmin=15; Tmax=25;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+      else if(obs=="FV_Td") {
+	if(ixg==1) {  Tmin=22; Tmax=30;  }
+	else if(ixg==2) {  Tmin=20; Tmax=26;  }
+	else if(ixg==3) {  Tmin=14; Tmax=22;  }
+	else if(ixg==4) {  Tmin=10; Tmax=16;  }
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+      }
+    }
+    else crash("Ensemble: "+Ens+" not yet implemented");
+  }
+
+  else crash("mh: "+mh+" not yet implemented");
+  
 
 
   
 
-  return; 
-   
-  
 
+  
+  if(use_old && Ens=="cC211a.06.80") { Tmin= (int)(Tmin*0.07957/0.0682); Tmax= (int)( Tmax*0.07957/0.0682);}
+
+  if(use_old && Ens=="cD211a.054.96") { Tmin= (int)(Tmin*0.07957/0.0569); Tmax= (int)( Tmax*0.07957/0.0569);}
  
+
+  return;
+
 }
+
+
+
+
+
+
+
+
+
+
 
 void Compute_Bs_mumu_gamma() {
 
   
 
 
-  //create directories
-  boost::filesystem::create_directory("../data/ph_emission");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type);
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson);
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/mass");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/decay_const");
 
-  
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/C");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/H");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/C_T");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/H_T");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC"); 
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/per_kin");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF_u");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF_u/per_kin");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF_d");
-  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+Meson+"/FF_d/per_kin");
 
   
   Get_Bs_xg_to_spline();
@@ -685,25 +815,99 @@ void Compute_Bs_mumu_gamma() {
 
   GaussianMersenne GM(61111223);
 
+  //read masses
+  data_t M1_SMSM, M2_SMSM, M3_SMSM, M4_SMSM;
+  data_t M1_SM, M2_SM, M3_SM, M4_SM;
+
+  M1_SM.Read("../Bs_mumu_gamma_data/masses", "mes_contr_2pts_M1_SM_2", "P5P5");
+  M2_SM.Read("../Bs_mumu_gamma_data/masses", "mes_contr_2pts_M2_SM_2", "P5P5");
+  M3_SM.Read("../Bs_mumu_gamma_data/masses", "mes_contr_2pts_M3_SM_2", "P5P5");
+  M4_SM.Read("../Bs_mumu_gamma_data/masses", "mes_contr_2pts_M4_SM_2", "P5P5");
+
+  M1_SMSM.Read("../Bs_mumu_gamma_data/masses", "mes_contr_2pts_M1_SMSM_2", "P5P5");
+  M2_SMSM.Read("../Bs_mumu_gamma_data/masses", "mes_contr_2pts_M2_SMSM_2", "P5P5");
+  M3_SMSM.Read("../Bs_mumu_gamma_data/masses", "mes_contr_2pts_M3_SMSM_2", "P5P5");
+  M4_SMSM.Read("../Bs_mumu_gamma_data/masses", "mes_contr_2pts_M4_SMSM_2", "P5P5");
+
+  int Ns= M1_SM.size;
+
+  for(int i=0;i<Ns;i++) {
+
+    boost::filesystem::create_directory( "../data/mass_list/"+M1_SM.Tag[i]);
+    CorrAnalysis Corr;
+    Corr.Reflection_sign=1;
+    Corr.UseJack=1;
+    Corr.Njacks=20;
+    Corr.Nt = M1_SM.nrows[i];
+    distr_t_list eff_M1 = Corr.effective_mass_t( M1_SM.col(0)[i], "../data/mass_list/"+M1_SM.Tag[i]+"/eff_mass_M1_SM");
+    distr_t_list eff_M2 = Corr.effective_mass_t( M2_SM.col(0)[i], "../data/mass_list/"+M1_SM.Tag[i]+"/eff_mass_M2_SM");
+    distr_t_list eff_M3 = Corr.effective_mass_t( M3_SM.col(0)[i], "../data/mass_list/"+M1_SM.Tag[i]+"/eff_mass_M3_SM");
+    distr_t_list eff_M4 = Corr.effective_mass_t( M4_SM.col(0)[i], "../data/mass_list/"+M1_SM.Tag[i]+"/eff_mass_M4_SM");
+
+    distr_t_list eff_M1_SMSM = Corr.effective_mass_t( M1_SMSM.col(0)[i], "../data/mass_list/"+M1_SMSM.Tag[i]+"/eff_mass_M1_SMSM");
+    distr_t_list eff_M2_SMSM = Corr.effective_mass_t( M2_SMSM.col(0)[i], "../data/mass_list/"+M1_SMSM.Tag[i]+"/eff_mass_M2_SMSM");
+    distr_t_list eff_M3_SMSM = Corr.effective_mass_t( M3_SMSM.col(0)[i], "../data/mass_list/"+M1_SMSM.Tag[i]+"/eff_mass_M3_SMSM");
+    distr_t_list eff_M4_SMSM = Corr.effective_mass_t( M4_SMSM.col(0)[i], "../data/mass_list/"+M1_SMSM.Tag[i]+"/eff_mass_M4_SMSM");
+   
+  }
+
 
   vector<rt_FF_Bs> FF_ret_list;
 
-  vector<bool> Use_three_finest_list({0,0,1});
-  vector<bool> Include_a4_list({0,0,0});
-  vector<bool> UseJack_list({1,1,1});
-  vector<int>  num_xg_list({8,11,11});
-  vector<double> Perform_continuum_extrapolation_list({0,1,1});
-  //vector<string> Corr_path_list({"_w_B96", "", "", ""});
-  vector<string> Corr_path_list({"_w_B96", "", ""});
+  
+  // vector<bool> Use_three_finest_list({0,0,1,0,0});
+  //vector<bool> Include_a4_list({0,0,0,0,0});
+  //vector<bool> UseJack_list({1,1,1,1,1});
+  //vector<int>  num_xg_list({8,11,11,5,5});
+  //vector<double> Perform_continuum_extrapolation_list({0,1,1,0,0});
+  //vector<string> Corr_path_list({"../Bs_mumu_gamma_data/mc_w_B96", "../Bs_mumu_gamma_data/mc", "../Bs_mumu_gamma_data/mc", "../Bs_mumu_gamma_data/mh1", "../Bs_mumu_gamma_data/mh2"});
+  //vector<string> out_tag_list({"", "", "", "mh1", "mh2"});
+  //vector<string> Meson_list({"Bs", "Bs", "Bs", "B1s", "B2s"});
+
+  vector<bool> Use_three_finest_list({0,0,0,0,0});
+  vector<bool> Include_a4_list({0,0,0,0,0});
+  vector<bool> UseJack_list({1,1,1,1,1});
+  vector<int>  num_xg_list({5,5,5,5,5});
+  vector<double> Perform_continuum_extrapolation_list({1,1,1,1,1});
+  vector<string> Corr_path_list({ "../Bs_mumu_gamma_data/mc",  "../Bs_mumu_gamma_data/mh1", "../Bs_mumu_gamma_data/mh2", "../Bs_mumu_gamma_data/mh3", "../Bs_mumu_gamma_data/mh4"});
+  vector<string> out_tag_list({"mc", "mh1", "mh2", "mh3", "mh4"});
+  vector<string> Meson_list({"Bs", "B1s", "B2s", "B3s", "B4s"});
 
   int N= UseJack_list.size();
   for(int i=0;i<N;i++) {
     Bs_xg_t_list.clear();
     Get_Bs_xg_t_list(num_xg_list[i]);
+    MESON=Meson_list[i];
+    //create output directories
+    boost::filesystem::create_directory("../data/ph_emission");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type);
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON);
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/mass");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/C");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/H");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/C_T");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/H_T");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/FF");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/uniform");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC"); 
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/per_kin");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/FF_u");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/FF_u/per_kin");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/FF_d");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/FF_d/per_kin");
+
+    
     string Fit_tag= ( (Include_a4_list[i]==true)?"wa4_":"");
     Fit_tag = ( (Use_three_finest_list[i]==true)?"wtf_":Fit_tag);
-    FF_ret_list.push_back(Get_Bs_mumu_gamma_form_factors(num_xg_list[i], Perform_continuum_extrapolation_list[i], Use_three_finest_list[i], Include_a4_list[i], UseJack_list[i], Fit_tag, Corr_path_list[i]));
+    FF_ret_list.push_back(Get_Bs_mumu_gamma_form_factors(num_xg_list[i], Perform_continuum_extrapolation_list[i], Use_three_finest_list[i], Include_a4_list[i], UseJack_list[i], Fit_tag, Corr_path_list[i], out_tag_list[i]));
   }
+
+
+  exit(-1);
+  MESON="Bs";
 
   
   //combine measurement with weight w_1,2
@@ -818,11 +1022,11 @@ void Compute_Bs_mumu_gamma() {
 
     //print form factors
 
-    Print_To_File({}, {Bs_xg_t_list, FF_jack.ave(), FF_jack.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_jack.dat", "", "");
-    //Print_To_File({}, {Bs_xg_t_list, FF_boot.ave(), FF_boot.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_boot.dat", "", "");
+    Print_To_File({}, {Bs_xg_t_list, FF_jack.ave(), FF_jack.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/uniform/"+contribs[i]+"_jack.dat", "", "");
+    //Print_To_File({}, {Bs_xg_t_list, FF_boot.ave(), FF_boot.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/uniform/"+contribs[i]+"_boot.dat", "", "");
     
-    Print_To_File({}, {Bs_xg_t_list, FF_jack_AIC.ave(), FF_jack_AIC.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_jack.dat", "", "");
-    //Print_To_File({}, {Bs_xg_t_list, FF_boot_AIC.ave(), FF_boot_AIC.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_boot.dat", "", "");
+    Print_To_File({}, {Bs_xg_t_list, FF_jack_AIC.ave(), FF_jack_AIC.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/"+contribs[i]+"_jack.dat", "", "");
+    //Print_To_File({}, {Bs_xg_t_list, FF_boot_AIC.ave(), FF_boot_AIC.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/"+contribs[i]+"_boot.dat", "", "");
 
 
     //print covariance matrix
@@ -856,15 +1060,15 @@ void Compute_Bs_mumu_gamma() {
 
     //Print To File
   
-    //ofstream Print_Cov_boot("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_boot.cov");
-    ofstream Print_Cov_jack("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_jack.cov");
-    //ofstream Print_Cov_boot_AIC("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_boot.cov");
-    ofstream Print_Cov_jack_AIC("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_jack.cov");
+    //ofstream Print_Cov_boot("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/uniform/"+contribs[i]+"_boot.cov");
+    ofstream Print_Cov_jack("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/uniform/"+contribs[i]+"_jack.cov");
+    //ofstream Print_Cov_boot_AIC("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/"+contribs[i]+"_boot.cov");
+    ofstream Print_Cov_jack_AIC("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/"+contribs[i]+"_jack.cov");
 
-    //ofstream Print_Corr_boot("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_boot.corr");
-    ofstream Print_Corr_jack("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_jack.corr");
-    //ofstream Print_Corr_boot_AIC("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_boot.corr");
-    ofstream Print_Corr_jack_AIC("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_jack.corr");
+    //ofstream Print_Corr_boot("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/uniform/"+contribs[i]+"_boot.corr");
+    ofstream Print_Corr_jack("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/uniform/"+contribs[i]+"_jack.corr");
+    //ofstream Print_Corr_boot_AIC("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/"+contribs[i]+"_boot.corr");
+    ofstream Print_Corr_jack_AIC("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/"+contribs[i]+"_jack.corr");
 
 
     //Print_Cov_boot<<Cov_boot<<endl;
@@ -935,9 +1139,9 @@ void Compute_Bs_mumu_gamma() {
       FF_AIC_interpol_cont_to_print_distr.distr_list.push_back( FF_AIC_cont_interpol_distr(X));
     }
 
-    Print_To_File({}, {Bs_xg_to_spline, FF_interpol_cont_to_print_distr.ave(), FF_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/uniform/"+contribs[i]+"_interpol.dat", "", "#xg "+contribs[i]+" "+contribs[i]+"_err");
+    Print_To_File({}, {Bs_xg_to_spline, FF_interpol_cont_to_print_distr.ave(), FF_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/uniform/"+contribs[i]+"_interpol.dat", "", "#xg "+contribs[i]+" "+contribs[i]+"_err");
 
-    Print_To_File({}, {Bs_xg_to_spline, FF_AIC_interpol_cont_to_print_distr.ave(), FF_AIC_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_interpol.dat", "", "#xg "+contribs[i]+" "+contribs[i]+"_err");
+    Print_To_File({}, {Bs_xg_to_spline, FF_AIC_interpol_cont_to_print_distr.ave(), FF_AIC_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/"+contribs[i]+"_interpol.dat", "", "#xg "+contribs[i]+" "+contribs[i]+"_err");
 
 
 
@@ -1099,7 +1303,7 @@ void Compute_Bs_mumu_gamma() {
     //print 
     string header_F= "Ampl1: "+to_string_with_precision(Ampl_F.ave(),5)+" +- "+to_string_with_precision(Ampl_F.err(),5)+" M^res1/Mp: "+to_string_with_precision(pole_F.ave(), 5)+" +- "+to_string_with_precision(pole_F.err(), 5)+" Ampl2: "+to_string_with_precision(Ampl_F2.ave(),5)+" +- "+to_string_with_precision(Ampl_F2.err(),5)+" M^res2/Mp: "+to_string_with_precision(pole_F2.ave(), 5)+" +- "+to_string_with_precision(pole_F2.err(), 5)+" B: "+to_string_with_precision(Bg_F.ave(),5)+" +- "+to_string_with_precision(Bg_F.err(),5)+"   ch2/dof: "+to_string_with_precision(ch2_red_VMD  ,5)+" dof: "+to_string(Bs_xg_t_list.size()-2);
   
-    Print_To_File({},{ Bs_xg_to_spline_VMD, F_VMD_fit.ave(), F_VMD_fit.err()} , "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/"+contribs[i]+"_VMD.fit" , "", header_F);
+    Print_To_File({},{ Bs_xg_to_spline_VMD, F_VMD_fit.ave(), F_VMD_fit.err()} , "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/"+contribs[i]+"_VMD.fit" , "", header_F);
 
     //push_back lambda function
 
@@ -1128,10 +1332,10 @@ void Compute_Bs_mumu_gamma() {
   distr_t_list R_V_u= FF_final[4]/FF_final[10];
   distr_t_list R_V_d= FF_final[5]/FF_final[11];
 
-  Print_To_File( {}, {Bs_xg_t_list, R_A_u.ave(), R_A_u.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/ratio_Au_jack.dat"  ,   "", "");
-  Print_To_File( {}, {Bs_xg_t_list, R_A_d.ave(), R_A_d.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/ratio_Ad_jack.dat"  ,   "", "");
-  Print_To_File( {}, {Bs_xg_t_list, R_V_u.ave(), R_V_u.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/ratio_Vu_jack.dat"  ,   "", "");
-  Print_To_File( {}, {Bs_xg_t_list, R_V_d.ave(), R_V_d.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/ratio_Vd_jack.dat"  ,   "", "");
+  Print_To_File( {}, {Bs_xg_t_list, R_A_u.ave(), R_A_u.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/ratio_Au_jack.dat"  ,   "", "");
+  Print_To_File( {}, {Bs_xg_t_list, R_A_d.ave(), R_A_d.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/ratio_Ad_jack.dat"  ,   "", "");
+  Print_To_File( {}, {Bs_xg_t_list, R_V_u.ave(), R_V_u.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/ratio_Vu_jack.dat"  ,   "", "");
+  Print_To_File( {}, {Bs_xg_t_list, R_V_d.ave(), R_V_d.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/ratio_Vd_jack.dat"  ,   "", "");
 
   //mass ratio mb/mc
   double mc_to_mb= 3.29;
@@ -1150,15 +1354,15 @@ void Compute_Bs_mumu_gamma() {
   distr_t_list FV_T_BDs =  FF_final[10] + FF_final[11];
 
   //print
-  Print_To_File({}, {Bs_xg_t_list, FA_Bs.ave(), FA_Bs.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FA_Bs_jack.dat", "", "");
-  Print_To_File({}, {Bs_xg_t_list, FV_Bs.ave(), FV_Bs.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FV_Bs_jack.dat", "", "");
-  Print_To_File({}, {Bs_xg_t_list, FA_T_Bs.ave(), FA_T_Bs.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FA_T_Bs_jack.dat", "", "");
-  Print_To_File({}, {Bs_xg_t_list, FV_T_Bs.ave(), FV_T_Bs.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FV_T_Bs_jack.dat", "", "");
+  Print_To_File({}, {Bs_xg_t_list, FA_Bs.ave(), FA_Bs.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FA_Bs_jack.dat", "", "");
+  Print_To_File({}, {Bs_xg_t_list, FV_Bs.ave(), FV_Bs.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FV_Bs_jack.dat", "", "");
+  Print_To_File({}, {Bs_xg_t_list, FA_T_Bs.ave(), FA_T_Bs.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FA_T_Bs_jack.dat", "", "");
+  Print_To_File({}, {Bs_xg_t_list, FV_T_Bs.ave(), FV_T_Bs.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FV_T_Bs_jack.dat", "", "");
 
-  Print_To_File({}, {Bs_xg_t_list, FA_BDs.ave(), FA_BDs.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FA_BDs_jack.dat", "", "");
-  Print_To_File({}, {Bs_xg_t_list, FV_BDs.ave(), FV_BDs.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FV_BDs_jack.dat", "", "");
-  Print_To_File({}, {Bs_xg_t_list, FA_T_BDs.ave(), FA_T_BDs.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FA_T_BDs_jack.dat", "", "");
-  Print_To_File({}, {Bs_xg_t_list, FV_T_BDs.ave(), FV_T_BDs.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FV_T_BDs_jack.dat", "", "");
+  Print_To_File({}, {Bs_xg_t_list, FA_BDs.ave(), FA_BDs.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FA_BDs_jack.dat", "", "");
+  Print_To_File({}, {Bs_xg_t_list, FV_BDs.ave(), FV_BDs.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FV_BDs_jack.dat", "", "");
+  Print_To_File({}, {Bs_xg_t_list, FA_T_BDs.ave(), FA_T_BDs.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FA_T_BDs_jack.dat", "", "");
+  Print_To_File({}, {Bs_xg_t_list, FV_T_BDs.ave(), FV_T_BDs.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FV_T_BDs_jack.dat", "", "");
 
    
 
@@ -1202,15 +1406,15 @@ void Compute_Bs_mumu_gamma() {
   }
 
   //Bs
-  Print_To_File( {}, {Bs_xg_to_spline, FA_Bs_interpolated.ave(), FA_Bs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FA_Bs_interpol.dat", "", "#xg FA_Bs  FA_Bs_err");
-  Print_To_File( {}, {Bs_xg_to_spline, FV_Bs_interpolated.ave(), FV_Bs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FV_Bs_interpol.dat", "", "#xg FV_Bs  FV_Bs_err");
-  Print_To_File( {}, {Bs_xg_to_spline, FA_T_Bs_interpolated.ave(), FA_T_Bs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FA_T_Bs_interpol.dat", "", "#xg FA_T_Bs  FA_T_Bs_err");
-  Print_To_File( {}, {Bs_xg_to_spline, FV_T_Bs_interpolated.ave(), FV_T_Bs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FV_T_Bs_interpol.dat", "", "#xg FV_T_Bs  FV_T_Bs_err");
+  Print_To_File( {}, {Bs_xg_to_spline, FA_Bs_interpolated.ave(), FA_Bs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FA_Bs_interpol.dat", "", "#xg FA_Bs  FA_Bs_err");
+  Print_To_File( {}, {Bs_xg_to_spline, FV_Bs_interpolated.ave(), FV_Bs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FV_Bs_interpol.dat", "", "#xg FV_Bs  FV_Bs_err");
+  Print_To_File( {}, {Bs_xg_to_spline, FA_T_Bs_interpolated.ave(), FA_T_Bs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FA_T_Bs_interpol.dat", "", "#xg FA_T_Bs  FA_T_Bs_err");
+  Print_To_File( {}, {Bs_xg_to_spline, FV_T_Bs_interpolated.ave(), FV_T_Bs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FV_T_Bs_interpol.dat", "", "#xg FV_T_Bs  FV_T_Bs_err");
   //BDs
-  Print_To_File( {}, {Bs_xg_to_spline, FA_BDs_interpolated.ave(), FA_BDs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FA_BDs_interpol.dat", "", "#xg FA_BDs  FA_BDs_err");
-  Print_To_File( {}, {Bs_xg_to_spline, FV_BDs_interpolated.ave(), FV_BDs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FV_BDs_interpol.dat", "", "#xg FV_BDs  FV_BDs_err");
-  Print_To_File( {}, {Bs_xg_to_spline, FA_T_BDs_interpolated.ave(), FA_T_BDs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FA_T_BDs_interpol.dat", "", "#xg FA_T_BDs  FA_T_BDs_err");
-  Print_To_File( {}, {Bs_xg_to_spline, FV_T_BDs_interpolated.ave(), FV_T_BDs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/BMA/AIC/FV_T_BDs_interpol.dat", "", "#xg FV_T_BDs  FV_T_BDs_err");
+  Print_To_File( {}, {Bs_xg_to_spline, FA_BDs_interpolated.ave(), FA_BDs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FA_BDs_interpol.dat", "", "#xg FA_BDs  FA_BDs_err");
+  Print_To_File( {}, {Bs_xg_to_spline, FV_BDs_interpolated.ave(), FV_BDs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FV_BDs_interpol.dat", "", "#xg FV_BDs  FV_BDs_err");
+  Print_To_File( {}, {Bs_xg_to_spline, FA_T_BDs_interpolated.ave(), FA_T_BDs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FA_T_BDs_interpol.dat", "", "#xg FA_T_BDs  FA_T_BDs_err");
+  Print_To_File( {}, {Bs_xg_to_spline, FV_T_BDs_interpolated.ave(), FV_T_BDs_interpolated.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/BMA/AIC/FV_T_BDs_interpol.dat", "", "#xg FV_T_BDs  FV_T_BDs_err");
     
 
 
@@ -1339,11 +1543,11 @@ void Compute_Bs_mumu_gamma() {
   
 
   //Bs
-  Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_Bs.ave(), rate_Bs.err(), rate_Bs_diff.ave(), rate_Bs_diff.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/rate_Bs.dat", "", "#qmin[GeV] xg_min xg_max  rate   rate_diff    ");
-  Print_To_File( {}, { qmin_list, xg_max_list, AFB_Bs.ave(), AFB_Bs.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/AFB_Bs.dat", "", "#q[GeV] xg   AFG    ");
+  Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_Bs.ave(), rate_Bs.err(), rate_Bs_diff.ave(), rate_Bs_diff.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/rate_Bs.dat", "", "#qmin[GeV] xg_min xg_max  rate   rate_diff    ");
+  Print_To_File( {}, { qmin_list, xg_max_list, AFB_Bs.ave(), AFB_Bs.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/AFB_Bs.dat", "", "#q[GeV] xg   AFG    ");
   //BDs
-  Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_BDs.ave(), rate_BDs.err(), rate_BDs_diff.ave(), rate_BDs_diff.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/rate_BDs.dat", "", "#qmin[GeV] xg_min xg_max  rate   rate_diff    ");
-  Print_To_File( {}, { qmin_list, xg_max_list, AFB_BDs.ave(), AFB_BDs.err()},  "../data/ph_emission/"+ph_type+"/"+Meson+"/AFB_BDs.dat", "", "#q[GeV] xg   AFG    ");
+  Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_BDs.ave(), rate_BDs.err(), rate_BDs_diff.ave(), rate_BDs_diff.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/rate_BDs.dat", "", "#qmin[GeV] xg_min xg_max  rate   rate_diff    ");
+  Print_To_File( {}, { qmin_list, xg_max_list, AFB_BDs.ave(), AFB_BDs.err()},  "../data/ph_emission/"+ph_type+"/"+MESON+"/AFB_BDs.dat", "", "#q[GeV] xg   AFG    ");
    
   cout<<"Done! Bye"<<endl;
     
@@ -1351,7 +1555,7 @@ void Compute_Bs_mumu_gamma() {
 }
 
 
-rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrapolation, bool Use_three_finest, bool Include_a4, bool UseJack, string Fit_tag, string path_list ) {
+rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrapolation, bool Use_three_finest, bool Include_a4, bool UseJack, string Fit_tag, string path_list, string out_tag) {
 
 
   cout<<"CALLING Get_Bs_mumu_gamma_form_factors"<<endl;
@@ -1375,19 +1579,10 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   const int Njacks=((UseJack==true)?NJ:Nboots);
 
    
-  string ph_type_mes=ph_type+"/"+Meson;
+  string ph_type_mes=ph_type+"/"+MESON;
   
   
-  //axial
-  vector<vector<vector<data_t>>> C_A_Fu_data(size_mu_nu), C_A_Fd_data(size_mu_nu), C_A_Bu_data(size_mu_nu), C_A_Bd_data(size_mu_nu);
-  //vector
-  vector<vector<vector<data_t>>> C_V_Fu_data(size_mu_nu), C_V_Fd_data(size_mu_nu), C_V_Bu_data(size_mu_nu), C_V_Bd_data(size_mu_nu);
 
-  //TK
-  vector<vector<vector<data_t>>> C_TK_Fu_data(size_mu_nu), C_TK_Fd_data(size_mu_nu), C_TK_Bu_data(size_mu_nu), C_TK_Bd_data(size_mu_nu);
-
-  //BK
-  vector<vector<vector<data_t>>> C_BK_Fu_data(size_mu_nu), C_BK_Fd_data(size_mu_nu), C_BK_Bu_data(size_mu_nu), C_BK_Bd_data(size_mu_nu);
 
 
 
@@ -1433,17 +1628,58 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   
   
  
-
+  int off_i = (Is_reph?1:0);
+  int off_T = 1;
   
 
 
   //2pts
-  data_t data_2pts, data_2pts_SM;
+  data_t data_2pts, data_2pts_SM, data_2pts_SMSM;
   data_t data_2pts_V1, data_2pts_V2, data_2pts_V3;
   data_t data_2pts_u_V1, data_2pts_u_V2, data_2pts_u_V3;
   data_t data_2pts_d_V1, data_2pts_d_V2, data_2pts_d_V3;
   data_t data_2pts_u_T1, data_2pts_u_T2, data_2pts_u_T3;
+  data_t data_2pts_loc_mc_T1, data_2pts_loc_mc_T2, data_2pts_loc_mc_T3;
   data_t data_2pts_u_B1, data_2pts_u_B2, data_2pts_u_B3;
+
+  
+  //Read data
+
+  //2pts function
+
+  data_2pts.Read(path_list, "mes_contr_2pts_SM_3", "P5P5", Sort_light_confs);
+  data_2pts_SM.Read(path_list, "mes_contr_2pts_SM_3", "P5P5", Sort_light_confs);
+  data_2pts_SMSM.Read(path_list, "mes_contr_2pts_SMSM_3", "P5P5", Sort_light_confs);
+  data_2pts_V1.Read(path_list, "mes_contr_2pts_SM_3", "V1V1", Sort_light_confs);
+  data_2pts_V2.Read(path_list, "mes_contr_2pts_SM_3", "V2V2", Sort_light_confs);
+  data_2pts_V3.Read(path_list, "mes_contr_2pts_SM_3", "V3V3", Sort_light_confs);
+  data_2pts_d_V1.Read(path_list, "mes_contr_2pts_SM_1", "V1V1", Sort_light_confs);
+  data_2pts_d_V2.Read(path_list, "mes_contr_2pts_SM_1", "V2V2", Sort_light_confs);
+  data_2pts_d_V3.Read(path_list, "mes_contr_2pts_SM_1", "V3V3", Sort_light_confs);
+  data_2pts_u_V1.Read(path_list, "mes_contr_2pts_SM_2", "V1V1" , Sort_light_confs);
+  data_2pts_u_V2.Read(path_list, "mes_contr_2pts_SM_2", "V2V2", Sort_light_confs);
+  data_2pts_u_V3.Read(path_list, "mes_contr_2pts_SM_2", "V3V3", Sort_light_confs);
+  data_2pts_u_T1.Read(path_list, "mes_contr_2pts_SM_2", "T1T1" , Sort_light_confs);
+  data_2pts_u_T2.Read(path_list, "mes_contr_2pts_SM_2", "T2T2", Sort_light_confs);
+  data_2pts_u_T3.Read(path_list, "mes_contr_2pts_SM_2", "T3T3", Sort_light_confs);
+  data_2pts_u_B1.Read(path_list, "mes_contr_2pts_SM_2", "B1B1" , Sort_light_confs);
+  data_2pts_u_B2.Read(path_list, "mes_contr_2pts_SM_2", "B2B2", Sort_light_confs);
+  data_2pts_u_B3.Read(path_list, "mes_contr_2pts_SM_2", "B3B3", Sort_light_confs);
+
+  //to evaluate f_J/Psi
+  data_2pts_loc_mc_T1.Read("../Bs_mumu_gamma_data/mc", "mes_contr_2pts_2", "T1T1", Sort_light_confs);
+  data_2pts_loc_mc_T2.Read("../Bs_mumu_gamma_data/mc", "mes_contr_2pts_2", "T2T2", Sort_light_confs);
+  data_2pts_loc_mc_T3.Read("../Bs_mumu_gamma_data/mc", "mes_contr_2pts_2", "T3T3", Sort_light_confs);
+
+
+  //axial
+  vector<vector<vector<data_t>>> C_A_Fu_data(size_mu_nu), C_A_Fd_data(size_mu_nu), C_A_Bu_data(size_mu_nu), C_A_Bd_data(size_mu_nu);
+  //vector
+  vector<vector<vector<data_t>>> C_V_Fu_data(size_mu_nu), C_V_Fd_data(size_mu_nu), C_V_Bu_data(size_mu_nu), C_V_Bd_data(size_mu_nu);
+  //TK
+  vector<vector<vector<data_t>>> C_TK_Fu_data(size_mu_nu), C_TK_Fd_data(size_mu_nu), C_TK_Bu_data(size_mu_nu), C_TK_Bd_data(size_mu_nu);
+  //BK
+  vector<vector<vector<data_t>>> C_BK_Fu_data(size_mu_nu), C_BK_Fd_data(size_mu_nu), C_BK_Bu_data(size_mu_nu), C_BK_Bd_data(size_mu_nu);
 
   for(int mu=0;mu<size_mu_nu;mu++) {
 
@@ -1497,97 +1733,60 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
   }
 
-  
-  int off_i = (Is_reph?1:0);
-  int off_T = 1;
-  
-
- 
-  //Read data
-
-  //2pts function
-
-  data_2pts.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_3", "P5P5", Sort_light_confs);
-  data_2pts_SM.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_SM_3", "P5P5", Sort_light_confs);
-  data_2pts_V1.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_3", "V1V1", Sort_light_confs);
-  data_2pts_V2.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_3", "V2V2", Sort_light_confs);
-  data_2pts_V3.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_3", "V3V3", Sort_light_confs);
-  data_2pts_d_V1.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_1", "V1V1", Sort_light_confs);
-  data_2pts_d_V2.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_1", "V2V2", Sort_light_confs);
-  data_2pts_d_V3.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_1", "V3V3", Sort_light_confs);
-  data_2pts_u_V1.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "V1V1" , Sort_light_confs);
-  data_2pts_u_V2.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "V2V2", Sort_light_confs);
-  data_2pts_u_V3.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "V3V3", Sort_light_confs);
-
-  data_2pts_u_T1.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "T1T1" , Sort_light_confs);
-  data_2pts_u_T2.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "T2T2", Sort_light_confs);
-  data_2pts_u_T3.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "T3T3", Sort_light_confs);
-
-  data_2pts_u_B1.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "B1B1" , Sort_light_confs);
-  data_2pts_u_B2.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "B2B2", Sort_light_confs);
-  data_2pts_u_B3.Read("../new_vph_gpu_data_w_123"+path_list, "mes_contr_2pts_2", "B3B3", Sort_light_confs);
-
-
-  //data_2pts_u should contain f_T/Jpsi
-  
-
   //read data
   for(int ixg=0;ixg<num_xg;ixg++) {
-
-
     for(int mu=0;mu<size_mu_nu;mu++) {
-
       for(int nu=0;nu<size_mu_nu;nu++) {
 
 	//vector
 	//Fu
-	C_V_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Fu_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Fd
-	C_V_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Fd_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bu
-	C_V_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Bu_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bd
-	C_V_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_V_Bd_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "V"+to_string(nu+off_i)+"P5", Sort_light_confs );
 
 	//axial
 	//Fu
-	C_A_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Fu_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Fd
-	C_A_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Fd_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bu
-	C_A_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
+	C_A_Bu_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
 	//Bd
-	C_A_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
-
+	C_A_Bd_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "A"+to_string(nu+off_i)+"P5", Sort_light_confs );
       }
-
       for(int nu=0;nu<size_mu_nu_T;nu++) {
 
 	//tensor electric part
 	//Fu
-	C_TK_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "T"+to_string(nu+off_T)+"P5", Sort_light_confs );
+	C_TK_Fu_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "T"+to_string(nu+off_T)+"P5", Sort_light_confs );
 	//Fd
-	C_TK_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "T"+to_string(nu+off_T)+"P5", Sort_light_confs );
+	C_TK_Fd_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "T"+to_string(nu+off_T)+"P5", Sort_light_confs );
 	//Bu
-	C_TK_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "T"+to_string(nu+off_T)+"P5", Sort_light_confs );
+	C_TK_Bu_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "T"+to_string(nu+off_T)+"P5", Sort_light_confs );
 	//Bd
-	C_TK_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "T"+to_string(nu+off_T)+"P5", Sort_light_confs );
-
-
+	C_TK_Bd_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "T"+to_string(nu+off_T)+"P5", Sort_light_confs );
 	//tensor magnetic part
 	//Fu
-	C_BK_Fu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "B"+to_string(nu+off_T)+"P5", Sort_light_confs );
+	C_BK_Fu_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_FF_u_ixg_"+to_string(ixg), "B"+to_string(nu+off_T)+"P5", Sort_light_confs );
 	//Fd
-	C_BK_Fd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "B"+to_string(nu+off_T)+"P5", Sort_light_confs );
+	C_BK_Fd_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_FF_d_ixg_"+to_string(ixg), "B"+to_string(nu+off_T)+"P5", Sort_light_confs );
 	//Bu
-	C_BK_Bu_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "B"+to_string(nu+off_T)+"P5", Sort_light_confs );
+	C_BK_Bu_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_BB_u_ixg_"+to_string(ixg), "B"+to_string(nu+off_T)+"P5", Sort_light_confs );
 	//Bd
-	C_BK_Bd_data[mu][nu][ixg].Read("../new_vph_gpu_data_w_123"+path_list, "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "B"+to_string(nu+off_T)+"P5", Sort_light_confs );
-	
-
+	C_BK_Bd_data[mu][nu][ixg].Read(path_list, "C_mu_"+to_string(mu+off_i)+"_BB_d_ixg_"+to_string(ixg), "B"+to_string(nu+off_T)+"P5", Sort_light_confs );
       }
     }
   }
+
+  //#######################################################################################################################################
+
+
+
+ 
 
   int Nens = data_2pts.size;
   GaussianMersenne GM(543543);
@@ -1608,9 +1807,9 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   distr_t_list ZT_list(UseJack);
   distr_t_list MP_ov_FP_list(UseJack);
   //resize
-
-  //
   distr_t_list FP_3pt(UseJack);
+
+  
   
   
   //define lambda function to combine FF and BB
@@ -1656,9 +1855,9 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
     
     ZT_A.distr.push_back( L_info_A.ZT_RI2 + GM_T()*L_info_A.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
-    ZT_B.distr.push_back( L_info_A.ZT_RI2 + GM_T()*L_info_A.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
-    ZT_C.distr.push_back( L_info_A.ZT_RI2 + GM_T()*L_info_A.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
-    ZT_D.distr.push_back( L_info_A.ZT_RI2 + GM_T()*L_info_A.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    ZT_B.distr.push_back( L_info_B.ZT_RI2 + GM_T()*L_info_B.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    ZT_C.distr.push_back( L_info_C.ZT_RI2 + GM_T()*L_info_C.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    ZT_D.distr.push_back( L_info_D.ZT_RI2 + GM_T()*L_info_D.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
     
 
   }
@@ -1696,10 +1895,10 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     //read theta values and loop over them
     Vfloat thetas, masses_u, masses_d, virts;
 
-    thetas= Read_From_File("../new_vph_gpu_data_w_123"+path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 1 , 5);
-    virts=  Read_From_File("../new_vph_gpu_data_w_123"+path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 2 , 5);
-    masses_u= Read_From_File("../new_vph_gpu_data_w_123"+path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 3 , 5);
-    masses_d= Read_From_File("../new_vph_gpu_data_w_123"+path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 4 , 5);
+    thetas= Read_From_File(path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 1 , 5);
+    virts=  Read_From_File(path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 2 , 5);
+    masses_u= Read_From_File(path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 3 , 5);
+    masses_d= Read_From_File(path_list+"/"+data_2pts.Tag[iens]+"/pars_list.dat", 4 , 5);
 
     cout<<"pars_list.dat: Read!"<<endl;
 
@@ -1739,36 +1938,84 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     cout<<"Number of kinematic analyzed: "<<num_xg<<endl;
     
     
-
-    
-   
-    
-    
-   
-   
-
     //set time interval for eff_mass_fit
+    
     if(data_2pts.Tag[iens].substr(1,1) =="A") {Corr.Tmin=19; Corr.Tmax=35;}
-    else if(data_2pts.Tag[iens] =="cB211b.072.64") {Corr.Tmin=25; Corr.Tmax=45;}
+    else if(data_2pts.Tag[iens] =="cB211b.072.64") {
+      Corr.Tmin=25; Corr.Tmax=45;
+      if(MESON=="B1s") { Corr.Tmin=24; Corr.Tmax=40;  }
+      else if(MESON=="B2s") { Corr.Tmin=22; Corr.Tmax=35;   }
+      else if (MESON=="B3s") {Corr.Tmin=22; Corr.Tmax=30;}
+      else if(MESON=="B4s") {Corr.Tmin=17; Corr.Tmax=25;}
+    }
     else if(data_2pts.Tag[iens] =="cB211b.072.96") {Corr.Tmin=25; Corr.Tmax=45;}
     else if(data_2pts.Tag[iens].substr(1,1) == "C") {Corr.Tmin=33;Corr.Tmax=51;}
     else if(data_2pts.Tag[iens].substr(1,1) == "D") {Corr.Tmin=35;Corr.Tmax=54;}
     else crash("In fixing [Tmin, Tmax] for MP, Ensemble: "+data_2pts.Tag[iens]+" not recognized");
 
-    distr_t_list pt2_distr= Corr.corr_t(data_2pts.col(0)[iens], "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt.dat");
-    distr_t_list eff_mass = Corr.effective_mass_t(pt2_distr, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass.dat");
-    distr_t_list fp_distr= Corr.decay_constant_t( pow( mu+md,2)*pt2_distr, "../data/ph_emission/"+ph_type_mes+"/"+"decay_const/"+data_2pts.Tag[iens]+"/decay_const.dat");
-    distr_t_list pt2_T_distr= -1*(1.0/3.0)*Corr.corr_t(summ_master(data_2pts_u_T1.col(0)[iens], data_2pts_u_T2.col(0)[iens], data_2pts_u_T3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C_T/"+data_2pts.Tag[iens]+"/corr_T_2pt.dat");
+    //distr_t_list pt2_distr= Corr.corr_t(data_2pts.col(0)[iens], "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt.dat");
+    //distr_t_list eff_mass = Corr.effective_mass_t(pt2_distr, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass.dat");
+    //distr_t_list fp_distr= Corr.decay_constant_t( pow( mu+md,2)*pt2_distr, "../data/ph_emission/"+ph_type_mes+"/"+"decay_const/"+data_2pts.Tag[iens]+"/decay_const.dat");
+    distr_t_list pt2_T_distr= -1*(1.0/3.0)*Corr.corr_t(summ_master(data_2pts_loc_mc_T1.col(0)[iens], data_2pts_loc_mc_T2.col(0)[iens], data_2pts_loc_mc_T3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C_T/"+data_2pts.Tag[iens]+"/corr_T_2pt.dat");
     distr_t_list pt2_B_distr= -1*(1.0/3.0)*Corr.corr_t(summ_master(data_2pts_u_B1.col(0)[iens], data_2pts_u_B2.col(0)[iens], data_2pts_u_B3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C_T/"+data_2pts.Tag[iens]+"/corr_B_2pt.dat");
     distr_t_list eff_mass_T= Corr.effective_mass_t(pt2_T_distr,"../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_T.dat");
     distr_t_list eff_mass_B= Corr.effective_mass_t(pt2_B_distr,"../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_B.dat"); 
     distr_t_list ft_distr= Corr.mel_ov_mass_t( pt2_T_distr, "../data/ph_emission/"+ph_type_mes+"/"+"decay_const/"+data_2pts.Tag[iens]+"/decay_const_T.dat");
 
-    distr_t M_P=Corr.Fit_distr(eff_mass);
-    distr_t F_P=Corr.Fit_distr(fp_distr);
-    distr_t F_T=Corr.Fit_distr(ft_distr);
-    //distr_t Z_T= fT_Jpsi_distr*a_distr/F_T;
+  
+
+
     
+   
+    
+    //set time interval for eff_mass_fit SM
+    if(data_2pts.Tag[iens].substr(1,1) =="A") {Corr.Tmin=24; Corr.Tmax=35;}
+    else if(data_2pts.Tag[iens] =="cB211b.072.64") {
+      if(MESON == "B1s" || MESON == "B2s") {Corr.Tmin=24; Corr.Tmax=35;}
+      else if(MESON=="B3s") {Corr.Tmin=18; Corr.Tmax=28;}
+      else if(MESON=="B4s") { Corr.Tmin=12; Corr.Tmax=20;}
+      else {Corr.Tmin=24; Corr.Tmax=35;}
+    }
+    else if(data_2pts.Tag[iens] =="cB211b.072.96") {Corr.Tmin=20; Corr.Tmax=36;}
+    else if(data_2pts.Tag[iens].substr(1,1) == "C")  {
+      if(MESON == "B1s" || MESON == "B2s") {Corr.Tmin=20; Corr.Tmax=30;}
+      else if(MESON=="B3s") {Corr.Tmin=18; Corr.Tmax=28;}
+      else if(MESON=="B4s") { Corr.Tmin=18; Corr.Tmax=25;}
+      else {Corr.Tmin=29; Corr.Tmax=42;}
+    }
+    else if(data_2pts.Tag[iens].substr(1,1) == "D")  {
+      if(MESON == "B1s" || MESON == "B2s") {Corr.Tmin=29; Corr.Tmax=36;}
+      else if(MESON == "B2s") { Corr.Tmin=29; Corr.Tmax= 36;}
+      else if(MESON=="B3s") {Corr.Tmin=28; Corr.Tmax=36;}
+      else if(MESON=="B4s") { Corr.Tmin=25; Corr.Tmax=34;}
+      else {Corr.Tmin=34; Corr.Tmax=46;}
+    }
+    else crash("In fixing [Tmin, Tmax] for smeared MP, Ensemble: "+data_2pts.Tag[iens]+" not recognized");
+    distr_t_list pt2_distr_SM= Corr.corr_t(data_2pts_SM.col(0)[iens], "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt_SM.dat");
+    distr_t_list eff_mass_SM = Corr.effective_mass_t(pt2_distr_SM, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_SM.dat");
+    distr_t_list pt2_distr_SMSM= Corr.corr_t(data_2pts_SMSM.col(0)[iens], "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt_SMSM.dat");
+    distr_t_list eff_mass_SMSM = Corr.effective_mass_t(pt2_distr_SMSM, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_SMSM.dat");
+    distr_t mel_SMSM= Corr.Fit_distr(Corr.mel_ov_mass_t(pt2_distr_SMSM, ""))/2.0;
+
+
+  
+
+
+   
+
+    
+    
+    distr_t M_P_SM = Corr.Fit_distr(eff_mass_SM);
+    distr_t M_P_SMSM = Corr.Fit_distr(eff_mass_SMSM);
+    auto SINH= [](double x) { return sinh(x);};
+    distr_t_list FP_SM_distr_list = (mu + md )*Corr.residue_t( pt2_distr_SM, "")/(M_P_SM*distr_t::f_of_distr(SINH, M_P_SM)*Corr.matrix_element_t(pt2_distr_SMSM, ""));
+    Print_To_File({}, {FP_SM_distr_list.ave(), FP_SM_distr_list.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"decay_const/"+data_2pts.Tag[iens]+"/decay_const_SM.dat.t", "", "");
+    distr_t FP_SM= Corr.Fit_distr( FP_SM_distr_list  );
+
+    distr_t M_P= M_P_SM;
+    distr_t F_P= FP_SM;
+    distr_t F_T=Corr.Fit_distr(ft_distr);
+       
     MP_list.distr_list.push_back(M_P/a_distr);
     FP_list.distr_list.push_back(F_P/a_distr);
     ZT_list.distr_list.push_back(Z_T);
@@ -1777,28 +2024,18 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       MP_list_red.distr_list.push_back(M_P/a_distr);
     }
 
-
-    
+    distr_t ZZT = fT_Jpsi_distr*a_distr/F_T;
    
-    
-    //set time interval for eff_mass_fit SM
-    if(data_2pts.Tag[iens].substr(1,1) =="A") {Corr.Tmin=24; Corr.Tmax=35;}
-    else if(data_2pts.Tag[iens] =="cB211b.072.64") {Corr.Tmin=20; Corr.Tmax=36;}
-    else if(data_2pts.Tag[iens] =="cB211b.072.96") {Corr.Tmin=20; Corr.Tmax=36;}
-    else if(data_2pts.Tag[iens].substr(1,1) == "C")  {Corr.Tmin=33;Corr.Tmax=51;}
-    else if(data_2pts.Tag[iens].substr(1,1) == "D")  {Corr.Tmin=41;Corr.Tmax=54;}
-    else crash("In fixing [Tmin, Tmax] for smeared MP, Ensemble: "+data_2pts.Tag[iens]+" not recognized");
-    distr_t_list pt2_distr_SM= Corr.corr_t(data_2pts_SM.col(0)[iens], "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt_SM.dat");
-    distr_t_list eff_mass_SM = Corr.effective_mass_t(pt2_distr_SM, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_SM.dat");
-    distr_t M_P_SM = Corr.Fit_distr(eff_mass_SM);
-
+    distr_t RF= (a_distr/FP_SM);
 
     cout<<"aM_P: "<<M_P.ave()<<" +- "<<M_P.err()<<" -> "<< (M_P/(a_distr)).ave()<<" +- "<<(M_P/a_distr).err()<<" GeV"<<endl;
     cout<<"aF_P: "<<F_P.ave()<<" +- "<<F_P.err()<<" -> "<< (F_P/(a_distr)).ave()<<" +- "<<(F_P/a_distr).err()<<" GeV"<<endl;
+    cout<<"aF_P(SM): " << FP_SM.ave() << " +- " << FP_SM.err() << " -> "<< (FP_SM/(a_distr)).ave()<<" +- "<<(FP_SM/a_distr).err()<<" GeV"<< endl;
     cout<<"MP/FP: "<<(M_P/F_P).ave()<<" +- "<<(M_P/F_P).err()<<endl;
     cout<<"aM_P(SM): "<<M_P_SM.ave()<<" +- "<<M_P_SM.err()<<" -> "<< (M_P_SM/(a_distr)).ave()<<" +- "<<(M_P_SM/a_distr).err()<<" GeV"<<endl;
+    cout<<"aM_P(SMSM): "<<M_P_SMSM.ave()<<" +- "<<M_P_SMSM.err()<<" -> "<<(M_P_SMSM/a_distr).ave()<<" +- "<<(M_P_SMSM/a_distr).err()<<" GeV"<<endl;
     cout<<"MP/FP: "<<(M_P/F_P).ave()<<" +- "<<(M_P/F_P).err()<<endl;
-
+    cout<<"Ensemble: "<<data_2pts.Tag[iens]<<" ZT(ETMC): "<<Z_T.ave()<<" +- "<<Z_T.err()<<" from F_T: "<<ZZT.ave()<<" +- "<<ZZT.err()<<endl;
 
 
     //vector ud meson
@@ -1811,13 +2048,17 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     distr_t_list dd_vector_distr= (1.0/3.0)*Corr.corr_t(summ_master(data_2pts_d_V1.col(0)[iens], data_2pts_d_V2.col(0)[iens], data_2pts_d_V3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt_V_dd.dat");
     distr_t_list eff_mass_V_dd= Corr.effective_mass_t(dd_vector_distr, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_V_dd.dat");
 
+    //#######################
+    
+    //#######################
+
 
     //define meson mass exponential to be removed
     auto EXP_MES_FUNC = [&] (double a, double b, double c) { return (b<c/2)?1.0/(exp(-a*b)):1.0/(exp(-a*(c-b)));};
 
-    distr_t_list EXP_MES= distr_t_list::f_of_distr( EXP_MES_FUNC, M_P, Corr.Nt);
+    distr_t_list EXP_MES= distr_t_list::f_of_distr( EXP_MES_FUNC, M_P_SMSM, Corr.Nt);
 
-  //for FV and FA
+    //for FV and FA
     vector<vector<vector<distr_t_list>>> Ax_glb, Vec_glb, Ax_u_glb, Ax_d_glb, Vec_u_glb, Vec_d_glb, Ax_Ds_glb, Ax_Ds_u_glb, Ax_Ds_d_glb;
     distr_t_list FV(UseJack), FA(UseJack), FV_u(UseJack), FV_d(UseJack), FA_u(UseJack), FA_d(UseJack);
     //for FV_T and FA_T
@@ -1895,9 +2136,6 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       cout<<"kz: "<<kz<<endl;
 
       
-
-    
-    
 
       //define vectors to combine FF and BB
       Vfloat th_FF(Corr.Nt);
@@ -1993,6 +2231,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 	  //restore standard reflection sign
 	  Corr.Reflection_sign=1;
 
+
+	
 
 	  //get H tensor
 	  distr_t_list HA_u= ax_u*EXP_MES*EXP_PH;
@@ -2233,12 +2473,6 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 	  Vec_T_tens_d[mu].push_back(vec_T_d_symm);
 	  
 
-	  
-
-
-
-
-
 	}
       }
 
@@ -2261,142 +2495,92 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       Ax_Ds_u_glb.push_back(Ax_Ds_tens_u);
       Ax_Ds_d_glb.push_back(Ax_Ds_tens_d);
 
-      //Compute FV and FA
-      distr_t_list FA0_distr= 0.5*(Ax_Ds_glb[0][1-off_i][1-off_i] + Ax_Ds_glb[0][2-off_i][2-off_i]);
-      distr_t_list FA_distr = -1.0*(0.5*(Ax_tens[1-off_i][1-off_i] + Ax_tens[2-off_i][2-off_i])*EXP_PH - 0.0*FA0_distr)*(1.0/Eg)*(F_P/(-1.0*FA0_distr));
-      distr_t_list FV_distr = 0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH/kz;
-      distr_t_list FV_sub_distr= 0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH - (Vec_glb[0][1-off_i][2-off_i] + Vec_glb[0][2-off_i][1-off_i])*1.0)/kz;
-      //compute FV and FA (up-component)
-      distr_t_list FA0_u_distr= 0.5*(Ax_u_glb[0][1-off_i][1-off_i] + Ax_u_glb[0][2-off_i][2-off_i]);
-      distr_t_list FA_u_distr = -1.0*(0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH - Qu*FA0_distr)*(1.0/Eg)*(F_P/(-1.0*FA0_distr));
-      distr_t_list FV_u_distr = 0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH/kz;
-      distr_t_list FV_u_sub_distr= 0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH - (Vec_u_glb[0][1-off_i][2-off_i] + Vec_u_glb[0][2-off_i][1-off_i])*1.0)/kz;
-      //compute FV and FA (d-component)
-      distr_t_list FA0_d_distr= 0.5*(Ax_d_glb[0][1-off_i][1-off_i] + Ax_d_glb[0][2-off_i][2-off_i]);
-      distr_t_list FA_d_distr = -1.0*(0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH - Qd*FA0_distr)*(1.0/Eg)*(F_P/(-1.0*FA0_distr));
-      distr_t_list FV_d_distr = 0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH/kz;
-      distr_t_list FV_d_sub_distr= 0.5*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH - (Vec_d_glb[0][1-off_i][2-off_i] + Vec_d_glb[0][2-off_i][1-off_i])*1.0)/kz;
-
       
 
+      //Compute FV and FA
+      distr_t_list FA0_distr= 0.5*RF*(Ax_Ds_glb[0][1-off_i][1-off_i] + Ax_Ds_glb[0][2-off_i][2-off_i]);
+      distr_t_list FA_distr = -1.0*RF*(0.5*(Ax_tens[1-off_i][1-off_i] + Ax_tens[2-off_i][2-off_i])*EXP_PH - 0.0*FA0_distr)*(1.0/Eg)*(F_P/(-1.0*FA0_distr));
+      distr_t_list FV_distr = 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH/kz;
+      distr_t_list FV_sub_distr= 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH - (Vec_glb[0][1-off_i][2-off_i] + Vec_glb[0][2-off_i][1-off_i])*1.0)/kz;
+      //compute FV and FA (up-component)
+      distr_t_list FA0_u_distr= 0.5*RF*(Ax_u_glb[0][1-off_i][1-off_i] + Ax_u_glb[0][2-off_i][2-off_i]);
+      distr_t_list FA_u_distr = -1.0*RF*(0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH - Qu*FA0_distr)*(1.0/Eg)*(F_P/(-1.0*FA0_distr));
+      distr_t_list FA_u_new_distr= -1.0*RF*Zv*(0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH - Qu*FA0_distr)*(1.0/(Eg*mel_SMSM))*EXP_MES;
+      distr_t_list FV_u_distr = 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH/kz;
+      distr_t_list FV_u_new_distr = (0.5*RF*Za*( Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH/(kz*mel_SMSM))*EXP_MES;
+      distr_t_list FV_u_sub_distr= 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH - (Vec_u_glb[0][1-off_i][2-off_i] + Vec_u_glb[0][2-off_i][1-off_i])*1.0)/kz;
+      //compute FV and FA (d-component)
+      distr_t_list FA0_d_distr= 0.5*RF*(Ax_d_glb[0][1-off_i][1-off_i] + Ax_d_glb[0][2-off_i][2-off_i]);
+      distr_t_list FA_d_distr = -1.0*RF*(0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH - Qd*FA0_distr)*(1.0/Eg)*(F_P/(-1.0*FA0_distr));
+      distr_t_list FA_d_new_distr= -1.0*RF*Zv*(0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH - Qd*FA0_distr)*(1.0/(Eg*mel_SMSM))*EXP_MES;
+      distr_t_list FV_d_distr = 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH/kz;
+      distr_t_list FV_d_new_distr=   (0.5*RF*Za*( Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH/(kz*mel_SMSM))*EXP_MES;
+      distr_t_list FV_d_sub_distr= 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH - (Vec_d_glb[0][1-off_i][2-off_i] + Vec_d_glb[0][2-off_i][1-off_i])*1.0)/kz;
+
+      
+      
       //Print FV and FA
       Print_To_File({}, {FA_distr.ave(), FA_distr.err(), FA0_distr.ave(), FA0_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {FV_distr.ave(), FV_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {FV_sub_distr.ave(), FV_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
 
       //Print FV and FA (up-component)
-      Print_To_File({}, {FA_u_distr.ave(), FA_u_distr.err(), FA0_u_distr.ave(), FA0_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
-      Print_To_File({}, {FV_u_distr.ave(), FV_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_u_distr.ave(), FA_u_distr.err(), FA_u_new_distr.ave(), FA_u_new_distr.err(),  FA0_u_distr.ave(), FA0_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FV_u_distr.ave(), FV_u_distr.err(), FV_u_new_distr.ave(), FV_u_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {FV_u_sub_distr.ave(), FV_u_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       
       //Print FV and FA (d-component)
-      Print_To_File({}, {FA_d_distr.ave(), FA_d_distr.err(), FA0_d_distr.ave(), FA0_d_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
-      Print_To_File({}, {(FV_d_distr).ave(), (FV_d_distr).err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_d_distr.ave(), FA_d_distr.err(), FA_d_new_distr.ave(), FA_d_new_distr.err(),  FA0_d_distr.ave(), FA0_d_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {(FV_d_distr).ave(), (FV_d_distr).err(), FV_d_new_distr.ave(), FV_d_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {(FV_d_sub_distr).ave(), (FV_d_sub_distr).err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
 
       //fit the form factors
 
+
+      
       //set interval depending on xg
       int Tmin_V, Tmax_V, Tmin_A, Tmax_A;
-        
+      if(xg.ave() > 1e-10) {
+      //set time intervals for each heavy mass
+      //FA_u
+      Get_Bs_Mh_Tmin_Tmax("FAu",MESON, Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
+      Corr.Tmin = Tmin_A; Corr.Tmax= Tmax_A;
+      distr_t FA_u_fit= Corr.Fit_distr(FA_u_new_distr);
+      FA_u.distr_list.push_back(FA_u_fit);
+      FA_u_per_kin[ixg-1].distr_list.push_back(FA_u_fit);
+      ax_u_Tmin.push_back( Corr.Tmin); ax_u_Tmax.push_back( Corr.Tmax);
+      //FA_d
+      Get_Bs_Mh_Tmin_Tmax("FAd",MESON, Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
+      Corr.Tmin = Tmin_A; Corr.Tmax= Tmax_A;
+      distr_t FA_d_fit= Corr.Fit_distr(FA_d_new_distr);
+      FA_d.distr_list.push_back(FA_d_fit);
+      FA_d_per_kin[ixg-1].distr_list.push_back(FA_d_fit);
+      ax_d_Tmin.push_back( Corr.Tmin); ax_d_Tmax.push_back( Corr.Tmax);
+      ax_Tmin.push_back( Corr.Tmin); ax_Tmax.push_back( Corr.Tmax);
+      FA.distr_list.push_back( FA_u_fit+ FA_d_fit);
+      FA_per_kin[ixg-1].distr_list.push_back( FA_u_fit + FA_d_fit);
 
-
-      //axial
-      //Corr.Tmin= Tmin_A; Corr.Tmax= Tmax_A;
-      if(xg.ave() > 1e-10) { //exclude xg=0
-	    Get_Bs_Tmin_Tmax("A", Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
-	    Corr.Tmin=Tmin_A+shift; Corr.Tmax=Tmax_A+shift;
-	    FA.distr_list.push_back( Corr.Fit_distr(FA_distr));
-	    FA_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_distr));
-	    ax_Tmin.push_back(Tmin_A+shift);
-	    ax_Tmax.push_back(Tmax_A+shift);
-
-	    //shift u-contrib by 0.1 fm
-	    int shift_u = (int)(0.1/(a_distr.ave()/fmTGeV));
-	    if(data_2pts.Tag[iens].substr(1,1)=="D") shift_u +=1;
-	    
-	    Get_Bs_Tmin_Tmax("A", Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
-
-	    if(xg.ave() > 0.75) {
-	      shift_u=0;
-	      Tmin_A= (int)(1.7/(a_distr.ave()/fmTGeV));
-	      Tmax_A= (int)(2.1/(a_distr.ave()/fmTGeV));
-	    }
-	    
-	    Corr.Tmin=Tmin_A+shift+shift_u; Corr.Tmax=Tmax_A+shift+shift_u;
-	    FA_u.distr_list.push_back(Corr.Fit_distr(FA_u_distr));
-	    FA_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_u_distr));
-	    ax_u_Tmin.push_back(Tmin_A+shift+shift_u);
-	    ax_u_Tmax.push_back(Tmax_A+shift+shift_u);
-
-	    //shift s-contrib by 0.1 fm
-	    int shift_d= 0;
-	    if(xg.ave() < 0.85) {
-	      shift_d = (int)(0.1/(a_distr.ave()/fmTGeV));
-	    }
-	    
-	    Get_Bs_Tmin_Tmax("A", Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
-	    Corr.Tmin=Tmin_A+shift+shift_d; Corr.Tmax=Tmax_A+shift+shift_d;
-	    FA_d.distr_list.push_back(Corr.Fit_distr(FA_d_distr));
-	    FA_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_d_distr));
-	    ax_d_Tmin.push_back(Tmin_A+shift+shift_d);
-	    ax_d_Tmax.push_back(Tmax_A+shift+shift_d);
-	  
+      //FV_u
+      Get_Bs_Mh_Tmin_Tmax("FVu",MESON, Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
+      Corr.Tmin = Tmin_V; Corr.Tmax= Tmax_V;
+      distr_t FV_u_fit= Corr.Fit_distr(FV_u_new_distr);
+      FV_u.distr_list.push_back(FV_u_fit);
+      FV_u_per_kin[ixg-1].distr_list.push_back(FV_u_fit);
+      vec_u_Tmin.push_back( Corr.Tmin); vec_u_Tmax.push_back( Corr.Tmax);
+      //FV_d
+      Get_Bs_Mh_Tmin_Tmax("FVd",MESON, Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
+      Corr.Tmin = Tmin_V; Corr.Tmax= Tmax_V;
+      distr_t FV_d_fit= Corr.Fit_distr(FV_d_new_distr);
+      FV_d.distr_list.push_back(FV_d_fit);
+      FV_d_per_kin[ixg-1].distr_list.push_back(FV_d_fit);
+      vec_d_Tmin.push_back( Corr.Tmin); vec_d_Tmax.push_back( Corr.Tmax);
+      vec_Tmin.push_back( Corr.Tmin); vec_Tmax.push_back( Corr.Tmax);
+      FV.distr_list.push_back( FV_u_fit+ FV_d_fit);
+      FV_per_kin[ixg-1].distr_list.push_back( FV_u_fit + FV_d_fit);
       }
-      //vector
-      if(xg.ave() > 1e-10) { //exclude xg=0
-	Get_Bs_Tmin_Tmax("V", Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
-	Corr.Tmin= Tmin_V+shift; Corr.Tmax= Tmax_V+shift;
-	FV.distr_list.push_back( Corr.Fit_distr(FV_distr));
-	FV_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_distr));
-	vec_Tmin.push_back(Tmin_V+shift);
-	vec_Tmax.push_back(Tmax_V+shift);
 
-	//shift u-contrib by 0.4 fm
-	int shift_u=0;
-	if(xg.ave()< 0.25) {
-	  shift_u = (int)(0.4/(a_distr.ave()/fmTGeV));
-	  if(data_2pts.Tag[iens].substr(1,1)=="A") shift_u +=3;
-	}
-	else if(xg.ave() < 0.45) {	  
-	   shift_u = (int)(0.4/(a_distr.ave()/fmTGeV));
-	   if(data_2pts.Tag[iens].substr(1,1)=="A") shift_u +=1;
-	   else if(data_2pts.Tag[iens].substr(1,1)=="D") shift_u -= 3;	  
-	}
-	
-	
-	Get_Bs_Tmin_Tmax("V", Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
 
-	if( xg.ave() > 0.75) {
-	  shift_u=0;
-	  Tmin_V = (int)(1.4/(a_distr.ave()/fmTGeV));
-	  Tmax_V = (int)(2.2/(a_distr.ave()/fmTGeV));
 
-	}
-	
-	Corr.Tmin= Tmin_V+shift+shift_u; Corr.Tmax= Tmax_V+shift+shift_u;	
-	FV_u.distr_list.push_back( Corr.Fit_distr(FV_u_distr));
-	FV_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_u_distr));
-	vec_u_Tmin.push_back(Tmin_V+shift+shift_u);
-	vec_u_Tmax.push_back(Tmax_V+shift+shift_u);
-
-	//shift s-contrib by 0.3 fm
-	int shift_d=0;
-	if(xg.ave() < 0.55) {
-	  shift_d = (int)(0.3/(a_distr.ave()/fmTGeV));
-	}
-	else if (xg.ave() < 0.85) {
-	  shift_d = (int)(0.1/(a_distr.ave()/fmTGeV));
-	}
-
-	
-	Get_Bs_Tmin_Tmax("V", Tmin_V, Tmax_V, ixg, data_2pts.Tag[iens]);
-	Corr.Tmin= Tmin_V+shift+shift_d; Corr.Tmax= Tmax_V+shift+shift_d;
-	FV_d.distr_list.push_back( Corr.Fit_distr(FV_d_distr));
- 	FV_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_d_distr));
-	vec_d_Tmin.push_back(Tmin_V+shift+shift_d);
-	vec_d_Tmax.push_back(Tmax_V+shift+shift_d);
-      }
 
 
       //######################################################################################################################
@@ -2417,16 +2601,22 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       //RIGHT ONE IS sign_kz = -1;
       double sign_kz= -1;
       //Compute FV and FA
-      distr_t_list FA_T_distr =0.5*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( Ax_T_tens[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens[1-off_i][2-off_T]*(xg/2) + Ax_T_tens[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
-      distr_t_list FV_T_distr = 0.5*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_T_tens[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
+      distr_t_list FA_T_distr =0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( Ax_T_tens[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens[1-off_i][2-off_T]*(xg/2) + Ax_T_tens[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
+      distr_t_list FV_T_distr = 0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_T_tens[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
       
       //compute FV and FA (up-component)
-      distr_t_list FA_T_u_distr =0.5*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( Ax_T_tens_u[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_u[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_u[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_u[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
-      distr_t_list FV_T_u_distr = 0.5*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_T_tens_u[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_u[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_u[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_u[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
+      distr_t_list FA_T_u_distr =0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( Ax_T_tens_u[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_u[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_u[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_u[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
+      distr_t_list FV_T_u_distr = 0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_T_tens_u[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_u[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_u[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_u[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
+      //improved estimator
+      distr_t_list FA_T_u_new_distr =(0.5*RF*(Z_T)*( Ax_T_tens_u[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_u[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_u[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_u[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
+      distr_t_list FV_T_u_new_distr = (0.5*RF*(Z_T)*( (Vec_T_tens_u[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_u[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_u[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_u[2-off_i][2-off_T]*(xg/2)))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
 
       //compute FV and FA (d-component)
-      distr_t_list FA_T_d_distr =0.5*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
-      distr_t_list FV_T_d_distr = 0.5*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_T_tens_d[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_d[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_d[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_d[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
+      distr_t_list FA_T_d_distr =0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
+      distr_t_list FV_T_d_distr = 0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_T_tens_d[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_d[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_d[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_d[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
+      //improved estimator
+      distr_t_list FA_T_d_new_distr =(0.5*RF*(Z_T)*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
+      distr_t_list FV_T_d_new_distr = (0.5*RF*(Z_T)*( (Vec_T_tens_d[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_d[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_d[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_d[2-off_i][2-off_T]*(xg/2)))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
 
    
       //Print FV and FA
@@ -2435,185 +2625,62 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       //Print_To_File({}, {FV_sub_distr.ave(), FV_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_T_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
 
       //Print FV and FA (up-component)
-      Print_To_File({}, {FA_T_u_distr.ave(), FA_T_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
-      Print_To_File({}, {FV_T_u_distr.ave(), FV_T_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_T_u_distr.ave(), FA_T_u_distr.err(), FA_T_u_new_distr.ave(), FA_T_u_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FV_T_u_distr.ave(), FV_T_u_distr.err(), FV_T_u_new_distr.ave(), FV_T_u_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       //Print_To_File({}, {FV_T_u_sub_distr.ave(), FV_T_u_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_T_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       
       //Print FV and FA (d-component)
-      Print_To_File({}, {FA_T_d_distr.ave(), FA_T_d_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
-      Print_To_File({}, {(FV_T_d_distr).ave(), (FV_T_d_distr).err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_T_d_distr.ave(), FA_T_d_distr.err(), FA_T_d_new_distr.ave(), FA_T_d_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {(FV_T_d_distr).ave(), (FV_T_d_distr).err(), FV_T_d_new_distr.ave(), FV_T_d_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       // Print_To_File({}, {(FV_T_d_sub_distr).ave(), (FV_T_d_sub_distr).err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_T_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
 
       //fit the form factors
 
       //set interval depending on xg
       int Tmin_T_V, Tmax_T_V, Tmin_T_A, Tmax_T_A;
-        
+      
+      if(xg.ave() > 1e-10) {
+      //set time intervals for each heavy mass
+      //FA_T_u
+      Get_Bs_Mh_Tmin_Tmax("FA_Tu",MESON, Tmin_T_A, Tmax_T_A, ixg, data_2pts.Tag[iens]);
+      Corr.Tmin = Tmin_T_A; Corr.Tmax= Tmax_T_A;
+      distr_t FA_T_u_fit= Corr.Fit_distr(FA_T_u_new_distr);
+      FA_T_u.distr_list.push_back(FA_T_u_fit);
+      FA_T_u_per_kin[ixg-1].distr_list.push_back(FA_T_u_fit);
+      ax_T_u_Tmin.push_back( Corr.Tmin); ax_T_u_Tmax.push_back( Corr.Tmax);
+      //FA_T_d
+      Get_Bs_Mh_Tmin_Tmax("FA_Td", MESON, Tmin_T_A, Tmax_T_A, ixg, data_2pts.Tag[iens]);
+      Corr.Tmin = Tmin_T_A; Corr.Tmax= Tmax_T_A;
+      distr_t FA_T_d_fit= Corr.Fit_distr(FA_T_d_new_distr);
+      FA_T_d.distr_list.push_back(FA_T_d_fit);
+      FA_T_d_per_kin[ixg-1].distr_list.push_back(FA_T_d_fit);
+      ax_T_d_Tmin.push_back( Corr.Tmin); ax_T_d_Tmax.push_back( Corr.Tmax);
+      ax_T_Tmin.push_back( Corr.Tmin); ax_T_Tmax.push_back( Corr.Tmax);
+      FA_T.distr_list.push_back( FA_T_u_fit+ FA_T_d_fit);
+      FA_T_per_kin[ixg-1].distr_list.push_back( FA_T_u_fit + FA_T_d_fit);
 
-
-      //axial
-      //Corr.Tmin= Tmin_T_A; Corr.Tmax= Tmax_T_A;
-      if(xg.ave() > 1e-10) { //exclude xg=0
-	    Get_Bs_Tmin_Tmax("A", Tmin_T_A, Tmax_T_A, ixg, data_2pts.Tag[iens]);
-	    if( (xg.ave() > 0.1) && (data_2pts.Tag[iens].substr(1,1) == "C")) {Tmin_T_A -= 2;}
-	    Corr.Tmin=Tmin_T_A+shift; Corr.Tmax=Tmax_T_A+shift;
-	    FA_T.distr_list.push_back( Corr.Fit_distr(FA_T_distr));
-	    FA_T_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_T_distr));
-	    ax_T_Tmin.push_back(Tmin_T_A+shift);
-	    ax_T_Tmax.push_back(Tmax_T_A+shift);
-	    int dt_min=0; int dt_max=0;
-	    //shift u-contrib by 0.1 fm
-	    int shift_u = (int)(0.1/(a_distr.ave()/fmTGeV));
-	    if(data_2pts.Tag[iens].substr(1,1)=="D") shift_u +=1;
-	    
-	    Get_Bs_Tmin_Tmax("A", Tmin_T_A, Tmax_T_A, ixg, data_2pts.Tag[iens]);
-
-	    if(xg.ave() > 0.75) {
-	      shift_u=0;
-	      Tmin_T_A= (int)(1.7/(a_distr.ave()/fmTGeV));
-	      Tmax_T_A= (int)(2.1/(a_distr.ave()/fmTGeV));
-	    }
-
-	    if(xg.ave() < 0.11) {
-	      if(data_2pts.Tag[iens].substr(1,1) == "B") { dt_min = -2; dt_max=-2;}
-	      else if(data_2pts.Tag[iens].substr(1,1) == "C" || data_2pts.Tag[iens].substr(1,1) == "D") { dt_min= -3; dt_max=-3;}
-	     
-	    }
-	    
-	    Corr.Tmin=Tmin_T_A+shift+shift_u+dt_min; Corr.Tmax=Tmax_T_A+shift+shift_u+dt_max;
-	    FA_T_u.distr_list.push_back(Corr.Fit_distr(FA_T_u_distr));
-	    FA_T_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_T_u_distr));
-	    ax_T_u_Tmin.push_back(Corr.Tmin);
-	    ax_T_u_Tmax.push_back(Corr.Tmax);
-
-	    //shift s-contrib by 0.1 fm
-	    int shift_d= 0;
-	    if(xg.ave() < 0.75) {
-	      shift_d = (int)(0.1/(a_distr.ave()/fmTGeV));
-	    }
-
-	    dt_min=0; dt_max=0;
-	    if(xg.ave() < 0.21 && data_2pts.Tag[iens].substr(1,1) == "B") { dt_min=-1;}
-	    if( (xg.ave() > 0.11 && xg.ave() < 0.31 ) && data_2pts.Tag[iens].substr(1,1) == "D" ) { dt_min=1; dt_max=1;}
-	    
-	    Get_Bs_Tmin_Tmax("A", Tmin_T_A, Tmax_T_A, ixg, data_2pts.Tag[iens]);
-	    Corr.Tmin=Tmin_T_A+shift+shift_d+dt_min; Corr.Tmax=Tmax_T_A+shift+shift_d+dt_max;
-	    FA_T_d.distr_list.push_back(Corr.Fit_distr(FA_T_d_distr));
-	    FA_T_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FA_T_d_distr));
-	    ax_T_d_Tmin.push_back(Corr.Tmin);
-	    ax_T_d_Tmax.push_back(Corr.Tmax);
-	  
+      //FV_T_u
+      Get_Bs_Mh_Tmin_Tmax("FV_Tu", MESON, Tmin_T_V, Tmax_T_V, ixg, data_2pts.Tag[iens]);
+      Corr.Tmin = Tmin_T_V; Corr.Tmax= Tmax_T_V;
+      distr_t FV_T_u_fit= Corr.Fit_distr(FV_T_u_new_distr);
+      FV_T_u.distr_list.push_back(FV_T_u_fit);
+      FV_T_u_per_kin[ixg-1].distr_list.push_back(FV_T_u_fit);
+      vec_T_u_Tmin.push_back( Corr.Tmin); vec_T_u_Tmax.push_back( Corr.Tmax);
+      //FV_T_d
+      Get_Bs_Mh_Tmin_Tmax("FV_Td", MESON, Tmin_T_V, Tmax_T_V, ixg, data_2pts.Tag[iens]);
+      Corr.Tmin = Tmin_T_V; Corr.Tmax= Tmax_T_V;
+      distr_t FV_T_d_fit= Corr.Fit_distr(FV_T_d_new_distr);
+      FV_T_d.distr_list.push_back(FV_T_d_fit);
+      FV_T_d_per_kin[ixg-1].distr_list.push_back(FV_T_d_fit);
+      vec_T_d_Tmin.push_back( Corr.Tmin); vec_T_d_Tmax.push_back( Corr.Tmax);
+      vec_T_Tmin.push_back( Corr.Tmin); vec_T_Tmax.push_back( Corr.Tmax);
+      FV_T.distr_list.push_back( FV_T_u_fit+ FV_T_d_fit);
+      FV_T_per_kin[ixg-1].distr_list.push_back( FV_T_u_fit + FV_T_d_fit);
       }
-      //vector
-      if(xg.ave() > 1e-10) { //exclude xg=0
-	Get_Bs_Tmin_Tmax("V", Tmin_T_V, Tmax_T_V, ixg, data_2pts.Tag[iens]);
-	int shift_T=0;
-	if( (xg.ave() < 0.31) && (xg.ave() > 0.09) ) shift_T=6;
-	if( xg.ave() > 0.55 && data_2pts.Tag[iens].substr(1,1) != "A") shift_T = -3;
-	Corr.Tmin= Tmin_T_V+shift+shift_T; Corr.Tmax= Tmax_T_V+shift+shift_T;
 
-	  
-	FV_T.distr_list.push_back( Corr.Fit_distr(FV_T_distr));
-	FV_T_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_T_distr));
-	vec_T_Tmin.push_back(Tmin_T_V+shift+shift_T);
-	vec_T_Tmax.push_back(Tmax_T_V+shift+shift_T);
-	int dt_min=0; int dt_max=0;
-
-	//shift u-contrib by 0.4 fm
-	int shift_u=0;
-	int shift_u_max=0;
-	if(xg.ave()< 0.25) {
-	  shift_u = (int)(0.4/(a_distr.ave()/fmTGeV)) + 4;
-	  if(data_2pts.Tag[iens].substr(1,1)=="A") shift_u +=3;
-	  else if(data_2pts.Tag[iens].substr(1,1) == "D") shift_u = 9;
-	  else if(data_2pts.Tag[iens].substr(1,1) == "C") shift_u -= 1;
-	}
-	else if(xg.ave()< 0.35) {
-	   shift_u = (int)(0.4/(a_distr.ave()/fmTGeV));
-	   if(data_2pts.Tag[iens].substr(1,1)=="A") shift_u -=1;
-	   else if(data_2pts.Tag[iens].substr(1,1)=="D") shift_u -= 5;
-	   else if(data_2pts.Tag[iens].substr(1,1)=="C") shift_u -= 3 ;
-	   
-	   shift_u += 3;
-	}
-	else if(xg.ave() < 0.45) {	  
-	   shift_u = (int)(0.4/(a_distr.ave()/fmTGeV));
-	   if(data_2pts.Tag[iens].substr(1,1)=="A") shift_u -=2;
-	   else if(data_2pts.Tag[iens].substr(1,1)=="D") shift_u -= 3;
-	   else if(data_2pts.Tag[iens].substr(1,1)=="C") {shift_u -= 4 ; shift_u_max=4;}
-	   else {shift_u -= 3 ; shift_u_max=3;}
-	}
-	else if(xg.ave() < 0.65) {
-
-	  if(data_2pts.Tag[iens].substr(1,1)=="C") { shift_u -= 4; shift_u_max= 4;}
-
-	}
-	
-	
-	Get_Bs_Tmin_Tmax("V", Tmin_T_V, Tmax_T_V, ixg, data_2pts.Tag[iens]);
-
-	if( xg.ave() > 0.75) {
-	  shift_u=0;
-	  Tmin_T_V = (int)(1.4/(a_distr.ave()/fmTGeV));
-	  Tmax_T_V = (int)(2.2/(a_distr.ave()/fmTGeV));
-
-	}
+      
 
 
-	
-	Corr.Tmin= Tmin_T_V+shift+shift_u+dt_min; Corr.Tmax= Tmax_T_V+shift+shift_u+shift_u_max+dt_max;	
-	FV_T_u.distr_list.push_back( Corr.Fit_distr(FV_T_u_distr));
-	FV_T_u_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_T_u_distr));
-	vec_T_u_Tmin.push_back(Corr.Tmin);
-	vec_T_u_Tmax.push_back(Corr.Tmax);
-
-	dt_min=0; dt_max=0;
-
-	//shift s-contrib by 0.3 fm
-	int shift_d=0;
-	if(xg.ave() < 0.12) {
-	  shift_d = (int)(0.3/(a_distr.ave()/fmTGeV)) -3;
-	}
-	else if(xg.ave() < 0.22) {
-	  shift_d = (int)(0.3/(a_distr.ave()/fmTGeV));
-	  if(data_2pts.Tag[iens].substr(1,1) != "A") shift_u -= 3;
-	}
-        else if(xg.ave() < 0.55) {
-	  shift_d = (int)(0.3/(a_distr.ave()/fmTGeV));
-	}
-	else if (xg.ave() < 0.85) {
-	  shift_d = (int)(0.1/(a_distr.ave()/fmTGeV));
-	}
-
-	if( (xg.ave() < 0.21) && (xg.ave() > 0.09) ) shift_d  +=6;  
-	if( data_2pts.Tag[iens].substr(1,1) == "A") {
-	  if(xg.ave() > 0.38 && xg.ave() < 0.56 ) shift_d -= 6;
-	  else shift_d -=2;
-	  
-	}
-
-	if( (xg.ave() < 0.11) && data_2pts.Tag[iens].substr(1,1) == "A") {dt_min=1; dt_max=1;}
-
-	if( ((xg.ave() > 0.11) && (xg.ave() < 0.21)) && data_2pts.Tag[iens].substr(1,1) == "A") {dt_min=2; dt_max=2;}
-
-
-	if( data_2pts.Tag[iens].substr(1,1) == "C") {
-
-	  if( xg.ave() > 0.49 && xg.ave() < 0.51) { dt_min = -2;}
-
-	  if( xg.ave() > 0.59 && xg.ave() < 0.61) { dt_min = -3;}
-
-	  if( xg.ave() > 0.69 && xg.ave() < 0.71) { dt_min = -2;}
-
-	}
-	
-	Get_Bs_Tmin_Tmax("V", Tmin_T_V, Tmax_T_V, ixg, data_2pts.Tag[iens]);
-	Corr.Tmin= Tmin_T_V+shift+shift_d+dt_min; Corr.Tmax= Tmax_T_V+shift+shift_d+dt_max;
-	FV_T_d.distr_list.push_back( Corr.Fit_distr(FV_T_d_distr));
-	FV_T_d_per_kin[ixg-1].distr_list.push_back(Corr.Fit_distr(FV_T_d_distr));
-	vec_T_d_Tmin.push_back(Corr.Tmin);
-	vec_T_d_Tmax.push_back(Corr.Tmax);
-      }
 
 
       //######################################################################################################################
@@ -2719,6 +2786,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
   //interpolate form factors for each ensemble
 
+  if(num_xg > 5) {
 
   cout<<"Interpolating vector and tensor form factors!"<<endl;
 
@@ -2784,8 +2852,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       FV_interpol_to_print_distr.distr_list.push_back( FV_interpol_distr(X, iens));
     }
 
-    Print_To_File({}, {Bs_xg_to_spline, FA_interpol_to_print_distr.ave(), FA_interpol_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/"+data_2pts.Tag[iens]+"/FA_interpol.dat", "", "#xg FA FA_err");
-    Print_To_File({}, {Bs_xg_to_spline, FV_interpol_to_print_distr.ave(), FV_interpol_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/"+data_2pts.Tag[iens]+"/FV_interpol.dat", "", "#xg FV FV_err");
+    Print_To_File({}, {Bs_xg_to_spline, FA_interpol_to_print_distr.ave(), FA_interpol_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/"+data_2pts.Tag[iens]+"/FA_interpol.dat", "", "#xg FA FA_err");
+    Print_To_File({}, {Bs_xg_to_spline, FV_interpol_to_print_distr.ave(), FV_interpol_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/"+data_2pts.Tag[iens]+"/FV_interpol.dat", "", "#xg FV FV_err");
 
 
     //for FV_T and FA_T
@@ -2796,16 +2864,18 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       FV_T_interpol_to_print_distr.distr_list.push_back( FV_T_interpol_distr(X, iens));
     }
 
-    Print_To_File({}, {Bs_xg_to_spline, FA_T_interpol_to_print_distr.ave(), FA_T_interpol_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/"+data_2pts.Tag[iens]+"/FA_T_interpol.dat", "", "#xg FA FA_err");
-    Print_To_File({}, {Bs_xg_to_spline, FV_T_interpol_to_print_distr.ave(), FV_T_interpol_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/"+data_2pts.Tag[iens]+"/FV_T_interpol.dat", "", "#xg FV FV_err");
+    Print_To_File({}, {Bs_xg_to_spline, FA_T_interpol_to_print_distr.ave(), FA_T_interpol_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/"+data_2pts.Tag[iens]+"/FA_T_interpol.dat", "", "#xg FA FA_err");
+    Print_To_File({}, {Bs_xg_to_spline, FV_T_interpol_to_print_distr.ave(), FV_T_interpol_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/"+data_2pts.Tag[iens]+"/FV_T_interpol.dat", "", "#xg FV FV_err");
 
+
+  }
 
   }
 
 
   //Print MP, FP, MP_ov_FP
-  Print_To_File({}, {a_distr_list_red.ave(), MP_list_red.ave(), MP_list_red.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/mass/masses.list", "", "#a MP MP_err");
-  Print_To_File({}, {a_distr_list.ave(), FP_list.ave(), FP_list.err(), MP_ov_FP_list.ave(), MP_ov_FP_list.err(), ZT_list.ave(), ZT_list.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/decay_const/fP.list", "", "#a FP FP_err MP/FP MP/FP_err ZT ");
+  Print_To_File({}, {a_distr_list_red.ave(), MP_list_red.ave(), MP_list_red.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/mass/masses.list", "", "#a MP MP_err");
+  Print_To_File({}, {a_distr_list.ave(), FP_list.ave(), FP_list.err(), MP_ov_FP_list.ave(), MP_ov_FP_list.err(), ZT_list.ave(), ZT_list.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/fP.list", "", "#a FP FP_err MP/FP MP/FP_err ZT ");
 
 
   //#################################################################################################
@@ -2827,7 +2897,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     //###########################################################################################################################
     //###########################################################################################################################
     //FOR FV and FA
-    ofstream Print_FVE("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE.dat");
+    ofstream Print_FVE("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
 
       double sA_max= sqrt( pow(FA_per_ens[iens_B96].err(ixg-1),2) +pow(FA_per_ens[iens_B64].err(ixg-1),2));
@@ -2851,7 +2921,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
     //u contribution
-    ofstream Print_FVE_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_u.dat");
+    ofstream Print_FVE_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE_u.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
 
       double sA_max= sqrt( pow(FA_u_per_ens[iens_B96].err(ixg-1),2) +pow(FA_u_per_ens[iens_B64].err(ixg-1),2));
@@ -2876,7 +2946,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
     //d contribution
-    ofstream Print_FVE_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_d.dat");
+    ofstream Print_FVE_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE_d.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
 
       double sA_max= sqrt( pow(FA_d_per_ens[iens_B96].err(ixg-1),2) + pow(FA_d_per_ens[iens_B64].err(ixg-1),2));
@@ -2911,7 +2981,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     //###########################################################################################################################
     //###########################################################################################################################
     //FOR FV_T and FA_T
-    ofstream Print_FVE_T("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_T.dat");
+    ofstream Print_FVE_T("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE_T.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
 
       double sA_max= sqrt( pow(FA_T_per_ens[iens_B96].err(ixg-1),2) +pow(FA_T_per_ens[iens_B64].err(ixg-1),2));
@@ -2935,7 +3005,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
     //u contribution
-    ofstream Print_FVE_T_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_T_u.dat");
+    ofstream Print_FVE_T_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE_T_u.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
 
       double sA_max= sqrt( pow(FA_T_u_per_ens[iens_B96].err(ixg-1),2) +pow(FA_T_u_per_ens[iens_B64].err(ixg-1),2));
@@ -2961,7 +3031,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
     //d contribution
-    ofstream Print_FVE_T_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_T_d.dat");
+    ofstream Print_FVE_T_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE_T_d.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
 
       double sA_max= sqrt( pow(FA_T_d_per_ens[iens_B96].err(ixg-1),2) + pow(FA_T_d_per_ens[iens_B64].err(ixg-1),2));
@@ -3019,7 +3089,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     //load FVE
     //VECTOR FORM FACTORS
 
-    ifstream Read_FVE("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE.dat");
+    ifstream Read_FVE("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
       distr_t FVE_V(UseJack), FVE_A;
       double xx, sV, sA, srel_V, srel_A;
@@ -3037,7 +3107,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
     //u contribution
-    ifstream Read_FVE_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_u.dat");
+    ifstream Read_FVE_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE_u.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
       distr_t FVE_V(UseJack), FVE_A;
       double xx, sV, sA, srel_V, srel_A;
@@ -3054,7 +3124,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
     //d contribution
-    ifstream Read_FVE_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_d.dat");
+    ifstream Read_FVE_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE_d.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
       distr_t FVE_V(UseJack), FVE_A(UseJack);
       double xx, sV, sA, srel_V, srel_A;
@@ -3072,7 +3142,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
     //TENSOR FORM FACTORS
-    ifstream Read_FVE_T("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_T.dat");
+    ifstream Read_FVE_T("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE_T.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
       distr_t FVE_V_T(UseJack), FVE_A_T;
       double xx, sV, sA, srel_V, srel_A;
@@ -3090,7 +3160,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
     //u contribution
-    ifstream Read_FVE_T_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_T_u.dat");
+    ifstream Read_FVE_T_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE_T_u.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
       distr_t FVE_V_T(UseJack), FVE_A_T;
       double xx, sV, sA, srel_V, srel_A;
@@ -3107,7 +3177,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
     //d contribution
-    ifstream Read_FVE_T_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/FVE_T_d.dat");
+    ifstream Read_FVE_T_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/FVE_T_d.dat");
     for(int ixg=1;ixg<num_xg;ixg++) {
       distr_t FVE_V_T(UseJack), FVE_A_T(UseJack);
       double xx, sV, sA, srel_V, srel_A;
@@ -3314,7 +3384,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FA_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FA_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FA_xg_to_print.ave(), FA_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
+  Print_To_File({}, {Bs_a_to_print, FA_xg_to_print.ave(), FA_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
  
   }
 
@@ -3397,14 +3467,14 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FV_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FV_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
+  Print_To_File({}, {Bs_a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
   }
 
  
 
   //Print continuum extrapolated form factors
-  Print_To_File({}, {Bs_xg_t_list, F0_A_list.ave(), F0_A_list.err(), (D1_A_list/F0_A_list).ave(), (D1_A_list/F0_A_list).err(), (D2_A_list/F0_A_list).ave(), (D2_A_list/F0_A_list).err(), ch2_FA}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
-  Print_To_File({}, {Bs_xg_t_list, F0_V_list.ave(), F0_V_list.err(), (D1_V_list/F0_V_list).ave(), (D1_V_list/F0_V_list).err(), (D2_V_list/F0_V_list).ave(), (D2_V_list/F0_V_list).err(), ch2_FV}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_A_list.ave(), F0_A_list.err(), (D1_A_list/F0_A_list).ave(), (D1_A_list/F0_A_list).err(), (D2_A_list/F0_A_list).ave(), (D2_A_list/F0_A_list).err(), ch2_FA}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_V_list.ave(), F0_V_list.err(), (D1_V_list/F0_V_list).ave(), (D1_V_list/F0_V_list).err(), (D2_V_list/F0_V_list).ave(), (D2_V_list/F0_V_list).err(), ch2_FV}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
 
 
   //Print covariance matrix
@@ -3424,10 +3494,10 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   }
 
   //Print To File
-  ofstream Print_Cov_FA("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Analysis_tag+".cov");
-  ofstream Print_Cov_FV("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Analysis_tag+".cov");
-  ofstream Print_Corr_FA("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Analysis_tag+".corr");
-  ofstream Print_Corr_FV("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Analysis_tag+".corr");
+  ofstream Print_Cov_FA("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_"+Analysis_tag+".cov");
+  ofstream Print_Cov_FV("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_"+Analysis_tag+".cov");
+  ofstream Print_Corr_FA("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_"+Analysis_tag+".corr");
+  ofstream Print_Corr_FV("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_"+Analysis_tag+".corr");
 
   Print_Cov_FA<<Cov_FA<<endl;
   Print_Cov_FV<<Cov_FV<<endl;
@@ -3534,7 +3604,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FA_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FA_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FA_xg_to_print.ave(), FA_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
+  Print_To_File({}, {Bs_a_to_print, FA_xg_to_print.ave(), FA_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_u_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
  
   }
 
@@ -3613,12 +3683,12 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FV_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FV_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
+  Print_To_File({}, {Bs_a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_u_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
   }
 
   //Print continuum extrapolated form factors
-  Print_To_File({}, {Bs_xg_t_list, F0_u_A_list.ave(), F0_u_A_list.err(), (D1_u_A_list/F0_u_A_list).ave(), (D1_u_A_list/F0_u_A_list).err(), (D2_u_A_list/F0_u_A_list).ave(), (D2_u_A_list/F0_u_A_list).err(), ch2_FA_u}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
-  Print_To_File({}, {Bs_xg_t_list, F0_u_V_list.ave(), F0_u_V_list.err(), (D1_u_V_list/F0_u_V_list).ave(), (D1_u_V_list/F0_u_V_list).err(), (D2_u_V_list/F0_u_V_list).ave(), (D2_u_V_list/F0_u_V_list).err(), ch2_FV_u}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_u_A_list.ave(), F0_u_A_list.err(), (D1_u_A_list/F0_u_A_list).ave(), (D1_u_A_list/F0_u_A_list).err(), (D2_u_A_list/F0_u_A_list).ave(), (D2_u_A_list/F0_u_A_list).err(), ch2_FA_u}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_u_V_list.ave(), F0_u_V_list.err(), (D1_u_V_list/F0_u_V_list).ave(), (D1_u_V_list/F0_u_V_list).err(), (D2_u_V_list/F0_u_V_list).ave(), (D2_u_V_list/F0_u_V_list).err(), ch2_FV_u}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -3638,10 +3708,10 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   }
 
   //Print To File
-  ofstream Print_Cov_FA_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Analysis_tag+".cov");
-  ofstream Print_Cov_FV_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Analysis_tag+".cov");
-  ofstream Print_Corr_FA_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Analysis_tag+".corr");
-  ofstream Print_Corr_FV_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Analysis_tag+".corr");
+  ofstream Print_Cov_FA_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_u_"+Analysis_tag+".cov");
+  ofstream Print_Cov_FV_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_u_"+Analysis_tag+".cov");
+  ofstream Print_Corr_FA_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_u_"+Analysis_tag+".corr");
+  ofstream Print_Corr_FV_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_u_"+Analysis_tag+".corr");
 
   Print_Cov_FA_u<<Cov_FA_u<<endl;
   Print_Cov_FV_u<<Cov_FV_u<<endl;
@@ -3745,7 +3815,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FA_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FA_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FA_xg_to_print.ave(), FA_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
+  Print_To_File({}, {Bs_a_to_print, FA_xg_to_print.ave(), FA_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_d_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
  
   }
 
@@ -3825,12 +3895,12 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FV_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FV_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
+  Print_To_File({}, {Bs_a_to_print, FV_xg_to_print.ave(), FV_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_d_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
   }
 
   //Print continuum extrapolated form factors
-  Print_To_File({}, {Bs_xg_t_list, F0_d_A_list.ave(), F0_d_A_list.err(), (D1_d_A_list/F0_d_A_list).ave(), (D1_d_A_list/F0_d_A_list).err(), (D2_d_A_list/F0_d_A_list).ave(), (D2_d_A_list/F0_d_A_list).err(), ch2_FA_d}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
-  Print_To_File({}, {Bs_xg_t_list, F0_d_V_list.ave(), F0_d_V_list.err(), (D1_d_V_list/F0_d_V_list).ave(), (D1_d_V_list/F0_d_V_list).err(), (D2_d_V_list/F0_d_V_list).ave(), (D2_d_V_list/F0_d_V_list).err(), ch2_FV_d}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_d_A_list.ave(), F0_d_A_list.err(), (D1_d_A_list/F0_d_A_list).ave(), (D1_d_A_list/F0_d_A_list).err(), (D2_d_A_list/F0_d_A_list).ave(), (D2_d_A_list/F0_d_A_list).err(), ch2_FA_d}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_d_V_list.ave(), F0_d_V_list.err(), (D1_d_V_list/F0_d_V_list).ave(), (D1_d_V_list/F0_d_V_list).err(), (D2_d_V_list/F0_d_V_list).ave(), (D2_d_V_list/F0_d_V_list).err(), ch2_FV_d}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -3851,10 +3921,10 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   }
 
   //Print To File
-  ofstream Print_Cov_FA_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Analysis_tag+".cov");
-  ofstream Print_Cov_FV_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Analysis_tag+".cov");
-  ofstream Print_Corr_FA_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Analysis_tag+".corr");
-  ofstream Print_Corr_FV_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Analysis_tag+".corr");
+  ofstream Print_Cov_FA_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_d_"+Analysis_tag+".cov");
+  ofstream Print_Cov_FV_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_d_"+Analysis_tag+".cov");
+  ofstream Print_Corr_FA_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_d_"+Analysis_tag+".corr");
+  ofstream Print_Corr_FV_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_d_"+Analysis_tag+".corr");
 
   Print_Cov_FA_d<<Cov_FA_d<<endl;
   Print_Cov_FV_d<<Cov_FV_d<<endl;
@@ -3986,7 +4056,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FA_T_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FA_T_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FA_T_xg_to_print.ave(), FA_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
+  Print_To_File({}, {Bs_a_to_print, FA_T_xg_to_print.ave(), FA_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
  
   }
 
@@ -4069,14 +4139,14 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FV_T_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FV_T_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FV_T_xg_to_print.ave(), FV_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
+  Print_To_File({}, {Bs_a_to_print, FV_T_xg_to_print.ave(), FV_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
   }
 
  
 
   //Print continuum extrapolated form factors
-  Print_To_File({}, {Bs_xg_t_list, F0_A_T_list.ave(), F0_A_T_list.err(), (D1_A_T_list/F0_A_T_list).ave(), (D1_A_T_list/F0_A_T_list).err(), (D2_A_T_list/F0_A_T_list).ave(), (D2_A_T_list/F0_A_T_list).err(), ch2_FA_T}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
-  Print_To_File({}, {Bs_xg_t_list, F0_V_T_list.ave(), F0_V_T_list.err(), (D1_V_T_list/F0_V_T_list).ave(), (D1_V_T_list/F0_V_T_list).err(), (D2_V_T_list/F0_V_T_list).ave(), (D2_V_T_list/F0_V_T_list).err(), ch2_FV_T}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_A_T_list.ave(), F0_A_T_list.err(), (D1_A_T_list/F0_A_T_list).ave(), (D1_A_T_list/F0_A_T_list).err(), (D2_A_T_list/F0_A_T_list).ave(), (D2_A_T_list/F0_A_T_list).err(), ch2_FA_T}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_V_T_list.ave(), F0_V_T_list.err(), (D1_V_T_list/F0_V_T_list).ave(), (D1_V_T_list/F0_V_T_list).err(), (D2_V_T_list/F0_V_T_list).ave(), (D2_V_T_list/F0_V_T_list).err(), ch2_FV_T}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2  ch2/dof");
 
 
   //Print covariance matrix
@@ -4096,10 +4166,10 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   }
 
   //Print To File
-  ofstream Print_Cov_FA_T("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_"+Analysis_tag+".cov");
-  ofstream Print_Cov_FV_T("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_"+Analysis_tag+".cov");
-  ofstream Print_Corr_FA_T("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_"+Analysis_tag+".corr");
-  ofstream Print_Corr_FV_T("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_"+Analysis_tag+".corr");
+  ofstream Print_Cov_FA_T("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_"+Analysis_tag+".cov");
+  ofstream Print_Cov_FV_T("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_"+Analysis_tag+".cov");
+  ofstream Print_Corr_FA_T("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_"+Analysis_tag+".corr");
+  ofstream Print_Corr_FV_T("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_"+Analysis_tag+".corr");
 
   Print_Cov_FA_T<<Cov_FA_T<<endl;
   Print_Cov_FV_T<<Cov_FV_T<<endl;
@@ -4206,7 +4276,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FA_T_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FA_T_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FA_T_xg_to_print.ave(), FA_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_u_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
+  Print_To_File({}, {Bs_a_to_print, FA_T_xg_to_print.ave(), FA_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_u_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
  
   }
 
@@ -4285,12 +4355,12 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FV_T_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FV_T_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FV_T_xg_to_print.ave(), FV_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_u_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
+  Print_To_File({}, {Bs_a_to_print, FV_T_xg_to_print.ave(), FV_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_u_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
   }
 
   //Print continuum extrapolated form factors
-  Print_To_File({}, {Bs_xg_t_list, F0_u_A_T_list.ave(), F0_u_A_T_list.err(), (D1_u_A_T_list/F0_u_A_T_list).ave(), (D1_u_A_T_list/F0_u_A_T_list).err(), (D2_u_A_T_list/F0_u_A_T_list).ave(), (D2_u_A_T_list/F0_u_A_T_list).err(), ch2_FA_T_u}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
-  Print_To_File({}, {Bs_xg_t_list, F0_u_V_T_list.ave(), F0_u_V_T_list.err(), (D1_u_V_T_list/F0_u_V_T_list).ave(), (D1_u_V_T_list/F0_u_V_T_list).err(), (D2_u_V_T_list/F0_u_V_T_list).ave(), (D2_u_V_T_list/F0_u_V_T_list).err(), ch2_FV_T_u}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_u_A_T_list.ave(), F0_u_A_T_list.err(), (D1_u_A_T_list/F0_u_A_T_list).ave(), (D1_u_A_T_list/F0_u_A_T_list).err(), (D2_u_A_T_list/F0_u_A_T_list).ave(), (D2_u_A_T_list/F0_u_A_T_list).err(), ch2_FA_T_u}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_u_V_T_list.ave(), F0_u_V_T_list.err(), (D1_u_V_T_list/F0_u_V_T_list).ave(), (D1_u_V_T_list/F0_u_V_T_list).err(), (D2_u_V_T_list/F0_u_V_T_list).ave(), (D2_u_V_T_list/F0_u_V_T_list).err(), ch2_FV_T_u}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_u_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -4310,10 +4380,10 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   }
 
   //Print To File
-  ofstream Print_Cov_FA_T_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_u_"+Analysis_tag+".cov");
-  ofstream Print_Cov_FV_T_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_u_"+Analysis_tag+".cov");
-  ofstream Print_Corr_FA_T_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_u_"+Analysis_tag+".corr");
-  ofstream Print_Corr_FV_T_u("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_u_"+Analysis_tag+".corr");
+  ofstream Print_Cov_FA_T_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_u_"+Analysis_tag+".cov");
+  ofstream Print_Cov_FV_T_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_u_"+Analysis_tag+".cov");
+  ofstream Print_Corr_FA_T_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_u_"+Analysis_tag+".corr");
+  ofstream Print_Corr_FV_T_u("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_u_"+Analysis_tag+".corr");
 
   Print_Cov_FA_T_u<<Cov_FA_T_u<<endl;
   Print_Cov_FV_T_u<<Cov_FV_T_u<<endl;
@@ -4417,7 +4487,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FA_T_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FA_T_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FA_T_xg_to_print.ave(), FA_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_d_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
+  Print_To_File({}, {Bs_a_to_print, FA_T_xg_to_print.ave(), FA_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_d_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FA FA_err");
  
   }
 
@@ -4497,12 +4567,12 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //print fit func
   distr_t_list FV_T_xg_to_print(UseJack);
   for(auto &a: Bs_a_to_print) FV_T_xg_to_print.distr_list.push_back( F0 + D1*pow(a*fmTGeV*Lambda_QCD,2) + D2*pow(a*fmTGeV*Lambda_QCD,4));
-  Print_To_File({}, {Bs_a_to_print, FV_T_xg_to_print.ave(), FV_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_d_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
+  Print_To_File({}, {Bs_a_to_print, FV_T_xg_to_print.ave(), FV_T_xg_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_d_"+Fit_tag+"xg_"+to_string_with_precision(0.10*ixg,2)+".fit_func", "", "#a[fm] FV FV_err");
   }
 
   //Print continuum extrapolated form factors
-  Print_To_File({}, {Bs_xg_t_list, F0_d_A_T_list.ave(), F0_d_A_T_list.err(), (D1_d_A_T_list/F0_d_A_T_list).ave(), (D1_d_A_T_list/F0_d_A_T_list).err(), (D2_d_A_T_list/F0_d_A_T_list).ave(), (D2_d_A_T_list/F0_d_A_T_list).err(), ch2_FA_T_d}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
-  Print_To_File({}, {Bs_xg_t_list, F0_d_V_T_list.ave(), F0_d_V_T_list.err(), (D1_d_V_T_list/F0_d_V_T_list).ave(), (D1_d_V_T_list/F0_d_V_T_list).err(), (D2_d_V_T_list/F0_d_V_T_list).ave(), (D2_d_V_T_list/F0_d_V_T_list).err(), ch2_FV_T_d}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_d_A_T_list.ave(), F0_d_A_T_list.err(), (D1_d_A_T_list/F0_d_A_T_list).ave(), (D1_d_A_T_list/F0_d_A_T_list).err(), (D2_d_A_T_list/F0_d_A_T_list).ave(), (D2_d_A_T_list/F0_d_A_T_list).err(), ch2_FA_T_d}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
+  Print_To_File({}, {Bs_xg_t_list, F0_d_V_T_list.ave(), F0_d_V_T_list.err(), (D1_d_V_T_list/F0_d_V_T_list).ave(), (D1_d_V_T_list/F0_d_V_T_list).err(), (D2_d_V_T_list/F0_d_V_T_list).ave(), (D2_d_V_T_list/F0_d_V_T_list).err(), ch2_FV_T_d}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_d_"+Fit_tag+"cont.dat", "", "#xg  F0   D1   D2   ch2/dof");
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -4523,10 +4593,10 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   }
 
   //Print To File
-  ofstream Print_Cov_FA_T_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_d_"+Analysis_tag+".cov");
-  ofstream Print_Cov_FV_T_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_d_"+Analysis_tag+".cov");
-  ofstream Print_Corr_FA_T_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_T_d_"+Analysis_tag+".corr");
-  ofstream Print_Corr_FV_T_d("../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_T_d_"+Analysis_tag+".corr");
+  ofstream Print_Cov_FA_T_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_d_"+Analysis_tag+".cov");
+  ofstream Print_Cov_FV_T_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_d_"+Analysis_tag+".cov");
+  ofstream Print_Corr_FA_T_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_T_d_"+Analysis_tag+".corr");
+  ofstream Print_Corr_FV_T_d("../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_T_d_"+Analysis_tag+".corr");
 
   Print_Cov_FA_T_d<<Cov_FA_T_d<<endl;
   Print_Cov_FV_T_d<<Cov_FV_T_d<<endl;
@@ -4590,6 +4660,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
 
+
+  /*
   //VMD-like fit for FV and FA
   //###############################################################################################################
 
@@ -4598,19 +4670,18 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     ipar_VMD() : FF(0.0), FF_err(0.0) {}
     double FF, FF_err, xg;
   };
-  
+
   class fpar_VMD {
   public:
     fpar_VMD() {}
     fpar_VMD(const Vfloat &par) {
-      if((signed)par.size() != 2) crash("In class fpar_VMD  class constructor Vfloat par has size != 2");
-      A=par[0];
-      M=par[1];
+      if((signed)par.size() != 2) crash("In class fpar_VMD  class constructor
+Vfloat par has size != 2"); A=par[0]; M=par[1];
     }
     double A, M;
   };
 
-  
+
   //init bootstrap fit
   bootstrap_fit<fpar_VMD,ipar_VMD> bf_VMD(Njacks);
   bf_VMD.set_warmup_lev(0); //sets warmup
@@ -4632,17 +4703,17 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //ansatz
   bf_VMD.ansatz=  [ ](const fpar_VMD &p, const ipar_VMD &ip) {
 
-		    double E_res= sqrt( p.M*p.M + ip.xg*ip.xg/4.0);
-		    return p.A/( E_res*( E_res - (1.0 - ip.xg/2.0)) );
-		 };
+                    double E_res= sqrt( p.M*p.M + ip.xg*ip.xg/4.0);
+                    return p.A/( E_res*( E_res - (1.0 - ip.xg/2.0)) );
+                 };
   bf_VMD.measurement=  [ ](const fpar_VMD &p, const ipar_VMD &ip) {
 
-		 return ip.FF;
-		 };
+                 return ip.FF;
+                 };
   bf_VMD.error=  [ ](const fpar_VMD &p, const ipar_VMD &ip) {
 
-		 return ip.FF_err;
-		 };
+                 return ip.FF_err;
+                 };
 
   bf_VMD_ch2.ansatz= bf_VMD.ansatz;
   bf_VMD_ch2.measurement = bf_VMD.measurement;
@@ -4664,9 +4735,9 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       data_VMD[ijack][ix].FF_err= F0_A_list.err(ix);
       data_VMD[ijack][ix].xg= Bs_xg_t_list[ix];
       if(ijack==0) {
-	data_VMD_ch2[ijack][ix].FF = F0_A_list.ave(ix);
-	data_VMD_ch2[ijack][ix].FF_err= F0_A_list.err(ix);
-	data_VMD_ch2[ijack][ix].xg= Bs_xg_t_list[ix];
+        data_VMD_ch2[ijack][ix].FF = F0_A_list.ave(ix);
+        data_VMD_ch2[ijack][ix].FF_err= F0_A_list.err(ix);
+        data_VMD_ch2[ijack][ix].xg= Bs_xg_t_list[ix];
 
       }
     }
@@ -4679,11 +4750,14 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   cout<<"Fitting FA using VMD ansatz"<<endl;
   Bt_fit_FA_VMD= bf_VMD.Perform_bootstrap_fit();
   Bt_fit_FA_VMD_ch2= bf_VMD_ch2.Perform_bootstrap_fit();
-  double ch2_red_FA_VMD= Bt_fit_FA_VMD_ch2.get_ch2_ave()/( Bs_xg_t_list.size() -2.0);
+  double ch2_red_FA_VMD= Bt_fit_FA_VMD_ch2.get_ch2_ave()/( Bs_xg_t_list.size()
+-2.0);
 
   //retrieve params
   distr_t Ampl_FA(UseJack), pole_FA(UseJack);
-  for(int ijack=0;ijack<Njacks;ijack++) { Ampl_FA.distr.push_back( Bt_fit_FA_VMD.par[ijack].A); pole_FA.distr.push_back( Bt_fit_FA_VMD.par[ijack].M);}
+  for(int ijack=0;ijack<Njacks;ijack++) { Ampl_FA.distr.push_back(
+Bt_fit_FA_VMD.par[ijack].A); pole_FA.distr.push_back(
+Bt_fit_FA_VMD.par[ijack].M);}
 
 
   //start fitting FV
@@ -4703,9 +4777,9 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       data_VMD[ijack][ix].FF_err= F0_V_list.err(ix);
       data_VMD[ijack][ix].xg= Bs_xg_t_list[ix];
       if(ijack==0) {
-	data_VMD_ch2[ijack][ix].FF = F0_V_list.ave(ix);
-	data_VMD_ch2[ijack][ix].FF_err= F0_V_list.err(ix);
-	data_VMD_ch2[ijack][ix].xg= Bs_xg_t_list[ix];
+        data_VMD_ch2[ijack][ix].FF = F0_V_list.ave(ix);
+        data_VMD_ch2[ijack][ix].FF_err= F0_V_list.err(ix);
+        data_VMD_ch2[ijack][ix].xg= Bs_xg_t_list[ix];
 
       }
     }
@@ -4719,14 +4793,17 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   Bt_fit_FV_VMD= bf_VMD.Perform_bootstrap_fit();
   Bt_fit_FV_VMD_ch2= bf_VMD_ch2.Perform_bootstrap_fit();
 
-  double ch2_red_FV_VMD= Bt_fit_FV_VMD_ch2.get_ch2_ave()/( Bs_xg_t_list.size() -2.0);
- 
+  double ch2_red_FV_VMD= Bt_fit_FV_VMD_ch2.get_ch2_ave()/( Bs_xg_t_list.size()
+-2.0);
+
 
   //retrieve params
   distr_t Ampl_FV(UseJack), pole_FV(UseJack);
-  for(int ijack=0;ijack<Njacks;ijack++) { Ampl_FV.distr.push_back( Bt_fit_FV_VMD.par[ijack].A); pole_FV.distr.push_back( Bt_fit_FV_VMD.par[ijack].M);}
+  for(int ijack=0;ijack<Njacks;ijack++) { Ampl_FV.distr.push_back(
+Bt_fit_FV_VMD.par[ijack].A); pole_FV.distr.push_back(
+Bt_fit_FV_VMD.par[ijack].M);}
 
-  
+
   distr_t_list FA_VMD_fit(UseJack), FV_VMD_fit(UseJack);
   //plot fit function
    for(auto &X: Bs_xg_to_spline_VMD) {
@@ -4734,21 +4811,36 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
      pp_VMD.xg=X;
      distr_t FA_VMD_xg(UseJack), FV_VMD_xg(UseJack);
      for(int ijack=0;ijack<Njacks;ijack++) {
-       FA_VMD_xg.distr.push_back( bf_VMD.ansatz( Bt_fit_FA_VMD.par[ijack], pp_VMD));
-       FV_VMD_xg.distr.push_back( bf_VMD.ansatz( Bt_fit_FV_VMD.par[ijack], pp_VMD));
+       FA_VMD_xg.distr.push_back( bf_VMD.ansatz( Bt_fit_FA_VMD.par[ijack],
+pp_VMD)); FV_VMD_xg.distr.push_back( bf_VMD.ansatz( Bt_fit_FV_VMD.par[ijack],
+pp_VMD));
      }
 
      FA_VMD_fit.distr_list.push_back( FA_VMD_xg);
      FV_VMD_fit.distr_list.push_back( FV_VMD_xg);
-  
+
    }
 
    //print
 
-   string header_FA= "Ampl: "+to_string_with_precision(Ampl_FA.ave(),5)+" +- "+to_string_with_precision(Ampl_FA.err(),5)+" M^res/Mp: "+to_string_with_precision(pole_FA.ave(), 5)+" +- "+to_string_with_precision(pole_FA.err(), 5)+" ch2/dof: "+to_string_with_precision(ch2_red_FA_VMD  ,5)+" dof: "+to_string(Bs_xg_t_list.size()-2);
-   string header_FV= "Ampl: "+to_string_with_precision(Ampl_FV.ave(),5)+" +- "+to_string_with_precision(Ampl_FV.err(),5)+" M^res/Mp: "+to_string_with_precision(pole_FV.ave(), 5)+" +- "+to_string_with_precision(pole_FV.err(), 5)+" ch2/dof: "+to_string_with_precision(ch2_red_FV_VMD  ,5)+" dof: "+to_string(Bs_xg_t_list.size()-2);
-   Print_To_File({},{ Bs_xg_to_spline_VMD, FA_VMD_fit.ave(), FA_VMD_fit.err()} , "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"VMD.fit" , "", header_FA);
-   Print_To_File({},{ Bs_xg_to_spline_VMD, FV_VMD_fit.ave(), FV_VMD_fit.err()} , "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"VMD.fit" , "", header_FV);
+   string header_FA= "Ampl: "+to_string_with_precision(Ampl_FA.ave(),5)+" +-
+"+to_string_with_precision(Ampl_FA.err(),5)+" M^res/Mp:
+"+to_string_with_precision(pole_FA.ave(), 5)+" +-
+"+to_string_with_precision(pole_FA.err(), 5)+" ch2/dof:
+"+to_string_with_precision(ch2_red_FA_VMD  ,5)+" dof:
+"+to_string(Bs_xg_t_list.size()-2); string header_FV= "Ampl:
+"+to_string_with_precision(Ampl_FV.ave(),5)+" +-
+"+to_string_with_precision(Ampl_FV.err(),5)+" M^res/Mp:
+"+to_string_with_precision(pole_FV.ave(), 5)+" +-
+"+to_string_with_precision(pole_FV.err(), 5)+" ch2/dof:
+"+to_string_with_precision(ch2_red_FV_VMD  ,5)+" dof:
+"+to_string(Bs_xg_t_list.size()-2); Print_To_File({},{ Bs_xg_to_spline_VMD,
+FA_VMD_fit.ave(), FA_VMD_fit.err()} ,
+"../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_"+Fit_tag+"VMD.fit" ,
+"", header_FA); Print_To_File({},{ Bs_xg_to_spline_VMD, FV_VMD_fit.ave(),
+FV_VMD_fit.err()} ,
+"../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_"+Fit_tag+"VMD.fit" ,
+"", header_FV);
 
 
 
@@ -4758,12 +4850,15 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
   //#################################################################################################################
 
+  */
+
   
   
   
   
   
   //interpolate continuum extrapolated form factors
+  if(num_xg > 5) {
   for(int ijack=0;ijack<Njacks;ijack++) {
 
     Vfloat FV_cont_ij, FA_cont_ij;
@@ -4858,18 +4953,18 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     FV_d_interpol_cont_to_print_distr.distr_list.push_back( FV_d_cont_interpol_distr(X));
   }
 
-  Print_To_File({}, {Bs_xg_to_spline, FA_interpol_cont_to_print_distr.ave(), FA_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_"+Fit_tag+"interpol.dat", "", "#xg FA FA_err");
-  Print_To_File({}, {Bs_xg_to_spline, FV_interpol_cont_to_print_distr.ave(), FV_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_"+Fit_tag+"interpol.dat", "", "#xg FV FV_err");
+  Print_To_File({}, {Bs_xg_to_spline, FA_interpol_cont_to_print_distr.ave(), FA_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_"+Fit_tag+"interpol.dat", "", "#xg FA FA_err");
+  Print_To_File({}, {Bs_xg_to_spline, FV_interpol_cont_to_print_distr.ave(), FV_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_"+Fit_tag+"interpol.dat", "", "#xg FV FV_err");
 
   //u contribution
-  Print_To_File({}, {Bs_xg_to_spline, FA_u_interpol_cont_to_print_distr.ave(), FA_u_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_u_"+Fit_tag+"interpol.dat", "", "#xg FA FA_err");
-  Print_To_File({}, {Bs_xg_to_spline, FV_u_interpol_cont_to_print_distr.ave(), FV_u_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_u_"+Fit_tag+"interpol.dat", "", "#xg FV FV_err");
+  Print_To_File({}, {Bs_xg_to_spline, FA_u_interpol_cont_to_print_distr.ave(), FA_u_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_u_"+Fit_tag+"interpol.dat", "", "#xg FA FA_err");
+  Print_To_File({}, {Bs_xg_to_spline, FV_u_interpol_cont_to_print_distr.ave(), FV_u_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_u_"+Fit_tag+"interpol.dat", "", "#xg FV FV_err");
 
   //d contribution
-  Print_To_File({}, {Bs_xg_to_spline, FA_d_interpol_cont_to_print_distr.ave(), FA_d_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FA_d_"+Fit_tag+"interpol.dat", "", "#xg FA FA_err");
-  Print_To_File({}, {Bs_xg_to_spline, FV_d_interpol_cont_to_print_distr.ave(), FV_d_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/FF/continuum/FV_d_"+Fit_tag+"interpol.dat", "", "#xg FV FV_err");
+  Print_To_File({}, {Bs_xg_to_spline, FA_d_interpol_cont_to_print_distr.ave(), FA_d_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FA_d_"+Fit_tag+"interpol.dat", "", "#xg FA FA_err");
+  Print_To_File({}, {Bs_xg_to_spline, FV_d_interpol_cont_to_print_distr.ave(), FV_d_interpol_cont_to_print_distr.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/FF/continuum/FV_d_"+Fit_tag+"interpol.dat", "", "#xg FV FV_err");
 
-
+  }
   //#################################################################################
 
 
@@ -5055,8 +5150,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     FP_to_print.distr_list.push_back( F0_FP + D1_FP*pow(a*fmTGeV*Lambda_QCD,2) + D2_FP*pow(a*fmTGeV*Lambda_QCD,4));
     MP_ov_FP_to_print.distr_list.push_back( F0_MP_ov_FP + D1_MP_ov_FP*pow(a*fmTGeV*Lambda_QCD,2) + D2_MP_ov_FP*pow(a*fmTGeV*Lambda_QCD,4));
   }
-  Print_To_File({}, {Bs_a_to_print, MP_to_print.ave(), MP_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/mass/masses"+_Fit_tag+".fit_func", "", "#a[fm]  MP MP_err");
-  Print_To_File({}, {Bs_a_to_print, FP_to_print.ave(), FP_to_print.err(), MP_ov_FP_to_print.ave(), MP_ov_FP_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+Meson+"/decay_const/fP"+_Fit_tag+".fit_func", "", "#a[fm]  FP FP_err   MP/FP  MP/FP_err");
+  Print_To_File({}, {Bs_a_to_print, MP_to_print.ave(), MP_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/mass/masses"+_Fit_tag+".fit_func", "", "#a[fm]  MP MP_err");
+  Print_To_File({}, {Bs_a_to_print, FP_to_print.ave(), FP_to_print.err(), MP_ov_FP_to_print.ave(), MP_ov_FP_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/fP"+_Fit_tag+".fit_func", "", "#a[fm]  FP FP_err   MP/FP  MP/FP_err");
 
 
   //print ch2 summary
