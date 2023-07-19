@@ -1,9 +1,10 @@
 #include "../include/Bs_mumu_gamma.h"
 #include "Corr_analysis.h"
+#include "numerics.h"
 using namespace std;
 
 const int Nboots= 800;
-const int NJ=15;
+const int NJ=20;
 const double Qu = -1.0/3.0; //electric charge of d-type quark
 const double Qd = -1.0/3.0; //electric charge of d-type quark
 const double qqu = 2.0/3.0; //electric charge of u-type quark
@@ -147,9 +148,9 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 
   bool use_old=true;
 
-  if(mh == "Bs") {
+  if(mh == "B0s") {
 
-    if( (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")) {
+    if( (Ens=="cA211a.12.48") ||  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")) {
 
       if(obs=="FAu") {
 	if(ixg==1) {  Tmin=16; Tmax=36;  }
@@ -240,7 +241,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
-	if(ixg==1) {  Tmin=24; Tmax=40; use_old=false;  }
+	if(ixg==1) {  Tmin=21; Tmax=40; use_old=false;  }
 	else if(ixg==2) {  Tmin=25; Tmax=40; use_old=false;  }
 	else if(ixg==3) {  Tmin=28; Tmax=40; use_old=false;  }
 	else if(ixg==4) {  Tmin=16; Tmax=30;  }
@@ -275,7 +276,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 
   else if(mh == "B1s") {
 
-    if( (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96") ) {
+    if( (Ens=="cA211a.12.48") || (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96") ) {
 
       if(obs=="FAu") {
        	if(ixg==1) {  Tmin=24; Tmax=34;  }
@@ -292,17 +293,17 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
-	if(ixg==1) {  Tmin=36; Tmax=50;  }
+	if(ixg==1) {  Tmin=34; Tmax=45;  }
 	else if(ixg==2) {  Tmin=34; Tmax=49;  }
 	else if(ixg==3) {  Tmin=33; Tmax=45;  }
-	else if(ixg==4) {  Tmin=20; Tmax=50;  }
+	else if(ixg==4) {  Tmin=23; Tmax=37;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=33; Tmax=44;  }
 	else if(ixg==2) {  Tmin=27; Tmax=36;  }
 	else if(ixg==3) {  Tmin=26; Tmax=37;  }
-	else if(ixg==4) {  Tmin=17; Tmax=35;  }
+	else if(ixg==4) {  Tmin=24; Tmax=29;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
@@ -313,8 +314,8 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
-	if(ixg==1) {  Tmin=29; Tmax=40;  }
-	else if(ixg==2) {  Tmin=28; Tmax=35;  }
+	if(ixg==1) {  Tmin=24; Tmax=35;  }
+	else if(ixg==2) {  Tmin=24; Tmax=31;  }
 	else if(ixg==3) {  Tmin=18; Tmax=35;  }
 	else if(ixg==4) {  Tmin=17; Tmax=35;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
@@ -322,15 +323,15 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       else if(obs=="FV_Tu") {
 	if(ixg==1) {  Tmin=37; Tmax=50;  }
 	else if(ixg==2) {  Tmin=33; Tmax=50;  }
-	else if(ixg==3) {  Tmin=32; Tmax=50;  }
-	else if(ixg==4) {  Tmin=17; Tmax=40;  }
+	else if(ixg==3) {  Tmin=25; Tmax=37;  }
+	else if(ixg==4) {  Tmin=23; Tmax=33;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
 	if(ixg==1) {  Tmin=34; Tmax=45;  }
-	else if(ixg==2) {  Tmin=27; Tmax=50;  }
-	else if(ixg==3) {  Tmin=22; Tmax=34;  }
-	else if(ixg==4) {  Tmin=17; Tmax=34;  }
+	else if(ixg==2) {  Tmin=27; Tmax=34;  }
+	else if(ixg==3) {  Tmin=26; Tmax=33;  }
+	else if(ixg==4) {  Tmin=23; Tmax=31;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
@@ -355,14 +356,14 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	if(ixg==1) {  Tmin=38; Tmax=51; use_old=false;  }
 	else if(ixg==2) {  Tmin=34; Tmax=49;  }
 	else if(ixg==3) {  Tmin=33; Tmax=45;  }
-	else if(ixg==4) {  Tmin=39; Tmax=48; use_old=false;  }
+	else if(ixg==4) {  Tmin=24; Tmax=33; use_old=false;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=32; Tmax=43; use_old=false;  }
+	if(ixg==1) {  Tmin=33; Tmax=44; use_old=true;  }
 	else if(ixg==2) {  Tmin=27; Tmax=36;  }
 	else if(ixg==3) {  Tmin=26; Tmax=37;  }
-	else if(ixg==4) {  Tmin=17; Tmax=35;  }
+	else if(ixg==4) {  Tmin=22; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
@@ -375,22 +376,22 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       else if(obs=="FA_Td") {
 	if(ixg==1) {  Tmin=29; Tmax=46; use_old=false;  }
 	else if(ixg==2) {  Tmin=26; Tmax=37; use_old=false;  }
-	else if(ixg==3) {  Tmin=19; Tmax=36; use_old=false;  }
-	else if(ixg==4) {  Tmin=18; Tmax=30; use_old=false;  }
+	else if(ixg==3) {  Tmin=22; Tmax=36; use_old=false;  }
+	else if(ixg==4) {  Tmin=21; Tmax=33; use_old=false;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") {
 	if(ixg==1) {  Tmin=37; Tmax=50;  }
 	else if(ixg==2) {  Tmin=33; Tmax=50;  }
 	else if(ixg==3) {  Tmin=30; Tmax=47; use_old=false;  }
-	else if(ixg==4) {  Tmin=24; Tmax=46; use_old=false;  }
+	else if(ixg==4) {  Tmin=24; Tmax=39; use_old=false;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=31; Tmax=39; use_old=false; }
+	if(ixg==1) {  Tmin=34; Tmax=45; use_old=true; }
 	else if(ixg==2) {  Tmin=30; Tmax=44; use_old=false;}
-	else if(ixg==3) {  Tmin=22; Tmax=34;  }
-	else if(ixg==4) {  Tmin=17; Tmax=34;  }
+	else if(ixg==3) {  Tmin=26; Tmax=33;  }
+	else if(ixg==4) {  Tmin=23; Tmax=31;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
@@ -400,41 +401,41 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 
   else if(mh == "B2s") {
 
-    if(  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
+    if( (Ens=="cA211a.12.48") ||  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
 
       if(obs=="FAu") {
-	if(ixg==1) {  Tmin=23; Tmax=31;  }
-	else if(ixg==2) {  Tmin=24; Tmax=31;  }
-	else if(ixg==3) {  Tmin=23; Tmax=32;  }
-	else if(ixg==4) {  Tmin=24; Tmax=32;  }
+	if(ixg==1) {  Tmin=26; Tmax=34;  }
+	else if(ixg==2) {  Tmin=27; Tmax=34;  }
+	else if(ixg==3) {  Tmin=25; Tmax=34;  }
+	else if(ixg==4) {  Tmin=26; Tmax=34;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") {
-	if(ixg==1) {  Tmin=23; Tmax=30;  }
+	if(ixg==1) {  Tmin=27; Tmax=34;  }
 	else if(ixg==2) {  Tmin=24; Tmax=35;  }
 	else if(ixg==3) {  Tmin=24; Tmax=35;  }
 	else if(ixg==4) {  Tmin=24; Tmax=35;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
-	if(ixg==1) {  Tmin=38; Tmax=50;  }
+	if(ixg==1) {  Tmin=31; Tmax=39;  }
 	else if(ixg==2) {  Tmin=33; Tmax=43;  }
-	else if(ixg==3) {  Tmin=18; Tmax=30;  }
-	else if(ixg==4) {  Tmin=17; Tmax=32;  }
+	else if(ixg==3) {  Tmin=22; Tmax=32;  }
+	else if(ixg==4) {  Tmin=21; Tmax=32;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=33; Tmax=45;  }
+	if(ixg==1) {  Tmin=31; Tmax=45;  }
 	else if(ixg==2) {  Tmin=27; Tmax=36;  }
-	else if(ixg==3) {  Tmin=15; Tmax=30;  }
-	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	else if(ixg==3) {  Tmin=23; Tmax=30;  }
+	else if(ixg==4) {  Tmin=21; Tmax=30;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
-	if(ixg==1) {  Tmin=20; Tmax=27;  }
-	else if(ixg==2) {  Tmin=20; Tmax=27;  }
+	if(ixg==1) {  Tmin=18; Tmax=25;  }
+	else if(ixg==2) {  Tmin=18; Tmax=24;  }
 	else if(ixg==3) {  Tmin=20; Tmax=28;  }
-	else if(ixg==4) {  Tmin=21; Tmax=30;  }
+	else if(ixg==4) {  Tmin=19; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
@@ -447,14 +448,14 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       else if(obs=="FV_Tu") {
 	if(ixg==1) {  Tmin=31; Tmax=41;  }
 	else if(ixg==2) {  Tmin=31; Tmax=39;  }
-	else if(ixg==3) {  Tmin=19; Tmax=35;  }
+	else if(ixg==3) {  Tmin=24; Tmax=35;  }
 	else if(ixg==4) {  Tmin=24; Tmax=38;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=33; Tmax=45;  }
-	else if(ixg==2) {  Tmin=21; Tmax=34;  }
-	else if(ixg==3) {  Tmin=19; Tmax=34;  }
+	if(ixg==1) {  Tmin=29; Tmax=35; if(Ens=="cB211b.072.64") Tmin -= 2;  }
+	else if(ixg==2) {  Tmin=27; Tmax=34;  }
+	else if(ixg==3) {  Tmin=24; Tmax=34;  }
 	else if(ixg==4) {  Tmin=20; Tmax=30;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -463,38 +464,38 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
     else if(Ens=="cC211a.06.80") {
 
       if(obs=="FAu") {
-	if(ixg==1) {  Tmin=23; Tmax=31;  }
-	else if(ixg==2) {  Tmin=24; Tmax=31;  }
-	else if(ixg==3) {  Tmin=23; Tmax=32;  }
-	else if(ixg==4) {  Tmin=24; Tmax=32;  }
+	if(ixg==1) {  Tmin=26; Tmax=34;  }
+	else if(ixg==2) {  Tmin=27; Tmax=34;  }
+	else if(ixg==3) {  Tmin=25; Tmax=34;  }
+	else if(ixg==4) {  Tmin=25; Tmax=33;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") {
-	if(ixg==1) {  Tmin=23; Tmax=30;  }
-	else if(ixg==2) {  Tmin=16; Tmax=25;  }
-	else if(ixg==3) {  Tmin=14; Tmax=29;  }
-	else if(ixg==4) {  Tmin=18; Tmax=29;  }
+	if(ixg==1) {  Tmin=26; Tmax=32;  }
+	else if(ixg==2) {  Tmin=26; Tmax=33;  }
+	else if(ixg==3) {  Tmin=25; Tmax=33;  }
+	else if(ixg==4) {  Tmin=25; Tmax=33;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
-	if(ixg==1) {  Tmin=38; Tmax=50;  }
+	if(ixg==1) {  Tmin=31; Tmax=43;  }
 	else if(ixg==2) {  Tmin=33; Tmax=43;  }
-	else if(ixg==3) {  Tmin=18; Tmax=30;  }
-	else if(ixg==4) {  Tmin=17; Tmax=32;  }
+	else if(ixg==3) {  Tmin=23; Tmax=37;  }
+	else if(ixg==4) {  Tmin=22; Tmax=35;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=33; Tmax=45;  }
 	else if(ixg==2) {  Tmin=27; Tmax=36;  }
-	else if(ixg==3) {  Tmin=15; Tmax=30;  }
-	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	else if(ixg==3) {  Tmin=24; Tmax=30;  }
+	else if(ixg==4) {  Tmin=21; Tmax=30;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
-	if(ixg==1) {  Tmin=20; Tmax=27;  }
-	else if(ixg==2) {  Tmin=20; Tmax=27;  }
+	if(ixg==1) {  Tmin=16; Tmax=22;  }
+	else if(ixg==2) {  Tmin=18; Tmax=23;  }
 	else if(ixg==3) {  Tmin=20; Tmax=28;  }
-	else if(ixg==4) {  Tmin=21; Tmax=30;  }
+	else if(ixg==4) {  Tmin=19; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
@@ -507,14 +508,14 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       else if(obs=="FV_Tu") {
 	if(ixg==1) {  Tmin=31; Tmax=41;  }
 	else if(ixg==2) {  Tmin=31; Tmax=39;  }
-	else if(ixg==3) {  Tmin=19; Tmax=35;  }
+	else if(ixg==3) {  Tmin=24; Tmax=35;  }
 	else if(ixg==4) {  Tmin=24; Tmax=38;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=33; Tmax=45;  }
-	else if(ixg==2) {  Tmin=21; Tmax=34;  }
-	else if(ixg==3) {  Tmin=19; Tmax=34;  }
+	if(ixg==1) {  Tmin=27; Tmax=34;  }
+	else if(ixg==2) {  Tmin=25; Tmax=34;  }
+	else if(ixg==3) {  Tmin=24; Tmax=34;  }
 	else if(ixg==4) {  Tmin=20; Tmax=30;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -527,41 +528,41 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 
   else if(mh == "B3s") {
 
-    if(  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
+    if( (Ens=="cA211a.12.48") || (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
 
       if(obs=="FAu") {
-       if(ixg==1) {  Tmin=22; Tmax=27;  }
-       else if(ixg==2) {  Tmin=22; Tmax=27;  }
-       else if(ixg==3) {  Tmin=22; Tmax=27;  }
-       else if(ixg==4) {  Tmin=22; Tmax=27;  }
+       if(ixg==1) {  Tmin=21; Tmax=27;  }
+       else if(ixg==2) {  Tmin=20; Tmax=25;  }
+       else if(ixg==3) {  Tmin=21; Tmax=27;  }
+       else if(ixg==4) {  Tmin=21; Tmax=27;  }
        else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") { //non bellissimi
-	if(ixg==1) {  Tmin=17; Tmax=28;  }
-	else if(ixg==2) {  Tmin=18; Tmax=28;  }
-	else if(ixg==3) {  Tmin=22; Tmax=30;  }
-	else if(ixg==4) {  Tmin=22; Tmax=30;  }
+	if(ixg==1) {  Tmin=17; Tmax=24;  }
+	else if(ixg==2) {  Tmin=24; Tmax=31;  }
+	else if(ixg==3) {  Tmin=22; Tmax=33;  }
+	else if(ixg==4) {  Tmin=22; Tmax=30; if(Ens=="cD211a.054.96") { Tmin -= 4; Tmax -=4 ;}  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
-	if(ixg==1) {  Tmin=27; Tmax=40;  }
-	else if(ixg==2) {  Tmin=25; Tmax=32;  }
+	if(ixg==1) {  Tmin=28; Tmax=40;  }
+	else if(ixg==2) {  Tmin=27; Tmax=32;  }
 	else if(ixg==3) {  Tmin=22; Tmax=30;  }
 	else if(ixg==4) {  Tmin=16; Tmax=30;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=26; Tmax=32;  }
-	else if(ixg==2) {  Tmin=22; Tmax=30;  }
-	else if(ixg==3) {  Tmin=16; Tmax=24;  }
-	else if(ixg==4) {  Tmin=14; Tmax=23;  }
+	else if(ixg==2) {  Tmin=23; Tmax=30;  }
+	else if(ixg==3) {  Tmin=20; Tmax=25; if(Ens=="cD211a.054.96") { Tmin += 2; Tmax +=2 ;}  }
+	else if(ixg==4) {  Tmin=17; Tmax=24; if(Ens=="cD211a.054.96") { Tmin += 2; Tmax +=2 ;}  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
 	if(ixg==1) {  Tmin=17; Tmax=26;  }
 	else if(ixg==2) {  Tmin=13; Tmax=24;  }
-	else if(ixg==3) {  Tmin=11; Tmax=24;  }
-	else if(ixg==4) {  Tmin=10; Tmax=28;  }
+	else if(ixg==3) {  Tmin=13; Tmax=24;  }
+	else if(ixg==4) {  Tmin=16; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
@@ -572,17 +573,17 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") { //two plataux for small xg
-	if(ixg==1) {  Tmin=24; Tmax=30;  }
-	else if(ixg==2) {  Tmin=21; Tmax=28;  }
-	else if(ixg==3) {  Tmin=17; Tmax=28;  }
+	if(ixg==1) {  Tmin=31; Tmax=38;  }
+	else if(ixg==2) {  Tmin=25; Tmax=30;  }
+	else if(ixg==3) {  Tmin=20; Tmax=28;  }
 	else if(ixg==4) {  Tmin=14; Tmax=25;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=30; Tmax=40;  }
-	else if(ixg==2) {  Tmin=26; Tmax=34;  }
-	else if(ixg==3) {  Tmin=16; Tmax=23;  }
-	else if(ixg==4) {  Tmin=15; Tmax=23;  }
+	if(ixg==1) {  Tmin=26; Tmax=40; if(Ens=="cD211a.054.96") Tmin +=3;  }
+	else if(ixg==2) {  Tmin=25; Tmax=34;  }
+	else if(ixg==3) {  Tmin=20; Tmax=25;  }
+	else if(ixg==4) {  Tmin=17; Tmax=23;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
@@ -590,58 +591,58 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
     else if(Ens=="cC211a.06.80") {
 
       if(obs=="FAu") {
-       if(ixg==1) {  Tmin=22; Tmax=27;  }
-       else if(ixg==2) {  Tmin=22; Tmax=27;  }
-       else if(ixg==3) {  Tmin=22; Tmax=27;  }
-       else if(ixg==4) {  Tmin=22; Tmax=27;  }
+       if(ixg==1) {  Tmin=21; Tmax=27;  }
+       else if(ixg==2) {  Tmin=20; Tmax=25;  }
+       else if(ixg==3) {  Tmin=21; Tmax=27;  }
+       else if(ixg==4) {  Tmin=21; Tmax=27;  }
        else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") { //non bellissimi
-	if(ixg==1) {  Tmin=17; Tmax=28;  }
-	else if(ixg==2) {  Tmin=18; Tmax=28;  }
-	else if(ixg==3) {  Tmin=22; Tmax=30;  }
-	else if(ixg==4) {  Tmin=22; Tmax=30;  }
+	if(ixg==1) {  Tmin=17; Tmax=24;  }
+	else if(ixg==2) {  Tmin=24; Tmax=31;  }
+	else if(ixg==3) {  Tmin=22; Tmax=32;  }
+	else if(ixg==4) {  Tmin=16; Tmax=30;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
-	if(ixg==1) {  Tmin=27; Tmax=40;  }
-	else if(ixg==2) {  Tmin=25; Tmax=32;  }
+	if(ixg==1) {  Tmin=30; Tmax=40;  }
+	else if(ixg==2) {  Tmin=26; Tmax=33;  }
 	else if(ixg==3) {  Tmin=22; Tmax=30;  }
 	else if(ixg==4) {  Tmin=16; Tmax=30;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=26; Tmax=32;  }
-	else if(ixg==2) {  Tmin=22; Tmax=30;  }
-	else if(ixg==3) {  Tmin=16; Tmax=24;  }
-	else if(ixg==4) {  Tmin=14; Tmax=23;  }
+	else if(ixg==2) {  Tmin=24; Tmax=31;  }
+	else if(ixg==3) {  Tmin=20; Tmax=25;  }
+	else if(ixg==4) {  Tmin=17; Tmax=24;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
 	if(ixg==1) {  Tmin=17; Tmax=26;  }
 	else if(ixg==2) {  Tmin=13; Tmax=24;  }
-	else if(ixg==3) {  Tmin=11; Tmax=24;  }
-	else if(ixg==4) {  Tmin=10; Tmax=28;  }
+	else if(ixg==3) {  Tmin=14; Tmax=24;  }
+	else if(ixg==4) {  Tmin=16; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
 	if(ixg==1) {  Tmin=20; Tmax=27;  }
 	else if(ixg==2) {  Tmin=17; Tmax=27;  }
-	else if(ixg==3) {  Tmin=16; Tmax=27;  }
+	else if(ixg==3) {  Tmin=14; Tmax=27;  }
 	else if(ixg==4) {  Tmin=14; Tmax=22;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") { //two plataux for small xg
-	if(ixg==1) {  Tmin=24; Tmax=30;  }
-	else if(ixg==2) {  Tmin=21; Tmax=28;  }
-	else if(ixg==3) {  Tmin=17; Tmax=28;  }
-	else if(ixg==4) {  Tmin=14; Tmax=25;  }
+	if(ixg==1) {  Tmin=31; Tmax=38;  }
+	else if(ixg==2) {  Tmin=25; Tmax=30;  }
+	else if(ixg==3) {  Tmin=20; Tmax=28;  }
+	else if(ixg==4) {  Tmin=17; Tmax=25;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=30; Tmax=40;  }
-	else if(ixg==2) {  Tmin=26; Tmax=34;  }
-	else if(ixg==3) {  Tmin=16; Tmax=23;  }
+	if(ixg==1) {  Tmin=24; Tmax=40;  }
+	else if(ixg==2) {  Tmin=25; Tmax=34;  }
+	else if(ixg==3) {  Tmin=20; Tmax=27;  }
 	else if(ixg==4) {  Tmin=15; Tmax=23;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -653,13 +654,13 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
   
   else if(mh == "B4s") {
 
-    if(  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
+    if( (Ens=="cA211a.12.48") ||  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
 
       if(obs=="FAu") { //not very nice
-       if(ixg==1) {  Tmin=19; Tmax=25;  }
-       else if(ixg==2) {  Tmin=17; Tmax=25;  }
-       else if(ixg==3) {  Tmin=17; Tmax=25;  }
-       else if(ixg==4) {  Tmin=17; Tmax=25;  }
+       if(ixg==1) {  Tmin=18; Tmax=25;  }
+       else if(ixg==2) {  Tmin=20; Tmax=25;  }
+       else if(ixg==3) {  Tmin=21; Tmax=25;  }
+       else if(ixg==4) {  Tmin=21; Tmax=25;  }
        else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") { //not very nice
@@ -670,55 +671,55 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
-	if(ixg==1) {  Tmin=25; Tmax=33;  }
-	else if(ixg==2) {  Tmin=20; Tmax=28;  }
-	else if(ixg==3) {  Tmin=18; Tmax=24;  }
+	if(ixg==1) {  Tmin=28; Tmax=33;  }
+	else if(ixg==2) {  Tmin=22; Tmax=28;  }
+	else if(ixg==3) {  Tmin=19; Tmax=24;  }
 	else if(ixg==4) {  Tmin=16; Tmax=24;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=21; Tmax=28;  }
-	else if(ixg==2) {  Tmin=19; Tmax=25;  }
-	else if(ixg==3) {  Tmin=17; Tmax=24;  }
-	else if(ixg==4) {  Tmin=12; Tmax=23;  }
+	if(ixg==1) {  Tmin=22; Tmax=30; if(Ens=="cD211a.054.96") { Tmin += 3;}    }
+	else if(ixg==2) {  Tmin=21; Tmax=27;  }
+	else if(ixg==3) {  Tmin=17; Tmax=24; if(Ens=="cD211a.054.96") {Tmin+=4; Tmax += 4; }  }
+	else if(ixg==4) {  Tmin=14; Tmax=23;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
-	if(ixg==1) {  Tmin=15; Tmax=24;  }
-	else if(ixg==2) {  Tmin=13; Tmax=24;  }
-	else if(ixg==3) {  Tmin=11; Tmax=24;  }
-	else if(ixg==4) {  Tmin=10; Tmax=28;  }
+	if(ixg==1) {  Tmin=15; Tmax=24; if(Ens=="cB211b.072.96") Tmin -=4;  }
+	else if(ixg==2) {  Tmin=17; Tmax=24;  }
+	else if(ixg==3) {  Tmin=17; Tmax=24;  }
+	else if(ixg==4) {  Tmin=18; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
-	if(ixg==1) {  Tmin=20; Tmax=27;  }
-	else if(ixg==2) {  Tmin=15; Tmax=25;  }
-	else if(ixg==3) {  Tmin=13; Tmax=23;  }
-	else if(ixg==4) {  Tmin=13; Tmax=22;  }
+	if(ixg==1) {  Tmin=18; Tmax=27;  }
+	else if(ixg==2) {  Tmin=18; Tmax=28;  }
+	else if(ixg==3) {  Tmin=15; Tmax=23;  }
+	else if(ixg==4) {  Tmin=12; Tmax=21;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") { //bad plateaux at  xg=0.1
-	if(ixg==1) {  Tmin=23; Tmax=30;  }
-	else if(ixg==2) {  Tmin=19; Tmax=25;  }
-	else if(ixg==3) {  Tmin=17; Tmax=24;  }
-	else if(ixg==4) {  Tmin=15; Tmax=25;  }
+	if(ixg==1) {  Tmin=26; Tmax=30;  }
+	else if(ixg==2) {  Tmin=21; Tmax=25;  }
+	else if(ixg==3) {  Tmin=22; Tmax=25;  }
+	else if(ixg==4) {  Tmin=20; Tmax=26;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=22; Tmax=30;  }
-	else if(ixg==2) {  Tmin=20; Tmax=26;  }
-	else if(ixg==3) {  Tmin=14; Tmax=22;  }
-	else if(ixg==4) {  Tmin=10; Tmax=16;  }
+	if(ixg==1) {  Tmin=26; Tmax=30;  }
+	else if(ixg==2) {  Tmin=24; Tmax=30;  }
+	else if(ixg==3) {  Tmin=16; Tmax=24;  }
+	else if(ixg==4) {  Tmin=11; Tmax=17;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
     else if(Ens=="cC211a.06.80") {
 
       if(obs=="FAu") { //not very nice
-       if(ixg==1) {  Tmin=19; Tmax=25;  }
-       else if(ixg==2) {  Tmin=17; Tmax=25;  }
-       else if(ixg==3) {  Tmin=17; Tmax=25;  }
-       else if(ixg==4) {  Tmin=17; Tmax=25;  }
+       if(ixg==1) {  Tmin=18; Tmax=25;  }
+       else if(ixg==2) {  Tmin=18; Tmax=25;  }
+       else if(ixg==3) {  Tmin=18; Tmax=25;  }
+       else if(ixg==4) {  Tmin=21; Tmax=25;  }
        else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") { //not very nice
@@ -730,44 +731,44 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FVu") {
 	if(ixg==1) {  Tmin=25; Tmax=33;  }
-	else if(ixg==2) {  Tmin=20; Tmax=28;  }
-	else if(ixg==3) {  Tmin=18; Tmax=24;  }
+	else if(ixg==2) {  Tmin=23; Tmax=28;  }
+	else if(ixg==3) {  Tmin=21; Tmax=24;  }
 	else if(ixg==4) {  Tmin=16; Tmax=24;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=21; Tmax=28;  }
-	else if(ixg==2) {  Tmin=19; Tmax=25;  }
-	else if(ixg==3) {  Tmin=17; Tmax=24;  }
-	else if(ixg==4) {  Tmin=12; Tmax=23;  }
+	if(ixg==1) {  Tmin=24; Tmax=30;  }
+	else if(ixg==2) {  Tmin=21; Tmax=27;  }
+	else if(ixg==3) {  Tmin=16; Tmax=27;  }
+	else if(ixg==4) {  Tmin=15; Tmax=23;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
 	if(ixg==1) {  Tmin=15; Tmax=24;  }
-	else if(ixg==2) {  Tmin=13; Tmax=24;  }
-	else if(ixg==3) {  Tmin=11; Tmax=24;  }
-	else if(ixg==4) {  Tmin=10; Tmax=28;  }
+	else if(ixg==2) {  Tmin=17; Tmax=24;  }
+	else if(ixg==3) {  Tmin=17; Tmax=24;  }
+	else if(ixg==4) {  Tmin=18; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
-	if(ixg==1) {  Tmin=20; Tmax=27;  }
-	else if(ixg==2) {  Tmin=15; Tmax=25;  }
-	else if(ixg==3) {  Tmin=13; Tmax=23;  }
-	else if(ixg==4) {  Tmin=13; Tmax=22;  }
+	if(ixg==1) {  Tmin=18; Tmax=27;  }
+	else if(ixg==2) {  Tmin=11; Tmax=27;  }
+	else if(ixg==3) {  Tmin=11; Tmax=20;  }
+	else if(ixg==4) {  Tmin=12; Tmax=21;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") { //bad plateaux at  xg=0.1
-	if(ixg==1) {  Tmin=23; Tmax=30;  }
-	else if(ixg==2) {  Tmin=19; Tmax=25;  }
-	else if(ixg==3) {  Tmin=17; Tmax=24;  }
-	else if(ixg==4) {  Tmin=15; Tmax=25;  }
+	if(ixg==1) {  Tmin=26; Tmax=30;  }
+	else if(ixg==2) {  Tmin=21; Tmax=25;  }
+	else if(ixg==3) {  Tmin=22; Tmax=25;  }
+	else if(ixg==4) {  Tmin=20; Tmax=26;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=22; Tmax=30;  }
-	else if(ixg==2) {  Tmin=20; Tmax=26;  }
-	else if(ixg==3) {  Tmin=14; Tmax=22;  }
-	else if(ixg==4) {  Tmin=10; Tmax=16;  }
+	if(ixg==1) {  Tmin=26; Tmax=30;  }
+	else if(ixg==2) {  Tmin=24; Tmax=30;  }
+	else if(ixg==3) {  Tmin=16; Tmax=24;  }
+	else if(ixg==4) {  Tmin=11; Tmax=17;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
@@ -777,14 +778,12 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
   else crash("mh: "+mh+" not yet implemented");
   
 
-
-  
-
-
   
   if(use_old && Ens=="cC211a.06.80") { Tmin= (int)(Tmin*0.07957/0.0682); Tmax= (int)( Tmax*0.07957/0.0682);}
 
   if(use_old && Ens=="cD211a.054.96") { Tmin= (int)(Tmin*0.07957/0.0569); Tmax= (int)( Tmax*0.07957/0.0569);}
+
+  if(use_old && Ens=="cA211a.12.48") { Tmin=(int)(Tmin*0.07957/0.0907593); Tmax= (int)(Tmax*0.07957/0.0907593);}
  
 
   return;
@@ -855,23 +854,16 @@ void Compute_Bs_mumu_gamma() {
   vector<rt_FF_Bs> FF_ret_list;
 
   
-  // vector<bool> Use_three_finest_list({0,0,1,0,0});
-  //vector<bool> Include_a4_list({0,0,0,0,0});
-  //vector<bool> UseJack_list({1,1,1,1,1});
-  //vector<int>  num_xg_list({8,11,11,5,5});
-  //vector<double> Perform_continuum_extrapolation_list({0,1,1,0,0});
-  //vector<string> Corr_path_list({"../Bs_mumu_gamma_data/mc_w_B96", "../Bs_mumu_gamma_data/mc", "../Bs_mumu_gamma_data/mc", "../Bs_mumu_gamma_data/mh1", "../Bs_mumu_gamma_data/mh2"});
-  //vector<string> out_tag_list({"", "", "", "mh1", "mh2"});
-  //vector<string> Meson_list({"Bs", "Bs", "Bs", "B1s", "B2s"});
+ 
 
   vector<bool> Use_three_finest_list({0,0,0,0,0});
   vector<bool> Include_a4_list({0,0,0,0,0});
   vector<bool> UseJack_list({1,1,1,1,1});
   vector<int>  num_xg_list({5,5,5,5,5});
   vector<double> Perform_continuum_extrapolation_list({1,1,1,1,1});
-  vector<string> Corr_path_list({ "../Bs_mumu_gamma_data/mc",  "../Bs_mumu_gamma_data/mh1", "../Bs_mumu_gamma_data/mh2", "../Bs_mumu_gamma_data/mh3", "../Bs_mumu_gamma_data/mh4"});
-  vector<string> out_tag_list({"mc", "mh1", "mh2", "mh3", "mh4"});
-  vector<string> Meson_list({"Bs", "B1s", "B2s", "B3s", "B4s"});
+  vector<string> Corr_path_list({ "../Bs_mumu_gamma_data/mh0",  "../Bs_mumu_gamma_data/mh1", "../Bs_mumu_gamma_data/mh2", "../Bs_mumu_gamma_data/mh3", "../Bs_mumu_gamma_data/mh4"});
+  vector<string> out_tag_list({"mh0", "mh1", "mh2", "mh3", "mh4"});
+  vector<string> Meson_list({"B0s", "B1s", "B2s", "B3s", "B4s"});
 
   int N= UseJack_list.size();
   for(int i=0;i<N;i++) {
@@ -906,12 +898,31 @@ void Compute_Bs_mumu_gamma() {
   }
 
 
+  cout<<"Generating data to be used for meson mass extrapolation"<<endl;
+  //print continuum extrapolated results for each contribution as a function of the mass
+  vector<string> contribs({"FA", "FA_u", "FA_d", "FV",  "FV_u", "FV_d",  "FA_T", "FA_T_u", "FA_T_d", "FV_T", "FV_T_u", "FV_T_d"});
+  for(int c=0; c<(signed)contribs.size(); c++) {
+    distr_t_list masses(1), fps(1);
+    vector<distr_t_list> FF_M;
+    for(int ixg=1; ixg<num_xg_list[0]; ixg++) FF_M.emplace_back(1);
+    for(int m=0; m<(signed)FF_ret_list.size(); m++) {
+      masses.distr_list.push_back( FF_ret_list[m].mass );
+      fps.distr_list.push_back( FF_ret_list[m].fp);
+      for(int ixg=1; ixg<num_xg_list[0];ixg++) { FF_M[ixg-1].distr_list.push_back( FF_ret_list[m].Get_FF(c).distr_list[ixg-1]);}
+    }
+
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+"Bs_extr");
+    for(int ixg=1;ixg<(signed)num_xg_list[0];ixg++) {
+     
+      Print_To_File({}, { (1.0/masses).ave(), (1.0/masses).err(), fps.ave(), fps.err(), FF_M[ixg-1].ave(), FF_M[ixg-1].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/"+contribs[c]+"_ixg_"+to_string(ixg)+".dat", "", ""); 
+    }
+  }
+  
   exit(-1);
   MESON="Bs";
 
   
-  //combine measurement with weight w_1,2
-  vector<string> contribs({"FA", "FA_u", "FA_d", "FV",  "FV_u", "FV_d",  "FA_T", "FA_T_u", "FA_T_d", "FV_T", "FV_T_u", "FV_T_d"});
+ 
 
   Bs_xg_t_list.clear();
   int nxg=11;
@@ -1639,7 +1650,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   data_t data_2pts_u_V1, data_2pts_u_V2, data_2pts_u_V3;
   data_t data_2pts_d_V1, data_2pts_d_V2, data_2pts_d_V3;
   data_t data_2pts_u_T1, data_2pts_u_T2, data_2pts_u_T3;
-  data_t data_2pts_loc_mc_T1, data_2pts_loc_mc_T2, data_2pts_loc_mc_T3;
+  data_t data_2pts_u_T1_SMSM, data_2pts_u_T2_SMSM, data_2pts_u_T3_SMSM;
   data_t data_2pts_u_B1, data_2pts_u_B2, data_2pts_u_B3;
 
   
@@ -1662,14 +1673,13 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   data_2pts_u_T1.Read(path_list, "mes_contr_2pts_SM_2", "T1T1" , Sort_light_confs);
   data_2pts_u_T2.Read(path_list, "mes_contr_2pts_SM_2", "T2T2", Sort_light_confs);
   data_2pts_u_T3.Read(path_list, "mes_contr_2pts_SM_2", "T3T3", Sort_light_confs);
+  data_2pts_u_T1_SMSM.Read(path_list, "mes_contr_2pts_SMSM_2", "T1T1" , Sort_light_confs);
+  data_2pts_u_T2_SMSM.Read(path_list, "mes_contr_2pts_SMSM_2", "T2T2", Sort_light_confs);
+  data_2pts_u_T3_SMSM.Read(path_list, "mes_contr_2pts_SMSM_2", "T3T3", Sort_light_confs);
   data_2pts_u_B1.Read(path_list, "mes_contr_2pts_SM_2", "B1B1" , Sort_light_confs);
   data_2pts_u_B2.Read(path_list, "mes_contr_2pts_SM_2", "B2B2", Sort_light_confs);
   data_2pts_u_B3.Read(path_list, "mes_contr_2pts_SM_2", "B3B3", Sort_light_confs);
 
-  //to evaluate f_J/Psi
-  data_2pts_loc_mc_T1.Read("../Bs_mumu_gamma_data/mc", "mes_contr_2pts_2", "T1T1", Sort_light_confs);
-  data_2pts_loc_mc_T2.Read("../Bs_mumu_gamma_data/mc", "mes_contr_2pts_2", "T2T2", Sort_light_confs);
-  data_2pts_loc_mc_T3.Read("../Bs_mumu_gamma_data/mc", "mes_contr_2pts_2", "T3T3", Sort_light_confs);
 
 
   //axial
@@ -1938,57 +1948,39 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     cout<<"Number of kinematic analyzed: "<<num_xg<<endl;
     
     
-    //set time interval for eff_mass_fit
-    
-    if(data_2pts.Tag[iens].substr(1,1) =="A") {Corr.Tmin=19; Corr.Tmax=35;}
-    else if(data_2pts.Tag[iens] =="cB211b.072.64") {
-      Corr.Tmin=25; Corr.Tmax=45;
-      if(MESON=="B1s") { Corr.Tmin=24; Corr.Tmax=40;  }
-      else if(MESON=="B2s") { Corr.Tmin=22; Corr.Tmax=35;   }
-      else if (MESON=="B3s") {Corr.Tmin=22; Corr.Tmax=30;}
-      else if(MESON=="B4s") {Corr.Tmin=17; Corr.Tmax=25;}
-    }
-    else if(data_2pts.Tag[iens] =="cB211b.072.96") {Corr.Tmin=25; Corr.Tmax=45;}
-    else if(data_2pts.Tag[iens].substr(1,1) == "C") {Corr.Tmin=33;Corr.Tmax=51;}
-    else if(data_2pts.Tag[iens].substr(1,1) == "D") {Corr.Tmin=35;Corr.Tmax=54;}
-    else crash("In fixing [Tmin, Tmax] for MP, Ensemble: "+data_2pts.Tag[iens]+" not recognized");
-
-    //distr_t_list pt2_distr= Corr.corr_t(data_2pts.col(0)[iens], "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt.dat");
-    //distr_t_list eff_mass = Corr.effective_mass_t(pt2_distr, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass.dat");
-    //distr_t_list fp_distr= Corr.decay_constant_t( pow( mu+md,2)*pt2_distr, "../data/ph_emission/"+ph_type_mes+"/"+"decay_const/"+data_2pts.Tag[iens]+"/decay_const.dat");
-    distr_t_list pt2_T_distr= -1*(1.0/3.0)*Corr.corr_t(summ_master(data_2pts_loc_mc_T1.col(0)[iens], data_2pts_loc_mc_T2.col(0)[iens], data_2pts_loc_mc_T3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C_T/"+data_2pts.Tag[iens]+"/corr_T_2pt.dat");
-    distr_t_list pt2_B_distr= -1*(1.0/3.0)*Corr.corr_t(summ_master(data_2pts_u_B1.col(0)[iens], data_2pts_u_B2.col(0)[iens], data_2pts_u_B3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C_T/"+data_2pts.Tag[iens]+"/corr_B_2pt.dat");
-    distr_t_list eff_mass_T= Corr.effective_mass_t(pt2_T_distr,"../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_T.dat");
-    distr_t_list eff_mass_B= Corr.effective_mass_t(pt2_B_distr,"../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_B.dat"); 
-    distr_t_list ft_distr= Corr.mel_ov_mass_t( pt2_T_distr, "../data/ph_emission/"+ph_type_mes+"/"+"decay_const/"+data_2pts.Tag[iens]+"/decay_const_T.dat");
-
-  
-
-
-    
    
     
     //set time interval for eff_mass_fit SM
-    if(data_2pts.Tag[iens].substr(1,1) =="A") {Corr.Tmin=24; Corr.Tmax=35;}
+    if(data_2pts.Tag[iens].substr(1,1) =="A") {
+      if(MESON == "B1s") { Corr.Tmin=14; Corr.Tmax= 24;}
+      else if(MESON == "B2s" ) { Corr.Tmin=13; Corr.Tmax= 24;}
+      else if(MESON=="B3s") { Corr.Tmin=14; Corr.Tmax=20;}
+      else if(MESON=="B4s") { Corr.Tmin=14; Corr.Tmax=19;}
+      else { Corr.Tmin=14; Corr.Tmax=27;}
+      
+    }
     else if(data_2pts.Tag[iens] =="cB211b.072.64") {
-      if(MESON == "B1s" || MESON == "B2s") {Corr.Tmin=24; Corr.Tmax=35;}
-      else if(MESON=="B3s") {Corr.Tmin=18; Corr.Tmax=28;}
-      else if(MESON=="B4s") { Corr.Tmin=12; Corr.Tmax=20;}
-      else {Corr.Tmin=24; Corr.Tmax=35;}
+      if(MESON == "B1s") {Corr.Tmin=24; Corr.Tmax=38;}
+      else if(MESON == "B2s") {Corr.Tmin=22; Corr.Tmax=34;}
+      else if(MESON=="B3s") {Corr.Tmin=17; Corr.Tmax=23;}
+      else if(MESON=="B4s") { Corr.Tmin=12; Corr.Tmax=22;}
+      else {Corr.Tmin=23; Corr.Tmax=33;}
     }
     else if(data_2pts.Tag[iens] =="cB211b.072.96") {Corr.Tmin=20; Corr.Tmax=36;}
+    
     else if(data_2pts.Tag[iens].substr(1,1) == "C")  {
-      if(MESON == "B1s" || MESON == "B2s") {Corr.Tmin=20; Corr.Tmax=30;}
-      else if(MESON=="B3s") {Corr.Tmin=18; Corr.Tmax=28;}
-      else if(MESON=="B4s") { Corr.Tmin=18; Corr.Tmax=25;}
+      if(MESON == "B1s") {Corr.Tmin=29; Corr.Tmax=36;}
+      else if(MESON == "B2s") {Corr.Tmin=23; Corr.Tmax=34;}
+      else if(MESON=="B3s") {Corr.Tmin=18; Corr.Tmax=31;}
+      else if(MESON=="B4s") { Corr.Tmin=18; Corr.Tmax=30;}
       else {Corr.Tmin=29; Corr.Tmax=42;}
     }
     else if(data_2pts.Tag[iens].substr(1,1) == "D")  {
-      if(MESON == "B1s" || MESON == "B2s") {Corr.Tmin=29; Corr.Tmax=36;}
-      else if(MESON == "B2s") { Corr.Tmin=29; Corr.Tmax= 36;}
-      else if(MESON=="B3s") {Corr.Tmin=28; Corr.Tmax=36;}
-      else if(MESON=="B4s") { Corr.Tmin=25; Corr.Tmax=34;}
-      else {Corr.Tmin=34; Corr.Tmax=46;}
+      if(MESON == "B1s") {Corr.Tmin=32; Corr.Tmax=53;}
+      else if(MESON == "B2s") { Corr.Tmin=28; Corr.Tmax= 37;}
+      else if(MESON=="B3s") {Corr.Tmin=28; Corr.Tmax=37;}
+      else if(MESON=="B4s") { Corr.Tmin=27; Corr.Tmax=37;}
+      else {Corr.Tmin=38; Corr.Tmax=52;}
     }
     else crash("In fixing [Tmin, Tmax] for smeared MP, Ensemble: "+data_2pts.Tag[iens]+" not recognized");
     distr_t_list pt2_distr_SM= Corr.corr_t(data_2pts_SM.col(0)[iens], "../data/ph_emission/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/corr_2pt_SM.dat");
@@ -1997,6 +1989,13 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     distr_t_list eff_mass_SMSM = Corr.effective_mass_t(pt2_distr_SMSM, "../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_SMSM.dat");
     distr_t mel_SMSM= Corr.Fit_distr(Corr.mel_ov_mass_t(pt2_distr_SMSM, ""))/2.0;
 
+
+    distr_t_list pt2_T_distr= -1*(1.0/3.0)*Corr.corr_t(summ_master(data_2pts_u_T1.col(0)[iens], data_2pts_u_T2.col(0)[iens], data_2pts_u_T3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C_T/"+data_2pts.Tag[iens]+"/corr_T_2pt.dat");
+    distr_t_list pt2_T_distr_SMSM= -1*(1.0/3.0)*Corr.corr_t(summ_master(data_2pts_u_T1_SMSM.col(0)[iens], data_2pts_u_T2_SMSM.col(0)[iens], data_2pts_u_T3_SMSM.col(0)[iens]), "");
+    distr_t_list pt2_B_distr= -1*(1.0/3.0)*Corr.corr_t(summ_master(data_2pts_u_B1.col(0)[iens], data_2pts_u_B2.col(0)[iens], data_2pts_u_B3.col(0)[iens]), "../data/ph_emission/"+ph_type_mes+"/"+"C_T/"+data_2pts.Tag[iens]+"/corr_B_2pt.dat");
+    distr_t_list eff_mass_T= Corr.effective_mass_t(pt2_T_distr,"../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_T.dat");
+    distr_t_list eff_mass_B= Corr.effective_mass_t(pt2_B_distr,"../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_B.dat"); 
+    distr_t_list ft_distr = Corr.residue_t( pt2_T_distr, "")/(Corr.Fit_distr(eff_mass_T)*Corr.matrix_element_t(pt2_T_distr_SMSM, ""));
 
   
 
@@ -2007,12 +2006,13 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     
     distr_t M_P_SM = Corr.Fit_distr(eff_mass_SM);
     distr_t M_P_SMSM = Corr.Fit_distr(eff_mass_SMSM);
+    distr_t M_P= 0.5*(M_P_SM+M_P_SMSM);
     auto SINH= [](double x) { return sinh(x);};
-    distr_t_list FP_SM_distr_list = (mu + md )*Corr.residue_t( pt2_distr_SM, "")/(M_P_SM*distr_t::f_of_distr(SINH, M_P_SM)*Corr.matrix_element_t(pt2_distr_SMSM, ""));
+    distr_t_list FP_SM_distr_list = (mu + md )*Corr.residue_t( pt2_distr_SM, "")/(M_P*distr_t::f_of_distr(SINH, M_P)*Corr.matrix_element_t(pt2_distr_SMSM, ""));
     Print_To_File({}, {FP_SM_distr_list.ave(), FP_SM_distr_list.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"decay_const/"+data_2pts.Tag[iens]+"/decay_const_SM.dat.t", "", "");
     distr_t FP_SM= Corr.Fit_distr( FP_SM_distr_list  );
 
-    distr_t M_P= M_P_SM;
+    
     distr_t F_P= FP_SM;
     distr_t F_T=Corr.Fit_distr(ft_distr);
        
@@ -2026,7 +2026,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
     distr_t ZZT = fT_Jpsi_distr*a_distr/F_T;
    
-    distr_t RF= (a_distr/FP_SM);
+    distr_t RF= Get_id_jack_distr(NJ); // (a_distr/FP_SM);
 
     cout<<"aM_P: "<<M_P.ave()<<" +- "<<M_P.err()<<" -> "<< (M_P/(a_distr)).ave()<<" +- "<<(M_P/a_distr).err()<<" GeV"<<endl;
     cout<<"aF_P: "<<F_P.ave()<<" +- "<<F_P.err()<<" -> "<< (F_P/(a_distr)).ave()<<" +- "<<(F_P/a_distr).err()<<" GeV"<<endl;
@@ -2056,7 +2056,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     //define meson mass exponential to be removed
     auto EXP_MES_FUNC = [&] (double a, double b, double c) { return (b<c/2)?1.0/(exp(-a*b)):1.0/(exp(-a*(c-b)));};
 
-    distr_t_list EXP_MES= distr_t_list::f_of_distr( EXP_MES_FUNC, M_P_SMSM, Corr.Nt);
+    distr_t_list EXP_MES= distr_t_list::f_of_distr( EXP_MES_FUNC, M_P, Corr.Nt);
 
     //for FV and FA
     vector<vector<vector<distr_t_list>>> Ax_glb, Vec_glb, Ax_u_glb, Ax_d_glb, Vec_u_glb, Vec_d_glb, Ax_Ds_glb, Ax_Ds_u_glb, Ax_Ds_d_glb;
@@ -2134,6 +2134,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       cout<<"xg: "<<xg.ave()<<" +- "<<xg.err()<<endl;
       cout<<"thz: "<<theta<<endl;
       cout<<"kz: "<<kz<<endl;
+
+
 
       
 
@@ -2480,6 +2482,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       //######################################################################################################################
       //####################     STANDARD     FV     AND    FA     COMPUTATION     ###########################
 
+      //######
+
       //push_back Ax_tens and Vec_tens
       Ax_glb.push_back(Ax_tens);
       Ax_u_glb.push_back(Ax_tens_u);
@@ -2495,27 +2499,58 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       Ax_Ds_u_glb.push_back(Ax_Ds_tens_u);
       Ax_Ds_d_glb.push_back(Ax_Ds_tens_d);
 
+      distr_t_list FA0_distr= 0.5*(Ax_Ds_glb[0][1-off_i][1-off_i] + Ax_Ds_glb[0][2-off_i][2-off_i]);
+      
+      //define exponential mass factor for each form factor
+      //RIGHT ONE IS sign_kz = -1; //relative sign in tensor FF contributions
+      double sign_kz= -1;
+      vector<distr_t_list> EXP_MASS_CH;
+      auto F_EXP = [](double m, double t) { return exp(m*t) ;};
+      vector<string> ff_tags({"Au", "Vu", "Ad", "Vd", "ATu", "VTu", "ATd", "VTd"});
+      //######
+         
+      EXP_MASS_CH.push_back( distr_t_list::f_of_distr_list(F_EXP, Corr.effective_mass_t( (Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[1-off_i][1-off_i])*EXP_PH  -Qu*FA0_distr, "")));
+      EXP_MASS_CH.push_back( distr_t_list::f_of_distr_list(F_EXP, Corr.effective_mass_t( (Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH, "")));
+      
+      EXP_MASS_CH.push_back( distr_t_list::f_of_distr_list(F_EXP, Corr.effective_mass_t( (Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[1-off_i][1-off_i])*EXP_PH  -Qd*FA0_distr, "")));
+      EXP_MASS_CH.push_back( distr_t_list::f_of_distr_list(F_EXP, Corr.effective_mass_t( (Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH, "")));
+
+      EXP_MASS_CH.push_back( distr_t_list::f_of_distr_list(F_EXP, Corr.effective_mass_t( (Ax_T_tens_u[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_u[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_u[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_u[2-off_i][1-off_T]*(xg/2))*EXP_PH, "")));
+      EXP_MASS_CH.push_back( distr_t_list::f_of_distr_list(F_EXP, Corr.effective_mass_t(  ((Vec_T_tens_u[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_u[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_u[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_u[2-off_i][2-off_T]*(xg/2)))*EXP_PH, "") ));
+
+      EXP_MASS_CH.push_back( distr_t_list::f_of_distr_list(F_EXP, Corr.effective_mass_t( (Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*EXP_PH, "")));
+      EXP_MASS_CH.push_back( distr_t_list::f_of_distr_list(F_EXP, Corr.effective_mass_t(  ((Vec_T_tens_d[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_d[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_d[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_d[2-off_i][2-off_T]*(xg/2)))*EXP_PH, "") ));
+
+          
+    
+
       
 
       //Compute FV and FA
-      distr_t_list FA0_distr= 0.5*RF*(Ax_Ds_glb[0][1-off_i][1-off_i] + Ax_Ds_glb[0][2-off_i][2-off_i]);
-      distr_t_list FA_distr = -1.0*RF*(0.5*(Ax_tens[1-off_i][1-off_i] + Ax_tens[2-off_i][2-off_i])*EXP_PH - 0.0*FA0_distr)*(1.0/Eg)*(F_P/(-1.0*FA0_distr));
-      distr_t_list FV_distr = 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH/kz;
-      distr_t_list FV_sub_distr= 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH - (Vec_glb[0][1-off_i][2-off_i] + Vec_glb[0][2-off_i][1-off_i])*1.0)/kz;
+    
+      distr_t_list FA_distr = -1.0*RF*(0.5*(Ax_tens[1-off_i][1-off_i] + Ax_tens[2-off_i][2-off_i])*EXP_PH - 0.0*FA0_distr)*(1.0/Eg)*(FP_SM/(-1.0*FA0_distr));
+      distr_t_list FA_new_distr= -1.0*RF*Zv*(0.5*(Ax_tens[1-off_i][1-off_i] + Ax_tens[2-off_i][2-off_i])*EXP_PH)*(1.0/(Eg*mel_SMSM))*EXP_MES; 
+      distr_t_list FV_distr = 0.5*RF*(Za/Zv)*(FP_SM/(-1.0*FA0_distr))*( Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH/kz;
+      distr_t_list FV_new_distr = (0.5*RF*Za*( Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH/(kz*mel_SMSM))*EXP_MES;
+      distr_t_list FV_sub_distr= 0.5*RF*(Za/Zv)*(FP_SM/(-1.0*FA0_distr))*( (Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH - (Vec_glb[0][1-off_i][2-off_i] + Vec_glb[0][2-off_i][1-off_i])*1.0)/kz;
       //compute FV and FA (up-component)
       distr_t_list FA0_u_distr= 0.5*RF*(Ax_u_glb[0][1-off_i][1-off_i] + Ax_u_glb[0][2-off_i][2-off_i]);
-      distr_t_list FA_u_distr = -1.0*RF*(0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH - Qu*FA0_distr)*(1.0/Eg)*(F_P/(-1.0*FA0_distr));
+      distr_t_list FA_u_distr = -1.0*RF*(0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH - Qu*FA0_distr)*(1.0/Eg)*(FP_SM/(-1.0*FA0_distr));
       distr_t_list FA_u_new_distr= -1.0*RF*Zv*(0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH - Qu*FA0_distr)*(1.0/(Eg*mel_SMSM))*EXP_MES;
-      distr_t_list FV_u_distr = 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH/kz;
+      distr_t_list FA_u_var= -1.0*RF*Zv*(0.5*(Ax_tens_u[1-off_i][1-off_i] + Ax_tens_u[2-off_i][2-off_i])*EXP_PH - Qu*FA0_distr)*(1.0/(Eg*mel_SMSM))*EXP_MASS_CH[0];
+      distr_t_list FV_u_distr = 0.5*RF*(Za/Zv)*(FP_SM/(-1.0*FA0_distr))*( Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH/kz;
       distr_t_list FV_u_new_distr = (0.5*RF*Za*( Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH/(kz*mel_SMSM))*EXP_MES;
-      distr_t_list FV_u_sub_distr= 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH - (Vec_u_glb[0][1-off_i][2-off_i] + Vec_u_glb[0][2-off_i][1-off_i])*1.0)/kz;
+      distr_t_list FV_u_var = (0.5*RF*Za*( Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH/(kz*mel_SMSM))*EXP_MASS_CH[1];
+      distr_t_list FV_u_sub_distr= 0.5*RF*(Za/Zv)*(FP_SM/(-1.0*FA0_distr))*( (Vec_tens_u[1-off_i][2-off_i] - Vec_tens_u[2-off_i][1-off_i])*EXP_PH - (Vec_u_glb[0][1-off_i][2-off_i] + Vec_u_glb[0][2-off_i][1-off_i])*1.0)/kz;
       //compute FV and FA (d-component)
       distr_t_list FA0_d_distr= 0.5*RF*(Ax_d_glb[0][1-off_i][1-off_i] + Ax_d_glb[0][2-off_i][2-off_i]);
-      distr_t_list FA_d_distr = -1.0*RF*(0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH - Qd*FA0_distr)*(1.0/Eg)*(F_P/(-1.0*FA0_distr));
+      distr_t_list FA_d_distr = -1.0*RF*(0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH - Qd*FA0_distr)*(1.0/Eg)*(FP_SM/(-1.0*FA0_distr));
       distr_t_list FA_d_new_distr= -1.0*RF*Zv*(0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH - Qd*FA0_distr)*(1.0/(Eg*mel_SMSM))*EXP_MES;
-      distr_t_list FV_d_distr = 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH/kz;
+      distr_t_list FA_d_var= -1.0*RF*Zv*(0.5*(Ax_tens_d[1-off_i][1-off_i] + Ax_tens_d[2-off_i][2-off_i])*EXP_PH - Qd*FA0_distr)*(1.0/(Eg*mel_SMSM))*EXP_MASS_CH[2];
+      distr_t_list FV_d_distr = 0.5*RF*(Za/Zv)*(FP_SM/(-1.0*FA0_distr))*( Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH/kz;
       distr_t_list FV_d_new_distr=   (0.5*RF*Za*( Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH/(kz*mel_SMSM))*EXP_MES;
-      distr_t_list FV_d_sub_distr= 0.5*RF*(Za/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH - (Vec_d_glb[0][1-off_i][2-off_i] + Vec_d_glb[0][2-off_i][1-off_i])*1.0)/kz;
+      distr_t_list FV_d_var=   (0.5*RF*Za*( Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH/(kz*mel_SMSM))*EXP_MASS_CH[3];
+      distr_t_list FV_d_sub_distr= 0.5*RF*(Za/Zv)*(FP_SM/(-1.0*FA0_distr))*( (Vec_tens_d[1-off_i][2-off_i] - Vec_tens_d[2-off_i][1-off_i])*EXP_PH - (Vec_d_glb[0][1-off_i][2-off_i] + Vec_d_glb[0][2-off_i][1-off_i])*1.0)/kz;
 
       
       
@@ -2525,13 +2560,13 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       Print_To_File({}, {FV_sub_distr.ave(), FV_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
 
       //Print FV and FA (up-component)
-      Print_To_File({}, {FA_u_distr.ave(), FA_u_distr.err(), FA_u_new_distr.ave(), FA_u_new_distr.err(),  FA0_u_distr.ave(), FA0_u_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
-      Print_To_File({}, {FV_u_distr.ave(), FV_u_distr.err(), FV_u_new_distr.ave(), FV_u_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_u_distr.ave(), FA_u_distr.err(), FA_u_new_distr.ave(), FA_u_new_distr.err(),  FA_u_var.ave(), FA_u_var.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FV_u_distr.ave(), FV_u_distr.err(), FV_u_new_distr.ave(), FV_u_new_distr.err(),  FV_u_var.ave(), FV_u_var.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {FV_u_sub_distr.ave(), FV_u_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       
       //Print FV and FA (d-component)
-      Print_To_File({}, {FA_d_distr.ave(), FA_d_distr.err(), FA_d_new_distr.ave(), FA_d_new_distr.err(),  FA0_d_distr.ave(), FA0_d_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
-      Print_To_File({}, {(FV_d_distr).ave(), (FV_d_distr).err(), FV_d_new_distr.ave(), FV_d_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_d_distr.ave(), FA_d_distr.err(), FA_d_new_distr.ave(), FA_d_new_distr.err(),  FA_d_var.ave(), FA_d_var.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {(FV_d_distr).ave(), (FV_d_distr).err(), FV_d_new_distr.ave(), FV_d_new_distr.err(),  FV_d_var.ave(), FV_d_var.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       Print_To_File({}, {(FV_d_sub_distr).ave(), (FV_d_sub_distr).err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
 
       //fit the form factors
@@ -2598,26 +2633,34 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       Vec_T_glb.push_back(Vec_T_tens);
       Vec_T_u_glb.push_back(Vec_T_tens_u);
       Vec_T_d_glb.push_back(Vec_T_tens_d);
-      //RIGHT ONE IS sign_kz = -1;
-      double sign_kz= -1;
+    
       //Compute FV and FA
-      distr_t_list FA_T_distr =0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( Ax_T_tens[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens[1-off_i][2-off_T]*(xg/2) + Ax_T_tens[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
-      distr_t_list FV_T_distr = 0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_T_tens[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
+      distr_t_list FA_T_distr =0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( Ax_T_tens[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens[1-off_i][2-off_T]*(xg/2) + Ax_T_tens[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
+      distr_t_list FV_T_distr = 0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( (Vec_T_tens[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
+      //improved estimator
+      distr_t_list FA_T_new_distr =(0.5*RF*(Z_T)*( Ax_T_tens[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens[1-off_i][2-off_T]*(xg/2) + Ax_T_tens[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
+      distr_t_list FV_T_new_distr = (0.5*RF*(Z_T)*( (Vec_T_tens[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens[2-off_i][2-off_T]*(xg/2)))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
       
       //compute FV and FA (up-component)
-      distr_t_list FA_T_u_distr =0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( Ax_T_tens_u[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_u[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_u[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_u[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
-      distr_t_list FV_T_u_distr = 0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_T_tens_u[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_u[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_u[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_u[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
+      distr_t_list FA_T_u_distr =0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( Ax_T_tens_u[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_u[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_u[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_u[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
+      distr_t_list FV_T_u_distr = 0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( (Vec_T_tens_u[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_u[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_u[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_u[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
       //improved estimator
       distr_t_list FA_T_u_new_distr =(0.5*RF*(Z_T)*( Ax_T_tens_u[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_u[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_u[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_u[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
       distr_t_list FV_T_u_new_distr = (0.5*RF*(Z_T)*( (Vec_T_tens_u[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_u[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_u[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_u[2-off_i][2-off_T]*(xg/2)))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
+      //another variation
+      distr_t_list FA_T_u_var =(0.5*RF*(Z_T)*( Ax_T_tens_u[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_u[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_u[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_u[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MASS_CH[4];
+      distr_t_list FV_T_u_var = (0.5*RF*(Z_T)*( (Vec_T_tens_u[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_u[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_u[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_u[2-off_i][2-off_T]*(xg/2)))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MASS_CH[5];
+      
 
       //compute FV and FA (d-component)
-      distr_t_list FA_T_d_distr =0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
-      distr_t_list FV_T_d_distr = 0.5*RF*(Z_T/Zv)*(F_P/(-1.0*FA0_distr))*( (Vec_T_tens_d[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_d[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_d[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_d[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
+      distr_t_list FA_T_d_distr =0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
+      distr_t_list FV_T_d_distr = 0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( (Vec_T_tens_d[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_d[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_d[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_d[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
       //improved estimator
       distr_t_list FA_T_d_new_distr =(0.5*RF*(Z_T)*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
       distr_t_list FV_T_d_new_distr = (0.5*RF*(Z_T)*( (Vec_T_tens_d[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_d[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_d[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_d[2-off_i][2-off_T]*(xg/2)))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
-
+      //another variation
+      distr_t_list FA_T_d_var =(0.5*RF*(Z_T)*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MASS_CH[6];
+      distr_t_list FV_T_d_var = (0.5*RF*(Z_T)*( (Vec_T_tens_d[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_d[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_d[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_d[2-off_i][2-off_T]*(xg/2)))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MASS_CH[7];
    
       //Print FV and FA
       Print_To_File({}, {FA_T_distr.ave(), FA_T_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FA_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
@@ -2625,13 +2668,13 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       //Print_To_File({}, {FV_sub_distr.ave(), FV_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF/"+data_2pts.Tag[iens]+"/FV_T_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
 
       //Print FV and FA (up-component)
-      Print_To_File({}, {FA_T_u_distr.ave(), FA_T_u_distr.err(), FA_T_u_new_distr.ave(), FA_T_u_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
-      Print_To_File({}, {FV_T_u_distr.ave(), FV_T_u_distr.err(), FV_T_u_new_distr.ave(), FV_T_u_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_T_u_distr.ave(), FA_T_u_distr.err(), FA_T_u_new_distr.ave(), FA_T_u_new_distr.err(), FA_T_u_var.ave(), FA_T_u_var.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FA_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FV_T_u_distr.ave(), FV_T_u_distr.err(), FV_T_u_new_distr.ave(), FV_T_u_new_distr.err(), FV_T_u_var.ave(), FV_T_u_var.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       //Print_To_File({}, {FV_T_u_sub_distr.ave(), FV_T_u_sub_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_u/"+data_2pts.Tag[iens]+"/FV_T_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       
       //Print FV and FA (d-component)
-      Print_To_File({}, {FA_T_d_distr.ave(), FA_T_d_distr.err(), FA_T_d_new_distr.ave(), FA_T_d_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
-      Print_To_File({}, {(FV_T_d_distr).ave(), (FV_T_d_distr).err(), FV_T_d_new_distr.ave(), FV_T_d_new_distr.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {FA_T_d_distr.ave(), FA_T_d_distr.err(), FA_T_d_new_distr.ave(), FA_T_d_new_distr.err(), FA_T_d_var.ave(), FA_T_d_var.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FA_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
+      Print_To_File({}, {(FV_T_d_distr).ave(), (FV_T_d_distr).err(), FV_T_d_new_distr.ave(), FV_T_d_new_distr.err(), FV_T_d_var.ave(), FV_T_d_var.err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_T_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
       // Print_To_File({}, {(FV_T_d_sub_distr).ave(), (FV_T_d_sub_distr).err()}, "../data/ph_emission/"+ph_type_mes+"/"+"FF_d/"+data_2pts.Tag[iens]+"/FV_T_sub_xg_"+to_string_with_precision(xg.ave(),2)+".dat", "", "");
 
       //fit the form factors
@@ -5154,21 +5197,36 @@ FV_VMD_fit.err()} ,
   Print_To_File({}, {Bs_a_to_print, FP_to_print.ave(), FP_to_print.err(), MP_ov_FP_to_print.ave(), MP_ov_FP_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/fP"+_Fit_tag+".fit_func", "", "#a[fm]  FP FP_err   MP/FP  MP/FP_err");
 
 
+  //push back the result for the mass and decay constant
+  rt_fit.mass = F0_MP;
+  rt_fit.fp = F0_FP;
+
+
   //print ch2 summary
   cout<<"#######   SUMMARY OF Ch2 ##########"<<endl;
-  cout<<"### FA ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA[ixg-1]<<endl; }
-  cout<<"### FV ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV[ixg-1]<<endl; }
-  cout<<"### FAT ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_T[ixg-1]<<endl; }
-  cout<<"### FVT ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_T[ixg-1]<<endl; }
+  cout<<"### FA u ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_u[ixg-1]<<endl; }
+  cout<<"### FA d ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_d[ixg-1]<<endl; }
+  cout<<"### FV u ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_u[ixg-1]<<endl; }
+  cout<<"### FV d ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_d[ixg-1]<<endl; }
+  cout<<"### FAT u ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_T_u[ixg-1]<<endl; }
+  cout<<"### FAT d ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_T_d[ixg-1]<<endl; }
+  cout<<"### FVT u ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_T_u[ixg-1]<<endl; }
+  cout<<"### FVT d ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_T_d[ixg-1]<<endl; }
   cout<<"##########"<<endl;
   cout<<"ch2(MP): "<< ch2_MP<<endl;
   cout<<"ch2(FP): "<< ch2_FP<<endl;
   cout<<"ch2(MP/FP): "<<ch2_MP_ov_FP<<endl;
   cout<<"###################################"<<endl;
+
+  
 
 
 

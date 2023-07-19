@@ -12,6 +12,7 @@
 #include "input.h"
 #include "Meson_mass_extrapolation.h"
 #include "g_minus_2_utilities.h"
+#include "binary_io.h"
 
 
 

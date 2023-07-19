@@ -65,6 +65,8 @@ public:
   Vfloat   Get_ch2(int i) { VVfloat A({Ch2_FA, Ch2_FA_u, Ch2_FA_d, Ch2_FV, Ch2_FV_u, Ch2_FV_d,  Ch2_FA_T, Ch2_FA_T_u, Ch2_FA_T_d,  Ch2_FV_T, Ch2_FV_T_u, Ch2_FV_T_d}); return A[i];}
 
   bool UseJack;
+  distr_t mass;
+  distr_t fp;
   distr_t_list FA, FA_u, FA_d, FV, FV_u, FV_d,  FA_T, FA_T_u, FA_T_d, FV_T, FV_T_u, FV_T_d;
   Vfloat Ch2_FA, Ch2_FA_u, Ch2_FA_d,  Ch2_FV, Ch2_FV_u, Ch2_FV_d,  Ch2_FA_T, Ch2_FA_T_u, Ch2_FA_T_d,  Ch2_FV_T, Ch2_FV_T_u, Ch2_FV_T_d;
   int Nmeas;

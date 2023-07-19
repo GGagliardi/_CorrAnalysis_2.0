@@ -713,8 +713,9 @@ void Compute_magnetic_susc() {
     //define dm
     double dm=0;
 
-    cout<<"Analyzing ensemble: "<<data_TKTK_tm.Tag[iens]<<endl;
 
+    cout<<"Analyzing ensemble: "<<data_TKTK_tm.Tag[iens]<<endl;
+    cout<<"aml: "<<ml<<" ams1: "<<ms1<<" ams2: "<<ms2<<endl;
     distr_t Za, Zv, Z_T, a_distr;
     if(data_TKTK_tm.Tag[iens].substr(1,1)=="A") {      Za= ZA_A; Zv=ZV_A; Z_T=ZT_A; a_distr=a_A; dm =0;}
     else if(data_TKTK_tm.Tag[iens].substr(1,1)=="B") { Za= ZA_B; Zv=ZV_B; Z_T=ZT_B; a_distr=a_B; dm= 0.00072-0.0006675;}
