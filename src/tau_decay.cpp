@@ -464,6 +464,40 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
   Ak_data_OS.Read("../R_ratio_data/light", "mes_contr_2pts_ll_2", "AKAK", Sort_light_confs);
   A0_data_OS.Read("../R_ratio_data/light", "mes_contr_2pts_ll_2", "A0A0", Sort_light_confs);
 
+  
+  data_t Vk_ph_data_tm, V0_ph_data_tm, Ak_ph_data_tm, A0_ph_data_tm;
+  data_t Vk_ph_data_OS, V0_ph_data_OS, Ak_ph_data_OS, A0_ph_data_OS;
+
+
+  //light 
+  //tm
+  Vk_ph_data_tm.Read("../tau_decay_data/light_mass_correction/phys", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
+  V0_ph_data_tm.Read("../tau_decay_data/light_mass_correction/phys", "mes_contr_2pts_ll_1", "V0V0", Sort_light_confs);
+  Ak_ph_data_tm.Read("../tau_decay_data/light_mass_correction/phys", "mes_contr_2pts_ll_1", "AKAK", Sort_light_confs);
+  A0_ph_data_tm.Read("../tau_decay_data/light_mass_correction/phys", "mes_contr_2pts_ll_1", "A0A0", Sort_light_confs);
+  //OS
+  Vk_ph_data_OS.Read("../tau_decay_data/light_mass_correction/phys", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
+  V0_ph_data_OS.Read("../tau_decay_data/light_mass_correction/phys", "mes_contr_2pts_ll_2", "V0V0", Sort_light_confs);
+  Ak_ph_data_OS.Read("../tau_decay_data/light_mass_correction/phys", "mes_contr_2pts_ll_2", "AKAK", Sort_light_confs);
+  A0_ph_data_OS.Read("../tau_decay_data/light_mass_correction/phys", "mes_contr_2pts_ll_2", "A0A0", Sort_light_confs);
+  
+
+  data_t Vk_uni_data_tm, V0_uni_data_tm, Ak_uni_data_tm, A0_uni_data_tm;
+  data_t Vk_uni_data_OS, V0_uni_data_OS, Ak_uni_data_OS, A0_uni_data_OS;
+
+
+  //light 
+  //tm
+  Vk_uni_data_tm.Read("../tau_decay_data/light_mass_correction/unitary", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
+  V0_uni_data_tm.Read("../tau_decay_data/light_mass_correction/unitary", "mes_contr_2pts_ll_1", "V0V0", Sort_light_confs);
+  Ak_uni_data_tm.Read("../tau_decay_data/light_mass_correction/unitary", "mes_contr_2pts_ll_1", "AKAK", Sort_light_confs);
+  A0_uni_data_tm.Read("../tau_decay_data/light_mass_correction/unitary", "mes_contr_2pts_ll_1", "A0A0", Sort_light_confs);
+  //OS
+  Vk_uni_data_OS.Read("../tau_decay_data/light_mass_correction/unitary", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
+  V0_uni_data_OS.Read("../tau_decay_data/light_mass_correction/unitary", "mes_contr_2pts_ll_2", "V0V0", Sort_light_confs);
+  Ak_uni_data_OS.Read("../tau_decay_data/light_mass_correction/unitary", "mes_contr_2pts_ll_2", "AKAK", Sort_light_confs);
+  A0_uni_data_OS.Read("../tau_decay_data/light_mass_correction/unitary", "mes_contr_2pts_ll_2", "A0A0", Sort_light_confs);
+
 
 
   
@@ -653,9 +687,10 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     double fpi=0.0;
     double Mpi_OS=0.0;
     double fpi_OS=0.0;
-    if(Vk_data_tm.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; Mpi=0.05653312833; Mpi_err=1.430196186e-05; fpi=0.05278353769; Mpi_OS=0.1203989717;}
-    else if(Vk_data_tm.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C; Mpi=0.04722061628; Mpi_err=3.492993579e-05; fpi=0.0450246; Mpi_OS=0.08597942324;}
-    else if(Vk_data_tm.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; Mpi=0.04062107883; Mpi_err= 2.973916243e-05; fpi=0.03766423429; Mpi_OS=0.06064150466;}
+    double dm=0.0;
+    if(Vk_data_tm.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; Mpi=0.05653312833; Mpi_err=1.430196186e-05; fpi=0.05278353769; Mpi_OS=0.1203989717; dm= (0.00072-0.0006675);}
+    else if(Vk_data_tm.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C; Mpi=0.04722061628; Mpi_err=3.492993579e-05; fpi=0.0450246; Mpi_OS=0.08597942324; dm = (0.00060-0.000585);}
+    else if(Vk_data_tm.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; Mpi=0.04062107883; Mpi_err= 2.973916243e-05; fpi=0.03766423429; Mpi_OS=0.06064150466; dm = (0.00054 -0.0004964);}
     else crash("lattice spacing distribution for Ens: "+Vk_data_tm.Tag[iens]+" not found");
     fpi_OS= fpi*L_info.Za_WI_strange/L_info.Za_WI;
 
@@ -678,33 +713,42 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     distr_t_list Vk_OS_block_1_distr, V0_OS_block_1_distr, Ak_OS_block_1_distr, A0_OS_block_1_distr;
 
     distr_t_list P5_tm_distr;
+
+
+    
    
     //light-tm sector
-    Vk_tm_distr = Corr.corr_t(Vk_data_tm.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/Vk_tm_"+Vk_data_tm.Tag[iens]+".dat");
-    V0_tm_distr = Corr.corr_t(V0_data_tm.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/V0_tm_"+Vk_data_tm.Tag[iens]+".dat");
-    Ak_tm_distr = Corr.corr_t(Ak_data_tm.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/Ak_tm_"+Vk_data_tm.Tag[iens]+".dat");
-    A0_tm_distr = Corr.corr_t(A0_data_tm.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/A0_tm_"+Vk_data_tm.Tag[iens]+".dat");
+    Vk_tm_distr = Corr.corr_t( summ_master(Vk_data_tm.col(0)[iens], Vk_ph_data_tm.col(0)[iens], Multiply_Vvector_by_scalar(Vk_uni_data_tm.col(0)[iens],-1.0)) , "../data/tau_decay/"+Tag_reco_type+"/light/corr/Vk_tm_"+Vk_data_tm.Tag[iens]+".dat");
+    V0_tm_distr = Corr.corr_t(summ_master(V0_data_tm.col(0)[iens], V0_ph_data_tm.col(0)[iens], Multiply_Vvector_by_scalar(V0_uni_data_tm.col(0)[iens],-1.0)), "../data/tau_decay/"+Tag_reco_type+"/light/corr/V0_tm_"+Vk_data_tm.Tag[iens]+".dat");
+    Ak_tm_distr = Corr.corr_t(summ_master(Ak_data_tm.col(0)[iens], Ak_ph_data_tm.col(0)[iens], Multiply_Vvector_by_scalar(Ak_uni_data_tm.col(0)[iens],-1.0)), "../data/tau_decay/"+Tag_reco_type+"/light/corr/Ak_tm_"+Vk_data_tm.Tag[iens]+".dat");
+    A0_tm_distr = Corr.corr_t(summ_master(A0_data_tm.col(0)[iens], A0_ph_data_tm.col(0)[iens], Multiply_Vvector_by_scalar(A0_uni_data_tm.col(0)[iens],-1.0)), "../data/tau_decay/"+Tag_reco_type+"/light/corr/A0_tm_"+Vk_data_tm.Tag[iens]+".dat");
     P5_tm_distr = Corr.corr_t(P5_data_tm.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/P5_tm_"+Vk_data_tm.Tag[iens]+".dat");
 
     //light-OS sector
-    Vk_OS_distr = Corr.corr_t(Vk_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/Vk_OS_"+Vk_data_tm.Tag[iens]+".dat");
-    V0_OS_distr = Corr.corr_t(V0_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/V0_OS_"+Vk_data_tm.Tag[iens]+".dat");
-    Ak_OS_distr = Corr.corr_t(Ak_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/Ak_OS_"+Vk_data_tm.Tag[iens]+".dat");
-    A0_OS_distr = Corr.corr_t(A0_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/A0_OS_"+Vk_data_tm.Tag[iens]+".dat");
+    Vk_OS_distr = Corr.corr_t( summ_master(Vk_data_OS.col(0)[iens], Vk_ph_data_OS.col(0)[iens], Multiply_Vvector_by_scalar(Vk_uni_data_OS.col(0)[iens],-1.0)) , "../data/tau_decay/"+Tag_reco_type+"/light/corr/Vk_OS_"+Vk_data_OS.Tag[iens]+".dat");
+    V0_OS_distr = Corr.corr_t(summ_master(V0_data_OS.col(0)[iens], V0_ph_data_OS.col(0)[iens], Multiply_Vvector_by_scalar(V0_uni_data_OS.col(0)[iens],-1.0)), "../data/tau_decay/"+Tag_reco_type+"/light/corr/V0_OS_"+Vk_data_OS.Tag[iens]+".dat");
+    Ak_OS_distr = Corr.corr_t(summ_master(Ak_data_OS.col(0)[iens], Ak_ph_data_OS.col(0)[iens], Multiply_Vvector_by_scalar(Ak_uni_data_OS.col(0)[iens],-1.0)), "../data/tau_decay/"+Tag_reco_type+"/light/corr/Ak_OS_"+Vk_data_OS.Tag[iens]+".dat");
+    A0_OS_distr = Corr.corr_t(summ_master(A0_data_OS.col(0)[iens], A0_ph_data_OS.col(0)[iens], Multiply_Vvector_by_scalar(A0_uni_data_OS.col(0)[iens],-1.0)), "../data/tau_decay/"+Tag_reco_type+"/light/corr/A0_OS_"+Vk_data_OS.Tag[iens]+".dat");
+  
+    
+    //Vk_OS_distr = Corr.corr_t(Vk_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/Vk_OS_"+Vk_data_tm.Tag[iens]+".dat");
+    //V0_OS_distr = Corr.corr_t(V0_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/V0_OS_"+Vk_data_tm.Tag[iens]+".dat");
+    //Ak_OS_distr = Corr.corr_t(Ak_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/Ak_OS_"+Vk_data_tm.Tag[iens]+".dat");
+    //A0_OS_distr = Corr.corr_t(A0_data_OS.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/light/corr/A0_OS_"+Vk_data_tm.Tag[iens]+".dat");
 
 
     //analyze data with Njacks=Nconfs
     //light-tm sector
-    Vk_tm_block_1_distr = Corr_block_1.corr_t(Vk_data_tm.col(0)[iens], "");
-    V0_tm_block_1_distr = Corr_block_1.corr_t(V0_data_tm.col(0)[iens], "");
-    Ak_tm_block_1_distr = Corr_block_1.corr_t(Ak_data_tm.col(0)[iens], "");
-    A0_tm_block_1_distr = Corr_block_1.corr_t(A0_data_tm.col(0)[iens], "");
+    Vk_tm_block_1_distr = Corr_block_1.corr_t(summ_master(Vk_data_tm.col(0)[iens], Vk_ph_data_tm.col(0)[iens], Multiply_Vvector_by_scalar(Vk_uni_data_tm.col(0)[iens],-1.0)), "");
+    V0_tm_block_1_distr = Corr_block_1.corr_t(summ_master(V0_data_tm.col(0)[iens], V0_ph_data_tm.col(0)[iens], Multiply_Vvector_by_scalar(V0_uni_data_tm.col(0)[iens],-1.0)), "");
+    Ak_tm_block_1_distr = Corr_block_1.corr_t(summ_master(Ak_data_tm.col(0)[iens], Ak_ph_data_tm.col(0)[iens], Multiply_Vvector_by_scalar(Ak_uni_data_tm.col(0)[iens],-1.0)), "");
+    A0_tm_block_1_distr = Corr_block_1.corr_t(summ_master(A0_data_tm.col(0)[iens], A0_ph_data_tm.col(0)[iens], Multiply_Vvector_by_scalar(A0_uni_data_tm.col(0)[iens],-1.0)), "");
 
     //light-OS sector
-    Vk_OS_block_1_distr = Corr_block_1.corr_t(Vk_data_OS.col(0)[iens], "");
-    V0_OS_block_1_distr = Corr_block_1.corr_t(V0_data_OS.col(0)[iens], "");
-    Ak_OS_block_1_distr = Corr_block_1.corr_t(Ak_data_OS.col(0)[iens], "");
-    A0_OS_block_1_distr = Corr_block_1.corr_t(A0_data_OS.col(0)[iens], "");
+    Vk_OS_block_1_distr = Corr_block_1.corr_t(summ_master(Vk_data_OS.col(0)[iens], Vk_ph_data_OS.col(0)[iens], Multiply_Vvector_by_scalar(Vk_uni_data_OS.col(0)[iens],-1.0)), "");
+    V0_OS_block_1_distr = Corr_block_1.corr_t(summ_master(V0_data_OS.col(0)[iens], V0_ph_data_OS.col(0)[iens], Multiply_Vvector_by_scalar(V0_uni_data_OS.col(0)[iens],-1.0)), "");
+    Ak_OS_block_1_distr = Corr_block_1.corr_t(summ_master(Ak_data_OS.col(0)[iens], Ak_ph_data_OS.col(0)[iens], Multiply_Vvector_by_scalar(Ak_uni_data_OS.col(0)[iens],-1.0)), "");
+    A0_OS_block_1_distr = Corr_block_1.corr_t(summ_master(A0_data_OS.col(0)[iens], A0_ph_data_OS.col(0)[iens], Multiply_Vvector_by_scalar(A0_uni_data_OS.col(0)[iens],-1.0)), "");
 
 
 
@@ -2409,6 +2453,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 	vector<string> ftpt_list;
 	
 	double w_tot=0;
+
+	distr_t_list Print_Res_partial(UseJack);
 	
 	for(auto &ftype: Fit_types)
 	  for(auto &ptype: poly_types) {
@@ -2425,6 +2471,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 	    ch2_list.push_back( ch2_i);
 	    Nmeas_list.push_back( Nmeas_i);
 	    Npars_list.push_back( Npars_i);
+	    Print_Res_partial.distr_list.push_back( res_map.find({contr, ftype,ptype})->second.distr_list[is]);
 	    
 	    AIC_map.insert( { {ftype, ptype}, w });
 	    w_tot += w;
@@ -2453,7 +2500,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
 	
 	//print details on AIC
-	Print_To_File({ftpt_list}, {weight_list, ch2_list, Nmeas_list, Npars_list, Res_partial.ave(), Res_partial.err()  } , "../data/tau_decay/"+Tag_reco_type+"/light/continuum/AIC/sigma_"+to_string_with_precision(sigma_list[is],3)+"/"+contr+".out", "", "#ftpt   w(AIC)   ch2/dof  Nmeas  Npars");
+	Print_To_File({ftpt_list}, {weight_list, ch2_list, Nmeas_list, Npars_list, Print_Res_partial.ave(), Print_Res_partial.err()  } , "../data/tau_decay/"+Tag_reco_type+"/light/continuum/AIC/sigma_"+to_string_with_precision(sigma_list[is],3)+"/"+contr+".out", "", "#ftpt   w(AIC)   ch2/dof  Nmeas  Npars");
 	cout<<"generating histograms for "<<Tag_reco_type<<endl<<flush;
 	cout<<"Contrib: "<<Contribs[c]<<endl;
 

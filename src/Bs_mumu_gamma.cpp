@@ -1449,6 +1449,40 @@ void Compute_Bs_mumu_gamma() {
       Print_To_File({}, {Bs_xg_t_list, FF_Bs_list.ave(), FF_Bs_list.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/"+contribs[c]+"_Bs.dat", "", "");
     }
   }
+
+
+
+  //determine the form factor corresponding to the emission of the real photon from O7
+  
+  vector<bool> UseJack_list_07({1});
+  vector<int>  num_xg_list_07({4});
+  vector<string> Corr_path_list_07({ "../Bs_mumu_gamma_data/07_virtual/mh0"});
+  vector<string> out_tag_list_07({"mh0"});
+  vector<string> Meson_list_07({"B0s"});
+
+  vector<rt_07_Bs> TFF_virtual_ret_list;
+
+  N= UseJack_list_07.size();
+  for(int i=0;i<N;i++) {
+    Bs_xg_t_list.clear();
+    Get_Bs_xg_t_list(num_xg_list_07[i]);
+    MESON=Meson_list_07[i];
+    //create output directories
+    boost::filesystem::create_directory("../data/ph_emission");
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type);
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON);
+    boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+MESON+"/07_virtual");
+    
+    string path_out="../data/ph_emission/"+ph_type+"/"+MESON+"/07_virtual";
+
+    TFF_virtual_ret_list.push_back(Get_virtual_tensor_FF(num_xg_list_07[i], UseJack_list_07[i], NJ, MESON, Corr_path_list_07[i], path_out));
+  
+  }
+
+
+  
+  
+  
   
   exit(-1);
   MESON="Bs";
