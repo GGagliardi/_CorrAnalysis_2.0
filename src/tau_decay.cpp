@@ -399,74 +399,6 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
   cout<<"done!"<<endl;
 
-  //Analyze new strange run
-  //###################################
-
-  bool Get_ASCII= true;
-
-    if(Get_ASCII) {
-    //read binary files
-    boost::filesystem::create_directory("../tau_decay_strange");
-    
-
-    vector<string> Ens_T1({"C.06.112"});
-    vector<string> Ens_TT1({"cC211a.06.112"});
-
-    for( int it=0; it<(signed)Ens_T1.size(); it++) {
-
-      vector<string> channels({"ll", "mix_l_l", "mix_l_s1", "mix_s1_s1", "mix_s2_s2"});
-
-      for(auto &channel : channels) {
-	boost::filesystem::create_directory("../tau_decay_strange/"+channel);
-	boost::filesystem::create_directory("../tau_decay_strange/"+channel+"/"+Ens_TT1[it]);
-      }
-      //read binary
-      vector<string> Corr_tags({"TM_VKVK", "TM_AKAK", "TM_A0A0", "TM_P5P5", "TM_S0S0", "OS_VKVK", "OS_AKAK", "OS_A0A0", "OS_P5P5", "OS_S0S0"});
-
-          
-      for(int id=0; id<(signed)Corr_tags.size(); id++) {
-
-
-
-	for( auto &channel: channels) {
-
-	FILE *stream = fopen( ("../tau_decay_strange_bin/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
-        size_t Nconfs, T, Nhits;
-	bin_read(Nconfs, stream);
-	bin_read(Nhits, stream);
-	bin_read(T, stream);
-
-	cout<<"Nconfs: "<<Nconfs<<endl;
-	cout<<"T: "<<T<<" "<<T/2+1<<endl;
-	cout<<"Nhits: "<<Nhits<<endl;
-	for(size_t iconf=0;iconf<Nconfs;iconf++) {
-	  vector<double> C(T/2+1);
-	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
-	  boost::filesystem::create_directory("../tau_decay_strange/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf));
-	  ofstream PrintCorr("../tau_decay_strange/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf)+"/mes_contr_"+channel+"_"+Corr_tags[id]);
-	  PrintCorr.precision(16);
-	  PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
-	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
-	  if(Corr_tags[id].substr(3,4) == "VKTK" || Corr_tags[id].substr(3,4) == "TKVK") { for(size_t t=T/2+1; t<T;t++) PrintCorr<<-1*C[T-t]<<endl;   }
-	  else  {for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;}
-	  PrintCorr.close();
-
-	}
-
-	fclose(stream);
-
-	}
-	
-      }
-    }
-    }
-
-    
- 
-
-    
-
-
 
   //Read data
 
@@ -513,25 +445,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 			    return A_bis<B_bis;
 			  };
 
-   auto Sort_easy = [](string A, string B) {
-
-      int conf_length_A= A.length();
-      int conf_length_B= B.length();
-      
-      int pos_a_slash=-1;
-      int pos_b_slash=-1;
-      for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
-      for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
-      
-      string A_bis= A.substr(pos_a_slash+1);
-      string B_bis= B.substr(pos_b_slash+1);
-
-      return atoi( A_bis.c_str()) < atoi( B_bis.c_str());
-      
-  };
-   
-
-
+ 
    data_t Vk_data_tm, V0_data_tm, Ak_data_tm, A0_data_tm, P5_data_tm;
    data_t Vk_data_OS, V0_data_OS, Ak_data_OS, A0_data_OS;
   
@@ -552,103 +466,6 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
 
 
-  
-
-
-  data_t ll_data_tm_P5P5, ss_data_tm_P5P5, ls_data_tm_P5P5;
-  data_t ll_data_tm_AKAK, ss_data_tm_AKAK, ls_data_tm_AKAK;
-  data_t ll_data_tm_VKVK, ss_data_tm_VKVK, ls_data_tm_VKVK;
-  data_t ll_data_tm_S0S0, ss_data_tm_S0S0, ls_data_tm_S0S0;
-  data_t ss_heavy_data_tm_P5P5;
-
-  data_t ll_data_OS_P5P5, ss_data_OS_P5P5, ls_data_OS_P5P5;
-  data_t ll_data_OS_AKAK, ss_data_OS_AKAK, ls_data_OS_AKAK;
-  data_t ll_data_OS_VKVK, ss_data_OS_VKVK, ls_data_OS_VKVK;
-  data_t ll_data_OS_S0S0, ss_data_OS_S0S0, ls_data_OS_S0S0;
-  data_t ss_heavy_data_OS_P5P5;
-
-  ll_data_tm_P5P5.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_TM_P5P5", "P5P5", Sort_easy);
-  ss_heavy_data_tm_P5P5.Read("../tau_decay_strange/mix_s2_s2", "mes_contr_mix_s2_s2_TM_P5P5", "P5P5", Sort_easy);
-  ss_data_tm_P5P5.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_TM_P5P5", "P5P5", Sort_easy);
-  ls_data_tm_P5P5.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_TM_P5P5", "P5P5", Sort_easy);
-  ll_data_tm_AKAK.Read("../tau_decay_strange/ll", "mes_contr_ll_TM_AKAK", "AKAK", Sort_easy);
-  ss_data_tm_AKAK.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_TM_AKAK", "AKAK", Sort_easy);
-  ls_data_tm_AKAK.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_TM_AKAK", "AKAK", Sort_easy);
-  ll_data_tm_VKVK.Read("../tau_decay_strange/ll", "mes_contr_ll_TM_VKVK", "VKVK", Sort_easy);
-  ss_data_tm_VKVK.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_TM_VKVK", "VKVK", Sort_easy);
-  ls_data_tm_VKVK.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_TM_VKVK", "VKVK", Sort_easy);
-  ll_data_tm_S0S0.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_TM_S0S0", "S0S0", Sort_easy);
-  ss_data_tm_S0S0.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_TM_S0S0", "S0S0", Sort_easy);
-  ls_data_tm_S0S0.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_TM_S0S0", "S0S0", Sort_easy);
-
-
-  ll_data_OS_P5P5.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_OS_P5P5", "P5P5", Sort_easy);
-  ss_heavy_data_OS_P5P5.Read("../tau_decay_strange/mix_s2_s2", "mes_contr_mix_s2_s2_OS_P5P5", "P5P5", Sort_easy);
-  ss_data_OS_P5P5.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_OS_P5P5", "P5P5", Sort_easy);
-  ls_data_OS_P5P5.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_OS_P5P5", "P5P5", Sort_easy);
-  ll_data_OS_AKAK.Read("../tau_decay_strange/ll", "mes_contr_ll_OS_AKAK", "AKAK", Sort_easy);
-  ss_data_OS_AKAK.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_OS_AKAK", "AKAK", Sort_easy);
-  ls_data_OS_AKAK.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_OS_AKAK", "AKAK", Sort_easy);
-  ll_data_OS_VKVK.Read("../tau_decay_strange/ll", "mes_contr_ll_OS_VKVK", "VKVK", Sort_easy);
-  ss_data_OS_VKVK.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_OS_VKVK", "VKVK", Sort_easy);
-  ls_data_OS_VKVK.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_OS_VKVK", "VKVK", Sort_easy);
-  ll_data_OS_S0S0.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_OS_S0S0", "S0S0", Sort_easy);
-  ss_data_OS_S0S0.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_OS_S0S0", "S0S0", Sort_easy);
-  ls_data_OS_S0S0.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_OS_S0S0", "S0S0", Sort_easy);
-
-  int Nens_strange = ll_data_tm_P5P5.size;
-
-  boost::filesystem::create_directory("../data/tau_decay_strange");
-
-  for(int is=0; is < Nens_strange; is++) {
-
-    boost::filesystem::create_directory("../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]);
-    
-     CorrAnalysis Corr(UseJack, Njacks,Nboots);
-     Corr.Nt = ll_data_tm_P5P5.nrows[is];
-
-     //effective masses
-     //tm
-     //pseudoscalar
-     distr_t_list M_pi_tm = Corr.effective_mass_t( ll_data_tm_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_Mpi_tm");
-     distr_t_list M_etas_tm = Corr.effective_mass_t( ss_data_tm_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_etas_tm");
-     distr_t_list M_etas_heavy_tm = Corr.effective_mass_t( ss_heavy_data_tm_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_etas_heavy_tm");
-     distr_t_list M_K_tm = Corr.effective_mass_t( ls_data_tm_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_K_tm");
-     
-     //vector
-     distr_t_list M_rho_tm = Corr.effective_mass_t( ll_data_tm_VKVK.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_Mrho_tm");
-     distr_t_list M_phi_tm = Corr.effective_mass_t( ss_data_tm_VKVK.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_phi_tm");
-     distr_t_list M_Kstar_tm = Corr.effective_mass_t( ls_data_tm_VKVK.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_K*_tm");
-     //axial-vector
-     distr_t_list M_a1_tm = Corr.effective_mass_t( ll_data_tm_AKAK.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_a1_tm");
-     distr_t_list M_phi_ax_tm = Corr.effective_mass_t( ss_data_tm_AKAK.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_phi_ax_tm");
-     distr_t_list M_K1_tm = Corr.effective_mass_t( ls_data_tm_AKAK.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_K1_tm");
-     //scalar
-     distr_t_list M_f0_tm = Corr.effective_mass_t( ll_data_tm_S0S0.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_f0_tm");
-     distr_t_list M_fs_tm = Corr.effective_mass_t( ss_data_tm_S0S0.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_fs_tm");
-     distr_t_list M_fk_tm = Corr.effective_mass_t( ls_data_tm_S0S0.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_fk_tm");
-
-     //OS
-     //pseudoscalar
-     distr_t_list M_pi_OS = Corr.effective_mass_t( ll_data_OS_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_Mpi_OS");
-     distr_t_list M_etas_OS = Corr.effective_mass_t( ss_data_OS_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_etas_OS");
-     distr_t_list M_etas_heavy_OS = Corr.effective_mass_t( ss_heavy_data_OS_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_etas_heavy_OS");
-     distr_t_list M_K_OS = Corr.effective_mass_t( ls_data_OS_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_K_OS");
-     //vector
-     distr_t_list M_rho_OS = Corr.effective_mass_t( ll_data_OS_VKVK.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_Mrho_OS");
-     distr_t_list M_phi_OS = Corr.effective_mass_t( ss_data_OS_VKVK.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_phi_OS");
-     distr_t_list M_Kstar_OS = Corr.effective_mass_t( ls_data_OS_VKVK.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_K*_OS");
-     //axial-vector
-     distr_t_list M_a1_OS = Corr.effective_mass_t( ll_data_OS_AKAK.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_a1_OS");
-     distr_t_list M_phi_ax_OS = Corr.effective_mass_t( ss_data_OS_AKAK.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_phi_ax_OS");
-     distr_t_list M_K1_OS = Corr.effective_mass_t( ls_data_OS_AKAK.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_K1_OS");
-     //scalar
-     distr_t_list M_f0_OS = Corr.effective_mass_t( ll_data_OS_S0S0.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_f0_OS");
-     distr_t_list M_fs_OS = Corr.effective_mass_t( ss_data_OS_S0S0.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_fs_OS");
-     distr_t_list M_fk_OS = Corr.effective_mass_t( ls_data_OS_S0S0.col(0)[is], "../data/tau_decay_strange/"+ll_data_OS_P5P5.Tag[is]+"/eff_mass_fk_OS");
-
-     
-  }
   
   
 
