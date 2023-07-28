@@ -19,7 +19,9 @@ Vfloat Bs_a_to_print;
 const double fT_Jpsi= 0.3927; //https://arxiv.org/pdf/2008.02024.pdf  [MSbar 2GeV]
 const double fT_Jpsi_err= 0.0027; //https://arxiv.org/pdf/2008.02024.pdf [MSbar 2GeV]
 const int shift=0;
-const string ph_type= Is_reph?"rph":"vph";
+const string ph_type = Is_reph ? "rph" : "vph";
+const int Nmasses = 5;
+const Vfloat ratio_mh({1, 1.0/1.4835, 1.0/2.02827, 1.0/2.53531, 1.0/3.04236});
 
  
 double evolutor_ZT_MS_bar( double mu1, double mu2)  { //evolves the Z_T RC from Z_T(mu1) to Z_T(mu2) in the MSbar scheme at three loops, namely the function returns Z_T(mu2)/Z_T(mu1)
@@ -152,60 +154,120 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 
     if( (Ens=="cA211a.12.48") ||  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")) {
 
+      
+      
       if(obs=="FAu") {
-	if(ixg==1) {  Tmin=16; Tmax=36;  }
-	else if(ixg==2) {  Tmin=21; Tmax=32;  }
-	else if(ixg==3) {  Tmin=21; Tmax=30;  }
-	else if(ixg==4) {  Tmin=22; Tmax=32;  }
+	if(ixg==1) {  Tmin=16; Tmax=36;
+	  if(Ens=="cA211a.12.48") { Tmin += 12; Tmax+=8;}
+	  if(Ens=="cB211b.072.64") { Tmin +=9; Tmax+=9;}
+	  if(Ens=="cD211a.054.96") { Tmin -=6; Tmax=Tmin+14;}
+	}
+	else if(ixg==2) {  Tmin=21; Tmax=32;
+	  if(Ens=="cA211a.12.48") { Tmin -= 5; Tmax-=7;}
+	  if(Ens=="cD211a.054.96") { Tmax-=5;}
+	}
+	else if(ixg==3) {  Tmin=21; Tmax=30;
+	  if(Ens=="cA211a.12.48") { Tmin -= 7; Tmax-=7;}
+	}
+	else if(ixg==4) {  Tmin=22; Tmax=32;
+	  if(Ens=="cA211a.12.48") { Tmin -= 10; Tmax-=8;}
+	  if(Ens=="cD211a.054.96") { Tmin -=1; Tmax-=6;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") {	
-	if(ixg==1) {  Tmin=18; Tmax=31;  }
-	else if(ixg==2) {  Tmin=19; Tmax=29;  }
+	if(ixg==1) {  Tmin=18; Tmax=31;
+	  if(Ens=="cA211a.12.48") { Tmin += 7; Tmax+=7;}
+	}
+	else if(ixg==2) {  Tmin=19; Tmax=29;	}
 	else if(ixg==3) {  Tmin=19; Tmax=29;  }
 	else if(ixg==4) {  Tmin=19; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
 	if(ixg==1) {  Tmin=39; Tmax=50;  }
-	else if(ixg==2) {  Tmin=39; Tmax=49;  }
-	else if(ixg==3) {  Tmin=38; Tmax=48;  }
-	else if(ixg==4) {  Tmin=38; Tmax=48;  }
+	else if(ixg==2) {  Tmin=39; Tmax=49;
+	  if(Ens=="cA211a.12.48") { Tmin -= 8; Tmax-=8;}
+	  if(Ens=="cB211b.072.64" || Ens=="cD211a.054.96") { Tmin -=10; Tmax-=10;}
+	}
+	else if(ixg==3) {  Tmin=38; Tmax=48;
+	  if(Ens=="cA211a.12.48") { Tmin -= 10; Tmax-=10;}
+	  if(Ens=="cB211b.072.64" || Ens=="cD211a.054.96") { Tmin -=10; Tmax-=10;}
+	}
+	else if(ixg==4) {  Tmin=38; Tmax=48;
+	   if(Ens=="cA211a.12.48") { Tmin -= 12; Tmax-=12;}
+	   if(Ens=="cB211b.072.64") { Tmin -=11; Tmax-=11;}
+	   if(Ens=="cD211a.054.96") { Tmin -=12; Tmax-=12;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=35; Tmax=47;  }
-	else if(ixg==2) {  Tmin=27; Tmax=38;  }
-	else if(ixg==3) {  Tmin=29; Tmax=39;  }
-	else if(ixg==4) {  Tmin=28; Tmax=40;  }
+	else if(ixg==2) {  Tmin=27; Tmax=38;
+	  if(Ens=="cA211a.12.48") { Tmin += 7; Tmax+=7;}
+	  if(Ens=="cB211b.072.64" || Ens=="cD211a.054.96") { Tmin +=9; Tmax+=9;}
+	}
+	else if(ixg==3) {  Tmin=29; Tmax=39;
+	   if(Ens=="cB211b.072.64") { Tmin +=9; Tmax+=9;}
+	   if(Ens=="cD211a.054.96") { Tmin +=10; Tmax+=10;}
+	}
+	else if(ixg==4) {  Tmin=28; Tmax=40;
+	  if(Ens=="cB211b.072.64") { Tmin +=9; Tmax+=9;}
+	   if(Ens=="cD211a.054.96") { Tmin +=10; Tmax+=10;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
-	if(ixg==1) {  Tmin=19; Tmax=31;  }
-	else if(ixg==2) {  Tmin=21; Tmax=30;  }
-	else if(ixg==3) {  Tmin=20; Tmax=30;  }
-	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	if(ixg==1) {  Tmin=19; Tmax=31;
+	  if(Ens=="cA211a.12.48") { Tmin += 3;}
+	}
+	else if(ixg==2) {  Tmin=21; Tmax=30;
+	  if(Ens=="cB211b.072.64") { Tmin -= 4; }
+	}
+	else if(ixg==3) {  Tmin=20; Tmax=30;
+	  if(Ens=="cB211b.072.64") { Tmin -= 4; }
+	}
+	else if(ixg==4) {  Tmin=16; Tmax=30;
+	  if(Ens=="cB211b.072.64") { Tmin -= 5;  Tmax -=5;}
+	  if(Ens=="cD211a.054.96") { Tmin += 5; Tmax+=5;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
 	if(ixg==1) {  Tmin=23; Tmax=35;  }
-	else if(ixg==2) {  Tmin=14; Tmax=30;  }
-	else if(ixg==3) {  Tmin=18; Tmax=31;  }
-	else if(ixg==4) {  Tmin=18; Tmax=29;  }
+	else if(ixg==2) {  Tmin=14; Tmax=30;
+	  if(Ens=="cA211a.12.48") { Tmin += 9; Tmax+=9;}
+	}
+	else if(ixg==3) {  Tmin=18; Tmax=31;
+	  if(Ens=="cD211a.054.96") { Tmin += 4; Tmax+=4;}
+	}
+	else if(ixg==4) {  Tmin=18; Tmax=29;
+	  if(Ens=="cD211a.054.96") { Tmin += 4; Tmax+=4;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") {
 	if(ixg==1) {  Tmin=39; Tmax=50;  }
-	else if(ixg==2) {  Tmin=41; Tmax=50;  }
-	else if(ixg==3) {  Tmin=38; Tmax=46;  }
-	else if(ixg==4) {  Tmin=38; Tmax=44;  }
+	else if(ixg==2) {  Tmin=41; Tmax=50;	}
+	else if(ixg==3) {  Tmin=38; Tmax=46;
+	  if(Ens=="cB211b.072.64") { Tmin -= 12; Tmax-=12;}
+	}
+	else if(ixg==4) {  Tmin=38; Tmax=44;
+	  if(Ens=="cB211b.072.64") { Tmin -= 15; Tmax-=11;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {  //quite bad
 	if(ixg==1) {  Tmin=40; Tmax=51;  }
-	else if(ixg==2) {  Tmin=40; Tmax=51;  }
-	else if(ixg==3) {  Tmin=38; Tmax=48;  }
-	else if(ixg==4) {  Tmin=37; Tmax=45;  }
+	else if(ixg==2) {  Tmin=40; Tmax=51;
+	  if(Ens=="cA211a.12.48") { Tmin -= 8; Tmax-=8;}
+	}
+	else if(ixg==3) {  Tmin=38; Tmax=48;
+	  if(Ens=="cA211a.12.48") { Tmin -= 9; Tmax-=9;}
+	}
+	else if(ixg==4) {  Tmin=37; Tmax=45;
+	  if(Ens=="cA211a.12.48") { Tmin -= 10; Tmax-=5;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
@@ -221,21 +283,21 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FAd") {	
 	if(ixg==1) {  Tmin=18; Tmax=31;  }
-	else if(ixg==2) {  Tmin=19; Tmax=29;  }
-	else if(ixg==3) {  Tmin=19; Tmax=29;  }
-	else if(ixg==4) {  Tmin=19; Tmax=28;  }
+	else if(ixg==2) {  Tmin=14; Tmax=24;  }
+	else if(ixg==3) {  Tmin=17; Tmax=27;  }
+	else if(ixg==4) {  Tmin=15; Tmax=24;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
 	if(ixg==1) {  Tmin=38; Tmax=55; use_old=false;  }
 	else if(ixg==2) {  Tmin=35; Tmax=54; use_old=false;  }
 	else if(ixg==3) {  Tmin=38; Tmax=48;  }
-	else if(ixg==4) {  Tmin=38; Tmax=48;  }
+	else if(ixg==4) {  Tmin=27; Tmax=37;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=35; Tmax=47;  }
-	else if(ixg==2) {  Tmin=27; Tmax=38;  }
+	else if(ixg==2) {  Tmin=36; Tmax=47;  }
 	else if(ixg==3) {  Tmin=29; Tmax=39;  }
 	else if(ixg==4) {  Tmin=28; Tmax=40;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
@@ -244,7 +306,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	if(ixg==1) {  Tmin=21; Tmax=40; use_old=false;  }
 	else if(ixg==2) {  Tmin=25; Tmax=40; use_old=false;  }
 	else if(ixg==3) {  Tmin=28; Tmax=40; use_old=false;  }
-	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	else if(ixg==4) {  Tmin=27; Tmax=41;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
@@ -279,59 +341,117 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
     if( (Ens=="cA211a.12.48") || (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96") ) {
 
       if(obs=="FAu") {
-       	if(ixg==1) {  Tmin=24; Tmax=34;  }
-	else if(ixg==2) {  Tmin=21; Tmax=29;  }
-	else if(ixg==3) {  Tmin=18; Tmax=26;  }
-	else if(ixg==4) {  Tmin=15; Tmax=26;  }
+       	if(ixg==1) {  Tmin=24; Tmax=34;
+	  if(Ens=="cA211a.12.48") {Tmin+=3;}
+	  if(Ens=="cB211b.072.64") {Tmin+=4;}
+	}
+	else if(ixg==2) {  Tmin=21; Tmax=29;
+	  if(Ens=="cA211a.12.48") {Tmin-=4; Tmax -=4;}
+	  if(Ens=="cD211a.054.96") {Tmin-=8; Tmax-=8;}
+	}
+	else if(ixg==3) {  Tmin=18; Tmax=26;	}
+	else if(ixg==4) {  Tmin=15; Tmax=26;	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") {
-	if(ixg==1) {  Tmin=25; Tmax=30;  }
-	else if(ixg==2) {  Tmin=17; Tmax=25;  }
-	else if(ixg==3) {  Tmin=16; Tmax=29;  }
-	else if(ixg==4) {  Tmin=16; Tmax=29;  }
+	if(ixg==1) {  Tmin=25; Tmax=30;
+	   if(Ens=="cA211a.12.48") {Tmin-=3;}
+	   if(Ens=="cB211b.072.64") {Tmin-=3; Tmax+=2;}
+	}
+	else if(ixg==2) {  Tmin=17; Tmax=25;
+	  if(Ens=="cD211a.054.96") {Tmin+=8; Tmax+=8;}
+	}
+	else if(ixg==3) {  Tmin=16; Tmax=29;
+	  if(Ens=="cD211a.054.96") {Tmin+=8; Tmax+=8;}
+	}
+	else if(ixg==4) {  Tmin=16; Tmax=29;
+	  if(Ens=="cB211b.072.64") {Tmin-=3;}
+	  if(Ens=="cD211a.054.96") {Tmin+=9; Tmax+=9;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
-	if(ixg==1) {  Tmin=34; Tmax=45;  }
-	else if(ixg==2) {  Tmin=34; Tmax=49;  }
-	else if(ixg==3) {  Tmin=33; Tmax=45;  }
+	if(ixg==1) {  Tmin=34; Tmax=45;
+	  if(Ens=="cA211a.12.48") {Tmin-=3;}
+	}
+	else if(ixg==2) {  Tmin=34; Tmax=49;
+	  if(Ens=="cA211a.12.48") {Tmin-=7;}
+	}
+	else if(ixg==3) {  Tmin=33; Tmax=45;
+	  if(Ens=="cA211a.12.48") {Tmin-=7; Tmax-=7;}
+	}
 	else if(ixg==4) {  Tmin=23; Tmax=37;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=33; Tmax=44;  }
-	else if(ixg==2) {  Tmin=27; Tmax=36;  }
+	else if(ixg==2) {  Tmin=27; Tmax=36;
+	  if(Ens=="cA211a.12.48") {Tmin+=10; Tmax+=10;}
+	}
 	else if(ixg==3) {  Tmin=26; Tmax=37;  }
-	else if(ixg==4) {  Tmin=24; Tmax=29;  }
+	else if(ixg==4) {  Tmin=24; Tmax=29;
+	  if(Ens=="cA211a.12.48") {Tmin-=7; Tmax+=4;}
+	  if(Ens=="cB211b.072.64") {Tmax+=6;}
+	  if(Ens=="cD211a.054.96") {Tmin+=11; Tmax+=11;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
 	if(ixg==1) {  Tmin=20; Tmax=28;  }
 	else if(ixg==2) {  Tmin=18; Tmax=26;  }
 	else if(ixg==3) {  Tmin=18; Tmax=26;  }
-	else if(ixg==4) {  Tmin=18; Tmax=30;  }
+	else if(ixg==4) {  Tmin=18; Tmax=30;
+	  if(Ens=="cD211a.054.96") {Tmin-=5; Tmax-=7;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
 	if(ixg==1) {  Tmin=24; Tmax=35;  }
-	else if(ixg==2) {  Tmin=24; Tmax=31;  }
-	else if(ixg==3) {  Tmin=18; Tmax=35;  }
-	else if(ixg==4) {  Tmin=17; Tmax=35;  }
+	else if(ixg==2) {  Tmin=24; Tmax=31;
+	    if(Ens=="cA211a.12.48") {Tmin-=2; Tmax+=2;}
+	}
+	else if(ixg==3) {  Tmin=18; Tmax=35;
+	  if(Ens=="cA211a.12.48") {Tmin+=3; Tmax+=3;}
+	}
+	else if(ixg==4) {  Tmin=17; Tmax=35;
+	  if(Ens=="cA211a.12.48") {Tmin+=4; Tmax+=4;}
+	  if(Ens=="cD211a.054.96") {Tmin+=3; Tmax+=1;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") {
-	if(ixg==1) {  Tmin=37; Tmax=50;  }
-	else if(ixg==2) {  Tmin=33; Tmax=50;  }
-	else if(ixg==3) {  Tmin=25; Tmax=37;  }
-	else if(ixg==4) {  Tmin=23; Tmax=33;  }
+	if(ixg==1) {  Tmin=37; Tmax=50;
+	  if(Ens=="cA211a.12.48") {Tmin-=6;}
+	  if(Ens=="cD211a.054.96") {Tmin-=5; Tmax-=5;}
+	}
+	else if(ixg==2) {  Tmin=33; Tmax=50;
+	  if(Ens=="cA211a.12.48") {Tmin-=5; Tmax-=5;}
+	  if(Ens=="cD211a.054.96") {Tmin-=3;}
+	}
+	else if(ixg==3) {  Tmin=25; Tmax=37;
+	  if(Ens=="cB211b.072.64") {Tmax-=2; Tmax-=5;}
+	  if(Ens=="cD211a.054.96") {Tmin+=5; Tmax+=5;}
+	}
+	else if(ixg==4) {  Tmin=23; Tmax=33;
+	  if(Ens=="cA211a.12.48") {Tmin-=3;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=34; Tmax=45;  }
-	else if(ixg==2) {  Tmin=27; Tmax=34;  }
-	else if(ixg==3) {  Tmin=26; Tmax=33;  }
-	else if(ixg==4) {  Tmin=23; Tmax=31;  }
+	if(ixg==1) {  Tmin=34; Tmax=45;
+	  if(Ens=="cD211a.054.96") {Tmin-=3; Tmax+=5;}
+	}
+	else if(ixg==2) {  Tmin=27; Tmax=34;
+	  if(Ens=="cD211a.054.96") {Tmin+=3; Tmax+=7;}
+	}
+	else if(ixg==3) {  Tmin=26; Tmax=33;
+	  if(Ens=="cD211a.054.96") {Tmin+=3; Tmax+=8;}
+	}
+	else if(ixg==4) {  Tmin=23; Tmax=31;
+	  if(Ens=="cA211a.12.48") {Tmin-=7;}
+	  if(Ens=="cB211b.072.64") {Tmin+=5; Tmax+=5;}
+	  if(Ens=="cD211a.054.96") {Tmin+=9; Tmax+=9;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
@@ -340,16 +460,16 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
     
       if(obs=="FAu") {
        	if(ixg==1) {  Tmin=24; Tmax=34;  }
-	else if(ixg==2) {  Tmin=21; Tmax=29;  }
-	else if(ixg==3) {  Tmin=18; Tmax=26;  }
+	else if(ixg==2) {  Tmin=17; Tmax=29;  }
+	else if(ixg==3) {  Tmin=16; Tmax=26;  }
 	else if(ixg==4) {  Tmin=15; Tmax=26;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") {
 	if(ixg==1) {  Tmin=19; Tmax=37; use_old=false;  }
-	else if(ixg==2) {  Tmin=17; Tmax=25;  }
-	else if(ixg==3) {  Tmin=16; Tmax=29;  }
-	else if(ixg==4) {  Tmin=16; Tmax=29;  }
+	else if(ixg==2) {  Tmin=15; Tmax=22;  }
+	else if(ixg==3) {  Tmin=13; Tmax=29;  }
+	else if(ixg==4) {  Tmin=12; Tmax=29;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
@@ -360,9 +480,9 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=33; Tmax=44; use_old=true;  }
+	if(ixg==1) {  Tmin=42; Tmax=53;  }
 	else if(ixg==2) {  Tmin=27; Tmax=36;  }
-	else if(ixg==3) {  Tmin=26; Tmax=37;  }
+	else if(ixg==3) {  Tmin=22; Tmax=31;  }
 	else if(ixg==4) {  Tmin=22; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -374,24 +494,24 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
-	if(ixg==1) {  Tmin=29; Tmax=46; use_old=false;  }
+	if(ixg==1) {  Tmin=28; Tmax=47; use_old=false;  }
 	else if(ixg==2) {  Tmin=26; Tmax=37; use_old=false;  }
-	else if(ixg==3) {  Tmin=22; Tmax=36; use_old=false;  }
-	else if(ixg==4) {  Tmin=21; Tmax=33; use_old=false;  }
+	else if(ixg==3) {  Tmin=20; Tmax=32; use_old=false;  }
+	else if(ixg==4) {  Tmin=19; Tmax=29; use_old=false;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") {
 	if(ixg==1) {  Tmin=37; Tmax=50;  }
-	else if(ixg==2) {  Tmin=33; Tmax=50;  }
+	else if(ixg==2) {  Tmin=28; Tmax=42;  }
 	else if(ixg==3) {  Tmin=30; Tmax=47; use_old=false;  }
 	else if(ixg==4) {  Tmin=24; Tmax=39; use_old=false;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=34; Tmax=45; use_old=true; }
+	if(ixg==1) {  Tmin=40; Tmax=45; }
 	else if(ixg==2) {  Tmin=30; Tmax=44; use_old=false;}
-	else if(ixg==3) {  Tmin=26; Tmax=33;  }
-	else if(ixg==4) {  Tmin=23; Tmax=31;  }
+	else if(ixg==3) {  Tmin=22; Tmax=33;  }
+	else if(ixg==4) {  Tmin=17; Tmax=31;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
@@ -404,59 +524,134 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
     if( (Ens=="cA211a.12.48") ||  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
 
       if(obs=="FAu") {
-	if(ixg==1) {  Tmin=26; Tmax=34;  }
-	else if(ixg==2) {  Tmin=27; Tmax=34;  }
-	else if(ixg==3) {  Tmin=25; Tmax=34;  }
-	else if(ixg==4) {  Tmin=26; Tmax=34;  }
+	if(ixg==1) {  Tmin=26; Tmax=34;
+	  if(Ens=="cA211a.12.48") {Tmin-=5; Tmax-=5;}
+	  if(Ens=="cB211b.072.64") {Tmin-=4;}
+	}
+	else if(ixg==2) {  Tmin=27; Tmax=34;
+	  if(Ens=="cA211a.12.48") {Tmin-=7; Tmax-=7;}
+	  if(Ens=="cD211a.054.96") {Tmin-=3;}
+	}
+	else if(ixg==3) {  Tmin=25; Tmax=34;
+	  if(Ens=="cA211a.12.48") {Tmin-=7; Tmax-=7;}
+	  if(Ens=="cD211a.054.96") {Tmin-=14; Tmax-=14;}
+	}
+	else if(ixg==4) {  Tmin=26; Tmax=34;
+	  if(Ens=="cA211a.12.48") {Tmin-=7; Tmax-=7;}
+	  if(Ens=="cB211b.072.64") {Tmin-=2;}
+	  if(Ens=="cD211a.054.96") {Tmin-=11; Tmax-=11;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") {
-	if(ixg==1) {  Tmin=27; Tmax=34;  }
-	else if(ixg==2) {  Tmin=24; Tmax=35;  }
-	else if(ixg==3) {  Tmin=24; Tmax=35;  }
-	else if(ixg==4) {  Tmin=24; Tmax=35;  }
+	if(ixg==1) {  Tmin=27; Tmax=34;
+	  if(Ens=="cA211a.12.48") {Tmin-=6; Tmax-=6;}
+	  if(Ens=="cB211b.072.64") {Tmin-=8;}
+	  if(Ens=="cD211a.054.96") {Tmin-=12;}
+	}
+	else if(ixg==2) {  Tmin=24; Tmax=35;
+	  if(Ens=="cA211a.12.48") {Tmin-=5; Tmax-=7;}
+	  if(Ens=="cB211b.072.64") {Tmin-=6; Tmax-=6;}
+	}
+	else if(ixg==3) {  Tmin=24; Tmax=35;
+	   if(Ens=="cA211a.12.48") {Tmin-=4;}
+	   if(Ens=="cB211b.072.64") {Tmin-=6; Tmax-=6;}
+	}
+	else if(ixg==4) {  Tmin=24; Tmax=35;
+	   if(Ens=="cA211a.12.48") {Tmin-=4; Tmax-=4;}
+	   if(Ens=="cB211b.072.64") {Tmin-=4; Tmax-=6;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
-	if(ixg==1) {  Tmin=31; Tmax=39;  }
-	else if(ixg==2) {  Tmin=33; Tmax=43;  }
-	else if(ixg==3) {  Tmin=22; Tmax=32;  }
-	else if(ixg==4) {  Tmin=21; Tmax=32;  }
+	if(ixg==1) {  Tmin=31; Tmax=39;
+	  if(Ens=="cA211a.12.48") {Tmin-=3; Tmax-=4;}
+	  if(Ens=="cB211b.072.64") {Tmin-=1; Tmax+=2;}
+	}
+	else if(ixg==2) {  Tmin=33; Tmax=43;
+	  if(Ens=="cA211a.12.48") {Tmin-=6; Tmax-=8;}
+	}
+	else if(ixg==3) {  Tmin=22; Tmax=32;
+	  if(Ens=="cB211b.072.64") {Tmin+=5; Tmax+=5;}
+	  if(Ens=="cD211a.054.96") {Tmin+=5; Tmax+=5;}
+	}
+	else if(ixg==4) {  Tmin=21; Tmax=32;
+	  if(Ens=="cA211a.12.48") {Tmin-=3;}
+	  if(Ens=="cB211b.072.64") {Tmin-=3;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=31; Tmax=45;  }
+	if(ixg==1) {  Tmin=31; Tmax=45;
+	  if(Ens=="cA211a.12.48") {Tmin-=1;}
+	}
 	else if(ixg==2) {  Tmin=27; Tmax=36;  }
-	else if(ixg==3) {  Tmin=23; Tmax=30;  }
-	else if(ixg==4) {  Tmin=21; Tmax=30;  }
+	else if(ixg==3) {  Tmin=23; Tmax=30;
+	  if(Ens=="cA211a.12.48") {Tmin-=4;}
+	  if(Ens=="cB211b.072.64") {Tmin+=5; Tmax+=5;}
+	}
+	else if(ixg==4) {  Tmin=21; Tmax=30;
+	  if(Ens=="cA211a.12.48") {Tmin-=8; Tmax-=8;}
+	  if(Ens=="cB211b.072.64") {Tmin-=7; Tmax-=8;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
 	if(ixg==1) {  Tmin=18; Tmax=25;  }
-	else if(ixg==2) {  Tmin=18; Tmax=24;  }
-	else if(ixg==3) {  Tmin=20; Tmax=28;  }
+	else if(ixg==2) {  Tmin=18; Tmax=24;
+	  if(Ens=="cA211a.12.48") {Tmin-=2; Tmax-=2;}
+	}
+	else if(ixg==3) {  Tmin=20; Tmax=28;
+	  if(Ens=="cA211a.12.48") {Tmin-=2; Tmax-=2;}
+	}
 	else if(ixg==4) {  Tmin=19; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
-	if(ixg==1) {  Tmin=23; Tmax=30;  }
+	if(ixg==1) {  Tmin=23; Tmax=30;
+	  if(Ens=="cA211a.12.48") {Tmin-=2;}
+	}
 	else if(ixg==2) {  Tmin=20; Tmax=30;  }
 	else if(ixg==3) {  Tmin=20; Tmax=30;  }
-	else if(ixg==4) {  Tmin=19; Tmax=30;  }
+	else if(ixg==4) {  Tmin=19; Tmax=30;
+	  if(Ens=="cA211a.12.48") {Tmin-=1; Tmax-=3;}
+	  if(Ens=="cB211b.072.64") { Tmin -= 4; Tmax-=4;   }
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") {
-	if(ixg==1) {  Tmin=31; Tmax=41;  }
-	else if(ixg==2) {  Tmin=31; Tmax=39;  }
-	else if(ixg==3) {  Tmin=24; Tmax=35;  }
-	else if(ixg==4) {  Tmin=24; Tmax=38;  }
+	if(ixg==1) {  Tmin=31; Tmax=41;
+	  if(Ens=="cA211a.12.48") {Tmin-=1; Tmax-=1;}
+	}
+	else if(ixg==2) {  Tmin=31; Tmax=39;
+	  if(Ens=="cA211a.12.48") {Tmin-=7; Tmax-=7;}
+	}
+	else if(ixg==3) {  Tmin=24; Tmax=35;
+	  if(Ens=="cD211a.054.96") { Tmin += 4; Tmax+=4;   }
+	}
+	else if(ixg==4) {  Tmin=24; Tmax=38;
+	  if(Ens=="cA211a.12.48") {Tmin-=4;}
+	  if(Ens=="cB211b.072.64") { Tmin -= 3; Tmax-=3;   }
+	  if(Ens=="cD211a.054.96") { Tmin += 3; Tmax+=3;   }
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=29; Tmax=35; if(Ens=="cB211b.072.64") Tmin -= 2;  }
-	else if(ixg==2) {  Tmin=27; Tmax=34;  }
-	else if(ixg==3) {  Tmin=24; Tmax=34;  }
-	else if(ixg==4) {  Tmin=20; Tmax=30;  }
+	if(ixg==1) {  Tmin=29; Tmax=35;
+	  if(Ens=="cA211a.12.48") {Tmin-=1; Tmax-=1;}
+	  if(Ens=="cB211b.072.64") { Tmin += 1; Tmax+=3;   }
+	  if(Ens=="cD211a.054.96") { Tmin += 3; Tmax+=3;   }
+	}
+	else if(ixg==2) {  Tmin=27; Tmax=34;
+	  if(Ens=="cA211a.12.48") {Tmin-=2; Tmax-=2;}
+	}
+	else if(ixg==3) {  Tmin=24; Tmax=34;
+	  if(Ens=="cA211a.12.48") {Tmin-=5;}
+	}
+	else if(ixg==4) {  Tmin=20; Tmax=30;
+	  if(Ens=="cA211a.12.48") {Tmin-=5;}
+	  if(Ens=="cB211b.072.64") { Tmin -=6; Tmax-=6;   }
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
@@ -465,30 +660,30 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 
       if(obs=="FAu") {
 	if(ixg==1) {  Tmin=26; Tmax=34;  }
-	else if(ixg==2) {  Tmin=27; Tmax=34;  }
-	else if(ixg==3) {  Tmin=25; Tmax=34;  }
-	else if(ixg==4) {  Tmin=25; Tmax=33;  }
+	else if(ixg==2) {  Tmin=23; Tmax=30;  }
+	else if(ixg==3) {  Tmin=15; Tmax=24;  }
+	else if(ixg==4) {  Tmin=17; Tmax=25;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") {
-	if(ixg==1) {  Tmin=26; Tmax=32;  }
-	else if(ixg==2) {  Tmin=26; Tmax=33;  }
-	else if(ixg==3) {  Tmin=25; Tmax=33;  }
-	else if(ixg==4) {  Tmin=25; Tmax=33;  }
+	if(ixg==1) {  Tmin=18; Tmax=32;  }
+	else if(ixg==2) {  Tmin=12; Tmax=33;  }
+	else if(ixg==3) {  Tmin=14; Tmax=33;  }
+	else if(ixg==4) {  Tmin=14; Tmax=33;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
 	if(ixg==1) {  Tmin=31; Tmax=43;  }
 	else if(ixg==2) {  Tmin=33; Tmax=43;  }
-	else if(ixg==3) {  Tmin=23; Tmax=37;  }
-	else if(ixg==4) {  Tmin=22; Tmax=35;  }
+	else if(ixg==3) {  Tmin=28; Tmax=37;  }
+	else if(ixg==4) {  Tmin=19; Tmax=35;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=33; Tmax=45;  }
-	else if(ixg==2) {  Tmin=27; Tmax=36;  }
+	else if(ixg==2) {  Tmin=24; Tmax=36;  }
 	else if(ixg==3) {  Tmin=24; Tmax=30;  }
-	else if(ixg==4) {  Tmin=21; Tmax=30;  }
+	else if(ixg==4) {  Tmin=16; Tmax=30;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
@@ -499,16 +694,16 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
-	if(ixg==1) {  Tmin=23; Tmax=30;  }
+	if(ixg==1) {  Tmin=27; Tmax=34;  }
 	else if(ixg==2) {  Tmin=20; Tmax=30;  }
-	else if(ixg==3) {  Tmin=20; Tmax=30;  }
-	else if(ixg==4) {  Tmin=19; Tmax=30;  }
+	else if(ixg==3) {  Tmin=17; Tmax=27;  }
+	else if(ixg==4) {  Tmin=12; Tmax=23;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") {
 	if(ixg==1) {  Tmin=31; Tmax=41;  }
-	else if(ixg==2) {  Tmin=31; Tmax=39;  }
-	else if(ixg==3) {  Tmin=24; Tmax=35;  }
+	else if(ixg==2) {  Tmin=29; Tmax=39;  }
+	else if(ixg==3) {  Tmin=24; Tmax=38;  }
 	else if(ixg==4) {  Tmin=24; Tmax=38;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -531,59 +726,144 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
     if( (Ens=="cA211a.12.48") || (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
 
       if(obs=="FAu") {
-       if(ixg==1) {  Tmin=21; Tmax=27;  }
-       else if(ixg==2) {  Tmin=20; Tmax=25;  }
-       else if(ixg==3) {  Tmin=21; Tmax=27;  }
-       else if(ixg==4) {  Tmin=21; Tmax=27;  }
+       if(ixg==1) {  Tmin=21; Tmax=27;
+	 if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=3;}
+	 if(Ens=="cD211a.054.96") { Tmin += 6; Tmax +=6 ;}
+       }
+       else if(ixg==2) {  Tmin=20; Tmax=25;
+	 if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=3;}
+       }
+       else if(ixg==3) {  Tmin=21; Tmax=27;
+	 if(Ens=="cA211a.12.48") { Tmin-=4; Tmax-=4;}
+       }
+       else if(ixg==4) {  Tmin=21; Tmax=27;
+	 if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=3;}
+	 if(Ens=="cD211a.054.96") { Tmin -= 3; Tmax -=3 ;}
+	 
+       }
        else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") { //non bellissimi
-	if(ixg==1) {  Tmin=17; Tmax=24;  }
-	else if(ixg==2) {  Tmin=24; Tmax=31;  }
-	else if(ixg==3) {  Tmin=22; Tmax=33;  }
-	else if(ixg==4) {  Tmin=22; Tmax=30; if(Ens=="cD211a.054.96") { Tmin -= 4; Tmax -=4 ;}  }
+	if(ixg==1) {  Tmin=17; Tmax=24;
+	  if(Ens=="cA211a.12.48") { Tmin+=2; Tmax+=1;}
+	}
+	else if(ixg==2) {  Tmin=24; Tmax=31;
+	  if(Ens=="cA211a.12.48") { Tmin-=12; Tmax-=12;}
+	  if(Ens=="cB211b.072.64") { Tmin-=2; Tmax-=2;}
+	}
+	else if(ixg==3) {  Tmin=22; Tmax=33;
+	  if(Ens=="cA211a.12.48") { Tmin-=12; Tmax-=16;}
+	  if(Ens=="cB211b.072.64") { Tmin-=2; Tmax-=2;}
+	}
+	else if(ixg==4) {  Tmin=22; Tmax=30;
+	  if(Ens=="cA211a.12.48") { Tmin-=1;}
+	  if(Ens=="cD211a.054.96") { Tmin -= 4; Tmax -=4 ;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
-	if(ixg==1) {  Tmin=28; Tmax=40;  }
-	else if(ixg==2) {  Tmin=27; Tmax=32;  }
-	else if(ixg==3) {  Tmin=22; Tmax=30;  }
+	if(ixg==1) {  Tmin=28; Tmax=40;
+	  if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=3;}
+	}
+	else if(ixg==2) {  Tmin=27; Tmax=32;
+	  if(Ens=="cA211a.12.48") { Tmin-=4; Tmax-=4;}
+	  if(Ens=="cD211a.054.96") { Tmin -= 1; Tmax +=4 ;}
+	}
+	else if(ixg==3) {  Tmin=22; Tmax=30;
+	  if(Ens=="cA211a.12.48") { Tmin+=2; Tmax+=2;}
+	  if(Ens=="cB211b.072.64") { Tmin+=3; Tmax+=3;}
+	}
 	else if(ixg==4) {  Tmin=16; Tmax=30;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=26; Tmax=32;  }
-	else if(ixg==2) {  Tmin=23; Tmax=30;  }
-	else if(ixg==3) {  Tmin=20; Tmax=25; if(Ens=="cD211a.054.96") { Tmin += 2; Tmax +=2 ;}  }
-	else if(ixg==4) {  Tmin=17; Tmax=24; if(Ens=="cD211a.054.96") { Tmin += 2; Tmax +=2 ;}  }
+	if(ixg==1) {  Tmin=26; Tmax=32;
+	  if(Ens=="cA211a.12.48") { Tmin-=1; Tmax-=4;}
+	  if(Ens=="cD211a.054.96") { Tmin+=3; Tmax+=3;}
+	}
+	else if(ixg==2) {  Tmin=23; Tmax=30;
+	  if(Ens=="cA211a.12.48") { Tmin-=5; Tmax-=5;}
+	}
+	else if(ixg==3) {  Tmin=20; Tmax=25;
+	  if(Ens=="cA211a.12.48") { Tmin-=4;}
+	  if(Ens=="cD211a.054.96") { Tmin += 4; Tmax +=4 ;}
+	}
+	else if(ixg==4) {  Tmin=17; Tmax=24;
+	  if(Ens=="cA211a.12.48") { Tmin-=5; Tmax-=5;}
+	  if(Ens=="cB211b.072.64") { Tmin-=3; Tmax-=5;}
+	  if(Ens=="cD211a.054.96") { Tmin += 2; Tmax +=2 ;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
-	if(ixg==1) {  Tmin=17; Tmax=26;  }
-	else if(ixg==2) {  Tmin=13; Tmax=24;  }
-	else if(ixg==3) {  Tmin=13; Tmax=24;  }
+	if(ixg==1) {  Tmin=17; Tmax=26;
+	  if(Ens=="cA211a.12.48") { Tmin-=4; Tmax-=4;}
+	}
+	else if(ixg==2) {  Tmin=13; Tmax=24;
+	  if(Ens=="cA211a.12.48") { Tmin+=3; Tmax-=2;}
+	  if(Ens=="cB211b.072.64") { Tmin+=5; Tmax+=5;}
+	}
+	else if(ixg==3) {  Tmin=13; Tmax=24;
+	   if(Ens=="cA211a.12.48") { Tmin+=3; }
+	   if(Ens=="cB211b.072.64") { Tmin+=3;}
+	   if(Ens=="cD211a.054.96") { Tmin += 3;}
+	}
 	else if(ixg==4) {  Tmin=16; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
-	if(ixg==1) {  Tmin=20; Tmax=27;  }
-	else if(ixg==2) {  Tmin=17; Tmax=27;  }
-	else if(ixg==3) {  Tmin=16; Tmax=27;  }
-	else if(ixg==4) {  Tmin=14; Tmax=22;  }
+	if(ixg==1) {  Tmin=20; Tmax=27;
+	   if(Ens=="cA211a.12.48") { Tmin-=2; Tmax-=2;}
+	}
+	else if(ixg==2) {  Tmin=17; Tmax=27;
+	  if(Ens=="cA211a.12.48") { Tmin+=4; Tmax+=2;}
+	}
+	else if(ixg==3) {  Tmin=16; Tmax=27;
+	  if(Ens=="cB211b.072.64") { Tmin-=5; Tmax-=5;}
+	}
+	else if(ixg==4) {  Tmin=14; Tmax=22;
+	  if(Ens=="cB211b.072.64") { Tmin-=4; Tmax-=7;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") { //two plataux for small xg
-	if(ixg==1) {  Tmin=31; Tmax=38;  }
-	else if(ixg==2) {  Tmin=25; Tmax=30;  }
-	else if(ixg==3) {  Tmin=20; Tmax=28;  }
-	else if(ixg==4) {  Tmin=14; Tmax=25;  }
+	if(ixg==1) {  Tmin=31; Tmax=38;
+	  if(Ens=="cA211a.12.48") { Tmin-=6; Tmax-=6;}
+	  if(Ens=="cB211b.072.64") { Tmin-=6; Tmax-=6;}
+	}
+	else if(ixg==2) {  Tmin=25; Tmax=30;
+	  if(Ens=="cD211a.054.96") { Tmin += 5; Tmax +=5 ;}
+	}
+	else if(ixg==3) {  Tmin=20; Tmax=28;
+	  if(Ens=="cB211b.072.64") { Tmin+=2; Tmax+=2;}
+	  if(Ens=="cD211a.054.96") { Tmin += 8; Tmax +=8 ;}
+	}
+	else if(ixg==4) {  Tmin=14; Tmax=25;
+	  if(Ens=="cA211a.12.48") { Tmin+=2;}
+	  if(Ens=="cB211b.072.64") { Tmin+=6; Tmax+=6;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=26; Tmax=40; if(Ens=="cD211a.054.96") Tmin +=3;  }
-	else if(ixg==2) {  Tmin=25; Tmax=34;  }
-	else if(ixg==3) {  Tmin=20; Tmax=25;  }
-	else if(ixg==4) {  Tmin=17; Tmax=23;  }
+	if(ixg==1) {  Tmin=26; Tmax=40;
+	  if(Ens=="cA211a.12.48") { Tmin-=1; Tmax-=1;}
+	  if(Ens=="cB211b.072.64") { Tmin+=2; Tmax+=2;}
+	  if(Ens=="cD211a.054.96") {Tmin +=3;}
+	}
+	else if(ixg==2) {  Tmin=25; Tmax=34;
+	  if(Ens=="cA211a.12.48") { Tmin-=7; Tmax-=9;}
+	  if(Ens=="cD211a.054.96") {Tmin +=3; Tmax+=3;}
+	}
+	else if(ixg==3) {  Tmin=20; Tmax=25;
+	  if(Ens=="cA211a.12.48") { Tmin-=4;}
+	  if(Ens=="cB211b.072.64") { Tmin-=2; Tmax-=2;}
+	  if(Ens=="cD211a.054.96") {Tmin +=6; Tmax+=6;}
+	}
+	else if(ixg==4) {  Tmin=17; Tmax=23;
+	  if(Ens=="cA211a.12.48") { Tmin-=4; Tmax-=4;}
+	  if(Ens=="cB211b.072.64") { Tmin-=3;}
+	  if(Ens=="cD211a.054.96") {Tmin +=2; Tmax+=2;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
@@ -615,33 +895,33 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	if(ixg==1) {  Tmin=26; Tmax=32;  }
 	else if(ixg==2) {  Tmin=24; Tmax=31;  }
 	else if(ixg==3) {  Tmin=20; Tmax=25;  }
-	else if(ixg==4) {  Tmin=17; Tmax=24;  }
+	else if(ixg==4) {  Tmin=16; Tmax=25;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
 	if(ixg==1) {  Tmin=17; Tmax=26;  }
-	else if(ixg==2) {  Tmin=13; Tmax=24;  }
-	else if(ixg==3) {  Tmin=14; Tmax=24;  }
-	else if(ixg==4) {  Tmin=16; Tmax=28;  }
+	else if(ixg==2) {  Tmin=19; Tmax=24;  }
+	else if(ixg==3) {  Tmin=17; Tmax=24;  }
+	else if(ixg==4) {  Tmin=20; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
 	if(ixg==1) {  Tmin=20; Tmax=27;  }
-	else if(ixg==2) {  Tmin=17; Tmax=27;  }
+	else if(ixg==2) {  Tmin=21; Tmax=31;  }
 	else if(ixg==3) {  Tmin=14; Tmax=27;  }
 	else if(ixg==4) {  Tmin=14; Tmax=22;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") { //two plataux for small xg
 	if(ixg==1) {  Tmin=31; Tmax=38;  }
-	else if(ixg==2) {  Tmin=25; Tmax=30;  }
-	else if(ixg==3) {  Tmin=20; Tmax=28;  }
-	else if(ixg==4) {  Tmin=17; Tmax=25;  }
+	else if(ixg==2) {  Tmin=26; Tmax=30;  }
+	else if(ixg==3) {  Tmin=25; Tmax=33;  }
+	else if(ixg==4) {  Tmin=23; Tmax=31;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
 	if(ixg==1) {  Tmin=24; Tmax=40;  }
-	else if(ixg==2) {  Tmin=25; Tmax=34;  }
+	else if(ixg==2) {  Tmin=21; Tmax=30;  }
 	else if(ixg==3) {  Tmin=20; Tmax=27;  }
 	else if(ixg==4) {  Tmin=15; Tmax=23;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
@@ -657,31 +937,79 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
     if( (Ens=="cA211a.12.48") ||  (Ens=="cB211b.072.64") || (Ens=="cB211b.072.96") || (Ens=="cD211a.054.96")  ) {
 
       if(obs=="FAu") { //not very nice
-       if(ixg==1) {  Tmin=18; Tmax=25;  }
-       else if(ixg==2) {  Tmin=20; Tmax=25;  }
-       else if(ixg==3) {  Tmin=21; Tmax=25;  }
-       else if(ixg==4) {  Tmin=21; Tmax=25;  }
+       if(ixg==1) {  Tmin=18; Tmax=25;
+	 if(Ens=="cA211a.12.48") { Tmin-=1;}
+	 if(Ens=="cB211b.072.64") {Tmin+=1;}
+       }
+       else if(ixg==2) {  Tmin=20; Tmax=25;
+	 if(Ens=="cA211a.12.48") { Tmin-=3;}
+	 if(Ens=="cB211b.072.64") {Tmin-=1; Tmax+=1;}
+       }
+       else if(ixg==3) {  Tmin=21; Tmax=25;
+	 if(Ens=="cA211a.12.48") { Tmin-=4;}
+	 if(Ens=="cB211b.072.64") {Tmin-=1; Tmax+=1;}
+       }
+       else if(ixg==4) {  Tmin=21; Tmax=25;
+	 if(Ens=="cA211a.12.48") { Tmin-=5;}
+	 if(Ens=="cB211b.072.64") {Tmin-=2; Tmax+=2;}
+       }
        else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") { //not very nice
-	if(ixg==1) {  Tmin=21; Tmax=24;  }
-	else if(ixg==2) {  Tmin=21; Tmax=24;  }
-	else if(ixg==3) {  Tmin=21; Tmax=25;  }
-	else if(ixg==4) {  Tmin=21; Tmax=26;  }
+	if(ixg==1) {  Tmin=21; Tmax=24;
+	  if(Ens=="cA211a.12.48") { Tmin-=6; Tmax-=5;}
+	  if(Ens=="cB211b.072.64") {Tmin-=2; Tmax+=6;}
+	  if(Ens=="cD211a.054.96") { Tmin += 2; Tmax+=2;}
+	}
+	else if(ixg==2) {  Tmin=21; Tmax=24;
+	  if(Ens=="cA211a.12.48") { Tmin-=6; Tmax-=6;}
+	  if(Ens=="cB211b.072.64") {Tmin+=4; Tmax+=4;}
+	  if(Ens=="cD211a.054.96") { Tmin += 4; Tmax+=9;}
+	}
+	else if(ixg==3) {  Tmin=21; Tmax=25;
+	  if(Ens=="cA211a.12.48") { Tmin-=6; Tmax-=6;}
+	  if(Ens=="cB211b.072.64") {Tmin+=4; Tmax+=4;}
+	  if(Ens=="cD211a.054.96") { Tmin += 5; Tmax+=5;}
+	}
+	else if(ixg==4) {  Tmin=21; Tmax=26;
+	  if(Ens=="cA211a.12.48") { Tmin-=2;}
+	  if(Ens=="cB211b.072.64") {Tmin-=2; Tmax-=2;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
-	if(ixg==1) {  Tmin=28; Tmax=33;  }
-	else if(ixg==2) {  Tmin=22; Tmax=28;  }
-	else if(ixg==3) {  Tmin=19; Tmax=24;  }
-	else if(ixg==4) {  Tmin=16; Tmax=24;  }
+	if(ixg==1) {  Tmin=28; Tmax=33;
+	  if(Ens=="cA211a.12.48") { Tmin-=6; Tmax-=5;}
+	}
+	else if(ixg==2) {  Tmin=22; Tmax=28;
+	  if(Ens=="cA211a.12.48") { Tmin-=2; Tmax-=2;}
+	  if(Ens=="cB211b.072.64") {Tmin+=3; Tmax+=3;}
+	  if(Ens=="cD211a.054.96") { Tmin += 5; Tmax+=5;}
+	}
+	else if(ixg==3) {  Tmin=19; Tmax=24;
+	  if(Ens=="cB211b.072.64") {Tmin+=2;}
+	}
+	else if(ixg==4) {  Tmin=16; Tmax=24;
+	  if(Ens=="cB211b.072.64") {Tmin+=2;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=22; Tmax=30; if(Ens=="cD211a.054.96") { Tmin += 3;}    }
-	else if(ixg==2) {  Tmin=21; Tmax=27;  }
-	else if(ixg==3) {  Tmin=17; Tmax=24; if(Ens=="cD211a.054.96") {Tmin+=4; Tmax += 4; }  }
-	else if(ixg==4) {  Tmin=14; Tmax=23;  }
+	if(ixg==1) {  Tmin=22; Tmax=30;
+	  if(Ens=="cA211a.12.48") { Tmin-=2; Tmax-=2;}
+	  if(Ens=="cD211a.054.96") { Tmin += 7; Tmax+=4;}
+	}
+	else if(ixg==2) {  Tmin=21; Tmax=27;
+	   if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=3;}
+	   if(Ens=="cD211a.054.96") { Tmin += 3;}
+	}
+	else if(ixg==3) {  Tmin=17; Tmax=24;
+	  if(Ens=="cB211b.072.64") {Tmin+=1; Tmax-=1;}
+	  if(Ens=="cD211a.054.96") {Tmin+=4; Tmax += 4; }
+	}
+	else if(ixg==4) {  Tmin=14; Tmax=23;
+	  if(Ens=="cA211a.12.48") { Tmin-=2; Tmax-=6;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
@@ -692,24 +1020,58 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
-	if(ixg==1) {  Tmin=18; Tmax=27;  }
-	else if(ixg==2) {  Tmin=18; Tmax=28;  }
-	else if(ixg==3) {  Tmin=15; Tmax=23;  }
-	else if(ixg==4) {  Tmin=12; Tmax=21;  }
+	if(ixg==1) {  Tmin=18; Tmax=27;
+	  if(Ens=="cA211a.12.48") { Tmin-=1; Tmax-=5;}
+	  if(Ens=="cD211a.054.96") {Tmin+=1; Tmax += 4; }
+	}
+	else if(ixg==2) {  Tmin=18; Tmax=28;
+	  if(Ens=="cA211a.12.48") { Tmin-=2; Tmax=Tmin+4;}
+	  if(Ens=="cD211a.054.96") {Tmin-=2; Tmax += 3; }
+	}
+	else if(ixg==3) {  Tmin=15; Tmax=23;
+	  if(Ens=="cA211a.12.48") { Tmin-=5; Tmax-=7;}
+	}
+	else if(ixg==4) {  Tmin=12; Tmax=21;
+	  if(Ens=="cD211a.054.96") {Tmin+=10; Tmax += 10; }
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") { //bad plateaux at  xg=0.1
-	if(ixg==1) {  Tmin=26; Tmax=30;  }
-	else if(ixg==2) {  Tmin=21; Tmax=25;  }
-	else if(ixg==3) {  Tmin=22; Tmax=25;  }
-	else if(ixg==4) {  Tmin=20; Tmax=26;  }
+	if(ixg==1) {  Tmin=26; Tmax=30;
+	  if(Ens=="cA211a.12.48") { Tmin-=5; Tmax-=5;}
+	  if(Ens=="cB211b.072.64") {Tmin-=1; Tmax += 2; }
+	  if(Ens=="cD211a.054.96") {Tmin+=2; Tmax += 2; }
+	}
+	else if(ixg==2) {  Tmin=21; Tmax=25;
+	  if(Ens=="cA211a.12.48") { Tmin-=2;}
+	  if(Ens=="cB211b.072.64") {Tmin+=4; Tmax += 4; }
+	  if(Ens=="cD211a.054.96") {Tmin+=8; Tmax += 8; }
+	}
+	else if(ixg==3) {  Tmin=22; Tmax=25;
+	  if(Ens=="cA211a.12.48") { Tmin-=4; Tmax-=2;}
+	  if(Ens=="cD211a.054.96") {Tmin+=4; Tmax += 4; }
+	}
+	else if(ixg==4) {  Tmin=20; Tmax=26;
+	  if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=3;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=26; Tmax=30;  }
-	else if(ixg==2) {  Tmin=24; Tmax=30;  }
-	else if(ixg==3) {  Tmin=16; Tmax=24;  }
-	else if(ixg==4) {  Tmin=11; Tmax=17;  }
+	if(ixg==1) {  Tmin=26; Tmax=30;
+	  if(Ens=="cA211a.12.48") { Tmin-=7; Tmax-=7;}
+	  if(Ens=="cD211a.054.96") {Tmin+=3; Tmax += 6; }
+	}
+	else if(ixg==2) {  Tmin=24; Tmax=30;
+	    if(Ens=="cA211a.12.48") { Tmin-=6; Tmax-=6;}
+	    if(Ens=="cD211a.054.96") {Tmin+=3; Tmax += 6; }
+	}
+	else if(ixg==3) {  Tmin=16; Tmax=24;
+	  if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=5;}
+	  if(Ens=="cD211a.054.96") {Tmin+=5; Tmax += 3; }
+	}
+	else if(ixg==4) {  Tmin=11; Tmax=17;
+	  if(Ens=="cA211a.12.48") { Tmin+=1; Tmax+=1;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
     }
@@ -724,22 +1086,22 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FAd") { //not very nice
 	if(ixg==1) {  Tmin=21; Tmax=24;  }
-	else if(ixg==2) {  Tmin=21; Tmax=24;  }
-	else if(ixg==3) {  Tmin=21; Tmax=25;  }
+	else if(ixg==2) {  Tmin=27; Tmax=33;  }
+	else if(ixg==3) {  Tmin=27; Tmax=34;  }
 	else if(ixg==4) {  Tmin=21; Tmax=26;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
 	if(ixg==1) {  Tmin=25; Tmax=33;  }
-	else if(ixg==2) {  Tmin=23; Tmax=28;  }
+	else if(ixg==2) {  Tmin=28; Tmax=33;  }
 	else if(ixg==3) {  Tmin=21; Tmax=24;  }
 	else if(ixg==4) {  Tmin=16; Tmax=24;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=24; Tmax=30;  }
-	else if(ixg==2) {  Tmin=21; Tmax=27;  }
-	else if(ixg==3) {  Tmin=16; Tmax=27;  }
+	else if(ixg==2) {  Tmin=24; Tmax=27;  }
+	else if(ixg==3) {  Tmin=18; Tmax=27;  }
 	else if(ixg==4) {  Tmin=15; Tmax=23;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -752,15 +1114,15 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FA_Td") {
 	if(ixg==1) {  Tmin=18; Tmax=27;  }
-	else if(ixg==2) {  Tmin=11; Tmax=27;  }
+	else if(ixg==2) {  Tmin=21; Tmax=29;  }
 	else if(ixg==3) {  Tmin=11; Tmax=20;  }
 	else if(ixg==4) {  Tmin=12; Tmax=21;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") { //bad plateaux at  xg=0.1
-	if(ixg==1) {  Tmin=26; Tmax=30;  }
-	else if(ixg==2) {  Tmin=21; Tmax=25;  }
-	else if(ixg==3) {  Tmin=22; Tmax=25;  }
+	if(ixg==1) {  Tmin=28; Tmax=32;  }
+	else if(ixg==2) {  Tmin=29; Tmax=33;  }
+	else if(ixg==3) {  Tmin=26; Tmax=29;  }
 	else if(ixg==4) {  Tmin=20; Tmax=26;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -898,10 +1260,20 @@ void Compute_Bs_mumu_gamma() {
   }
 
 
+  //Fit F_Bs
+
+  
+
+  
+
+
   cout<<"Generating data to be used for meson mass extrapolation"<<endl;
   //print continuum extrapolated results for each contribution as a function of the mass
   vector<string> contribs({"FA", "FA_u", "FA_d", "FV",  "FV_u", "FV_d",  "FA_T", "FA_T_u", "FA_T_d", "FV_T", "FV_T_u", "FV_T_d"});
   for(int c=0; c<(signed)contribs.size(); c++) {
+
+    distr_t_list FF_Bs_list;
+    
     distr_t_list masses(1), fps(1);
     vector<distr_t_list> FF_M;
     for(int ixg=1; ixg<num_xg_list[0]; ixg++) FF_M.emplace_back(1);
@@ -914,16 +1286,176 @@ void Compute_Bs_mumu_gamma() {
     boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+"Bs_extr");
     for(int ixg=1;ixg<(signed)num_xg_list[0];ixg++) {
      
-      Print_To_File({}, { (1.0/masses).ave(), (1.0/masses).err(), fps.ave(), fps.err(), FF_M[ixg-1].ave(), FF_M[ixg-1].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/"+contribs[c]+"_ixg_"+to_string(ixg)+".dat", "", ""); 
+      Print_To_File({}, { ratio_mh, (1.0/masses).ave(), (1.0/masses).err(), fps.ave(), fps.err(), FF_M[ixg-1].ave(), FF_M[ixg-1].err(), (FF_M[ixg-1]/fps).ave(), (FF_M[ixg-1]/fps).err() }, "../data/ph_emission/"+ph_type+"/Bs_extr/"+contribs[c]+"_ixg_"+to_string(ixg)+".dat", "", "");
+
+
+      //perform extrapolation in the heavy quark mass
+      if(contribs[c] != "FA" && contribs[c] != "FV" && contribs[c] != "FV_T" && contribs[c] != "FA_T" ) {
+	
+	 
+	class ipar_MEX {
+	public:
+	  ipar_MEX() : FF(0.0), FF_err(0.0) {}
+	  double FF, FF_err, M, xg;
+	};
+  
+	class fpar_MEX {
+	public:
+	  fpar_MEX() {}
+	  fpar_MEX(const Vfloat &par) {
+	    if((signed)par.size() != 3) crash("In class fpar_MEX  class constructor Vfloat par has size != 3");
+	    A=par[0];
+	    B=par[1];
+	    C=par[2];
+	  }
+	  double A,B,C;
+	};
+	
+	
+	//init bootstrap fit
+	bootstrap_fit<fpar_MEX,ipar_MEX> bf_MEX(NJ);
+	bf_MEX.set_warmup_lev(0); //sets warmup
+	bf_MEX.Set_number_of_measurements(Nmasses);
+	bf_MEX.Set_verbosity(1);
+	
+	double guess_B= sqrt(2*0.24/Bs_xg_t_list[ixg-1]);
+	if(contribs[c].substr(1,1)=="A")  guess_B=  sqrt(2*0.5/Bs_xg_t_list[ixg-1]);
+	
+	bf_MEX.Add_par("A", (FF_M[ixg-1]/fps).ave(0), (FF_M[ixg-1]/fps).ave(0)/10);
+	bf_MEX.Add_par("B", guess_B , guess_B/10);
+	bf_MEX.Add_par("C", 0.1, 0.001);
+	//fit on mean values to get ch2
+	bootstrap_fit<fpar_MEX,ipar_MEX> bf_MEX_ch2(1);
+	bf_MEX_ch2.set_warmup_lev(2); //sets warmup
+	bf_MEX_ch2.Set_number_of_measurements(Nmasses);
+	bf_MEX_ch2.Set_verbosity(1);
+	bf_MEX_ch2.Add_par("A", (FF_M[ixg-1]/fps).ave(0), (FF_M[ixg-1]/fps).ave(0)/10);
+	bf_MEX_ch2.Add_par("B", guess_B, guess_B/10); 
+	bf_MEX_ch2.Add_par("C", 0.1, 0.001); 
+	bool C_fixed=false;
+	if(contribs[c]=="FA_d") C_fixed=true;
+	if(C_fixed) {
+	  bf_MEX.Fix_par("C", 0.0);
+	  bf_MEX_ch2.Fix_par("C", 0.0);
+	}
+	
+	//ansatz
+	bf_MEX.ansatz=  [&contribs, &c ](const fpar_MEX &p, const ipar_MEX &ip) {
+
+	  bool is_axial= (contribs[c].substr(1,1) == "A");
+
+	  double x= ip.M*ip.M;
+	  
+	  if(is_axial) x= ip.M;
+
+	  double func= (p.A/( 1 + p.B*p.B/x ))*( 1 + p.C/ip.M) ; 
+
+	  if(contribs[c].substr( contribs[c].length() -1, 1) == "u" ) func/= ip.M;
+
+	  return func;
+	  
+	  
+	};
+	bf_MEX.measurement=  [ ](const fpar_MEX &p, const ipar_MEX &ip) {
+	  
+	  return ip.FF;
+	};
+	bf_MEX.error=  [ ](const fpar_MEX &p, const ipar_MEX &ip) {
+	  
+	  return ip.FF_err;
+	};
+	
+	bf_MEX_ch2.ansatz= bf_MEX.ansatz;
+	bf_MEX_ch2.measurement = bf_MEX.measurement;
+	bf_MEX_ch2.error = bf_MEX.error;
+      
+	//start fitting
+	//fill the data
+	vector<vector<ipar_MEX>> data_MEX(NJ);
+	vector<vector<ipar_MEX>> data_MEX_ch2(1);
+	//allocate space for output result
+	boot_fit_data<fpar_MEX> Bt_fit_MEX;
+	boot_fit_data<fpar_MEX> Bt_fit_MEX_ch2;
+	for(auto &data_iboot: data_MEX) data_iboot.resize(Nmasses);
+	for(auto &data_iboot: data_MEX_ch2) data_iboot.resize(Nmasses);
+	for(int ijack=0;ijack<NJ;ijack++) {
+	  for(int im=0;im<Nmasses;im++) {
+	    data_MEX[ijack][im].FF = (FF_M[ixg-1].distr_list[im]/fps.distr_list[im]).distr[ijack];
+	    data_MEX[ijack][im].FF_err= (FF_M[ixg-1]/fps).err(im);
+	    data_MEX[ijack][im].xg= Bs_xg_t_list[ixg-1];
+	    data_MEX[ijack][im].M= masses.distr_list[im].distr[ijack];
+	    if(ijack==0) {
+	      data_MEX_ch2[ijack][im].FF = (FF_M[ixg-1]/fps).ave(im);
+	      data_MEX_ch2[ijack][im].FF_err= (FF_M[ixg-1]/fps).err(im);
+	      data_MEX_ch2[ijack][im].xg= Bs_xg_t_list[ixg-1];
+	      data_MEX_ch2[ijack][im].M = masses.ave(im);
+	      
+	    }
+	  }
+	}
+	
+	//append
+	bf_MEX.Append_to_input_par(data_MEX);
+	bf_MEX_ch2.Append_to_input_par(data_MEX_ch2);
+	//fit
+	cout<<"Fitting "<<contribs[c]<<" to extrapolate at the Bs-meson mass"<<endl;
+	Bt_fit_MEX= bf_MEX.Perform_bootstrap_fit();
+	Bt_fit_MEX_ch2= bf_MEX_ch2.Perform_bootstrap_fit();
+	int Npars= C_fixed?2:3;
+	double ch2_red_MEX= Bt_fit_MEX_ch2.get_ch2_ave()/( Nmasses -Npars);
+	
+	//retrieve params
+	distr_t A(1), B(1), C(1);
+	for(int ijack=0;ijack<NJ;ijack++) {
+	  A.distr.push_back( Bt_fit_MEX.par[ijack].A);
+	  B.distr.push_back( Bt_fit_MEX.par[ijack].B);
+	  C.distr.push_back( Bt_fit_MEX.par[ijack].C);
+	}
+	
+	//print fit function
+	distr_t_list F_MEX_fit(1);
+	Vfloat Inv_Masses_to_print;
+
+	//### Determine FF at Bs meson mass
+	ipar_MEX pp_Bs;
+	double MBs=5.367;
+	pp_Bs.M= MBs;
+	distr_t FF_Bs(1);
+	for(int ijack=0;ijack<NJ;ijack++) FF_Bs.distr.push_back( bf_MEX.ansatz( Bt_fit_MEX.par[ijack], pp_Bs));
+	FF_Bs_list.distr_list.push_back( FF_Bs);
+	//#################################
+
+	//######### PRINT FIT FUNCTION ##########
+	for(int i=0;i<1000;i++) { Inv_Masses_to_print.push_back( 0.7*2*i/999  ) ;}
+	//plot fit function
+	for(auto &Minv: Inv_Masses_to_print) {
+	  ipar_MEX pp_MEX;
+	  pp_MEX.M=1.0/Minv;
+	  distr_t F_MEX_M(1);
+	  for(int ijack=0;ijack<NJ;ijack++) {
+	    F_MEX_M.distr.push_back( bf_MEX.ansatz( Bt_fit_MEX.par[ijack], pp_MEX));
+	  }
+	  
+	  F_MEX_fit.distr_list.push_back( F_MEX_M);
+	}
+	//print
+	string out_path="../data/ph_emission/"+ph_type+"/Bs_extr/"+contribs[c]+"_ixg_"+to_string(ixg)+".fit_func";
+	Print_To_File({},{ Inv_Masses_to_print, F_MEX_fit.ave(), F_MEX_fit.err()} , out_path , "", "ch2/dof: "+to_string_with_precision(ch2_red_MEX,5));
+	
+      }
+    }
+    //print FF_Bs
+    if(contribs[c] != "FA" && contribs[c] != "FV" && contribs[c] != "FV_T" && contribs[c] != "FA_T" ) {
+      Print_To_File({}, {Bs_xg_t_list, FF_Bs_list.ave(), FF_Bs_list.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/"+contribs[c]+"_Bs.dat", "", "");
     }
   }
   
   exit(-1);
   MESON="Bs";
-
+  
   
  
-
+  
   Bs_xg_t_list.clear();
   int nxg=11;
   Get_Bs_xg_t_list(nxg);
@@ -1963,14 +2495,14 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       if(MESON == "B1s") {Corr.Tmin=24; Corr.Tmax=38;}
       else if(MESON == "B2s") {Corr.Tmin=22; Corr.Tmax=34;}
       else if(MESON=="B3s") {Corr.Tmin=17; Corr.Tmax=23;}
-      else if(MESON=="B4s") { Corr.Tmin=12; Corr.Tmax=22;}
+      else if(MESON=="B4s") { Corr.Tmin=16; Corr.Tmax=22;}
       else {Corr.Tmin=23; Corr.Tmax=33;}
     }
     else if(data_2pts.Tag[iens] =="cB211b.072.96") {Corr.Tmin=20; Corr.Tmax=36;}
     
     else if(data_2pts.Tag[iens].substr(1,1) == "C")  {
-      if(MESON == "B1s") {Corr.Tmin=29; Corr.Tmax=36;}
-      else if(MESON == "B2s") {Corr.Tmin=23; Corr.Tmax=34;}
+      if(MESON == "B1s") {Corr.Tmin=27; Corr.Tmax=36;}
+      else if(MESON == "B2s") {Corr.Tmin=27; Corr.Tmax=36;}
       else if(MESON=="B3s") {Corr.Tmin=18; Corr.Tmax=31;}
       else if(MESON=="B4s") { Corr.Tmin=18; Corr.Tmax=30;}
       else {Corr.Tmin=29; Corr.Tmax=42;}

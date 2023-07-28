@@ -41,6 +41,7 @@ class LatticeInfo {
   double a_nucleon_err;
   double ml;
   double ms_L, ms_M, ms_H;
+  double ms_L_new, ms_M_new;
   double mc_L, mc_M, mc_H;
   string CURRENT_TYPE;
   double ainv; //GeV

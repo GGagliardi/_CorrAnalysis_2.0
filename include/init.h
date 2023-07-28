@@ -14,6 +14,7 @@
 #include "vph_Nissa.h"
 #include "vph_Nissa_3d.h"
 #include "tau_decay.h"
+#include "tau_decay_strange.h"
 #include "semileptonic.h"
 #include "Bs_mumu_gamma.h"
 

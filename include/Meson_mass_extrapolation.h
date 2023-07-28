@@ -9,7 +9,7 @@
 using namespace std;
 
 distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op, double Op_phys, string Print_dir, string Tag, bool UseJack, string EXTRAPOLATION_MODE);
-distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op, distr_t &Op_phys, string Print_dir, string Tag, bool UseJack, string EXTRAPOLATION_MODE);
+distr_t Obs_extrapolation_meson_mass( vector<distr_t> &Meas, vector<distr_t> &Op,const distr_t &Op_phys, string Print_dir, string Tag, bool UseJack, string EXTRAPOLATION_MODE);
 
 
 

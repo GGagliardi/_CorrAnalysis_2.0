@@ -614,6 +614,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
      distr_t_list M_etas_tm = Corr.effective_mass_t( ss_data_tm_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_etas_tm");
      distr_t_list M_etas_heavy_tm = Corr.effective_mass_t( ss_heavy_data_tm_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_etas_heavy_tm");
      distr_t_list M_K_tm = Corr.effective_mass_t( ls_data_tm_P5P5.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_K_tm");
+     
      //vector
      distr_t_list M_rho_tm = Corr.effective_mass_t( ll_data_tm_VKVK.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_Mrho_tm");
      distr_t_list M_phi_tm = Corr.effective_mass_t( ss_data_tm_VKVK.col(0)[is], "../data/tau_decay_strange/"+ll_data_tm_P5P5.Tag[is]+"/eff_mass_phi_tm");
@@ -1124,6 +1125,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 		  return result;
 		    };
 
+    
     auto f_syst_A = [](const function<double(double)> &F) { return 0.0;};
     auto f_syst_A0_tm = [&resc_GeV, &Mpi, &fpi](const function<double(double)> &F) -> double { return resc_GeV.ave()*F(Mpi)*pow(fpi,2)*Mpi/(2.0);};
     auto f_syst_A0_OS = [&resc_GeV, &Mpi_OS, &fpi_OS](const function<double(double)> &F) -> double { return resc_GeV.ave()*F(Mpi_OS)*pow(fpi_OS,2)*Mpi_OS/(2.0);};
@@ -1738,9 +1740,11 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 
     
     vector<string> Contribs({"A0A0", "AkAk", "VkVk", "tot", "VA", "VMA", "AX", "T"});
-    vector<string> Fit_types({"tm", "OS", "comb"});
-    vector<string> poly_types({"const", "linear"});
-
+    //vector<string> Fit_types({"tm", "OS", "comb"});
+    vector<string> Fit_types({"comb"});
+    //vector<string> poly_types({"const", "linear"});
+    vector<string> poly_types({"const", "linear", "tm_linear", "OS_linear"});
+    
     distr_t_list test(UseJack);
     map< tuple<string,string,string> , distr_t_list> res_map;
     map< tuple<string, string,string>, vector<double>> ch2_map;
@@ -1987,6 +1991,8 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
        for( auto &contr: Contribs) {
 	for( auto &fit_type: Fit_types) {
 	  for( auto &poly_type: poly_types) {
+
+	    if( (fit_type != "comb") && (poly_type.substr(0,2)=="tm" || poly_type.substr(0,2) == "OS")) crash("Cannot use tm/OS_linear with fit type: "+fit_type);
 	    cout<<"###########################################################"<<endl;
 	    cout<<"Performing continuum limit extrapolation for sigma: "<<sigma_list[is]<<endl;
 	    cout<<"Contribution: "<<contr<<endl;
@@ -1996,7 +2002,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 	    //Depending on fit considered, determine Nmeas, Npars and Ndof
 	    int Nmeas= ((fit_type=="comb")?(2*Nens_eff):Nens_eff);
 	    int deg_pars= ((fit_type=="comb")?2:1);
-	    int Npars= 1 + (poly_type=="linear")*deg_pars;
+	    int Npars= 1 + (poly_type=="linear")*deg_pars +(poly_type.substr(0,2)=="tm") + (poly_type.substr(0,2)=="OS");
 	    int Ndof= Nmeas-Npars;
 
 	    cout<<"Nmeas: "<<Nmeas<<endl;
@@ -2034,10 +2040,17 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 	      bf_TAU_ch2.Fix_par("D2_tm", 0);
 	      bf_TAU_ch2.Fix_par("D2_OS", 0);
 	    }
-	    else{
+	    else if(poly_type=="linear") {
 	      if(fit_type=="OS") { bf_TAU.Fix_par("D2_tm", 0); bf_TAU_ch2.Fix_par("D2_tm", 0); }
 	      else if(fit_type=="tm") { bf_TAU.Fix_par("D2_OS",0); bf_TAU_ch2.Fix_par("D2_OS",0); }
 	    }
+	    else if(poly_type=="tm_linear") {
+	      bf_TAU.Fix_par("D2_OS",0); bf_TAU_ch2.Fix_par("D2_OS",0);
+	    }
+	    else if(poly_type=="OS_linear") {
+	       bf_TAU.Fix_par("D2_tm",0); bf_TAU_ch2.Fix_par("D2_tm",0);
+	    }
+	    else crash("poly_type: "+poly_type+" not yet implemented");
 
 
 	    //ansatz

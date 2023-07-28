@@ -205,6 +205,7 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     }
     
     ms_L=0.02050; ms_M=0.02300;
+    ms_L_new=0.02050; ms_M_new=0.02300;
     mc_L= 0.26500; mc_M=0.29000; mc_H=0.30000;
   }
 
@@ -254,6 +255,7 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv=0.7131;
     Zv_err=0.0006;
     ms_L=0.019; ms_M=0.021;
+    ms_L_new=0.018; ms_M_new=0.020;
     mc_L= 0.21000; mc_M=0.23000; mc_H=0.25000;
   }
 
@@ -290,6 +292,7 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
    
     
     ms_L= 0.01600; ms_M= 0.01800;
+    ms_L_new= 0.01600; ms_M_new= 0.01800;
     mc_L=0.17500; mc_M=0.19500; mc_H=0.21500;
   }
 
@@ -324,6 +327,7 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
 
       
     ms_L= 0.014; ms_M= 0.015;
+    ms_L_new= 0.014; ms_M_new= 0.015;
     mc_L=0.165; mc_M=0.175; mc_H=0.175; //mc_H is fake 
 
 
@@ -368,6 +372,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   else if(Tag=="cC211a.06.80") {
     L=80; T=160; ml=0.00060; 
   }
+  else if(Tag=="cC211a.06.112") {
+    L=112; T=2*112; ml=0.00060; 
+  }
+  
   else if(Tag=="cD211a.054.96") {
     L=96; T=192; ml=0.00054;
   }
