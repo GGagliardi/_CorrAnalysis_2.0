@@ -535,7 +535,6 @@ distr_t_list CorrAnalysis::matrix_element_t(const VVfloat &corr_A, string Obs) {
   
   for(int t=0;t<Nt;t++) {
     for(int is=0; is < effective_mass_fit_distr.size(); is++) {
-      double el = effective_mass_fit_distr.distr[is];
       double Z = residue.distr_list[t].distr[is];
       matrix_element_t.distr_list[t].distr.push_back(sqrt(Z));
     }

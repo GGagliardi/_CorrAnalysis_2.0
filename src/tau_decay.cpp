@@ -1660,6 +1660,9 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       //VkVk
       syst_VkVk_tm[iens] = Read_From_File("../data/tau_decay/"+Tag_reco_type+"/light/Br/br_contrib_tm_"+MODE+"_sm_func_mode_"+to_string(sm_func_mode)+"_"+Vk_data_tm.Tag[iens]+".dat", 10,  11,1);
       syst_VkVk_OS[iens] = Read_From_File("../data/tau_decay/"+Tag_reco_type+"/light/Br/br_contrib_OS_"+MODE+"_sm_func_mode_"+to_string(sm_func_mode)+"_"+Vk_data_tm.Tag[iens]+".dat", 10,  11,1);
+
+
+      cout<<"Ens: "<<Vk_data_tm.Tag[iens]<<" "<<Tag_reco_type<<"  syst tm A0, Ak Vk: "<<syst_A0A0_tm[iens][0]<<" "<<syst_AkAk_tm[iens][0]<<" "<<syst_VkVk_tm[iens][0]<<endl;
     }
 
 
@@ -1671,7 +1674,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       distr_t_list  A0A0_tm(UseJack), AkAk_tm(UseJack), VkVk_tm(UseJack);
       distr_t_list  A0A0_OS(UseJack), AkAk_OS(UseJack), VkVk_OS(UseJack);
 
-            
+      GaussianMersenne GM_sigma(654324);
 
       for(int iens=0;iens<Nens;iens++) {
 
@@ -1698,14 +1701,14 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 	
 	for(int ijack=0;ijack<Njacks;ijack++) {
 	  //A0A0
-	  distr_syst_A0A0_tm.distr.push_back( GM()*syst_A0A0_tm[iens][is]/sqrt(Njacks-1.0));
-	  distr_syst_A0A0_OS.distr.push_back( GM()*syst_A0A0_OS[iens][is]/sqrt(Njacks-1.0));
+	  distr_syst_A0A0_tm.distr.push_back( GM_sigma()*syst_A0A0_tm[iens][is]/sqrt(Njacks-1.0));
+	  distr_syst_A0A0_OS.distr.push_back( GM_sigma()*syst_A0A0_OS[iens][is]/sqrt(Njacks-1.0));
 	  //AkAk
-	  distr_syst_AkAk_tm.distr.push_back( GM()*syst_AkAk_tm[iens][is]/sqrt(Njacks-1.0));
-	  distr_syst_AkAk_OS.distr.push_back( GM()*syst_AkAk_OS[iens][is]/sqrt(Njacks-1.0));
+	  distr_syst_AkAk_tm.distr.push_back( GM_sigma()*syst_AkAk_tm[iens][is]/sqrt(Njacks-1.0));
+	  distr_syst_AkAk_OS.distr.push_back( GM_sigma()*syst_AkAk_OS[iens][is]/sqrt(Njacks-1.0));
 	  //VkVk
-	  distr_syst_VkVk_tm.distr.push_back( GM()*syst_VkVk_tm[iens][is]/sqrt(Njacks-1.0));
-	  distr_syst_VkVk_OS.distr.push_back( GM()*syst_VkVk_OS[iens][is]/sqrt(Njacks-1.0));
+	  distr_syst_VkVk_tm.distr.push_back( GM_sigma()*syst_VkVk_tm[iens][is]/sqrt(Njacks-1.0));
+	  distr_syst_VkVk_OS.distr.push_back( GM_sigma()*syst_VkVk_OS[iens][is]/sqrt(Njacks-1.0));
 	}
 	//A0A0
 	A0A0_tm.distr_list[iens] = A0A0_tm.distr_list[iens] + distr_syst_A0A0_tm;
@@ -1783,9 +1786,9 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       distr_t distr_syst_FSE_VkVk(UseJack);
 
       for(int ijack=0;ijack<Njacks;ijack++) {
-	distr_syst_FSE_A0A0.distr.push_back( 1.0 + GM()*corr_fact_A0A0_FSE/sqrt(Njacks-1.0));
-	distr_syst_FSE_AkAk.distr.push_back( 1.0 + GM()*corr_fact_AkAk_FSE/sqrt(Njacks-1.0));
-	distr_syst_FSE_VkVk.distr.push_back( 1.0 + GM()*corr_fact_VkVk_FSE/sqrt(Njacks-1.0));
+	distr_syst_FSE_A0A0.distr.push_back( 1.0 + GM_sigma()*corr_fact_A0A0_FSE/sqrt(Njacks-1.0));
+	distr_syst_FSE_AkAk.distr.push_back( 1.0 + GM_sigma()*corr_fact_AkAk_FSE/sqrt(Njacks-1.0));
+	distr_syst_FSE_VkVk.distr.push_back( 1.0 + GM_sigma()*corr_fact_VkVk_FSE/sqrt(Njacks-1.0));
       }
       
       for(int iens=0;iens<Nens;iens++) {
@@ -2510,7 +2513,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 	Vfloat x_list, s_list;
 	double x_min= 0;
 	double x_max= 2*Br.ave();
-	if( Contribs[c] == "VMA") { x_min= -300*fabs(Br.ave()); x_max = 300*fabs(Br.ave()) ;}
+	if( Contribs[c] == "VMA") { x_min= -2000*fabs(Br.ave()-Br.err()); x_max = 2000*fabs(Br.ave()+Br.err()) ;}
 	
 
 	double sw=1.0201;
@@ -2587,13 +2590,14 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
 	double D,D4, D6;
       };
 
+      int Nmeas= sigma_list.size() - sigma_to_exclude;
 
       bootstrap_fit<fpar_SIGMA,ipar_SIGMA> bf_SIGMA(Njacks);
       bootstrap_fit<fpar_SIGMA,ipar_SIGMA> bf_SIGMA_ch2(1);
-      bf_SIGMA.Set_number_of_measurements(sigma_list.size() - sigma_to_exclude);
+      bf_SIGMA.Set_number_of_measurements(Nmeas);
       bf_SIGMA.Set_verbosity(1);
       //ch2
-      bf_SIGMA_ch2.Set_number_of_measurements(sigma_list.size() - sigma_to_exclude);
+      bf_SIGMA_ch2.Set_number_of_measurements(Nmeas);
       bf_SIGMA_ch2.Set_verbosity(1);
 
       //add fit parameters
@@ -2636,15 +2640,39 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       //allocate space for output result
       boot_fit_data<fpar_SIGMA> Bt_fit;
       boot_fit_data<fpar_SIGMA> Bt_fit_ch2;
-      for(auto &data_iboot: data) data_iboot.resize(sigma_list.size() - sigma_to_exclude);
-      for(auto &data_iboot: data_ch2) data_iboot.resize(sigma_list.size() - sigma_to_exclude);
+      
+      for(auto &data_iboot: data) data_iboot.resize(Nmeas);
+      for(auto &data_iboot: data_ch2) data_iboot.resize(Nmeas);
+
+
+      //correlated fit
+      Eigen::MatrixXd Cov_Matrix(Nmeas,Nmeas);
+      Eigen::MatrixXd Corr_Matrix(Nmeas,Nmeas);
+      for(int i=0;i<Nmeas;i++)
+	for(int j=0;j<Nmeas;j++) {
+	  Cov_Matrix(i,j) = Br_finals[c].distr_list[i]%Br_finals[c].distr_list[j];
+	  Corr_Matrix(i,j)= Cov_Matrix(i,j)/(Br_finals[c].err(i)*Br_finals[c].err(j));
+	}
+      
+      //add cov matrix to bootstrap fit
+      //bf_SIGMA.Add_covariance_matrix(Cov_Matrix);
+      //bf_SIGMA_ch2.Add_covariance_matrix(Cov_Matrix);
+
+      //print covariance matrix
+      ofstream Print_Cov("../data/tau_decay/"+Tag_reco_type+"/light/sigma_extr/contr_"+Contribs[c]+".cov");
+      ofstream Print_Corr("../data/tau_decay/"+Tag_reco_type+"/light/sigma_extr/contr_"+Contribs[c]+".corr");
+      
+      Print_Cov<<Cov_Matrix<<endl;  Print_Corr<<Corr_Matrix<<endl;
+      Print_Cov.close();            Print_Corr.close();
+      
+      
 
       GaussianMersenne GS(224223); //GS(15431); //;
          
       for(int ijack=0;ijack<Njacks;ijack++) {
 
 	double rn= GS();
-	for(int is=0;is<(signed)sigma_list.size() - sigma_to_exclude;is++) {
+	for(int is=0;is<Nmeas;is++) {
 
 	  data[ijack][is].Br = Br_finals[c].distr_list[is].distr[ijack] + rn*Br_final_systs[c][is]/sqrt(Njacks-1.0);
 	  data[ijack][is].Br_err = sqrt( pow(Br_finals[c].err(is),2) + pow(Br_final_systs[c][is],2));
@@ -2692,7 +2720,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
       for(auto &ss: sigma_to_print) {
 	R_at_sigma_to_print.distr_list.push_back( D + D4*pow(ss,4) + D6*pow(ss,6));
       }
-      string Fit_tag= "../data/tau_decay/"+Tag_reco_type+"/light//sigma_extr/contr_"+Contribs[c];
+      string Fit_tag= "../data/tau_decay/"+Tag_reco_type+"/light/sigma_extr/contr_"+Contribs[c];
       Print_To_File({}, {sigma_to_print, R_at_sigma_to_print.ave(), R_at_sigma_to_print.err()},Fit_tag, "", "#sigma Br Br_err "+to_string_with_precision(ch2,4));
       
       

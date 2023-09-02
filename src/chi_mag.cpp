@@ -1,7 +1,6 @@
 #include "../include/chi_mag.h"
 #include "g_minus_2_utilities.h"
 #include "numerics.h"
-
 using namespace std;
 
 const int Njacks = 50;
@@ -11,10 +10,13 @@ const double fmTGeV= 1.0/0.197327;
 const double QCD_scale = 0.5 * fmTGeV;
 const bool Gen_free_corr_data = false;
 const vector<double> t0_list({});
-const vector<double> p0_list({0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09,  0.1, 0.120, 0.140, 0.16, 0.18,  0.2, 0.22, 0.240, 0.260});
 //const vector<double> t0_list({0.25*fmTGeV, 0.225*fmTGeV, 0.2*fmTGeV, 0.175*fmTGeV, 0.15*fmTGeV, 0.125*fmTGeV, 0.10*fmTGeV, 0.08*fmTGeV});
 const bool Use_tree_level_sub = false;
 const bool No_sub_in_t0_analysis = false;
+const double Qp = 2.0 / 3.0;
+const double Qn = -1.0 / 3.0;
+const bool Include_disco = true;
+const bool Include_sea_quark_mass_derivative=false;
 
 
 double Ker_sub(double x) {
@@ -94,6 +96,7 @@ double Get_tree_lev_der(double x) {
   return F1-F2;
 
 }
+
 
 
 void Generate_free_corr_data_VT() {
@@ -342,7 +345,16 @@ void Compute_free_VT_corr(double am, int Tmax, int L) {
 
 void Compute_magnetic_susc() {
 
+  Get_magnetic_susc(false);
+  Get_magnetic_susc(true);
 
+
+}
+
+void Get_magnetic_susc(bool Include_sea_quark_mass_derivative) {
+
+
+  string Tag_val=  (Include_sea_quark_mass_derivative?"":"_only_val");
 
   if(Gen_free_corr_data) Generate_free_corr_data_VT();
 
@@ -444,11 +456,14 @@ void Compute_magnetic_susc() {
 	cout<<"Nconfs: "<<Nconfs<<endl;
 	cout<<"T: "<<T<<" "<<T/2+1<<endl;
 	cout<<"Nhits: "<<Nhits<<endl;
+	ifstream Read_confs_tag( "../magnetic_susc_bin/magn_susc_data/"+Ens_T1[it]+"/data/confsList"+channel+".txt");
 	for(size_t iconf=0;iconf<Nconfs;iconf++) {
 	  vector<double> C(T/2+1);
 	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
-	  boost::filesystem::create_directory("../magnetic_susc_data/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf));
-	  ofstream PrintCorr("../magnetic_susc_data/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf)+"/mes_contr_"+channel+"_"+Corr_tags[id]);
+	  string Confs_tag;
+	  Read_confs_tag>>Confs_tag;
+	  boost::filesystem::create_directory("../magnetic_susc_data/"+channel+"/"+Ens_TT1[it]+"/"+Confs_tag);
+	  ofstream PrintCorr("../magnetic_susc_data/"+channel+"/"+Ens_TT1[it]+"/"+Confs_tag+"/mes_contr_"+channel+"_"+Corr_tags[id]);
 	  PrintCorr.precision(16);
 	  PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
 	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
@@ -457,16 +472,39 @@ void Compute_magnetic_susc() {
 	  PrintCorr.close();
 
 	}
+	Read_confs_tag.close();
 
 	fclose(stream);
 
 	}
 	
       }
+      //eliminate unmatching confs between ss1 and ss2
+      ifstream Read_confs_ss1( "../magnetic_susc_bin/magn_susc_data/"+Ens_T1[it]+"/data/confsListss1.txt");
+      ifstream Read_confs_ss2( "../magnetic_susc_bin/magn_susc_data/"+Ens_T1[it]+"/data/confsListss2.txt");
+
+      while(!Read_confs_ss1.eof()) {
+	string conf_ss1_tag;
+	Read_confs_ss1>>conf_ss1_tag;
+	if(!Read_confs_ss1.eof()) {
+	  if( ! boost::filesystem::exists( "../magnetic_susc_data/ss2/"+Ens_TT1[it]+"/"+conf_ss1_tag) ) boost::filesystem::remove_all( "../magnetic_susc_data/ss1/"+Ens_TT1[it]+"/"+conf_ss1_tag);
+	}
+      }
+
+      while(!Read_confs_ss2.eof()) {
+	string conf_ss2_tag;
+	Read_confs_ss2>>conf_ss2_tag;
+	if(!Read_confs_ss2.eof()) {
+	  if( ! boost::filesystem::exists( "../magnetic_susc_data/ss1/"+Ens_TT1[it]+"/"+conf_ss2_tag) ) boost::filesystem::remove_all( "../magnetic_susc_data/ss2/"+Ens_TT1[it]+"/"+conf_ss2_tag);
+	}
+      }
+      
+      Read_confs_ss1.close();
+      Read_confs_ss2.close();
     }
   }
 
-
+  
   auto Sort_light_confs = [](string A, string B) {
 
 			   
@@ -506,22 +544,7 @@ void Compute_magnetic_susc() {
 			  };
 
 
-  auto Sort_easy = [](string A, string B) {
 
-      int conf_length_A= A.length();
-      int conf_length_B= B.length();
-      
-      int pos_a_slash=-1;
-      int pos_b_slash=-1;
-      for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
-      for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
-      
-      string A_bis= A.substr(pos_a_slash+1);
-      string B_bis= B.substr(pos_b_slash+1);
-
-      return atoi( A_bis.c_str()) < atoi( B_bis.c_str());
-
-  };
 
 
   //light
@@ -539,16 +562,29 @@ void Compute_magnetic_susc() {
   data_t data_s2_TKTK_tm, data_s2_TKVK_tm, data_s2_VKTK_tm, data_s2_P5P5_tm;
   data_t data_s2_TKTK_OS, data_s2_TKVK_OS, data_s2_VKTK_OS, data_s2_P5P5_OS;
 
+  //disconnected
+  data_t data_disc_VKTK_light, data_disc_VKTK_strange, data_disc_JJ_light;
+  data_t data_disc_V1T1_light, data_disc_V2T2_light, data_disc_V3T3_light;
 
-  data_TKTK_tm.Read("../magnetic_susc_data/ll", "mes_contr_ll_TM_TKTK", "TKTK", Sort_easy);
-  data_TKVK_tm.Read("../magnetic_susc_data/ll", "mes_contr_ll_TM_TKVK", "TKVK", Sort_easy);
-  data_VKTK_tm.Read("../magnetic_susc_data/ll", "mes_contr_ll_TM_VKTK", "VKTK", Sort_easy);
-  data_P5P5_tm.Read("../magnetic_susc_data/ll", "mes_contr_ll_TM_P5P5", "P5P5", Sort_easy);
 
-  data_TKTK_OS.Read("../magnetic_susc_data/ll", "mes_contr_ll_OS_TKTK", "TKTK", Sort_easy);
-  data_TKVK_OS.Read("../magnetic_susc_data/ll", "mes_contr_ll_OS_TKVK", "TKVK", Sort_easy);
-  data_VKTK_OS.Read("../magnetic_susc_data/ll", "mes_contr_ll_OS_VKTK", "VKTK", Sort_easy);
-  data_P5P5_OS.Read("../magnetic_susc_data/ll", "mes_contr_ll_OS_P5P5", "P5P5", Sort_easy);
+  data_t data_barXX_light, data_barXX_strange;
+  data_t data_VKTK_light_tm_correlated, data_TKVK_light_tm_correlated, data_VKTK_light_OS_correlated, data_TKVK_light_OS_correlated;
+  data_t data_VKTK_s1_tm_correlated, data_TKVK_s1_tm_correlated, data_VKTK_s1_OS_correlated, data_TKVK_s1_OS_correlated;
+  data_t data_VKTK_s2_tm_correlated, data_TKVK_s2_tm_correlated, data_VKTK_s2_OS_correlated, data_TKVK_s2_OS_correlated;
+
+  data_t  VKTK_barXX_tm_light, TKVK_barXX_tm_light, VKTK_barXX_OS_light, TKVK_barXX_OS_light;
+  data_t  VKTK_barXX_tm_s1, TKVK_barXX_tm_s1, VKTK_barXX_OS_s1, TKVK_barXX_OS_s1;
+  data_t  VKTK_barXX_tm_s2, TKVK_barXX_tm_s2, VKTK_barXX_OS_s2, TKVK_barXX_OS_s2;
+
+  data_TKTK_tm.Read("../magnetic_susc_data/ll", "mes_contr_ll_TM_TKTK", "TKTK", Sort_light_confs);
+  data_TKVK_tm.Read("../magnetic_susc_data/ll", "mes_contr_ll_TM_TKVK", "TKVK", Sort_light_confs);
+  data_VKTK_tm.Read("../magnetic_susc_data/ll", "mes_contr_ll_TM_VKTK", "VKTK", Sort_light_confs);
+  data_P5P5_tm.Read("../magnetic_susc_data/ll", "mes_contr_ll_TM_P5P5", "P5P5", Sort_light_confs);
+
+  data_TKTK_OS.Read("../magnetic_susc_data/ll", "mes_contr_ll_OS_TKTK", "TKTK", Sort_light_confs);
+  data_TKVK_OS.Read("../magnetic_susc_data/ll", "mes_contr_ll_OS_TKVK", "TKVK", Sort_light_confs);
+  data_VKTK_OS.Read("../magnetic_susc_data/ll", "mes_contr_ll_OS_VKTK", "VKTK", Sort_light_confs);
+  data_P5P5_OS.Read("../magnetic_susc_data/ll", "mes_contr_ll_OS_P5P5", "P5P5", Sort_light_confs);
 
   //to estimate der
   data_TKVK_tm_m1.Read("../magnetic_susc_data/valence/physical", "mes_contr_2pts_ll_1", "TKVK", Sort_light_confs);
@@ -582,7 +618,54 @@ void Compute_magnetic_susc() {
   data_s2_TKVK_OS.Read("../magnetic_susc_data/ss2", "mes_contr_ss2_OS_TKVK", "TKVK", Sort_light_confs);
   data_s2_VKTK_OS.Read("../magnetic_susc_data/ss2", "mes_contr_ss2_OS_VKTK", "VKTK", Sort_light_confs);
   data_s2_P5P5_OS.Read("../magnetic_susc_data/ss2", "mes_contr_ss2_OS_P5P5", "P5P5", Sort_light_confs);
-  
+
+  //disconnected
+  data_disc_VKTK_light.Read("../magnetic_susc_disco/disco", "light_TKVK.txt", "TKVK", Sort_light_confs);
+  data_disc_V1T1_light.Read("../magnetic_susc_disco/disco", "light_T1V1.txt", "T1V1", Sort_light_confs);
+  data_disc_V2T2_light.Read("../magnetic_susc_disco/disco", "light_T2V2.txt", "T2V2", Sort_light_confs);
+  data_disc_V3T3_light.Read("../magnetic_susc_disco/disco", "light_T3V3.txt", "T3V3", Sort_light_confs);
+  data_disc_JJ_light.Read("../magnetic_susc_disco/disco", "JJ_light.txt", "VKVK", Sort_light_confs);
+  data_disc_VKTK_strange.Read("../magnetic_susc_disco/disco", "strange_TKVK.txt", "TKVK", Sort_light_confs);
+ 
+
+
+  //chiral condensate
+  data_barXX_light.Read("../magnetic_susc_disco/conn_XX_correlated/ll", "scalar_light.txt", "S", Sort_light_confs);
+  data_barXX_strange.Read("../magnetic_susc_disco/conn_XX_correlated/ss1", "scalar_strange.txt", "S", Sort_light_confs);
+
+
+  //connected TKVK correlated to chiral condensate
+  data_VKTK_light_tm_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ll", "mes_contr_ll_TM_VKTK", "VKTK", Sort_light_confs);
+  data_TKVK_light_tm_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ll", "mes_contr_ll_TM_TKVK", "TKVK", Sort_light_confs);
+  data_VKTK_light_OS_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ll", "mes_contr_ll_OS_VKTK", "VKTK", Sort_light_confs);
+  data_TKVK_light_OS_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ll", "mes_contr_ll_OS_TKVK", "TKVK", Sort_light_confs);
+
+
+  data_VKTK_s1_tm_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ss1", "mes_contr_ss1_TM_VKTK", "VKTK", Sort_light_confs);
+  data_TKVK_s1_tm_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ss1", "mes_contr_ss1_TM_TKVK", "TKVK", Sort_light_confs);
+  data_VKTK_s1_OS_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ss1", "mes_contr_ss1_OS_VKTK", "VKTK", Sort_light_confs);
+  data_TKVK_s1_OS_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ss1", "mes_contr_ss1_OS_TKVK", "TKVK", Sort_light_confs);
+
+  data_VKTK_s2_tm_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ss2", "mes_contr_ss2_TM_VKTK", "VKTK", Sort_light_confs);
+  data_TKVK_s2_tm_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ss2", "mes_contr_ss2_TM_TKVK", "TKVK", Sort_light_confs);
+  data_VKTK_s2_OS_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ss2", "mes_contr_ss2_OS_VKTK", "VKTK", Sort_light_confs);
+  data_TKVK_s2_OS_correlated.Read("../magnetic_susc_disco/conn_XX_correlated/ss2", "mes_contr_ss2_OS_TKVK", "TKVK", Sort_light_confs);
+
+
+  VKTK_barXX_tm_light.Read("../magnetic_susc_disco/conn_XX_correlated/ll", "ll_TM_VKTK_barXX_corr", "VKTK", Sort_light_confs);
+  TKVK_barXX_tm_light.Read("../magnetic_susc_disco/conn_XX_correlated/ll", "ll_TM_TKVK_barXX_corr", "TKVK", Sort_light_confs);
+  VKTK_barXX_OS_light.Read("../magnetic_susc_disco/conn_XX_correlated/ll", "ll_OS_VKTK_barXX_corr", "VKTK", Sort_light_confs);
+  TKVK_barXX_OS_light.Read("../magnetic_susc_disco/conn_XX_correlated/ll", "ll_OS_TKVK_barXX_corr", "TKVK", Sort_light_confs);
+
+  VKTK_barXX_tm_s1.Read("../magnetic_susc_disco/conn_XX_correlated/ss1", "ss1_TM_VKTK_barXX_corr", "VKTK", Sort_light_confs);
+  TKVK_barXX_tm_s1.Read("../magnetic_susc_disco/conn_XX_correlated/ss1", "ss1_TM_TKVK_barXX_corr", "TKVK", Sort_light_confs);
+  VKTK_barXX_OS_s1.Read("../magnetic_susc_disco/conn_XX_correlated/ss1", "ss1_OS_VKTK_barXX_corr", "VKTK", Sort_light_confs);
+  TKVK_barXX_OS_s1.Read("../magnetic_susc_disco/conn_XX_correlated/ss1", "ss1_OS_TKVK_barXX_corr", "TKVK", Sort_light_confs);
+
+  VKTK_barXX_tm_s2.Read("../magnetic_susc_disco/conn_XX_correlated/ss2", "ss2_TM_VKTK_barXX_corr", "VKTK", Sort_light_confs);
+  TKVK_barXX_tm_s2.Read("../magnetic_susc_disco/conn_XX_correlated/ss2", "ss2_TM_TKVK_barXX_corr", "TKVK", Sort_light_confs);
+  VKTK_barXX_OS_s2.Read("../magnetic_susc_disco/conn_XX_correlated/ss2", "ss2_OS_VKTK_barXX_corr", "VKTK", Sort_light_confs);
+  TKVK_barXX_OS_s2.Read("../magnetic_susc_disco/conn_XX_correlated/ss2", "ss2_OS_TKVK_barXX_corr", "TKVK", Sort_light_confs);
 
 
   int Nens = data_TKTK_tm.size;
@@ -593,43 +676,35 @@ void Compute_magnetic_susc() {
   distr_t_list susc_TV_tm_list(UseJack);
   distr_t_list susc_VT_tm_list(UseJack);
   distr_t_list susc_VTV_tm_list(UseJack);
-  vector<distr_t_list> susc_VTV_subp_tm_list(p0_list.size());
   distr_t_list susc_TV_OS_list(UseJack);
   distr_t_list susc_VT_OS_list(UseJack);
   distr_t_list susc_VTV_OS_list(UseJack);
-  vector<distr_t_list> susc_VTV_subp_OS_list(p0_list.size());
   //data where to store ensembles info red
   distr_t_list a_distr_list_red(UseJack);
   distr_t_list susc_TV_tm_list_red(UseJack);
   distr_t_list susc_VT_tm_list_red(UseJack);
   distr_t_list susc_VTV_tm_list_red(UseJack);
-  vector<distr_t_list> susc_VTV_subp_tm_list_red(p0_list.size());
   distr_t_list susc_TV_OS_list_red(UseJack);
   distr_t_list susc_VT_OS_list_red(UseJack);
   distr_t_list susc_VTV_OS_list_red(UseJack);
-  vector<distr_t_list> susc_VTV_subp_OS_list_red(p0_list.size());
-     
+       
 
   //strange
   //data where to store ensembles info
   distr_t_list susc_s_TV_tm_list(UseJack);
   distr_t_list susc_s_VT_tm_list(UseJack);
   distr_t_list susc_s_VTV_tm_list(UseJack);
-  vector<distr_t_list> susc_s_VTV_subp_tm_list(p0_list.size());
   distr_t_list susc_s_TV_OS_list(UseJack);
   distr_t_list susc_s_VT_OS_list(UseJack);
   distr_t_list susc_s_VTV_OS_list(UseJack);
-  vector<distr_t_list> susc_s_VTV_subp_OS_list(p0_list.size());
   //data where to store ensembles info red
   distr_t_list susc_s_TV_tm_list_red(UseJack);
   distr_t_list susc_s_VT_tm_list_red(UseJack);
   distr_t_list susc_s_VTV_tm_list_red(UseJack);
-  vector<distr_t_list> susc_s_VTV_subp_tm_list_red(p0_list.size());
   distr_t_list susc_s_TV_OS_list_red(UseJack);
   distr_t_list susc_s_VT_OS_list_red(UseJack);
   distr_t_list susc_s_VTV_OS_list_red(UseJack);
-  vector<distr_t_list> susc_s_VTV_subp_OS_list_red(p0_list.size());
-    
+      
 
   //light
   //data where to store ensembles info
@@ -692,9 +767,7 @@ void Compute_magnetic_susc() {
   for(int ijack=0;ijack<Njacks;ijack++) chiral_cond.distr.push_back( val_cond + err_cond/sqrt(Njacks-1.0)); 
   //final values
   distr_t chi_light_TV(UseJack), chi_light_VT(UseJack), chi_light_VTV(UseJack);
-  distr_t_list chi_light_VTV_subp(UseJack);
   distr_t chi_strange_TV(UseJack), chi_strange_VT(UseJack), chi_strange_VTV(UseJack);
-  distr_t_list chi_strange_VTV_subp(UseJack);
   distr_t_list chi_light_TV_t0(UseJack), chi_light_VT_t0(UseJack), chi_light_VTV_t0(UseJack);
   distr_t_list chi_strange_TV_t0(UseJack), chi_strange_VT_t0(UseJack), chi_strange_VTV_t0(UseJack);
   
@@ -723,7 +796,6 @@ void Compute_magnetic_susc() {
     else if(data_TKTK_tm.Tag[iens].substr(1,1)=="D") { Za= ZA_D; Zv=ZV_D; Z_T=ZT_D; a_distr=a_D; dm= 0.00054-0.0004964;}
     else crash("Ensemble: "+data_TKTK_tm.Tag[iens]+" not recognised");
 
-    double ml_ave= ml - dm/2;
     double dms= ms2 -ms1;
     double ms_ave= (ms1+ms2)/2;
 
@@ -733,37 +805,211 @@ void Compute_magnetic_susc() {
     Corr.Reflection_sign=1;
     Corr.Perform_Nt_t_average=1;
 
+    //load chiral condensate and correlate it to TKVK
+    auto F_disco_jack= [&](const Vfloat& par) { if((signed)par.size() != 3) crash("Lambda function F_disco_jack expects par[3], but par["+to_string((signed)par.size())+"] provided"); return par[0] -par[1]*par[2];};
+
+    
+
+    //sanity check
+    if( (data_VKTK_tm.Tag[iens] != data_disc_VKTK_light.Tag[iens] )   || (data_VKTK_tm.Tag[iens] != data_barXX_light.Tag[iens] )) crash("Connected and disconnected ensemble list do not match");
+    if( (data_VKTK_tm.Tag[iens] != data_disc_VKTK_strange.Tag[iens] )   || (data_VKTK_tm.Tag[iens] != data_barXX_strange.Tag[iens] )) crash("Connected and disconnected ensemble list do not match");
+
+
+    //-------------------------   FOR SEA QUARK MASS DERIVATIVE ---------------------------//
+    //-------   -------//
+    int iens_XX=iens;
+    int T_XX= Corr.Nt;
+    if(data_VKTK_tm.Tag[iens] == "cB211b.072.96") {
+      T_XX= 128;
+      for(int j=0; j < (signed)data_VKTK_tm.Tag.size(); j++)
+	if ( data_VKTK_tm.Tag[j] == "cB211b.072.64") iens_XX = j;
+    }
+ 
+    
+    int Nconfs_barXX_light= data_barXX_light.col(1)[iens_XX][0].size();
+    int Nconfs_barXX_strange= data_barXX_strange.col(1)[iens_XX][0].size();
+    Vfloat barXX_light(Nconfs_barXX_light,0.0);
+    Vfloat barXX_strange(Nconfs_barXX_strange,0.0);
+  
+    //final observerbable to evaluate sea-quark mass derivative
+    distr_t_list VKTK_sea_der_tm_light(UseJack), TKVK_sea_der_tm_light(UseJack), VKTK_sea_der_OS_light(UseJack), TKVK_sea_der_OS_light(UseJack);
+    distr_t_list VKTK_sea_der_tm_s1(UseJack), TKVK_sea_der_tm_s1(UseJack), VKTK_sea_der_OS_s1(UseJack), TKVK_sea_der_OS_s1(UseJack);
+    distr_t_list VKTK_sea_der_tm_s2(UseJack), TKVK_sea_der_tm_s2(UseJack), VKTK_sea_der_OS_s2(UseJack), TKVK_sea_der_OS_s2(UseJack);
+
+    for(int t=0;t<T_XX;t++) {
+      for(int iconf=0; iconf<Nconfs_barXX_light;iconf++) barXX_light[iconf] += -1.0*data_barXX_light.col(1)[iens_XX][t][iconf];
+      for(int iconf=0; iconf<Nconfs_barXX_strange;iconf++) barXX_strange[iconf] += -1.0*data_barXX_strange.col(1)[iens_XX][t][iconf];
+    }
+
+    for(int t=0; t < T_XX;t++) {
+      
+
+	//cout<<"SIZES ENS: "<<data_VKTK_tm.Tag[iens_XX]<<" : "<<VKTK_barXX_tm_light[t].size()<<" "<<barXX_light.size()<<" "<<data_VKTK_light_tm_correlated.col(0)[iens_XX][t].size()<<endl;
+	//jackknife
+       	Jackknife J_light(10000,Njacks);
+	VKTK_sea_der_tm_light.distr_list.push_back(-dm*J_light.DoJack(F_disco_jack, 3, VKTK_barXX_tm_light.col(0)[iens_XX][t], barXX_light, data_VKTK_light_tm_correlated.col(0)[iens_XX][t]));
+	TKVK_sea_der_tm_light.distr_list.push_back(-dm*J_light.DoJack(F_disco_jack, 3, TKVK_barXX_tm_light.col(0)[iens_XX][t], barXX_light, data_TKVK_light_tm_correlated.col(0)[iens_XX][t]));
+	VKTK_sea_der_OS_light.distr_list.push_back(-dm*J_light.DoJack(F_disco_jack, 3, VKTK_barXX_OS_light.col(0)[iens_XX][t], barXX_light, data_VKTK_light_OS_correlated.col(0)[iens_XX][t]));
+	TKVK_sea_der_OS_light.distr_list.push_back(-dm*J_light.DoJack(F_disco_jack, 3, TKVK_barXX_OS_light.col(0)[iens_XX][t], barXX_light, data_TKVK_light_OS_correlated.col(0)[iens_XX][t]));
+	Jackknife J_s1(10000,Njacks);
+	VKTK_sea_der_tm_s1.distr_list.push_back(-dms*J_s1.DoJack(F_disco_jack, 3, VKTK_barXX_tm_s1.col(0)[iens_XX][t], barXX_strange, data_VKTK_s1_tm_correlated.col(0)[iens_XX][t]));
+	TKVK_sea_der_tm_s1.distr_list.push_back(-dms*J_s1.DoJack(F_disco_jack, 3, TKVK_barXX_tm_s1.col(0)[iens_XX][t], barXX_strange, data_TKVK_s1_tm_correlated.col(0)[iens_XX][t]));
+	VKTK_sea_der_OS_s1.distr_list.push_back(-dms*J_s1.DoJack(F_disco_jack, 3, VKTK_barXX_OS_s1.col(0)[iens_XX][t], barXX_strange, data_VKTK_s1_OS_correlated.col(0)[iens_XX][t]));
+	TKVK_sea_der_OS_s1.distr_list.push_back(-dms*J_s1.DoJack(F_disco_jack, 3, TKVK_barXX_OS_s1.col(0)[iens_XX][t], barXX_strange, data_TKVK_s1_OS_correlated.col(0)[iens_XX][t]));
+	Jackknife J_s2(10000,Njacks);
+	VKTK_sea_der_tm_s2.distr_list.push_back(-dms*J_s2.DoJack(F_disco_jack, 3, VKTK_barXX_tm_s2.col(0)[iens_XX][t], barXX_strange, data_VKTK_s2_tm_correlated.col(0)[iens_XX][t]));
+	TKVK_sea_der_tm_s2.distr_list.push_back(-dms*J_s2.DoJack(F_disco_jack, 3, TKVK_barXX_tm_s2.col(0)[iens_XX][t], barXX_strange, data_TKVK_s2_tm_correlated.col(0)[iens_XX][t]));
+	VKTK_sea_der_OS_s2.distr_list.push_back(-dms*J_s2.DoJack(F_disco_jack, 3, VKTK_barXX_OS_s2.col(0)[iens_XX][t], barXX_strange, data_VKTK_s2_OS_correlated.col(0)[iens_XX][t]));
+	TKVK_sea_der_OS_s2.distr_list.push_back(-dms*J_s2.DoJack(F_disco_jack, 3, TKVK_barXX_OS_s2.col(0)[iens_XX][t], barXX_strange, data_TKVK_s2_OS_correlated.col(0)[iens_XX][t]));
+    }
+
+    
+       
+    //antysymmetrize
+    for(int t=0; t < T_XX; t++) {
+      VKTK_sea_der_tm_light.distr_list[t] = 0.5*(VKTK_sea_der_tm_light.distr_list[t] -  VKTK_sea_der_tm_light.distr_list[(T_XX -t+T_XX)%T_XX]);
+      TKVK_sea_der_tm_light.distr_list[t] = 0.5*(TKVK_sea_der_tm_light.distr_list[t] -  TKVK_sea_der_tm_light.distr_list[(T_XX -t+T_XX)%T_XX]);
+      VKTK_sea_der_OS_light.distr_list[t] = 0.5*(VKTK_sea_der_OS_light.distr_list[t] -  VKTK_sea_der_OS_light.distr_list[(T_XX -t+T_XX)%T_XX]);
+      TKVK_sea_der_OS_light.distr_list[t] = 0.5*(TKVK_sea_der_OS_light.distr_list[t] -  TKVK_sea_der_OS_light.distr_list[(T_XX -t+T_XX)%T_XX]);
+
+      VKTK_sea_der_tm_s1.distr_list[t] = 0.5*(VKTK_sea_der_tm_s1.distr_list[t] -  VKTK_sea_der_tm_s1.distr_list[(T_XX -t+T_XX)%T_XX]);
+      TKVK_sea_der_tm_s1.distr_list[t] = 0.5*(TKVK_sea_der_tm_s1.distr_list[t] -  TKVK_sea_der_tm_s1.distr_list[(T_XX -t+T_XX)%T_XX]);
+      VKTK_sea_der_OS_s1.distr_list[t] = 0.5*(VKTK_sea_der_OS_s1.distr_list[t] -  VKTK_sea_der_OS_s1.distr_list[(T_XX -t+T_XX)%T_XX]);
+      TKVK_sea_der_OS_s1.distr_list[t] = 0.5*(TKVK_sea_der_OS_s1.distr_list[t] -  TKVK_sea_der_OS_s1.distr_list[(T_XX -t+T_XX)%T_XX]);
+
+      VKTK_sea_der_tm_s2.distr_list[t] = 0.5*(VKTK_sea_der_tm_s2.distr_list[t] -  VKTK_sea_der_tm_s2.distr_list[(T_XX -t+T_XX)%T_XX]);
+      TKVK_sea_der_tm_s2.distr_list[t] = 0.5*(TKVK_sea_der_tm_s2.distr_list[t] -  TKVK_sea_der_tm_s2.distr_list[(T_XX -t+T_XX)%T_XX]);
+      VKTK_sea_der_OS_s2.distr_list[t] = 0.5*(VKTK_sea_der_OS_s2.distr_list[t] -  VKTK_sea_der_OS_s2.distr_list[(T_XX -t+T_XX)%T_XX]);
+      TKVK_sea_der_OS_s2.distr_list[t] = 0.5*(TKVK_sea_der_OS_s2.distr_list[t] -  TKVK_sea_der_OS_s2.distr_list[(T_XX -t+T_XX)%T_XX]);
+    }
+    
+    if(data_VKTK_tm.Tag[iens] == "cB211b.072.96") {
+      distr_t_list FAKE_ZERO= 0.0*Get_id_jack_distr_list( T_XX/2 , Njacks) ;
+      distr_t_list VKTK_ll_tm_tmp(UseJack), TKVK_ll_tm_tmp(UseJack), VKTK_ll_OS_tmp(UseJack), TKVK_ll_OS_tmp(UseJack); 
+      distr_t_list VKTK_s1_tm_tmp(UseJack), TKVK_s1_tm_tmp(UseJack), VKTK_s1_OS_tmp(UseJack), TKVK_s1_OS_tmp(UseJack);
+      distr_t_list VKTK_s2_tm_tmp(UseJack), TKVK_s2_tm_tmp(UseJack), VKTK_s2_OS_tmp(UseJack), TKVK_s2_OS_tmp(UseJack);
+
+      for(int t=0; t < T_XX/2; t++) {
+	VKTK_ll_tm_tmp.distr_list.push_back( VKTK_sea_der_tm_light.distr_list[t]);
+	TKVK_ll_tm_tmp.distr_list.push_back( TKVK_sea_der_tm_light.distr_list[t]);
+	VKTK_ll_OS_tmp.distr_list.push_back( VKTK_sea_der_OS_light.distr_list[t]);
+	TKVK_ll_OS_tmp.distr_list.push_back( TKVK_sea_der_OS_light.distr_list[t]);
+	VKTK_s1_tm_tmp.distr_list.push_back( VKTK_sea_der_tm_s1.distr_list[t]);
+	TKVK_s1_tm_tmp.distr_list.push_back( TKVK_sea_der_tm_s1.distr_list[t]);
+	VKTK_s1_OS_tmp.distr_list.push_back( VKTK_sea_der_OS_s1.distr_list[t]);
+	TKVK_s1_OS_tmp.distr_list.push_back( TKVK_sea_der_OS_s1.distr_list[t]);
+	VKTK_s2_tm_tmp.distr_list.push_back( VKTK_sea_der_tm_s2.distr_list[t]);
+	TKVK_s2_tm_tmp.distr_list.push_back( TKVK_sea_der_tm_s2.distr_list[t]);
+	VKTK_s2_OS_tmp.distr_list.push_back( VKTK_sea_der_OS_s2.distr_list[t]);
+	TKVK_s2_OS_tmp.distr_list.push_back( TKVK_sea_der_OS_s2.distr_list[t]);
+      }
+      for(int t=0; t <= T_XX/4; t++) {
+	VKTK_ll_tm_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]);
+	TKVK_ll_tm_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]);
+	VKTK_ll_OS_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]);
+	TKVK_ll_OS_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]); 
+	VKTK_s1_tm_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]); 
+	TKVK_s1_tm_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]); 
+	VKTK_s1_OS_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]); 
+	TKVK_s1_OS_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]);
+	VKTK_s2_tm_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]); 
+	TKVK_s2_tm_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]); 
+	VKTK_s2_OS_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]); 
+	TKVK_s2_OS_tmp.distr_list.push_back(  FAKE_ZERO.distr_list[t]); 
+      }
+
+      for(int t= Corr.Nt/2 + 1; t < Corr.Nt; t++) {
+	VKTK_ll_tm_tmp.distr_list.push_back(  -1.0*VKTK_ll_tm_tmp.distr_list[ (Corr.Nt -t) ] );
+	TKVK_ll_tm_tmp.distr_list.push_back(  -1.0*TKVK_ll_tm_tmp.distr_list[ (Corr.Nt -t) ] );
+	VKTK_ll_OS_tmp.distr_list.push_back(  -1.0*VKTK_ll_OS_tmp.distr_list[ (Corr.Nt -t) ] );
+	TKVK_ll_OS_tmp.distr_list.push_back(  -1.0*TKVK_ll_OS_tmp.distr_list[ (Corr.Nt -t) ] );
+	VKTK_s1_tm_tmp.distr_list.push_back(  -1.0*VKTK_s1_tm_tmp.distr_list[ (Corr.Nt -t) ] );
+	TKVK_s1_tm_tmp.distr_list.push_back(  -1.0*TKVK_s1_tm_tmp.distr_list[ (Corr.Nt -t) ] );
+	VKTK_s1_OS_tmp.distr_list.push_back(  -1.0*VKTK_s1_OS_tmp.distr_list[ (Corr.Nt -t) ] );
+	TKVK_s1_OS_tmp.distr_list.push_back(  -1.0*TKVK_s1_OS_tmp.distr_list[ (Corr.Nt -t) ] );
+	VKTK_s2_tm_tmp.distr_list.push_back(  -1.0*VKTK_s2_tm_tmp.distr_list[ (Corr.Nt -t) ] );
+	TKVK_s2_tm_tmp.distr_list.push_back(  -1.0*TKVK_s2_tm_tmp.distr_list[ (Corr.Nt -t) ] );
+	VKTK_s2_OS_tmp.distr_list.push_back(  -1.0*VKTK_s2_OS_tmp.distr_list[ (Corr.Nt -t) ] );
+	TKVK_s2_OS_tmp.distr_list.push_back(  -1.0*TKVK_s2_OS_tmp.distr_list[ (Corr.Nt -t) ] );
+      }
+
+      VKTK_sea_der_tm_light = VKTK_ll_tm_tmp;
+      TKVK_sea_der_tm_light = TKVK_ll_tm_tmp;
+      VKTK_sea_der_OS_light = VKTK_ll_OS_tmp;
+      TKVK_sea_der_OS_light = TKVK_ll_OS_tmp;
+      VKTK_sea_der_tm_s1 = VKTK_s1_tm_tmp;
+      TKVK_sea_der_tm_s1 = TKVK_s1_tm_tmp;
+      VKTK_sea_der_OS_s1 = VKTK_s1_OS_tmp;
+      TKVK_sea_der_OS_s1 = TKVK_s1_OS_tmp;
+      VKTK_sea_der_tm_s2 = VKTK_s2_tm_tmp;
+      TKVK_sea_der_tm_s2 = TKVK_s2_tm_tmp;
+      VKTK_sea_der_OS_s2 = VKTK_s2_OS_tmp;
+      TKVK_sea_der_OS_s2 = TKVK_s2_OS_tmp;
+    }
+    //-------   -------//
+    //-------------------------   FOR SEA QUARK MASS DERIVATIVE ---------------------------//
+    cout<<"sea quark mass derivative computed..."<<endl;
+
+    Print_To_File( {}, {VKTK_sea_der_tm_light.ave(), VKTK_sea_der_tm_light.err()}, "../data/magnetic_susc/"+data_TKTK_tm.Tag[iens]+"/ll_sea_der_VKTK_tm.dat.t", "", "");
+    Print_To_File( {}, {TKVK_sea_der_tm_light.ave(), TKVK_sea_der_tm_light.err()}, "../data/magnetic_susc/"+data_TKTK_tm.Tag[iens]+"/ll_sea_der_TKVK_tm.dat.t", "", "");
+    Print_To_File( {}, {VKTK_sea_der_OS_light.ave(), VKTK_sea_der_OS_light.err()}, "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/ll_sea_der_VKTK_OS.dat.t", "", "");
+    Print_To_File( {}, {TKVK_sea_der_OS_light.ave(), TKVK_sea_der_OS_light.err()}, "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/ll_sea_der_TKVK_OS.dat.t", "", "");
+
+    Print_To_File( {}, {VKTK_sea_der_tm_s1.ave(), VKTK_sea_der_tm_s1.err()}, "../data/magnetic_susc/"+data_TKTK_tm.Tag[iens]+"/s1_sea_der_VKTK_tm.dat.t", "", "");
+    Print_To_File( {}, {TKVK_sea_der_tm_s1.ave(), TKVK_sea_der_tm_s1.err()}, "../data/magnetic_susc/"+data_TKTK_tm.Tag[iens]+"/s1_sea_der_TKVK_tm.dat.t", "", "");
+    Print_To_File( {}, {VKTK_sea_der_OS_s1.ave(), VKTK_sea_der_OS_s1.err()}, "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/s1_sea_der_VKTK_OS.dat.t", "", "");
+    Print_To_File( {}, {TKVK_sea_der_OS_s1.ave(), TKVK_sea_der_OS_s1.err()}, "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/s1_sea_der_TKVK_OS.dat.t", "", "");
+
+    Print_To_File( {}, {VKTK_sea_der_tm_s2.ave(), VKTK_sea_der_tm_s2.err()}, "../data/magnetic_susc/"+data_TKTK_tm.Tag[iens]+"/s2_sea_der_VKTK_tm.dat.t", "", "");
+    Print_To_File( {}, {TKVK_sea_der_tm_s2.ave(), TKVK_sea_der_tm_s2.err()}, "../data/magnetic_susc/"+data_TKTK_tm.Tag[iens]+"/s2_sea_der_TKVK_tm.dat.t", "", "");
+    Print_To_File( {}, {VKTK_sea_der_OS_s2.ave(), VKTK_sea_der_OS_s2.err()}, "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/s2_sea_der_VKTK_OS.dat.t", "", "");
+    Print_To_File( {}, {TKVK_sea_der_OS_s2.ave(), TKVK_sea_der_OS_s2.err()}, "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/s2_sea_der_TKVK_OS.dat.t", "", "");
+      
+      
     //tm
     distr_t_list Corr_TKTK_tm= Corr.corr_t(data_TKTK_tm.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_tm.Tag[iens]+"/ll_TKTK_tm.dat");
     Corr.Reflection_sign=-1;
-    distr_t_list Corr_VKTK_tm= Corr.corr_t(data_VKTK_tm.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_tm.Tag[iens]+"/ll_VKTK_tm.dat");
-    distr_t_list Corr_TKVK_tm= Corr.corr_t(data_TKVK_tm.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_tm.Tag[iens]+"/ll_TKVK_tm.dat");
+    
+    distr_t_list Corr_VKTK_tm= Corr.corr_t(data_VKTK_tm.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_tm.Tag[iens]+"/ll_VKTK_tm.dat") + Include_disco*(Zv/Za)*Corr.corr_t(data_disc_VKTK_light.col(0)[iens], "")/Qp;
+    distr_t_list Corr_TKVK_tm= Corr.corr_t(data_TKVK_tm.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_tm.Tag[iens]+"/ll_TKVK_tm.dat") + Include_disco*(Zv/Za)*Corr.corr_t(data_disc_VKTK_light.col(0)[iens], "")/Qp;
     distr_t_list Corr_VKTKVK_tm(UseJack);
     for(int t=0;t<Corr.Nt;t++) { Corr_VKTKVK_tm.distr_list.push_back( (t==0 || t==Corr.Nt/2)?Corr_VKTK_tm.distr_list[0]:((1.0/pow(Corr_VKTK_tm.err(t),2))*Corr_VKTK_tm.distr_list[t] +  (1.0/pow(Corr_TKVK_tm.err(t),2))*Corr_TKVK_tm.distr_list[t])/(       (1.0/pow(Corr_VKTK_tm.err(t),2)) + (1.0/pow(Corr_TKVK_tm.err(t),2)) ));}
+    
     Corr.Reflection_sign=1;
     distr_t_list Corr_P5P5_tm= Corr.corr_t(data_P5P5_tm.col(0)[iens], "../data/magnetic_susc/"+data_P5P5_tm.Tag[iens]+"/ll_P5P5_tm.dat");
     //OS
     distr_t_list Corr_TKTK_OS= Corr.corr_t(data_TKTK_OS.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/ll_TKTK_OS.dat");
+    
     Corr.Reflection_sign=-1;
-    distr_t_list Corr_VKTK_OS= Corr.corr_t(data_VKTK_OS.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_OS.Tag[iens]+"/ll_VKTK_OS.dat");
-    distr_t_list Corr_TKVK_OS= Corr.corr_t(data_TKVK_OS.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_OS.Tag[iens]+"/ll_TKVK_OS.dat");
+    distr_t_list Corr_VKTK_OS= Corr.corr_t(data_VKTK_OS.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_OS.Tag[iens]+"/ll_VKTK_OS.dat") + Include_disco*Corr.corr_t(data_disc_VKTK_light.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/disc_light_VKTK.dat")/Qp; 
+    distr_t_list Corr_TKVK_OS= Corr.corr_t(data_TKVK_OS.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_OS.Tag[iens]+"/ll_TKVK_OS.dat")  +  Include_disco*Corr.corr_t(data_disc_VKTK_light.col(0)[iens], "")/Qp; 
     distr_t_list Corr_VKTKVK_OS(UseJack);
     for(int t=0;t<Corr.Nt;t++) { Corr_VKTKVK_OS.distr_list.push_back( (t==0 || t==Corr.Nt/2)?Corr_VKTK_OS.distr_list[0]:((1.0/pow(Corr_VKTK_OS.err(t),2))*Corr_VKTK_OS.distr_list[t] +  (1.0/pow(Corr_TKVK_OS.err(t),2))*Corr_TKVK_OS.distr_list[t] )/(       (1.0/pow(Corr_VKTK_OS.err(t),2)) + (1.0/pow(Corr_TKVK_OS.err(t),2)) ));}
+    //disco T1V1, T2V2, T3V3
+    distr_t_list Corr_disco_V1T1= Corr.corr_t( data_disc_V1T1_light.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/disc_light_V1T1.dat");
+    distr_t_list Corr_disco_V2T2= Corr.corr_t( data_disc_V2T2_light.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/disc_light_V2T2.dat");
+    distr_t_list Corr_disco_V3T3= Corr.corr_t( data_disc_V3T3_light.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/disc_light_V3T3.dat");
+    
     Corr.Reflection_sign=1;
     distr_t_list Corr_P5P5_OS= Corr.corr_t(data_P5P5_OS.col(0)[iens], "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/ll_P5P5_OS.dat");
+    //disco JJ
+    distr_t_list Corr_disco_JJ= Corr.corr_t( data_disc_JJ_light.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/disc_JJ_light.dat");
+   
 
-
+    //###########################################################################
     //to estimate derivative
     Corr.Reflection_sign=1;
-    distr_t_list Corr_der_TKVK_tm= -1*(Corr.corr_t(data_TKVK_tm_m2.col(0)[iens], "") - Corr.corr_t(data_TKVK_tm_m1.col(0)[iens], ""));
-    distr_t_list Corr_der_VKTK_tm= Corr.corr_t(data_VKTK_tm_m2.col(0)[iens], "") - Corr.corr_t(data_VKTK_tm_m1.col(0)[iens], "");
+    distr_t_list Corr_der_TKVK_tm= -1*(Corr.corr_t(data_TKVK_tm_m2.col(0)[iens], "") - Corr.corr_t(data_TKVK_tm_m1.col(0)[iens], "")) + Include_sea_quark_mass_derivative*TKVK_sea_der_tm_light ;
+    distr_t_list Corr_der_VKTK_tm= Corr.corr_t(data_VKTK_tm_m2.col(0)[iens], "") - Corr.corr_t(data_VKTK_tm_m1.col(0)[iens], "") + Include_sea_quark_mass_derivative*VKTK_sea_der_tm_light;
     distr_t_list Corr_der_VKTKVK_tm(UseJack);
     for(int t=0;t<Corr.Nt;t++) { Corr_der_VKTKVK_tm.distr_list.push_back( (t==0 || t==Corr.Nt/2)?Corr_der_VKTK_tm.distr_list[0]:((1.0/pow(Corr_der_VKTK_tm.err(t),2))*Corr_der_VKTK_tm.distr_list[t] +  (1.0/pow(Corr_der_TKVK_tm.err(t),2))*Corr_der_TKVK_tm.distr_list[t])/(       (1.0/pow(Corr_der_VKTK_tm.err(t),2)) + (1.0/pow(Corr_der_TKVK_tm.err(t),2)) ));}
-    distr_t_list Corr_der_TKVK_OS= -1*(Corr.corr_t(data_TKVK_OS_m2.col(0)[iens], "") - Corr.corr_t(data_TKVK_OS_m1.col(0)[iens], ""));
-    distr_t_list Corr_der_VKTK_OS= Corr.corr_t(data_VKTK_OS_m2.col(0)[iens], "") - Corr.corr_t(data_VKTK_OS_m1.col(0)[iens], "");
+    distr_t_list Corr_der_TKVK_OS= -1*(Corr.corr_t(data_TKVK_OS_m2.col(0)[iens], "") - Corr.corr_t(data_TKVK_OS_m1.col(0)[iens], "")) + Include_sea_quark_mass_derivative*TKVK_sea_der_OS_light;
+    distr_t_list Corr_der_VKTK_OS= Corr.corr_t(data_VKTK_OS_m2.col(0)[iens], "") - Corr.corr_t(data_VKTK_OS_m1.col(0)[iens], "") + Include_sea_quark_mass_derivative*VKTK_sea_der_OS_light;
     distr_t_list Corr_der_VKTKVK_OS(UseJack);
     for(int t=0;t<Corr.Nt;t++) { Corr_der_VKTKVK_OS.distr_list.push_back( (t==0 || t==Corr.Nt/2)?Corr_der_VKTK_OS.distr_list[0]:((1.0/pow(Corr_der_VKTK_OS.err(t),2))*Corr_der_VKTK_OS.distr_list[t] +  (1.0/pow(Corr_der_TKVK_OS.err(t),2))*Corr_der_TKVK_OS.distr_list[t])/(       (1.0/pow(Corr_der_VKTK_OS.err(t),2)) + (1.0/pow(Corr_der_TKVK_OS.err(t),2)) ));}
     Corr.Reflection_sign=1;
+
+    
 
     
     if(data_TKVK_tm.Tag[iens] != data_TKVK_tm_m1.Tag[iens]) crash("ensemble used to compute C and dC do not match");
@@ -773,20 +1019,24 @@ void Compute_magnetic_susc() {
     //strange 1
     //tm
     distr_t_list Corr_s1_TKTK_tm= Corr.corr_t(data_s1_TKTK_tm.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_tm.Tag[iens]+"/s1_TKTK_tm.dat");
+    
     Corr.Reflection_sign=-1;
-    distr_t_list Corr_s1_VKTK_tm= Corr.corr_t(data_s1_VKTK_tm.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_tm.Tag[iens]+"/s1_VKTK_tm.dat");
-    distr_t_list Corr_s1_TKVK_tm= Corr.corr_t(data_s1_TKVK_tm.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_tm.Tag[iens]+"/s1_TKVK_tm.dat");
+    distr_t_list Corr_s1_VKTK_tm= Corr.corr_t(data_s1_VKTK_tm.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_tm.Tag[iens]+"/s1_VKTK_tm.dat") + Include_disco*(Zv/Za)*Corr.corr_t(data_disc_VKTK_strange.col(0)[iens],  "")/Qn;
+    distr_t_list Corr_s1_TKVK_tm= Corr.corr_t(data_s1_TKVK_tm.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_tm.Tag[iens]+"/s1_TKVK_tm.dat") + Include_disco*(Zv/Za)*Corr.corr_t(data_disc_VKTK_strange.col(0)[iens],  "")/Qn;
     distr_t_list Corr_s1_VKTKVK_tm(UseJack);
     for(int t=0;t<Corr.Nt;t++) { Corr_s1_VKTKVK_tm.distr_list.push_back( (t==0 || t==Corr.Nt/2)?Corr_s1_VKTK_tm.distr_list[0]:((1.0/pow(Corr_s1_VKTK_tm.err(t),2))*Corr_s1_VKTK_tm.distr_list[t] +  (1.0/pow(Corr_s1_TKVK_tm.err(t),2))*Corr_s1_TKVK_tm.distr_list[t])/(       (1.0/pow(Corr_s1_VKTK_tm.err(t),2)) + (1.0/pow(Corr_s1_TKVK_tm.err(t),2)) ));}
+    
     Corr.Reflection_sign=1;
     distr_t_list Corr_s1_P5P5_tm= Corr.corr_t(data_s1_P5P5_tm.col(0)[iens], "../data/magnetic_susc/"+data_P5P5_tm.Tag[iens]+"/s1_P5P5_tm.dat");
     //OS
     distr_t_list Corr_s1_TKTK_OS= Corr.corr_t(data_s1_TKTK_OS.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/s1_TKTK_OS.dat");
+    
     Corr.Reflection_sign=-1;
-    distr_t_list Corr_s1_VKTK_OS= Corr.corr_t(data_s1_VKTK_OS.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_OS.Tag[iens]+"/s1_VKTK_OS.dat");
-    distr_t_list Corr_s1_TKVK_OS= Corr.corr_t(data_s1_TKVK_OS.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_OS.Tag[iens]+"/s1_TKVK_OS.dat");
+    distr_t_list Corr_s1_VKTK_OS= Corr.corr_t(data_s1_VKTK_OS.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_OS.Tag[iens]+"/s1_VKTK_OS.dat")  + Include_disco*Corr.corr_t(data_disc_VKTK_strange.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/disc_stange_VKTK.dat")/Qn;
+    distr_t_list Corr_s1_TKVK_OS= Corr.corr_t(data_s1_TKVK_OS.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_OS.Tag[iens]+"/s1_TKVK_OS.dat") + Include_disco*Corr.corr_t(data_disc_VKTK_strange.col(0)[iens], "")/Qn;
     distr_t_list Corr_s1_VKTKVK_OS(UseJack);
     for(int t=0;t<Corr.Nt;t++) { Corr_s1_VKTKVK_OS.distr_list.push_back( (t==0 || t==Corr.Nt/2)?Corr_s1_VKTK_OS.distr_list[0]:((1.0/pow(Corr_s1_VKTK_OS.err(t),2))*Corr_s1_VKTK_OS.distr_list[t] +  (1.0/pow(Corr_s1_TKVK_OS.err(t),2))*Corr_s1_TKVK_OS.distr_list[t])/(       (1.0/pow(Corr_s1_VKTK_OS.err(t),2)) + (1.0/pow(Corr_s1_TKVK_OS.err(t),2))));}
+    
     Corr.Reflection_sign=1;
     distr_t_list Corr_s1_P5P5_OS= Corr.corr_t(data_s1_P5P5_OS.col(0)[iens], "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/s1_P5P5_OS.dat");
 
@@ -794,35 +1044,62 @@ void Compute_magnetic_susc() {
     //strange 2
     //tm
     distr_t_list Corr_s2_TKTK_tm= Corr.corr_t(data_s2_TKTK_tm.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_tm.Tag[iens]+"/s2_TKTK_tm.dat");
+    
     Corr.Reflection_sign=-1;
-    distr_t_list Corr_s2_VKTK_tm= Corr.corr_t(data_s2_VKTK_tm.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_tm.Tag[iens]+"/s2_VKTK_tm.dat");
-    distr_t_list Corr_s2_TKVK_tm= Corr.corr_t(data_s2_TKVK_tm.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_tm.Tag[iens]+"/s2_TKVK_tm.dat");
+    distr_t_list Corr_s2_VKTK_tm= Corr.corr_t(data_s2_VKTK_tm.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_tm.Tag[iens]+"/s2_VKTK_tm.dat") + Include_disco*(Zv/Za)*Corr.corr_t(data_disc_VKTK_strange.col(0)[iens], "")/Qn;
+    distr_t_list Corr_s2_TKVK_tm= Corr.corr_t(data_s2_TKVK_tm.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_tm.Tag[iens]+"/s2_TKVK_tm.dat") + Include_disco*(Zv/Za)*Corr.corr_t(data_disc_VKTK_strange.col(0)[iens], "")/Qn;
     distr_t_list Corr_s2_VKTKVK_tm(UseJack);
     for(int t=0;t<Corr.Nt;t++) { Corr_s2_VKTKVK_tm.distr_list.push_back( (t==0 || t==Corr.Nt/2)?Corr_s2_VKTK_tm.distr_list[0]:((1.0/pow(Corr_s2_VKTK_tm.err(t),2))*Corr_s2_VKTK_tm.distr_list[t] +  (1.0/pow(Corr_s2_TKVK_tm.err(t),2))*Corr_s2_TKVK_tm.distr_list[t])/(       (1.0/pow(Corr_s2_VKTK_tm.err(t),2)) + (1.0/pow(Corr_s2_TKVK_tm.err(t),2)) ));}
+
+    
     Corr.Reflection_sign=1;
     distr_t_list Corr_s2_P5P5_tm= Corr.corr_t(data_s2_P5P5_tm.col(0)[iens], "../data/magnetic_susc/"+data_P5P5_tm.Tag[iens]+"/s2_P5P5_tm.dat");
     //OS
     distr_t_list Corr_s2_TKTK_OS= Corr.corr_t(data_s2_TKTK_OS.col(0)[iens], "../data/magnetic_susc/"+data_TKTK_OS.Tag[iens]+"/s2_TKTK_OS.dat");
+
+    
     Corr.Reflection_sign=-1;
-    distr_t_list Corr_s2_VKTK_OS= Corr.corr_t(data_s2_VKTK_OS.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_OS.Tag[iens]+"/s2_VKTK_OS.dat");
-    distr_t_list Corr_s2_TKVK_OS= Corr.corr_t(data_s2_TKVK_OS.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_OS.Tag[iens]+"/s2_TKVK_OS.dat");
+    distr_t_list Corr_s2_VKTK_OS= Corr.corr_t(data_s2_VKTK_OS.col(0)[iens], "../data/magnetic_susc/"+data_VKTK_OS.Tag[iens]+"/s2_VKTK_OS.dat") + Include_disco*Corr.corr_t(data_disc_VKTK_strange.col(0)[iens], "")/Qn;
+    distr_t_list Corr_s2_TKVK_OS= Corr.corr_t(data_s2_TKVK_OS.col(0)[iens], "../data/magnetic_susc/"+data_TKVK_OS.Tag[iens]+"/s2_TKVK_OS.dat") + Include_disco*Corr.corr_t(data_disc_VKTK_strange.col(0)[iens], "")/Qn;
     distr_t_list Corr_s2_VKTKVK_OS(UseJack);
     for(int t=0;t<Corr.Nt;t++) { Corr_s2_VKTKVK_OS.distr_list.push_back( (t==0 || t==Corr.Nt/2)?Corr_s2_VKTK_OS.distr_list[0]:((1.0/pow(Corr_s2_VKTK_OS.err(t),2))*Corr_s2_VKTK_OS.distr_list[t] +  (1.0/pow(Corr_s2_TKVK_OS.err(t),2))*Corr_s2_TKVK_OS.distr_list[t])/(       (1.0/pow(Corr_s2_VKTK_OS.err(t),2)) + (1.0/pow(Corr_s2_TKVK_OS.err(t),2)) ));}
+
+    
     Corr.Reflection_sign=1;
     distr_t_list Corr_s2_P5P5_OS= Corr.corr_t(data_s2_P5P5_OS.col(0)[iens], "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/s2_P5P5_OS.dat");
 
 
+    //##########################################################
     //to estimate derivative
 
-    distr_t_list Corr_s_der_TKVK_tm = Corr_s2_VKTK_tm -Corr_s1_VKTK_tm;
-    distr_t_list Corr_s_der_VKTK_tm = Corr_s2_TKVK_tm -Corr_s1_TKVK_tm;
-    distr_t_list Corr_s_der_VKTKVK_tm = Corr_s2_VKTKVK_tm - Corr_s1_VKTKVK_tm;
+    distr_t_list Corr_s1_der_TKVK_tm = Corr_s2_VKTK_tm -Corr_s1_VKTK_tm + Include_sea_quark_mass_derivative*TKVK_sea_der_tm_s1;
+    distr_t_list Corr_s1_der_VKTK_tm = Corr_s2_TKVK_tm -Corr_s1_TKVK_tm + Include_sea_quark_mass_derivative*VKTK_sea_der_tm_s1;
+    distr_t_list Corr_s1_der_VKTKVK_tm = Corr_s2_VKTKVK_tm - Corr_s1_VKTKVK_tm;
+    distr_t_list Corr_s1_der_TKVK_OS = Corr_s2_VKTK_OS -Corr_s1_VKTK_OS + Include_sea_quark_mass_derivative*TKVK_sea_der_OS_s1;
+    distr_t_list Corr_s1_der_VKTK_OS = Corr_s2_TKVK_OS -Corr_s1_TKVK_OS + Include_sea_quark_mass_derivative*VKTK_sea_der_OS_s1;
+    distr_t_list Corr_s1_der_VKTKVK_OS = Corr_s2_VKTKVK_OS - Corr_s1_VKTKVK_OS;
+    if(Include_sea_quark_mass_derivative ) {
+      for(int t=0;t<Corr.Nt;t++) {
+	Corr_s1_der_VKTKVK_tm.distr_list[t] = Corr_s1_der_VKTKVK_tm.distr_list[t] + (( (t==0) || (t==Corr.Nt/2)  || ( VKTK_sea_der_tm_s1.ave(t)==0 && VKTK_sea_der_tm_s1.err(t) == 0 ) )?VKTK_sea_der_tm_s1.distr_list[0]:((1.0/pow(VKTK_sea_der_tm_s1.err(t),2))*VKTK_sea_der_tm_s1.distr_list[t] +  (1.0/pow(TKVK_sea_der_tm_s1.err(t),2))*TKVK_sea_der_tm_s1.distr_list[t])/(       (1.0/pow(VKTK_sea_der_tm_s1.err(t),2)) + (1.0/pow(TKVK_sea_der_tm_s1.err(t),2))));
+	Corr_s1_der_VKTKVK_OS.distr_list[t] = Corr_s1_der_VKTKVK_OS.distr_list[t] + (( (t==0) || (t==Corr.Nt/2)  || ( VKTK_sea_der_OS_s1.ave(t)==0 && VKTK_sea_der_OS_s1.err(t) == 0 ) )?VKTK_sea_der_OS_s1.distr_list[0]:((1.0/pow(VKTK_sea_der_OS_s1.err(t),2))*VKTK_sea_der_OS_s1.distr_list[t] +  (1.0/pow(TKVK_sea_der_OS_s1.err(t),2))*TKVK_sea_der_OS_s1.distr_list[t])/(       (1.0/pow(VKTK_sea_der_OS_s1.err(t),2)) + (1.0/pow(TKVK_sea_der_OS_s1.err(t),2))));
+      }
+    }
 
-    distr_t_list Corr_s_der_TKVK_OS = Corr_s2_VKTK_OS -Corr_s1_VKTK_OS;
-    distr_t_list Corr_s_der_VKTK_OS = Corr_s2_TKVK_OS -Corr_s1_TKVK_OS;
-    distr_t_list Corr_s_der_VKTKVK_OS = Corr_s2_VKTKVK_OS - Corr_s1_VKTKVK_OS;
 
+    distr_t_list Corr_s2_der_TKVK_tm = Corr_s2_VKTK_tm -Corr_s1_VKTK_tm + Include_sea_quark_mass_derivative*TKVK_sea_der_tm_s2;
+    distr_t_list Corr_s2_der_VKTK_tm = Corr_s2_TKVK_tm -Corr_s1_TKVK_tm + Include_sea_quark_mass_derivative*VKTK_sea_der_tm_s2;
+    distr_t_list Corr_s2_der_VKTKVK_tm = Corr_s2_VKTKVK_tm - Corr_s1_VKTKVK_tm;
+    distr_t_list Corr_s2_der_TKVK_OS = Corr_s2_VKTK_OS -Corr_s1_VKTK_OS + Include_sea_quark_mass_derivative*TKVK_sea_der_OS_s2;
+    distr_t_list Corr_s2_der_VKTK_OS = Corr_s2_TKVK_OS -Corr_s1_TKVK_OS + Include_sea_quark_mass_derivative*VKTK_sea_der_OS_s2;
+    distr_t_list Corr_s2_der_VKTKVK_OS = Corr_s2_VKTKVK_OS - Corr_s1_VKTKVK_OS;
+    if(Include_sea_quark_mass_derivative ) {
+      for(int t=0;t<Corr.Nt;t++) {
+	Corr_s2_der_VKTKVK_tm.distr_list[t] = Corr_s2_der_VKTKVK_tm.distr_list[t] + (( (t==0) || (t==Corr.Nt/2)  || ( VKTK_sea_der_tm_s2.ave(t)==0 && VKTK_sea_der_tm_s2.err(t) == 0 ) )?VKTK_sea_der_tm_s2.distr_list[0]:((1.0/pow(VKTK_sea_der_tm_s2.err(t),2))*VKTK_sea_der_tm_s2.distr_list[t] +  (1.0/pow(TKVK_sea_der_tm_s2.err(t),2))*TKVK_sea_der_tm_s2.distr_list[t])/(       (1.0/pow(VKTK_sea_der_tm_s2.err(t),2)) + (1.0/pow(TKVK_sea_der_tm_s2.err(t),2))));
+	Corr_s2_der_VKTKVK_OS.distr_list[t] = Corr_s2_der_VKTKVK_OS.distr_list[t] + (( (t==0) || (t==Corr.Nt/2)  || ( VKTK_sea_der_OS_s2.ave(t)==0 && VKTK_sea_der_OS_s2.err(t) == 0 ) )?VKTK_sea_der_OS_s2.distr_list[0]:((1.0/pow(VKTK_sea_der_OS_s2.err(t),2))*VKTK_sea_der_OS_s2.distr_list[t] +  (1.0/pow(TKVK_sea_der_OS_s2.err(t),2))*TKVK_sea_der_OS_s2.distr_list[t])/(       (1.0/pow(VKTK_sea_der_OS_s2.err(t),2)) + (1.0/pow(TKVK_sea_der_OS_s2.err(t),2))));
+      }
+    }
     
+    //##########################################################
     
 
     //renormalize correlators
@@ -862,12 +1139,23 @@ void Compute_magnetic_susc() {
     Corr_s2_TKVK_OS = Zv*Z_T*Corr_s2_TKVK_OS;
     Corr_s2_VKTKVK_OS = Zv*Z_T*Corr_s2_VKTKVK_OS;
     //to compute derivative
-    Corr_s_der_VKTK_tm = Za*Z_T*Corr_s_der_VKTK_tm;
-    Corr_s_der_TKVK_tm = Za*Z_T*Corr_s_der_TKVK_tm;
-    Corr_s_der_VKTKVK_tm = Za*Z_T*Corr_s_der_VKTKVK_tm;
-    Corr_s_der_VKTK_OS = Zv*Z_T*Corr_s_der_VKTK_OS;
-    Corr_s_der_TKVK_OS = Zv*Z_T*Corr_s_der_TKVK_OS;
-    Corr_s_der_VKTKVK_OS = Zv*Z_T*Corr_s_der_VKTKVK_OS;
+    //strange 1
+    Corr_s1_der_VKTK_tm = Za*Z_T*Corr_s1_der_VKTK_tm;
+    Corr_s1_der_TKVK_tm = Za*Z_T*Corr_s1_der_TKVK_tm;
+    Corr_s1_der_VKTKVK_tm = Za*Z_T*Corr_s1_der_VKTKVK_tm;
+    Corr_s1_der_VKTK_OS = Zv*Z_T*Corr_s1_der_VKTK_OS;
+    Corr_s1_der_TKVK_OS = Zv*Z_T*Corr_s1_der_TKVK_OS;
+    Corr_s1_der_VKTKVK_OS = Zv*Z_T*Corr_s1_der_VKTKVK_OS;
+    //strange 2
+    Corr_s2_der_VKTK_tm = Za*Z_T*Corr_s2_der_VKTK_tm;
+    Corr_s2_der_TKVK_tm = Za*Z_T*Corr_s2_der_TKVK_tm;
+    Corr_s2_der_VKTKVK_tm = Za*Z_T*Corr_s2_der_VKTKVK_tm;
+    Corr_s2_der_VKTK_OS = Zv*Z_T*Corr_s2_der_VKTK_OS;
+    Corr_s2_der_TKVK_OS = Zv*Z_T*Corr_s2_der_TKVK_OS;
+    Corr_s2_der_VKTKVK_OS = Zv*Z_T*Corr_s2_der_VKTKVK_OS;
+
+
+   
 
 
     //subtracted corr light
@@ -879,20 +1167,20 @@ void Compute_magnetic_susc() {
     distr_t_list Corr_sub_VTV_OS  = Corr_VKTKVK_OS - (ml/dm)*Corr_der_VKTKVK_OS;
 
     //subtracted corr strange 1
-    distr_t_list Corr_s1_sub_TV_tm  = Corr_s1_TKVK_tm - (ms1/dms)*Corr_s_der_TKVK_tm;
-    distr_t_list Corr_s1_sub_VT_tm  = Corr_s1_VKTK_tm - (ms1/dms)*Corr_s_der_VKTK_tm;
-    distr_t_list Corr_s1_sub_VTV_tm  = Corr_s1_VKTKVK_tm - (ms1/dms)*Corr_s_der_VKTKVK_tm;
-    distr_t_list Corr_s1_sub_TV_OS  = Corr_s1_TKVK_OS - (ms1/dms)*Corr_s_der_TKVK_OS;
-    distr_t_list Corr_s1_sub_VT_OS  = Corr_s1_VKTK_OS - (ms1/dms)*Corr_s_der_VKTK_OS;
-    distr_t_list Corr_s1_sub_VTV_OS  = Corr_s1_VKTKVK_OS - (ms1/dms)*Corr_s_der_VKTKVK_OS;
+    distr_t_list Corr_s1_sub_TV_tm  = Corr_s1_TKVK_tm - (ms1/dms)*Corr_s1_der_TKVK_tm;
+    distr_t_list Corr_s1_sub_VT_tm  = Corr_s1_VKTK_tm - (ms1/dms)*Corr_s1_der_VKTK_tm;
+    distr_t_list Corr_s1_sub_VTV_tm  = Corr_s1_VKTKVK_tm - (ms1/dms)*Corr_s1_der_VKTKVK_tm;
+    distr_t_list Corr_s1_sub_TV_OS  = Corr_s1_TKVK_OS - (ms1/dms)*Corr_s1_der_TKVK_OS;
+    distr_t_list Corr_s1_sub_VT_OS  = Corr_s1_VKTK_OS - (ms1/dms)*Corr_s1_der_VKTK_OS;
+    distr_t_list Corr_s1_sub_VTV_OS  = Corr_s1_VKTKVK_OS - (ms1/dms)*Corr_s1_der_VKTKVK_OS;
 
-    //subtracted corr strange 1
-    distr_t_list Corr_s2_sub_TV_tm  = Corr_s2_TKVK_tm - (ms2/dms)*Corr_s_der_TKVK_tm;
-    distr_t_list Corr_s2_sub_VT_tm  = Corr_s2_VKTK_tm - (ms2/dms)*Corr_s_der_VKTK_tm;
-    distr_t_list Corr_s2_sub_VTV_tm  = Corr_s2_VKTKVK_tm - (ms2/dms)*Corr_s_der_VKTKVK_tm;
-    distr_t_list Corr_s2_sub_TV_OS  = Corr_s2_TKVK_OS - (ms2/dms)*Corr_s_der_TKVK_OS;
-    distr_t_list Corr_s2_sub_VT_OS  = Corr_s2_VKTK_OS - (ms2/dms)*Corr_s_der_VKTK_OS;
-    distr_t_list Corr_s2_sub_VTV_OS  = Corr_s2_VKTKVK_OS - (ms2/dms)*Corr_s_der_VKTKVK_OS;
+    //subtracted corr strange 2
+    distr_t_list Corr_s2_sub_TV_tm  = Corr_s2_TKVK_tm - (ms2/dms)*Corr_s2_der_TKVK_tm;
+    distr_t_list Corr_s2_sub_VT_tm  = Corr_s2_VKTK_tm - (ms2/dms)*Corr_s2_der_VKTK_tm;
+    distr_t_list Corr_s2_sub_VTV_tm  = Corr_s2_VKTKVK_tm - (ms2/dms)*Corr_s2_der_VKTKVK_tm;
+    distr_t_list Corr_s2_sub_TV_OS  = Corr_s2_TKVK_OS - (ms2/dms)*Corr_s2_der_TKVK_OS;
+    distr_t_list Corr_s2_sub_VT_OS  = Corr_s2_VKTK_OS - (ms2/dms)*Corr_s2_der_VKTK_OS;
+    distr_t_list Corr_s2_sub_VTV_OS  = Corr_s2_VKTKVK_OS - (ms2/dms)*Corr_s2_der_VKTKVK_OS;
 
     //interpolate correlators
     //################################################################
@@ -1020,14 +1308,23 @@ void Compute_magnetic_susc() {
     distr_t susc_s2_TV_tm(UseJack, UseJack?Njacks:800), susc_s2_VT_tm(UseJack, UseJack?Njacks:800), susc_s2_VTV_tm(UseJack, UseJack?Njacks:800);
     distr_t susc_s2_TV_OS(UseJack, UseJack?Njacks:800), susc_s2_VT_OS(UseJack, UseJack?Njacks:800), susc_s2_VTV_OS(UseJack, UseJack?Njacks:800);
     //to evaluate derivative 
-    distr_t susc_s_der_TV_tm(UseJack, UseJack?Njacks:800), susc_s_der_VT_tm(UseJack, UseJack?Njacks:800), susc_s_der_VTV_tm(UseJack, UseJack?Njacks:800);
-    distr_t susc_s_der_TV_OS(UseJack, UseJack?Njacks:800), susc_s_der_VT_OS(UseJack, UseJack?Njacks:800), susc_s_der_VTV_OS(UseJack, UseJack?Njacks:800);
+    distr_t susc_s1_der_TV_tm(UseJack, UseJack?Njacks:800), susc_s1_der_VT_tm(UseJack, UseJack?Njacks:800), susc_s1_der_VTV_tm(UseJack, UseJack?Njacks:800);
+    distr_t susc_s1_der_TV_OS(UseJack, UseJack?Njacks:800), susc_s1_der_VT_OS(UseJack, UseJack?Njacks:800), susc_s1_der_VTV_OS(UseJack, UseJack?Njacks:800);
+    distr_t susc_s2_der_TV_tm(UseJack, UseJack?Njacks:800), susc_s2_der_VT_tm(UseJack, UseJack?Njacks:800), susc_s2_der_VTV_tm(UseJack, UseJack?Njacks:800);
+    distr_t susc_s2_der_TV_OS(UseJack, UseJack?Njacks:800), susc_s2_der_VT_OS(UseJack, UseJack?Njacks:800), susc_s2_der_VTV_OS(UseJack, UseJack?Njacks:800);
     //integrated susc
     distr_t_list susc_s1_TV_tm_int(UseJack, Corr.Nt/2 +1,  UseJack?Njacks:800), susc_s1_VT_tm_int(UseJack, Corr.Nt/2+1,  UseJack?Njacks:800),  susc_s1_VTV_tm_int(UseJack, Corr.Nt/2+1,  UseJack?Njacks:800);
     distr_t_list susc_s1_TV_OS_int(UseJack, Corr.Nt/2 +1,  UseJack?Njacks:800), susc_s1_VT_OS_int(UseJack, Corr.Nt/2+1,  UseJack?Njacks:800),  susc_s1_VTV_OS_int(UseJack, Corr.Nt/2+1,  UseJack?Njacks:800);
     //integrated sub_susc
     distr_t_list susc_s1_sub_TV_tm_int(UseJack, Corr.Nt/2 +1,  UseJack?Njacks:800), susc_s1_sub_VT_tm_int(UseJack, Corr.Nt/2+1,  UseJack?Njacks:800),  susc_s1_sub_VTV_tm_int(UseJack, Corr.Nt/2+1,  UseJack?Njacks:800);
     distr_t_list susc_s1_sub_TV_OS_int(UseJack, Corr.Nt/2 +1,  UseJack?Njacks:800), susc_s1_sub_VT_OS_int(UseJack, Corr.Nt/2+1,  UseJack?Njacks:800),  susc_s1_sub_VTV_OS_int(UseJack, Corr.Nt/2+1,  UseJack?Njacks:800);
+    //integrate derivative
+    distr_t_list susc_s1_der_TV_tm_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800), susc_s1_der_VT_tm_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800), susc_s1_der_VTV_tm_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800);
+    distr_t_list susc_s1_der_TV_OS_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800), susc_s1_der_VT_OS_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800), susc_s1_der_VTV_OS_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800);
+
+    distr_t_list susc_s2_der_TV_tm_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800), susc_s2_der_VT_tm_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800), susc_s2_der_VTV_tm_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800);
+    distr_t_list susc_s2_der_TV_OS_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800), susc_s2_der_VT_OS_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800), susc_s2_der_VTV_OS_int(UseJack, Corr.Nt/2 + 1, UseJack?Njacks:800);
+      
 
     
 
@@ -1043,28 +1340,11 @@ void Compute_magnetic_susc() {
     distr_t_list susc_s2_t0_TV_OS(UseJack, t0_list.size()), susc_s2_t0_VT_OS(UseJack, t0_list.size()), susc_s2_t0_VTV_OS(UseJack, t0_list.size());
 
 
-    //for p0 analysis
-    vector<distr_t> susc_VTV_subp_tm, susc_VTV_subp_OS, susc_s1_VTV_subp_tm, susc_s1_VTV_subp_OS, susc_s2_VTV_subp_tm, susc_s2_VTV_subp_OS;
-    vector<distr_t> susc_der_VTV_subp_tm, susc_der_VTV_subp_OS, susc_s_der_VTV_subp_tm, susc_s_der_VTV_subp_OS;
-
- 
     
-    for(int ip0=0; ip0<(signed)p0_list.size();ip0++) {
-      susc_VTV_subp_tm.emplace_back( UseJack, UseJack?Njacks:800);
-      susc_VTV_subp_OS.emplace_back( UseJack, UseJack?Njacks:800);
-      susc_s1_VTV_subp_tm.emplace_back( UseJack, UseJack?Njacks:800);
-      susc_s1_VTV_subp_OS.emplace_back( UseJack, UseJack?Njacks:800);
-      susc_s2_VTV_subp_tm.emplace_back( UseJack, UseJack?Njacks:800);
-      susc_s2_VTV_subp_OS.emplace_back( UseJack, UseJack?Njacks:800);
-
-      susc_der_VTV_subp_tm.emplace_back( UseJack, UseJack?Njacks:800);
-      susc_der_VTV_subp_OS.emplace_back( UseJack, UseJack?Njacks:800);
-      susc_s_der_VTV_subp_tm.emplace_back( UseJack, UseJack?Njacks:800);
-      susc_s_der_VTV_subp_OS.emplace_back( UseJack, UseJack?Njacks:800);
+ 
 
 
-      
-    }
+    
 
     //set time limit for integral ov derivative
     int Tmax_der_tm=Corr.Nt/2-10;
@@ -1124,12 +1404,12 @@ void Compute_magnetic_susc() {
     
 
       //integrated derivative
-      susc_der_TV_tm_int.distr_list[t] = susc_der_TV_tm_int.distr_list[t-1] - 1000*(2/a_distr)*Corr_der_TKVK_tm.distr_list[t]*t;
-      susc_der_VT_tm_int.distr_list[t] = susc_der_VT_tm_int.distr_list[t-1] - 1000*(2/a_distr)*Corr_der_VKTK_tm.distr_list[t]*t;
-      susc_der_VTV_tm_int.distr_list[t] = susc_der_VTV_tm_int.distr_list[t-1] - 1000*(2/a_distr)*Corr_der_VKTKVK_tm.distr_list[t]*t;
-      susc_der_TV_OS_int.distr_list[t] = susc_der_TV_OS_int.distr_list[t-1] - 1000*(2/a_distr)*Corr_der_TKVK_OS.distr_list[t]*t;
-      susc_der_VT_OS_int.distr_list[t] = susc_der_VT_OS_int.distr_list[t-1] - 1000*(2/a_distr)*Corr_der_VKTK_OS.distr_list[t]*t;
-      susc_der_VTV_OS_int.distr_list[t] = susc_der_VTV_OS_int.distr_list[t-1] - 1000*(2/a_distr)*Corr_der_VKTKVK_OS.distr_list[t]*t;
+      susc_der_TV_tm_int.distr_list[t] = susc_der_TV_tm_int.distr_list[t-1] - 1000*(ml/dm)*(2/a_distr)*Corr_der_TKVK_tm.distr_list[t]*t;
+      susc_der_VT_tm_int.distr_list[t] = susc_der_VT_tm_int.distr_list[t-1] - 1000*(ml/dm)*(2/a_distr)*Corr_der_VKTK_tm.distr_list[t]*t;
+      susc_der_VTV_tm_int.distr_list[t] = susc_der_VTV_tm_int.distr_list[t-1] - 1000*(ml/dm)*(2/a_distr)*Corr_der_VKTKVK_tm.distr_list[t]*t;
+      susc_der_TV_OS_int.distr_list[t] = susc_der_TV_OS_int.distr_list[t-1] - 1000*(ml/dm)*(2/a_distr)*Corr_der_TKVK_OS.distr_list[t]*t;
+      susc_der_VT_OS_int.distr_list[t] = susc_der_VT_OS_int.distr_list[t-1] - 1000*(ml/dm)*(2/a_distr)*Corr_der_VKTK_OS.distr_list[t]*t;
+      susc_der_VTV_OS_int.distr_list[t] = susc_der_VTV_OS_int.distr_list[t-1] - 1000*(ml/dm)*(2/a_distr)*Corr_der_VKTKVK_OS.distr_list[t]*t;
       
 
       
@@ -1157,6 +1437,13 @@ void Compute_magnetic_susc() {
       susc_s1_sub_TV_OS_int.distr_list[t] = susc_s1_sub_TV_OS_int.distr_list[t-1]  -1000*(2/a_distr)*Corr_s1_sub_TV_OS.distr_list[t]*t;
       susc_s1_sub_VT_OS_int.distr_list[t] = susc_s1_sub_VT_OS_int.distr_list[t-1]  -1000*(2/a_distr)*Corr_s1_sub_VT_OS.distr_list[t]*t;
       susc_s1_sub_VTV_OS_int.distr_list[t] = susc_s1_sub_VTV_OS_int.distr_list[t-1]  -1000*(2/a_distr)*Corr_s1_sub_VTV_OS.distr_list[t]*t;
+      //integrated derivative
+      susc_s1_der_TV_tm_int.distr_list[t] = susc_s1_der_TV_tm_int.distr_list[t-1] - 1000*(ms1/dms)*(2/a_distr)*Corr_s1_der_TKVK_tm.distr_list[t]*t;
+      susc_s1_der_VT_tm_int.distr_list[t] = susc_s1_der_VT_tm_int.distr_list[t-1] - 1000*(ms1/dms)*(2/a_distr)*Corr_s1_der_VKTK_tm.distr_list[t]*t;
+      susc_s1_der_VTV_tm_int.distr_list[t] = susc_s1_der_VTV_tm_int.distr_list[t-1] - 1000*(ms1/dms)*(2/a_distr)*Corr_s1_der_VKTKVK_tm.distr_list[t]*t;
+      susc_s1_der_TV_OS_int.distr_list[t] = susc_s1_der_TV_OS_int.distr_list[t-1] - 1000*(ms1/dms)*(2/a_distr)*Corr_s1_der_TKVK_OS.distr_list[t]*t;
+      susc_s1_der_VT_OS_int.distr_list[t] = susc_s1_der_VT_OS_int.distr_list[t-1] - 1000*(ms1/dms)*(2/a_distr)*Corr_s1_der_VKTK_OS.distr_list[t]*t;
+      susc_s1_der_VTV_OS_int.distr_list[t] = susc_s1_der_VTV_OS_int.distr_list[t-1] - 1000*(ms1/dms)*(2/a_distr)*Corr_s1_der_VKTKVK_OS.distr_list[t]*t;
       
 
       //strange 2
@@ -1167,37 +1454,43 @@ void Compute_magnetic_susc() {
       susc_s2_TV_OS = susc_s2_TV_OS - 1000*(2/a_distr)*Corr_s2_TKVK_OS.distr_list[t]*t;
       susc_s2_VT_OS = susc_s2_VT_OS - 1000*(2/a_distr)*Corr_s2_VKTK_OS.distr_list[t]*t;
       susc_s2_VTV_OS = susc_s2_VTV_OS - 1000*(2/a_distr)*Corr_s2_VKTKVK_OS.distr_list[t]*t;
+
+
+      //integrated derivative
+      susc_s2_der_TV_tm_int.distr_list[t] = susc_s2_der_TV_tm_int.distr_list[t-1] - 1000*(ms2/dms)*(2/a_distr)*Corr_s2_der_TKVK_tm.distr_list[t]*t;
+      susc_s2_der_VT_tm_int.distr_list[t] = susc_s2_der_VT_tm_int.distr_list[t-1] - 1000*(ms2/dms)*(2/a_distr)*Corr_s2_der_VKTK_tm.distr_list[t]*t;
+      susc_s2_der_VTV_tm_int.distr_list[t] = susc_s2_der_VTV_tm_int.distr_list[t-1] - 1000*(ms2/dms)*(2/a_distr)*Corr_s2_der_VKTKVK_tm.distr_list[t]*t;
+      susc_s2_der_TV_OS_int.distr_list[t] = susc_s2_der_TV_OS_int.distr_list[t-1] - 1000*(ms2/dms)*(2/a_distr)*Corr_s2_der_TKVK_OS.distr_list[t]*t;
+      susc_s2_der_VT_OS_int.distr_list[t] = susc_s2_der_VT_OS_int.distr_list[t-1] - 1000*(ms2/dms)*(2/a_distr)*Corr_s2_der_VKTK_OS.distr_list[t]*t;
+      susc_s2_der_VTV_OS_int.distr_list[t] = susc_s2_der_VTV_OS_int.distr_list[t-1] - 1000*(ms2/dms)*(2/a_distr)*Corr_s2_der_VKTKVK_OS.distr_list[t]*t;
+
+
+
+      
     
       //to evaluate derivative
-      susc_s_der_TV_tm = susc_s_der_TV_tm - 1000*(2/a_distr)*Corr_s_der_TKVK_tm.distr_list[t]*t;
-      susc_s_der_VT_tm = susc_s_der_VT_tm - 1000*(2/a_distr)*Corr_s_der_VKTK_tm.distr_list[t]*t;
-      susc_s_der_VTV_tm = susc_s_der_VTV_tm - 1000*(2/a_distr)*Corr_s_der_VKTKVK_tm.distr_list[t]*t;
+      //strange 1
+      susc_s1_der_TV_tm = susc_s1_der_TV_tm - 1000*(2/a_distr)*Corr_s1_der_TKVK_tm.distr_list[t]*t;
+      susc_s1_der_VT_tm = susc_s1_der_VT_tm - 1000*(2/a_distr)*Corr_s1_der_VKTK_tm.distr_list[t]*t;
+      susc_s1_der_VTV_tm = susc_s1_der_VTV_tm - 1000*(2/a_distr)*Corr_s1_der_VKTKVK_tm.distr_list[t]*t;
      
-      susc_s_der_TV_OS = susc_s_der_TV_OS - 1000*(2/a_distr)*Corr_s_der_TKVK_OS.distr_list[t]*t;
-      susc_s_der_VT_OS = susc_s_der_VT_OS - 1000*(2/a_distr)*Corr_s_der_VKTK_OS.distr_list[t]*t;
-      susc_s_der_VTV_OS = susc_s_der_VTV_OS - 1000*(2/a_distr)*Corr_s_der_VKTKVK_OS.distr_list[t]*t;
+      susc_s1_der_TV_OS = susc_s1_der_TV_OS - 1000*(2/a_distr)*Corr_s1_der_TKVK_OS.distr_list[t]*t;
+      susc_s1_der_VT_OS = susc_s1_der_VT_OS - 1000*(2/a_distr)*Corr_s1_der_VKTK_OS.distr_list[t]*t;
+      susc_s1_der_VTV_OS = susc_s1_der_VTV_OS - 1000*(2/a_distr)*Corr_s1_der_VKTKVK_OS.distr_list[t]*t;
+
+      //strange 2
+      susc_s2_der_TV_tm = susc_s2_der_TV_tm - 1000*(2/a_distr)*Corr_s2_der_TKVK_tm.distr_list[t]*t;
+      susc_s2_der_VT_tm = susc_s2_der_VT_tm - 1000*(2/a_distr)*Corr_s2_der_VKTK_tm.distr_list[t]*t;
+      susc_s2_der_VTV_tm = susc_s2_der_VTV_tm - 1000*(2/a_distr)*Corr_s2_der_VKTKVK_tm.distr_list[t]*t;
+     
+      susc_s2_der_TV_OS = susc_s2_der_TV_OS - 1000*(2/a_distr)*Corr_s2_der_TKVK_OS.distr_list[t]*t;
+      susc_s2_der_VT_OS = susc_s2_der_VT_OS - 1000*(2/a_distr)*Corr_s2_der_VKTK_OS.distr_list[t]*t;
+      susc_s2_der_VTV_OS = susc_s2_der_VTV_OS - 1000*(2/a_distr)*Corr_s2_der_VKTKVK_OS.distr_list[t]*t;
      
 
 
-
-      //p0 analysis
-      for(int ip0=0;ip0<(signed)p0_list.size(); ip0++) {
-
-	double p0= p0_list[ip0];
-	distr_t pt = p0*a_distr;
-	susc_VTV_subp_tm[ip0] = susc_VTV_subp_tm[ip0] - 1000*(2/a_distr)*Corr_VKTKVK_tm.distr_list[t]*Ker_sub_distr(t*pt)/pt;
-	susc_VTV_subp_OS[ip0] = susc_VTV_subp_OS[ip0] - 1000*(2/a_distr)*Corr_VKTKVK_OS.distr_list[t]*Ker_sub_distr(t*pt)/pt;
-	if(t <= Tmax_der_tm) susc_der_VTV_subp_tm[ip0] = susc_der_VTV_subp_tm[ip0] - 1000*(2/a_distr)*Corr_der_VKTKVK_tm.distr_list[t]*Ker_sub_distr(t*pt)/pt;
-	if(t <= Tmax_der_OS) 	susc_der_VTV_subp_OS[ip0] = susc_der_VTV_subp_OS[ip0] - 1000*(2/a_distr)*Corr_der_VKTKVK_OS.distr_list[t]*Ker_sub_distr(t*pt)/pt;
-
-	susc_s1_VTV_subp_tm[ip0] = susc_s1_VTV_subp_tm[ip0] - 1000*(2/a_distr)*Corr_s1_VKTKVK_tm.distr_list[t]*Ker_sub_distr(t*pt)/pt;
-	susc_s1_VTV_subp_OS[ip0] = susc_s1_VTV_subp_OS[ip0] - 1000*(2/a_distr)*Corr_s1_VKTKVK_OS.distr_list[t]*Ker_sub_distr(t*pt)/pt;
-	susc_s2_VTV_subp_tm[ip0] = susc_s2_VTV_subp_tm[ip0] - 1000*(2/a_distr)*Corr_s2_VKTKVK_tm.distr_list[t]*Ker_sub_distr(t*pt)/pt;
-	susc_s2_VTV_subp_OS[ip0] = susc_s2_VTV_subp_OS[ip0] - 1000*(2/a_distr)*Corr_s2_VKTKVK_OS.distr_list[t]*Ker_sub_distr(t*pt)/pt;
-
-	susc_s_der_VTV_subp_tm[ip0] = susc_s_der_VTV_subp_tm[ip0] - 1000*(2/a_distr)*Corr_s_der_VKTKVK_tm.distr_list[t]*Ker_sub_distr(t*pt)/pt;
-	susc_s_der_VTV_subp_OS[ip0] = susc_s_der_VTV_subp_OS[ip0] - 1000*(2/a_distr)*Corr_s_der_VKTKVK_OS.distr_list[t]*Ker_sub_distr(t*pt)/pt;
-      }
+      
+     
       
     }
 
@@ -1256,12 +1549,12 @@ void Compute_magnetic_susc() {
      
       
 
-      distr_t coeff_strange_TV_tm = (a_distr/1000)*susc_s_der_TV_tm/(log(ms_ave)*dms);
-      distr_t coeff_strange_VT_tm = (a_distr/1000)*susc_s_der_VT_tm/(log(ms_ave)*dms);
-      distr_t coeff_strange_VTV_tm = (a_distr/1000)*susc_s_der_VTV_tm/(log(ms_ave)*dms);
-      distr_t coeff_strange_TV_OS = (a_distr/1000)*susc_s_der_TV_OS/(log(ms_ave)*dms);
-      distr_t coeff_strange_VT_OS = (a_distr/1000)*susc_s_der_VT_OS/(log(ms_ave)*dms);
-      distr_t coeff_strange_VTV_OS = (a_distr/1000)*susc_s_der_VTV_OS/(log(ms_ave)*dms);
+      distr_t coeff_strange_TV_tm = (a_distr/1000)*susc_s1_der_TV_tm/(log(ms1)*dms);
+      distr_t coeff_strange_VT_tm = (a_distr/1000)*susc_s1_der_VT_tm/(log(ms1)*dms);
+      distr_t coeff_strange_VTV_tm = (a_distr/1000)*susc_s1_der_VTV_tm/(log(ms1)*dms);
+      distr_t coeff_strange_TV_OS = (a_distr/1000)*susc_s1_der_TV_OS/(log(ms1)*dms);
+      distr_t coeff_strange_VT_OS = (a_distr/1000)*susc_s1_der_VT_OS/(log(ms1)*dms);
+      distr_t coeff_strange_VTV_OS = (a_distr/1000)*susc_s1_der_VTV_OS/(log(ms1)*dms);
 
       susc_TV_tm = susc_TV_tm + (-1000/a_distr)*coeff_light_TV_tm*ml*log(ml);
       susc_VT_tm = susc_VT_tm + (-1000/a_distr)*coeff_light_VT_tm*ml*log(ml);
@@ -1270,19 +1563,19 @@ void Compute_magnetic_susc() {
       susc_VT_OS = susc_VT_OS + (-1000/a_distr)*coeff_light_VT_OS*ml*log(ml);
       susc_VTV_OS = susc_VTV_OS + (-1000/a_distr)*coeff_light_VTV_OS*ml*log(ml);
       
-      susc_s1_TV_tm = susc_s1_TV_tm + (-ms1/dms)*susc_s_der_TV_tm;
-      susc_s1_VT_tm = susc_s1_VT_tm + (-ms1/dms)*susc_s_der_VT_tm;
-      susc_s1_VTV_tm = susc_s1_VTV_tm + (-ms1/dms)*susc_s_der_VTV_tm;
-      susc_s1_TV_OS = susc_s1_TV_OS + (-ms1/dms)*susc_s_der_TV_OS;
-      susc_s1_VT_OS = susc_s1_VT_OS + (-ms1/dms)*susc_s_der_VT_OS;
-      susc_s1_VTV_OS = susc_s1_VTV_OS + (-ms1/dms)*susc_s_der_VTV_OS;
+      susc_s1_TV_tm = susc_s1_TV_tm + (-ms1/dms)*susc_s1_der_TV_tm;
+      susc_s1_VT_tm = susc_s1_VT_tm + (-ms1/dms)*susc_s1_der_VT_tm;
+      susc_s1_VTV_tm = susc_s1_VTV_tm + (-ms1/dms)*susc_s1_der_VTV_tm;
+      susc_s1_TV_OS = susc_s1_TV_OS + (-ms1/dms)*susc_s1_der_TV_OS;
+      susc_s1_VT_OS = susc_s1_VT_OS + (-ms1/dms)*susc_s1_der_VT_OS;
+      susc_s1_VTV_OS = susc_s1_VTV_OS + (-ms1/dms)*susc_s1_der_VTV_OS;
 
-      susc_s2_TV_tm = susc_s2_TV_tm + (-ms2/dms)*susc_s_der_TV_tm;
-      susc_s2_VT_tm = susc_s2_VT_tm + (-ms2/dms)*susc_s_der_VT_tm;
-      susc_s2_VTV_tm = susc_s2_VTV_tm + (-ms2/dms)*susc_s_der_VTV_tm;
-      susc_s2_TV_OS = susc_s2_TV_OS + (-ms2/dms)*susc_s_der_TV_OS;
-      susc_s2_VT_OS = susc_s2_VT_OS + (-ms2/dms)*susc_s_der_VT_OS;
-      susc_s2_VTV_OS = susc_s2_VTV_OS + (-ms2/dms)*susc_s_der_VTV_OS;
+      susc_s2_TV_tm = susc_s2_TV_tm + (-ms2/dms)*susc_s2_der_TV_tm;
+      susc_s2_VT_tm = susc_s2_VT_tm + (-ms2/dms)*susc_s2_der_VT_tm;
+      susc_s2_VTV_tm = susc_s2_VTV_tm + (-ms2/dms)*susc_s2_der_VTV_tm;
+      susc_s2_TV_OS = susc_s2_TV_OS + (-ms2/dms)*susc_s2_der_TV_OS;
+      susc_s2_VT_OS = susc_s2_VT_OS + (-ms2/dms)*susc_s2_der_VT_OS;
+      susc_s2_VTV_OS = susc_s2_VTV_OS + (-ms2/dms)*susc_s2_der_VTV_OS;
       
 
       cout<<"Ensemble: "<<data_TKVK_tm.Tag[iens]<<endl;
@@ -1295,28 +1588,27 @@ void Compute_magnetic_susc() {
       cout<<"der_TV(l,OS): "<<(-ml/dm)*susc_der_TV_OS.ave()<<" +- "<<(-ml/dm)*susc_der_TV_OS.err()<<" tree: "<<tree_level_log_ml.ave()<<" tree naive: "<<tree_level_log_naive_ml.ave()<<endl;
       cout<<"der_VT(l,OS): "<<(-ml/dm)*susc_der_VT_OS.ave()<<" +- "<<(-ml/dm)*susc_der_VT_OS.err()<<" tree: "<<tree_level_log_ml.ave()<<" tree naive: "<<tree_level_log_naive_ml.ave()<<endl;
       cout<<"der_VTV(l,OS): "<<(-ml/dm)*susc_der_VTV_OS.ave()<<" +- "<<(-ml/dm)*susc_der_VTV_OS.err()<<" tree: "<<tree_level_log_ml.ave()<<" tree naive: "<<tree_level_log_naive_ml.ave()<<endl;
-      cout<<"###### strange 1 #####"<<endl;
 
+      
+      cout<<"###### strange 1 #####"<<endl;
       cout<<"SUSC(s,tm): "<< susc_s1_VTV_tm.ave()<<" +- "<<susc_s1_VTV_tm.err()<<endl;
-      cout<<"SUSC(s,OS): "<< susc_s1_VTV_OS.ave()<<" +- "<<susc_s1_VTV_OS.err()<<endl; 
+      cout<<"SUSC(s,OS): "<< susc_s1_VTV_OS.ave()<<" +- "<<susc_s1_VTV_OS.err()<<endl;      
+      cout<<"der_TV(s1,tm): "<<(-ms1/dms)*susc_s1_der_TV_tm.ave()<<" +- "<<(-ms1/dms)*susc_s1_der_TV_tm.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
+      cout<<"der_VT(s1,tm): "<<(-ms1/dms)*susc_s1_der_VT_tm.ave()<<" +- "<<(-ms1/dms)*susc_s1_der_VT_tm.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
+      cout<<"der_VTV(s1,tm): "<<(-ms1/dms)*susc_s1_der_VTV_tm.ave()<<" +- "<<(-ms1/dms)*susc_s1_der_VTV_tm.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
+      cout<<"der_TV(s1,OS): "<<(-ms1/dms)*susc_s1_der_TV_OS.ave()<<" +- "<<(-ms1/dms)*susc_s1_der_TV_OS.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
+      cout<<"der_VT(s1,OS): "<<(-ms1/dms)*susc_s1_der_VT_OS.ave()<<" +- "<<(-ms1/dms)*susc_s1_der_VT_OS.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
+      cout<<"der_VTV(s1,OS): "<<(-ms1/dms)*susc_s1_der_VTV_OS.ave()<<" +- "<<(-ms1/dms)*susc_s1_der_VTV_OS.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
       
-      cout<<"der_TV(s1,tm): "<<(-ms1/dms)*susc_s_der_TV_tm.ave()<<" +- "<<(-ms1/dms)*susc_s_der_TV_tm.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
-      cout<<"der_VT(s1,tm): "<<(-ms1/dms)*susc_s_der_VT_tm.ave()<<" +- "<<(-ms1/dms)*susc_s_der_VT_tm.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
-      cout<<"der_VTV(s1,tm): "<<(-ms1/dms)*susc_s_der_VTV_tm.ave()<<" +- "<<(-ms1/dms)*susc_s_der_VTV_tm.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
-      cout<<"der_TV(s1,OS): "<<(-ms1/dms)*susc_s_der_TV_OS.ave()<<" +- "<<(-ms1/dms)*susc_s_der_TV_OS.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
-      cout<<"der_VT(s1,OS): "<<(-ms1/dms)*susc_s_der_VT_OS.ave()<<" +- "<<(-ms1/dms)*susc_s_der_VT_OS.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
-      cout<<"der_VTV(s1,OS): "<<(-ms1/dms)*susc_s_der_VTV_OS.ave()<<" +- "<<(-ms1/dms)*susc_s_der_VTV_OS.err()<<" tree: "<<tree_level_log_ms1.ave()<<" tree naive: "<<tree_level_log_naive_ms1.ave()<<endl;
-      cout<<"###### strange 2 #####"<<endl;
-      
+      cout<<"###### strange 2 #####"<<endl;      
       cout<<"SUSC(s,tm): "<< susc_s2_VTV_tm.ave()<<" +- "<<susc_s2_VTV_tm.err()<<endl;
-      cout<<"SUSC(s,OS): "<< susc_s2_VTV_OS.ave()<<" +- "<<susc_s2_VTV_OS.err()<<endl; 
-      
-      cout<<"der_TV(s2,tm): "<<(-ms2/dms)*susc_s_der_TV_tm.ave()<<" +- "<<(-ms2/dms)*susc_s_der_TV_tm.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
-      cout<<"der_VT(s2,tm): "<<(-ms2/dms)*susc_s_der_VT_tm.ave()<<" +- "<<(-ms2/dms)*susc_s_der_VT_tm.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
-      cout<<"der_VTV(s2,tm): "<<(-ms2/dms)*susc_s_der_VTV_tm.ave()<<" +- "<<(-ms2/dms)*susc_s_der_VTV_tm.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
-      cout<<"der_TV(s2,OS): "<<(-ms2/dms)*susc_s_der_TV_OS.ave()<<" +- "<<(-ms2/dms)*susc_s_der_TV_OS.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
-      cout<<"der_VT(s2,OS): "<<(-ms2/dms)*susc_s_der_VT_OS.ave()<<" +- "<<(-ms2/dms)*susc_s_der_VT_OS.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
-      cout<<"der_VTV(s2,OS): "<<(-ms2/dms)*susc_s_der_VTV_OS.ave()<<" +- "<<(-ms2/dms)*susc_s_der_VTV_OS.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
+      cout<<"SUSC(s,OS): "<< susc_s2_VTV_OS.ave()<<" +- "<<susc_s2_VTV_OS.err()<<endl;       
+      cout<<"der_TV(s2,tm): "<<(-ms2/dms)*susc_s2_der_TV_tm.ave()<<" +- "<<(-ms2/dms)*susc_s2_der_TV_tm.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
+      cout<<"der_VT(s2,tm): "<<(-ms2/dms)*susc_s2_der_VT_tm.ave()<<" +- "<<(-ms2/dms)*susc_s2_der_VT_tm.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
+      cout<<"der_VTV(s2,tm): "<<(-ms2/dms)*susc_s2_der_VTV_tm.ave()<<" +- "<<(-ms2/dms)*susc_s2_der_VTV_tm.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
+      cout<<"der_TV(s2,OS): "<<(-ms2/dms)*susc_s2_der_TV_OS.ave()<<" +- "<<(-ms2/dms)*susc_s2_der_TV_OS.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
+      cout<<"der_VT(s2,OS): "<<(-ms2/dms)*susc_s2_der_VT_OS.ave()<<" +- "<<(-ms2/dms)*susc_s2_der_VT_OS.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
+      cout<<"der_VTV(s2,OS): "<<(-ms2/dms)*susc_s2_der_VTV_OS.ave()<<" +- "<<(-ms2/dms)*susc_s2_der_VTV_OS.err()<<" tree: "<<tree_level_log_ms2.ave()<<" tree naive: "<<tree_level_log_naive_ms2.ave()<<endl;
       cout<<"##### coeffs #####"<<endl;
       cout<<"TV(tm):  (l) "<<coeff_light_TV_tm.ave()<<" +- "<<coeff_light_TV_tm.err()<<" (s) "<<coeff_strange_TV_tm.ave()<<" +- "<<coeff_strange_TV_tm.err()<<endl;
       cout<<"VT(tm):  (l) "<<coeff_light_VT_tm.ave()<<" +- "<<coeff_light_VT_tm.err()<<" (s) "<<coeff_strange_VT_tm.ave()<<" +- "<<coeff_strange_VT_tm.err()<<endl;
@@ -1329,33 +1621,37 @@ void Compute_magnetic_susc() {
     }
 
    
-
-   
+       
     //print susc info
     //light
     Print_To_File({}, {susc_VTV_tm_int.ave(), susc_VTV_tm_int.err(), susc_TV_tm_int.ave(), susc_TV_tm_int.err(), susc_VT_tm_int.ave(), susc_VT_tm_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_data_tm.dat", "", "#VTV TV  VT");
     Print_To_File({}, {susc_VTV_OS_int.ave(), susc_VTV_OS_int.err(), susc_TV_OS_int.ave(), susc_TV_OS_int.err(), susc_VT_OS_int.ave(), susc_VT_OS_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_data_OS.dat", "", "#VTV TV  VT");
-    Print_To_File({}, {susc_sub_VTV_tm_int.ave(), susc_sub_VTV_tm_int.err(), susc_sub_TV_tm_int.ave(), susc_sub_TV_tm_int.err(), susc_sub_VT_tm_int.ave(), susc_sub_VT_tm_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_sub_data_tm.dat", "", "#VTV TV  VT");
-    Print_To_File({}, {susc_sub_VTV_OS_int.ave(), susc_sub_VTV_OS_int.err(), susc_sub_TV_OS_int.ave(), susc_sub_TV_OS_int.err(), susc_sub_VT_OS_int.ave(), susc_sub_VT_OS_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_sub_data_OS.dat", "", "#VTV TV  VT");
-    Print_To_File({}, {susc_der_VTV_tm_int.ave(), susc_der_VTV_tm_int.err(), susc_der_TV_tm_int.ave(), susc_der_TV_tm_int.err(), susc_der_VT_tm_int.ave(), susc_der_VT_tm_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_der_data_tm.dat", "", "#VTV TV  VT");
-    Print_To_File({}, {susc_der_VTV_OS_int.ave(), susc_der_VTV_OS_int.err(), susc_der_TV_OS_int.ave(), susc_der_TV_OS_int.err(), susc_der_VT_OS_int.ave(), susc_der_VT_OS_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_der_data_OS.dat", "", "#VTV TV  VT");
-    //strange
+    Print_To_File({}, {susc_sub_VTV_tm_int.ave(), susc_sub_VTV_tm_int.err(), susc_sub_TV_tm_int.ave(), susc_sub_TV_tm_int.err(), susc_sub_VT_tm_int.ave(), susc_sub_VT_tm_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_sub_data_tm"+Tag_val+".dat", "", "#VTV TV  VT");
+    Print_To_File({}, {susc_sub_VTV_OS_int.ave(), susc_sub_VTV_OS_int.err(), susc_sub_TV_OS_int.ave(), susc_sub_TV_OS_int.err(), susc_sub_VT_OS_int.ave(), susc_sub_VT_OS_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_sub_data_OS"+Tag_val+".dat", "", "#VTV TV  VT");
+    Print_To_File({}, {susc_der_VTV_tm_int.ave(), susc_der_VTV_tm_int.err(), susc_der_TV_tm_int.ave(), susc_der_TV_tm_int.err(), susc_der_VT_tm_int.ave(), susc_der_VT_tm_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_der_data_tm"+Tag_val+".dat", "", "#VTV TV  VT");
+    Print_To_File({}, {susc_der_VTV_OS_int.ave(), susc_der_VTV_OS_int.err(), susc_der_TV_OS_int.ave(), susc_der_TV_OS_int.err(), susc_der_VT_OS_int.ave(), susc_der_VT_OS_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_der_data_OS"+Tag_val+".dat", "", "#VTV TV  VT");
+    //strange 1
     Print_To_File({}, {susc_s1_VTV_tm_int.ave(), susc_s1_VTV_tm_int.err(), susc_s1_TV_tm_int.ave(), susc_s1_TV_tm_int.err(), susc_s1_VT_tm_int.ave(), susc_s1_VT_tm_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s1_data_tm.dat", "", "#VTV TV  VT");
     Print_To_File({}, {susc_s1_VTV_OS_int.ave(), susc_s1_VTV_OS_int.err(),  susc_s1_TV_OS_int.ave(), susc_s1_TV_OS_int.err(), susc_s1_VT_OS_int.ave(), susc_s1_VT_OS_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s1_data_OS.dat", "", "#VTV TV  VT");
-    Print_To_File({}, {susc_s1_sub_VTV_tm_int.ave(), susc_s1_sub_VTV_tm_int.err(), susc_s1_sub_TV_tm_int.ave(), susc_s1_sub_TV_tm_int.err(), susc_s1_sub_VT_tm_int.ave(), susc_s1_sub_VT_tm_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s1_sub_data_tm.dat", "", "#VTV TV  VT");
-    Print_To_File({}, {susc_s1_sub_VTV_OS_int.ave(), susc_s1_sub_VTV_OS_int.err(), susc_s1_sub_TV_OS_int.ave(), susc_s1_sub_TV_OS_int.err(), susc_s1_sub_VT_OS_int.ave(), susc_s1_sub_VT_OS_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s1_sub_data_OS.dat", "", "#VTV TV  VT");
+    Print_To_File({}, {susc_s1_sub_VTV_tm_int.ave(), susc_s1_sub_VTV_tm_int.err(), susc_s1_sub_TV_tm_int.ave(), susc_s1_sub_TV_tm_int.err(), susc_s1_sub_VT_tm_int.ave(), susc_s1_sub_VT_tm_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s1_sub_data_tm"+Tag_val+".dat", "", "#VTV TV  VT");
+    Print_To_File({}, {susc_s1_sub_VTV_OS_int.ave(), susc_s1_sub_VTV_OS_int.err(), susc_s1_sub_TV_OS_int.ave(), susc_s1_sub_TV_OS_int.err(), susc_s1_sub_VT_OS_int.ave(), susc_s1_sub_VT_OS_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s1_sub_data_OS"+Tag_val+".dat", "", "#VTV TV  VT");
+    Print_To_File({}, {susc_s1_der_VTV_tm_int.ave(), susc_s1_der_VTV_tm_int.err(), susc_s1_der_TV_tm_int.ave(), susc_s1_der_TV_tm_int.err(), susc_s1_der_VT_tm_int.ave(), susc_s1_der_VT_tm_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s1_der_data_tm"+Tag_val+".dat", "", "#VTV TV  VT");
+    Print_To_File({}, {susc_s1_der_VTV_OS_int.ave(), susc_s1_der_VTV_OS_int.err(), susc_s1_der_TV_OS_int.ave(), susc_s1_der_TV_OS_int.err(), susc_s1_der_VT_OS_int.ave(), susc_s1_der_VT_OS_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s1_der_data_OS"+Tag_val+".dat", "", "#VTV TV  VT");
+    Print_To_File({}, {susc_s2_der_VTV_tm_int.ave(), susc_s2_der_VTV_tm_int.err(), susc_s2_der_TV_tm_int.ave(), susc_s2_der_TV_tm_int.err(), susc_s2_der_VT_tm_int.ave(), susc_s2_der_VT_tm_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s2_der_data_tm"+Tag_val+".dat", "", "#VTV TV  VT");
+    Print_To_File({}, {susc_s2_der_VTV_OS_int.ave(), susc_s2_der_VTV_OS_int.err(), susc_s2_der_TV_OS_int.ave(), susc_s2_der_TV_OS_int.err(), susc_s2_der_VT_OS_int.ave(), susc_s2_der_VT_OS_int.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s2_der_data_OS"+Tag_val+".dat", "", "#VTV TV  VT");
 
     //print corr_info
     //light
     Print_To_File({}, {((-2*1000/a_distr)*Corr_VKTKVK_tm).ave(), ((-2*1000/a_distr)*Corr_VKTKVK_tm).err(), ((-2*1000/a_distr)*Corr_TKVK_tm).ave(), ((-2*1000/a_distr)*Corr_TKVK_tm).err(), ( (-2*1000/a_distr)*Corr_VKTK_tm).ave(), ( (-2*1000/(a_distr))*Corr_VKTK_tm).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_data_tm.dat", "", "#VTV TV  VT");
     Print_To_File({}, {((-2*1000/a_distr)*Corr_VKTKVK_OS).ave(), ((-2*1000/a_distr)*Corr_VKTKVK_OS).err(), ((-2*1000/a_distr)*Corr_TKVK_OS).ave(), ((-2*1000/a_distr)*Corr_TKVK_OS).err(), ((-2*1000/a_distr)*Corr_VKTK_OS).ave(), ((-2*1000/a_distr)*Corr_VKTK_OS).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_data_OS.dat", "", "#VTV TV  VT");
-    Print_To_File({}, {((-2*1000/a_distr)*Corr_sub_VTV_tm).ave(), ((-2*1000/a_distr)*Corr_sub_VTV_tm).err(), ((-2*1000/a_distr)*Corr_sub_TV_tm).ave(), ((-2*1000/a_distr)*Corr_sub_TV_tm).err(), ( (-2*1000/a_distr)*Corr_sub_VT_tm).ave(), ( (-2*1000/(a_distr))*Corr_sub_VT_tm).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_sub_data_tm.dat", "", "#VTV TV  VT");
-    Print_To_File({}, {((-2*1000/a_distr)*Corr_sub_VTV_OS).ave(), ((-2*1000/a_distr)*Corr_sub_VTV_OS).err(), ((-2*1000/a_distr)*Corr_sub_TV_OS).ave(), ((-2*1000/a_distr)*Corr_sub_TV_OS).err(), ((-2*1000/a_distr)*Corr_sub_VT_OS).ave(), ((-2*1000/a_distr)*Corr_sub_VT_OS).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_sub_data_OS.dat", "", "#VTV TV  VT");
+    
+    Print_To_File({}, {((-2*1000/a_distr)*Corr_sub_VTV_tm).ave(), ((-2*1000/a_distr)*Corr_sub_VTV_tm).err(), ((-2*1000/a_distr)*Corr_sub_TV_tm).ave(), ((-2*1000/a_distr)*Corr_sub_TV_tm).err(), ( (-2*1000/a_distr)*Corr_sub_VT_tm).ave(), ( (-2*1000/(a_distr))*Corr_sub_VT_tm).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_sub_data_tm"+Tag_val+".dat", "", "#VTV TV  VT");
+    Print_To_File({}, {((-2*1000/a_distr)*Corr_sub_VTV_OS).ave(), ((-2*1000/a_distr)*Corr_sub_VTV_OS).err(), ((-2*1000/a_distr)*Corr_sub_TV_OS).ave(), ((-2*1000/a_distr)*Corr_sub_TV_OS).err(), ((-2*1000/a_distr)*Corr_sub_VT_OS).ave(), ((-2*1000/a_distr)*Corr_sub_VT_OS).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_sub_data_OS"+Tag_val+".dat", "", "#VTV TV  VT");
     //strange
     Print_To_File({}, {((-2*1000/a_distr)*Corr_s1_VKTKVK_tm).ave(), ((-2*1000/a_distr)*Corr_s1_VKTKVK_tm).err(), ((-2*1000/a_distr)*Corr_s1_TKVK_tm).ave(), ((-2*1000/a_distr)*Corr_s1_TKVK_tm).err(), ((-2*1000/a_distr)*Corr_s1_VKTK_tm).ave(), ((-2*1000/a_distr)*Corr_s1_VKTK_tm).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_s1_data_tm.dat", "", "#VTV TV  VT");
     Print_To_File({}, {((-2*1000/a_distr)*Corr_s1_VKTKVK_OS).ave(), ((-2*1000/a_distr)*Corr_s1_VKTKVK_OS).err(), ((-2*1000/a_distr)*Corr_s1_TKVK_OS).ave(), ((-2*1000/a_distr)*Corr_s1_TKVK_OS).err(), ((-2*1000/a_distr)*Corr_s1_VKTK_OS).ave(), ((-2*1000/a_distr)*Corr_s1_VKTK_OS).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_s1_data_OS.dat", "", "#VTV TV  VT");
-    Print_To_File({}, {((-2*1000/a_distr)*Corr_s1_sub_VTV_tm).ave(), ((-2*1000/a_distr)*Corr_s1_sub_VTV_tm).err(),  ((-2*1000/a_distr)*Corr_s1_sub_TV_tm).ave(), ((-2*1000/a_distr)*Corr_s1_sub_TV_tm).err(), ((-2*1000/a_distr)*Corr_s1_sub_VT_tm).ave(), ((-2*1000/a_distr)*Corr_s1_sub_VT_tm).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_s1_sub_data_tm.dat", "", "#VTV TV  VT");
-    Print_To_File({}, {((-2*1000/a_distr)*Corr_s1_sub_VTV_OS).ave(), ((-2*1000/a_distr)*Corr_s1_sub_VTV_OS).err(), ((-2*1000/a_distr)*Corr_s1_sub_TV_OS).ave(), ((-2*1000/a_distr)*Corr_s1_sub_TV_OS).err(), ((-2*1000/a_distr)*Corr_s1_sub_VT_OS).ave(), ((-2*1000/a_distr)*Corr_s1_sub_VT_OS).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_s1_sub_data_OS.dat", "", "#VTV TV  VT");
+    Print_To_File({}, {((-2*1000/a_distr)*Corr_s1_sub_VTV_tm).ave(), ((-2*1000/a_distr)*Corr_s1_sub_VTV_tm).err(),  ((-2*1000/a_distr)*Corr_s1_sub_TV_tm).ave(), ((-2*1000/a_distr)*Corr_s1_sub_TV_tm).err(), ((-2*1000/a_distr)*Corr_s1_sub_VT_tm).ave(), ((-2*1000/a_distr)*Corr_s1_sub_VT_tm).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_s1_sub_data_tm"+Tag_val+".dat", "", "#VTV TV  VT");
+    Print_To_File({}, {((-2*1000/a_distr)*Corr_s1_sub_VTV_OS).ave(), ((-2*1000/a_distr)*Corr_s1_sub_VTV_OS).err(), ((-2*1000/a_distr)*Corr_s1_sub_TV_OS).ave(), ((-2*1000/a_distr)*Corr_s1_sub_TV_OS).err(), ((-2*1000/a_distr)*Corr_s1_sub_VT_OS).ave(), ((-2*1000/a_distr)*Corr_s1_sub_VT_OS).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_s1_sub_data_OS"+Tag_val+".dat", "", "#VTV TV  VT");
 
     //push_back light info
     susc_TV_tm_list.distr_list.push_back( susc_TV_tm);
@@ -1366,12 +1662,7 @@ void Compute_magnetic_susc() {
     susc_VT_OS_list.distr_list.push_back(susc_VT_OS);
     susc_VTV_OS_list.distr_list.push_back(susc_VTV_OS);
 
-    for(int ip0=0; ip0<(signed)p0_list.size(); ip0++) {
-      susc_VTV_subp_tm_list[ip0].distr_list.push_back( susc_VTV_subp_tm[ip0] );
-      susc_VTV_subp_OS_list[ip0].distr_list.push_back( susc_VTV_subp_OS[ip0] );
-      
-    }
-  
+     
     
     
     //t0 analysis
@@ -1605,23 +1896,27 @@ void Compute_magnetic_susc() {
     susc_s_VT_OS_list.distr_list.push_back( Obs_extrapolation_meson_mass(susc_VT_OS_2_fit, X_2_fit, etas_phys2,  "../data/magnetic_susc", "susc_s_VT_OS_"+data_TKTK_OS.Tag[iens], UseJack, "SPLINE"));
     susc_s_VTV_OS_list.distr_list.push_back( Obs_extrapolation_meson_mass(susc_VTV_OS_2_fit, X_2_fit, etas_phys2,  "../data/magnetic_susc", "susc_s_VTV_OS_"+data_TKTK_OS.Tag[iens], UseJack, "SPLINE"));
 
-    for(int ip0=0; ip0<(signed)p0_list.size(); ip0++) {
+    //interpolate unsubtracted strange correlator (tm-only for figure paper)
 
-      
-      vector<distr_t> susc_VTV_subp_tm_2_fit({susc_s1_VTV_subp_tm[ip0], susc_s2_VTV_subp_tm[ip0]});
-      
-      susc_s_VTV_subp_tm_list[ip0].distr_list.push_back( Obs_extrapolation_meson_mass(susc_VTV_subp_tm_2_fit, X_2_fit, etas_phys2,  "../data/magnetic_susc", "susc_s_VTV_subp_tm_p0_"+to_string_with_precision(p0_list[ip0],2)+"_"+data_TKTK_tm.Tag[iens], UseJack, "SPLINE"));
-      
-
-      
-      vector<distr_t> susc_VTV_subp_OS_2_fit({susc_s1_VTV_subp_OS[ip0], susc_s2_VTV_subp_OS[ip0]});
-      
-      susc_s_VTV_subp_OS_list[ip0].distr_list.push_back( Obs_extrapolation_meson_mass(susc_VTV_subp_OS_2_fit, X_2_fit, etas_phys2,  "../data/magnetic_susc", "susc_s_VTV_subp_OS_p0_"+to_string_with_precision(p0_list[ip0],2)+"_"+data_TKTK_OS.Tag[iens], UseJack, "SPLINE"));
-
+    distr_t_list Corr_s_VKTKVK_tm_interpol(UseJack);
+    for(int t=0;t<Corr.Nt;t++) {
+      vector<distr_t> Corr_fit({ Corr_s1_VKTKVK_tm.distr_list[t], Corr_s2_VKTKVK_tm.distr_list[t] });
+      Corr_s_VKTKVK_tm_interpol.distr_list.push_back( Obs_extrapolation_meson_mass(Corr_fit, X_2_fit, etas_phys2,  "../data/magnetic_susc", "corr_s_VTV_tm_t_"+to_string(t)+"_"+data_TKTK_OS.Tag[iens], UseJack, "SPLINE"));
+    }
 
         
+    distr_t_list susc_s_int_VTV_tm_interpol(UseJack, Corr.Nt/2 +1,  UseJack?Njacks:800);
+    for(int t=1; t < Corr.Nt/2 -10; t++) {
+      susc_s_int_VTV_tm_interpol.distr_list[t] = susc_s_int_VTV_tm_interpol.distr_list[t-1]  -1000*(2/a_distr)*Corr_s_VKTKVK_tm_interpol.distr_list[t]*t;
     }
- 
+
+    Print_To_File({}, {((-2*1000/a_distr)*Corr_s_VKTKVK_tm_interpol).ave(), ((-2*1000/a_distr)*Corr_s_VKTKVK_tm_interpol).err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/corr_s_interpol_data_tm.dat", "", "#VTV");
+    Print_To_File({}, {susc_s_int_VTV_tm_interpol.ave(), susc_s_int_VTV_tm_interpol.err()}, "../data/magnetic_susc/"+data_P5P5_OS.Tag[iens]+"/susc_s_interpol_data_tm.dat", "", "#VTV");
+    
+
+    
+
+    
     //push_back susc t0
     for(int it0=0;it0<(signed)t0_list.size();it0++) {
       susc_t0_TV_tm_list[it0].distr_list[iens] = susc_t0_TV_tm.distr_list[it0];
@@ -1691,18 +1986,8 @@ void Compute_magnetic_susc() {
   Print_To_File(Ensemble_list, { a_distr_list.ave(), susc_s_VTV_OS_list.ave(), susc_s_VTV_OS_list.err()}, "../data/magnetic_susc/cont/susc_s_VTV_OS.dat.t", "", "");
 
 
- 
-
   
-  for(int ip0=0;ip0<(signed)p0_list.size(); ip0++) {
-    Print_To_File(Ensemble_list, { a_distr_list.ave(), susc_VTV_subp_tm_list[ip0].ave(), susc_VTV_subp_tm_list[ip0].err()}, "../data/magnetic_susc/cont/susc_ll_VTV_p0_"+to_string_with_precision(p0_list[ip0],2)+"_tm.dat.t", "", "");
-    Print_To_File(Ensemble_list, { a_distr_list.ave(), susc_VTV_subp_OS_list[ip0].ave(), susc_VTV_subp_OS_list[ip0].err()}, "../data/magnetic_susc/cont/susc_ll_VTV_p0_"+to_string_with_precision(p0_list[ip0],2)+"_OS.dat.t", "", "");
 
-    Print_To_File(Ensemble_list, { a_distr_list.ave(), susc_s_VTV_subp_tm_list[ip0].ave(), susc_s_VTV_subp_tm_list[ip0].err()}, "../data/magnetic_susc/cont/susc_s_VTV_p0_"+to_string_with_precision(p0_list[ip0],2)+"_tm.dat.t", "", "");
-    Print_To_File(Ensemble_list, { a_distr_list.ave(), susc_s_VTV_subp_OS_list[ip0].ave(), susc_s_VTV_subp_OS_list[ip0].err()}, "../data/magnetic_susc/cont/susc_s_VTV_p0_"+to_string_with_precision(p0_list[ip0],2)+"_OS.dat.t", "", "");
-
-    
-  }
 
   for(int it0=0;it0<(signed)t0_list.size(); it0++) {
     Print_To_File(Ensemble_list, { a_distr_list.ave(), susc_t0_TV_tm_list[it0].ave(), susc_t0_TV_tm_list[it0].err()}, "../data/magnetic_susc/cont/susc_ll_it0_"+to_string(it0)+"_TV_tm.dat.t", "", "");
@@ -1717,8 +2002,7 @@ void Compute_magnetic_susc() {
   }
 
 
-  D(2);
-
+ 
   
   //perform infinite volume extrapolation
   
@@ -1735,64 +2019,38 @@ void Compute_magnetic_susc() {
   double sigma_comb_TV_tm= sqrt( pow(susc_TV_tm_list.err(B64),2) + pow(susc_TV_tm_list.err(B96),2));
   double sigma_comb_VT_tm= sqrt( pow(susc_VT_tm_list.err(B64),2) + pow(susc_VT_tm_list.err(B96),2));
   double sigma_comb_VTV_tm= sqrt( pow(susc_VTV_tm_list.err(B64),2) + pow(susc_VTV_tm_list.err(B96),2));
-  vector<double> sigma_comb_VTV_subp_tm(p0_list.size());
 
-  for(int ip0=0;ip0<(signed)p0_list.size();ip0++) {
-     sigma_comb_VTV_subp_tm[ip0] = sqrt( pow(susc_VTV_subp_tm_list[ip0].err(B64),2) + pow(susc_VTV_subp_tm_list[ip0].err(B96),2));
-  }
+  
   double sigma_comb_TV_OS= sqrt( pow(susc_TV_OS_list.err(B64),2) + pow(susc_TV_OS_list.err(B96),2));
   double sigma_comb_VT_OS= sqrt( pow(susc_VT_OS_list.err(B64),2) + pow(susc_VT_OS_list.err(B96),2));
   double sigma_comb_VTV_OS= sqrt( pow(susc_VTV_OS_list.err(B64),2) + pow(susc_VTV_OS_list.err(B96),2));
-  vector<double> sigma_comb_VTV_subp_OS(p0_list.size());
- 
-  for(int ip0=0;ip0<(signed)p0_list.size();ip0++) {
-     sigma_comb_VTV_subp_OS[ip0] = sqrt( pow(susc_VTV_subp_OS_list[ip0].err(B64),2) + pow(susc_VTV_subp_OS_list[ip0].err(B96),2));
- 
-  }
+  
     
   double syst_TV_tm = (fabs(susc_TV_tm_list.ave(B64) - susc_TV_tm_list.ave(B96))/fabs(susc_TV_tm_list.ave(B64)))*erf( fabs(susc_TV_tm_list.ave(B64) - susc_TV_tm_list.ave(B96))/(sqrt(2)*sigma_comb_TV_tm));
   double syst_VT_tm = (fabs(susc_VT_tm_list.ave(B64) - susc_VT_tm_list.ave(B96))/fabs(susc_VT_tm_list.ave(B64)))*erf( fabs(susc_VT_tm_list.ave(B64) - susc_VT_tm_list.ave(B96))/(sqrt(2)*sigma_comb_VT_tm));
   double syst_VTV_tm = (fabs(susc_VTV_tm_list.ave(B64) - susc_VTV_tm_list.ave(B96))/fabs(susc_VTV_tm_list.ave(B64)))*erf( fabs(susc_VTV_tm_list.ave(B64) - susc_VTV_tm_list.ave(B96))/(sqrt(2)*sigma_comb_VTV_tm));
 
-  vector<double> syst_VTV_subp_tm(p0_list.size());
- 
-  for(int ip0=0; ip0<(signed)p0_list.size(); ip0++) {
-    syst_VTV_subp_tm[ip0] = (fabs(susc_VTV_subp_tm_list[ip0].ave(B64) - susc_VTV_subp_tm_list[ip0].ave(B96))/fabs(susc_VTV_subp_tm_list[ip0].ave(B64)))*erf( fabs(susc_VTV_subp_tm_list[ip0].ave(B64) - susc_VTV_subp_tm_list[ip0].ave(B96))/(sqrt(2)*sigma_comb_VTV_subp_tm[ip0]));
- 
-  }
+  
 
   double syst_TV_OS = (fabs(susc_TV_OS_list.ave(B64) - susc_TV_OS_list.ave(B96))/fabs(susc_TV_OS_list.ave(B64)))*erf( fabs(susc_TV_OS_list.ave(B64) - susc_TV_OS_list.ave(B96))/(sqrt(2)*sigma_comb_TV_OS));
   double syst_VT_OS = (fabs(susc_VT_OS_list.ave(B64) - susc_VT_OS_list.ave(B96))/fabs(susc_VT_OS_list.ave(B64)))*erf( fabs(susc_VT_OS_list.ave(B64) - susc_VT_OS_list.ave(B96))/(sqrt(2)*sigma_comb_VT_OS));
   double syst_VTV_OS = (fabs(susc_VTV_OS_list.ave(B64) - susc_VTV_OS_list.ave(B96))/fabs(susc_VTV_OS_list.ave(B64)))*erf( fabs(susc_VTV_OS_list.ave(B64) - susc_VTV_OS_list.ave(B96))/(sqrt(2)*sigma_comb_VTV_OS));
 
-  vector<double> syst_VTV_subp_OS(p0_list.size());
- 
-  for(int ip0=0; ip0<(signed)p0_list.size(); ip0++) {
-    syst_VTV_subp_OS[ip0] = (fabs(susc_VTV_subp_OS_list[ip0].ave(B64) - susc_VTV_subp_OS_list[ip0].ave(B96))/fabs(susc_VTV_subp_OS_list[ip0].ave(B64)))*erf( fabs(susc_VTV_subp_OS_list[ip0].ave(B64) - susc_VTV_subp_OS_list[ip0].ave(B96))/(sqrt(2)*sigma_comb_VTV_subp_OS[ip0]));
-   }
-  
- 
+   
   double syst_TV = max(syst_TV_tm, syst_TV_OS);
   double syst_VT = max(syst_VT_tm, syst_VT_OS);
   double syst_VTV = max(syst_VTV_tm, syst_VTV_OS);
-  vector<double> syst_VTV_subp(p0_list.size());
- 
-  for(int ip0=0;ip0<(signed)p0_list.size(); ip0++) {
-    syst_VTV_subp[ip0] = max(syst_VTV_subp_tm[ip0], syst_VTV_subp_OS[ip0]);
- 
-  }
+  
 
   distr_t distr_syst_FSE_TV(UseJack), distr_syst_FSE_VT(UseJack), distr_syst_FSE_VTV(UseJack);
-  distr_t_list distr_syst_FSE_VTV_subp(UseJack, p0_list.size());
+  
  
   
   for(int ijack=0;ijack<Njacks;ijack++) {
     distr_syst_FSE_TV.distr.push_back( 1.0 + 0.0*GM()*syst_TV/sqrt(Njacks-1.0));
     distr_syst_FSE_VT.distr.push_back( 1.0 + 0.0*GM()*syst_VT/sqrt(Njacks-1.0));
     distr_syst_FSE_VTV.distr.push_back( 1.0 + 0.0*GM()*syst_VTV/sqrt(Njacks-1.0));
-    for(int ip0=0; ip0<(signed)p0_list.size(); ip0++) {
-      distr_syst_FSE_VTV_subp.distr_list[ip0].distr.push_back( 1.0 + 0.0*GM()*syst_VTV_subp[ip0]/sqrt(Njacks-1.0));
-     }
+  
   }
 
 
@@ -1802,12 +2060,10 @@ void Compute_magnetic_susc() {
     distr_t corr_FSE_light_TV_tm = Get_id_jack_distr( Njacks);
     distr_t corr_FSE_light_VT_tm = Get_id_jack_distr(Njacks);
     distr_t corr_FSE_light_VTV_tm = Get_id_jack_distr(Njacks);
-    distr_t_list corr_FSE_light_VTV_subp_tm = Get_id_jack_distr_list(p0_list.size(), Njacks);
     distr_t corr_FSE_light_TV_OS = Get_id_jack_distr(Njacks);
     distr_t corr_FSE_light_VT_OS = Get_id_jack_distr(Njacks);
     distr_t corr_FSE_light_VTV_OS = Get_id_jack_distr(Njacks);
-    distr_t_list corr_FSE_light_VTV_subp_OS = Get_id_jack_distr_list(p0_list.size(), Njacks);
-    
+      
     if(data_TKTK_tm.Tag[iens] != "cB211b.072.96") {
 
 
@@ -1829,11 +2085,6 @@ void Compute_magnetic_susc() {
 	corr_FSE_light_VTV_OS = corr_FSE_light_VTV_OS+ DC_rel*(susc_VTV_OS_list.distr_list[iB]/susc_VTV_OS_list.distr_list[iens] -1);
 
 
-	for(int ip0=0;ip0<(signed)p0_list.size(); ip0++) {
-	  corr_FSE_light_VTV_subp_tm.distr_list[ip0] = corr_FSE_light_VTV_subp_tm.distr_list[ip0] + DC_rel*(susc_VTV_subp_tm_list[ip0].distr_list[iB]/susc_VTV_subp_tm_list[ip0].distr_list[iens] -1);
-	  corr_FSE_light_VTV_subp_OS.distr_list[ip0] = corr_FSE_light_VTV_subp_OS.distr_list[ip0] + DC_rel*(susc_VTV_subp_OS_list[ip0].distr_list[iB]/susc_VTV_subp_OS_list[ip0].distr_list[iens] -1);
-
-	}
 
       }
 
@@ -1857,14 +2108,6 @@ void Compute_magnetic_susc() {
       susc_s_VTV_OS_list_red.distr_list.push_back( susc_s_VTV_OS_list.distr_list[iens]);
     
 
-      for(int ip0=0;ip0<(signed)p0_list.size(); ip0++) {
-	  susc_VTV_subp_tm_list_red[ip0].distr_list.push_back( susc_VTV_subp_tm_list[ip0].distr_list[iens]*corr_FSE_light_VTV_subp_tm.distr_list[ip0]);
-	  susc_VTV_subp_OS_list_red[ip0].distr_list.push_back( susc_VTV_subp_OS_list[ip0].distr_list[iens]*corr_FSE_light_VTV_subp_OS.distr_list[ip0]);
-	  susc_s_VTV_subp_tm_list_red[ip0].distr_list.push_back( susc_s_VTV_subp_tm_list[ip0].distr_list[iens]);
-	  susc_s_VTV_subp_OS_list_red[ip0].distr_list.push_back( susc_s_VTV_subp_OS_list[ip0].distr_list[iens]);
- 	 
-
-      }
       
       
       a_distr_list_red.distr_list.push_back( a_distr_list.distr_list[iens]);
@@ -1883,15 +2126,7 @@ void Compute_magnetic_susc() {
   Print_To_File(Ensemble_list_red, { a_distr_list_red.ave(), susc_VTV_OS_list_red.ave(), susc_VTV_OS_list_red.err()}, "../data/magnetic_susc/cont/susc_ll_red_VTV_OS.dat.t", "", "");
  
 
-  for(int ip0=0;ip0<(signed)p0_list.size(); ip0++) {
-    Print_To_File(Ensemble_list_red, { a_distr_list_red.ave(), susc_VTV_subp_tm_list_red[ip0].ave(), susc_VTV_subp_tm_list_red[ip0].err()}, "../data/magnetic_susc/cont/susc_ll_red_VTV_p0_"+to_string_with_precision(p0_list[ip0],2)+"_tm.dat.t", "", "");
-    Print_To_File(Ensemble_list_red, { a_distr_list_red.ave(), susc_VTV_subp_OS_list_red[ip0].ave(), susc_VTV_subp_OS_list_red[ip0].err()}, "../data/magnetic_susc/cont/susc_ll_red_VTV_p0_"+to_string_with_precision(p0_list[ip0],2)+"_OS.dat.t", "", "");
-    
-
-  }
-
-
-
+  
 
   //for t0 analysis
   for(int it0=0;it0<(signed)t0_list.size();it0++) {
@@ -1988,19 +2223,10 @@ void Compute_magnetic_susc() {
   vector<distr_t_list> susc_flav_TV_tm({susc_TV_tm_list_red, susc_s_TV_tm_list_red});
   vector<distr_t_list> susc_flav_VT_tm({susc_VT_tm_list_red, susc_s_VT_tm_list_red});
   vector<distr_t_list> susc_flav_VTV_tm({susc_VTV_tm_list_red, susc_s_VTV_tm_list_red});
-  //vector<distr_t_list> susc_flav_VTV_subp_tm({susc_VTV_subp_tm_list_red, susc_s_VTV_subp_tm_list_red});
   vector<distr_t_list> susc_flav_TV_OS({susc_TV_OS_list_red, susc_s_TV_OS_list_red});
   vector<distr_t_list> susc_flav_VT_OS({susc_VT_OS_list_red, susc_s_VT_OS_list_red});
   vector<distr_t_list> susc_flav_VTV_OS({susc_VTV_OS_list_red, susc_s_VTV_OS_list_red});
-  //vector<distr_t_list> susc_flav_VTV_subp_OS({susc_VTV_subp_OS_list_red, susc_s_VTV_subp_OS_list_red});
-
-  //add p0 light
-  for(int ip0=0;ip0<(signed)p0_list.size(); ip0++) {
-    flavs.push_back("light_p0_"+to_string_with_precision(p0_list[ip0],2));
-    susc_flav_VTV_tm.push_back( susc_VTV_subp_tm_list_red[ip0]);
-    susc_flav_VTV_OS.push_back( susc_VTV_subp_OS_list_red[ip0]);
-  }
-
+  
   
 
   //add t0 light
@@ -2015,14 +2241,7 @@ void Compute_magnetic_susc() {
 
   }
 
-  //add p0 strange
-  for(int ip0=0;ip0<(signed)p0_list.size(); ip0++) {
-    flavs.push_back("strange_p0_"+to_string_with_precision(p0_list[ip0],2));
-    susc_flav_VTV_tm.push_back( susc_s_VTV_subp_tm_list_red[ip0]);
-    susc_flav_VTV_OS.push_back( susc_s_VTV_subp_OS_list_red[ip0]);
-  }
-
-  
+    
 
 
   
@@ -2318,17 +2537,7 @@ void Compute_magnetic_susc() {
 
       }
 
-      if(flavs[iflav].substr(0,8)=="light_p0") {
-
-	chi_light_VTV_subp.distr_list.push_back(D/chiral_cond);
-      }
-
-      if(flavs[iflav].substr(0,10)=="strange_p0") {
-
-	chi_strange_VTV_subp.distr_list.push_back(D/chiral_cond);
-      }
-
-   
+        
       
       if(flavs[iflav].substr(0,9)=="light_it0") {
 
@@ -2363,12 +2572,7 @@ void Compute_magnetic_susc() {
     Print_To_File({}, {t0_list, chi_strange_VTV_t0.ave(), chi_strange_VTV_t0.err(), chi_strange_TV_t0.ave(), chi_strange_TV_t0.err(), chi_strange_VT_t0.ave(), chi_strange_VT_t0.err()}, "../data/magnetic_susc/cont/t0_strange_extr.dat", "", "#t0[GeV^-1] VTV  TV   VT");
   }
 
-   if(p0_list.size() > 0) {
-    Print_To_File({}, {p0_list, chi_light_VTV_subp.ave(), chi_light_VTV_subp.err()}, "../data/magnetic_susc/cont/p0_light_extr.dat", "", "#t0[GeV^-1] VTV");
-    Print_To_File({}, {p0_list, chi_strange_VTV_subp.ave(), chi_strange_VTV_subp.err()}, "../data/magnetic_susc/cont/p0_strange_extr.dat", "", "#t0[GeV^-1] VTV");
-   
-  }
-
+  
 
   cout<<"###### PRINTING CH2/NDOF: "<<endl;
 

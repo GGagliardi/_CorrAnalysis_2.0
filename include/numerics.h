@@ -46,6 +46,7 @@
 #include <boost/numeric/ublas/triangular.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 #include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
+#include <boost/math/interpolators/cubic_hermite.hpp>
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <Minuit2/FCNBase.h>
@@ -167,8 +168,23 @@ double Root_Brent_sinh(double R, int nt, int NT);
 double DoConstantFit(Vfloat &data, Vfloat &err);
 double quad_interpolator(double y1, double y2, double y3, double Dx1, double Dx2, double Dx3, double Dx);
 void Print_To_File(const vector<string>& row_id, const VVfloat &data, string Path, string MODE, string Header);
-double Get_4l_alpha_s( double Q, double Nf);
+double Get_4l_alpha_s(double Q, double Nf, double Lambda=0.340);
+double Get_2l_alpha_s( double Q, double Nf, double Lambda=0.340);
 void Print_4l_alpha_s();
+double m_MS_bar_m( double mu, double Nf, double Lambda, double m );
+double MS_bar_to_pole_mass(double mu, double Nf, double Lambda, double m, double mc);
+double MS_bar_to_pole_mass_bis(double mu, double Nf, double Lambda, double m, double mc);
+double pole_mass_to_MS_bar(double mu, double Nf, double Lambda, double Mpole);
+double pole_mass_to_MS_bar_bis(double mu, double Nf, double Lambda,double Mpole, double mc);
+double MS_bar_to_MRS_mass(double mu, double Nf, double Lambda, double m, double mc);
+double MRS_mass_to_MS_bar_mass(double mu, double Nf, double Lambda, double M_MRS, double mc);
+double MRS_mass_to_mm(double mu, double Nf, double Lambda, double M_MRS, double mc);
+double MS_bar_mass_evolutor(double mu1, double mu2, double Nf, double Lambda,  int mode);
+pair<double, double> MS_bar_to_mm_and_MRS_mass(double mu, double Nf, double Lambda, double m, double mc);
+double J_MRS(double Nf, double mm) ;
+double evolutor_ZT_MS_bar( double mu1, double mu2);
+double Get_Lambda_MS_bar(int Nf);
+
 double w(int t, int Simps_ord);
 
 
@@ -278,6 +294,67 @@ auto summ_master(const std::vector<T>& t0,const std::vector<V>&...t)
     res[i]=summ_master(t0[i],t[i]...);
   
   return res;
+}
+
+
+template <typename T>
+double R_brent( T&& F, double xmin, double xmax) {
+
+  double Precision = 1e-6;
+  double delta = 0.01;
+  //solve the equation F(X) = 0 using the Brent method!
+  //initialize iteration
+  double b=xmax;
+  double a=xmin;
+ 
+  if (F(a)*F(b) > 0) {crash("Initial conditions in R_brent not valid: (xmin,xmax) = ("+to_string_with_precision(xmin,5)+","+to_string_with_precision(xmax,5)+") , (f(xmin), f(xmax)) = ("+to_string_with_precision(F(xmin),5)+","+to_string_with_precision(F(xmax),5)+")");
+  }
+ 
+ 
+
+
+
+  if(fabs(F(a)) < fabs(F(b))) {double atemp=a; a=b; b=atemp;}
+
+  double c=a;
+  bool FLAG = true;
+  double s=b;
+  double d=0;
+
+  
+  
+  while(F(s) !=0 && fabs(b-a)>= Precision*fabs((double)(b+a)/2.0) ) {
+
+  
+    if((F(a) != F(c)) && (F(b) != F(c))) {//inverse quadratic interpolation
+      s= a*F(b)*F(c)/((F(a)-F(b))*(F(a)-F(c))) + b*F(a)*F(c)/((F(b)-F(a))*(F(b)-F(c))) + c*F(a)*F(b)/((F(c)-F(a))*(F(c)-F(b)));
+    }
+    else s= b-(F(b)*(b-a)/(F(b)-F(a)));
+
+    double s1= (double)(3*a+b/4.0);
+    if( (s < s1 || s> b) || (FLAG==true && fabs(s-b) >= (double)fabs(b-c)/2) || (FLAG==false && fabs(s-b) >= (double)fabs(c-d)/2) || (FLAG==true && fabs(b-c) < delta) || (FLAG==false && fabs(c-d) < delta)) {
+      
+      FLAG=true;
+      s= (a+b)/2.0;
+      
+    }
+    
+    else FLAG= false;
+
+    d= c;
+    c= b;
+    if (F(a)*F(s)<0) b=s;
+    else a=s;
+
+    if(fabs(F(a)) < fabs(F(b))) {double atemp=a; a=b; b=atemp;}
+
+   
+  }
+
+  
+  return s;
+
+
 }
 
 

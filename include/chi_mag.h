@@ -22,6 +22,7 @@ void Generate_free_corr_data_VT();
 void Compute_free_VT_corr(double am, int Tmax, int L = -1);
 double Get_tree_lev_der(double x);
 void Compute_magnetic_susc();
+void Get_magnetic_susc(bool Include_sea_quark_mass_der);
 
 
 

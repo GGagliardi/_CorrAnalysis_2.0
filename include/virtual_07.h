@@ -21,17 +21,17 @@
 class rt_07_Bs {
 
 public:
-  rt_07_Bs() : UseJack(1),  FA_T_u(1), FA_T_d(1), FV_T_u(1), FV_T_d(1),  Nmeas(0), Npars(0), Ndof(0), Use_three_finest(0), Include_a4(0), num_xg(0) { };
-  rt_07_Bs(bool x) : UseJack(x), FA_T_u(x), FA_T_d(x), FV_T_u(x), FV_T_d(x),  Nmeas(0), Npars(0), Ndof(0), Use_three_finest(0), Include_a4(0), num_xg(0) {    };
-  distr_t_list Get_FF(int i) { vector<distr_t_list> A({ FA_T_u, FA_T_d, FV_T_u, FV_T_d}); return A[i];}
-  Vfloat   Get_ch2(int i) { VVfloat A({ Ch2_FA_T_u, Ch2_FA_T_d, Ch2_FV_T_u, Ch2_FV_T_d}); return A[i];}
+  rt_07_Bs() : UseJack(1),  F_T_u(1), F_T_d(1),  Nmeas(0), Npars(0), Ndof(0), Use_three_finest(0), Include_a4(0), num_xg(0) { };
+  rt_07_Bs(bool x) : UseJack(x),  F_T_u(x), F_T_d(x),  Nmeas(0), Npars(0), Ndof(0), Use_three_finest(0), Include_a4(0), num_xg(0) {    };
+  distr_t_list Get_FF(int i) { vector<distr_t_list> A({ F_T_u, F_T_d}); return A[i];}
+  Vfloat   Get_ch2(int i) { VVfloat A({  Ch2_F_T_u, Ch2_F_T_d}); return A[i];}
   
 
   bool UseJack;
   distr_t mass;
   distr_t fp;
-  distr_t_list FA_T_u, FA_T_d, FV_T_u, FV_T_d;
-  Vfloat  Ch2_FA_T_u, Ch2_FA_T_d,  Ch2_FV_T_u, Ch2_FV_T_d;
+  distr_t_list F_T_u, F_T_d;
+  Vfloat  Ch2_F_T_u, Ch2_F_T_d;
   int Nmeas;
   int Npars;
   int Ndof;

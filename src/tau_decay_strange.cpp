@@ -6,7 +6,7 @@
 const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
 const bool UseJack=1;
-const int Njacks=50;
+const int Njacks=25;
 const int Nboots=800;
 const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
@@ -190,7 +190,7 @@ void get_sigma_list_strange() {
   double s_max= 0.2;
   double s_min= 0.004420;
 
-  sigma_list_strange= { 0.02, 0.04, 0.08};
+  sigma_list_strange= { 0.004, 0.02, 0.04, 0.08, 0.12, 0.16};
   return;
 
  
@@ -337,12 +337,12 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     boost::filesystem::create_directory("../tau_decay_strange");
     
 
-    vector<string> Ens_T1({"C.06.112", "B.072.64"});
-    vector<string> Ens_TT1({"cC211a.06.112", "cB211b.072.64"});
+    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.072.64"});
+    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64"});
 
     for( int it=0; it<(signed)Ens_T1.size(); it++) {
 
-      vector<string> channels({"ll", "mix_l_l", "mix_l_s1", "mix_l_s2", "mix_s1_s1", "mix_s2_s2"});
+      vector<string> channels({"mix_l_l",  "mix_l_s1", "mix_l_s2", "mix_s1_s1", "mix_s2_s2"});
 
       for(auto &channel : channels) {
 	boost::filesystem::create_directory("../tau_decay_strange/"+channel);
@@ -480,19 +480,19 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   ll_data_tm_P5P5.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_TM_P5P5", "P5P5", Sort_easy);
   ss_data_tm_P5P5.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_TM_P5P5", "P5P5", Sort_easy);
   ls_data_tm_P5P5.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_TM_P5P5", "P5P5", Sort_easy);
-  ll_data_tm_AKAK.Read("../tau_decay_strange/ll", "mes_contr_ll_TM_AKAK", "AKAK", Sort_easy);
+  ll_data_tm_AKAK.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_TM_AKAK", "AKAK", Sort_easy);
   ss_data_tm_AKAK.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_TM_AKAK", "AKAK", Sort_easy);
   ls_data_tm_AKAK.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_TM_AKAK", "AKAK", Sort_easy);
 
-  ll_data_tm_A0A0.Read("../tau_decay_strange/ll", "mes_contr_ll_TM_A0A0", "A0A0", Sort_easy);
+  ll_data_tm_A0A0.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_TM_A0A0", "A0A0", Sort_easy);
   ss_data_tm_A0A0.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_TM_A0A0", "A0A0", Sort_easy);
   ls_data_tm_A0A0.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_TM_A0A0", "A0A0", Sort_easy);
 
-  ll_data_tm_V0V0.Read("../tau_decay_strange/ll", "mes_contr_ll_TM_V0V0", "V0V0", Sort_easy);
+  ll_data_tm_V0V0.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_TM_V0V0", "V0V0", Sort_easy);
   ss_data_tm_V0V0.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_TM_V0V0", "V0V0", Sort_easy);
   ls_data_tm_V0V0.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_TM_V0V0", "V0V0", Sort_easy);
   
-  ll_data_tm_VKVK.Read("../tau_decay_strange/ll", "mes_contr_ll_TM_VKVK", "VKVK", Sort_easy);
+  ll_data_tm_VKVK.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_TM_VKVK", "VKVK", Sort_easy);
   ss_data_tm_VKVK.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_TM_VKVK", "VKVK", Sort_easy);
   ls_data_tm_VKVK.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_TM_VKVK", "VKVK", Sort_easy);
   ll_data_tm_S0S0.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_TM_S0S0", "S0S0", Sort_easy);
@@ -503,19 +503,19 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   ll_data_OS_P5P5.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_OS_P5P5", "P5P5", Sort_easy);
   ss_data_OS_P5P5.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_OS_P5P5", "P5P5", Sort_easy);
   ls_data_OS_P5P5.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_OS_P5P5", "P5P5", Sort_easy);
-  ll_data_OS_AKAK.Read("../tau_decay_strange/ll", "mes_contr_ll_OS_AKAK", "AKAK", Sort_easy);
+  ll_data_OS_AKAK.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_OS_AKAK", "AKAK", Sort_easy);
   ss_data_OS_AKAK.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_OS_AKAK", "AKAK", Sort_easy);
   ls_data_OS_AKAK.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_OS_AKAK", "AKAK", Sort_easy);
 
-  ll_data_OS_A0A0.Read("../tau_decay_strange/ll", "mes_contr_ll_OS_A0A0", "A0A0", Sort_easy);
+  ll_data_OS_A0A0.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_OS_A0A0", "A0A0", Sort_easy);
   ss_data_OS_A0A0.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_OS_A0A0", "A0A0", Sort_easy);
   ls_data_OS_A0A0.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_OS_A0A0", "A0A0", Sort_easy);
 
-  ll_data_OS_V0V0.Read("../tau_decay_strange/ll", "mes_contr_ll_OS_V0V0", "V0V0", Sort_easy);
+  ll_data_OS_V0V0.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_OS_V0V0", "V0V0", Sort_easy);
   ss_data_OS_V0V0.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_OS_V0V0", "V0V0", Sort_easy);
   ls_data_OS_V0V0.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_OS_V0V0", "V0V0", Sort_easy);
   
-  ll_data_OS_VKVK.Read("../tau_decay_strange/ll", "mes_contr_ll_OS_VKVK", "VKVK", Sort_easy);
+  ll_data_OS_VKVK.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_OS_VKVK", "VKVK", Sort_easy);
   ss_data_OS_VKVK.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_OS_VKVK", "VKVK", Sort_easy);
   ls_data_OS_VKVK.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_OS_VKVK", "VKVK", Sort_easy);
   ll_data_OS_S0S0.Read("../tau_decay_strange/mix_l_l", "mes_contr_mix_l_l_OS_S0S0", "S0S0", Sort_easy);
@@ -730,6 +730,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      CorrAnalysis Corr(UseJack, Njacks,Nboots);
      Corr.Nt = ls_data_tm_VKVK.nrows[iens];
 
+   
      //effective masses
      //tm
      //pseudoscalar
@@ -798,8 +799,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      double ams2= L_info.ms_M_new;
      
      
-     
-   
+       
      CorrAnalysis Corr_block_1(0, ls_data_tm_VKVK.Nconfs[iens],Nboots, iens);
      Corr_block_1.Nt= ls_data_tm_VKVK.nrows[iens];
      int T = Corr.Nt;
@@ -938,7 +938,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     
 
     
-
+       
     if(!Skip_spectral_density_analysis_strange) {
 
     distr_t resc_GeV = C_V*GAMMA_FACT/(a_distr.ave()*a_distr*a_distr);

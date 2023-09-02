@@ -75,6 +75,7 @@ void data_t::Read() {
 	     cout<<"ncols_old: "<<ncols_old<<" ncols: "<<ncols<<endl;
 	     cout<<"Ens tag: "<<ens<<", conf_path: "<<conf_path<<endl;
 	     cout<<"iteration: "<<it<<endl;
+	     cout<<"Conf num: "<<it2<<endl;
 	     crash("Exiting...");
 	   }
 	   if(!Read.eof() && (ReadLine.find(SC) == string::npos)) {
@@ -96,7 +97,7 @@ void data_t::Read() {
 	 }
       nrows.push_back(N_rows);
       raw_data.push_back(raw_data_ens);
-    }
+  }
   
 
      
@@ -128,7 +129,7 @@ void data_t::Read() {
       for(int iens=0; iens< this->size; iens++) Transpose_VV(data[col][iens]);
     }
 
-  }
+}
 
 
 

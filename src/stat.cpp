@@ -883,10 +883,137 @@ distr_t_list Get_id_jack_distr_list(int size, int N) {
 }
 
 
+distr_t AIC( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas, GaussianMersenne &G, bool NEIL ) {
+
+
+  if( (VAL.size() != ch2.size()) || (VAL.size() != Ndof.size()) || ( Ndof.size() != Nmeas.size())) crash("AIC analysis called with vectors of different sizes");
+
+  int N=VAL.size();
+  assert(N > 0);
+  bool UseJack= VAL[0].UseJack;
+  int Nj= VAL[0].distr.size();
+  double F= ((NEIL)?2:1);
+   
+  distr_t RES= 0.0*VAL[0];
+
+  vector<double> W(N,0.0);
+  double wtot=0; double syst=0;
+  for(int i=0; i<N;i++) { W[i] = exp(-0.5*( ch2[i] + 2*( Nmeas[i] - Ndof[i]) - F*Nmeas[i])); wtot += W[i]; }
+  for(int i=0; i<N;i++) { W[i] /= wtot; RES = RES + W[i]*VAL[i];}
+  for(int i=0; i<N;i++) {syst += W[i]*pow( VAL[i].ave() - RES.ave(),2); }
+  syst= sqrt(syst);
+  
+  for(int ijack=0; ijack<Nj;ijack++) RES.distr[ijack] = RES.distr[ijack] + G()*syst/((UseJack?sqrt(Nj -1.0):1.0));
+
+
+  return RES;
+  
+  
+  
+
+}
+
+
+
+distr_t_list EXP_DL (const distr_t_list &A) {
+  distr_t_list B = A;
+  for (int t = 0; t < A.size(); t++)
+    for (int i = 0; i < A.distr_list[t].size(); i++)
+      B.distr_list[t].distr[i] = exp(A.distr_list[t].distr[i]);
+  return B;
+}
+
+distr_t_list EXPT_DL(const distr_t_list &A) {
+  distr_t_list B = A;
+  for (int t = 0; t < A.size(); t++)
+    for (int i = 0; i < A.distr_list[t].size(); i++)
+      B.distr_list[t].distr[i] = exp(A.distr_list[t].distr[i]*t);
+  return B;
+}
+
+
+distr_t_list COSH_DL (const distr_t_list &A) {
+  distr_t_list B = A;
+  for (int t = 0; t < A.size(); t++)
+    for (int i = 0; i < A.distr_list[t].size(); i++)
+      B.distr_list[t].distr[i] = cosh(A.distr_list[t].distr[i]);
+  return B;
+}
+
+distr_t_list SINH_DL (const distr_t_list & A) { distr_t_list B=A;
+      for(int t=0;t<A.size();t++)
+	for(int i=0;i<A.distr_list[t].size();i++) B.distr_list[t].distr[i] = sinh(A.distr_list[t].distr[i]);
+      return B;
+ }
+
+distr_t_list SQRT_DL (const distr_t_list &A) {
+  distr_t_list B = A;
+  for(int t=0;t<A.size();t++)
+    for(int i=0;i<A.distr_list[t].size();i++)
+      B.distr_list[t].distr[i] = sqrt(A.distr_list[t].distr[i]);
+  return B;
+}
+
+distr_t_list LOG_DL (const distr_t_list &A) {
+  distr_t_list B = A;
+  for(int t=0;t<A.size();t++)
+    for(int i=0;i<A.distr_list[t].size();i++)
+      B.distr_list[t].distr[i] = log(A.distr_list[t].distr[i]);
+  return B;
+}
+
+distr_t_list POW_DL (const distr_t_list &A, int n) {
+  distr_t_list B = A;
+  for(int t=0;t<A.size();t++)
+    for(int i=0;i<A.distr_list[t].size();i++)
+      B.distr_list[t].distr[i] = pow(A.distr_list[t].distr[i],n);
+  return B;
+}
 
 
 
 
 
+distr_t EXP_D (const distr_t &A) {
+  distr_t B = A;
+  for (int i = 0; i < A.size(); i++)
+    B.distr[i] = exp(A.distr[i]);
+  return B;
+}
+
+distr_t COSH_D (const distr_t &A) {
+  distr_t B = A;
+  for (int i = 0; i < A.size(); i++)
+    B.distr[i] = cosh(A.distr[i]);
+  return B;
+}
+
+distr_t SINH_D (const distr_t &A) {
+  distr_t B = A;
+  for (int i = 0; i < A.size(); i++)
+    B.distr[i] = sinh(A.distr[i]);
+  return B;
+}
+
+distr_t LOG_D (const distr_t &A) {
+  distr_t B = A;
+  for (int i = 0; i < A.size(); i++)
+    B.distr[i] = log(A.distr[i]);
+  return B;
+}
+
+distr_t SQRT_D (const distr_t &A) {
+  distr_t B = A;
+  for (int i = 0; i < A.size(); i++)
+    B.distr[i] = sqrt(A.distr[i]);
+  return B;
+}
+
+distr_t POW_D (const distr_t  &A,int n) {
+  distr_t B = A;
+  for (int i = 0; i < A.size(); i++)
+    B.distr[i] = pow(A.distr[i],n);
+  return B;
+}
 
 

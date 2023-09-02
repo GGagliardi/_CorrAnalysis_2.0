@@ -683,7 +683,7 @@ double Get_GS_artifacts_win(double M, double L, LL_functions &LL, bool mode_mixe
   LL.Find_pipi_energy_lev(L, m_rho, 5.95, M, 0.0, Ergs_lat);
   LL.Find_pipi_energy_lev(L, m_rho, 5.95, 0.135, 0.0, Ergs_cont);
 
-  auto Bt_coeff= [](double t) { return 0.5*(1.0 - exp(-pow( Get_4l_alpha_s( 1.0/t, 4)/1.0,2)));};
+  auto Bt_coeff= [](double t) { return 0.5*(1.0 - exp(-pow( Get_4l_alpha_s( 1.0/t, 4, 0.340)/1.0,2)));};
 
   
   auto GS_art =[&LL, &M, &L, &Ergs_lat, &Ergs_cont, &Bt_coeff, &mode_mixed](double t) {
