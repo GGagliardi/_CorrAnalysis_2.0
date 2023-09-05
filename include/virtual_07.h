@@ -41,7 +41,7 @@ public:
 };
 
 
-rt_07_Bs Get_virtual_tensor_FF(int num_xg, bool UseJack, int Njacks, string MESON,  string Corr_path, string path_out);
+rt_07_Bs Get_virtual_tensor_FF(int num_xg, bool UseJack, int Njacks, string MESON,  string Corr_path,  string path_out);
 
 
 #endif

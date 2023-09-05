@@ -19,7 +19,7 @@ const double QD = -1.0/3;
 
 
 
-rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,  string Corr_path, string path_out) {
+rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,  string Corr_path,string path_out) {
 
 
   rt_07_Bs return_class;
@@ -29,7 +29,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   cout<<"current max exponent: "<<PrecFloat::getEmax()<<endl;
   cout<<"Number of xg to analyze: "<<n_xg<<endl;
 
-  int t_07=18;
+  int t_07_s=14;
+  int t_07_s_HLT=14;
+  int t_07_c=25;
 
   string TAG_CURR="";
   if(CONS_EM_CURRENT==false) TAG_CURR="LOC_";
@@ -109,8 +111,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   
   //read data
 
-  data_2pts_SM.Read(Corr_path, "mes_contr_2pts_SM_3", "P5P5", Sort_confs);
-  data_2pts_SMSM.Read(Corr_path, "mes_contr_2pts_SMSM_3", "P5P5", Sort_confs);
+  data_2pts_SM.Read(Corr_path+"_mass", "mes_contr_2pts_SM_3", "P5P5", Sort_confs);
+  data_2pts_SMSM.Read(Corr_path+"_mass", "mes_contr_2pts_SMSM_3", "P5P5", Sort_confs);
 
   
  
@@ -516,21 +518,18 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       distr_t FA_T_d_real(UseJack, Njacks);
 
       
-      bool BW=(t_07>(Corr.Nt/2));
       auto HeavyTheta=[](const int x) {  return ((x>=0)+(x>0))/2.0;   };
       auto Exp= [&Njacks, &UseJack](const distr_t &A) -> distr_t { distr_t ret(UseJack); for(int ijack=0;ijack<Njacks;ijack++) ret.distr.push_back( exp(A.distr[ijack])); return ret;};
       double T=Corr.Nt;
       
       for(int ty=0; ty < Corr.Nt; ty++) {
 	
-	const distr_t f1=  
-	(BW==true)?Exp(-(T/2+ty)*Eg_off):Exp(-(T/2-ty)*Eg_off);
+	const distr_t f1=  Exp(-(T/2-ty)*Eg_off);
 
-	const distr_t f2=
-	  (BW==true)?Exp((T/2-ty)*Eg_off):Exp(-((3*T/2)-ty)*Eg_off);
+	const distr_t f2= Exp(-((3*T/2)-ty)*Eg_off);
 
-	const double f1_real= (BW==true)?exp(-(T/2+ty)*Eg):exp(-(T/2-ty)*Eg);
-	const double f2_real= (BW==true)?exp((T/2-ty)*Eg):exp(-((3*T/2)-ty)*Eg);
+	const double f1_real= exp(-(T/2-ty)*Eg);
+	const double f2_real= exp(-((3*T/2)-ty)*Eg);
 	
 	const double h1=HeavyTheta((T/2)-ty);
 	const double h2=HeavyTheta(ty-(T/2));
@@ -543,7 +542,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	FV_T_d_real = FV_T_d_real + (sign_kz*T_d.distr_list[ty]*(1.0- xg/2.0)   + B_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
 	FA_T_u_real = FA_T_u_real + ( B_u.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_u.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
 	FA_T_d_real = FA_T_d_real + ( B_d.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
-	if(ty<= t_07) {
+	if(ty<= t_07_s) {
 	  F_T_d_I = F_T_d_I + (sign_kz*T_d.distr_list[ty]*(xg/2.0)   + B_d.distr_list[ty]*xg/2.0 )*(h1*f1+ h2*f2);
 	}
       }
@@ -551,12 +550,12 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       
          
       //normalize
-      F_T_u = F_T_u*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07))*Exp( M_P*t_07) ;
-      F_T_d_I = F_T_d_I*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07))*Exp( M_P*t_07) ;
-      FV_T_u_real= FV_T_u_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07))*Exp( M_P*t_07) ;
-      FV_T_d_real= FV_T_d_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07))*Exp( M_P*t_07) ;
-      FA_T_u_real= FA_T_u_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07))*Exp( M_P*t_07) ;
-      FA_T_d_real= FA_T_d_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07))*Exp( M_P*t_07) ;
+      F_T_u = F_T_u*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_c))*Exp( M_P*t_07_c) ;
+      F_T_d_I = F_T_d_I*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
+      FV_T_u_real= FV_T_u_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_c))*Exp( M_P*t_07_c) ;
+      FV_T_d_real= FV_T_d_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
+      FA_T_u_real= FA_T_u_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_c))*Exp( M_P*t_07_c) ;
+      FA_T_d_real= FA_T_d_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
       //push_back
       F_T_u_list[ixg].distr_list.push_back( F_T_u);
       F_T_d_I_list[ixg].distr_list.push_back( F_T_d_I);
@@ -572,7 +571,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
       distr_t_list Corr_TV_real(UseJack), Corr_TV_real_boot(UseJack);
 
-      for(int t=t_07; t <= Corr.Nt/2; t++) {
+      for(int t=t_07_s_HLT; t <= Corr.Nt/2; t++) {
 	
 	Corr_T.distr_list.push_back( sign_kz*T_d.distr_list[t] + B_d.distr_list[t]);
 	Corr_T_boot.distr_list.push_back( sign_kz*T_d_boot.distr_list[t] + B_d_boot.distr_list[t]);
@@ -584,8 +583,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
       int tmax= Corr_T.size();
 
-      distr_t FACT= ZT*(1.0/(mel_SMSM*Eg) )*Exp( M_P*t_07)*xg/2.0;
-      distr_t FACT_real = ZT*(1.0/(mel_SMSM*Eg) )*Exp( M_P*t_07);
+      distr_t FACT= ZT*(1.0/(mel_SMSM*Eg) )*Exp( M_P*t_07_s_HLT)*xg/2.0;
+      distr_t FACT_real = ZT*(1.0/(mel_SMSM*Eg) )*Exp( M_P*t_07_s_HLT);
 
       
       CorrAnalysis Corr_HLT(UseJack, Njacks,1000);
@@ -642,9 +641,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  double l_re_T;
 	  
 	  
-	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , "07_FF_Tw_"+to_string(t_07), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0,1));
+	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , "07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0,1));
 	  	  
-	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , "07_FF_Tw_"+to_string(t_07), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0,1));
+	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , "07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0,1));
 	  
 	 	  
 	  

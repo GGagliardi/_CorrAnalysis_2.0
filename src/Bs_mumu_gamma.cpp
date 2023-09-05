@@ -29,7 +29,7 @@ const Vfloat ratio_mh({1, 1.0 / 1.4835, 1.0 / 2.02827, 1.0 / 2.53531, 1.0 / 3.04
 const double mc_MS_bar_2_ave=  1.016392574;
 const double mc_MS_bar_2_err = 0.02247780935;
 const bool Compute_FF = false;
-const bool Skip_virtual_diagram = true;
+const bool Skip_virtual_diagram = false;
 const bool Generate_data_for_mass_spline = false;
 const bool Fit_single_reg = false;
 const string Reg_to_fit="3pt";
@@ -1385,7 +1385,7 @@ void Compute_Bs_mumu_gamma() {
   if(!Skip_virtual_diagram) {
   
   vector<bool> UseJack_list_07({1});
-  vector<int>  num_xg_list_07({4});
+  vector<int>  num_xg_list_07({1});
   vector<string> Corr_path_list_07({ "../Bs_mumu_gamma_data/07_virtual/mh0"});
   vector<string> out_tag_list_07({"mh0"});
   vector<string> Meson_list_07({"B0s"});
@@ -1405,7 +1405,7 @@ void Compute_Bs_mumu_gamma() {
     
     string path_out="../data/ph_emission/"+ph_type+"/"+MESON+"/07_virtual";
     
-    TFF_virtual_ret_list.push_back(Get_virtual_tensor_FF(num_xg_list_07[i], UseJack_list_07[i], NJ, MESON, Corr_path_list_07[i], path_out));
+    TFF_virtual_ret_list.push_back(Get_virtual_tensor_FF(num_xg_list_07[i], UseJack_list_07[i], NJ, MESON, Corr_path_list_07[i],  path_out));
   
   }
 
