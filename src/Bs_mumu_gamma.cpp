@@ -1386,9 +1386,9 @@ void Compute_Bs_mumu_gamma() {
   
   vector<bool> UseJack_list_07({1});
   vector<int>  num_xg_list_07({1});
-  vector<string> Corr_path_list_07({ "../Bs_mumu_gamma_data/07_virtual/mh0"});
-  vector<string> out_tag_list_07({"mh0"});
-  vector<string> Meson_list_07({"B0s"});
+  vector<string> Corr_path_list_07({ "../Bs_mumu_gamma_data/07_virtual/mh4"});
+  vector<string> out_tag_list_07({"mh4"});
+  vector<string> Meson_list_07({"B4s"});
 
   vector<rt_07_Bs> TFF_virtual_ret_list;
   

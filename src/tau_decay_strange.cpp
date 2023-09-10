@@ -6,7 +6,7 @@
 const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
 const bool UseJack=1;
-const int Njacks=25;
+const int Njacks=50;
 const int Nboots=800;
 const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
@@ -100,7 +100,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
     else if(channel=="Vii") {
       if(Ens == "cB211b.072.64") {   Ra0= 6e5;   }
       else if(Ens == "cB211b.072.96") {  Ra0= 6e5;    }
-      else if(Ens == "cC211a.06.80") {   Ra0= 2e7;   }
+      else if(Ens == "cC211a.06.80") {   Ra0= 1e8;   }
       else if(Ens == "cC211a.06.112") { Ra0= 5e7;   }
       else if(Ens == "cD211a.054.96") {  Ra0=1e6;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");

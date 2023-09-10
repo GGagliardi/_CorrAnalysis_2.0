@@ -4,7 +4,7 @@
 using namespace std;
 
 bool verbose_lev_07=1;
-Vfloat sigmas_07({1.5,1.25,1.0, 0.75, 0.5,0.4,0.3,0.15}); //sigma in GeV  
+Vfloat sigmas_07({1.5,1.25,1.0, 0.75, 0.5,0.4,0.3,0.25}); //sigma in GeV  
 int prec_07=128;
 const string MODE_FF="TANT";
 const bool Skip_spectral_reconstruction_07=false;
@@ -12,7 +12,7 @@ const double Mjpsi= 3.0969; //GeV
 const double Mphi= 1.019461; //GeV
 const double MDs_phys = 1.96847; // GeV
 const double E0_fact = 0.90;
-const bool CONS_EM_CURRENT = true;
+const bool CONS_EM_CURRENT = false;
 const string SM_TYPE = "FF_Exp";
 const double QU = -1.0/3;
 const double QD = -1.0/3;
@@ -29,9 +29,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   cout<<"current max exponent: "<<PrecFloat::getEmax()<<endl;
   cout<<"Number of xg to analyze: "<<n_xg<<endl;
 
-  int t_07_s=14;
-  int t_07_s_HLT=14;
-  int t_07_c=25;
+  int t_07_s=20;
+  int t_07_s_HLT=20;
+  int t_07_c=20;
 
   string TAG_CURR="";
   if(CONS_EM_CURRENT==false) TAG_CURR="LOC_";
@@ -522,7 +522,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       auto Exp= [&Njacks, &UseJack](const distr_t &A) -> distr_t { distr_t ret(UseJack); for(int ijack=0;ijack<Njacks;ijack++) ret.distr.push_back( exp(A.distr[ijack])); return ret;};
       double T=Corr.Nt;
       
-      for(int ty=0; ty < Corr.Nt; ty++) {
+      for(int ty=0; ty < Corr.Nt/2; ty++) {
 	
 	const distr_t f1=  Exp(-(T/2-ty)*Eg_off);
 
@@ -633,7 +633,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  double s= sigmas_07[isg]*a_distr.ave();
 	  
 	  double syst_T;
-	  double mult_T= 0.5;
+	  double mult_T_IM= 0.01;
+	  double mult_T_RE=0.05;
 	  double Ag_target=1e-4;
 	  if(sigmas_07[isg] < 0.5) Ag_target=5e-2;
 	  else if(sigmas_07[isg] < 0.7) Ag_target=5e-3;
@@ -641,9 +642,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  double l_re_T;
 	  
 	  
-	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , "07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0,1));
+	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , "07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0,1));
 	  	  
-	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , "07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0,1));
+	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , "07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0,1));
 	  
 	 	  
 	  
