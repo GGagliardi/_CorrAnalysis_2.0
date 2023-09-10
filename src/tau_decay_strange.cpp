@@ -163,10 +163,11 @@ void tau_decay_analysis_strange() {
 
   get_sigma_list_strange();
 
-  Vfloat betas({ 3.99, 4.99});
-  Vfloat Emax_list({4.0, 4.0 });
-  vector<bool> Is_Emax_Finite({1,1});
-  
+
+  Vfloat betas({ 2.99, 3.99, 4.99, 5.99, 2.99, 1.99 });
+  Vfloat Emax_list({4.0, 4.0 , 4.0, 4.0, 5.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,1,1,1,1,0});
+
   
 
   int rank, size;
