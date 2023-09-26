@@ -7,7 +7,7 @@
 using namespace std;
 
 const int Nboots= 800;
-const int NJ=20;
+const int NJ=25;
 const double Qu = -1.0/3.0; //electric charge of d-type quark
 const double Qd = -1.0/3.0; //electric charge of d-type quark
 const double qqu = 2.0/3.0; //electric charge of u-type quark
@@ -29,10 +29,12 @@ const Vfloat ratio_mh({1, 1.0 / 1.4835, 1.0 / 2.02827, 1.0 / 2.53531, 1.0 / 3.04
 const double mc_MS_bar_2_ave=  1.016392574;
 const double mc_MS_bar_2_err = 0.02247780935;
 const bool Compute_FF = false;
-const bool Skip_virtual_diagram = false;
+const bool Skip_virtual_diagram = true;
 const bool Generate_data_for_mass_spline = false;
 const bool Fit_single_reg = false;
-const string Reg_to_fit="3pt";
+const string Reg_to_fit = "3pt";
+const double k_erf = 1e10;
+const bool plot_fit_func_fBs=false;
 
 
 void rt_FF_Bs::Print(string path) {
@@ -279,8 +281,9 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FA_Td") {
 	if(ixg==1) {  Tmin=23; Tmax=35;  }
-	else if(ixg==2) {  Tmin=14; Tmax=30;
-	  if(Ens=="cA211a.12.48") { Tmin += 9; Tmax+=9;}
+	else if(ixg==2) {  Tmin=19; Tmax=35;
+	  if(Ens=="cA211a.12.48") { Tmin += 4; Tmax+=4;}
+	  if(Ens=="cD211a.054.96") { Tmin+=5; Tmax+=5;} 
 	}
 	else if(ixg==3) {  Tmin=18; Tmax=31;
 	  if(Ens=="cD211a.054.96") { Tmin += 4; Tmax+=4;}
@@ -328,7 +331,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       else if(obs=="FAd") {	
 	if(ixg==1) {  Tmin=18; Tmax=31;  }
 	else if(ixg==2) {  Tmin=14; Tmax=24;  }
-	else if(ixg==3) {  Tmin=17; Tmax=27;  }
+	else if(ixg==3) {  Tmin=14; Tmax=27;  }
 	else if(ixg==4) {  Tmin=15; Tmax=24;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -356,8 +359,8 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       else if(obs=="FA_Td") {
 	if(ixg==1) {  Tmin=24; Tmax=36; use_old=false; }
 	else if(ixg==2) {  Tmin=28; Tmax=39; use_old=false;  }
-	else if(ixg==3) {  Tmin=32; Tmax=40; use_old=false;  }
-	else if(ixg==4) {  Tmin=32; Tmax=51; use_old=false;  }
+	else if(ixg==3) {  Tmin=30; Tmax=38; use_old=false;  }
+	else if(ixg==4) {  Tmin=30; Tmax=43; use_old=false;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Tu") {
@@ -394,7 +397,9 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	  if(Ens=="cD211a.054.96") {Tmin-=8; Tmax-=8;}
 	}
 	else if(ixg==3) {  Tmin=18; Tmax=26;	}
-	else if(ixg==4) {  Tmin=15; Tmax=26;	}
+	else if(ixg==4) {  Tmin=15; Tmax=26;
+	  if(Ens=="cD211a.054.96") { Tmin +=3;}
+	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") {
@@ -403,7 +408,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	   if(Ens=="cB211b.072.64") {Tmin-=3; Tmax+=2;}
 	}
 	else if(ixg==2) {  Tmin=17; Tmax=25;
-	  if(Ens=="cD211a.054.96") {Tmin+=8; Tmax+=8;}
+	  if(Ens=="cD211a.054.96") {Tmin+=6; Tmax+=8;}
 	}
 	else if(ixg==3) {  Tmin=16; Tmax=29;
 	  if(Ens=="cD211a.054.96") {Tmin+=8; Tmax+=8;}
@@ -428,15 +433,21 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=33; Tmax=44;  }
+	if(ixg==1) {  Tmin=33; Tmax=44;
+	  if(Ens=="cA211a.12.48") { Tmin+=3;}
+	  if(Ens=="cD211a.054.96") { Tmax -=6;    }
+
+	}
 	else if(ixg==2) {  Tmin=27; Tmax=36;
 	  if(Ens=="cA211a.12.48") {Tmin+=3;}
+	  if(Ens=="cB211b.072.64") {Tmin+=2; Tmax+=2;}
+	  if(Ens=="cD211a.054.96") {Tmin+=2; Tmax+=2;}
 	}
 	else if(ixg==3) {  Tmin=26; Tmax=37;  }
 	else if(ixg==4) {  Tmin=24; Tmax=29;
 	  if(Ens=="cA211a.12.48") {Tmin-=7; Tmax+=4;}
-	  if(Ens=="cB211b.072.64") {Tmax+=6;}
-	  if(Ens=="cD211a.054.96") {Tmin+=11; Tmax+=11;}
+	  if(Ens=="cB211b.072.64") {Tmin-=1; Tmax+=8;}
+	  if(Ens=="cD211a.054.96") { Tmax+=4;}
 	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -467,10 +478,12 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	if(ixg==1) {  Tmin=37; Tmax=50;
 	  if(Ens=="cA211a.12.48") {Tmin-=6;}
 	  if(Ens=="cD211a.054.96") {Tmin-=5; Tmax-=5;}
+	  if(Ens=="cB211b.072.64") {Tmin+=3;}
 	}
 	else if(ixg==2) {  Tmin=33; Tmax=50;
-	  if(Ens=="cA211a.12.48") {Tmin-=5; Tmax-=5;}
+	  if(Ens=="cA211a.12.48") {Tmin-=3; Tmax-=5;}
 	  if(Ens=="cD211a.054.96") {Tmin-=3;}
+	  if(Ens=="cB211b.072.64") {Tmin+=2;}
 	}
 	else if(ixg==3) {  Tmin=25; Tmax=37;
 	  if(Ens=="cB211b.072.64") {Tmax-=2; Tmax-=5;}
@@ -486,12 +499,13 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	  if(Ens=="cD211a.054.96") {Tmin-=3; Tmax+=5;}
 	}
 	else if(ixg==2) {  Tmin=27; Tmax=34;
-	  if(Ens=="cB211b.072.64") {Tmin+=2; Tmax+=4;}
+	  if(Ens=="cB211b.072.64") {Tmin+=5; Tmax+=7;}
 	  if(Ens=="cD211a.054.96") {Tmin+=3; Tmax+=7;}
 	  if(Ens=="cA211a.12.48")  {Tmin+=4; Tmax+=4;}
 	}
 	else if(ixg==3) {  Tmin=26; Tmax=33;
 	  if(Ens=="cD211a.054.96") {Tmin+=3; Tmax+=8;}
+	  if(Ens=="cB211b.072.64") {Tmin+=6; Tmax+=6;}
 	}
 	else if(ixg==4) {  Tmin=23; Tmax=31;
 	  if(Ens=="cA211a.12.48") {Tmin-=7;}
@@ -512,8 +526,8 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") {
-	if(ixg==1) {  Tmin=19; Tmax=37; use_old=false;  }
-	else if(ixg==2) {  Tmin=15; Tmax=22;  }
+	if(ixg==1) {  Tmin=22; Tmax=37; use_old=false;  }
+	else if(ixg==2) {  Tmin=18; Tmax=25;  }
 	else if(ixg==3) {  Tmin=13; Tmax=29;  }
 	else if(ixg==4) {  Tmin=12; Tmax=29;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
@@ -526,9 +540,9 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=42; Tmax=53;  }
+	if(ixg==1) {  Tmin=32; Tmax=43;  }
 	else if(ixg==2) {  Tmin=27; Tmax=36;  }
-	else if(ixg==3) {  Tmin=22; Tmax=31;  }
+	else if(ixg==3) {  Tmin=24; Tmax=31;  }
 	else if(ixg==4) {  Tmin=22; Tmax=28;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -548,14 +562,14 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FV_Tu") {
 	if(ixg==1) {  Tmin=37; Tmax=50;  }
-	else if(ixg==2) {  Tmin=28; Tmax=42;  }
+	else if(ixg==2) {  Tmin=31; Tmax=42;  }
 	else if(ixg==3) {  Tmin=30; Tmax=47; use_old=false;  }
 	else if(ixg==4) {  Tmin=24; Tmax=39; use_old=false;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=40; Tmax=45; }
-	else if(ixg==2) {  Tmin=30; Tmax=44; use_old=false;}
+	if(ixg==1) {  Tmin=35; Tmax=45; }
+	else if(ixg==2) {  Tmin=32; Tmax=46; use_old=false;}
 	else if(ixg==3) {  Tmin=22; Tmax=33;  }
 	else if(ixg==4) {  Tmin=17; Tmax=31;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
@@ -584,7 +598,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	}
 	else if(ixg==4) {  Tmin=26; Tmax=34;
 	  if(Ens=="cA211a.12.48") {Tmin-=7; Tmax-=7;}
-	  if(Ens=="cB211b.072.64") {Tmin-=2;}
+	  if(Ens=="cB211b.072.64") {Tmin-=6;}
 	  if(Ens=="cD211a.054.96") {Tmin-=11; Tmax-=11;}
 	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
@@ -596,15 +610,17 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	  if(Ens=="cD211a.054.96") {Tmin-=12;}
 	}
 	else if(ixg==2) {  Tmin=24; Tmax=35;
-	  if(Ens=="cA211a.12.48") {Tmin-=5; Tmax-=7;}
-	  if(Ens=="cB211b.072.64") {Tmin-=6; Tmax-=6;}
+	  if(Ens=="cA211a.12.48") {Tmin-=8; Tmax-=7;}
+	  if(Ens=="cB211b.072.64") {Tmin-=8; Tmax-=6;}
+	  if(Ens=="cD211a.054.96") {Tmin-=2; Tmax -=3;}
 	}
 	else if(ixg==3) {  Tmin=24; Tmax=35;
-	  if(Ens=="cA211a.12.48") {Tmin-=13; Tmax-=13;}
+	  if(Ens=="cA211a.12.48") {Tmin-=12; Tmax-=13;}
 	  if(Ens=="cB211b.072.64") {Tmin-=12; Tmax-=6;}
+	  if(Ens=="cD211a.054.96") {Tmin-=1; Tmax-=3;}
 	}
 	else if(ixg==4) {  Tmin=24; Tmax=35;
-	   if(Ens=="cA211a.12.48") {Tmin-=15; Tmax-=15;}
+	   if(Ens=="cA211a.12.48") {Tmin-=14; Tmax-=15;}
 	   if(Ens=="cB211b.072.64") {Tmin-=14; Tmax-=16;}
 	   if(Ens=="cD211a.054.96") {Tmin-=4;}
 	}
@@ -631,15 +647,20 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=31; Tmax=45;
 	  if(Ens=="cA211a.12.48") {Tmin-=1;}
+	  if(Ens=="cD211a.054.96") { Tmax-=7;}
+	  if(Ens=="cB211b.072.64") {Tmin+=2;}
 	}
-	else if(ixg==2) {  Tmin=27; Tmax=36;  }
+	else if(ixg==2) {  Tmin=27; Tmax=36;
+	  if(Ens=="cB211b.072.64") {Tmin+=3; Tmax+=3;}
+	  if(Ens=="cD211a.054.96") {Tmin-=1; Tmax+=0;}
+	}
 	else if(ixg==3) {  Tmin=23; Tmax=30;
 	  if(Ens=="cA211a.12.48") {Tmin-=4;}
-	  if(Ens=="cB211b.072.64") {Tmin+=5; Tmax+=5;}
+	  if(Ens=="cB211b.072.64") {Tmin+=3; Tmax+=7;}
 	}
 	else if(ixg==4) {  Tmin=21; Tmax=30;
 	  if(Ens=="cA211a.12.48") {Tmin-=8; Tmax-=8;}
-	  if(Ens=="cB211b.072.64") {Tmin-=7; Tmax-=8;}
+	  if(Ens=="cB211b.072.64") {Tmin-=4; Tmax-=8;}
 	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -672,9 +693,11 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	}
 	else if(ixg==2) {  Tmin=31; Tmax=39;
 	  if(Ens=="cA211a.12.48") {Tmin-=7; Tmax-=7;}
+	  if(Ens=="cB211b.072.64") {Tmin-=3;}
 	}
 	else if(ixg==3) {  Tmin=24; Tmax=35;
 	  if(Ens=="cD211a.054.96") { Tmin += 4; Tmax+=4;   }
+	  if(Ens=="cA211a.12.48") {Tmin+=2;}
 	}
 	else if(ixg==4) {  Tmin=24; Tmax=38;
 	  if(Ens=="cA211a.12.48") {Tmin-=4;}
@@ -685,8 +708,8 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FV_Td") {
 	if(ixg==1) {  Tmin=29; Tmax=35;
-	  if(Ens=="cA211a.12.48") {Tmin-=1; Tmax-=1;}
-	  if(Ens=="cB211b.072.64") { Tmin += 1; Tmax+=3;   }
+	  if(Ens=="cA211a.12.48") {Tmin-=0; Tmax-=1;}
+	  if(Ens=="cB211b.072.64") { Tmin += 3; Tmax+=3;   }
 	  if(Ens=="cD211a.054.96") { Tmin += 3; Tmax+=3;   }
 	}
 	else if(ixg==2) {  Tmin=27; Tmax=34;
@@ -716,7 +739,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	if(ixg==1) {  Tmin=18; Tmax=32;  }
 	else if(ixg==2) {  Tmin=12; Tmax=33;  }
 	else if(ixg==3) {  Tmin=14; Tmax=33;  }
-	else if(ixg==4) {  Tmin=14; Tmax=33;  }
+	else if(ixg==4) {  Tmin=13; Tmax=22;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
@@ -727,7 +750,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVd") {
-	if(ixg==1) {  Tmin=33; Tmax=45;  }
+	if(ixg==1) {  Tmin=30; Tmax=39;  }
 	else if(ixg==2) {  Tmin=24; Tmax=36;  }
 	else if(ixg==3) {  Tmin=24; Tmax=30;  }
 	else if(ixg==4) {  Tmin=16; Tmax=30;  }
@@ -741,7 +764,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Td") {
-	if(ixg==1) {  Tmin=27; Tmax=34;  }
+	if(ixg==1) {  Tmin=29; Tmax=34;  }
 	else if(ixg==2) {  Tmin=20; Tmax=30;  }
 	else if(ixg==3) {  Tmin=17; Tmax=27;  }
 	else if(ixg==4) {  Tmin=12; Tmax=23;  }
@@ -755,7 +778,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=27; Tmax=34;  }
+	if(ixg==1) {  Tmin=31; Tmax=33;  }
 	else if(ixg==2) {  Tmin=25; Tmax=34;  }
 	else if(ixg==3) {  Tmin=24; Tmax=34;  }
 	else if(ixg==4) {  Tmin=20; Tmax=30;  }
@@ -796,18 +819,18 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	}
 	else if(ixg==2) {  Tmin=24; Tmax=31;
 	  if(Ens=="cA211a.12.48") { Tmin-=12; Tmax-=12;}
-	  if(Ens=="cB211b.072.64") { Tmin-=6; Tmax-=2;}
+	  if(Ens=="cB211b.072.64") { Tmin-=12; Tmax-=13;}
 	  if(Ens=="cD211a.054.96") { Tmin-=3;}
 	}
 	else if(ixg==3) {  Tmin=22; Tmax=33;
-	  if(Ens=="cA211a.12.48") { Tmin-=12; Tmax-=16;}
+	  if(Ens=="cA211a.12.48") { Tmin-=10; Tmax-=15;}
 	  if(Ens=="cB211b.072.64") { Tmin-=13; Tmax-=13;}
-	  if(Ens=="cD211a.054.96") { Tmin-=4;}
+	  if(Ens=="cD211a.054.96") { Tmin-=0;}
 	}
 	else if(ixg==4) {  Tmin=22; Tmax=30;
 	  if(Ens=="cA211a.12.48") { Tmin-=14; Tmax-=11;}
-	  if(Ens=="cD211a.054.96") { Tmin -= 10; Tmax -=4 ;}
-	  if(Ens=="cB211b.072.96") { Tmin -= 15; Tmax -=15;}
+	  if(Ens=="cD211a.054.96") { Tmin -= 7; Tmax -=4 ;}
+	  if(Ens=="cB211b.072.64") { Tmin -= 13; Tmax -=15;}
 	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -830,13 +853,16 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	if(ixg==1) {  Tmin=26; Tmax=32;
 	  if(Ens=="cA211a.12.48") { Tmin-=1; Tmax-=4;}
 	  if(Ens=="cD211a.054.96") { Tmin+=3; Tmax+=3;}
+	  if(Ens=="cB211b.072.64") {Tmin +=2; Tmax+=2;}
 	}
 	else if(ixg==2) {  Tmin=23; Tmax=30;
 	  if(Ens=="cA211a.12.48") { Tmin-=5; Tmax-=5;}
+	  if(Ens=="cD211a.054.96") {Tmin+=1; Tmax+=1;}
+	  if(Ens=="cB211b.072.64") {Tmin+=2;}
 	}
 	else if(ixg==3) {  Tmin=20; Tmax=25;
 	  if(Ens=="cA211a.12.48") { Tmin-=4;}
-	  if(Ens=="cD211a.054.96") { Tmin += 4; Tmax +=4 ;}
+	  if(Ens=="cD211a.054.96") { Tmin += 3; Tmax +=5 ;}
 	}
 	else if(ixg==4) {  Tmin=17; Tmax=24;
 	  if(Ens=="cA211a.12.48") { Tmin-=5; Tmax-=5;}
@@ -930,9 +956,9 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FAd") { //non bellissimi
 	if(ixg==1) {  Tmin=17; Tmax=24;  }
-	else if(ixg==2) {  Tmin=24; Tmax=31;  }
+	else if(ixg==2) {  Tmin=12; Tmax=19;  }
 	else if(ixg==3) {  Tmin=12; Tmax=22;  }
-	else if(ixg==4) {  Tmin=16; Tmax=30;  }
+	else if(ixg==4) {  Tmin=12; Tmax=26;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
@@ -971,7 +997,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=24; Tmax=40;  }
+	if(ixg==1) {  Tmin=26; Tmax=36;  }
 	else if(ixg==2) {  Tmin=21; Tmax=30;  }
 	else if(ixg==3) {  Tmin=20; Tmax=27;  }
 	else if(ixg==4) {  Tmin=15; Tmax=23;  }
@@ -1009,22 +1035,23 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       else if(obs=="FAd") { //not very nice
 	if(ixg==1) {  Tmin=21; Tmax=24;
 	  if(Ens=="cA211a.12.48") { Tmin-=6; Tmax-=5;}
-	  if(Ens=="cB211b.072.64") {Tmin-=4; Tmax+=6;}
-	  if(Ens=="cD211a.054.96") { Tmin -= 5; Tmax+=4;}
+	  if(Ens=="cB211b.072.64") {Tmin-=6; Tmax+=2;}
+	  if(Ens=="cD211a.054.96") { Tmin -= 5; Tmax+=0;}
 	}
 	else if(ixg==2) {  Tmin=21; Tmax=24;
 	  if(Ens=="cA211a.12.48") { Tmin-=7; Tmax-=5;}
-	  if(Ens=="cB211b.072.64") {Tmin+=2; Tmax+=4;}
-	  if(Ens=="cD211a.054.96") { Tmin += 4; Tmax+=9;}
+	  if(Ens=="cB211b.072.64") {Tmin-=10; Tmax-=10;}
+	  if(Ens=="cD211a.054.96") { Tmin += 2; Tmax+=6;}
 	}
 	else if(ixg==3) {  Tmin=21; Tmax=25;
-	  if(Ens=="cA211a.12.48") { Tmin-=6; Tmax-=6;}
-	  if(Ens=="cB211b.072.64") {Tmin+=4; Tmax+=4;}
-	  if(Ens=="cD211a.054.96") { Tmin += 5; Tmax+=5;}
+	  if(Ens=="cA211a.12.48") { Tmin-=7; Tmax-=7;}
+	  if(Ens=="cB211b.072.64") {Tmin-=13; Tmax-=13;}
+	  if(Ens=="cD211a.054.96") { Tmin -= 3; Tmax+=4;}
 	}
 	else if(ixg==4) {  Tmin=21; Tmax=26;
-	  if(Ens=="cA211a.12.48") { Tmin-=2;}
-	  if(Ens=="cB211b.072.64") {Tmin-=2; Tmax-=2;}
+	  if(Ens=="cA211a.12.48") { Tmin-=7; Tmax-=5;}
+	  if(Ens=="cB211b.072.64") {Tmin-=12; Tmax-=12;}
+	  if(Ens=="cD211a.054.96") {Tmin -=11; Tmax-=9;}
 	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -1047,12 +1074,14 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=22; Tmax=30;
-	  if(Ens=="cA211a.12.48") { Tmin-=2; Tmax-=2;}
-	  if(Ens=="cD211a.054.96") { Tmin += 7; Tmax+=4;}
+	  if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=5;}
+	  if(Ens=="cD211a.054.96") { Tmin += 8; Tmax+=4;}
+	  if(Ens=="cB211b.072.64") { Tmin +=2; }
 	}
 	else if(ixg==2) {  Tmin=21; Tmax=27;
-	   if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=3;}
-	   if(Ens=="cD211a.054.96") { Tmin += 3;}
+	  if(Ens=="cB211b.072.64") { Tmin-=1; Tmax-=1;}
+	  if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=3;}
+	  if(Ens=="cD211a.054.96") { Tmin += 3;}
 	}
 	else if(ixg==3) {  Tmin=17; Tmax=24;
 	  if(Ens=="cB211b.072.64") {Tmin+=1; Tmax-=1;}
@@ -1064,7 +1093,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FA_Tu") {
-	if(ixg==1) {  Tmin=15; Tmax=24; if(Ens=="cB211b.072.96") Tmin -=4;  }
+	if(ixg==1) {  Tmin=15; Tmax=24; if(Ens=="cB211b.072.64") Tmin -=4;  }
 	else if(ixg==2) {  Tmin=17; Tmax=24;  }
 	else if(ixg==3) {  Tmin=17; Tmax=24;  }
 	else if(ixg==4) {  Tmin=18; Tmax=28;  }
@@ -1083,9 +1112,10 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else if(ixg==3) {  Tmin=15; Tmax=23;
 	  if(Ens=="cA211a.12.48") { Tmin-=5; Tmax-=7;}
 	  if(Ens=="cB211b.072.64") { Tmin-=3; }
+	  if(Ens=="cD211a.054.96") { Tmin -=6; Tmax -=9;}
 	}
 	else if(ixg==4) {  Tmin=12; Tmax=21;
-	  if(Ens=="cD211a.054.96") {Tmin+=10; Tmax += 10; }
+	  if(Ens=="cD211a.054.96") {Tmin-=1; Tmax -= 4; }
 	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
@@ -1111,16 +1141,18 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FV_Td") {
 	if(ixg==1) {  Tmin=26; Tmax=30;
-	  if(Ens=="cA211a.12.48") { Tmin-=7; Tmax-=7;}
+	  if(Ens=="cA211a.12.48") { Tmin-=6; Tmax-=7;}
 	  if(Ens=="cD211a.054.96") {Tmin+=3; Tmax += 6; }
+	  if(Ens=="cB211b.072.64") {Tmin-=2; Tmax -=1; }
 	}
 	else if(ixg==2) {  Tmin=24; Tmax=30;
 	    if(Ens=="cA211a.12.48") { Tmin-=6; Tmax-=6;}
-	    if(Ens=="cD211a.054.96") {Tmin+=3; Tmax += 6; }
+	    if(Ens=="cD211a.054.96") {Tmin+=3; Tmax += 4; }
+	    if(Ens=="cB211b.072.64") {Tmin-=4; Tmax-=4;}
 	}
 	else if(ixg==3) {  Tmin=16; Tmax=24;
 	  if(Ens=="cA211a.12.48") { Tmin-=3; Tmax-=5;}
-	  if(Ens=="cD211a.054.96") {Tmin+=5; Tmax += 3; }
+	  if(Ens=="cD211a.054.96") {Tmin+=6; Tmax += 2; }
 	}
 	else if(ixg==4) {  Tmin=11; Tmax=17;
 	  if(Ens=="cA211a.12.48") { Tmin+=1; Tmax+=1;}
@@ -1138,10 +1170,10 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
        else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FAd") { //not very nice
-	if(ixg==1) {  Tmin=18; Tmax=24;  }
-	else if(ixg==2) {  Tmin=25; Tmax=33;  }
-	else if(ixg==3) {  Tmin=27; Tmax=34;  }
-	else if(ixg==4) {  Tmin=21; Tmax=26;  }
+	if(ixg==1) {  Tmin=15; Tmax=21;  }
+	else if(ixg==2) {  Tmin=12; Tmax=17;  }
+	else if(ixg==3) {  Tmin=13; Tmax=17;  }
+	else if(ixg==4) {  Tmin=11; Tmax=16;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FVu") {
@@ -1153,7 +1185,7 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
       }
       else if(obs=="FVd") {
 	if(ixg==1) {  Tmin=24; Tmax=30;  }
-	else if(ixg==2) {  Tmin=24; Tmax=27;  }
+	else if(ixg==2) {  Tmin=23; Tmax=26;  }
 	else if(ixg==3) {  Tmin=18; Tmax=27;  }
 	else if(ixg==4) {  Tmin=15; Tmax=23;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
@@ -1180,8 +1212,8 @@ void Get_Bs_Mh_Tmin_Tmax(string obs, string mh,  int &Tmin, int &Tmax, int ixg, 
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
       }
       else if(obs=="FV_Td") {
-	if(ixg==1) {  Tmin=26; Tmax=30;  }
-	else if(ixg==2) {  Tmin=24; Tmax=30;  }
+	if(ixg==1) {  Tmin=24; Tmax=30;  }
+	else if(ixg==2) {  Tmin=20; Tmax=26;  }
 	else if(ixg==3) {  Tmin=16; Tmax=24;  }
 	else if(ixg==4) {  Tmin=11; Tmax=17;  }
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
@@ -1384,18 +1416,16 @@ void Compute_Bs_mumu_gamma() {
 
   if(!Skip_virtual_diagram) {
   
-  vector<bool> UseJack_list_07({1});
-  vector<int>  num_xg_list_07({1});
-  vector<string> Corr_path_list_07({ "../Bs_mumu_gamma_data/07_virtual/mh4"});
-  vector<string> out_tag_list_07({"mh4"});
-  vector<string> Meson_list_07({"B4s"});
+    vector<bool> UseJack_list_07({1,1,1});
+    vector<int>  num_xg_list_07({4,4,4});
+    vector<string> Corr_path_list_07({ "../Bs_mumu_gamma_data/07_virtual/mh0", "../Bs_mumu_gamma_data/07_virtual/mh1", "../Bs_mumu_gamma_data/07_virtual/mh3"  });
+    vector<string> out_tag_list_07({"mh0", "mh1", "mh3"});
+    vector<string> Meson_list_07({"B0s", "B1s", "B3s"});
 
   vector<rt_07_Bs> TFF_virtual_ret_list;
   
   int NN= UseJack_list_07.size();
   for(int i=0;i<NN;i++) {
-    Bs_xg_t_list.clear();
-    Get_Bs_xg_t_list(num_xg_list_07[i]);
     MESON=Meson_list_07[i];
     //create output directories
     boost::filesystem::create_directory("../data/ph_emission");
@@ -1406,11 +1436,12 @@ void Compute_Bs_mumu_gamma() {
     string path_out="../data/ph_emission/"+ph_type+"/"+MESON+"/07_virtual";
     
     TFF_virtual_ret_list.push_back(Get_virtual_tensor_FF(num_xg_list_07[i], UseJack_list_07[i], NJ, MESON, Corr_path_list_07[i],  path_out));
+    
+  }
   
   }
 
-  }
-  
+  //exit(-1);
 
 
       
@@ -1547,8 +1578,6 @@ void Compute_Bs_mumu_gamma() {
   distr_t_list masses(1), fps(1), phis(1);
   int FF_SIZE= (signed)FF_ret_list.size();
   for(int m=0; m< Nmasses ; m++) {
-    GaussianMersenne GM_syst_phi(33354354);
-    GaussianMersenne GM_syst_mp(33354354);
     vector<distr_t> VAL_MASS, VAL_PHI;
     vector<double> CH2_MASS, CH2_PHI;
     vector<int> Ndof_MASS, Ndof_PHI, Nmeas_MASS, Nmeas_PHI;
@@ -1566,10 +1595,10 @@ void Compute_Bs_mumu_gamma() {
       k++;
     }
 
-    masses.distr_list.push_back( AIC( VAL_MASS, CH2_MASS, Ndof_MASS, Nmeas_MASS, GM_syst_mp));
-    phis.distr_list.push_back( AIC( VAL_PHI, CH2_PHI, Ndof_PHI, Nmeas_PHI, GM_syst_phi));
+    masses.distr_list.push_back( AIC( VAL_MASS, CH2_MASS, Ndof_MASS, Nmeas_MASS));
+    phis.distr_list.push_back( AIC( VAL_PHI, CH2_PHI, Ndof_PHI, Nmeas_PHI));
     
-    fps.distr_list.push_back( phis.distr_list[m]/SQRT_D(masses[m]) );
+    fps.distr_list.push_back( phis.distr_list[m]/SQRT_D(masses.distr_list[m]) );
     
   }
 
@@ -1934,6 +1963,8 @@ void Compute_Bs_mumu_gamma() {
 
 
   cout<<"fBs: "<<f_Bs.ave()<<" +- "<<f_Bs.err()<<" [GeV] "<<endl;
+
+  if(plot_fit_func_fBs) {
   
   //######### PRINT FIT FUNCTION ##########
   //plot fit function
@@ -1972,10 +2003,10 @@ void Compute_Bs_mumu_gamma() {
 
   Print_To_File({},{ Inv_Masses_to_print, F_fB_fit.ave(), F_fB_fit.err(), C_HQET_fit.ave()} , out_path_fBs , "", "ch2/dof: "+to_string_with_precision(ch2_red_fB,5));
   Print_To_File({}, {ratio_mh, (1.0/masses).ave(), (1.0/masses).err(), fps.ave(), fps.err(), HQET_on_simulated_m, pole_mass_on_simulated_m}, "../data/ph_emission/"+ph_type+"/Bs_extr/fBs.dat", "", "");
-  
+
+  }
 	
   
-  exit(-1);
 
   
   //print continuum extrapolated results for each contribution as a function of the mass
@@ -1993,7 +2024,6 @@ void Compute_Bs_mumu_gamma() {
   
     for(int m=0; m<Nmasses; m++) {
       for(int ixg=1; ixg<num_xg_list[0];ixg++) {
-	GaussianMersenne GM_AIC(918743144);
 	vector<distr_t> FF_AIC;
 	vector<double> Ch2_AIC;
 	vector<int> Ndof_AIC;
@@ -2008,7 +2038,7 @@ void Compute_Bs_mumu_gamma() {
 	  k++;
 	}
 
-	distr_t RES=AIC( FF_AIC, Ch2_AIC, Ndof_AIC, Nmeas_AIC, GM_AIC);
+	distr_t RES=AIC( FF_AIC, Ch2_AIC, Ndof_AIC, Nmeas_AIC);
 	
 
 	FF_M[ixg-1].distr_list.push_back(RES);
@@ -2048,17 +2078,17 @@ void Compute_Bs_mumu_gamma() {
 	
 	//init bootstrap fit
 	bootstrap_fit<fpar_MEX,ipar_MEX> bf_MEX(NJ);
-	bf_MEX.set_warmup_lev(1); //sets warmup
+	bf_MEX.set_warmup_lev(2); //sets warmup
 	bf_MEX.Set_number_of_measurements(Nmasses);
 	bf_MEX.Set_verbosity(1);
 	
 	double guess_B= sqrt(2*0.24/Bs_xg_t_list[ixg-1]);
-	if( (contribs[c].substr(0,2) == "FA" && contribs[c].substr(0,4) != "FA_T") )  guess_B=  sqrt(2*0.1/Bs_xg_t_list[ixg-1]);
-	if( (contribs[c].substr(0,2) == "FB")) guess_B = sqrt( 2*0.1/Bs_xg_t_list[ixg-1]);
+	if( (contribs[c].substr(0,2) == "FA") )  guess_B=  sqrt(2*0.5/Bs_xg_t_list[ixg-1]);
+	if( (contribs[c].substr(0,2) == "FB")) guess_B = sqrt( 2*0.5/Bs_xg_t_list[ixg-1]);
 
 	double G= (contribs[c].substr( contribs[c].length()-1, 1) == "u")?masses.ave(2):1.0;
 	
-	bf_MEX.Add_par("A", (G*FF_M[ixg-1]/fps).ave(2), (G*FF_M[ixg-1]/fps).ave(2)/10);
+	bf_MEX.Add_par("A", (G*FF_M[ixg-1]/fps).ave(3), (G*FF_M[ixg-1]/fps).ave(3)/10);
 	bf_MEX.Add_par("B", guess_B , guess_B/10);
 	bf_MEX.Add_par("C", 0.1, 0.01);
 	//fit on mean values to get ch2
@@ -2066,32 +2096,33 @@ void Compute_Bs_mumu_gamma() {
 	bf_MEX_ch2.set_warmup_lev(1); //sets warmup
 	bf_MEX_ch2.Set_number_of_measurements(Nmasses);
 	bf_MEX_ch2.Set_verbosity(1);
-	bf_MEX_ch2.Add_par("A", (G*FF_M[ixg-1]/fps).ave(2), (G*FF_M[ixg-1]/fps).ave(2)/10);
+	bf_MEX_ch2.Add_par("A", (G*FF_M[ixg-1]/fps).ave(3), (G*FF_M[ixg-1]/fps).ave(3)/10);
 	bf_MEX_ch2.Add_par("B", guess_B, guess_B/10); 
 	bf_MEX_ch2.Add_par("C", 0.1, 0.01); 
 	bool C_fixed=true;
-	if(contribs[c]=="FA_d") C_fixed=true;
+	if(contribs[c]=="FA_d") {  C_fixed=true;}
+	if(contribs[c]=="FA_u") {  C_fixed=true;}
 	if(C_fixed) {
 	  bf_MEX.Fix_par("C", 0.0);
 	  bf_MEX_ch2.Fix_par("C", 0.0);
 	}
-	
-	//ansatz
-	int mode_fit_axial=0;
-	
-	bf_MEX.ansatz=  [&contribs, &c, &mode_fit_axial ](const fpar_MEX &p, const ipar_MEX &ip) {
 
-	  bool is_axial= (contribs[c].substr(0,2) == "FA" && contribs[c].substr(0,4) != "FA_T") || (contribs[c].substr(0,2) == "FB") ;
+	bool axial_mode_fit_2=false;
+	//ansatz
+	
+	bf_MEX.ansatz=  [&contribs, &c, &axial_mode_fit_2 ](const fpar_MEX &p, const ipar_MEX &ip) {
+
+	  bool is_axial= (contribs[c].substr(0,2) == "FA") || (contribs[c].substr(0,2) == "FB") ;
 
 	  double x= ip.M*ip.M;
 	  
 	  if(is_axial) x= ip.M;
 
-	  double func= (p.A/( 1 + p.B*p.B/x ))*( 1 + p.C/ip.M) ;
+	  double func= (p.A/( 1.0 + p.B*p.B/x ))*( 1 + p.C/ip.M );
 
-	  if(is_axial && mode_fit_axial) func= p.A*( 1 + p.B/ip.M)*(1 + p.C/ip.M);
+	  if(is_axial && axial_mode_fit_2 ) func= p.A*( 1 + p.B/ip.M)*(1 + p.C/ip.M);
 
-	  if(contribs[c].substr( contribs[c].length() -1, 1) == "u" ) func/= ip.M;
+	  if(contribs[c].substr( contribs[c].length() -1, 1) == "u" ) func /= ip.M;
 
 	  return func;
 	  
@@ -2115,6 +2146,27 @@ void Compute_Bs_mumu_gamma() {
 	bf_MEX_ch2.error = bf_MEX.error;
 
 	cout<<"Fitting contrib: "<<contribs[c]<<endl;
+
+
+
+	//insert covariance matrix
+	Eigen::MatrixXd Cov_Matrix_FF(Nmasses,Nmasses);
+	Eigen::MatrixXd Corr_Matrix_FF(Nmasses,Nmasses);
+	for(int i=0;i<Nmasses;i++)
+	  for(int j=0;j<Nmasses;j++) {
+	    Cov_Matrix_FF(i,j) = ((FF_M[ixg-1]/fps).distr_list[i])%((FF_M[ixg-1]/fps).distr_list[j]);
+	    Corr_Matrix_FF(i,j) = Cov_Matrix_FF(i,j)/( (FF_M[ixg-1]/fps).err(i)*(FF_M[ixg-1]/fps).err(j));
+	  }
+
+	//print on screen
+	cout<<"Correlation matrix FF: "<<contribs[c]<<endl;
+	cout<<Corr_Matrix_FF<<endl;
+	
+	//add cov matrix to bootstrap fit
+	bf_MEX.Add_covariance_matrix(Cov_Matrix_FF);
+	bf_MEX_ch2.Add_covariance_matrix(Cov_Matrix_FF);
+
+	
       
 	//start fitting
 	//fill the data
@@ -2172,9 +2224,13 @@ void Compute_Bs_mumu_gamma() {
 	FF_Bs_xg.distr_list.push_back( FF_Bs);
 	//#################################
 
+
+	 Vfloat Inv_Masses_to_print_MEX;
+	 for(int i=0;i<1000;i++) { Inv_Masses_to_print_MEX.push_back(  0.30*2*i/999  ) ;}
+
 	//######### PRINT FIT FUNCTION ##########
 	//plot fit function
-	for(auto &Minv: Inv_Masses_to_print) {
+	for(auto &Minv: Inv_Masses_to_print_MEX) {
 	  ipar_MEX pp_MEX;
 	  pp_MEX.M=1.0/Minv;
 	  distr_t F_MEX_M(1);
@@ -2186,7 +2242,7 @@ void Compute_Bs_mumu_gamma() {
 	}
 	//print
 	string out_path="../data/ph_emission/"+ph_type+"/Bs_extr/"+contribs[c]+"_ixg_"+to_string(ixg)+".fit_func";
-	Print_To_File({},{ Inv_Masses_to_print, (F_MEX_fit*f_Bs).ave(), (F_MEX_fit*f_Bs).err(),  F_MEX_fit.ave(), F_MEX_fit.err()} , out_path , "", "ch2/dof: "+to_string_with_precision(ch2_red_MEX,5));
+	Print_To_File({},{ Inv_Masses_to_print_MEX, (F_MEX_fit*f_Bs).ave(), (F_MEX_fit*f_Bs).err(),  F_MEX_fit.ave(), F_MEX_fit.err()} , out_path , "", "ch2/dof: "+to_string_with_precision(ch2_red_MEX,5));
 	
       }
     }
@@ -2203,6 +2259,11 @@ void Compute_Bs_mumu_gamma() {
   Print_To_File({}, {Bs_xg_t_list,  (FF_Bs_list[4]*f_Bs).ave(), (FF_Bs_list[4]*f_Bs).err(),  FF_Bs_list[4].ave(), FF_Bs_list[4].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FB_Bs.dat", "", "");
   Print_To_File({}, {Bs_xg_t_list,  (FF_Bs_list[5]*f_Bs).ave(), (FF_Bs_list[5]*f_Bs).err(),  FF_Bs_list[5].ave(), FF_Bs_list[5].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FT_Bs.dat", "", "");
   
+  double evolutor_ZT = evolutor_ZT_MS_bar(2.0,5.0,4);
+  cout<<"ZT(5GeV)/ZT(2GeV) NNNLO: "<<evolutor_ZT<<endl;
+  cout<<"ZT(5GeV)/ZT(2GeV) NNLO: "<<evolutor_ZT_MS_bar(2.0, 5.0, 3)<<endl;
+  cout<<"ZT(1GeV)/ZT(2GeV) NNNLO: "<<evolutor_ZT_MS_bar(2.0, 1.0, 4)<<endl;
+  cout<<"ZT(1GeV)/ZT(2GeV) NNLO: "<<evolutor_ZT_MS_bar(2.0, 1.0, 3)<<endl;
   
   exit(-1);
   MESON="Bs_extr";
@@ -2222,11 +2283,8 @@ vector<double> xg_min_list(Nxgs), xg_max_list(Nxgs), qmin_list(Nxgs);
   double Mb=5.36692;
   for(int it=0;it<Nxgs;it++) { xg_min_list[it] = 0.0; xg_max_list[it] =  1 - pow( 3.8 + it*(Mb-3.8)/(Nxgs-1.0)  ,2)/pow(Mb,2); qmin_list[it] = Mb*sqrt(1-xg_max_list[it]);  }
    
-  double evolutor_ZT = evolutor_ZT_MS_bar(2.0,5.0);
-
-  cout<<"ZT(5GeV, MSbar)/ZT(2GeV, MSbar): "<<evolutor_ZT<<endl;
-  cout<<"Riemann zeta(3): "<<riemann_zeta(3)<<endl;
-
+ 
+ 
   distr_t g_Bs_phi(1);
   for(int i=0;i<NJ;i++) g_Bs_phi.distr.push_back( 0.27 + 0.27*GM()/sqrt(NJ-1.0));
 
@@ -2304,7 +2362,6 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
   
     if(A_bis.length() <= 4) return A_bis < B_bis;
-     
     string rA = A_bis.substr(A_bis.length()-2);
     string rB = B_bis.substr(B_bis.length()-2);
 
@@ -2693,11 +2750,24 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     distr_t_list eff_mass_B= Corr.effective_mass_t(pt2_B_distr,"../data/ph_emission/"+ph_type_mes+"/"+"mass/"+data_2pts.Tag[iens]+"/eff_mass_B.dat"); 
     distr_t_list ft_distr = Corr.residue_t( pt2_T_distr, "")/(Corr.Fit_distr(eff_mass_T)*Corr.matrix_element_t(pt2_T_distr_SMSM, ""));
 
-  
 
-    int Dx= (int)( 0.32*fmTGeV/a_distr.ave() );
+    int Dx;
 
+    if(MESON == "B0s") { Dx= (int)( 0.40*fmTGeV/a_distr.ave() );}
+    if(MESON == "B1s") { Dx= (int)( 0.35*fmTGeV/a_distr.ave() );}
+    if(MESON == "B2s") { Dx= (int)( 0.30*fmTGeV/a_distr.ave() );}
+    if(MESON == "B3s") { Dx= (int)( 0.27*fmTGeV/a_distr.ave() );}
+    if(MESON == "B4s") { Dx= (int)( 0.25*fmTGeV/a_distr.ave() );}
+
+
+    int Dx_2pt;
+    if(MESON == "B0s") { Dx_2pt= (int)( 0.32*fmTGeV/a_distr.ave() );}
+    if(MESON == "B1s") { Dx_2pt= (int)( 0.26*fmTGeV/a_distr.ave() );}
+    if(MESON == "B2s") { Dx_2pt= (int)( 0.23*fmTGeV/a_distr.ave() );}
+    if(MESON == "B3s") { Dx_2pt= (int)( 0.19*fmTGeV/a_distr.ave() );}
+    if(MESON == "B4s") { Dx_2pt= (int)( 0.16*fmTGeV/a_distr.ave() );}
     
+    Dx_2pt=Dx;
    
     
     distr_t M_P_SM = Corr.Fit_distr(eff_mass_SM);
@@ -2751,7 +2821,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     Tmax_fp.push_back( Corr.Tmax);
     
     distr_t FP_SM_II = Corr.Fit_distr( FP_SM_II_distr_list);
-    Corr.Tmin +=Dx; Corr.Tmax += Dx;
+    Corr.Tmin +=Dx_2pt; Corr.Tmax += Dx_2pt;
     distr_t FP_SM_II_syst= Corr.Fit_distr( FP_SM_II_distr_list);
     Corr.Tmin=Tmin_old; Corr.Tmax=Tmax_old;
     
@@ -3355,7 +3425,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 	Tmax_fp_3pt.push_back( Corr.Tmax);
 	
 	distr_t FP_3pt = Corr.Fit_distr( FP_3pt_distr);
-	Corr.Tmin += Dx; Corr.Tmax += Dx;
+	Corr.Tmin += Dx_2pt; Corr.Tmax += Dx_2pt;
 	distr_t FP_3pt_syst= Corr.Fit_distr(FP_3pt_distr);
 	FP_3pt= FP_3pt + fabs( FP_3pt.ave() - FP_3pt_syst.ave())*( FP_3pt - FP_3pt.ave())/FP_3pt.err();
 	
@@ -3450,7 +3520,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       distr_t FA_u_fit= Corr.Fit_distr(FA_u_new_distr);
       Corr.Tmin += Dx; Corr.Tmax += Dx;
       distr_t FA_u_syst_fit= Corr.Fit_distr(FA_u_new_distr);
-      FA_u_fit = FA_u_fit + fabs(FA_u_fit.ave()-FA_u_syst_fit.ave())*(FA_u_fit - FA_u_fit.ave())/(FA_u_fit.err());
+      Corr.Tmin -= Dx; Corr.Tmax -= Dx;
+      FA_u_fit = FA_u_fit + fabs(FA_u_fit.ave()-FA_u_syst_fit.ave())*erf(k_erf*fabs((FA_u_fit.ave()-FA_u_syst_fit.ave()))/(sqrt(2)*FA_u_syst_fit.err()))*(FA_u_fit - FA_u_fit.ave())/(FA_u_fit.err());
       FA_u.distr_list.push_back(FA_u_fit);
       FA_u_per_kin[ixg-1].distr_list.push_back(FA_u_fit);
       ax_u_Tmin.push_back( Corr.Tmin); ax_u_Tmax.push_back( Corr.Tmax);
@@ -3458,9 +3529,12 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       Get_Bs_Mh_Tmin_Tmax("FAd",MESON, Tmin_A, Tmax_A, ixg, data_2pts.Tag[iens]);
       Corr.Tmin = Tmin_A; Corr.Tmax= Tmax_A;
       distr_t FA_d_fit= Corr.Fit_distr(FA_d_new_distr);
+      if(MESON=="B3s" || MESON=="B4s") Dx+= (int)( 0.1*fmTGeV/a_distr.ave());
       Corr.Tmin += Dx; Corr.Tmax += Dx;
       distr_t FA_d_syst_fit= Corr.Fit_distr(FA_d_new_distr);
-      FA_d_fit = FA_d_fit + fabs(FA_d_fit.ave()-FA_d_syst_fit.ave())*(FA_d_fit - FA_d_fit.ave())/(FA_d_fit.err());
+      Corr.Tmin -= Dx; Corr.Tmax -= Dx;
+      if(MESON=="B3s" || MESON=="B4s") Dx-= (int)( 0.1*fmTGeV/a_distr.ave());
+      FA_d_fit = FA_d_fit + fabs(FA_d_fit.ave()-FA_d_syst_fit.ave())*erf(k_erf*fabs((FA_d_fit.ave()-FA_d_syst_fit.ave()))/(sqrt(2)*FA_d_syst_fit.err()))*(FA_d_fit - FA_d_fit.ave())/(FA_d_fit.err());
       FA_d.distr_list.push_back(FA_d_fit);
       FA_d_per_kin[ixg-1].distr_list.push_back(FA_d_fit);
       ax_d_Tmin.push_back( Corr.Tmin); ax_d_Tmax.push_back( Corr.Tmax);
@@ -3474,7 +3548,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       distr_t FV_u_fit= Corr.Fit_distr(FV_u_new_distr);
       Corr.Tmin += Dx; Corr.Tmax += Dx;
       distr_t FV_u_syst_fit= Corr.Fit_distr(FV_u_new_distr);
-      FV_u_fit = FV_u_fit + fabs(FV_u_fit.ave()-FV_u_syst_fit.ave())*(FV_u_fit - FV_u_fit.ave())/(FV_u_fit.err());
+      Corr.Tmin -= Dx; Corr.Tmax -= Dx;
+      FV_u_fit = FV_u_fit + fabs(FV_u_fit.ave()-FV_u_syst_fit.ave())*erf(k_erf*fabs((FV_u_fit.ave()-FV_u_syst_fit.ave()))/(sqrt(2)*FV_u_syst_fit.err()))*(FV_u_fit - FV_u_fit.ave())/(FV_u_fit.err());
       FV_u.distr_list.push_back(FV_u_fit);
       FV_u_per_kin[ixg-1].distr_list.push_back(FV_u_fit);
       vec_u_Tmin.push_back( Corr.Tmin); vec_u_Tmax.push_back( Corr.Tmax);
@@ -3484,7 +3559,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       distr_t FV_d_fit= Corr.Fit_distr(FV_d_new_distr);
       Corr.Tmin += Dx; Corr.Tmax += Dx;
       distr_t FV_d_syst_fit= Corr.Fit_distr(FV_d_new_distr);
-      FV_d_fit = FV_d_fit + fabs(FV_d_fit.ave()-FV_d_syst_fit.ave())*(FV_d_fit - FV_d_fit.ave())/(FV_d_fit.err());
+      Corr.Tmin -= Dx; Corr.Tmax -= Dx;
+      FV_d_fit = FV_d_fit + fabs(FV_d_fit.ave()-FV_d_syst_fit.ave())*erf(k_erf*fabs((FV_d_fit.ave()-FV_d_syst_fit.ave()))/(sqrt(2)*FV_d_syst_fit.err()))*(FV_d_fit - FV_d_fit.ave())/(FV_d_fit.err());
       FV_d.distr_list.push_back(FV_d_fit);
       FV_d_per_kin[ixg-1].distr_list.push_back(FV_d_fit);
       vec_d_Tmin.push_back( Corr.Tmin); vec_d_Tmax.push_back( Corr.Tmax);
@@ -3517,7 +3593,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       distr_t_list FA_T_distr =0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( Ax_T_tens[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens[1-off_i][2-off_T]*(xg/2) + Ax_T_tens[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
       distr_t_list FV_T_distr = 0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( (Vec_T_tens[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
       //improved estimator
-      distr_t_list FA_T_new_distr =(0.5*RF*(Z_T)*( Ax_T_tens[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens[1-off_i][2-off_T]*(xg/2) + Ax_T_tens[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
+      distr_t_list FA_T_new_distr = (0.5*RF*(Z_T)*( Ax_T_tens[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens[1-off_i][2-off_T]*(xg/2) + Ax_T_tens[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
       distr_t_list FV_T_new_distr = (0.5*RF*(Z_T)*( (Vec_T_tens[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens[2-off_i][2-off_T]*(xg/2)))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
       
       //compute FV and FA (up-component)
@@ -3535,7 +3611,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       distr_t_list FA_T_d_distr =0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
       distr_t_list FV_T_d_distr = 0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( (Vec_T_tens_d[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_d[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_d[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_d[2-off_i][2-off_T]*(xg/2)))*(1.0/Eg)*EXP_PH;
       //improved estimator
-      distr_t_list FA_T_d_new_distr =(0.5*RF*(Z_T)*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
+      distr_t_list FA_T_d_new_distr = (0.5*RF*(Z_T)*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
       distr_t_list FV_T_d_new_distr = (0.5*RF*(Z_T)*( (Vec_T_tens_d[1-off_i][2-off_T]*(1-xg/2) -sign_kz*Ax_T_tens_d[1-off_i][1-off_T]*(xg/2)) -(Vec_T_tens_d[2-off_i][1-off_i]*(1-xg/2) + sign_kz*Ax_T_tens_d[2-off_i][2-off_T]*(xg/2)))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MES;
       //another variation
       distr_t_list FA_T_d_var =(0.5*RF*(Z_T)*( Ax_T_tens_d[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens_d[1-off_i][2-off_T]*(xg/2) + Ax_T_tens_d[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens_d[2-off_i][1-off_T]*(xg/2))*(1.0/(mel_SMSM*Eg))*EXP_PH)*EXP_MASS_CH[6];
@@ -3569,7 +3645,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       distr_t FA_T_u_fit= Corr.Fit_distr(FA_T_u_new_distr);
       Corr.Tmin += Dx; Corr.Tmax += Dx;
       distr_t FA_T_u_syst_fit= Corr.Fit_distr(FA_T_u_new_distr);
-      FA_T_u_fit = FA_T_u_fit + fabs(FA_T_u_fit.ave()-FA_T_u_syst_fit.ave())*(FA_T_u_fit - FA_T_u_fit.ave())/(FA_T_u_fit.err());
+      Corr.Tmin -= Dx; Corr.Tmax -= Dx;
+      FA_T_u_fit = FA_T_u_fit + fabs(FA_T_u_fit.ave()-FA_T_u_syst_fit.ave())*erf(k_erf*fabs((FA_T_u_fit.ave()-FA_T_u_syst_fit.ave()))/(sqrt(2)*FA_T_u_syst_fit.err()))*(FA_T_u_fit - FA_T_u_fit.ave())/(FA_T_u_fit.err());
       FA_T_u.distr_list.push_back(FA_T_u_fit);
       FA_T_u_per_kin[ixg-1].distr_list.push_back(FA_T_u_fit);
       ax_T_u_Tmin.push_back( Corr.Tmin); ax_T_u_Tmax.push_back( Corr.Tmax);
@@ -3579,7 +3656,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       distr_t FA_T_d_fit= Corr.Fit_distr(FA_T_d_new_distr);
       Corr.Tmin += Dx; Corr.Tmax += Dx;
       distr_t FA_T_d_syst_fit= Corr.Fit_distr(FA_T_d_new_distr);
-      FA_T_d_fit = FA_T_d_fit + fabs(FA_T_d_fit.ave()-FA_T_d_syst_fit.ave())*(FA_T_d_fit - FA_T_d_fit.ave())/(FA_T_d_fit.err());
+      Corr.Tmin -= Dx; Corr.Tmax -= Dx;
+      FA_T_d_fit = FA_T_d_fit + fabs(FA_T_d_fit.ave()-FA_T_d_syst_fit.ave())*erf(k_erf*fabs((FA_T_d_fit.ave()-FA_T_d_syst_fit.ave()))/(sqrt(2)*FA_T_d_syst_fit.err()))*(FA_T_d_fit - FA_T_d_fit.ave())/(FA_T_d_fit.err());
       FA_T_d.distr_list.push_back(FA_T_d_fit);
       FA_T_d_per_kin[ixg-1].distr_list.push_back(FA_T_d_fit);
       ax_T_d_Tmin.push_back( Corr.Tmin); ax_T_d_Tmax.push_back( Corr.Tmax);
@@ -3593,7 +3671,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       distr_t FV_T_u_fit= Corr.Fit_distr(FV_T_u_new_distr);
       Corr.Tmin += Dx; Corr.Tmax += Dx;
       distr_t FV_T_u_syst_fit= Corr.Fit_distr(FV_T_u_new_distr);
-      FV_T_u_fit = FV_T_u_fit + fabs(FV_T_u_fit.ave()-FV_T_u_syst_fit.ave())*(FV_T_u_fit - FV_T_u_fit.ave())/(FV_T_u_fit.err());
+      Corr.Tmin -= Dx; Corr.Tmax -= Dx;
+      FV_T_u_fit = FV_T_u_fit + fabs(FV_T_u_fit.ave()-FV_T_u_syst_fit.ave())*erf(k_erf*fabs((FV_T_u_fit.ave()-FV_T_u_syst_fit.ave()))/(sqrt(2)*FV_T_u_syst_fit.err()))*(FV_T_u_fit - FV_T_u_fit.ave())/(FV_T_u_fit.err());
       FV_T_u.distr_list.push_back(FV_T_u_fit);
       FV_T_u_per_kin[ixg-1].distr_list.push_back(FV_T_u_fit);
       vec_T_u_Tmin.push_back( Corr.Tmin); vec_T_u_Tmax.push_back( Corr.Tmax);
@@ -3603,7 +3682,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
       distr_t FV_T_d_fit= Corr.Fit_distr(FV_T_d_new_distr);
       Corr.Tmin += Dx; Corr.Tmax += Dx;
       distr_t FV_T_d_syst_fit= Corr.Fit_distr(FV_T_d_new_distr);
-      FV_T_d_fit = FV_T_d_fit + fabs(FV_T_d_fit.ave()-FV_T_d_syst_fit.ave())*(FV_T_d_fit - FV_T_d_fit.ave())/(FV_T_d_fit.err());
+      Corr.Tmin -= Dx; Corr.Tmax -= Dx;
+      FV_T_d_fit = FV_T_d_fit + fabs(FV_T_d_fit.ave()-FV_T_d_syst_fit.ave())*erf(k_erf*fabs((FV_T_d_fit.ave()-FV_T_d_syst_fit.ave()))/(sqrt(2)*FV_T_d_syst_fit.err()))*(FV_T_d_fit - FV_T_d_fit.ave())/(FV_T_d_fit.err());
       FV_T_d.distr_list.push_back(FV_T_d_fit);
       FV_T_d_per_kin[ixg-1].distr_list.push_back(FV_T_d_fit);
       vec_T_d_Tmin.push_back( Corr.Tmin); vec_T_d_Tmax.push_back( Corr.Tmax);
@@ -3629,8 +3709,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
       
       
-      //FT_u_per_kin[ixg-1].distr_list.push_back(
-      
+         
       }
 
       
@@ -5231,7 +5310,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //###########################################                                                                 ##########################################
   //###########################################                                                                 ##########################################
   //###########################################                                                                 ##########################################
-  //###########################################                           FITTING FT AND FB                  ##########################################
+  //###########################################                           FITTING FT AND FB                     ##########################################
   //###########################################                     INCLUDING SINGLE CONTRIBUTIONS              ##########################################
   //###########################################                        FROM STRANGE AND "CHARM"                 ##########################################
   //###########################################                                                                 ##########################################

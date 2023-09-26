@@ -176,6 +176,12 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
     //do nothing
 
   }
+
+  else if(Analysis_Mode=="HVP") {
+
+    //do nothing
+
+  }
   
   
   else crash("Analysis_Mode: "+Analysis_Mode+" not found");
@@ -239,7 +245,7 @@ void MasterClass_analysis::Analysis_manager() {
     Gm2();
 
   }
-
+  
   if(Analysis_Mode == "R_ratio") {
 
     R_ratio_analysis();
@@ -264,7 +270,10 @@ void MasterClass_analysis::Analysis_manager() {
   if(Analysis_Mode=="magnetic_susc") {
     Compute_magnetic_susc();
   }
-    
+
+  if(Analysis_Mode=="HVP") {
+    HVP();
+  }
   
   return;
 

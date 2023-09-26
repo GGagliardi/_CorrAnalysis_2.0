@@ -34,7 +34,7 @@ const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
-bool Skip_spectral_density_analysis_strange=false;
+bool Skip_spectral_density_analysis_strange=true;
 const bool Perform_continuum_extrapolation=false;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
@@ -295,8 +295,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     boost::filesystem::create_directory("../tau_decay_strange");
     
 
-    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.072.64"});
-    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64"});
+    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.072.64", "Z.077.64", "D.054.96"});
+    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64", "cZ211a.077.64", "cD211a.054.96"});
 
     for( int it=0; it<(signed)Ens_T1.size(); it++) {
 
@@ -547,12 +547,12 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   //generate fake jack_distr for lattice spacing a_A a_B, a_C, a_D and RENORMALIZATION CONSTANT
   GaussianMersenne GM(36551294);
   LatticeInfo a_info;
-  distr_t a_A(UseJack), a_B(UseJack), a_C(UseJack), a_D(UseJack);
-  distr_t ZV_A(UseJack), ZV_B(UseJack), ZV_C(UseJack), ZV_D(UseJack);
-  distr_t ZA_A(UseJack), ZA_B(UseJack), ZA_C(UseJack), ZA_D(UseJack);
-  double a_A_ave, a_A_err, a_B_ave, a_B_err, a_C_ave, a_C_err, a_D_ave, a_D_err;
-  double ZV_A_ave, ZV_A_err, ZV_B_ave, ZV_B_err, ZV_C_ave, ZV_C_err, ZV_D_ave, ZV_D_err;
-  double ZA_A_ave, ZA_A_err, ZA_B_ave, ZA_B_err, ZA_C_ave, ZA_C_err, ZA_D_ave, ZA_D_err;
+  distr_t a_A(UseJack), a_B(UseJack), a_C(UseJack), a_D(UseJack), a_Z(UseJack);
+  distr_t ZV_A(UseJack), ZV_B(UseJack), ZV_C(UseJack), ZV_D(UseJack), ZV_Z(UseJack);
+  distr_t ZA_A(UseJack), ZA_B(UseJack), ZA_C(UseJack), ZA_D(UseJack), ZA_Z(UseJack);;
+  double a_A_ave, a_A_err, a_B_ave, a_B_err, a_C_ave, a_C_err, a_D_ave, a_D_err, a_Z_ave, a_Z_err;
+  double ZV_A_ave, ZV_A_err, ZV_B_ave, ZV_B_err, ZV_C_ave, ZV_C_err, ZV_D_ave, ZV_D_err, ZV_Z_ave, ZV_Z_err;
+  double ZA_A_ave, ZA_A_err, ZA_B_ave, ZA_B_err, ZA_C_ave, ZA_C_err, ZA_D_ave, ZA_D_err, ZA_Z_ave, ZA_Z_err;
   a_info.LatInfo_new_ens("cA211a.53.24");
   a_A_ave= a_info.a_from_afp;
   a_A_err= a_info.a_from_afp_err;
@@ -581,12 +581,21 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   ZA_D_err = a_info.Za_WI_strange_err;
   ZV_D_ave = a_info.Zv_WI_strange;
   ZV_D_err = a_info.Zv_WI_strange_err;
+  a_info.LatInfo_new_ens("cZ211a.077.64");
+  a_Z_ave= a_info.a_from_afp;
+  a_Z_err= a_info.a_from_afp_err;
+  ZA_Z_ave = a_info.Za_WI_strange;
+  ZA_Z_err = a_info.Za_WI_strange_err;
+  ZV_Z_ave = a_info.Zv_WI_strange;
+  ZV_Z_err = a_info.Zv_WI_strange_err;
+  
   
   if(UseJack)  { for(int ijack=0;ijack<Njacks;ijack++) {
       a_A.distr.push_back( fm_to_inv_Gev*( a_A_ave + GM()*a_A_err*(1.0/sqrt(Njacks-1.0))));
       a_B.distr.push_back( fm_to_inv_Gev*( a_B_ave + GM()*a_B_err*(1.0/sqrt(Njacks-1.0))));
       a_C.distr.push_back( fm_to_inv_Gev*( a_C_ave + GM()*a_C_err*(1.0/sqrt(Njacks-1.0))));
       a_D.distr.push_back( fm_to_inv_Gev*( a_D_ave + GM()*a_D_err*(1.0/sqrt(Njacks-1.0))));
+      a_Z.distr.push_back( fm_to_inv_Gev*( a_Z_ave + GM()*a_Z_err*(1.0/sqrt(Njacks-1.0))));
       ZA_A.distr.push_back(  ZA_A_ave + GM()*ZA_A_err*(1.0/sqrt(Njacks -1.0)));
       ZV_A.distr.push_back(  ZV_A_ave + GM()*ZV_A_err*(1.0/sqrt(Njacks -1.0)));
       ZA_B.distr.push_back(  ZA_B_ave + GM()*ZA_B_err*(1.0/sqrt(Njacks -1.0)));
@@ -595,6 +604,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       ZV_C.distr.push_back(  ZV_C_ave + GM()*ZV_C_err*(1.0/sqrt(Njacks -1.0)));
       ZA_D.distr.push_back(  ZA_D_ave + GM()*ZA_D_err*(1.0/sqrt(Njacks -1.0)));
       ZV_D.distr.push_back(  ZV_D_ave + GM()*ZV_D_err*(1.0/sqrt(Njacks -1.0)));
+      ZA_Z.distr.push_back(  ZA_Z_ave + GM()*ZA_Z_err*(1.0/sqrt(Njacks -1.0)));
+      ZV_Z.distr.push_back(  ZV_Z_ave + GM()*ZV_Z_err*(1.0/sqrt(Njacks -1.0)));
       
     }
   }
@@ -612,6 +623,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       ZV_C.distr.push_back(  ZV_C_ave + GM()*ZV_C_err);
       ZA_D.distr.push_back(  ZA_D_ave + GM()*ZA_D_err);
       ZV_D.distr.push_back(  ZV_D_ave + GM()*ZV_D_err);
+      ZA_Z.distr.push_back(  ZA_Z_ave + GM()*ZA_Z_err);
+      ZV_Z.distr.push_back(  ZV_Z_ave + GM()*ZV_Z_err);
       
     }
   }
@@ -768,23 +781,16 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      //get lattice spacing
      distr_t a_distr(UseJack);
      distr_t Zv(UseJack), Za(UseJack);
-     double Mpi=0.0;
-     double Mpi_err=0.0;
-     double fpi=0.0;
-     double Mpi_OS=0.0;
-     double fpi_OS=0.0;
-     if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; Mpi=0.05653312833; Mpi_err=1.430196186e-05; fpi=0.05278353769; Mpi_OS=0.1203989717;}
-     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C; Mpi=0.04722061628; Mpi_err=3.492993579e-05; fpi=0.0450246; Mpi_OS=0.08597942324;}
-     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; Mpi=0.04062107883; Mpi_err= 2.973916243e-05; fpi=0.03766423429; Mpi_OS=0.06064150466;}
+     if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; }
+     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C;}
+     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D;}
+     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="Z") {a_distr=a_Z; Zv = ZV_Z; Za = ZA_Z;}
      else crash("lattice spacing distribution for Ens: "+ls_data_tm_VKVK.Tag[iens]+" not found");
      
   
 
    
-    //jack distr for Mpi
-    distr_t Mpi_distr(UseJack);
-    for(int ij=0;ij<Njacks;ij++) Mpi_distr.distr.push_back( Mpi + GM()*Mpi_err/sqrt(Njacks-1.0));
-
+    
  
     //############# LIGHTER MASS ################//
     
@@ -876,6 +882,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     else if(ls_data_tm_VKVK.Tag[iens] =="cB211b.072.64") { Tmin_P5=30; Tmax_P5=60;}
     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C")  { Tmin_P5=40; Tmax_P5=70;}
     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D")  { Tmin_P5=41; Tmax_P5=80;}
+    else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="Z")  { Tmin_P5=26; Tmax_P5=45;}
     else crash("Cannot recognize the ensemble: "+ls_data_tm_VKVK.Tag[iens]+" in assigning Tmin_P5,Tmax_P5 for ensemble: ");
 
     Corr.Tmin = Tmin_P5; Corr.Tmax= Tmax_P5;

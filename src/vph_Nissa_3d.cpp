@@ -4531,7 +4531,7 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 		//print model prediction if pole model
 		if(fit_types[ifit] == "pole") {
 		  distr_t_list RE_H_mod(UseJack), RE_H_mod_from_IM(UseJack), IM_H_mod(UseJack);
-		  double sm= 0.005*0.79380/MDs_phys;
+		  double sm= 0.0025*0.79380/MDs_phys;   //0.005*0.79380/MDs_phys;
 		  Vfloat virt_list_new;
 		  for(int m=0;m<(signed)virt_list.size();m++) {
 		    for(int i=0;i<200;i++) virt_list_new.push_back( virt_list[m]+ (virt_list[1]-virt_list[0])*i*0.005);

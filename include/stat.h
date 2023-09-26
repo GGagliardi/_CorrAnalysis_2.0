@@ -313,7 +313,7 @@ class Bootstrap {
 
 distr_t Get_id_jack_distr(int N);
 distr_t_list Get_id_jack_distr_list(int size, int N);
-distr_t AIC( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas, GaussianMersenne &G, bool NEIL=false );
+distr_t AIC( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas, bool NEIL=false );
 
 
 
@@ -325,6 +325,7 @@ distr_t_list SQRT_DL(const distr_t_list &A);
 distr_t_list LOG_DL(const distr_t_list &A);
 distr_t_list POW_DL(const distr_t_list &A, int n);
 
+distr_t_list EXPT_D(const distr_t &A, int T);
 distr_t EXP_D(const distr_t &A);
 distr_t COSH_D(const distr_t &A);
 distr_t SINH_D(const distr_t &A);

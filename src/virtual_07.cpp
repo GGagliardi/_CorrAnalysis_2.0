@@ -1,38 +1,51 @@
 #include "../include/virtual_07.h"
 #include "Corr_analysis.h"
 #include "numerics.h"
+#include "stat.h"
 using namespace std;
 
 bool verbose_lev_07=1;
-Vfloat sigmas_07({1.5,1.25,1.0, 0.75, 0.5,0.4,0.3,0.25}); //sigma in GeV  
+//Vfloat sigmas_07({1.5, 1.25, 1.0, 0.8, 0.6, 0.5, 0.4, 0.3}); // sigma in GeV
+Vfloat sigmas_07({0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2});
+Vfloat sigmas_07_w0({0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29,  0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0});
 int prec_07=128;
 const string MODE_FF="TANT";
-const bool Skip_spectral_reconstruction_07=false;
+const bool Skip_spectral_reconstruction_07 = true;
+const bool virtuality_scan = false;
+const bool Use_preconditioning = true;
+const string  preco_tag= (Use_preconditioning)?"prec_":"";
 const double Mjpsi= 3.0969; //GeV
 const double Mphi= 1.019461; //GeV
 const double MDs_phys = 1.96847; // GeV
 const double E0_fact = 0.90;
-const bool CONS_EM_CURRENT = false;
+const bool CONS_EM_CURRENT = true;
 const string SM_TYPE = "FF_Exp";
 const double QU = -1.0/3;
-const double QD = -1.0/3;
-
-
+const double QD = -1.0 / 3;
+const double mh0 = 1.0 / 0.5074743143;
+const double mh1 = 1.0 / 0.4007494458;
+const double mh2=  1.0 / 0.3287466686;
+const double mh3 = 1.0 / 0.2846032952;
+const Vfloat masses({mh0, mh1, mh2, mh3});
 
 rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,  string Corr_path,string path_out) {
 
+  Njacks=50;
 
+  Vfloat virtualities;
+  for(int i=0;i<75;i++) { virtualities.push_back( 3*i/74.0) ; }
+  
   rt_07_Bs return_class;
+
+
 
   PrecFloat::setDefaultPrecision(prec_07);
   cout<<"max possible exponent: "<<PrecFloat::getEmax_max()<<endl;
   cout<<"current max exponent: "<<PrecFloat::getEmax()<<endl;
   cout<<"Number of xg to analyze: "<<n_xg<<endl;
 
-  int t_07_s=20;
-  int t_07_s_HLT=20;
-  int t_07_c=20;
-
+  int t_07_s, t_07_s_HLT, t_07_c;
+ 
   string TAG_CURR="";
   if(CONS_EM_CURRENT==false) TAG_CURR="LOC_";
 
@@ -42,9 +55,13 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   double sign_kz=-1.0; //correct one is -1
 
   //BK
-  vector<vector<vector<data_t>>> C_B_u_data(size_mu_nu), C_B_d_data(size_mu_nu);
+  vector<vector<vector<data_t>>> C_B_d_data(size_mu_nu);
   //T
-  vector<vector<vector<data_t>>> C_T_u_data(size_mu_nu), C_T_d_data(size_mu_nu);
+  vector<vector<vector<data_t>>>  C_T_d_data(size_mu_nu);
+
+
+  vector<vector<vector<data_t>>> C_B_u_data_std(size_mu_nu), C_B_d_data_std(size_mu_nu);
+  vector<vector<vector<data_t>>> C_T_u_data_std(size_mu_nu), C_T_d_data_std(size_mu_nu);
 
 
   data_t data_2pts_SM, data_2pts_SMSM;
@@ -56,18 +73,24 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   
   for(int mu=0;mu<size_mu_nu;mu++) {
 
-    C_B_u_data[mu].resize(size_mu_nu);
     C_B_d_data[mu].resize(size_mu_nu);
-    C_T_u_data[mu].resize(size_mu_nu);
     C_T_d_data[mu].resize(size_mu_nu);
+
+    C_B_u_data_std[mu].resize(size_mu_nu);
+    C_B_d_data_std[mu].resize(size_mu_nu);
+    C_T_u_data_std[mu].resize(size_mu_nu);
+    C_T_d_data_std[mu].resize(size_mu_nu);
 
    
     for(int nu=0;nu<size_mu_nu;nu++) {
 
-      C_B_u_data[mu][nu].resize(n_xg);
       C_B_d_data[mu][nu].resize(n_xg);
-      C_T_u_data[mu][nu].resize(n_xg);
       C_T_d_data[mu][nu].resize(n_xg);
+
+      C_B_u_data_std[mu][nu].resize(n_xg);
+      C_B_d_data_std[mu][nu].resize(n_xg);
+      C_T_u_data_std[mu][nu].resize(n_xg);
+      C_T_d_data_std[mu][nu].resize(n_xg);
 
     
     }
@@ -111,8 +134,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   
   //read data
 
-  data_2pts_SM.Read(Corr_path+"_mass", "mes_contr_2pts_SM_3", "P5P5", Sort_confs);
-  data_2pts_SMSM.Read(Corr_path+"_mass", "mes_contr_2pts_SMSM_3", "P5P5", Sort_confs);
+  data_2pts_SM.Read(Corr_path+"/spectre", "mes_contr_2pts_SM_3", "P5P5", Sort_confs);
+  data_2pts_SMSM.Read(Corr_path+"/spectre", "mes_contr_2pts_SMSM_3", "P5P5", Sort_confs);
 
   
  
@@ -134,10 +157,14 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       string Tag_contr="S0P5";
       if(CONS_EM_CURRENT==false) Tag_contr="V"+to_string(mu)+"P5";
       //B
-      //u
-      C_B_u_data[mu][nu][ixg].Read(Corr_path, TAG_CURR+"C_u_B_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
       //d
-      C_B_d_data[mu][nu][ixg].Read(Corr_path, TAG_CURR+"C_d_B_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
+      C_B_d_data[mu][nu][ixg].Read(Corr_path+"/spectre", TAG_CURR+"C_d_B_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
+
+      //B
+      //u
+      C_B_u_data_std[mu][nu][ixg].Read(Corr_path+"/standard", TAG_CURR+"C_u_B_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
+      //d
+      C_B_d_data_std[mu][nu][ixg].Read(Corr_path+"/standard", TAG_CURR+"C_d_B_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
       
     
     }
@@ -150,23 +177,26 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       string Tag_contr="S0P5";
       if(CONS_EM_CURRENT==false) Tag_contr="V"+to_string(mu)+"P5";
       //T
-      //u
-      C_T_u_data[mu][nu][ixg].Read(Corr_path, TAG_CURR+"C_u_T_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
       //d
-      C_T_d_data[mu][nu][ixg].Read(Corr_path, TAG_CURR+"C_d_T_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
+      C_T_d_data[mu][nu][ixg].Read(Corr_path+"/spectre", TAG_CURR+"C_d_T_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
+
+      //u
+      C_T_u_data_std[mu][nu][ixg].Read(Corr_path+"/standard", TAG_CURR+"C_u_T_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
+      //d
+      C_T_d_data_std[mu][nu][ixg].Read(Corr_path+"/standard", TAG_CURR+"C_d_T_nu_"+to_string(nu)+"_mu_"+to_string(mu)+"_ixg_"+to_string(ixg), Tag_contr, Sort_confs);
       
     
     }
   }
 
-
-
+  
    
-  GaussianMersenne GM(652205123);
+  GaussianMersenne GM_07(4455);
 
   //resample RCs
   distr_t ZT_A(UseJack), ZT_B(UseJack), ZT_C(UseJack), ZT_D(UseJack);
   distr_t a_A(UseJack), a_B(UseJack), a_C(UseJack), a_D(UseJack);
+  distr_t ZV_A(UseJack), ZV_B(UseJack), ZV_C(UseJack), ZV_D(UseJack);
 
   
   double fmTGeV= 1.0/0.197327;
@@ -176,27 +206,57 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   L_info_B.LatInfo_new_ens("cB211b.072.96");
   L_info_C.LatInfo_new_ens("cC211a.06.80");
   L_info_D.LatInfo_new_ens("cD211a.054.96");
-  
+
+   
 
   for(int ijack=0; ijack<Njacks;ijack++) {
 
-    a_A.distr.push_back( L_info_A.a_from_afp*fmTGeV + GM()*L_info_A.a_from_afp_err*fmTGeV/((UseJack==true)?sqrt(Njacks -1.0):1.0));
-    a_B.distr.push_back( L_info_B.a_from_afp*fmTGeV + GM()*L_info_B.a_from_afp_err*fmTGeV/((UseJack==true)?sqrt(Njacks -1.0):1.0));
-    a_C.distr.push_back( L_info_C.a_from_afp*fmTGeV + GM()*L_info_C.a_from_afp_err*fmTGeV/((UseJack==true)?sqrt(Njacks -1.0):1.0));
-    a_D.distr.push_back( L_info_D.a_from_afp*fmTGeV + GM()*L_info_D.a_from_afp_err*fmTGeV/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+   
 
-        
-    ZT_A.distr.push_back( L_info_A.ZT_RI2 + GM()*L_info_A.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
-    ZT_B.distr.push_back( L_info_B.ZT_RI2 + GM()*L_info_B.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
-    ZT_C.distr.push_back( L_info_C.ZT_RI2 + GM()*L_info_C.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
-    ZT_D.distr.push_back( L_info_D.ZT_RI2 + GM()*L_info_D.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
     
+    a_A.distr.push_back( L_info_A.a_from_afp*fmTGeV + GM_07()*L_info_A.a_from_afp_err*fmTGeV/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    a_B.distr.push_back( L_info_B.a_from_afp*fmTGeV + GM_07()*L_info_B.a_from_afp_err*fmTGeV/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    a_C.distr.push_back( L_info_C.a_from_afp*fmTGeV + GM_07()*L_info_C.a_from_afp_err*fmTGeV/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    a_D.distr.push_back( L_info_D.a_from_afp*fmTGeV + GM_07()*L_info_D.a_from_afp_err*fmTGeV/((UseJack==true)?sqrt(Njacks -1.0):1.0));
 
+    
+    ZT_A.distr.push_back( L_info_A.ZT_RI2 + GM_07()*L_info_A.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    ZT_B.distr.push_back( L_info_B.ZT_RI2 + GM_07()*L_info_B.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    ZT_C.distr.push_back( L_info_C.ZT_RI2 + GM_07()*L_info_C.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    ZT_D.distr.push_back( L_info_D.ZT_RI2 + GM_07()*L_info_D.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+
+       
+    ZV_A.distr.push_back( L_info_A.Zv_WI_strange + GM_07()*L_info_A.Zv_WI_strange_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    ZV_B.distr.push_back( L_info_B.Zv_WI_strange + GM_07()*L_info_B.Zv_WI_strange_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    ZV_C.distr.push_back( L_info_C.Zv_WI_strange + GM_07()*L_info_C.Zv_WI_strange_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    ZV_D.distr.push_back( L_info_D.Zv_WI_strange + GM_07()*L_info_D.Zv_WI_strange_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
+    
+    
   }
 
-  int Nens= C_B_u_data[1][1][0].size;
-  vector<string> Ens_tags= C_B_u_data[1][1][0].Tag;
-  Vint Nts=C_B_u_data[1][1][0].nrows;
+  cout<<"a_A: "<<a_A.ave()/fmTGeV << " +- "<<a_A.err()/fmTGeV<<endl;
+  cout<<"a_B: "<<a_B.ave()/fmTGeV << " +- "<<a_B.err()/fmTGeV<<endl;
+  cout<<"a_C: "<<a_C.ave()/fmTGeV << " +- "<<a_C.err()/fmTGeV<<endl;
+  cout<<"a_D: "<<a_D.ave()/fmTGeV << " +- "<<a_D.err()/fmTGeV<<endl;
+
+  cout<<"ZT_A : "<<ZT_A.ave()<< " +- "<<ZT_A.err()<<endl;
+  cout<<"ZT_B : "<<ZT_B.ave()<< " +- "<<ZT_B.err()<<endl;
+  cout<<"ZT_C : "<<ZT_C.ave()<< " +- "<<ZT_C.err()<<endl;
+  cout<<"ZT_D : "<<ZT_D.ave()<< " +- "<<ZT_D.err()<<endl;
+
+  cout<<"ZT_A : "<<ZV_A.ave()<< " +- "<<ZV_A.err()<<endl;
+  cout<<"ZT_B : "<<ZV_B.ave()<< " +- "<<ZV_B.err()<<endl;
+  cout<<"ZT_C : "<<ZV_C.ave()<< " +- "<<ZV_C.err()<<endl;
+  cout<<"ZT_D : "<<ZV_D.ave()<< " +- "<<ZV_D.err()<<endl;
+
+
+  
+  
+  
+ 
+  int Nens= C_B_d_data[1][1][0].size;
+  vector<string> Ens_tags= C_B_d_data[1][1][0].Tag;
+  Vint Nts=C_B_d_data[1][1][0].nrows;
 
   distr_t_list xg_list(UseJack);
   vector<distr_t_list> F_T_u_list;
@@ -205,8 +265,26 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   vector<distr_t_list> FV_T_d_real_list;
   vector<distr_t_list> FA_T_u_real_list;
   vector<distr_t_list> FA_T_d_real_list;
+
+  vector<distr_t_list> FV_T_d_sp_real_list;
+  vector<distr_t_list> FA_T_d_sp_real_list;
+  
   vector<vector<distr_t_list>> F_T_d_RE_sm_list(n_xg);
   vector<vector<distr_t_list>> F_T_d_IM_sm_list(n_xg);
+
+  
+
+  vector<vector<distr_t_list>> F_T_d_RE_VMD_sm_list(n_xg);
+  vector<vector<distr_t_list>> F_T_d_IM_VMD_sm_list(n_xg);
+
+  vector<vector<distr_t_list>> F_T_d_RE_VMD_II_state_sm_list(n_xg);
+  vector<vector<distr_t_list>> F_T_d_IM_VMD_II_state_sm_list(n_xg);
+
+  vector<vector<distr_t_list>> F_T_d_RE_VMD_III_state_sm_list(n_xg);
+  vector<vector<distr_t_list>> F_T_d_IM_VMD_III_state_sm_list(n_xg);
+
+  vector<distr_t_list> F_T_u_VMD_list;
+  vector<distr_t_list> F_T_u_VMD_spectre_list;
 
   for(int ixg=0; ixg<n_xg;ixg++) {
 
@@ -216,12 +294,61 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     FV_T_d_real_list.emplace_back(UseJack);
     FA_T_u_real_list.emplace_back(UseJack);
     FA_T_d_real_list.emplace_back(UseJack);
+
+    F_T_u_VMD_list.emplace_back(UseJack);
+    F_T_u_VMD_spectre_list.emplace_back(UseJack);
+
+    FV_T_d_sp_real_list.emplace_back(UseJack);
+    FA_T_d_sp_real_list.emplace_back(UseJack);
+
+    for(int iss=0; iss<(signed)sigmas_07_w0.size(); iss ++) {
+
+    F_T_d_RE_VMD_sm_list[ixg].emplace_back(UseJack);
+    F_T_d_IM_VMD_sm_list[ixg].emplace_back(UseJack);
+
+    F_T_d_RE_VMD_II_state_sm_list[ixg].emplace_back(UseJack);
+    F_T_d_IM_VMD_II_state_sm_list[ixg].emplace_back(UseJack);
+
+    F_T_d_RE_VMD_III_state_sm_list[ixg].emplace_back(UseJack);
+    F_T_d_IM_VMD_III_state_sm_list[ixg].emplace_back(UseJack);
+
+
+    }
+    
     for(int is=0; is<(signed)sigmas_07.size(); is++) {
       F_T_d_RE_sm_list[ixg].emplace_back(UseJack);
       F_T_d_IM_sm_list[ixg].emplace_back(UseJack);
+
     }
   }
 
+
+
+
+   auto K_RE_distr= [](const distr_t &E, const distr_t &m, double s) -> distr_t {
+
+     distr_t ret(1);
+     for(int ijack=0;ijack<E.size();ijack++) {
+     double x= (E.distr[ijack]-m.distr[ijack]);
+     ret.distr.push_back(  ( cos(s)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(s)*exp(-x)));
+     }
+     return ret;
+  
+  };
+
+   auto K_IM_distr= [](const distr_t &E, const distr_t &m, double s) -> distr_t {
+
+
+       distr_t ret(1);
+       for(int ijack=0;ijack<E.size();ijack++) {
+	 double x= (E.distr[ijack]-m.distr[ijack]);
+	 ret.distr.push_back(exp(-x)*sin(s)/( 1 + exp(-2*x) -2*cos(s)*exp(-x)));
+       }
+       return ret;
+       
+  };
+
+ 
 
   auto K_RE= [](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
 
@@ -356,14 +483,32 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   boost::filesystem::create_directory( path_out+"/covariance");
   boost::filesystem::create_directory( path_out+"/FF_d_I");
   boost::filesystem::create_directory( path_out+"/FF_d_II");
+  boost::filesystem::create_directory( path_out+"/FF_d_II/VMD_virt_scan");
   boost::filesystem::create_directory( path_out+"/FF_u");
   boost::filesystem::create_directory( path_out+"/FF_d");
   boost::filesystem::create_directory( path_out+"/FF");
+
+
   
   
   //loop over ensembles
   for(int iens=0; iens<Nens;iens++) {
 
+
+    
+    if(MESON=="B0s") {
+      if(Ens_tags[iens] == "cB211b.072.64") {  t_07_s=25; t_07_s_HLT=14; t_07_c=25;    }
+      else crash("B0s-crash-virtual");
+    }
+    else if(MESON=="B1s") {
+      if(Ens_tags[iens] == "cB211b.072.64") {  t_07_s=25; t_07_s_HLT=14; t_07_c=25;    }
+      else crash("B1s-crash-virtual");
+    }
+    else if(MESON=="B3s") {
+      if(Ens_tags[iens] == "cB211b.072.64") {  t_07_s=25; t_07_s_HLT=10; t_07_c=25;    }
+      else crash("B3s-crash-virtual");
+    }
+    else crash("Meson: "+MESON+" not yet simulated");
 
     boost::filesystem::create_directory( path_out+"/"+data_2pts_SM.Tag[iens]);
     boost::filesystem::create_directory( path_out+"/corr");
@@ -381,21 +526,25 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     //read theta values and loop over them
     Vfloat thetas, masses_u, masses_d;
 
-    thetas= Read_From_File(Corr_path+"/"+Ens_tags[iens]+"/pars_list.dat", 1 , 5);
-    masses_u= Read_From_File(Corr_path+"/"+Ens_tags[iens]+"/pars_list.dat", 3 , 5);
-    masses_d= Read_From_File( Corr_path+"/"+Ens_tags[iens]+"/pars_list.dat", 4 , 5);
+    thetas= Read_From_File(Corr_path+"/spectre/"+Ens_tags[iens]+"/pars_list.dat", 1 , 5);
+    masses_u= Read_From_File(Corr_path+"/spectre/"+Ens_tags[iens]+"/pars_list.dat", 3 , 5);
+    masses_d= Read_From_File( Corr_path+"/spectre/"+Ens_tags[iens]+"/pars_list.dat", 4 , 5);
 
     double mu= masses_u[0];
     double md= masses_d[0];
 
 
     //RCs
-    distr_t ZT, a_distr;
-    if(data_2pts_SM.Tag[iens].substr(1,1)=="A") { ZT=ZT_A;a_distr=a_A;}
-    else if(data_2pts_SM.Tag[iens].substr(1,1)=="B") { ZT= ZT_B;a_distr=a_B;}
-    else if(data_2pts_SM.Tag[iens].substr(1,1)=="C") { ZT= ZT_C;a_distr=a_C;}
-    else if(data_2pts_SM.Tag[iens].substr(1,1)=="D") { ZT= ZT_D;a_distr=a_D;}
+    
+    distr_t ZT, a_distr, ZV;
+    if(data_2pts_SM.Tag[iens].substr(1,1)=="A") { ZT=ZT_A; ZV=ZV_A; a_distr=a_A;}
+    else if(data_2pts_SM.Tag[iens].substr(1,1)=="B") { ZT= ZT_B; ZV=ZV_B; a_distr=a_B;}
+    else if(data_2pts_SM.Tag[iens].substr(1,1)=="C") { ZT= ZT_C; ZV=ZV_C; a_distr=a_C;}
+    else if(data_2pts_SM.Tag[iens].substr(1,1)=="D") { ZT= ZT_D; ZV=ZV_D; a_distr=a_D;}
     else crash("Ensemble: "+data_2pts_SM.Tag[iens]+" not recognised");
+
+
+    if(CONS_EM_CURRENT==false) ZT = ZT*ZV;
 
 
     //2pts plateaux
@@ -458,6 +607,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 
     cout<<"MP: "<<(M_P/a_distr).ave()<<" +- "<<(M_P/a_distr).err()<<endl;
+    cout<<"FP_SM: "<<(FP_SM/a_distr).ave()<<" +- "<<(FP_SM/a_distr).err()<<endl;
 
     
     distr_t F_P= FP_SM;
@@ -493,14 +643,18 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       Corr_boot.Perform_Nt_t_average=0;
 	 
 	 
-      distr_t_list T_u = 0.5*QU*Corr.corr_t(summ_master(C_T_u_data[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_u_data[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+data_2pts_SM.Tag[iens]+"_T_u_xg_"+to_string(ixg));
-      distr_t_list T_d = 0.5*QD*Corr.corr_t(summ_master(C_T_d_data[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+data_2pts_SM.Tag[iens]+"_T_d_xg_"+to_string(ixg));
+      distr_t_list T_u_std = 0.5*QU*Corr.corr_t(summ_master(C_T_u_data_std[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_u_data_std[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_T_u_xg_"+to_string(ixg));
+      	 
+      distr_t_list T_d_std = 0.5*QU*Corr.corr_t(summ_master(C_T_d_data_std[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data_std[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_T_d_xg_"+to_string(ixg));
+      
+      distr_t_list T_d = 0.5*QD*Corr.corr_t(summ_master(C_T_d_data[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_T_d_sp_xg_"+to_string(ixg));
       distr_t_list T_d_boot= 0.5*QD*Corr_boot.corr_t(summ_master(C_T_d_data[2][1][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data[2][1][ixg].col(Im_Re)[iens], -1.0)),"");
 
       Im_Re=0;
 
-      distr_t_list B_u = 0.5*QU*Corr.corr_t(summ_master(C_B_u_data[1][1][ixg].col(Im_Re)[iens], C_B_u_data[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+data_2pts_SM.Tag[iens]+"_B_u_xg_"+to_string(ixg));
-      distr_t_list B_d = 0.5*QD*Corr.corr_t(summ_master(C_B_d_data[1][1][ixg].col(Im_Re)[iens], C_B_d_data[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+data_2pts_SM.Tag[iens]+"_B_d_xg_"+to_string(ixg));
+      distr_t_list B_u_std = 0.5*QU*Corr.corr_t(summ_master(C_B_u_data_std[1][1][ixg].col(Im_Re)[iens], C_B_u_data_std[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_u_xg_"+to_string(ixg));
+      distr_t_list B_d_std = 0.5*QU*Corr.corr_t(summ_master(C_B_d_data_std[1][1][ixg].col(Im_Re)[iens], C_B_d_data_std[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_u_xg_"+to_string(ixg));
+      distr_t_list B_d = 0.5*QD*Corr.corr_t(summ_master(C_B_d_data[1][1][ixg].col(Im_Re)[iens], C_B_d_data[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_d_sp_xg_"+to_string(ixg));
       distr_t_list B_d_boot= 0.5*QD*Corr_boot.corr_t(summ_master(C_B_d_data[1][1][ixg].col(Im_Re)[iens], C_B_d_data[2][2][ixg].col(Im_Re)[iens]),"");
 
 
@@ -508,21 +662,68 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       //determine the form factors that do not need spectral-reconstruction techniques, i.e. up-type quark (heavy) contribution and down-type quark (s-quark) contribution in I-TO
 
 
+      //#############     VMD PRED  FT_u  #####################
+      //define corr for Fu in 2nd TO for VMD pred
+      distr_t_list Corr_Tu_2TO(UseJack);
+      for(int t=t_07_c; t <=Corr.Nt/2;t++) {
+	Corr_Tu_2TO.distr_list.push_back( (xg/2.0)*(sign_kz*T_u_std.distr_list[t] + B_u_std.distr_list[t]));
+      }
+      CorrAnalysis Corr_VMD_anal(UseJack, Njacks,1000);
+      if(MESON=="B0s") {
+	 Corr_VMD_anal.Tmin= 17;
+	 Corr_VMD_anal.Tmax= 30;
+      }
+      else if(MESON=="B1s") {
+	Corr_VMD_anal.Tmin= 17;
+	Corr_VMD_anal.Tmax= 30;
+      }
+      else if(MESON=="B3s") {
+	 Corr_VMD_anal.Tmin= 17;
+	 Corr_VMD_anal.Tmax= 30;
+      }
+      else crash("Meson: "+MESON+" not yet implemented");
+      Corr_VMD_anal.Nt=2*(Corr_Tu_2TO.size()-1);
+      distr_t_list Corr_Tu_2TO_symm= Corr_Tu_2TO;
+      for(int t=Corr_VMD_anal.Nt/2 +1;t<Corr_VMD_anal.Nt;t++) Corr_Tu_2TO_symm.distr_list.push_back( Corr_Tu_2TO.distr_list[Corr_VMD_anal.Nt -t]);
+      distr_t_list eff_M_Tu_distr= Corr_VMD_anal.effective_mass_t(Corr_Tu_2TO_symm, "" );
+      distr_t eff_M_Tu= Corr_VMD_anal.Fit_distr(eff_M_Tu_distr)/a_distr;
+      Print_To_File({}, {eff_M_Tu_distr.ave(), eff_M_Tu_distr.err()}, path_out+"/mass/"+TAG_CURR+"Vb_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      distr_t Ups_MT = Corr_VMD_anal.Fit_distr( Corr_Tu_2TO_symm*(EXPT_DL(eff_M_Tu_distr)));
+      F_T_u_VMD_spectre_list[ixg].distr_list.push_back( Ups_MT*ZT*(1.0/(mel_SMSM*Eg))*EXP_D( M_P*t_07_c)*K_RE_distr( eff_M_Tu*a_distr, Eg_off, 1e-5));
+      distr_t_list Corr_F_T_u_VMD = Ups_MT*EXPT_D(-1.0*eff_M_Tu*a_distr, Corr_Tu_2TO.size());
+      distr_t F_T_u_VMD_distr(UseJack, Njacks);
+      for(int ty=1;ty<Corr_Tu_2TO.size(); ty++) {
+	F_T_u_VMD_distr = F_T_u_VMD_distr + Corr_F_T_u_VMD[ty]*EXP_D(ty*Eg_off);
+      }
+      F_T_u_VMD_list[ixg].distr_list.push_back( F_T_u_VMD_distr*ZT*(1.0/(mel_SMSM*Eg))*EXP_D( M_P*t_07_c));
+      //#######################################################
       
       
       distr_t F_T_u(UseJack, Njacks);
       distr_t F_T_d_I(UseJack, Njacks);
+      distr_t F_T_d_I_sp(UseJack, Njacks);
       distr_t FV_T_u_real(UseJack, Njacks);
       distr_t FV_T_d_real(UseJack, Njacks);
       distr_t FA_T_u_real(UseJack, Njacks);
       distr_t FA_T_d_real(UseJack, Njacks);
+      distr_t FV_T_d_sp_real(UseJack,Njacks);
+      distr_t FA_T_d_sp_real(UseJack,Njacks);
+
+      distr_t_list F_T_d_ty(UseJack), F_T_d_sp_ty(UseJack), F_T_u_ty(UseJack);
+      distr_t_list F_T_d_ty_psum(UseJack), F_T_d_sp_ty_psum(UseJack), F_T_u_ty_psum(UseJack);
+
+      distr_t_list FA_T_d_real_ty(UseJack), FA_T_d_sp_real_ty(UseJack), FA_T_u_real_ty(UseJack);
+      distr_t_list FA_T_d_real_ty_psum(UseJack), FA_T_d_sp_real_ty_psum(UseJack), FA_T_u_real_ty_psum(UseJack);
+
+      distr_t_list FV_T_d_real_ty(UseJack), FV_T_d_sp_real_ty(UseJack), FV_T_u_real_ty(UseJack);
+      distr_t_list FV_T_d_real_ty_psum(UseJack), FV_T_d_sp_real_ty_psum(UseJack), FV_T_u_real_ty_psum(UseJack);
 
       
       auto HeavyTheta=[](const int x) {  return ((x>=0)+(x>0))/2.0;   };
       auto Exp= [&Njacks, &UseJack](const distr_t &A) -> distr_t { distr_t ret(UseJack); for(int ijack=0;ijack<Njacks;ijack++) ret.distr.push_back( exp(A.distr[ijack])); return ret;};
       double T=Corr.Nt;
       
-      for(int ty=0; ty < Corr.Nt/2; ty++) {
+      for(int ty=0; ty <= Corr.Nt/2; ty++) {
 	
 	const distr_t f1=  Exp(-(T/2-ty)*Eg_off);
 
@@ -532,18 +733,59 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	const double f2_real= exp(-((3*T/2)-ty)*Eg);
 	
 	const double h1=HeavyTheta((T/2)-ty);
+	
 	const double h2=HeavyTheta(ty-(T/2));
 
 
+	F_T_d_ty.distr_list.push_back( (sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1*f1+ h2*f2)            );
+	F_T_d_sp_ty.distr_list.push_back( (sign_kz*T_d.distr_list[ty]*(xg/2.0) + B_d.distr_list[ty]*xg/2.0)*(h1*f1+h2*f2)   );
+	F_T_u_ty.distr_list.push_back(  (sign_kz*T_u_std.distr_list[ty]*(xg/2.0)   + B_u_std.distr_list[ty]*xg/2.0 )*(h1*f1+ h2*f2));
 
-		
-	F_T_u = F_T_u +  (sign_kz*T_u.distr_list[ty]*(xg/2.0)   + B_u.distr_list[ty]*xg/2.0 )*(h1*f1+ h2*f2);
-	FV_T_u_real = FV_T_u_real + (sign_kz*T_u.distr_list[ty]*(1.0- xg/2.0)   + B_u.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
-	FV_T_d_real = FV_T_d_real + (sign_kz*T_d.distr_list[ty]*(1.0- xg/2.0)   + B_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
-	FA_T_u_real = FA_T_u_real + ( B_u.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_u.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
-	FA_T_d_real = FA_T_d_real + ( B_d.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
+
+	F_T_d_ty_psum.distr_list.push_back( ((ty==0)?F_T_d_ty[ty]:(F_T_d_ty_psum[ty-1] + F_T_d_ty[ty])));
+	F_T_d_sp_ty_psum.distr_list.push_back( ((ty==0)?F_T_d_sp_ty[ty]:(F_T_d_sp_ty_psum[ty-1] + F_T_d_sp_ty[ty])));
+	F_T_u_ty_psum.distr_list.push_back( ((ty==0)?F_T_u_ty[ty]:(F_T_u_ty_psum[ty-1] + F_T_u_ty[ty])));
+
+
+
+	FA_T_d_real_ty.distr_list.push_back( ( B_d_std.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real)    )      ;
+	FA_T_d_sp_real_ty.distr_list.push_back( ( B_d.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
+	FA_T_u_real_ty.distr_list.push_back(  ( B_u_std.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_u_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
+
+
+	FA_T_d_real_ty_psum.distr_list.push_back( ((ty==0)?FA_T_d_real_ty[ty]:(FA_T_d_real_ty_psum[ty-1] + FA_T_d_real_ty[ty])));
+	FA_T_d_sp_real_ty_psum.distr_list.push_back( ((ty==0)?FA_T_d_sp_real_ty[ty]:(FA_T_d_sp_real_ty_psum[ty-1] + FA_T_d_sp_real_ty[ty])));
+	FA_T_u_real_ty_psum.distr_list.push_back( ((ty==0)?FA_T_u_real_ty[ty]:(FA_T_u_real_ty_psum[ty-1] + FA_T_u_real_ty[ty])));
+
+
+
+	FV_T_d_real_ty.distr_list.push_back( (sign_kz*T_d_std.distr_list[ty]*(1.0- xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
+	FV_T_d_sp_real_ty.distr_list.push_back( (sign_kz*T_d.distr_list[ty]*(1.0- xg/2.0)   + B_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
+	FV_T_u_real_ty.distr_list.push_back(  (sign_kz*T_u_std.distr_list[ty]*(1.0- xg/2.0)   + B_u_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
+
+
+	FV_T_d_real_ty_psum.distr_list.push_back( ((ty==0)?FV_T_d_real_ty[ty]:(FV_T_d_real_ty_psum[ty-1] + FV_T_d_real_ty[ty])));
+	FV_T_d_sp_real_ty_psum.distr_list.push_back( ((ty==0)?FV_T_d_sp_real_ty[ty]:(FV_T_d_sp_real_ty_psum[ty-1] + FV_T_d_sp_real_ty[ty])));
+	FV_T_u_real_ty_psum.distr_list.push_back( ((ty==0)?FV_T_u_real_ty[ty]:(FV_T_u_real_ty_psum[ty-1] + FV_T_u_real_ty[ty])));
+
+	
+	F_T_u = F_T_u +  (sign_kz*T_u_std.distr_list[ty]*(xg/2.0)   + B_u_std.distr_list[ty]*xg/2.0 )*(h1*f1+ h2*f2);
+	FV_T_u_real = FV_T_u_real + (sign_kz*T_u_std.distr_list[ty]*(1.0- xg/2.0)   + B_u_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
+	FV_T_d_real = FV_T_d_real + (sign_kz*T_d_std.distr_list[ty]*(1.0- xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
+	FA_T_u_real = FA_T_u_real + ( B_u_std.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_u_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
+	FA_T_d_real = FA_T_d_real + ( B_d_std.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
+	FA_T_d_sp_real = FA_T_d_sp_real + ( B_d.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
+	FV_T_d_sp_real = FV_T_d_sp_real + (sign_kz*T_d.distr_list[ty]*(1.0- xg/2.0)   + B_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
+	
+
+
+	
+	
 	if(ty<= t_07_s) {
-	  F_T_d_I = F_T_d_I + (sign_kz*T_d.distr_list[ty]*(xg/2.0)   + B_d.distr_list[ty]*xg/2.0 )*(h1*f1+ h2*f2);
+	  F_T_d_I = F_T_d_I + (sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1*f1+ h2*f2);
+	}
+	if(ty <= t_07_s_HLT) {
+	  F_T_d_I_sp = F_T_d_I_sp + (sign_kz*T_d.distr_list[ty]*(xg/2.0) + B_d.distr_list[ty]*xg/2.0)*(h1*f1+h2*f2);
 	}
       }
 
@@ -556,20 +798,72 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       FV_T_d_real= FV_T_d_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
       FA_T_u_real= FA_T_u_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_c))*Exp( M_P*t_07_c) ;
       FA_T_d_real= FA_T_d_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
+
+      FV_T_d_sp_real= FV_T_d_sp_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT) ;
+      FA_T_d_sp_real= FA_T_d_sp_real*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT) ;
+      F_T_d_I_sp = F_T_d_I_sp*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT);
+
+
+      F_T_d_ty = F_T_d_ty*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s))*Exp( M_P*t_07_s);
+      F_T_d_sp_ty = F_T_d_sp_ty*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT);
+      F_T_u_ty= F_T_u_ty*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_c))*Exp( M_P*t_07_c);
+
+      F_T_d_ty_psum = F_T_d_ty_psum*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s))*Exp( M_P*t_07_s);
+      F_T_d_sp_ty_psum = F_T_d_sp_ty_psum*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT);
+      F_T_u_ty_psum= F_T_u_ty_psum*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_c))*Exp( M_P*t_07_c);
+
+
+      FA_T_d_real_ty = FA_T_d_real_ty*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s))*Exp( M_P*t_07_s);
+      FA_T_d_sp_real_ty = FA_T_d_sp_real_ty*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT);
+      FA_T_u_real_ty= FA_T_u_real_ty*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_c))*Exp( M_P*t_07_c);
+
+      FA_T_d_real_ty_psum = FA_T_d_real_ty_psum*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s))*Exp( M_P*t_07_s);
+      FA_T_d_sp_real_ty_psum = FA_T_d_sp_real_ty_psum*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT);
+      FA_T_u_real_ty_psum= FA_T_u_real_ty_psum*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_c))*Exp( M_P*t_07_c);
+
+      FV_T_d_real_ty = FV_T_d_real_ty*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s))*Exp( M_P*t_07_s);
+      FV_T_d_sp_real_ty = FV_T_d_sp_real_ty*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT);
+      FV_T_u_real_ty= FV_T_u_real_ty*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_c))*Exp( M_P*t_07_c);
+
+      FV_T_d_real_ty_psum = FV_T_d_real_ty_psum*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s))*Exp( M_P*t_07_s);
+      FV_T_d_sp_real_ty_psum = FV_T_d_sp_real_ty_psum*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT);
+      FV_T_u_real_ty_psum= FV_T_u_real_ty_psum*ZT*(1.0/(mel_SMSM*Eg))*exp( Eg*abs(T/2 - t_07_c))*Exp( M_P*t_07_c);
+
+      
       //push_back
       F_T_u_list[ixg].distr_list.push_back( F_T_u);
       F_T_d_I_list[ixg].distr_list.push_back( F_T_d_I);
+      //F_T_d_I_sp_list[ixg].distr_list.push_back( F_T_d_I_sp);
       FV_T_u_real_list[ixg].distr_list.push_back( FV_T_u_real);
       FV_T_d_real_list[ixg].distr_list.push_back( FV_T_d_real);
       FA_T_u_real_list[ixg].distr_list.push_back( FA_T_u_real);
       FA_T_d_real_list[ixg].distr_list.push_back( FA_T_d_real);
-      
+
+      FV_T_d_sp_real_list[ixg].distr_list.push_back( FV_T_d_sp_real);
+      FA_T_d_sp_real_list[ixg].distr_list.push_back( FA_T_d_sp_real);
+
+
+      //print to File ty analysis
+      Print_To_File( { }, { F_T_d_ty.ave(), F_T_d_ty.err(), F_T_d_ty_psum.ave(), F_T_d_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { F_T_d_sp_ty.ave(), F_T_d_sp_ty.err(), F_T_d_sp_ty_psum.ave(), F_T_d_sp_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"ty_analysis_sp_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { F_T_u_ty.ave(), F_T_u_ty.err(),  F_T_u_ty_psum.ave(), F_T_u_ty_psum.err() }, path_out+"/FF_u/"+TAG_CURR+"ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+
+      Print_To_File( { }, { FA_T_d_real_ty.ave(), FA_T_d_real_ty.err(), FA_T_d_real_ty_psum.ave(), FA_T_d_real_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"TA_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { FA_T_d_sp_real_ty.ave(), FA_T_d_sp_real_ty.err(), FA_T_d_sp_real_ty_psum.ave(), FA_T_d_sp_real_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"TA_real_ty_analysis_sp_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { FA_T_u_real_ty.ave(), FA_T_u_real_ty.err(),  FA_T_u_real_ty_psum.ave(), FA_T_u_real_ty_psum.err() }, path_out+"/FF_u/"+TAG_CURR+"TA_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+
+      Print_To_File( { }, { FV_T_d_real_ty.ave(), FV_T_d_real_ty.err(), FV_T_d_real_ty_psum.ave(), FV_T_d_real_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"TV_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { FV_T_d_sp_real_ty.ave(), FV_T_d_sp_real_ty.err(), FV_T_d_sp_real_ty_psum.ave(), FV_T_d_sp_real_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"TV_real_ty_analysis_sp_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { FV_T_u_real_ty.ave(), FV_T_u_real_ty.err(),  FV_T_u_real_ty_psum.ave(), FV_T_u_real_ty_psum.err() }, path_out+"/FF_u/"+TAG_CURR+"TV_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+
+   
+            
 
       //define corrs to be used in spec dens reconstruction
       distr_t_list Corr_T(UseJack);
-      distr_t_list Corr_T_boot(UseJack);
+      distr_t_list Corr_T_boot(0);
 
-      distr_t_list Corr_TV_real(UseJack), Corr_TV_real_boot(UseJack);
+      distr_t_list Corr_TV_real(UseJack), Corr_TV_real_boot(0);
 
       for(int t=t_07_s_HLT; t <= Corr.Nt/2; t++) {
 	
@@ -578,7 +872,6 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 	Corr_TV_real.distr_list.push_back(   sign_kz*T_d.distr_list[t]*(1 - xg/2.0) + B_d.distr_list[t]*(xg/2.0));
 	Corr_TV_real_boot.distr_list.push_back(   sign_kz*T_d_boot.distr_list[t]*(1 - xg_boot/2.0) + B_d_boot.distr_list[t]*(xg_boot/2.0));
-	
       }
 
       int tmax= Corr_T.size();
@@ -588,17 +881,330 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
       
       CorrAnalysis Corr_HLT(UseJack, Njacks,1000);
-      Corr_HLT.Tmin= 20;
-      Corr_HLT.Tmax= 30;
-      Corr_HLT.Nt=2*(Corr_T.size()-1);
-      distr_t_list Corr_T_symm= Corr_T;
-      for(int t=Corr_HLT.Nt/2 +1;t<Corr_HLT.Nt;t++) Corr_T_symm.distr_list.push_back( Corr_T.distr_list[Corr_HLT.Nt -t]);
-      distr_t eff_M_T= Corr_HLT.Fit_distr(Corr_HLT.effective_mass_t(Corr_T_symm, "" ))/a_distr;
-      double Mphi_motion= sqrt( Mphi*Mphi + pow(kz/a_distr.ave(),2));
-     
-    
+      CorrAnalysis Corr_HLT_boot(0, Njacks, 1000);
+      if(MESON=="B0s") {
+	if(ixg==0) {
+	  Corr_HLT.Tmin= 14;
+	  Corr_HLT.Tmax= 25;
+	}
+	else if(ixg==1) {
+	  Corr_HLT.Tmin= 14;
+	  Corr_HLT.Tmax= 25;
+	}
+	else if(ixg==2) {
+	  Corr_HLT.Tmin= 13;
+	  Corr_HLT.Tmax= 19;
 
-      cout<<"eff_M_T: "<<eff_M_T.ave()<<" +- "<<eff_M_T.err()<<" expected: "<<Mphi_motion<<endl;
+	}
+	else if(ixg==3) {
+	  Corr_HLT.Tmin= 13;
+	  Corr_HLT.Tmax= 18;
+	}
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+
+      }
+      else if(MESON=="B1s") {
+	 
+	 if(ixg==0) {
+	  Corr_HLT.Tmin= 15;
+	  Corr_HLT.Tmax= 22;
+	 }
+	 else if(ixg==1) {
+	   Corr_HLT.Tmin= 15;
+	   Corr_HLT.Tmax= 22;
+	 }
+	 else if(ixg==2) {
+	   Corr_HLT.Tmin= 14;
+	   Corr_HLT.Tmax= 22;
+	 }
+	 else if(ixg==3) {
+	   Corr_HLT.Tmin= 14;
+	   Corr_HLT.Tmax= 22;
+	 }
+	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
+	 
+      }
+      else if(MESON=="B3s") {
+	
+	 if(ixg==0) {
+	  Corr_HLT.Tmin= 14;
+	  Corr_HLT.Tmax= 25;
+	 }
+	 else if(ixg==1) {
+	   Corr_HLT.Tmin= 14;
+	   Corr_HLT.Tmax= 18;
+	 }
+	 else if(ixg==2) {
+	   Corr_HLT.Tmin= 12;
+	   Corr_HLT.Tmax= 17;
+	 }
+	 else if(ixg==3) {
+	   Corr_HLT.Tmin= 12;
+	   Corr_HLT.Tmax= 17;
+	 }
+	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
+	 
+      }
+      else crash("Meson: "+MESON+" not yet implemented");
+
+      Corr_HLT_boot.Tmin= Corr_HLT.Tmin;
+      Corr_HLT_boot.Tmax= Corr_HLT.Tmax;
+
+      
+      Corr_HLT.Nt=2*(Corr_T.size()-1);
+      Corr_HLT_boot.Nt= Corr_HLT.Nt;
+      distr_t_list Corr_T_symm= Corr_T;
+      distr_t_list Corr_T_symm_boot= Corr_T_boot;
+      for(int t=Corr_HLT.Nt/2 +1;t<Corr_HLT.Nt;t++) {
+	Corr_T_symm.distr_list.push_back( Corr_T.distr_list[Corr_HLT.Nt -t]);
+	Corr_T_symm_boot.distr_list.push_back( Corr_T_boot.distr_list[Corr_HLT_boot.Nt -t]);
+      }
+      distr_t_list eff_M_Td_distr= Corr_HLT.effective_mass_t(Corr_T_symm, "" );
+      distr_t_list eff_M_Td_boot_distr= Corr_HLT_boot.effective_mass_t( Corr_T_symm_boot, "");
+      distr_t eff_M_Td= Corr_HLT.Fit_distr(eff_M_Td_distr)/a_distr;
+      distr_t eff_M_Td_boot= Corr_HLT.Fit_distr(eff_M_Td_boot_distr);
+      double Mphi_motion= sqrt( Mphi*Mphi + pow(kz/a_distr.ave(),2));
+      Print_To_File({}, {eff_M_Td_distr.ave(), eff_M_Td_distr.err()}, path_out+"/mass/"+TAG_CURR+"Vs_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+     
+      Print_To_File({}, { (Corr_T*FACT).ave(), (Corr_T*FACT).err() }, path_out+"/corr_2pts/"+TAG_CURR+"HLT_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+
+      cout<<"eff_M_T: "<<eff_M_Td.ave()<<" +- "<<eff_M_Td.err()<<" expected: "<<Mphi_motion<<endl;
+
+      distr_t_list phi_MT_distr= Corr_T_symm*EXPT_DL(eff_M_Td_distr);
+      distr_t phi_MT = Corr_HLT.Fit_distr( Corr_T_symm*(EXPT_DL(eff_M_Td_distr)));
+      distr_t phi_MT_boot= Corr_HLT_boot.Fit_distr( Corr_T_symm_boot*(EXPT_DL(eff_M_Td_boot_distr)));
+      distr_t_list Corr_T_VMD = phi_MT*EXPT_D(-1.0*eff_M_Td*a_distr, Corr_T.size());
+      distr_t_list Corr_T_VMD_boot = phi_MT_boot*EXPT_D(-1.0*eff_M_Td_boot, Corr_T_boot.size());
+
+           
+      distr_t_list Corr_T_sub = Corr_T - Corr_T_VMD;
+      distr_t_list Corr_T_boot_sub = Corr_T_boot - Corr_T_VMD_boot;
+
+
+      cout<<"PRINTING VMD PREDICTION FOR THE COUPLING for meson: "<<MESON+" xg: "<<xg_list.ave(ixg)<<endl;
+      cout<<"g+ * f_V : "<<(FACT*phi_MT/a_distr).ave()<<" +- " <<(FACT*phi_MT/a_distr).err()<<endl;
+      cout<<"##############################################################################"<<endl;
+
+
+      //#########################################################################################################
+
+
+
+      //Determine second-state 
+      
+      //ari-symmetrize
+      distr_t_list Corr_T_ary_symm= Corr_T_sub;
+      distr_t_list Corr_T_ary_symm_boot= Corr_T_boot_sub;
+      for(int t=Corr_HLT.Nt/2 +1;t<Corr_HLT.Nt;t++) {
+	Corr_T_ary_symm.distr_list.push_back( Corr_T_sub.distr_list[Corr_HLT.Nt -t]);
+	Corr_T_ary_symm_boot.distr_list.push_back( Corr_T_boot_sub.distr_list[Corr_HLT.Nt -t]);
+      }
+      distr_t_list eff_M_prime_Td_distr= Corr_HLT.effective_mass_t( Corr_T_ary_symm, path_out+"/mass/"+TAG_CURR+"Vs_exc_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2));
+      distr_t_list eff_M_prime_Td_boot_distr= Corr_HLT.effective_mass_t( Corr_T_ary_symm_boot, "");
+      int Tmin_old= Corr_HLT.Tmin; int Tmax_old= Corr_HLT.Tmax;
+      if(MESON=="B0s") {
+	if(ixg==0) {
+	  Corr_HLT.Tmin= 5;
+	  Corr_HLT.Tmax= 9;
+	}
+	else if(ixg==1) {
+	  Corr_HLT.Tmin= 5;
+	  Corr_HLT.Tmax= 9;
+	}
+	else if(ixg==2) {
+	  Corr_HLT.Tmin= 4;
+	  Corr_HLT.Tmax= 6;
+
+	}
+	else if(ixg==3) {
+	  Corr_HLT.Tmin= 4;
+	  Corr_HLT.Tmax= 6;
+	}
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+
+      }
+      else if(MESON=="B1s") {
+	 
+	 if(ixg==0) {
+	  Corr_HLT.Tmin= 6;
+	  Corr_HLT.Tmax= 9;
+	 }
+	 else if(ixg==1) {
+	   Corr_HLT.Tmin= 6;
+	   Corr_HLT.Tmax= 9;
+	 }
+	 else if(ixg==2) {
+	   Corr_HLT.Tmin= 6;
+	   Corr_HLT.Tmax= 9;
+	 }
+	 else if(ixg==3) {
+	   Corr_HLT.Tmin= 7;
+	   Corr_HLT.Tmax= 9;
+	 }
+	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
+	 
+      }
+      else if(MESON=="B3s") {
+	
+	 if(ixg==0) {
+	  Corr_HLT.Tmin= 8;
+	  Corr_HLT.Tmax= 10;
+	 }
+	 else if(ixg==1) {
+	   Corr_HLT.Tmin= 5;
+	   Corr_HLT.Tmax= 7;
+	 }
+	 else if(ixg==2) {
+	   Corr_HLT.Tmin= 5;
+	   Corr_HLT.Tmax= 7;
+	 }
+	 else if(ixg==3) {
+	   Corr_HLT.Tmin= 4;
+	   Corr_HLT.Tmax= 6;
+	 }
+	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
+	 
+      }
+      else crash("Meson: "+MESON+" not yet implemented");
+
+      Corr_HLT_boot.Tmin= Corr_HLT.Tmin;
+      Corr_HLT_boot.Tmax= Corr_HLT.Tmax;
+
+      
+      
+      distr_t eff_M_prime_Td= Corr_HLT.Fit_distr(eff_M_prime_Td_distr)/a_distr;
+      distr_t eff_M_prime_Td_boot= Corr_HLT_boot.Fit_distr(eff_M_prime_Td_boot_distr);
+      distr_t_list phi_prime_MT_distr=  Corr_T_ary_symm*(EXPT_DL(eff_M_prime_Td_distr));
+      distr_t_list phi_prime_MT_boot_distr=  Corr_T_ary_symm_boot*(EXPT_DL(eff_M_prime_Td_boot_distr));
+      distr_t phi_prime_MT= Corr_HLT.Fit_distr( Corr_T_ary_symm*(EXPT_DL(eff_M_prime_Td_distr)));
+      distr_t phi_prime_MT_boot= Corr_HLT_boot.Fit_distr( Corr_T_ary_symm_boot*(EXPT_DL(eff_M_prime_Td_boot_distr)));
+      
+      Corr_HLT.Tmin = Tmin_old; Corr_HLT.Tmax= Tmax_old;
+      Corr_HLT_boot.Tmin = Tmin_old; Corr_HLT_boot.Tmax= Tmax_old;
+      
+      distr_t_list Corr_T_VMD_II = phi_prime_MT*EXPT_D(-1.0*eff_M_prime_Td*a_distr, Corr_T.size());
+      distr_t_list Corr_T_sub_II = Corr_T_sub - Corr_T_VMD_II;
+      distr_t_list Corr_T_boot_VMD_II = phi_prime_MT_boot*EXPT_D(-1.0*eff_M_prime_Td_boot, Corr_T.size());
+      distr_t_list Corr_T_boot_sub_II = Corr_T_boot_sub - Corr_T_boot_VMD_II;
+
+
+
+      //#########################################################################################################
+
+
+
+      //Determine tird-state 
+      
+      //ari-symmetrize
+      distr_t_list Corr_T_aryary_symm= Corr_T_sub_II;
+      distr_t_list Corr_T_aryary_symm_boot= Corr_T_boot_sub_II;
+      for(int t=Corr_HLT.Nt/2 +1;t<Corr_HLT.Nt;t++) {
+	Corr_T_aryary_symm.distr_list.push_back( Corr_T_sub_II.distr_list[Corr_HLT.Nt -t]);
+	Corr_T_aryary_symm_boot.distr_list.push_back( Corr_T_boot_sub_II.distr_list[Corr_HLT.Nt -t]);
+      }
+      distr_t_list eff_M_second_Td_distr= Corr_HLT.effective_mass_t( Corr_T_aryary_symm, path_out+"/mass/"+TAG_CURR+"Vs_exc2_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2));
+      distr_t_list eff_M_second_Td_boot_distr= Corr_HLT.effective_mass_t( Corr_T_aryary_symm_boot, "");
+      Tmin_old= Corr_HLT.Tmin; Tmax_old= Corr_HLT.Tmax;
+      if(MESON=="B0s") {
+	if(ixg==0) {
+	  Corr_HLT.Tmin= 2;
+	  Corr_HLT.Tmax= 5;
+	}
+	else if(ixg==1) {
+	  Corr_HLT.Tmin= 2;
+	  Corr_HLT.Tmax= 5;
+	}
+	else if(ixg==2) {
+	  Corr_HLT.Tmin= 2;
+	  Corr_HLT.Tmax= 5;
+
+	}
+	else if(ixg==3) {
+	  Corr_HLT.Tmin= 2;
+	  Corr_HLT.Tmax= 5;
+	}
+	else crash("ixg: "+to_string(ixg)+" not yet implemented");
+
+      }
+      else if(MESON=="B1s") {
+	 
+	 if(ixg==0) {
+	  Corr_HLT.Tmin= 2;
+	  Corr_HLT.Tmax= 5;
+	 }
+	 else if(ixg==1) {
+	   Corr_HLT.Tmin= 2;
+	   Corr_HLT.Tmax= 5;
+	 }
+	 else if(ixg==2) {
+	   Corr_HLT.Tmin= 2;
+	   Corr_HLT.Tmax= 5;
+	 }
+	 else if(ixg==3) {
+	   Corr_HLT.Tmin= 2;
+	   Corr_HLT.Tmax= 5;
+	 }
+	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
+	 
+      }
+      else if(MESON=="B3s") {
+	
+	 if(ixg==0) {
+	  Corr_HLT.Tmin= 2;
+	  Corr_HLT.Tmax= 5;
+	 }
+	 else if(ixg==1) {
+	   Corr_HLT.Tmin= 2;
+	   Corr_HLT.Tmax= 5;
+	 }
+	 else if(ixg==2) {
+	   Corr_HLT.Tmin= 2;
+	   Corr_HLT.Tmax= 5;
+	 }
+	 else if(ixg==3) {
+	   Corr_HLT.Tmin= 2;
+	   Corr_HLT.Tmax= 5;
+	 }
+	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
+	 
+      }
+      else crash("Meson: "+MESON+" not yet implemented");
+
+      Corr_HLT_boot.Tmin= Corr_HLT.Tmin;
+      Corr_HLT_boot.Tmax= Corr_HLT.Tmax;
+
+      
+      
+      distr_t eff_M_second_Td= Corr_HLT.Fit_distr(eff_M_second_Td_distr)/a_distr;
+      distr_t eff_M_second_Td_boot= Corr_HLT_boot.Fit_distr(eff_M_second_Td_boot_distr);
+      distr_t_list phi_second_MT_distr=  Corr_T_aryary_symm*(EXPT_DL(eff_M_second_Td_distr));
+      distr_t_list phi_second_MT_boot_distr=  Corr_T_aryary_symm_boot*(EXPT_DL(eff_M_second_Td_boot_distr));
+      distr_t phi_second_MT= Corr_HLT.Fit_distr( Corr_T_aryary_symm*(EXPT_DL(eff_M_second_Td_distr)));
+      distr_t phi_second_MT_boot= Corr_HLT_boot.Fit_distr( Corr_T_aryary_symm_boot*(EXPT_DL(eff_M_second_Td_boot_distr)));
+      
+      Corr_HLT.Tmin = Tmin_old; Corr_HLT.Tmax= Tmax_old;
+      Corr_HLT_boot.Tmin = Tmin_old; Corr_HLT_boot.Tmax= Tmax_old;
+      
+      distr_t_list Corr_T_VMD_III = phi_second_MT*EXPT_D(-1.0*eff_M_second_Td*a_distr, Corr_T.size());
+      distr_t_list Corr_T_sub_III = Corr_T_sub_II - Corr_T_VMD_III;
+      distr_t_list Corr_T_boot_VMD_III = phi_second_MT_boot*EXPT_D(-1.0*eff_M_second_Td_boot, Corr_T.size());
+      distr_t_list Corr_T_boot_sub_III = Corr_T_boot_sub_II - Corr_T_boot_VMD_III;
+
+
+
+
+
+      //#########################################################################################################
+
+      
+      Print_To_File({}, { (Corr_T_sub*FACT).ave(), (Corr_T_sub*FACT).err(), (Corr_T_sub_II*FACT).ave(), (Corr_T_sub_II*FACT).err(), (Corr_T_sub_III*FACT).ave(), (Corr_T_sub_II*FACT).err() }, path_out+"/corr_2pts/"+TAG_CURR+"sub_HLT_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+
+      if(Use_preconditioning) {
+	Corr_T= Corr_T_sub_II;
+	Corr_T_boot= Corr_T_boot_sub_II;
+      }
+
+      Print_To_File({}, { (FACT*phi_MT_distr/a_distr).ave(), (FACT*phi_MT_distr/a_distr).err(), (FACT*phi_prime_MT_distr/a_distr).ave(), (FACT*phi_prime_MT_distr/a_distr).err(), (FACT*phi_second_MT_distr/a_distr).ave(), (FACT*phi_second_MT_distr/a_distr).err()}, path_out+"/FF_d_II/VMD_MT_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
  
       //generate covariance matrix
       Vfloat cov_T, corr_T;
@@ -618,39 +1224,101 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       
 
       //print covariance matrix
-      Print_To_File({},{TT,RR, cov_T, corr_T}, path_out+"/covariance/"+Ens_tags[iens]+"/cov_T_xg_"+to_string_with_precision(xg.ave(),2)+".cov", "" , "");
+      Print_To_File({},{TT,RR, cov_T, corr_T}, path_out+"/covariance/"+Ens_tags[iens]+"/"+preco_tag+"cov_T_xg_"+to_string_with_precision(xg.ave(),2)+".cov", "" , "");
   
 
       cout<<"Starting spectral reconstruction:..."<<endl;
+
+      for(int iss=0; iss <(signed)sigmas_07_w0.size(); iss++) {
+
+	
+	F_T_d_RE_VMD_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave()));
+	F_T_d_IM_VMD_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off,  sigmas_07_w0[iss]*a_distr.ave()));
+
+	F_T_d_RE_VMD_II_state_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave())   +  FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave())   );
+	F_T_d_IM_VMD_II_state_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off,  sigmas_07_w0[iss]*a_distr.ave())  + FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave())    );
+
+	F_T_d_RE_VMD_III_state_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave())   + FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave()) +  FACT*phi_second_MT*K_RE_distr( eff_M_second_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave())  );
+	F_T_d_IM_VMD_III_state_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off,  sigmas_07_w0[iss]*a_distr.ave())  + FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave()) +  FACT*phi_second_MT*K_IM_distr( eff_M_second_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave())    );
+
+	distr_t_list VMD_VIRT_SCAN_RE(UseJack), VMD_VIRT_SCAN_IM(UseJack);
+	distr_t_list VMD_II_VIRT_SCAN_RE(UseJack), VMD_II_VIRT_SCAN_IM(UseJack);
+	distr_t_list VMD_III_VIRT_SCAN_RE(UseJack), VMD_III_VIRT_SCAN_IM(UseJack);
+
+	for(int vir=0;vir<(signed)virtualities.size(); vir++) {
+
+	  VMD_VIRT_SCAN_RE.distr_list.push_back(  FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr , M_P*virtualities[vir] , sigmas_07_w0[iss]*a_distr.ave()));
+	  VMD_VIRT_SCAN_IM.distr_list.push_back( FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, M_P*virtualities[vir],  sigmas_07_w0[iss]*a_distr.ave()) );
+
+	  VMD_II_VIRT_SCAN_RE.distr_list.push_back(  FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr , M_P*virtualities[vir] , sigmas_07_w0[iss]*a_distr.ave())   +  FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, M_P*virtualities[vir], sigmas_07_w0[iss]*a_distr.ave())   );
+	  VMD_II_VIRT_SCAN_IM.distr_list.push_back( FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, M_P*virtualities[vir],  sigmas_07_w0[iss]*a_distr.ave())  + FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, M_P*virtualities[vir], sigmas_07_w0[iss]*a_distr.ave())    );
+
+	  VMD_III_VIRT_SCAN_RE.distr_list.push_back(  FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr , M_P*virtualities[vir] , sigmas_07_w0[iss]*a_distr.ave())   +  FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, M_P*virtualities[vir], sigmas_07_w0[iss]*a_distr.ave())   +  FACT*phi_second_MT*K_RE_distr( eff_M_second_Td*a_distr, M_P*virtualities[vir], sigmas_07_w0[iss]*a_distr.ave())   );
+	  VMD_III_VIRT_SCAN_IM.distr_list.push_back( FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, M_P*virtualities[vir],  sigmas_07_w0[iss]*a_distr.ave())  + FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, M_P*virtualities[vir], sigmas_07_w0[iss]*a_distr.ave())  + FACT*phi_second_MT*K_IM_distr( eff_M_second_Td*a_distr, M_P*virtualities[vir], sigmas_07_w0[iss]*a_distr.ave())    );
+
+	}
+
+	Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(), Njacks)*M_P/a_distr).ave(), VMD_VIRT_SCAN_RE.ave(), VMD_VIRT_SCAN_RE.err(), VMD_VIRT_SCAN_IM.ave(), VMD_VIRT_SCAN_IM.err()}, path_out+"/FF_d_II/VMD_virt_scan/xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_sm_"+to_string_with_precision(sigmas_07_w0[iss],3)+"_"+Ens_tags[iens], "", "");
+
+	Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(), Njacks)*M_P/a_distr).ave(), VMD_II_VIRT_SCAN_RE.ave(), VMD_II_VIRT_SCAN_RE.err(), VMD_II_VIRT_SCAN_IM.ave(), VMD_II_VIRT_SCAN_IM.err()}, path_out+"/FF_d_II/VMD_virt_scan/II_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_sm_"+to_string_with_precision(sigmas_07_w0[iss],3)+"_"+Ens_tags[iens], "", "");
+
+	Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(), Njacks)*M_P/a_distr).ave(), VMD_III_VIRT_SCAN_RE.ave(), VMD_III_VIRT_SCAN_RE.err(), VMD_III_VIRT_SCAN_IM.ave(), VMD_III_VIRT_SCAN_IM.err()}, path_out+"/FF_d_II/VMD_virt_scan/III_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_sm_"+to_string_with_precision(sigmas_07_w0[iss],3)+"_"+Ens_tags[iens], "", "");
+      }
+
       
 
       if(!Skip_spectral_reconstruction_07) {
+
+	vector<distr_t_list> F_T_d_RE_virt_scan;
+	vector<distr_t_list> F_T_d_IM_virt_scan;
+
+	for(int isg=0;isg<(signed)sigmas_07.size();isg++) {
+	  F_T_d_RE_virt_scan.emplace_back(UseJack, virtualities.size(), Njacks);
+	  F_T_d_IM_virt_scan.emplace_back(UseJack, virtualities.size(), Njacks);
+	}
 
 	#pragma omp parallel for schedule(dynamic)
 	//spectral reconstruction for second time ordering
 	for(int isg=0;isg<(signed)sigmas_07.size();isg++) {
 
 	  double s= sigmas_07[isg]*a_distr.ave();
+
 	  
 	  double syst_T;
 	  double mult_T_IM= 0.01;
-	  double mult_T_RE=0.05;
+	  double mult_T_RE=0.03;
 	  double Ag_target=1e-4;
 	  if(sigmas_07[isg] < 0.5) Ag_target=5e-2;
 	  else if(sigmas_07[isg] < 0.7) Ag_target=5e-3;
 	  double th= E0_fact*Mphi_motion;
 	  double l_re_T;
 	  
-	  
-	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , "07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0,1));
-	  	  
-	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , "07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0,1));
-	  
+
+	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1)+ ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_off, s) + FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_off, s) )) ;
+	 	  	  
+	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1) +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off, s)+FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_off, s)));
+
+	  if(virtuality_scan && ixg==0) {
+	    
+	    for(int vir=0;vir<(signed)virtualities.size(); vir++) {
+
+	      F_T_d_RE_virt_scan[isg].distr_list[vir] = Get_Laplace_transfo ( M_P.ave()*virtualities[vir],  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"VIRT_SCAN_T_"+Ens_tags[iens], Ag_target,0, FACT , MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1) + + ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, M_P*virtualities[vir], s) + FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, M_P*virtualities[vir], s));
+	      
+	      F_T_d_IM_virt_scan[isg].distr_list[vir] = Get_Laplace_transfo ( M_P.ave()*virtualities[vir],  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"VIRT_SCAN_T_"+Ens_tags[iens], Ag_target,0, FACT , MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1)  +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, M_P*virtualities[vir], s)+FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, M_P*virtualities[vir], s));
+
+	    }
+
+	  }
 	 	  
 	  
 	}
-      }
-            
+	//if virtuality scan and first kinematic, print results
+	if(virtuality_scan && ixg==0) {
+	  for(int isg=0;isg<(signed)sigmas_07.size();isg++) {
+	    Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(),Njacks)*M_P/a_distr).ave(), F_T_d_RE_virt_scan[isg].ave(), F_T_d_RE_virt_scan[isg].err(), F_T_d_IM_virt_scan[isg].ave(), F_T_d_IM_virt_scan[isg].err() }, path_out+"/FF_d_II/VIRT_SCAN_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_xg_0.1", "", "");
+	  }
+	}
+      }    
       
     }
 
@@ -659,18 +1327,25 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   //print results
   //per kinematic
   for(int ixg=0;ixg<n_xg;ixg++) {
-    Print_To_File( Ens_tags, { F_T_u_list[ixg].ave(), F_T_u_list[ixg].err()     } , path_out+"/FF_u/F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-    Print_To_File( Ens_tags, { F_T_d_I_list[ixg].ave(), F_T_d_I_list[ixg].err()     } , path_out+"/FF_d_I/F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-    Print_To_File( Ens_tags, { FV_T_u_real_list[ixg].ave(), FV_T_u_real_list[ixg].err()     } , path_out+"/FF_u/FV_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-    Print_To_File( Ens_tags, { FV_T_d_real_list[ixg].ave(), FV_T_d_real_list[ixg].err()     } , path_out+"/FF_d/FV_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-    Print_To_File( Ens_tags, { FA_T_u_real_list[ixg].ave(), FA_T_u_real_list[ixg].err()     } , path_out+"/FF_u/FA_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-    Print_To_File( Ens_tags, { FA_T_d_real_list[ixg].ave(), FA_T_d_real_list[ixg].err()     } , path_out+"/FF_d/FA_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-    
+    Print_To_File( Ens_tags, { F_T_u_list[ixg].ave(), F_T_u_list[ixg].err()     } , path_out+"/FF_u/"+TAG_CURR+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+    Print_To_File( Ens_tags, { F_T_d_I_list[ixg].ave(), F_T_d_I_list[ixg].err()     } , path_out+"/FF_d_I/"+TAG_CURR+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+    Print_To_File( Ens_tags, { FV_T_u_real_list[ixg].ave(), FV_T_u_real_list[ixg].err()     } , path_out+"/FF_u/"+TAG_CURR+"FV_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+    Print_To_File( Ens_tags, { FV_T_d_real_list[ixg].ave(), FV_T_d_real_list[ixg].err()     } , path_out+"/FF_d/"+TAG_CURR+"FV_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+    Print_To_File( Ens_tags, { FA_T_u_real_list[ixg].ave(), FA_T_u_real_list[ixg].err()     } , path_out+"/FF_u/"+TAG_CURR+"FA_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+    Print_To_File( Ens_tags, { FA_T_d_real_list[ixg].ave(), FA_T_d_real_list[ixg].err()     } , path_out+"/FF_d/"+TAG_CURR+"FA_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+
+    Print_To_File( Ens_tags, { FV_T_d_sp_real_list[ixg].ave(), FV_T_d_sp_real_list[ixg].err()     } , path_out+"/FF_d/"+TAG_CURR+"FV_T_sp_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+    Print_To_File( Ens_tags, { FA_T_d_sp_real_list[ixg].ave(), FA_T_d_sp_real_list[ixg].err()     } , path_out+"/FF_d/"+TAG_CURR+"FA_T_sp_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+
+    Print_To_File( Ens_tags, { F_T_u_VMD_list[ixg].ave(), F_T_u_VMD_list[ixg].err(), F_T_u_VMD_spectre_list[ixg].ave(), F_T_u_VMD_spectre_list[ixg].err()     } , path_out+"/FF_u/"+TAG_CURR+"VMD_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+
+    if(!Skip_spectral_reconstruction_07) {
     for(int isg=0;isg<(signed)sigmas_07.size();isg++) {
 
-      Print_To_File( Ens_tags, { F_T_d_RE_sm_list[ixg][isg].ave(), F_T_d_RE_sm_list[ixg][isg].err(), F_T_d_IM_sm_list[ixg][isg].ave(), F_T_d_IM_sm_list[ixg][isg].err()     } , path_out+"/FF_d_II/F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( Ens_tags, { F_T_d_RE_sm_list[ixg][isg].ave(), F_T_d_RE_sm_list[ixg][isg].err(), F_T_d_IM_sm_list[ixg][isg].ave(), F_T_d_IM_sm_list[ixg][isg].err()     } , path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
 
 
+    }
     }
   }
   //per ensemble
@@ -678,6 +1353,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     distr_t_list F_T_u_per_ens(UseJack),  F_T_d_I_per_ens(UseJack);
     distr_t_list FV_T_u_real_per_ens(UseJack),  FV_T_d_real_per_ens(UseJack);
     distr_t_list FA_T_u_real_per_ens(UseJack),  FA_T_d_real_per_ens(UseJack);
+    distr_t_list FA_T_d_sp_real_per_ens(UseJack), FV_T_d_sp_real_per_ens(UseJack);
+    distr_t_list F_T_u_VMD_per_ens(UseJack), F_T_u_VMD_spectre_per_ens(UseJack);
    
 
     for(int ixg=0;ixg<n_xg;ixg++) {
@@ -688,26 +1365,59 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       FA_T_u_real_per_ens.distr_list.push_back( FA_T_u_real_list[ixg].distr_list[iens]);
       FA_T_d_real_per_ens.distr_list.push_back( FA_T_d_real_list[ixg].distr_list[iens]);
 
+      FV_T_d_sp_real_per_ens.distr_list.push_back( FV_T_d_sp_real_list[ixg].distr_list[iens]);
+      FA_T_d_sp_real_per_ens.distr_list.push_back( FA_T_d_sp_real_list[ixg].distr_list[iens]);
+
+      F_T_u_VMD_per_ens.distr_list.push_back( F_T_u_VMD_list[ixg].distr_list[iens]);
+      F_T_u_VMD_spectre_per_ens.distr_list.push_back( F_T_u_VMD_spectre_list[ixg].distr_list[iens]);
+
       distr_t_list F_T_d_RE_sm_per_ens_per_kin, F_T_d_IM_sm_per_ens_per_kin;
+      distr_t_list F_T_d_RE_VMD_sm_per_ens_per_kin, F_T_d_IM_VMD_sm_per_ens_per_kin;
+      distr_t_list F_T_d_RE_VMD_II_state_sm_per_ens_per_kin, F_T_d_IM_VMD_II_state_sm_per_ens_per_kin;
+      distr_t_list F_T_d_RE_VMD_III_state_sm_per_ens_per_kin, F_T_d_IM_VMD_III_state_sm_per_ens_per_kin;
       
-      for(int isg=0;isg<(signed)sigmas_07.size(); isg++) {
-	F_T_d_RE_sm_per_ens_per_kin.distr_list.push_back( F_T_d_RE_sm_list[ixg][isg].distr_list[iens]);
-	F_T_d_IM_sm_per_ens_per_kin.distr_list.push_back( F_T_d_IM_sm_list[ixg][isg].distr_list[iens]);
+      if(!Skip_spectral_reconstruction_07) {
+	for(int iss=0; iss<(signed)sigmas_07_w0.size(); iss++) {
+	  F_T_d_RE_VMD_sm_per_ens_per_kin.distr_list.push_back( F_T_d_RE_VMD_sm_list[ixg][iss].distr_list[iens]);
+	  F_T_d_IM_VMD_sm_per_ens_per_kin.distr_list.push_back( F_T_d_IM_VMD_sm_list[ixg][iss].distr_list[iens]);
+
+	  F_T_d_RE_VMD_II_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_RE_VMD_II_state_sm_list[ixg][iss].distr_list[iens]);
+	  F_T_d_IM_VMD_II_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_IM_VMD_II_state_sm_list[ixg][iss].distr_list[iens]);
+
+	  F_T_d_RE_VMD_III_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_RE_VMD_III_state_sm_list[ixg][iss].distr_list[iens]);
+	  F_T_d_IM_VMD_III_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_IM_VMD_III_state_sm_list[ixg][iss].distr_list[iens]);
+	}
+	for(int isg=0;isg<(signed)sigmas_07.size(); isg++) {
+	  F_T_d_RE_sm_per_ens_per_kin.distr_list.push_back( F_T_d_RE_sm_list[ixg][isg].distr_list[iens]);
+	  F_T_d_IM_sm_per_ens_per_kin.distr_list.push_back( F_T_d_IM_sm_list[ixg][isg].distr_list[iens]);
+	}
+	
+      Print_To_File( {}, {sigmas_07, F_T_d_RE_sm_per_ens_per_kin.ave(), F_T_d_RE_sm_per_ens_per_kin.err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      Print_To_File( {}, {sigmas_07_w0, F_T_d_RE_VMD_sm_per_ens_per_kin.ave(), F_T_d_RE_VMD_sm_per_ens_per_kin.err(), F_T_d_IM_VMD_sm_per_ens_per_kin.ave(), F_T_d_IM_VMD_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      Print_To_File( {}, {sigmas_07_w0, F_T_d_RE_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_RE_VMD_II_state_sm_per_ens_per_kin.err(), F_T_d_IM_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_IM_VMD_II_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_II_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      Print_To_File( {}, {sigmas_07_w0, F_T_d_RE_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_RE_VMD_III_state_sm_per_ens_per_kin.err(), F_T_d_IM_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_IM_VMD_III_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_III_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      Print_To_File( {}, {sigmas_07, (F_T_d_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+ F_T_d_I_per_ens[ixg]).ave(), (F_T_d_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+F_T_d_I_per_ens[ixg]).err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      Print_To_File( {}, {sigmas_07, (F_T_d_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).ave(), (F_T_d_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      
       }
-      
-      Print_To_File( {}, {sigmas_07, F_T_d_RE_sm_per_ens_per_kin.ave(), F_T_d_RE_sm_per_ens_per_kin.err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      
     }
 
-    Print_To_File( {}, {xg_list.ave(),  F_T_u_per_ens.ave(), F_T_u_per_ens.err()     } , path_out+"/FF_u/F_T_"+Ens_tags[iens], "", "");
-    Print_To_File( {}, {xg_list.ave(), F_T_d_I_per_ens.ave(), F_T_d_I_per_ens.err()     } , path_out+"/FF_d_I/F_T_"+Ens_tags[iens], "", "");
+    Print_To_File( {}, {xg_list.ave(),  F_T_u_per_ens.ave(), F_T_u_per_ens.err()     } , path_out+"/FF_u/"+TAG_CURR+"F_T_"+Ens_tags[iens], "", "");
+    Print_To_File( {}, {xg_list.ave(), F_T_d_I_per_ens.ave(), F_T_d_I_per_ens.err()     } , path_out+"/FF_d_I/"+TAG_CURR+"F_T_"+Ens_tags[iens], "", "");
 
-    Print_To_File( {}, {xg_list.ave(),  FV_T_u_real_per_ens.ave(), FV_T_u_real_per_ens.err()     } , path_out+"/FF_u/FV_T_real_"+Ens_tags[iens], "", "");
-    Print_To_File( {}, {xg_list.ave(), FV_T_d_real_per_ens.ave(), FV_T_d_real_per_ens.err()     } , path_out+"/FF_d/FV_T_real_"+Ens_tags[iens], "", "");
+    Print_To_File( {}, {xg_list.ave(),  FV_T_u_real_per_ens.ave(), FV_T_u_real_per_ens.err()     } , path_out+"/FF_u/"+TAG_CURR+"FV_T_real_"+Ens_tags[iens], "", "");
+    Print_To_File( {}, {xg_list.ave(), FV_T_d_real_per_ens.ave(), FV_T_d_real_per_ens.err()     } , path_out+"/FF_d/"+TAG_CURR+"FV_T_real_"+Ens_tags[iens], "", "");
 
-    Print_To_File( {}, {xg_list.ave(),  FA_T_u_real_per_ens.ave(), FA_T_u_real_per_ens.err()     } , path_out+"/FF_u/FA_T_real_"+Ens_tags[iens], "", "");
-    Print_To_File( {}, {xg_list.ave(), FA_T_d_real_per_ens.ave(), FA_T_d_real_per_ens.err()     } , path_out+"/FF_d/FA_T_real_"+Ens_tags[iens], "", "");
+    Print_To_File( {}, {xg_list.ave(),  FA_T_u_real_per_ens.ave(), FA_T_u_real_per_ens.err()     } , path_out+"/FF_u/"+TAG_CURR+"FA_T_real_"+Ens_tags[iens], "", "");
+    Print_To_File( {}, {xg_list.ave(), FA_T_d_real_per_ens.ave(), FA_T_d_real_per_ens.err()     } , path_out+"/FF_d/"+TAG_CURR+"FA_T_real_"+Ens_tags[iens], "", "");
+
+    Print_To_File( {}, {xg_list.ave(),  FA_T_d_sp_real_per_ens.ave(), FA_T_d_sp_real_per_ens.err()     } , path_out+"/FF_d/"+TAG_CURR+"FA_T_sp_real_"+Ens_tags[iens], "", "");
+    Print_To_File( {}, {xg_list.ave(), FV_T_d_sp_real_per_ens.ave(), FV_T_d_sp_real_per_ens.err()     } , path_out+"/FF_d/"+TAG_CURR+"FV_T_sp_real_"+Ens_tags[iens], "", "");
+
+    Print_To_File( {}, {xg_list.ave(),  F_T_u_VMD_per_ens.ave(), F_T_u_VMD_per_ens.err(), F_T_u_VMD_spectre_per_ens.ave(), F_T_u_VMD_spectre_per_ens.err()     } , path_out+"/FF_u/"+TAG_CURR+"VMD_F_T_"+Ens_tags[iens], "", "");
+
     
+    if(!Skip_spectral_reconstruction_07) {
     for(int isg=0;isg<(signed)sigmas_07.size(); isg++) {
 
       distr_t_list F_T_d_RE_sm_per_ens_per_sigma, F_T_d_IM_sm_per_ens_per_sigma;
@@ -717,21 +1427,18 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	 F_T_d_IM_sm_per_ens_per_sigma.distr_list.push_back( F_T_d_IM_sm_list[ixg][isg].distr_list[iens]);
        }
 
-       Print_To_File( {}, {xg_list.ave(), F_T_d_RE_sm_per_ens_per_sigma.ave(), F_T_d_RE_sm_per_ens_per_sigma.err(), F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d_II/F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
-       Print_To_File( {}, {xg_list.ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).err(),  F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF/F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
+       Print_To_File( {}, {xg_list.ave(), F_T_d_RE_sm_per_ens_per_sigma.ave(), F_T_d_RE_sm_per_ens_per_sigma.err(), F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
+       Print_To_File( {}, {xg_list.ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).err(),  F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
+       
+       Print_To_File( {}, {xg_list.ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).err(),  F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
        
        
+    }
     }
   }
 
     
-  
-
-
-  
-
  
-
 
 
 

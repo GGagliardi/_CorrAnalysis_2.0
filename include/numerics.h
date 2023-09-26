@@ -182,7 +182,7 @@ double MRS_mass_to_mm(double mu, double Nf, double Lambda, double M_MRS, double 
 double MS_bar_mass_evolutor(double mu1, double mu2, double Nf, double Lambda,  int mode);
 pair<double, double> MS_bar_to_mm_and_MRS_mass(double mu, double Nf, double Lambda, double m, double mc);
 double J_MRS(double Nf, double mm) ;
-double evolutor_ZT_MS_bar( double mu1, double mu2);
+double evolutor_ZT_MS_bar( double mu1, double mu2, int nloops);
 double Get_Lambda_MS_bar(int Nf);
 
 double w(int t, int Simps_ord);

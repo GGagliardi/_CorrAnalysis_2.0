@@ -557,10 +557,15 @@ double Get_2l_alpha_s( double Q, double Nf, double Lambda) {
 double Get_4l_alpha_s( double Q, double Nf, double Lambda) { //4loop alpha 
 
   double zeta_3 = riemann_zeta(3);
+  double zeta_4 = riemann_zeta(4);
+  double zeta_5 = riemann_zeta(5);
+ 
+
   double B0= (33.0-2.0*Nf)/(12.0*M_PI);
   double B1= (153.0 - 19*Nf)/(24.0*M_PI*M_PI);
   double B2= (2857.0 -5033.0*Nf/9.0 + 325.0*Nf*Nf/27.0)/(128.0*pow(M_PI,3));
   double B3= ( (149753.0/6.0 + 3564*zeta_3) -(1078361.0/162.0 + 6508.0*zeta_3/27.0)*Nf + (50065.0/162.0 + 6472.0*zeta_3/81.0)*Nf*Nf + 1093.0*pow(Nf,3)/729.0)/(256.0*pow(M_PI,4));
+  double B4= (1.0/pow(4*M_PI,5))*( 8157455.0/16 + 621885.0*zeta_3/2.0 - 88209.0*zeta_4/2 -288090*zeta_5 + Nf*( -336460813.0/1944 - 4811164*zeta_3/81 + 33935*zeta_4/6 + 1358995*zeta_5/27) + pow(Nf,2)*( 25960913.0/1944 + 698531.0*zeta_3/81 - 10526*zeta_4/9 - 381760.0*zeta_5/81) + pow(Nf,3)*( -630559.9/5832 - 48722.0*zeta_3/243 + 1618.0*zeta_4/27 + 460.0*zeta_5/9) + pow(Nf,4)*( 1205.0/2916 -152.0*zeta_3/81))   ;
   double t=log(Q*Q/(Lambda*Lambda));
   double l=log(t);
  
@@ -571,6 +576,8 @@ double Get_4l_alpha_s( double Q, double Nf, double Lambda) { //4loop alpha
   ret = ret + (1.0/(B0*t))*( (18.0*B0*B2*pow(B1,2)*(2*l*l -l -1.0) + pow(B1,4)*(6*pow(l,4) -26*pow(l,3) -9*l*l + 24*l + 7.0))/(6.0*pow(B0,8)*pow(t,4)));
   
   ret = ret + (1.0/(B0*t))*( ( -pow(B0,2)*B3*B1*(12*l+1) + 2*pow(B0,2)*5*pow(B2,2))/(6*pow(B0,8)*pow(t,4)));
+
+  ret = ret + (1.0/(B0*t))*( 2*pow(B0,2)*B0*B4)/(6*pow(B0,8)*pow(t,4));
 
   return ret;
 
@@ -999,24 +1006,28 @@ double MS_bar_mass_evolutor( double mu1, double mu2, double Nf, double Lambda, i
 }
 
 
-double evolutor_ZT_MS_bar( double mu1, double mu2)  { //evolves the Z_T RC from Z_T(mu1) to Z_T(mu2) in the MSbar scheme at three loops, namely the function returns Z_T(mu2)/Z_T(mu1)
+double evolutor_ZT_MS_bar( double mu1, double mu2, int nloops)  { //evolves the Z_T RC from Z_T(mu1) to Z_T(mu2) in the MSbar scheme at three loops, namely the function returns Z_T(mu2)/Z_T(mu1)
 
   
 
 
   double Lambda_QCD_MS_Bar_4= Get_Lambda_MS_bar(4);
   double Lambda_QCD_MS_Bar_5= Get_Lambda_MS_bar(5);
+  double Lambda_QCD_MS_Bar_3= Get_Lambda_MS_bar(3);
   
   double CF= 4.0/3;
   double CA= 3;
   double TF= 0.5;
   double zeta_3=  riemann_zeta(3);
+  double zeta_4=  riemann_zeta(4);
+  double zeta_5=  riemann_zeta(5);
 
   
   
-  auto Int= [&CF, &CA, &TF, &zeta_3, &Lambda_QCD_MS_Bar_4, &Lambda_QCD_MS_Bar_5 ](double mu) {
+  auto Int= [&CF, &CA, &TF, &zeta_3, &zeta_4, &zeta_5, &Lambda_QCD_MS_Bar_3,  &Lambda_QCD_MS_Bar_4, &Lambda_QCD_MS_Bar_5, &nloops ](double mu) {
 
-    auto alphas = [&Lambda_QCD_MS_Bar_4, &Lambda_QCD_MS_Bar_5](double x) {
+    auto alphas = [&Lambda_QCD_MS_Bar_3, &Lambda_QCD_MS_Bar_4, &Lambda_QCD_MS_Bar_5](double x) {
+      if(x < 1.28) { return Get_4l_alpha_s(x, 3, Lambda_QCD_MS_Bar_3);}
       if(x < 4.18)  {return  Get_4l_alpha_s(x, 4, Lambda_QCD_MS_Bar_4);}
 
       return Get_4l_alpha_s(x,5,Lambda_QCD_MS_Bar_5);
@@ -1025,12 +1036,18 @@ double evolutor_ZT_MS_bar( double mu1, double mu2)  { //evolves the Z_T RC from 
     double a =  alphas(mu)/(4.0*M_PI);
        
     int Nf=4;
-    if(mu > 4.18) Nf=5;
+    //if( mu > 1.28) Nf=4;
+    //if(mu > 4.18) Nf=5;
 
-    double anomalous_dim = (4.0/3.0)*a  - 2.0*( 26*Nf - 543)*a*a/27.0 - pow(a,3)*(36*pow(Nf,2) + 1440*zeta_3*Nf + 5240*Nf + 2784*zeta_3 - 52555)/81.0;
+    double anomalous_dim=0;
+    if(nloops==1) anomalous_dim= (4.0/3.0)*a;
+    else if(nloops==2) anomalous_dim=  (4.0/3.0)*a  - 2.0*( 26*Nf - 543)*a*a/27.0;
+    else if(nloops==3)  anomalous_dim = (4.0/3.0)*a  - 2.0*( 26*Nf - 543)*a*a/27.0 - pow(a,3)*(36*pow(Nf,2) + 1440*zeta_3*Nf + 5240*Nf + 2784*zeta_3 - 52555)/81.0;
+    else if(nloops==4) anomalous_dim= (4.0/3.0)*a  - 2.0*( 26*Nf - 543)*a*a/27.0 - pow(a,3)*(36*pow(Nf,2) + 1440*zeta_3*Nf + 5240*Nf + 2784*zeta_3 - 52555)/81.0 + (pow(a,4)/1458.0)*( 1152*zeta_3*pow(Nf,3) + 168.0*pow(Nf,3) + 66240*zeta_3*pow(Nf,2) -25920*zeta_4*pow(Nf,2) + 39844*pow(Nf,2) -1821984*zeta_3*Nf + 377568*zeta_4*Nf + 993600*zeta_5*Nf -3074758*Nf -742368*zeta_3 + 826848*zeta_4 -4018560*zeta_5 + 19876653);
+    else crash("nloops must be <= 3");
     
     
-    return anomalous_dim/mu;
+    return -2*anomalous_dim/mu;
     
   };
 

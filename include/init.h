@@ -17,6 +17,7 @@
 #include "tau_decay_strange.h"
 #include "semileptonic.h"
 #include "Bs_mumu_gamma.h"
+#include "HVP.h"
 
 using namespace std;
 
