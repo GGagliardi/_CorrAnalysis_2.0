@@ -29,7 +29,7 @@ Vfloat sigma_list_strange;
 const double C_V = 2*M_PI/(pow(m_tau,3));
 const double GAMMA_FACT= 12*M_PI; //12*M_PI*pow(Vud*GF,2);
 const string MODE="TANT";
-bool Use_t_up_to_T_half_strange=true;
+bool Use_t_up_to_T_half_strange=false;
 const int sm_func_mode= 0;
 const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
@@ -50,6 +50,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   if(alpha_m < 3) crash("Customized_plateaux_tau_spectre called with alpha = "+to_string_with_precision(alpha,2));
   if( (alpha_m != 3) && (alpha_m != 4) && (alpha_m != 5) ) crash("Customized_plateaux_tau_spectre called with (int)alpha: "+to_string(alpha_m));
 
+  if(Ens=="cZ211a.077.64") Ens = "cB211b.072.64";
 
   
   if( reg=="tm") {
@@ -66,7 +67,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else if(Ens == "cB211b.072.96") { Ra0= 2e5;    } 
       else if(Ens == "cC211a.06.80") {  Ra0=1e7;  } 
       else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
-      else if(Ens == "cD211a.054.96") {  Ra0= ((alpha_m==3)?1e5:1e6);   }
+      else if(Ens == "cD211a.054.96") {  Ra0= 1e7;   }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="A0") {
@@ -74,7 +75,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else if(Ens == "cB211b.072.96") { Ra0=1e7;   }
       else if(Ens == "cC211a.06.80") {  Ra0=1e7;  }
       else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
-      else if(Ens == "cD211a.054.96") { Ra0=9e7;   } //THIS IS TRICKY, OLD VALUE WAS 1e7
+      else if(Ens == "cD211a.054.96") { Ra0=9e7;   } 
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="V0") {
@@ -82,7 +83,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else if(Ens == "cB211b.072.96") { Ra0=5e7;   }
       else if(Ens == "cC211a.06.80") {  Ra0=1e7;  }
       else if(Ens == "cC211a.06.112") { Ra0= 7e6;   }
-      else if(Ens == "cD211a.054.96") { Ra0=9e7;   } //THIS IS TRICKY, OLD VALUE WAS 1e7
+      else if(Ens == "cD211a.054.96") { Ra0=1e7;   }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -95,7 +96,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else if(Ens == "cB211b.072.96") { Ra0=1e5;   }
       else if(Ens == "cC211a.06.80") { Ra0=3e6;   } 
       else if(Ens == "cC211a.06.112") { Ra0= 1e8;   }
-      else if(Ens == "cD211a.054.96") {  Ra0=1e7;  } //PREVIOUS WAS 2e6
+      else if(Ens == "cD211a.054.96") {  Ra0=3e8;  } 
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="Vii") {
@@ -103,7 +104,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else if(Ens == "cB211b.072.96") {  Ra0= 6e5;    }
       else if(Ens == "cC211a.06.80") {   Ra0= 1e8;   }
       else if(Ens == "cC211a.06.112") { Ra0= 5e7;   }
-      else if(Ens == "cD211a.054.96") {  Ra0=1e6;  }
+      else if(Ens == "cD211a.054.96") {  Ra0=4e7;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="A0") {
@@ -111,7 +112,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
       else if(Ens == "cC211a.06.80") { Ra0=1e7;   }
       else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
-      else if(Ens == "cD211a.054.96") { if( ( (Emax > (5.0-1e-4)) && (Emax < (5.0 +1e-4))) && (alpha_m==3)  ) Ra0= 2e6; else  Ra0=9e6;   } //THIS IS TRICKY, OLD VALUE WAS 1e6
+      else if(Ens == "cD211a.054.96") { Ra0=1e7;   }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="V0") {
@@ -119,7 +120,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else if(Ens == "cB211b.072.96") { Ra0=5e7;   }
       else if(Ens == "cC211a.06.80") { Ra0=5e8;   }
       else if(Ens == "cC211a.06.112") { Ra0= 7e8;   }
-      else if(Ens == "cD211a.054.96") { if( ( (Emax > (5.0-1e-4)) && (Emax < (5.0 +1e-4))) && (alpha_m==3)  ) Ra0= 2e6; else  Ra0=9e6;   } //THIS IS TRICKY, OLD VALUE WAS 1e6
+      else if(Ens == "cD211a.054.96") { Ra0=1e8;  } 
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -1024,7 +1025,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     //################   LIGHTER   ##############################
 
     bool Found_error_less_x_percent=false;
-    double x=15;
+    double x=20;
     //tm
     int tmax_tm_A0=1;
     while(!Found_error_less_x_percent && tmax_tm_A0 < Corr.Nt/2 -1 ) {

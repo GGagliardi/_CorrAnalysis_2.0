@@ -1584,7 +1584,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   for(int ip=0; ip<Npoints;ip++) {
     PrecVect bt;
     PrecFloat E;
-    if(analysis_name == "tau_decay") E= E0+ ip*step_size;
+    if(analysis_name == "tau_decay") E= 0.25*E0+ ip*step_size;
     else E = (ip*s)*step_size;
     //if(verbosity_lev==2) cout<<"ip: "<<ip<<"/"<<Npoints<<"  (E-m): "<<((E-m)/s).get()<<flush;
     Get_bt(bt, E, T, 1, tmax);  
@@ -1654,7 +1654,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 	for(int t=1; t<=tmax;t++) {
 	  distr_t g_t;
 	  for(int ijack=0;ijack<Njacks;ijack++) g_t.distr.push_back( g_jack[ijack](t-1).get());
-	  PrintCoeff<<g_t.ave()<<"  "<<g_t.err()<<"\t"<<(g_t*Prefact*corr).ave(t)<<"   "<<(g_t*Prefact*corr).err(t)<<"\t"<<Spec_dens_at_E_star.ave()<<"\t"<<Spec_dens_at_E_star.err()<<endl;
+	  PrintCoeff<<t<<"\t"<<g_t.ave()<<"  "<<g_t.err()<<"\t"<<(g_t*Prefact*corr).ave(t)<<"   "<<(g_t*Prefact*corr).err(t)<<"\t"<<Spec_dens_at_E_star.ave()<<"\t"<<Spec_dens_at_E_star.err()<<endl;
 	}
       }
     }
