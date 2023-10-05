@@ -239,9 +239,11 @@ distr_t_list operator/(const distr_t_list& A, double B);
   
 distr_t_list operator/(double B, const distr_t_list& A);
 
-distr_t_list operator+(const distr_t_list &A, const Vfloat& B);
+distr_t_list operator+(const distr_t_list &A, const Vfloat &B);
+distr_t_list operator-(const distr_t_list &A, const Vfloat& B);
 
-distr_t_list operator+(const Vfloat& B, const distr_t_list& A) ;
+distr_t_list operator+(const Vfloat &B, const distr_t_list &A);
+distr_t_list operator-(const Vfloat& B, const distr_t_list& A);
 
 
 distr_t_list operator*(const distr_t_list &A, const Vfloat& B);

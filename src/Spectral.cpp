@@ -439,7 +439,7 @@ void Compute_covariance_matrix(PrecMatr &B,const PrecMatr &Atr, const distr_t_li
 }
 
 
-void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const PrecMatr &Atr_std_norm_Emax, const PrecMatr &B,const PrecVect &ft, vector<PrecVect>& ft_jack, const PrecVect &ft_std_norm, const PrecVect &ft_std_norm_Emax, const PrecFloat & M2, const PrecFloat &M2_std_norm, const PrecFloat &M2_std_norm_Emax, const double &mean, const double &sigma, const double &Estart,  double& lambda_opt, double& lambda_opt_10, vector<PrecVect> Rt_n, const PrecVect &M_n , vector<PrecVect>& M_n_jack, const distr_t_list & corr,int T, int tmin, int tmax,const double mult,  string MODE, string curr_type, string SMEARING_FUNC, string CORR_NAME, double Ag_ov_A0_tg, bool JackOnKer,const distr_t& Prefact, string analysis_name,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f,  const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density ) {
+void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const PrecMatr &Atr_std_norm_Emax, const PrecMatr &B,const PrecVect &ft, vector<PrecVect>& ft_jack, const PrecVect &ft_std_norm, const PrecVect &ft_std_norm_Emax, const PrecFloat & M2, const PrecFloat &M2_std_norm, const PrecFloat &M2_std_norm_Emax, const double &mean, const double &sigma, const double &Estart,  double& lambda_opt, double& lambda_opt_10, vector<PrecVect> Rt_n, const PrecVect &M_n , vector<PrecVect>& M_n_jack, const distr_t_list & corr,int T, int tmin, int tmax,const double mult,  string MODE, string curr_type, string SMEARING_FUNC, string CORR_NAME, double Ag_ov_A0_tg, bool JackOnKer,const distr_t& Prefact, const double &offset,  string analysis_name,  const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f,  const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density ) {
 
 
  
@@ -695,7 +695,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
       PrecFloat mult_est = (mult_estimated_from_norm0==false)?A1_val/B1_val:A1_val_std/B1_val_std;
      
-      Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
+      Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*(R_E_lambda+offset)).ave()+offset<<" "<<(Prefact*(R_E_lambda+offset)).err();
       Print_R_at_lambda<<" "<<syst;
       Print_R_at_lambda<<" 0 "<<mult_est<<endl;
 
@@ -915,7 +915,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
       
 
-    Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
+    Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*(R_E_lambda+offset)).ave()<<" "<<(Prefact*(R_E_lambda+offset)).err();
     Print_R_at_lambda<<" "<<syst;
     Print_R_at_lambda<<" "<<lambda_balance_found<<" "<<mult_est<<endl;
 
@@ -1120,7 +1120,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       R_E_lambda.distr.push_back( spec_lambda_d_jack.get());
     }
 
-    Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
+    Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*(R_E_lambda+offset)).ave()<<" "<<(Prefact*(R_E_lambda+offset)).err();
     Print_R_at_lambda<<" "<<syst;
     Print_R_at_lambda<<" "<<2*(lambda_balance_found_10==1)<<" "<<mult_est<<endl;
 
@@ -1299,7 +1299,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
       R_E_lambda.distr.push_back( spec_lambda_d_jack.get());
     }
 
-    Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*R_E_lambda).ave()<<" "<<(Prefact*R_E_lambda).err();
+    Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*(R_E_lambda+offset)).ave()<<" "<<(Prefact*(R_E_lambda+offset)).err();
     Print_R_at_lambda<<" "<<syst;
     Print_R_at_lambda<<" "<<3*(lambda_balance_found_100==1 && skipping_N_100==0)<<" "<<mult_est<<endl;
 
@@ -1331,7 +1331,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
 }
 
-distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact, string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW,  bool GENERALIZED_NORM,  const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> F_NORM, const function<PrecFloat( PrecFloat )> Atr_gen_NORM) {
+distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact,const double &offset,  string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW,  bool GENERALIZED_NORM,  const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> F_NORM, const function<PrecFloat( PrecFloat )> Atr_gen_NORM) {
 
   Integrate_up_to_max_energy= Int_up_to_Max;
   Emax_int=Max_Erg;
@@ -1466,7 +1466,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   double lambda_opt= lambda;
   double lambda_opt_10=lambda;
 
-  if(INCLUDE_ERRORS && FIND_OPTIMAL_LAMBDA) Get_optimal_lambda(Atr, Atr_std, Atr_std_Emax,  B, ft, ft_jack, ft_std, ft_std_Emax, M2, M2_std, M2_std_Emax, mean, sigma, Estart, lambda_opt , lambda_opt_10, Rt_n, M_n, M_n_jack, corr, T , 1 , tmax, mult,  MODE, reg_type, SMEARING_FUNC,  CORR_NAME, Ag_ov_A0_target, JackOnKer, Prefact, analysis_name, f, syst_func, Use_guess_density, guess_density);
+  if(INCLUDE_ERRORS && FIND_OPTIMAL_LAMBDA) Get_optimal_lambda(Atr, Atr_std, Atr_std_Emax,  B, ft, ft_jack, ft_std, ft_std_Emax, M2, M2_std, M2_std_Emax, mean, sigma, Estart, lambda_opt , lambda_opt_10, Rt_n, M_n, M_n_jack, corr, T , 1 , tmax, mult,  MODE, reg_type, SMEARING_FUNC,  CORR_NAME, Ag_ov_A0_target, JackOnKer, Prefact, offset, analysis_name, f, syst_func, Use_guess_density, guess_density);
 
 
   if(verbosity_lev>=2) cout<<"Stability analysis completed!"<<endl;
@@ -1635,8 +1635,8 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
       Spec_dens_at_E_star_10.distr.push_back( spec_d_jack_10.get());
     }
 
-    Spec_dens_at_E_star = Spec_dens_at_E_star*Prefact;
-    Spec_dens_at_E_star_10 = Spec_dens_at_E_star_10*Prefact;
+    Spec_dens_at_E_star = (Spec_dens_at_E_star+offset)*Prefact;
+    Spec_dens_at_E_star_10 = (Spec_dens_at_E_star_10+offset)*Prefact;
 
     
     cout<<"done"<<endl<<flush;
@@ -1648,7 +1648,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
     }
     else {
       if(!JackOnKer) {
-	for(int t=1;t<=tmax;t++) PrintCoeff<<g(t-1)<<"\t"<<g(t-1)*(Prefact*corr).ave(t)<<"\t"<<Spec_dens_at_E_star.ave()<<"\t"<<Spec_dens_at_E_star.err()<<endl;
+	for(int t=1;t<=tmax;t++) PrintCoeff<<g(t-1)<<"\t"<<g(t-1)*(Prefact*corr).ave(t) + offset<<"\t"<<Spec_dens_at_E_star.ave()<<"\t"<<Spec_dens_at_E_star.err()<<endl;
       }
       else {
 	for(int t=1; t<=tmax;t++) {

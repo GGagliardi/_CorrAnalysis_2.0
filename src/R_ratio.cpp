@@ -1323,7 +1323,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_L_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_L_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
 
 	auto start = chrono::system_clock::now();
-	Spectral_dens_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_L_distr, syst_tm_L[ip], mult_TANT, lambda_Estar, "TANT", "tm", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_L, f_syst_tm_L, 0, model_charm_tm_L, Is_Emax_Finite, Emax,beta ) + syst_L_T_tm*syst_tm_L[ip] ;
+	Spectral_dens_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_L_distr, syst_tm_L[ip], mult_TANT, lambda_Estar, "TANT", "tm", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), 0.0, "R_ratio_charm", cov_tm_L, f_syst_tm_L, 0, model_charm_tm_L, Is_Emax_Finite, Emax,beta ) + syst_L_T_tm*syst_tm_L[ip] ;
 	auto end = chrono::system_clock::now();
 	chrono::duration<double> elapsed_seconds = end-start;
 	double time_L_tm= elapsed_seconds.count();
@@ -1334,7 +1334,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	cout<<"."<<flush;
 
 	start = chrono::system_clock::now();
-	Spectral_dens_OS_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_L_distr, syst_OS_L[ip], mult_TANT, lambda_Estar, "TANT", "OS", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_L, f_syst_OS_L, 0, model_charm_OS_L, Is_Emax_Finite, Emax,beta  ) + syst_L_T_OS*syst_OS_L[ip] ;
+	Spectral_dens_OS_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_L_distr, syst_OS_L[ip], mult_TANT, lambda_Estar, "TANT", "OS", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), 0.0, "R_ratio_charm", cov_OS_L, f_syst_OS_L, 0, model_charm_OS_L, Is_Emax_Finite, Emax,beta  ) + syst_L_T_OS*syst_OS_L[ip] ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_L_OS= elapsed_seconds.count();
@@ -1350,8 +1350,8 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	  //define jackknife distribution to account for systematic error:
 	  distr_t syst_L_S_tm(UseJack), syst_L_S_OS(UseJack);
 	  for(int ijack=0; ijack<Njacks;ijack++) {syst_L_S_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_L_S_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	  Spectral_dens_SANF_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_L_distr, syst_tm_SANF_L[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_L[ip]*syst_L_S_tm;
-	  Spectral_dens_OS_SANF_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_L_distr, syst_OS_SANF_L[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS_SANF_L[ip]*syst_L_S_OS ;
+	  Spectral_dens_SANF_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_L_distr, syst_tm_SANF_L[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), 0.0, "R_ratio_charm", cov_tm_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_L[ip]*syst_L_S_tm;
+	  Spectral_dens_OS_SANF_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_L_distr, syst_OS_SANF_L[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "L_"+V_charm_1_L.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), 0.0, "R_ratio_charm", cov_OS_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS_SANF_L[ip]*syst_L_S_OS ;
 	}
 
 
@@ -1363,7 +1363,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_M_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_M_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
 	
 	start = chrono::system_clock::now();
-	Spectral_dens_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_M_distr, syst_tm_M[ip], mult_TANT, lambda_Estar, "TANT", "tm", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_M, f_syst_tm_M, 0, model_charm_tm_M, Is_Emax_Finite, Emax,beta ) + syst_tm_M[ip]*syst_M_T_tm ;
+	Spectral_dens_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_M_distr, syst_tm_M[ip], mult_TANT, lambda_Estar, "TANT", "tm", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Za*Za*pow(qc,2), 0.0, "R_ratio_charm", cov_tm_M, f_syst_tm_M, 0, model_charm_tm_M, Is_Emax_Finite, Emax,beta ) + syst_tm_M[ip]*syst_M_T_tm ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_M_tm= elapsed_seconds.count();
@@ -1374,7 +1374,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	cout<<"."<<flush;
 
 	start = chrono::system_clock::now();
-	Spectral_dens_OS_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_M_distr, syst_OS_M[ip], mult_TANT, lambda_Estar, "TANT", "OS", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_M, f_syst_OS_M, 0, model_charm_OS_M, Is_Emax_Finite, Emax,beta  )+ syst_OS_M[ip]*syst_M_T_OS ;
+	Spectral_dens_OS_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_M_distr, syst_OS_M[ip], mult_TANT, lambda_Estar, "TANT", "OS", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Zv*Zv*pow(qc,2), 0.0, "R_ratio_charm", cov_OS_M, f_syst_OS_M, 0, model_charm_OS_M, Is_Emax_Finite, Emax,beta  )+ syst_OS_M[ip]*syst_M_T_OS ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_M_OS= elapsed_seconds.count();
@@ -1391,8 +1391,8 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	  //define jackknife distribution to account for systematic error:
 	  distr_t syst_M_S_tm(UseJack), syst_M_S_OS(UseJack);
 	  for(int ijack=0; ijack<Njacks;ijack++) {syst_M_S_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_M_S_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	  Spectral_dens_SANF_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_M_distr, syst_tm_SANF_M[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_M[ip]*syst_M_S_tm;
-	  Spectral_dens_OS_SANF_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_M_distr, syst_OS_SANF_M[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta )+ syst_OS_SANF_M[ip]*syst_M_S_OS;
+	  Spectral_dens_SANF_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_M_distr, syst_tm_SANF_M[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Za*Za*pow(qc,2), 0.0, "R_ratio_charm", cov_tm_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_M[ip]*syst_M_S_tm;
+	  Spectral_dens_OS_SANF_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_M_distr, syst_OS_SANF_M[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "M_"+V_charm_1_M.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Zv*Zv*pow(qc,2), 0.0, "R_ratio_charm", cov_OS_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta )+ syst_OS_SANF_M[ip]*syst_M_S_OS;
 	}
 
 	
@@ -1402,7 +1402,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_H_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_H_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
 
 	start = chrono::system_clock::now();
-	Spectral_dens_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_H_distr, syst_tm_H[ip], mult_TANT, lambda_Estar, "TANT", "tm", "H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_H, f_syst_tm_H, 0, model_charm_tm_H, Is_Emax_Finite, Emax,beta  )+ syst_tm_H[ip]*syst_H_T_tm ;
+	Spectral_dens_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_H_distr, syst_tm_H[ip], mult_TANT, lambda_Estar, "TANT", "tm", "H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), 0.0, "R_ratio_charm", cov_tm_H, f_syst_tm_H, 0, model_charm_tm_H, Is_Emax_Finite, Emax,beta  )+ syst_tm_H[ip]*syst_H_T_tm ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_H_tm= elapsed_seconds.count();
@@ -1413,7 +1413,7 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	cout<<"."<<flush;
 
 	start = chrono::system_clock::now();
-	Spectral_dens_OS_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_H_distr, syst_OS_H[ip], mult_TANT, lambda_Estar, "TANT", "OS","H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_H, f_syst_OS_H, 0, model_charm_OS_H, Is_Emax_Finite, Emax,beta  )+ syst_OS_H[ip]*syst_H_T_OS ;
+	Spectral_dens_OS_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_H_distr, syst_OS_H[ip], mult_TANT, lambda_Estar, "TANT", "OS","H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Zv*Zv*pow(qc,2), 0.0, "R_ratio_charm", cov_OS_H, f_syst_OS_H, 0, model_charm_OS_H, Is_Emax_Finite, Emax,beta  )+ syst_OS_H[ip]*syst_H_T_OS ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_H_OS= elapsed_seconds.count();
@@ -1427,8 +1427,8 @@ void Compute_R_ratio(bool Is_Emax_Finite, double Emax, double beta) {
 	if(!SANF_MODE_OFF) {
 	  distr_t syst_H_S_tm(UseJack), syst_H_S_OS(UseJack);
 	  for(int ijack=0; ijack<Njacks;ijack++) {syst_H_S_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_H_S_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	  Spectral_dens_SANF_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_H_distr, syst_tm_SANF_H[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), "R_ratio_charm", cov_tm_H, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_H[ip]*syst_H_S_tm;
-	  Spectral_dens_OS_SANF_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_H_distr, syst_OS_SANF_H[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Zv*Zv*pow(qc,2), "R_ratio_charm", cov_OS_H, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta )+ syst_OS_SANF_H[ip]*syst_H_S_OS ;
+	  Spectral_dens_SANF_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_H_distr, syst_tm_SANF_H[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target, 0, rho_R*Za*Za*pow(qc,2), 0.0, "R_ratio_charm", cov_tm_H, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_H[ip]*syst_H_S_tm;
+	  Spectral_dens_OS_SANF_H.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_H, prec_charm, SM_TYPE+"_ov_E2",f, V_charm_OS_H_distr, syst_OS_SANF_H[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "H_"+V_charm_1_H.Tag[i_ens], Ag_ov_A0_target , 0, rho_R*Zv*Zv*pow(qc,2), 0.0, "R_ratio_charm", cov_OS_H, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta )+ syst_OS_SANF_H[ip]*syst_H_S_OS ;
 	}
       
 
@@ -1877,7 +1877,7 @@ if(!skip_light) {
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
 
 	auto start= chrono::system_clock::now();
-	Spectral_dens.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, V_light_distr, syst_tm[ip], mult_TANT, lambda_Estar, "TANT", "tm", V_light_1.Tag[i_ens], -1 , 0, rho_R*Za*Za*(pow(qu,2)+pow(qd,2)), "R_ratio_light" , cov_tm, f_syst_tm, 1, model_light_tm, Is_Emax_Finite, Emax,beta ) + syst_tm[ip]*syst_T_tm ;
+	Spectral_dens.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, V_light_distr, syst_tm[ip], mult_TANT, lambda_Estar, "TANT", "tm", V_light_1.Tag[i_ens], -1 , 0, rho_R*Za*Za*(pow(qu,2)+pow(qd,2)), 0.0, "R_ratio_light" , cov_tm, f_syst_tm, 1, model_light_tm, Is_Emax_Finite, Emax,beta ) + syst_tm[ip]*syst_T_tm ;
 	auto end = chrono::system_clock::now();
 	cout<<"node: "<<_hostname<<", rank: "<<rank<<", thread_id: "<<omp_get_thread_num()<<" core-id: "<<sched_getcpu()<<endl<<flush; 
 	chrono::duration<double> elapsed_seconds = end-start;
@@ -1889,7 +1889,7 @@ if(!skip_light) {
 	cout<<"."<<flush;
 
 	start= chrono::system_clock::now();
-	Spectral_dens_OS.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS, prec, SM_TYPE+"_ov_E2",f, V_light_OS_distr, syst_OS[ip], mult_TANT, lambda_Estar, "TANT", "OS", V_light_1.Tag[i_ens], -1 , 0,  rho_R*Zv*Zv*(pow(qu,2)+pow(qd,2)), "R_ratio_light", cov_OS, f_syst_OS, 1, model_light_OS, Is_Emax_Finite, Emax,beta  )+ syst_OS[ip]*syst_T_OS ;
+	Spectral_dens_OS.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS, prec, SM_TYPE+"_ov_E2",f, V_light_OS_distr, syst_OS[ip], mult_TANT, lambda_Estar, "TANT", "OS", V_light_1.Tag[i_ens], -1 , 0,  rho_R*Zv*Zv*(pow(qu,2)+pow(qd,2)), 0.0, "R_ratio_light", cov_OS, f_syst_OS, 1, model_light_OS, Is_Emax_Finite, Emax,beta  )+ syst_OS[ip]*syst_T_OS ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_OS= elapsed_seconds.count();
@@ -1904,8 +1904,8 @@ if(!skip_light) {
 	  //define jackknife distribution to account for systematic error:
 	  distr_t syst_S_tm(UseJack), syst_S_OS(UseJack);
 	  for(int ijack=0; ijack<Njacks;ijack++) {syst_S_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_S_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	  Spectral_dens_OS_SANF.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS, prec, SM_TYPE+"_ov_E2",f, V_light_OS_distr, syst_OS_SANF[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", V_light_1.Tag[i_ens], -1 , 0,  rho_R*Zv*Zv*(pow(qu,2)+pow(qd,2)), "R_ratio_light", cov_OS, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta )+ syst_OS_SANF[ip]*syst_S_tm ;
-	  Spectral_dens_SANF.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, V_light_distr, syst_tm_SANF[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", V_light_1.Tag[i_ens], -1 , 0,  rho_R*Za*Za*(pow(qu,2)+pow(qd,2)), "R_ratio_light", cov_tm, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  ) + syst_tm_SANF[ip]*syst_S_OS ;
+	  Spectral_dens_OS_SANF.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS, prec, SM_TYPE+"_ov_E2",f, V_light_OS_distr, syst_OS_SANF[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", V_light_1.Tag[i_ens], -1 , 0,  rho_R*Zv*Zv*(pow(qu,2)+pow(qd,2)), 0.0, "R_ratio_light", cov_OS, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta )+ syst_OS_SANF[ip]*syst_S_tm ;
+	  Spectral_dens_SANF.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, V_light_distr, syst_tm_SANF[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", V_light_1.Tag[i_ens], -1 , 0,  rho_R*Za*Za*(pow(qu,2)+pow(qd,2)), 0.0, "R_ratio_light", cov_tm, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  ) + syst_tm_SANF[ip]*syst_S_OS ;
 	}
 	
      
@@ -2452,7 +2452,7 @@ if(!skip_light) {
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_L_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_L_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
 
 	auto start = chrono::system_clock::now();
-	Spectral_dens_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec, SM_TYPE+"_ov_E2",f, V_strange_L_distr, syst_tm_L[ip], mult_TANT, lambda_Estar, "TANT", "tm", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), "R_ratio_strange", cov_tm_L, f_syst_tm_L, 0, model_strange_tm_L, Is_Emax_Finite, Emax,beta  )+ syst_tm_L[ip]*syst_L_T_tm ;
+	Spectral_dens_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec, SM_TYPE+"_ov_E2",f, V_strange_L_distr, syst_tm_L[ip], mult_TANT, lambda_Estar, "TANT", "tm", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), 0.0, "R_ratio_strange", cov_tm_L, f_syst_tm_L, 0, model_strange_tm_L, Is_Emax_Finite, Emax,beta  )+ syst_tm_L[ip]*syst_L_T_tm ;
 	auto end = chrono::system_clock::now();
 	chrono::duration<double> elapsed_seconds = end-start;
 	double time_L_tm= elapsed_seconds.count();
@@ -2463,7 +2463,7 @@ if(!skip_light) {
 	cout<<"."<<flush;
 
 	start = chrono::system_clock::now();
-	Spectral_dens_OS_L.distr_list[ip]=Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_L_distr, syst_OS_L[ip], mult_TANT, lambda_Estar, "TANT", "OS", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2), "R_ratio_strange", cov_OS_L, f_syst_OS_L, 0, model_strange_OS_L, Is_Emax_Finite, Emax,beta  )+ syst_OS_L[ip]*syst_L_T_OS ;
+	Spectral_dens_OS_L.distr_list[ip]=Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_L_distr, syst_OS_L[ip], mult_TANT, lambda_Estar, "TANT", "OS", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2), 0.0, "R_ratio_strange", cov_OS_L, f_syst_OS_L, 0, model_strange_OS_L, Is_Emax_Finite, Emax,beta  )+ syst_OS_L[ip]*syst_L_T_OS ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_L_OS= elapsed_seconds.count();
@@ -2478,8 +2478,8 @@ if(!skip_light) {
 	  //define jackknife distribution to account for systematic error:
 	  distr_t syst_L_S_tm(UseJack), syst_L_S_OS(UseJack);
 	  for(int ijack=0; ijack<Njacks;ijack++) {syst_L_S_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_L_S_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	  Spectral_dens_SANF_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec, SM_TYPE+"_ov_E2",f, V_strange_L_distr, syst_tm_SANF_L[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), "R_ratio_strange", cov_tm_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_L[ip]*syst_L_S_tm ;
-	  Spectral_dens_OS_SANF_L[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_L_distr, syst_OS_SANF_L[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2), "R_ratio_strange", cov_OS_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS_SANF_L[ip]*syst_L_S_OS ;
+	  Spectral_dens_SANF_L.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_L, prec, SM_TYPE+"_ov_E2",f, V_strange_L_distr, syst_tm_SANF_L[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), 0.0, "R_ratio_strange", cov_tm_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_L[ip]*syst_L_S_tm ;
+	  Spectral_dens_OS_SANF_L[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_L, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_L_distr, syst_OS_SANF_L[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "L_"+V_strange_1_L.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2), 0.0, "R_ratio_strange", cov_OS_L, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS_SANF_L[ip]*syst_L_S_OS ;
 	}
 	
 	//M (T)
@@ -2488,7 +2488,7 @@ if(!skip_light) {
 	for(int ijack=0; ijack<Njacks;ijack++) {syst_M_T_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_M_T_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
 
 	start= chrono::system_clock::now();
-	Spectral_dens_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec, SM_TYPE+"_ov_E2",f, V_strange_M_distr, syst_tm_M[ip], mult_TANT, lambda_Estar, "TANT", "tm", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), "R_ratio_strange", cov_tm_M, f_syst_tm_M, 0, model_strange_tm_M, Is_Emax_Finite, Emax,beta  )+ syst_tm_M[ip]*syst_M_T_tm ;
+	Spectral_dens_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec, SM_TYPE+"_ov_E2",f, V_strange_M_distr, syst_tm_M[ip], mult_TANT, lambda_Estar, "TANT", "tm", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), 0.0, "R_ratio_strange", cov_tm_M, f_syst_tm_M, 0, model_strange_tm_M, Is_Emax_Finite, Emax,beta  )+ syst_tm_M[ip]*syst_M_T_tm ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_M_tm= elapsed_seconds.count();
@@ -2499,7 +2499,7 @@ if(!skip_light) {
 	cout<<"."<<flush;
 
 	start = chrono::system_clock::now();
-	Spectral_dens_OS_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_M_distr, syst_OS_M[ip], mult_TANT, lambda_Estar, "TANT", "OS", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2) , "R_ratio_strange", cov_OS_M, f_syst_OS_M, 0, model_strange_OS_M, Is_Emax_Finite, Emax,beta )+ syst_OS_M[ip]*syst_M_T_OS ;
+	Spectral_dens_OS_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_M_distr, syst_OS_M[ip], mult_TANT, lambda_Estar, "TANT", "OS", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2) , 0.0, "R_ratio_strange", cov_OS_M, f_syst_OS_M, 0, model_strange_OS_M, Is_Emax_Finite, Emax,beta )+ syst_OS_M[ip]*syst_M_T_OS ;
 	end = chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	double time_M_OS= elapsed_seconds.count();
@@ -2514,8 +2514,8 @@ if(!skip_light) {
 	  //define jackknife distribution to account for systematic error:
 	  distr_t syst_M_S_tm(UseJack), syst_M_S_OS(UseJack);
 	  for(int ijack=0; ijack<Njacks;ijack++) {syst_M_S_tm.distr.push_back( GM()/sqrt(Njacks-1.0)); syst_M_S_OS.distr.push_back( GM()/sqrt(Njacks-1.0));}
-	  Spectral_dens_SANF_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec, SM_TYPE+"_ov_E2",f, V_strange_M_distr, syst_tm_SANF_M[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), "R_ratio_strange", cov_tm_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_M[ip]*syst_M_S_tm ;
-	  Spectral_dens_OS_SANF_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_M_distr, syst_OS_SANF_M[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2), "R_ratio_strange", cov_OS_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS_SANF_M[ip]*syst_M_S_OS ;
+	  Spectral_dens_SANF_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_M, prec, SM_TYPE+"_ov_E2",f, V_strange_M_distr, syst_tm_SANF_M[ip], mult_SANF, lambda_Estar_SANF, "SANF", "tm", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Za*Za*pow(qs,2), 0.0, "R_ratio_strange", cov_tm_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_tm_SANF_M[ip]*syst_M_S_tm ;
+	  Spectral_dens_OS_SANF_M.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax_OS_M, prec, SM_TYPE+"_ov_E2",f, V_strange_OS_M_distr, syst_OS_SANF_M[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", "M_"+V_strange_1_M.Tag[i_ens], -1 , 0, rho_R*Zv*Zv*pow(qs,2), 0.0, "R_ratio_strange", cov_OS_M, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  )+ syst_OS_SANF_M[ip]*syst_M_S_OS ;
 	}
 
 
@@ -2759,7 +2759,7 @@ if(!skip_disconnected) {
 	//(T)
 
 	auto start= chrono::system_clock::now();
-	Spectral_dens.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, disco_distr, syst[ip], mult_TANT, lambda_Estar, "TANT", "OS", disco_light.Tag[i_ens], -1 , 0, rho_R*Zv*Zv, "R_ratio_disco", cov_OS, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  ) ;
+	Spectral_dens.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, disco_distr, syst[ip], mult_TANT, lambda_Estar, "TANT", "OS", disco_light.Tag[i_ens], -1 , 0, rho_R*Zv*Zv, 0.0, "R_ratio_disco", cov_OS, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta  ) ;
 	auto end = chrono::system_clock::now();
 	chrono::duration<double> elapsed_seconds = end-start;
 	double time_OS= elapsed_seconds.count();
@@ -2771,7 +2771,7 @@ if(!skip_disconnected) {
 
 	//(S)
 	if(!SANF_MODE_OFF) {
-	  Spectral_dens_SANF.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, disco_distr, syst_SANF[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", disco_light.Tag[i_ens], -1  , 0, rho_R*Zv*Zv, "R_ratio_disco", cov_OS, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta ) ;
+	  Spectral_dens_SANF.distr_list[ip] = Get_Laplace_transfo(  mean,  sigma, E0,  T, tmax, prec, SM_TYPE+"_ov_E2",f, disco_distr, syst_SANF[ip], mult_SANF, lambda_Estar_SANF, "SANF", "OS", disco_light.Tag[i_ens], -1  , 0, rho_R*Zv*Zv, 0.0, "R_ratio_disco", cov_OS, fake_func, 0, fake_func_d, Is_Emax_Finite, Emax,beta ) ;
 	}
 	         
 	//############################################################################################

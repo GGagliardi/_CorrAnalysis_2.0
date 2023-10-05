@@ -850,7 +850,17 @@ distr_t_list operator+(const distr_t_list &A, const Vfloat& B) {
   return res;
 }
 
-distr_t_list operator+(const Vfloat& B, const distr_t_list& A) { return A+B;}
+distr_t_list operator-(const distr_t_list &A, const Vfloat& B) {
+  distr_t_list res(A.UseJack, A.size());
+  if(A.size() != (signed)B.size()) crash("Call to operator distr_t_list*Vfloat is invalid, sizeof(Vfloat) and size(distr_t_list) do not coincide");
+
+  for(int i=0; i<A.size();i++) res.distr_list[i] = A.distr_list[i]-B[i];
+
+  return res;
+}
+
+distr_t_list operator+(const Vfloat &B, const distr_t_list &A) { return A + B; }
+distr_t_list operator-(const Vfloat& B, const distr_t_list& A) { return -1.0*(A-B); }
 
 
 distr_t_list operator*(const distr_t_list &A, const Vfloat& B) {

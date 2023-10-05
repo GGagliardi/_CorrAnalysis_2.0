@@ -29,7 +29,7 @@ const Vfloat ratio_mh({1, 1.0 / 1.4835, 1.0 / 2.02827, 1.0 / 2.53531, 1.0 / 3.04
 const double mc_MS_bar_2_ave=  1.016392574;
 const double mc_MS_bar_2_err = 0.02247780935;
 const bool Compute_FF = false;
-const bool Skip_virtual_diagram = true;
+const bool Skip_virtual_diagram = false;
 const bool Generate_data_for_mass_spline = false;
 const bool Fit_single_reg = false;
 const string Reg_to_fit = "3pt";
@@ -1441,7 +1441,7 @@ void Compute_Bs_mumu_gamma() {
   
   }
 
-  //exit(-1);
+  exit(-1);
 
 
       
@@ -2006,13 +2006,37 @@ void Compute_Bs_mumu_gamma() {
 
   }
 	
-  
 
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //#########################################                                    ######################################################
+  //#########################################                                    ######################################################
+  //#########################################                                    ######################################################
+  //#########################################     UNCONTRAINED EXTR.             ######################################################
+  //#########################################                                    ######################################################
+  //#########################################                                    ######################################################
+  //#########################################                                    ######################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
   
   //print continuum extrapolated results for each contribution as a function of the mass
   vector<string> contribs({"FA", "FA_u", "FA_d", "FV",  "FV_u", "FV_d",  "FA_T", "FA_T_u", "FA_T_d", "FV_T", "FV_T_u", "FV_T_d", "FB", "FB_u", "FB_d", "FT", "FT_u", "FT_d"});
   vector<int> FF_id({0,0,0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,5});
   vector<double> FF_sign({1,1,-1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1});
+  vector<vector<distr_t_list>> FF_M_list(contribs.size());
+  for(auto &FF_c: FF_M_list)
+    for(int im=0;im<Nmasses;im++) FF_c.emplace_back(1);
+ 
   
   for(int c=0; c<(signed)contribs.size(); c++) {
 
@@ -2042,9 +2066,12 @@ void Compute_Bs_mumu_gamma() {
 	
 
 	FF_M[ixg-1].distr_list.push_back(RES);
+	FF_M_list[c][m].distr_list.push_back((c==2)?(-1.0*RES):RES);
+	
       }
     }
-
+    
+   
     distr_t_list B_coeff(1);
     
     boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/"+"Bs_extr");
@@ -2258,6 +2285,330 @@ void Compute_Bs_mumu_gamma() {
   Print_To_File({}, {Bs_xg_t_list,  (FF_Bs_list[3]*f_Bs).ave(), (FF_Bs_list[3]*f_Bs).err(),  FF_Bs_list[3].ave(), FF_Bs_list[3].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_Bs.dat", "", "");
   Print_To_File({}, {Bs_xg_t_list,  (FF_Bs_list[4]*f_Bs).ave(), (FF_Bs_list[4]*f_Bs).err(),  FF_Bs_list[4].ave(), FF_Bs_list[4].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FB_Bs.dat", "", "");
   Print_To_File({}, {Bs_xg_t_list,  (FF_Bs_list[5]*f_Bs).ave(), (FF_Bs_list[5]*f_Bs).err(),  FF_Bs_list[5].ave(), FF_Bs_list[5].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FT_Bs.dat", "", "");
+
+
+
+
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //#########################################                                    ######################################################
+  //#########################################                                    ######################################################
+  //#########################################                                    ######################################################
+  //#########################################     CONSTRAINED EXTR.              ######################################################
+  //#########################################                                    ######################################################
+  //#########################################                                    ######################################################
+  //#########################################                                    ######################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+
+
+  //index corresponding to FA_d and FV_d is 2 and 5
+
+  
+  
+  class ipar_MEX_comb {
+  public:
+    ipar_MEX_comb() : FF(0.0), FF_err(0.0) {}
+    double FF, FF_err, M, xg;
+    string W;
+  };
+  
+  class fpar_MEX_comb {
+  public:
+    fpar_MEX_comb() {}
+    fpar_MEX_comb(const Vfloat &par) {
+      if((signed)par.size() != 11) crash("In class fpar_MEX_comb  class constructor Vfloat par has size != 11");
+      A=par[0];
+      B1=par[1];
+      B2=par[2];
+      DV=par[3];
+      DA=par[4];
+      CV1=par[5];
+      CV2=par[6];
+      CV3=par[7];
+      CA1=par[8];
+      CA2=par[9];
+      CA3=par[10];
+     
+    }
+    double A,B1,B2, DV, DA, CV1, CV2, CV3,  CA1, CA2, CA3;
+  };
+  
+  
+  //init bootstrap fit
+  int num_xg=4;
+  bootstrap_fit<fpar_MEX_comb,ipar_MEX_comb> bf_MEX_comb(NJ);
+  bf_MEX_comb.set_warmup_lev(2); //sets warmup
+  bf_MEX_comb.Set_number_of_measurements(Nmasses*2*num_xg);
+  bf_MEX_comb.Set_verbosity(1);
+  //fit on mean values to get ch2
+  bootstrap_fit<fpar_MEX_comb,ipar_MEX_comb> bf_MEX_comb_ch2(1);
+  bf_MEX_comb_ch2.set_warmup_lev(1); //sets warmup
+  bf_MEX_comb_ch2.Set_number_of_measurements(Nmasses*2*num_xg);
+  bf_MEX_comb_ch2.Set_verbosity(1);
+  
+
+  bf_MEX_comb.Add_par("A", 1.0/0.5, 0.1/0.5);
+  bf_MEX_comb.Add_par("B1", -1.0, 0.1);
+  bf_MEX_comb.Add_par("B2", 1.0, 0.1);
+  bf_MEX_comb.Add_par("DV", sqrt(0.24), 0.1*sqrt(0.24));
+  bf_MEX_comb.Add_par("DA", sqrt(0.5), 0.1*sqrt(0.5));
+  bf_MEX_comb.Add_par("CV1", 1.0, 0.1);
+  bf_MEX_comb.Add_par("CV2", 1.0, 0.1);
+  bf_MEX_comb.Add_par("CV3", 1.0, 0.1);
+  bf_MEX_comb.Add_par("CA1", 1.0, 0.1);
+  bf_MEX_comb.Add_par("CA2", 1.0, 0.1);
+  bf_MEX_comb.Add_par("CA3", 1.0, 0.1);
+
+  bf_MEX_comb_ch2.Add_par("A", 1.0/0.5, 0.1/0.5);
+  bf_MEX_comb_ch2.Add_par("B1", -1.0, 0.1);
+  bf_MEX_comb_ch2.Add_par("B2", 1.0, 0.1);
+  bf_MEX_comb_ch2.Add_par("DV", sqrt(0.24), 0.1*sqrt(0.24));
+  bf_MEX_comb_ch2.Add_par("DA", sqrt(0.5), 0.1*sqrt(0.5));
+  bf_MEX_comb_ch2.Add_par("CV1", 1.0, 0.1);
+  bf_MEX_comb_ch2.Add_par("CV2", 1.0, 0.1);
+  bf_MEX_comb_ch2.Add_par("CV3", 1.0, 0.1);
+  bf_MEX_comb_ch2.Add_par("CA1", 1.0, 0.1);
+  bf_MEX_comb_ch2.Add_par("CA2", 1.0, 0.1);
+  bf_MEX_comb_ch2.Add_par("CA3", 1.0, 0.1);
+
+
+  //to make some test let us start by setting some parameters to zero
+
+  bf_MEX_comb.Fix_par("B1", 0.0);
+  //bf_MEX_comb.Fix_par("B2", 0.0);
+  bf_MEX_comb.Fix_par("CV3", 0.0);
+  //bf_MEX_comb.Fix_par("CA3", 0.0);
+
+  bf_MEX_comb_ch2.Fix_par("B1", 0.0);
+  //bf_MEX_comb_ch2.Fix_par("B2", 0.0);
+  bf_MEX_comb_ch2.Fix_par("CV3", 0.0);
+  //bf_MEX_comb_ch2.Fix_par("CA3", 0.0);
+
+  int Npars_comb = 9-3;
+
+  bf_MEX_comb.ansatz =  [ ](const fpar_MEX_comb &p, const ipar_MEX_comb &ip) {
+
+    double LB=0.5;
+    double M=ip.M;
+    double x = ip.xg;
+
+    if (ip.W =="V") {
+
+      return (1.0/3.0)*(p.A/(x))*( 1 + p.B1*log(x) + p.B2*x*log(x))*( 1 + LB*p.CV1/M + LB*p.CV2/(x*M) + LB*p.CV3/(pow(x,2)*M))/( 1 + 2*p.DV*p.DV/(x*M*M));
+
+    }
+
+    else if (ip.W == "A") {
+      
+        return (1.0/3.0)*(p.A/(x))*( 1 + p.B1*log(x) + p.B2*x*log(x))*( 1 + LB*p.CA1/M + LB*p.CA2/(x*M) + LB*p.CA3/(pow(x,2)*M))/( 1 + 2*p.DA*p.DA/(x*M));
+    }
+
+
+    exit(-1);
+
+    
+    return 0.0;
+  };
+
+	
+  bf_MEX_comb.measurement=  [ ](const fpar_MEX_comb &p, const ipar_MEX_comb &ip) {
+	  
+    return ip.FF;
+  };
+	
+  bf_MEX_comb.error=  [ ](const fpar_MEX_comb &p, const ipar_MEX_comb &ip) {
+	  
+    return ip.FF_err;
+  };
+	
+	
+  bf_MEX_comb_ch2.ansatz= bf_MEX_comb.ansatz;
+  bf_MEX_comb_ch2.measurement = bf_MEX_comb.measurement;
+  bf_MEX_comb_ch2.error = bf_MEX_comb.error;
+
+  cout<<"Computing covariance matrix of global fit"<<endl;
+
+
+  //insert covariance matrix
+  Eigen::MatrixXd Cov_Matrix_comb_FF(Nmasses*2*num_xg,Nmasses*2*num_xg);
+  Eigen::MatrixXd Corr_Matrix_comb_FF(Nmasses*2*num_xg,Nmasses*2*num_xg);
+  for(int m=0;m< Nmasses*2*num_xg;m++)
+    for(int n=0;n< Nmasses*2*num_xg ;n++) Cov_Matrix_comb_FF(m,n)=0;
+  
+  for(int i=0;i<Nmasses;i++)
+    for(int j=0;j<Nmasses;j++) 
+      for(int ix=0; ix < num_xg; ix++)
+	for(int jx=0; jx<num_xg;jx++) {
+	  Cov_Matrix_comb_FF(i*2*num_xg + 2*ix , j*2*num_xg + 2*jx) = (FF_M_list[2][i].distr_list[ix]/fps.distr_list[i])%(FF_M_list[2][j].distr_list[jx]/fps.distr_list[j]);
+	  Cov_Matrix_comb_FF(i*2*num_xg + 2*ix + 1 , j*2*num_xg + 2*jx + 1) = (FF_M_list[5][i].distr_list[ix]/fps.distr_list[i])%(FF_M_list[5][j].distr_list[jx]/fps.distr_list[j]);
+	  //Cov_Matrix_comb_FF(i*2*num_xg + 2*ix , j*2*num_xg + 2*jx + 1) = (FF_M_list[2][i].distr_list[ix]/fps.distr_list[i])%(FF_M_list[5][j].distr_list[jx]/fps.distr_list[j]);
+	  //Cov_Matrix_comb_FF(i*2*num_xg + 2*ix + 1 , j*2*num_xg + 2*jx) = (FF_M_list[5][i].distr_list[ix]/fps.distr_list[i])%(FF_M_list[2][j].distr_list[jx]/fps.distr_list[j]);
+	}
+
+  for(int m=0;m < Nmasses*2*num_xg; m++)
+    for(int n=0; n< Nmasses*2*num_xg;n++) Corr_Matrix_comb_FF(m,n) = Cov_Matrix_comb_FF(m,n)/sqrt( Cov_Matrix_comb_FF(m,m)*Cov_Matrix_comb_FF(n,n));
+
+
+      
+  cout<<"Corr matrix determinant: "<<Corr_Matrix_comb_FF.determinant()<<endl;    
+  
+  //print on screen
+  cout<<"Correlation matrix comb"<<endl;
+  cout<<Corr_Matrix_comb_FF<<endl;
+  
+  //add cov matrix to bootstrap fit
+  bf_MEX_comb.Add_covariance_matrix(Cov_Matrix_comb_FF);
+  bf_MEX_comb_ch2.Add_covariance_matrix(Cov_Matrix_comb_FF);
+
+
+
+
+  //fill the data
+  vector<vector<ipar_MEX_comb>> data_MEX_comb(NJ);
+  vector<vector<ipar_MEX_comb>> data_MEX_comb_ch2(1);
+  //allocate space for output result
+  boot_fit_data<fpar_MEX_comb> Bt_fit_MEX_comb;
+  boot_fit_data<fpar_MEX_comb> Bt_fit_MEX_comb_ch2;
+  for(auto &data_iboot: data_MEX_comb) data_iboot.resize(Nmasses*2*num_xg);
+  for(auto &data_iboot: data_MEX_comb_ch2) data_iboot.resize(Nmasses*2*num_xg);
+  for(int ijack=0;ijack<NJ;ijack++) {
+    for(int im=0;im<Nmasses;im++) {
+      for(int ixg=0;ixg<num_xg;ixg++) {
+	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg].FF = (FF_M_list[2][im].distr_list[ixg]/fps.distr_list[im]).distr[ijack];
+	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg].FF_err= (FF_M_list[2][im].distr_list[ixg]/fps.distr_list[im]).err();
+	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg].xg= Bs_xg_t_list[ixg];
+	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg].M= masses.distr_list[im].distr[ijack];
+	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg].W= "A";
+
+	data_MEX_comb[ijack][2*im*num_xg+2*ixg+1].FF = (FF_M_list[5][im].distr_list[ixg]/fps.distr_list[im]).distr[ijack];
+	data_MEX_comb[ijack][2*im*num_xg+2*ixg+1].FF_err= (FF_M_list[5][im].distr_list[ixg]/fps.distr_list[im]).err();
+	data_MEX_comb[ijack][2*im*num_xg+2*ixg+1].xg= Bs_xg_t_list[ixg];
+	data_MEX_comb[ijack][2*im*num_xg+2*ixg+1].M= masses.distr_list[im].distr[ijack];
+	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg+1].W= "V";
+      if(ijack==0) {
+	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].FF = (FF_M_list[2][im].distr_list[ixg]/fps.distr_list[im]).ave();
+	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].FF_err= (FF_M_list[2][im].distr_list[ixg]/fps.distr_list[im]).err();
+	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].xg= Bs_xg_t_list[ixg];
+	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].M= masses.distr_list[im].distr[ijack];
+	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].W= "A";
+
+       
+
+	data_MEX_comb_ch2[ijack][2*im*num_xg+2*ixg+1].FF = (FF_M_list[5][im].distr_list[ixg]/fps.distr_list[im]).ave();
+	data_MEX_comb_ch2[ijack][2*im*num_xg+2*ixg+1].FF_err= (FF_M_list[5][im].distr_list[ixg]/fps.distr_list[im]).err();
+	data_MEX_comb_ch2[ijack][2*im*num_xg+2*ixg+1].xg= Bs_xg_t_list[ixg];
+	data_MEX_comb_ch2[ijack][2*im*num_xg+2*ixg+1].M= masses.distr_list[im].distr[ijack];
+	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg+1].W= "V";
+      }
+      }
+    }
+  }
+
+  cout<<"####################################################"<<endl;
+
+  //for (auto &d: data_MEX_comb_ch2[0]) cout<<"ch: "<<d.W<<"xg: "<<d.xg<<" FF: "<<d.FF<<" +- "<<d.FF_err<<endl;
+
+
+  cout<<"####################################################"<<endl;
+
+  
+  //append
+  bf_MEX_comb.Append_to_input_par(data_MEX_comb);
+  bf_MEX_comb_ch2.Append_to_input_par(data_MEX_comb_ch2);
+  //fit
+  Bt_fit_MEX_comb= bf_MEX_comb.Perform_bootstrap_fit();
+  Bt_fit_MEX_comb_ch2= bf_MEX_comb_ch2.Perform_bootstrap_fit();
+  double ch2_red_MEX_comb= Bt_fit_MEX_comb_ch2.get_ch2_ave()/( Nmasses*2*num_xg -Npars_comb);
+	
+  //retrieve params
+  distr_t A(1), B1(1), B2(1), DV(1), DA(1), CV1(1), CV2(1), CV3(1), CA1(1), CA2(1), CA3(1);
+  for(int ijack=0;ijack<NJ;ijack++) {
+    A.distr.push_back( Bt_fit_MEX_comb.par[ijack].A);
+    B1.distr.push_back( Bt_fit_MEX_comb.par[ijack].B1);
+    B2.distr.push_back( Bt_fit_MEX_comb.par[ijack].B2);
+
+    DV.distr.push_back( Bt_fit_MEX_comb.par[ijack].DV);
+    DA.distr.push_back( Bt_fit_MEX_comb.par[ijack].DA);
+
+    CV1.distr.push_back( Bt_fit_MEX_comb.par[ijack].CV1);
+    CV2.distr.push_back( Bt_fit_MEX_comb.par[ijack].CV2);
+    CV3.distr.push_back( Bt_fit_MEX_comb.par[ijack].CV3);
+
+    CA1.distr.push_back( Bt_fit_MEX_comb.par[ijack].CA1);
+    CA2.distr.push_back( Bt_fit_MEX_comb.par[ijack].CA2);
+    CA3.distr.push_back( Bt_fit_MEX_comb.par[ijack].CA3);
+  }
+  
+
+
+  //print fit function
+  distr_t_list F_MEX_fit(1);
+	
+  //### Determine FF at Bs meson mass
+  ipar_MEX_comb pp_Bs_comb;
+  pp_Bs_comb.M= MBs;
+ 
+  //scan over xg
+  Vfloat xg_scan;
+  for(int ixg=0;ixg<200;ixg++) xg_scan.push_back( 0.05+ 0.45*ixg/199);
+  distr_t_list FA_Bs_xg(1,xg_scan.size(),NJ);
+  distr_t_list FV_Bs_xg(1,xg_scan.size(), NJ);
+
+  for(int ixg=0;ixg<(signed)xg_scan.size();ixg++) {
+    pp_Bs_comb.xg= xg_scan[ixg];
+    for(int ijack=0;ijack<NJ;ijack++) {
+      pp_Bs_comb.W="A";
+      FA_Bs_xg.distr_list[ixg].distr[ijack] =  bf_MEX_comb.ansatz( Bt_fit_MEX_comb.par[ijack], pp_Bs_comb);
+      pp_Bs_comb.W="V";
+      FV_Bs_xg.distr_list[ixg].distr[ijack] =  bf_MEX_comb.ansatz( Bt_fit_MEX_comb.par[ijack], pp_Bs_comb);
+    }
+  }
+  //#################################
+  Print_To_File({}, {xg_scan, (FA_Bs_xg*f_Bs).ave(), (FA_Bs_xg*f_Bs).err(),  FA_Bs_xg.ave(), FA_Bs_xg.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FA_d_comb_Bs.dat", "", "");
+  Print_To_File({}, {xg_scan, (FV_Bs_xg*f_Bs).ave(), (FV_Bs_xg*f_Bs).err(), FV_Bs_xg.ave(), FV_Bs_xg.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FV_d_comb_Bs.dat", "", "");
+
+
+  //scan over masses and xg
+
+  Vfloat Inv_Masses_to_print_MEX;
+  for(int i=0;i<1000;i++) { Inv_Masses_to_print_MEX.push_back(  0.30*2*i/999  ) ;}
+
+  for(int ixg=0;ixg<num_xg;ixg++) {
+
+    distr_t_list FA(1,Inv_Masses_to_print_MEX.size(),NJ), FV(1, Inv_Masses_to_print_MEX.size(), NJ);
+    for(int im=0;im<(signed)Inv_Masses_to_print_MEX.size(); im++) {
+
+      ipar_MEX_comb pp;
+      pp.M = 1.0/Inv_Masses_to_print_MEX[im];
+      pp.xg= Bs_xg_t_list[ixg];
+      
+      for(int ijack=0;ijack<NJ;ijack++) {
+	pp.W="A";
+	FA.distr_list[im].distr[ijack] = bf_MEX_comb.ansatz( Bt_fit_MEX_comb.par[ijack], pp);
+	pp.W="V";
+	FV.distr_list[im].distr[ijack] = bf_MEX_comb.ansatz( Bt_fit_MEX_comb.par[ijack], pp);
+      }
+    }
+  
+    Print_To_File({}, { Inv_Masses_to_print_MEX, FA.ave(), FA.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_d_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "ch2/dof: "+to_string_with_precision(ch2_red_MEX_comb,5));
+    Print_To_File({}, { Inv_Masses_to_print_MEX, FV.ave(), FV.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_d_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "ch2/dof: "+to_string_with_precision(ch2_red_MEX_comb,5));
+  }
+
+
+  cout<<"Print fit parameters for quasi-pole"<<endl;
+  cout<<"Axial: "<<(DA*DA).ave()<< "+-"<<(DA*DA).err()<<endl;
+  cout<<"vector: "<<(DV*DV).ave()<< "+-"<<(DV*DV).err()<<endl;
   
   double evolutor_ZT = evolutor_ZT_MS_bar(2.0,5.0,4);
   cout<<"ZT(5GeV)/ZT(2GeV) NNNLO: "<<evolutor_ZT<<endl;

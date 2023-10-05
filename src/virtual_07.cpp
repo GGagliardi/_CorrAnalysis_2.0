@@ -10,8 +10,8 @@ Vfloat sigmas_07({0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2});
 Vfloat sigmas_07_w0({0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29,  0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0});
 int prec_07=128;
 const string MODE_FF="TANT";
-const bool Skip_spectral_reconstruction_07 = true;
-const bool virtuality_scan = false;
+const bool Skip_spectral_reconstruction_07 = false;
+const bool virtuality_scan = true;
 const bool Use_preconditioning = true;
 const string  preco_tag= (Use_preconditioning)?"prec_":"";
 const double Mjpsi= 3.0969; //GeV
@@ -319,6 +319,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       F_T_d_RE_sm_list[ixg].emplace_back(UseJack);
       F_T_d_IM_sm_list[ixg].emplace_back(UseJack);
 
+      
     }
   }
 
@@ -906,19 +907,19 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       else if(MESON=="B1s") {
 	 
 	 if(ixg==0) {
-	  Corr_HLT.Tmin= 15;
-	  Corr_HLT.Tmax= 22;
+	  Corr_HLT.Tmin= 17;
+	  Corr_HLT.Tmax= 21;
 	 }
 	 else if(ixg==1) {
-	   Corr_HLT.Tmin= 15;
+	   Corr_HLT.Tmin= 17;
 	   Corr_HLT.Tmax= 22;
 	 }
 	 else if(ixg==2) {
-	   Corr_HLT.Tmin= 14;
-	   Corr_HLT.Tmax= 22;
+	   Corr_HLT.Tmin= 16;
+	   Corr_HLT.Tmax= 21;
 	 }
 	 else if(ixg==3) {
-	   Corr_HLT.Tmin= 14;
+	   Corr_HLT.Tmin= 16;
 	   Corr_HLT.Tmax= 22;
 	 }
 	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
@@ -927,20 +928,20 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       else if(MESON=="B3s") {
 	
 	 if(ixg==0) {
-	  Corr_HLT.Tmin= 14;
-	  Corr_HLT.Tmax= 25;
+	  Corr_HLT.Tmin= 13;
+	  Corr_HLT.Tmax= 18;
 	 }
 	 else if(ixg==1) {
 	   Corr_HLT.Tmin= 14;
 	   Corr_HLT.Tmax= 18;
 	 }
 	 else if(ixg==2) {
-	   Corr_HLT.Tmin= 12;
-	   Corr_HLT.Tmax= 17;
+	   Corr_HLT.Tmin= 14;
+	   Corr_HLT.Tmax= 18;
 	 }
 	 else if(ixg==3) {
-	   Corr_HLT.Tmin= 12;
-	   Corr_HLT.Tmax= 17;
+	   Corr_HLT.Tmin= 14;
+	   Corr_HLT.Tmax= 18;
 	 }
 	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
 	 
@@ -1034,12 +1035,12 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	   Corr_HLT.Tmax= 9;
 	 }
 	 else if(ixg==2) {
-	   Corr_HLT.Tmin= 6;
-	   Corr_HLT.Tmax= 9;
+	   Corr_HLT.Tmin= 8;
+	   Corr_HLT.Tmax= 11;
 	 }
 	 else if(ixg==3) {
-	   Corr_HLT.Tmin= 7;
-	   Corr_HLT.Tmax= 9;
+	   Corr_HLT.Tmin= 8;
+	   Corr_HLT.Tmax= 11;
 	 }
 	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
 	 
@@ -1047,8 +1048,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       else if(MESON=="B3s") {
 	
 	 if(ixg==0) {
-	  Corr_HLT.Tmin= 8;
-	  Corr_HLT.Tmax= 10;
+	  Corr_HLT.Tmin= 5;
+	  Corr_HLT.Tmax= 8;
 	 }
 	 else if(ixg==1) {
 	   Corr_HLT.Tmin= 5;
@@ -1059,8 +1060,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	   Corr_HLT.Tmax= 7;
 	 }
 	 else if(ixg==3) {
-	   Corr_HLT.Tmin= 4;
-	   Corr_HLT.Tmax= 6;
+	   Corr_HLT.Tmin= 5;
+	   Corr_HLT.Tmax= 7;
 	 }
 	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
 	 
@@ -1107,21 +1108,21 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       Tmin_old= Corr_HLT.Tmin; Tmax_old= Corr_HLT.Tmax;
       if(MESON=="B0s") {
 	if(ixg==0) {
-	  Corr_HLT.Tmin= 2;
-	  Corr_HLT.Tmax= 5;
+	  Corr_HLT.Tmin= 1;
+	  Corr_HLT.Tmax= 3;
 	}
 	else if(ixg==1) {
-	  Corr_HLT.Tmin= 2;
-	  Corr_HLT.Tmax= 5;
+	  Corr_HLT.Tmin= 1;
+	  Corr_HLT.Tmax= 3;
 	}
 	else if(ixg==2) {
-	  Corr_HLT.Tmin= 2;
-	  Corr_HLT.Tmax= 5;
+	  Corr_HLT.Tmin= 1;
+	  Corr_HLT.Tmax= 3;
 
 	}
 	else if(ixg==3) {
-	  Corr_HLT.Tmin= 2;
-	  Corr_HLT.Tmax= 5;
+	  Corr_HLT.Tmin= 1;
+	  Corr_HLT.Tmax= 3;
 	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
 
@@ -1129,20 +1130,20 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       else if(MESON=="B1s") {
 	 
 	 if(ixg==0) {
-	  Corr_HLT.Tmin= 2;
-	  Corr_HLT.Tmax= 5;
+	  Corr_HLT.Tmin= 1;
+	  Corr_HLT.Tmax= 3;
 	 }
 	 else if(ixg==1) {
-	   Corr_HLT.Tmin= 2;
-	   Corr_HLT.Tmax= 5;
+	   Corr_HLT.Tmin= 1;
+	   Corr_HLT.Tmax= 3;
 	 }
 	 else if(ixg==2) {
-	   Corr_HLT.Tmin= 2;
-	   Corr_HLT.Tmax= 5;
+	   Corr_HLT.Tmin= 1;
+	   Corr_HLT.Tmax= 3;
 	 }
 	 else if(ixg==3) {
-	   Corr_HLT.Tmin= 2;
-	   Corr_HLT.Tmax= 5;
+	   Corr_HLT.Tmin= 1;
+	   Corr_HLT.Tmax= 3;
 	 }
 	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
 	 
@@ -1150,20 +1151,20 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       else if(MESON=="B3s") {
 	
 	 if(ixg==0) {
-	  Corr_HLT.Tmin= 2;
-	  Corr_HLT.Tmax= 5;
+	  Corr_HLT.Tmin= 1;
+	  Corr_HLT.Tmax= 3;
 	 }
 	 else if(ixg==1) {
-	   Corr_HLT.Tmin= 2;
-	   Corr_HLT.Tmax= 5;
+	   Corr_HLT.Tmin= 1;
+	   Corr_HLT.Tmax= 3;
 	 }
 	 else if(ixg==2) {
-	   Corr_HLT.Tmin= 2;
-	   Corr_HLT.Tmax= 5;
+	   Corr_HLT.Tmin= 1;
+	   Corr_HLT.Tmax= 3;
 	 }
 	 else if(ixg==3) {
-	   Corr_HLT.Tmin= 2;
-	   Corr_HLT.Tmax= 5;
+	   Corr_HLT.Tmin= 1;
+	   Corr_HLT.Tmax= 3;
 	 }
 	 else crash("ixg: "+to_string(ixg)+" not yet implemented");
 	 
@@ -1294,17 +1295,17 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  double l_re_T;
 	  
 
-	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1)+ ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_off, s) + FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_off, s) )) ;
+	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT, 0.0 , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1)+ ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_off, s) + FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_off, s) )) ;
 	 	  	  
-	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1) +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off, s)+FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_off, s)));
+	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT, 0.0 , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1) +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off, s)+FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_off, s)));
 
-	  if(virtuality_scan && ixg==0) {
+	  if(virtuality_scan) {
 	    
 	    for(int vir=0;vir<(signed)virtualities.size(); vir++) {
 
-	      F_T_d_RE_virt_scan[isg].distr_list[vir] = Get_Laplace_transfo ( M_P.ave()*virtualities[vir],  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"VIRT_SCAN_T_"+Ens_tags[iens], Ag_target,0, FACT , MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1) + + ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, M_P*virtualities[vir], s) + FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, M_P*virtualities[vir], s));
+	      F_T_d_RE_virt_scan[isg].distr_list[vir] = Get_Laplace_transfo ( M_P.ave()*virtualities[vir],  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"VIRT_SCAN_T_"+Ens_tags[iens], Ag_target,0, FACT, 0.0 , MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1) + + ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, M_P*virtualities[vir], s) + FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, M_P*virtualities[vir], s));
 	      
-	      F_T_d_IM_virt_scan[isg].distr_list[vir] = Get_Laplace_transfo ( M_P.ave()*virtualities[vir],  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"VIRT_SCAN_T_"+Ens_tags[iens], Ag_target,0, FACT , MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1)  +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, M_P*virtualities[vir], s)+FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, M_P*virtualities[vir], s));
+	      F_T_d_IM_virt_scan[isg].distr_list[vir] = Get_Laplace_transfo ( M_P.ave()*virtualities[vir],  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"VIRT_SCAN_T_"+Ens_tags[iens], Ag_target,0, FACT, 0.0 , MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1)  +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, M_P*virtualities[vir], s)+FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, M_P*virtualities[vir], s));
 
 	    }
 
@@ -1313,9 +1314,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  
 	}
 	//if virtuality scan and first kinematic, print results
-	if(virtuality_scan && ixg==0) {
+	if(virtuality_scan) {
 	  for(int isg=0;isg<(signed)sigmas_07.size();isg++) {
-	    Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(),Njacks)*M_P/a_distr).ave(), F_T_d_RE_virt_scan[isg].ave(), F_T_d_RE_virt_scan[isg].err(), F_T_d_IM_virt_scan[isg].ave(), F_T_d_IM_virt_scan[isg].err() }, path_out+"/FF_d_II/VIRT_SCAN_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_xg_0.1", "", "");
+	    Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(),Njacks)*M_P/a_distr).ave(), F_T_d_RE_virt_scan[isg].ave(), F_T_d_RE_virt_scan[isg].err(), F_T_d_IM_virt_scan[isg].ave(), F_T_d_IM_virt_scan[isg].err() }, path_out+"/FF_d_II/VIRT_SCAN_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_xg_"+to_string_with_precision(0.1+0.1*ixg,2), "", "");
 	  }
 	}
       }    

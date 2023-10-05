@@ -22,7 +22,8 @@ const double m_kappa_err = 0.0004;
 const double m_etas = 0.68989;
 const double m_etas_err= 0.00050;
 const double E0_l = 0.9*m_kappa;
-const double E0_sp = 0.9*(m_kappa + MPiPhys);
+const double E0_sp = 0.9 * (m_kappa + MPiPhys);
+const double E0_A_sp = 0.9*(m_kappa+2*MPiPhys);
 const double Rs_HFLAV = 0.163260;
 const double D_Rs_HFLAV= 0.0027;
 Vfloat sigma_list_strange;
@@ -48,7 +49,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   int alpha_m= (int)(alpha+1);
 
   if(alpha_m < 3) crash("Customized_plateaux_tau_spectre called with alpha = "+to_string_with_precision(alpha,2));
-  if( (alpha_m != 3) && (alpha_m != 4) && (alpha_m != 5) ) crash("Customized_plateaux_tau_spectre called with (int)alpha: "+to_string(alpha_m));
+  //if( (alpha_m != 3) && (alpha_m != 4) && (alpha_m != 5) ) crash("Customized_plateaux_tau_spectre called with (int)alpha: "+to_string(alpha_m));
 
   if(Ens=="cZ211a.077.64") Ens = "cB211b.072.64";
 
@@ -57,16 +58,16 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
     if(channel=="Aii") {
       if(Ens == "cB211b.072.64") {  Ra0 =2e7;  }
       else if(Ens == "cB211b.072.96") { Ra0= 2e7;   }
-      else if(Ens == "cC211a.06.80") { Ra0= 4e6;   } 
+      else if(Ens == "cC211a.06.80") { Ra0= 2e7;   } 
       else if(Ens == "cC211a.06.112") { Ra0= 1e8;   }
-      else if(Ens == "cD211a.054.96") {  Ra0=1e6;  }
+      else if(Ens == "cD211a.054.96") {  Ra0=8e6;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="Vii") {
       if(Ens == "cB211b.072.64") { Ra0=2e5;   }
       else if(Ens == "cB211b.072.96") { Ra0= 2e5;    } 
       else if(Ens == "cC211a.06.80") {  Ra0=1e7;  } 
-      else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
+      else if(Ens == "cC211a.06.112") { Ra0= 2e6;   }
       else if(Ens == "cD211a.054.96") {  Ra0= 1e7;   }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
@@ -120,7 +121,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else if(Ens == "cB211b.072.96") { Ra0=5e7;   }
       else if(Ens == "cC211a.06.80") { Ra0=5e8;   }
       else if(Ens == "cC211a.06.112") { Ra0= 7e8;   }
-      else if(Ens == "cD211a.054.96") { Ra0=1e8;  } 
+      else if(Ens == "cD211a.054.96") { Ra0=8e8;  } 
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -283,6 +284,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/VkVk");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/Br");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/corr");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/mass");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/covariance");
 
   cout<<"done!"<<endl;
@@ -297,8 +299,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     boost::filesystem::create_directory("../tau_decay_strange");
     
 
-    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.072.64", "Z.077.64", "D.054.96"});
-    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64", "cZ211a.077.64", "cD211a.054.96"});
+    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.072.64", "D.054.96"});
+    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64","cD211a.054.96"});
 
     for( int it=0; it<(signed)Ens_T1.size(); it++) {
 
@@ -758,8 +760,11 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      distr_t_list M_fs_H_OS = Corr.effective_mass_t( ss_H_data_OS_S0S0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/masses/"+ll_data_OS_P5P5.Tag[iens]+"/eff_mass_fs_H_OS");
      distr_t_list M_Ks0_OS = Corr.effective_mass_t( ls_data_OS_S0S0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/masses/"+ll_data_OS_P5P5.Tag[iens]+"/eff_mass_Ks0_OS");
      distr_t_list M_Ks0_H_OS = Corr.effective_mass_t( ls_H_data_OS_S0S0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/masses/"+ll_data_OS_P5P5.Tag[iens]+"/eff_mass_Ks0_H_OS");
-    
 
+
+   
+     
+     
   
    
      
@@ -819,7 +824,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_OS_distr = Corr.corr_t(ls_data_OS_A0A0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/A0_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
     V0_OS_distr = Corr.corr_t(ls_data_OS_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
 
-    //analyze data with Njacks=Nconfs
+
+    
+    
     //light-tm sector
     Vk_tm_block_1_distr = Corr_block_1.corr_t(ls_data_tm_VKVK.col(0)[iens], "");
     Ak_tm_block_1_distr = Corr_block_1.corr_t(ls_data_tm_AKAK.col(0)[iens], "");
@@ -875,6 +882,77 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     V0_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_V0V0.col(0)[iens], "");
 
     //############# HEAVIER MASS ################//
+
+
+
+    //set plateaux for J^P = 1^- and J^P = 1^+
+
+    int Tmin_1_minus_tm=0; int Tmax_1_minus_tm=0;
+    int Tmin_1_plus_tm=0;  int Tmax_1_plus_tm=0;
+    int Tmin_1_minus_OS=0; int Tmax_1_minus_OS=0;
+    int Tmin_1_plus_OS=0;  int Tmax_1_plus_OS=0;
+    
+    if(ll_data_OS_P5P5.Tag[iens] == "cB211b.072.64") {
+      
+      Tmin_1_minus_tm=21;   Tmax_1_minus_tm=26;
+      Tmin_1_plus_tm=18;   Tmax_1_plus_tm=21;
+      
+      Tmin_1_minus_OS=21;   Tmax_1_minus_OS=26;
+      Tmin_1_plus_OS=18;   Tmax_1_plus_OS=21;
+    }
+    else if(ll_data_OS_P5P5.Tag[iens] == "cC211a.06.80") {
+       Tmin_1_minus_tm=24;   Tmax_1_minus_tm=32;
+       Tmin_1_plus_tm=16;   Tmax_1_plus_tm=20;
+       
+       Tmin_1_minus_OS=24;   Tmax_1_minus_OS=32;
+       Tmin_1_plus_OS=16;   Tmax_1_plus_OS=20;
+       
+     }
+    else if(ll_data_OS_P5P5.Tag[iens] == "cC211a.06.112") {
+       
+       Tmin_1_minus_tm=24;   Tmax_1_minus_tm=29;
+       Tmin_1_plus_tm=16;   Tmax_1_plus_tm=20;
+       
+       Tmin_1_minus_OS=24;   Tmax_1_minus_OS=29;
+       Tmin_1_plus_OS=16;   Tmax_1_plus_OS=20;
+       
+    }
+    else if(ll_data_OS_P5P5.Tag[iens] == "cD211a.054.96") {
+       
+      Tmin_1_minus_tm=26;   Tmax_1_minus_tm=33;
+       Tmin_1_plus_tm=24;   Tmax_1_plus_tm=30;
+       
+       Tmin_1_minus_OS=26;   Tmax_1_minus_OS=33;
+       Tmin_1_plus_OS=24;   Tmax_1_plus_OS=30;
+	
+    }
+    else crash("Cannot find ensemble: "+ll_data_OS_P5P5.Tag[iens]);
+    
+    Corr.Tmin=Tmin_1_minus_tm; Corr.Tmax=Tmax_1_minus_tm;
+    distr_t m_Kstar_tm= Corr.Fit_distr(M_Kstar_tm);
+    distr_t A_Kstar_tm= Corr.Fit_distr( Corr.residue_t(Vk_tm_distr, "")/(2.0*m_Kstar_tm));
+    distr_t_list Vii_tm_gs= (A_Kstar_tm).ave()*exp(-1.0*m_Kstar_tm.ave())*Get_id_jack_distr_list(T,Njacks); 
+    Vii_tm_gs.distr_list[0] = 0.0*Vii_tm_gs.distr_list[0];
+    
+    Corr.Tmin=Tmin_1_plus_tm; Corr.Tmax=Tmax_1_plus_tm;
+    distr_t m_K1_tm= Corr.Fit_distr(M_K1_tm);
+    distr_t A_K1_tm= Corr.Fit_distr( Corr.residue_t(Ak_tm_distr, "")/(2.0*m_K1_tm));
+    distr_t_list Aii_tm_gs= (A_K1_tm).ave()*exp(-1.0*m_K1_tm.ave())*Get_id_jack_distr_list(T,Njacks); 
+    Aii_tm_gs.distr_list[0] = 0.0*Aii_tm_gs.distr_list[0];
+
+    Corr.Tmin=Tmin_1_minus_OS; Corr.Tmax=Tmax_1_minus_OS;
+    distr_t m_Kstar_OS= Corr.Fit_distr(M_Kstar_OS);
+    distr_t A_Kstar_OS= Corr.Fit_distr( Corr.residue_t(Vk_OS_distr, "")/(2.0*m_Kstar_OS));
+    distr_t_list Vii_OS_gs= (A_Kstar_OS).ave()*exp(-1.0*m_Kstar_OS.ave())*Get_id_jack_distr_list(T,Njacks);  
+    Vii_OS_gs.distr_list[0] = 0.0*Vii_OS_gs.distr_list[0];
+
+    Corr.Tmin=Tmin_1_plus_OS; Corr.Tmax=Tmax_1_plus_OS;
+    distr_t m_K1_OS= Corr.Fit_distr(M_K1_OS);
+    distr_t A_K1_OS= Corr.Fit_distr( Corr.residue_t(Ak_OS_distr, "")/(2.0*m_K1_OS));
+    distr_t_list Aii_OS_gs= (A_K1_OS).ave()*exp(-1.0*m_K1_OS.ave())*Get_id_jack_distr_list(T,Njacks); 
+    Aii_OS_gs.distr_list[0] = 0.0*Aii_OS_gs.distr_list[0];
+
+    
     
 
 
@@ -1025,7 +1103,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     //################   LIGHTER   ##############################
 
     bool Found_error_less_x_percent=false;
-    double x=20;
+    double x=15;
     //tm
     int tmax_tm_A0=1;
     while(!Found_error_less_x_percent && tmax_tm_A0 < Corr.Nt/2 -1 ) {
@@ -1211,6 +1289,25 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 		   
 		 };
 
+    auto K0_dub = [&a_distr](double &E, double &s) -> double {
+
+      
+		      
+      double X = E/(m_tau*a_distr.ave());
+      double XX= E/(m_tau*a_distr.ave());
+		     
+      		      
+      double sm_theta;
+      
+      if(sm_func_mode==0) sm_theta= 1/(1+ exp(-(1-X)/s));
+      else if(sm_func_mode==1) sm_theta= 1/(1+ exp(-sinh((1-X)/s)));
+      else if(sm_func_mode==2) sm_theta= (1+erf((1-X)/s))/2;
+      else crash("sm_func_mode: "+to_string(sm_func_mode)+" not yet implemented");
+      
+      return (1/XX)*pow(( 1 -pow(X,2)),2)*sm_theta;
+		   
+    };
+
     const auto K1 = [&a_distr](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
 
 		      PrecFloat X;
@@ -1236,6 +1333,25 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 		      return (1 + 2*pow(X,2))*(1/(XX))*pow(( 1 -pow(X,2)),2)*sm_theta;
 		   
 		    };
+
+    auto K1_dub = [&a_distr](double E, double s) -> double {
+
+      
+		      
+      double X = E/(m_tau*a_distr.ave());
+      double XX= E/(m_tau*a_distr.ave());
+      
+      
+      double sm_theta;
+      
+      if(sm_func_mode==0) sm_theta= 1/(1+ exp(-(1-X)/s));
+      else if(sm_func_mode==1) sm_theta= 1/(1+ exp(-sinh((1-X)/s)));
+      else if(sm_func_mode==2) sm_theta= (1+erf((1-X)/s))/2;
+      else crash("sm_func_mode: "+to_string(sm_func_mode)+" not yet implemented");
+
+      return (1 + 2*pow(X,2))*(1/(XX))*pow(( 1 -pow(X,2)),2)*sm_theta;
+     		   
+    };
 
 
 
@@ -1389,11 +1505,14 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       //##############                              ###############//
       //##############                              ###############//
       //##############                              ###############//
-  
+
+
+      
       auto start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax,  "Aii", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm, syst_Aii_tm, mult, lAii_tm, MODE, "tm", "Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      Br_s_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_tm, syst_s_Aii_tm, mult, lAii_tm, MODE, "tm", "Aii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm, syst_Aii_tm, mult, lAii_tm, MODE, "tm", "Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_s_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_tm, syst_s_Aii_tm, mult, lAii_tm, MODE, "tm", "Aii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      distr_t preco_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm - Aii_tm_gs.ave(), syst_Aii_tm, mult, lAii_tm, MODE, "tm", "preco_Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, A_K1_tm.ave()*K1_dub(m_K1_tm.ave(), s), "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Aii_tm = fabs( Br_s_sigma_Aii_tm.ave() - Br_sigma_Aii_tm.ave());
       auto end = chrono::system_clock::now();
       cout<<"node: "<<_hostname<<", rank: "<<rank<<", thread_id: "<<omp_get_thread_num()<<" core-id: "<<sched_getcpu()<<endl<<flush;
@@ -1408,8 +1527,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "Aii", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS, syst_Aii_OS, mult, lAii_OS, MODE, "OS", "Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      Br_s_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_OS, syst_s_Aii_OS, mult, lAii_OS, MODE, "OS", "Aii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS, syst_Aii_OS, mult, lAii_OS, MODE, "OS", "Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, 0.0, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_s_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_OS, syst_s_Aii_OS, mult, lAii_OS, MODE, "OS", "Aii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, 0.0, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      distr_t preco_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS - Aii_OS_gs.ave(), syst_Aii_OS, mult, lAii_OS, MODE, "OS", "preco_Aii_strange_"+ls_data_OS_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, A_K1_OS.ave()*K1_dub(m_K1_OS.ave(), s), "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Aii_OS = fabs( Br_s_sigma_Aii_OS.ave() - Br_sigma_Aii_OS.ave());
      
       end = chrono::system_clock::now();
@@ -1425,8 +1545,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "Vii", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, mult, lVii_tm, MODE, "tm", "Vii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, beta);
-      Br_s_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1_shifted, Vii_tm, syst_s_Vii_tm, mult, lVii_tm, MODE, "tm", "Vii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_tm, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, beta);
+      Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, mult, lVii_tm, MODE, "tm", "Vii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_Vk_tm, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, beta);
+      Br_s_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1_shifted, Vii_tm, syst_s_Vii_tm, mult, lVii_tm, MODE, "tm", "Vii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_Vk_tm, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, beta);
+      distr_t preco_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm - Vii_tm_gs.ave(), syst_Vii_tm, mult, lVii_tm, MODE, "tm", "preco_Vii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, A_Kstar_tm.ave()*K1_dub(m_Kstar_tm.ave(), s), "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Vii_tm = fabs( Br_s_sigma_Vii_tm.ave() - Br_sigma_Vii_tm.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1440,8 +1561,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax,  "Vii", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_OS, syst_Vii_OS, mult, lVii_OS, MODE, "OS", "Vii_strange_"+ls_data_tm_VKVK.Tag[iens],1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_Vk_OS, fake_func,0, fake_func_d  ,  Is_Emax_Finite, Emax, beta);
-      Br_s_sigma_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1_shifted, Vii_OS, syst_s_Vii_OS, mult, lVii_OS, MODE, "OS", "Vii_s_strange_"+ls_data_tm_VKVK.Tag[iens],1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_Vk_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_sigma_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_OS, syst_Vii_OS, mult, lVii_OS, MODE, "OS", "Vii_strange_"+ls_data_tm_VKVK.Tag[iens],1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Vk_OS, fake_func,0, fake_func_d  ,  Is_Emax_Finite, Emax, beta);
+      Br_s_sigma_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1_shifted, Vii_OS, syst_s_Vii_OS, mult, lVii_OS, MODE, "OS", "Vii_s_strange_"+ls_data_tm_VKVK.Tag[iens],1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Vk_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      distr_t preco_Vii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_OS - Vii_OS_gs.ave(), syst_Vii_OS, mult, lVii_OS, MODE, "OS", "preco_Vii_strange_"+ls_data_OS_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, A_Kstar_OS.ave()*K1_dub(m_Kstar_OS.ave(), s), "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Vii_OS = fabs( Br_s_sigma_Vii_OS.ave() - Br_sigma_Vii_OS.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1456,8 +1578,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "A0", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_A0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_A0, prec, SM_TYPE_0,K0, A0_tm, syst_A0_tm, mult, lA0_tm, MODE, "tm", "A0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_A0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_A0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_A0, prec, SM_TYPE_0,K0_shifted, A0_tm, syst_s_A0_tm, mult, lA0_tm, MODE, "tm", "A0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_A0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_A0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_A0, prec, SM_TYPE_0,K0, A0_tm, syst_A0_tm, mult, lA0_tm, MODE, "tm", "A0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_A0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_A0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_A0, prec, SM_TYPE_0,K0_shifted, A0_tm, syst_s_A0_tm, mult, lA0_tm, MODE, "tm", "A0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_A0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_A0_tm = fabs( Br_s_sigma_A0_tm.ave() - Br_sigma_A0_tm.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1471,8 +1593,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "A0", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_A0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_A0, prec, SM_TYPE_0,K0, A0_OS, syst_A0_OS, mult, lA0_OS, MODE, "OS", "A0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_A0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_A0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_A0, prec, SM_TYPE_0,K0_shifted, A0_OS, syst_s_A0_OS, mult, lA0_OS, MODE, "OS", "A0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_A0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_A0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_A0, prec, SM_TYPE_0,K0, A0_OS, syst_A0_OS, mult, lA0_OS, MODE, "OS", "A0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_A0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_A0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_A0, prec, SM_TYPE_0,K0_shifted, A0_OS, syst_s_A0_OS, mult, lA0_OS, MODE, "OS", "A0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_A0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_A0_OS = fabs( Br_s_sigma_A0_OS.ave() - Br_sigma_A0_OS.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1487,8 +1609,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "V0", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_V0_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_V0, prec, SM_TYPE_0,K0, V0_tm, syst_V0_tm, mult, lV0_tm, MODE, "tm", "V0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_V0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_V0_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_V0, prec, SM_TYPE_0,K0_shifted, V0_tm, syst_s_V0_tm, mult, lV0_tm, MODE, "tm", "V0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_V0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_V0_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_V0, prec, SM_TYPE_0,K0, V0_tm, syst_V0_tm, mult, lV0_tm, MODE, "tm", "V0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_V0_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_V0, prec, SM_TYPE_0,K0_shifted, V0_tm, syst_s_V0_tm, mult, lV0_tm, MODE, "tm", "V0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_V0_tm = fabs( Br_s_sigma_V0_tm.ave() - Br_sigma_V0_tm.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1502,8 +1624,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "V0", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_V0_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_V0, prec, SM_TYPE_0,K0, V0_OS, syst_V0_OS, mult, lV0_OS, MODE, "OS", "V0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_V0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_V0_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_V0, prec, SM_TYPE_0,K0_shifted, V0_OS, syst_s_V0_OS, mult, lV0_OS, MODE, "OS", "V0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_V0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_V0_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_V0, prec, SM_TYPE_0,K0, V0_OS, syst_V0_OS, mult, lV0_OS, MODE, "OS", "V0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_V0_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_V0, prec, SM_TYPE_0,K0_shifted, V0_OS, syst_s_V0_OS, mult, lV0_OS, MODE, "OS", "V0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_V0_OS = fabs( Br_s_sigma_V0_OS.ave() - Br_sigma_V0_OS.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1538,8 +1660,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax,  "Aii", "tm" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_Aii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_H_tm, syst_Aii_H_tm, mult, lAii_H_tm, MODE, "tm", "Aii_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_Ak_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      Br_s_sigma_Aii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_H_tm, syst_s_Aii_H_tm, mult, lAii_H_tm, MODE, "tm", "Aii_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_Ak_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_sigma_Aii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_H_tm, syst_Aii_H_tm, mult, lAii_H_tm, MODE, "tm", "Aii_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_s_sigma_Aii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_H_tm, syst_s_Aii_H_tm, mult, lAii_H_tm, MODE, "tm", "Aii_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Aii_H_tm = fabs( Br_s_sigma_Aii_H_tm.ave() - Br_sigma_Aii_H_tm.ave());
       end = chrono::system_clock::now();
       cout<<"node: "<<_hostname<<", rank: "<<rank<<", thread_id: "<<omp_get_thread_num()<<" core-id: "<<sched_getcpu()<<endl<<flush;
@@ -1554,8 +1676,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "Aii", "OS" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_Aii_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_H_OS, syst_Aii_H_OS, mult, lAii_H_OS, MODE, "OS", "Aii_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, "tau_decay", cov_Ak_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      Br_s_sigma_Aii_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_H_OS, syst_s_Aii_H_OS, mult, lAii_H_OS, MODE, "OS", "Aii_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, "tau_decay", cov_Ak_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_sigma_Aii_H_OS = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_H_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_H_OS, syst_Aii_H_OS, mult, lAii_H_OS, MODE, "OS", "Aii_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, 0.0, "tau_decay", cov_Ak_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_s_sigma_Aii_H_OS = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_H_OS_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_H_OS, syst_s_Aii_H_OS, mult, lAii_H_OS, MODE, "OS", "Aii_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, 0.0, "tau_decay", cov_Ak_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Aii_H_OS = fabs( Br_s_sigma_Aii_H_OS.ave() - Br_sigma_Aii_H_OS.ave());
      
       end = chrono::system_clock::now();
@@ -1571,8 +1693,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "Vii", "tm" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_Vii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_H_tm, syst_Vii_H_tm, mult, lVii_H_tm, MODE, "tm", "Vii_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_H_tm, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, beta);
-      Br_s_sigma_Vii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_1_Vii, prec, SM_TYPE_1,K1_shifted, Vii_H_tm, syst_s_Vii_H_tm, mult, lVii_H_tm, MODE, "tm", "Vii_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_Vk_H_tm, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, beta);
+      Br_sigma_Vii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_H_tm, syst_Vii_H_tm, mult, lVii_H_tm, MODE, "tm", "Vii_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_Vk_H_tm, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, beta);
+      Br_s_sigma_Vii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_1_Vii, prec, SM_TYPE_1,K1_shifted, Vii_H_tm, syst_s_Vii_H_tm, mult, lVii_H_tm, MODE, "tm", "Vii_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_Vk_H_tm, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, beta);
       syst_s_Vii_H_tm = fabs( Br_s_sigma_Vii_H_tm.ave() - Br_sigma_Vii_H_tm.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1586,8 +1708,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax,  "Vii", "OS" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_Vii_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_H_OS, syst_Vii_H_OS, mult, lVii_H_OS, MODE, "OS", "Vii_strange_H_"+ls_H_data_tm_VKVK.Tag[iens],1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_Vk_H_OS, fake_func,0, fake_func_d  ,  Is_Emax_Finite, Emax, beta);
-      Br_s_sigma_Vii_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_1_Vii, prec, SM_TYPE_1,K1_shifted, Vii_H_OS, syst_s_Vii_H_OS, mult, lVii_H_OS, MODE, "OS", "Vii_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens],1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_Vk_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_sigma_Vii_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_1_Vii, prec, SM_TYPE_1,K1, Vii_H_OS, syst_Vii_H_OS, mult, lVii_H_OS, MODE, "OS", "Vii_strange_H_"+ls_H_data_tm_VKVK.Tag[iens],1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Vk_H_OS, fake_func,0, fake_func_d  ,  Is_Emax_Finite, Emax, beta);
+      Br_s_sigma_Vii_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_1_Vii, prec, SM_TYPE_1,K1_shifted, Vii_H_OS, syst_s_Vii_H_OS, mult, lVii_H_OS, MODE, "OS", "Vii_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens],1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Vk_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Vii_H_OS = fabs( Br_s_sigma_Vii_H_OS.ave() - Br_sigma_Vii_H_OS.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1602,8 +1724,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "A0", "tm" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_A0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_tm_A0, prec, SM_TYPE_0,K0, A0_H_tm, syst_A0_H_tm, mult, lA0_H_tm, MODE, "tm", "A0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_A0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_A0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_tm_A0, prec, SM_TYPE_0,K0_shifted, A0_H_tm, syst_s_A0_H_tm, mult, lA0_H_tm, MODE, "tm", "A0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_A0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_A0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_tm_A0, prec, SM_TYPE_0,K0, A0_H_tm, syst_A0_H_tm, mult, lA0_H_tm, MODE, "tm", "A0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_A0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_A0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_tm_A0, prec, SM_TYPE_0,K0_shifted, A0_H_tm, syst_s_A0_H_tm, mult, lA0_H_tm, MODE, "tm", "A0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_A0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_A0_H_tm = fabs( Br_s_sigma_A0_H_tm.ave() - Br_sigma_A0_H_tm.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1617,8 +1739,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "A0", "OS" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_A0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_OS_A0, prec, SM_TYPE_0,K0, A0_H_OS, syst_A0_H_OS, mult, lA0_H_OS, MODE, "OS", "A0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_A0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_A0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_OS_A0, prec, SM_TYPE_0,K0_shifted, A0_H_OS, syst_s_A0_H_OS, mult, lA0_H_OS, MODE, "OS", "A0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_A0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_A0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_OS_A0, prec, SM_TYPE_0,K0, A0_H_OS, syst_A0_H_OS, mult, lA0_H_OS, MODE, "OS", "A0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_A0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_A0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_OS_A0, prec, SM_TYPE_0,K0_shifted, A0_H_OS, syst_s_A0_H_OS, mult, lA0_H_OS, MODE, "OS", "A0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_A0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_A0_H_OS = fabs( Br_s_sigma_A0_H_OS.ave() - Br_sigma_A0_H_OS.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1633,8 +1755,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "V0", "tm" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_V0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_V0, prec, SM_TYPE_0,K0, V0_H_tm, syst_V0_H_tm, mult, lV0_H_tm, MODE, "tm", "V0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_V0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_V0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_V0, prec, SM_TYPE_0,K0_shifted, V0_H_tm, syst_s_V0_H_tm, mult, lV0_H_tm, MODE, "tm", "V0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, "tau_decay", cov_V0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_V0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_V0, prec, SM_TYPE_0,K0, V0_H_tm, syst_V0_H_tm, mult, lV0_H_tm, MODE, "tm", "V0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_V0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_V0, prec, SM_TYPE_0,K0_shifted, V0_H_tm, syst_s_V0_H_tm, mult, lV0_H_tm, MODE, "tm", "V0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_V0_H_tm = fabs( Br_s_sigma_V0_H_tm.ave() - Br_sigma_V0_H_tm.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1648,8 +1770,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "V0", "OS" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_V0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_V0, prec, SM_TYPE_0,K0, V0_H_OS, syst_V0_H_OS, mult, lV0_H_OS, MODE, "OS", "V0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_V0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_V0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_V0, prec, SM_TYPE_0,K0_shifted, V0_H_OS, syst_s_V0_H_OS, mult, lV0_H_OS, MODE, "OS", "V0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, "tau_decay", cov_V0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_V0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_V0, prec, SM_TYPE_0,K0, V0_H_OS, syst_V0_H_OS, mult, lV0_H_OS, MODE, "OS", "V0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_V0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_V0, prec, SM_TYPE_0,K0_shifted, V0_H_OS, syst_s_V0_H_OS, mult, lV0_H_OS, MODE, "OS", "V0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_V0_H_OS = fabs( Br_s_sigma_V0_H_OS.ave() - Br_sigma_V0_H_OS.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
