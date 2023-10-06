@@ -695,7 +695,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
       PrecFloat mult_est = (mult_estimated_from_norm0==false)?A1_val/B1_val:A1_val_std/B1_val_std;
      
-      Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*(R_E_lambda+offset)).ave()+offset<<" "<<(Prefact*(R_E_lambda+offset)).err();
+      Print_R_at_lambda<<lambda_mid<<" "<<A1_val_std<<" "<<A1_val_std_Emax<<" "<<B1_val_std<<" "<<B1_val_std_Emax<<" "<<A1_val<<" "<<(Prefact*(R_E_lambda+offset)).ave()<<" "<<(Prefact*(R_E_lambda+offset)).err();
       Print_R_at_lambda<<" "<<syst;
       Print_R_at_lambda<<" 0 "<<mult_est<<endl;
 

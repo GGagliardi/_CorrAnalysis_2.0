@@ -810,6 +810,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     //OS block1
     distr_t_list Vk_OS_block_1_distr,  Ak_OS_block_1_distr, A0_OS_block_1_distr, V0_OS_block_1_distr;
     distr_t_list P5_tm_distr;
+
    
     //light-tm sector
     Vk_tm_distr = Corr.corr_t(ls_data_tm_VKVK.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/Vk_tm_"+ls_data_tm_VKVK.Tag[iens]+".dat");
@@ -931,25 +932,25 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     Corr.Tmin=Tmin_1_minus_tm; Corr.Tmax=Tmax_1_minus_tm;
     distr_t m_Kstar_tm= Corr.Fit_distr(M_Kstar_tm);
     distr_t A_Kstar_tm= Corr.Fit_distr( Corr.residue_t(Vk_tm_distr, "")/(2.0*m_Kstar_tm));
-    distr_t_list Vii_tm_gs= (A_Kstar_tm).ave()*EXPT_D(-1.0*m_Kstar_tm.ave()*Get_id_jack_distr(Njacks), Corr.Nt); 
+    distr_t_list Vii_tm_gs= (A_Kstar_tm).ave()*(EXPT_D(-1.0*m_Kstar_tm.ave()*Get_id_jack_distr(Njacks), Corr.Nt) + exp(-m_Kstar_tm.ave()*Corr.Nt)*EXPT_D( m_Kstar_tm.ave()*Get_id_jack_distr(Njacks), Corr.Nt) ); 
     Vii_tm_gs.distr_list[0] = 0.0*Vii_tm_gs.distr_list[0];
     
     Corr.Tmin=Tmin_1_plus_tm; Corr.Tmax=Tmax_1_plus_tm;
     distr_t m_K1_tm= Corr.Fit_distr(M_K1_tm);
     distr_t A_K1_tm= Corr.Fit_distr( Corr.residue_t(Ak_tm_distr, "")/(2.0*m_K1_tm));
-    distr_t_list Aii_tm_gs= (A_K1_tm).ave()*EXPT_D(-1.0*m_K1_tm.ave()*Get_id_jack_distr(Njacks), Corr.Nt);; 
+    distr_t_list Aii_tm_gs= (A_K1_tm).ave()*(EXPT_D(-1.0*m_K1_tm.ave()*Get_id_jack_distr(Njacks), Corr.Nt) + exp(-m_K1_tm.ave()*Corr.Nt)*EXPT_D( m_K1_tm.ave()*Get_id_jack_distr(Njacks), Corr.Nt) );
     Aii_tm_gs.distr_list[0] = 0.0*Aii_tm_gs.distr_list[0];
 
     Corr.Tmin=Tmin_1_minus_OS; Corr.Tmax=Tmax_1_minus_OS;
     distr_t m_Kstar_OS= Corr.Fit_distr(M_Kstar_OS);
     distr_t A_Kstar_OS= Corr.Fit_distr( Corr.residue_t(Vk_OS_distr, "")/(2.0*m_Kstar_OS));
-    distr_t_list Vii_OS_gs= (A_Kstar_OS).ave()*EXPT_D(-1.0*m_Kstar_OS.ave()*Get_id_jack_distr(Njacks), Corr.Nt);;  
+    distr_t_list Vii_OS_gs= (A_Kstar_OS).ave()*( EXPT_D(-1.0*m_Kstar_OS.ave()*Get_id_jack_distr(Njacks), Corr.Nt) + exp(-m_Kstar_OS.ave()*Corr.Nt)*EXPT_D( m_Kstar_OS.ave()*Get_id_jack_distr(Njacks), Corr.Nt) );  
     Vii_OS_gs.distr_list[0] = 0.0*Vii_OS_gs.distr_list[0];
 
     Corr.Tmin=Tmin_1_plus_OS; Corr.Tmax=Tmax_1_plus_OS;
     distr_t m_K1_OS= Corr.Fit_distr(M_K1_OS);
     distr_t A_K1_OS= Corr.Fit_distr( Corr.residue_t(Ak_OS_distr, "")/(2.0*m_K1_OS));
-    distr_t_list Aii_OS_gs= (A_K1_OS).ave()*EXPT_D(-1.0*m_K1_OS.ave()*Get_id_jack_distr(Njacks), Corr.Nt);; 
+    distr_t_list Aii_OS_gs= (A_K1_OS).ave()*(EXPT_D(-1.0*m_K1_OS.ave()*Get_id_jack_distr(Njacks), Corr.Nt) + exp(-m_K1_OS.ave()*Corr.Nt)*EXPT_D( m_K1_OS.ave()*Get_id_jack_distr(Njacks), Corr.Nt) );
     Aii_OS_gs.distr_list[0] = 0.0*Aii_OS_gs.distr_list[0];
 
     
@@ -1529,7 +1530,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "Aii", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
       Br_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS, syst_Aii_OS, mult, lAii_OS, MODE, "OS", "Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, 0.0, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       Br_s_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_OS, syst_s_Aii_OS, mult, lAii_OS, MODE, "OS", "Aii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, 0.0, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      distr_t preco_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS - Aii_OS_gs.ave(), syst_Aii_OS, mult, lAii_OS, MODE, "OS", "preco_Aii_strange_"+ls_data_OS_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, A_K1_OS.ave()*K1_dub(m_K1_OS.ave(), s), "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      distr_t preco_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS - Aii_OS_gs.ave(), syst_Aii_OS, mult, lAii_OS, MODE, "OS", "preco_Aii_strange_"+ls_data_OS_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, A_K1_OS.ave()*K1_dub(m_K1_OS.ave(), s), "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Aii_OS = fabs( Br_s_sigma_Aii_OS.ave() - Br_sigma_Aii_OS.ave());
      
       end = chrono::system_clock::now();
@@ -1547,7 +1548,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "Vii", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
       Br_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm, syst_Vii_tm, mult, lVii_tm, MODE, "tm", "Vii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_Vk_tm, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, beta);
       Br_s_sigma_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1_shifted, Vii_tm, syst_s_Vii_tm, mult, lVii_tm, MODE, "tm", "Vii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_Vk_tm, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, beta);
-      distr_t preco_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm - Vii_tm_gs.ave(), syst_Vii_tm, mult, lVii_tm, MODE, "tm", "preco_Vii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, A_Kstar_tm.ave()*K1_dub(m_Kstar_tm.ave(), s), "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      distr_t preco_Vii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Vii, prec, SM_TYPE_1,K1, Vii_tm - Vii_tm_gs.ave(), syst_Vii_tm, mult, lVii_tm, MODE, "tm", "preco_Vii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, A_Kstar_tm.ave()*K1_dub(m_Kstar_tm.ave(), s), "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Vii_tm = fabs( Br_s_sigma_Vii_tm.ave() - Br_sigma_Vii_tm.ave());
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
