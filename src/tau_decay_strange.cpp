@@ -11,7 +11,7 @@ const int Njacks=50;
 const int Nboots=800;
 const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
-const int prec = 128;
+const int prec = 64;
 const double Nc=3;
 bool tau_strange_verbosity_lev=1;
 const double GF= 1.1663787*1e-5; //[GeV^-2]
@@ -36,7 +36,7 @@ const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
-bool Skip_spectral_density_analysis_strange=true;
+bool Skip_spectral_density_analysis_strange=false;
 const bool Perform_continuum_extrapolation=false;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
@@ -167,7 +167,7 @@ void tau_decay_analysis_strange() {
   get_sigma_list_strange();
 
 
-  Vfloat betas({ 2.99, 3.99, 4.99, 5.99, 2.99, 1.99 });
+  Vfloat betas({ 3.99, 2.99, 4.99, 5.99, 2.99, 1.99 });
   Vfloat Emax_list({4.0, 4.0 , 4.0, 4.0, 5.0, 4.0});
   vector<bool> Is_Emax_Finite({1,1,1,1,1,0});
 
@@ -931,25 +931,25 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     Corr.Tmin=Tmin_1_minus_tm; Corr.Tmax=Tmax_1_minus_tm;
     distr_t m_Kstar_tm= Corr.Fit_distr(M_Kstar_tm);
     distr_t A_Kstar_tm= Corr.Fit_distr( Corr.residue_t(Vk_tm_distr, "")/(2.0*m_Kstar_tm));
-    distr_t_list Vii_tm_gs= (A_Kstar_tm).ave()*exp(-1.0*m_Kstar_tm.ave())*Get_id_jack_distr_list(T,Njacks); 
+    distr_t_list Vii_tm_gs= (A_Kstar_tm).ave()*EXPT_D(-1.0*m_Kstar_tm.ave()*Get_id_jack_distr(Njacks), Corr.Nt); 
     Vii_tm_gs.distr_list[0] = 0.0*Vii_tm_gs.distr_list[0];
     
     Corr.Tmin=Tmin_1_plus_tm; Corr.Tmax=Tmax_1_plus_tm;
     distr_t m_K1_tm= Corr.Fit_distr(M_K1_tm);
     distr_t A_K1_tm= Corr.Fit_distr( Corr.residue_t(Ak_tm_distr, "")/(2.0*m_K1_tm));
-    distr_t_list Aii_tm_gs= (A_K1_tm).ave()*exp(-1.0*m_K1_tm.ave())*Get_id_jack_distr_list(T,Njacks); 
+    distr_t_list Aii_tm_gs= (A_K1_tm).ave()*EXPT_D(-1.0*m_K1_tm.ave()*Get_id_jack_distr(Njacks), Corr.Nt);; 
     Aii_tm_gs.distr_list[0] = 0.0*Aii_tm_gs.distr_list[0];
 
     Corr.Tmin=Tmin_1_minus_OS; Corr.Tmax=Tmax_1_minus_OS;
     distr_t m_Kstar_OS= Corr.Fit_distr(M_Kstar_OS);
     distr_t A_Kstar_OS= Corr.Fit_distr( Corr.residue_t(Vk_OS_distr, "")/(2.0*m_Kstar_OS));
-    distr_t_list Vii_OS_gs= (A_Kstar_OS).ave()*exp(-1.0*m_Kstar_OS.ave())*Get_id_jack_distr_list(T,Njacks);  
+    distr_t_list Vii_OS_gs= (A_Kstar_OS).ave()*EXPT_D(-1.0*m_Kstar_OS.ave()*Get_id_jack_distr(Njacks), Corr.Nt);;  
     Vii_OS_gs.distr_list[0] = 0.0*Vii_OS_gs.distr_list[0];
 
     Corr.Tmin=Tmin_1_plus_OS; Corr.Tmax=Tmax_1_plus_OS;
     distr_t m_K1_OS= Corr.Fit_distr(M_K1_OS);
     distr_t A_K1_OS= Corr.Fit_distr( Corr.residue_t(Ak_OS_distr, "")/(2.0*m_K1_OS));
-    distr_t_list Aii_OS_gs= (A_K1_OS).ave()*exp(-1.0*m_K1_OS.ave())*Get_id_jack_distr_list(T,Njacks); 
+    distr_t_list Aii_OS_gs= (A_K1_OS).ave()*EXPT_D(-1.0*m_K1_OS.ave()*Get_id_jack_distr(Njacks), Corr.Nt);; 
     Aii_OS_gs.distr_list[0] = 0.0*Aii_OS_gs.distr_list[0];
 
     
@@ -1103,7 +1103,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     //################   LIGHTER   ##############################
 
     bool Found_error_less_x_percent=false;
-    double x=15;
+    double x=10;
     //tm
     int tmax_tm_A0=1;
     while(!Found_error_less_x_percent && tmax_tm_A0 < Corr.Nt/2 -1 ) {

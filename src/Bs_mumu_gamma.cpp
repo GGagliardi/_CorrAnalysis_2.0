@@ -29,12 +29,12 @@ const Vfloat ratio_mh({1, 1.0 / 1.4835, 1.0 / 2.02827, 1.0 / 2.53531, 1.0 / 3.04
 const double mc_MS_bar_2_ave=  1.016392574;
 const double mc_MS_bar_2_err = 0.02247780935;
 const bool Compute_FF = false;
-const bool Skip_virtual_diagram = false;
+const bool Skip_virtual_diagram = true;
 const bool Generate_data_for_mass_spline = false;
 const bool Fit_single_reg = false;
 const string Reg_to_fit = "3pt";
 const double k_erf = 1e10;
-const bool plot_fit_func_fBs=false;
+const bool plot_fit_func_fBs=true;
 
 
 void rt_FF_Bs::Print(string path) {
@@ -1441,7 +1441,6 @@ void Compute_Bs_mumu_gamma() {
   
   }
 
-  exit(-1);
 
 
       
@@ -2403,13 +2402,13 @@ void Compute_Bs_mumu_gamma() {
     double M=ip.M;
     double x = ip.xg;
 
-    if (ip.W =="V") {
+    if (ip.W =="Vd") {
 
       return (1.0/3.0)*(p.A/(x))*( 1 + p.B1*log(x) + p.B2*x*log(x))*( 1 + LB*p.CV1/M + LB*p.CV2/(x*M) + LB*p.CV3/(pow(x,2)*M))/( 1 + 2*p.DV*p.DV/(x*M*M));
 
     }
 
-    else if (ip.W == "A") {
+    else if (ip.W == "Ad") {
       
         return (1.0/3.0)*(p.A/(x))*( 1 + p.B1*log(x) + p.B2*x*log(x))*( 1 + LB*p.CA1/M + LB*p.CA2/(x*M) + LB*p.CA3/(pow(x,2)*M))/( 1 + 2*p.DA*p.DA/(x*M));
     }
@@ -2489,19 +2488,19 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg].FF_err= (FF_M_list[2][im].distr_list[ixg]/fps.distr_list[im]).err();
 	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg].xg= Bs_xg_t_list[ixg];
 	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg].M= masses.distr_list[im].distr[ijack];
-	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg].W= "A";
+	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg].W= "Ad";
 
 	data_MEX_comb[ijack][2*im*num_xg+2*ixg+1].FF = (FF_M_list[5][im].distr_list[ixg]/fps.distr_list[im]).distr[ijack];
 	data_MEX_comb[ijack][2*im*num_xg+2*ixg+1].FF_err= (FF_M_list[5][im].distr_list[ixg]/fps.distr_list[im]).err();
 	data_MEX_comb[ijack][2*im*num_xg+2*ixg+1].xg= Bs_xg_t_list[ixg];
 	data_MEX_comb[ijack][2*im*num_xg+2*ixg+1].M= masses.distr_list[im].distr[ijack];
-	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg+1].W= "V";
+	data_MEX_comb[ijack][2*im*num_xg+ 2*ixg+1].W= "Vd";
       if(ijack==0) {
 	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].FF = (FF_M_list[2][im].distr_list[ixg]/fps.distr_list[im]).ave();
 	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].FF_err= (FF_M_list[2][im].distr_list[ixg]/fps.distr_list[im]).err();
 	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].xg= Bs_xg_t_list[ixg];
 	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].M= masses.distr_list[im].distr[ijack];
-	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].W= "A";
+	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg].W= "Ad";
 
        
 
@@ -2509,7 +2508,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb_ch2[ijack][2*im*num_xg+2*ixg+1].FF_err= (FF_M_list[5][im].distr_list[ixg]/fps.distr_list[im]).err();
 	data_MEX_comb_ch2[ijack][2*im*num_xg+2*ixg+1].xg= Bs_xg_t_list[ixg];
 	data_MEX_comb_ch2[ijack][2*im*num_xg+2*ixg+1].M= masses.distr_list[im].distr[ijack];
-	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg+1].W= "V";
+	data_MEX_comb_ch2[ijack][2*im*num_xg+ 2*ixg+1].W= "Vd";
       }
       }
     }
@@ -2568,9 +2567,9 @@ void Compute_Bs_mumu_gamma() {
   for(int ixg=0;ixg<(signed)xg_scan.size();ixg++) {
     pp_Bs_comb.xg= xg_scan[ixg];
     for(int ijack=0;ijack<NJ;ijack++) {
-      pp_Bs_comb.W="A";
+      pp_Bs_comb.W="Ad";
       FA_Bs_xg.distr_list[ixg].distr[ijack] =  bf_MEX_comb.ansatz( Bt_fit_MEX_comb.par[ijack], pp_Bs_comb);
-      pp_Bs_comb.W="V";
+      pp_Bs_comb.W="Vd";
       FV_Bs_xg.distr_list[ixg].distr[ijack] =  bf_MEX_comb.ansatz( Bt_fit_MEX_comb.par[ijack], pp_Bs_comb);
     }
   }
@@ -2594,9 +2593,9 @@ void Compute_Bs_mumu_gamma() {
       pp.xg= Bs_xg_t_list[ixg];
       
       for(int ijack=0;ijack<NJ;ijack++) {
-	pp.W="A";
+	pp.W="Ad";
 	FA.distr_list[im].distr[ijack] = bf_MEX_comb.ansatz( Bt_fit_MEX_comb.par[ijack], pp);
-	pp.W="V";
+	pp.W="Vd";
 	FV.distr_list[im].distr[ijack] = bf_MEX_comb.ansatz( Bt_fit_MEX_comb.par[ijack], pp);
       }
     }
@@ -2912,6 +2911,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   distr_t_list FP_list(UseJack);
   distr_t_list FP_3pt_list(UseJack);
   distr_t_list FP_diml_list(UseJack);
+  distr_t_list FP_3pt_diml_list(UseJack);
   distr_t_list ZT_list(UseJack);
   distr_t_list MP_ov_FP_list(UseJack);
   distr_t_list MP_ov_FP_3pt_list(UseJack);
@@ -3112,12 +3112,13 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 
     int Dx_2pt;
-    if(MESON == "B0s") { Dx_2pt= (int)( 0.32*fmTGeV/a_distr.ave() );}
-    if(MESON == "B1s") { Dx_2pt= (int)( 0.26*fmTGeV/a_distr.ave() );}
-    if(MESON == "B2s") { Dx_2pt= (int)( 0.23*fmTGeV/a_distr.ave() );}
-    if(MESON == "B3s") { Dx_2pt= (int)( 0.19*fmTGeV/a_distr.ave() );}
-    if(MESON == "B4s") { Dx_2pt= (int)( 0.16*fmTGeV/a_distr.ave() );}
-    
+    if(MESON == "B0s") { Dx_2pt= (int)( 0.50*fmTGeV/a_distr.ave() );}
+    if(MESON == "B1s") { Dx_2pt= (int)( 0.42*fmTGeV/a_distr.ave() );}
+    if(MESON == "B2s") { Dx_2pt= (int)( 0.34*fmTGeV/a_distr.ave() );}
+    if(MESON == "B3s") { Dx_2pt= (int)( 0.28*fmTGeV/a_distr.ave() );}
+    if(MESON == "B4s") { Dx_2pt= (int)( 0.25*fmTGeV/a_distr.ave() );}
+
+    cout<<"Dx_2pt: "<<Dx_2pt<<endl;
     Dx_2pt=Dx;
    
     
@@ -3135,35 +3136,35 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
     //set time interval for eff_mass_fit SM
     if(data_2pts.Tag[iens].substr(1,1) =="A") {
-      if(MESON == "B1s") { Corr.Tmin=12; Corr.Tmax= 35;}
+      if(MESON == "B1s") { Corr.Tmin=13; Corr.Tmax= 13+11;}
       else if(MESON == "B2s" ) { Corr.Tmin=13; Corr.Tmax= 32;}
       else if(MESON=="B3s") { Corr.Tmin=14; Corr.Tmax=21;}
       else if(MESON=="B4s") { Corr.Tmin=14; Corr.Tmax=21;}
-      else { Corr.Tmin=12; Corr.Tmax=32;}
+      else { Corr.Tmin=13; Corr.Tmax=13+16;}
       
     }
     else if(data_2pts.Tag[iens] =="cB211b.072.64") {
-      if(MESON == "B1s") {Corr.Tmin=22; Corr.Tmax=50;}
-      else if(MESON == "B2s") {Corr.Tmin=15; Corr.Tmax=40;}
-      else if(MESON=="B3s") {Corr.Tmin=13; Corr.Tmax=24;}
+      if(MESON == "B1s") {Corr.Tmin=22; Corr.Tmax=22+17;}
+      else if(MESON == "B2s") {Corr.Tmin=14; Corr.Tmax=27;}
+      else if(MESON=="B3s") {Corr.Tmin=13; Corr.Tmax=13+7;}
       else if(MESON=="B4s") { Corr.Tmin=13; Corr.Tmax=21;}
-      else {Corr.Tmin=22; Corr.Tmax=50;}
+      else {Corr.Tmin=22; Corr.Tmax=22+13;}
     }
     else if(data_2pts.Tag[iens] =="cB211b.072.96") {Corr.Tmin=20; Corr.Tmax=36;}
     
     else if(data_2pts.Tag[iens].substr(1,1) == "C")  {
-      if(MESON == "B1s") {Corr.Tmin=21; Corr.Tmax=50;}
-      else if(MESON == "B2s") {Corr.Tmin=20; Corr.Tmax=50;}
-      else if(MESON=="B3s") {Corr.Tmin=18; Corr.Tmax=35;}
-      else if(MESON=="B4s") { Corr.Tmin=17; Corr.Tmax=31;}
-      else {Corr.Tmin=26; Corr.Tmax=55;}
+      if(MESON == "B1s") {Corr.Tmin=21; Corr.Tmax=21+18;}
+      else if(MESON == "B2s") {Corr.Tmin=20; Corr.Tmax=20+16;}
+      else if(MESON=="B3s") {Corr.Tmin=18; Corr.Tmax=18+10;}
+      else if(MESON=="B4s") { Corr.Tmin=18; Corr.Tmax=18+12;}
+      else {Corr.Tmin=26; Corr.Tmax=26+18;}
     }
     else if(data_2pts.Tag[iens].substr(1,1) == "D")  {
-      if(MESON == "B1s") {Corr.Tmin=26; Corr.Tmax=60;}
-      else if(MESON == "B2s") { Corr.Tmin=25; Corr.Tmax= 60;}
-      else if(MESON=="B3s") {Corr.Tmin=25; Corr.Tmax=43;}
-      else if(MESON=="B4s") { Corr.Tmin=25; Corr.Tmax=43;}
-      else {Corr.Tmin=33; Corr.Tmax=63;}
+      if(MESON == "B1s") {Corr.Tmin=26; Corr.Tmax=26+20;}
+      else if(MESON == "B2s") { Corr.Tmin=25; Corr.Tmax= 25+17;}
+      else if(MESON=="B3s") {Corr.Tmin=25; Corr.Tmax=25+14;}
+      else if(MESON=="B4s") { Corr.Tmin=27; Corr.Tmax=27+11;}
+      else {Corr.Tmin=31; Corr.Tmax=31+23;}
     }
     else crash("In fixing [Tmin, Tmax] for smeared FP_II, Ensemble: "+data_2pts.Tag[iens]+" not recognized");
     
@@ -3173,6 +3174,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     
     distr_t FP_SM_II = Corr.Fit_distr( FP_SM_II_distr_list);
     Corr.Tmin +=Dx_2pt; Corr.Tmax += Dx_2pt;
+    
     distr_t FP_SM_II_syst= Corr.Fit_distr( FP_SM_II_distr_list);
     Corr.Tmin=Tmin_old; Corr.Tmax=Tmax_old;
     
@@ -3745,25 +3747,25 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 	else if(data_2pts.Tag[iens] =="cB211b.072.64") {
 	  if(MESON == "B1s") {Corr.Tmin=18; Corr.Tmax=27;}
 	  else if(MESON == "B2s") {Corr.Tmin=16; Corr.Tmax=28;}
-	  else if(MESON=="B3s") {Corr.Tmin=16; Corr.Tmax=30;}
-	  else if(MESON=="B4s") { Corr.Tmin=16; Corr.Tmax=28;}
-	  else {Corr.Tmin=21; Corr.Tmax=31;}
+	  else if(MESON=="B3s") {Corr.Tmin=16; Corr.Tmax=16+9;}
+	  else if(MESON=="B4s") { Corr.Tmin=15; Corr.Tmax=15+7;}
+	  else {Corr.Tmin=22; Corr.Tmax=31;}
 	}
 	else if(data_2pts.Tag[iens] =="cB211b.072.96") {Corr.Tmin=20; Corr.Tmax=36;}
 	
 	else if(data_2pts.Tag[iens].substr(1,1) == "C")  {
 	  if(MESON == "B1s") {Corr.Tmin=20; Corr.Tmax=31;}
-	  else if(MESON == "B2s") {Corr.Tmin=20; Corr.Tmax=31;}
-	  else if(MESON=="B3s") {Corr.Tmin=19; Corr.Tmax=31;}
-	  else if(MESON=="B4s") { Corr.Tmin=19; Corr.Tmax=31;}
-	  else {Corr.Tmin=14; Corr.Tmax=38;}
+	  else if(MESON == "B2s") {Corr.Tmin=18; Corr.Tmax=28;}
+	  else if(MESON=="B3s") {Corr.Tmin=19; Corr.Tmax=19+10;}
+	  else if(MESON=="B4s") { Corr.Tmin=18; Corr.Tmax=27;}
+	  else {Corr.Tmin=14; Corr.Tmax=14+17;}
 	}
 	else if(data_2pts.Tag[iens].substr(1,1) == "D")  {
-	  if(MESON == "B1s") {Corr.Tmin=21; Corr.Tmax=40;}
-	  else if(MESON == "B2s") { Corr.Tmin=15; Corr.Tmax= 36;}
-	  else if(MESON=="B3s") {Corr.Tmin=16; Corr.Tmax=35;}
+	  if(MESON == "B1s") {Corr.Tmin=21; Corr.Tmax=21+16;}
+	  else if(MESON == "B2s") { Corr.Tmin=16; Corr.Tmax= 16+12;}
+	  else if(MESON=="B3s") {Corr.Tmin=16; Corr.Tmax=16+12;}
 	  else if(MESON=="B4s") { Corr.Tmin=16; Corr.Tmax=27;}
-	  else {Corr.Tmin=25; Corr.Tmax=47;}
+	  else {Corr.Tmin=25; Corr.Tmax=25+17;}
 	}
 	else crash("In fixing [Tmin, Tmax] for smeared FP_III mode_c, Ensemble: "+data_2pts.Tag[iens]+" not recognized");
 	}
@@ -3784,6 +3786,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 	
 	
 	FP_3pt_list.distr_list.push_back( FP_3pt/a_distr);
+	FP_3pt_diml_list.distr_list.push_back( FP_3pt);
 	MP_ov_FP_3pt_list.distr_list.push_back( M_P/FP_3pt);
 	
 	Print_To_File({}, {FP_3pt_distr_u.ave(), FP_3pt_distr_u.err(),  FP_3pt_distr_d.ave(), FP_3pt_distr_d.err(), FP_3pt_distr_std.ave(), FP_3pt_distr_std.err(), FP_3pt_distr_opt.ave(), FP_3pt_distr_opt.err(),},  "../data/ph_emission/"+ph_type_mes+"/"+"decay_const/"+data_2pts.Tag[iens]+"/decay_const_3pt.dat.t", "", "# u  d   std  opt");
@@ -3814,8 +3817,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
        
       
 
-      //Compute FV and FA
-    
+      //Compute FV and FA   
       distr_t_list FA_distr = -1.0*RF*(0.5*(Ax_tens[1-off_i][1-off_i] + Ax_tens[2-off_i][2-off_i])*EXP_PH - 0.0*FA0_distr)*(1.0/Eg)*(FP_SM/(-1.0*FA0_distr));
       distr_t_list FA_new_distr= -1.0*RF*Zv*(0.5*(Ax_tens[1-off_i][1-off_i] + Ax_tens[2-off_i][2-off_i])*EXP_PH)*(1.0/(Eg*mel_SMSM))*EXP_MES; 
       distr_t_list FV_distr = 0.5*RF*(Za/Zv)*(FP_SM/(-1.0*FA0_distr))*( Vec_tens[1-off_i][2-off_i] - Vec_tens[2-off_i][1-off_i])*EXP_PH/kz;
@@ -4201,7 +4203,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
   //Print MP, FP, MP_ov_FP, phi
   Print_To_File({}, {a_distr_list_red.ave(), MP_list_red.ave(), MP_list_red.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/mass/masses.list", "", "#a MP MP_err");
-  Print_To_File({}, {a_distr_list.ave(), FP_list.ave(), FP_list.err(), FP_3pt_list.ave(), FP_3pt_list.err(),  FP_diml_list.ave(), FP_diml_list.err(),  Tmin_fp, Tmax_fp, Tmin_fp_3pt, Tmax_fp_3pt}, "../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/fP.list", "", "#a FP FP_3pt FP_bare Tmin Tmax  ");
+  Print_To_File({}, {a_distr_list.ave(), FP_list.ave(), FP_list.err(), FP_3pt_list.ave(), FP_3pt_list.err(),  FP_diml_list.ave(), FP_diml_list.err(), FP_3pt_diml_list.ave(), FP_3pt_diml_list.err(),  Tmin_fp, Tmax_fp, Tmin_fp_3pt, Tmax_fp_3pt}, "../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/fP.list", "", "#a FP FP_3pt FP_bare FP_bare_3pt Tmin Tmax  ");
   Print_To_File({}, {a_distr_list.ave(),  MP_ov_FP_list.ave(), MP_ov_FP_list.err(), Tmin_fp, Tmax_fp}, "../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/mP_ov_fP.list", "", "#a FP FP_err MP/FP MP/FP_err Tmin Tmax ");
   Print_To_File({}, {a_distr_list.ave(), (FP_list*SQRT_DL(MP_list)).ave(), (FP_list*SQRT_DL(MP_list)).err(),  (FP_3pt_list*SQRT_DL(MP_list)).ave(), (FP_3pt_list*SQRT_DL(MP_list)).err(),  Tmin_fp, Tmax_fp, Tmin_fp_3pt, Tmax_fp_3pt}, "../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/phi.list", "", "#a phi phi_list Tmin Tmax");
 
