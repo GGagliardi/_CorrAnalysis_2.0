@@ -347,7 +347,7 @@ void Print_To_File(const vector<string>& row_id, const VVfloat &data, string Pat
   if(MODE=="APP") Print.open(Path, ofstream::app);
   else Print.open(Path, ofstream::out);
 
-  Print.precision(10);
+  Print.precision(16);
 
   if(data.size() == 0) crash("In Print_To_File an empty vectors has been provided");
 
@@ -363,7 +363,7 @@ void Print_To_File(const vector<string>& row_id, const VVfloat &data, string Pat
     
     for(unsigned int i=0; i<data.size(); i++) {
       if(data[i].size() != rows) crash("In Print_To_File, number of measurements is non-constant over columns. Exiting...");
-      Print<<setw(20)<<data[i][j];
+      Print<<setw(30)<<data[i][j];
     }
     Print<<endl;
   }

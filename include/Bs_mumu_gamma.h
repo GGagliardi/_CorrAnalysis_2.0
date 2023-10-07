@@ -60,15 +60,21 @@ const double Vtbs = Vts*Vtb; const double Vtbs_err= sqrt( pow( Vtb*Vts_err,2) + 
 class rt_FF_Bs {
 
 public:
-  rt_FF_Bs() : UseJack(1), FA(1), FA_u(1), FA_d(1), FV(1), FV_u(1), FV_d(1), FA_T(1), FA_T_u(1), FA_T_d(1), FV_T(1), FV_T_u(1), FV_T_d(1), FB(1), FB_u(1), FB_d(1), FT(1), FT_u(1), FT_d(1),  Nmeas(0), Npars(0), Ndof(0), Use_three_finest(0), Include_a4(0), num_xg(0) { };
-  rt_FF_Bs(bool x) : UseJack(x), FA(x), FA_u(x), FA_d(x), FV(x), FV_u(x), FV_d(x), FA_T(x), FA_T_u(x), FA_T_d(x), FV_T(x), FV_T_u(x), FV_T_d(x), FB(1), FB_u(1), FB_d(1), FT(1), FT_u(1), FT_d(1),  Nmeas(0), Npars(0), Ndof(0), Use_three_finest(0), Include_a4(0), num_xg(0) {    };
+  //class constructors
+  rt_FF_Bs() : UseJack(1), fp(3), phi(3), mp_ov_fp(3), Ch2_fp(3), Ch2_phi(3), Ch2_mp_ov_fp(3), FA(1), FA_u(1), FA_d(1), FV(1), FV_u(1), FV_d(1), FA_T(1), FA_T_u(1), FA_T_d(1), FV_T(1), FV_T_u(1), FV_T_d(1), FB(1), FB_u(1), FB_d(1), FT(1), FT_u(1), FT_d(1),  Nmeas(0), Npars(0), Ndof(0), Use_three_finest(0), Include_a4(0), num_xg(0), Nmeas_K(3), Npars_K(3), Ndof_K(3)  { };
+  
+  rt_FF_Bs(bool x) : UseJack(x), fp(3), phi(3), mp_ov_fp(3), Ch2_fp(3), Ch2_phi(3), Ch2_mp_ov_fp(3), FA(x), FA_u(x), FA_d(x), FV(x), FV_u(x), FV_d(x), FA_T(x), FA_T_u(x), FA_T_d(x), FV_T(x), FV_T_u(x), FV_T_d(x), FB(1), FB_u(1), FB_d(1), FT(1), FT_u(1), FT_d(1),  Nmeas(0), Npars(0), Ndof(0), Use_three_finest(0), Include_a4(0), num_xg(0) , Nmeas_K(3), Npars_K(3), Ndof_K(3) {    };
+
+  rt_FF_Bs(string P, bool UJ,  bool three_f, bool Inc_a4, int nxg) : fp(3), phi(3), mp_ov_fp(3), Ch2_fp(3), Ch2_phi(3), Ch2_mp_ov_fp(3),  Nmeas_K(3), Npars_K(3), Ndof_K(3)  { Read(P, UJ, three_f, Inc_a4, nxg);}
+  
+  
   distr_t_list Get_FF(int i) { vector<distr_t_list> A({FA, FA_u, FA_d, FV,FV_u, FV_d, FA_T, FA_T_u, FA_T_d, FV_T, FV_T_u, FV_T_d, FB, FB_u, FB_d, FT, FT_u, FT_d}); return A[i];}
   Vfloat   Get_ch2(int i) { VVfloat A({Ch2_FA, Ch2_FA_u, Ch2_FA_d, Ch2_FV, Ch2_FV_u, Ch2_FV_d,  Ch2_FA_T, Ch2_FA_T_u, Ch2_FA_T_d,  Ch2_FV_T, Ch2_FV_T_u, Ch2_FV_T_d, Ch2_FB, Ch2_FB_u, Ch2_FB_d, Ch2_FT, Ch2_FT_u, Ch2_FT_d}); return A[i];}
-  rt_FF_Bs(string P, bool UJ,  bool three_f, bool Inc_a4, int nxg)  { Read(P, UJ, three_f, Inc_a4, nxg);} 
+
   void Print(string path);
   void Read(string path, bool UseJ, bool three_finest, bool inc_a4, int n_xg);
-  distr_t Get_FF_2pts(int i) { vector<distr_t> A({mass,fp,phi, mp_ov_fp}); return A[i];}
-  double Get_ch2_2pts(int i) { Vfloat A({Ch2_mass, Ch2_fp, Ch2_phi, Ch2_mp_ov_fp}); return A[i];}
+  distr_t Get_FF_2pts(int i) { vector<distr_t> A({mass,fp[0],fp[1], fp[2], phi[0], phi[1], phi[2], mp_ov_fp[0], mp_ov_fp[1], mp_ov_fp[2]}); return A[i];}
+  double Get_ch2_2pts(int i) { Vfloat A({Ch2_mass, Ch2_fp[0], Ch2_fp[1], Ch2_fp[2], Ch2_phi[0], Ch2_phi[1], Ch2_phi[2],  Ch2_mp_ov_fp[0], Ch2_mp_ov_fp[1], Ch2_mp_ov_fp[2]}); return A[i];}
   void Fill_FF(int i, const distr_t_list &A, Vfloat &ch2) {
     if(i==0) {FA=A; Ch2_FA=ch2;} 
     else if(i==1) {FA_u=A; Ch2_FA_u=ch2;}
@@ -93,21 +99,27 @@ public:
 
    void Fill_FF_2pt(int i, const distr_t &A, double ch2) {
     if(i==0) {mass=A; Ch2_mass=ch2;} 
-    else if(i==1) {fp=A; Ch2_fp=ch2;}
-    else if(i==2) {phi=A; Ch2_phi=ch2;}
-    else if(i==3)  {mp_ov_fp=A; Ch2_mp_ov_fp=ch2;}
-    else crash("In rt_FF_Bs::Fill_FF_2pts(i,A) i must be smaller than 4");
+    else if(i==1) {fp[0]=A; Ch2_fp[0]=ch2;}
+    else if(i==2) {fp[1]=A; Ch2_fp[1]=ch2;}
+    else if(i==3) {fp[2]=A; Ch2_fp[2]=ch2;}
+    else if(i==4) {phi[0]=A; Ch2_phi[0]=ch2;}
+    else if(i==5) {phi[1]=A; Ch2_phi[1]=ch2;}
+    else if(i==6) {phi[2]=A; Ch2_phi[2]=ch2;}
+    else if(i==7)  {mp_ov_fp[0]=A; Ch2_mp_ov_fp[0]=ch2;}
+    else if(i==8)  {mp_ov_fp[1]=A; Ch2_mp_ov_fp[1]=ch2;}
+    else if(i==9)  {mp_ov_fp[2]=A; Ch2_mp_ov_fp[2]=ch2;}
+    else crash("In rt_FF_Bs::Fill_FF_2pts(i,A) i must be smaller than 10");
   }
 
   bool UseJack;
   distr_t mass;
-  distr_t fp;
-  distr_t phi;
-  distr_t mp_ov_fp;
+  vector<distr_t> fp;
+  vector<distr_t> phi;
+  vector<distr_t> mp_ov_fp;
   double Ch2_mass;
-  double Ch2_fp;
-  double Ch2_phi;
-  double Ch2_mp_ov_fp;
+  Vfloat Ch2_fp;
+  Vfloat Ch2_phi;
+  Vfloat Ch2_mp_ov_fp;
   distr_t_list FA, FA_u, FA_d, FV, FV_u, FV_d,  FA_T, FA_T_u, FA_T_d, FV_T, FV_T_u, FV_T_d, FB, FB_u, FB_d, FT, FT_u, FT_d;
   Vfloat Ch2_FA, Ch2_FA_u, Ch2_FA_d,  Ch2_FV, Ch2_FV_u, Ch2_FV_d,  Ch2_FA_T, Ch2_FA_T_u, Ch2_FA_T_d,  Ch2_FV_T, Ch2_FV_T_u, Ch2_FV_T_d, Ch2_FB, Ch2_FB_u, Ch2_FB_d, Ch2_FT, Ch2_FT_u, Ch2_FT_d;
   int Nmeas;
@@ -116,9 +128,9 @@ public:
   bool Use_three_finest;
   bool Include_a4;
   int num_xg;
-  int Nmeas_K;
-  int Npars_K;
-  int Ndof_K;
+  Vfloat Nmeas_K;
+  Vfloat Npars_K;
+  Vfloat Ndof_K;
 
   
   

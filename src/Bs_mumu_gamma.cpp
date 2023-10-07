@@ -28,7 +28,7 @@ const Vfloat ratio_mh({1, 1.0 / 1.4835, 1.0 / 2.02827, 1.0 / 2.53531, 1.0 / 3.04
 //const Vfloat ratio_mh({ 1.0/1.4835, 1.0/2.02827, 1.0/2.53531, 1.0/3.04236});
 const double mc_MS_bar_2_ave=  1.016392574;
 const double mc_MS_bar_2_err = 0.02247780935;
-const bool Compute_FF = false;
+const bool Compute_FF = true;
 const bool Skip_virtual_diagram = true;
 const bool Generate_data_for_mass_spline = false;
 const bool Fit_single_reg = false;
@@ -42,7 +42,7 @@ void rt_FF_Bs::Print(string path) {
   string Tag="UJ_"+to_string(UseJack)+"_TF_"+to_string(Use_three_finest)+"_a4_"+to_string(Include_a4);
 
   vector<string> contribs_3pt({"FA", "FA_u", "FA_d", "FV",  "FV_u", "FV_d",  "FA_T", "FA_T_u", "FA_T_d", "FV_T", "FV_T_u", "FV_T_d", "FB", "FB_u", "FB_d", "FT", "FT_u", "FT_d"});
-  vector<string> contribs_2pt({"mp", "fp", "phi", "mp_ov_fp"});
+  vector<string> contribs_2pt({"mp", "fp", "fp_a4_2pt", "fp_a4_3pt", "phi", "phi_a4_2pt", "phi_a4_3pt",  "mp_ov_fp", "mp_ov_fp_a4_2pt", "mp_ov_fp_a4_3pt"});
   boost::filesystem::create_directory(path+"/jackknives");
   for(auto &c: contribs_3pt) boost::filesystem::create_directory(path+"/jackknives/"+c);
   boost::filesystem::create_directory(path+"/jackknives/2pts");
@@ -52,7 +52,7 @@ void rt_FF_Bs::Print(string path) {
     for(int ixg=1;ixg<num_xg;ixg++) {
       distr_t D= Get_FF(c).distr_list[ixg-1];
       double ch2 = Get_ch2(c)[ixg-1];
-      Print_To_File({}, {D.distr}, path+"/jackknives/"+contribs_3pt[c]+"/ixg_"+to_string(ixg)+"_"+Tag+".jack", "", "ch2/dof: "+to_string_with_precision(ch2,5));
+      Print_To_File({}, {D.distr}, path+"/jackknives/"+contribs_3pt[c]+"/ixg_"+to_string(ixg)+"_"+Tag+".jack", "", "ch2/dof: "+to_string_with_precision(ch2,12));
     }
   }
 
@@ -60,13 +60,17 @@ void rt_FF_Bs::Print(string path) {
   for( int c=0; c<(signed)contribs_2pt.size();c++) {
     distr_t D= Get_FF_2pts(c);
     double ch2 = Get_ch2_2pts(c);
-    Print_To_File({}, {D.distr}, path+"/jackknives/2pts/"+contribs_2pt[c]+"_"+Tag+".jack", "", "ch2/dof: "+to_string_with_precision(ch2,5));
+    Print_To_File({}, {D.distr}, path+"/jackknives/2pts/"+contribs_2pt[c]+"_"+Tag+".jack", "", "ch2/dof: "+to_string_with_precision(ch2,12));
   }
-   
+  
   return;
 }
 
 void rt_FF_Bs::Read(string path, bool UseJ, bool three_finest, bool inc_a4, int nxg) {
+
+  this->Nmeas_K.clear();
+  this->Npars_K.clear();
+  this->Ndof_K.clear();
 
   this->UseJack= UseJ;
   this->Use_three_finest= three_finest;
@@ -75,19 +79,26 @@ void rt_FF_Bs::Read(string path, bool UseJ, bool three_finest, bool inc_a4, int 
   this->Nmeas = ( (this->Use_three_finest)?3:4);
   this->Npars = ( (this->Include_a4)?3:2);
   this->Ndof = this->Nmeas - this->Npars;
-  this->Nmeas_K = ( (this->Use_three_finest)?6:8);
-  this->Npars_K = ( (this->Include_a4)?5:3);
-  this->Ndof_K = this->Nmeas_K - this->Npars_K;
-  if(Fit_single_reg) {
-    this->Nmeas_K= this->Nmeas;
-    this->Npars_K= this->Npars;
-    this->Ndof_K = this->Ndof;
-  }
+  this->Nmeas_K.push_back( ( (this->Use_three_finest)?6:8));
+  this->Nmeas_K.push_back( ( (this->Use_three_finest)?6:8));
+  this->Nmeas_K.push_back( ( (this->Use_three_finest)?6:8));
+  this->Npars_K.push_back( 3);
+  this->Npars_K.push_back( 4);
+  this->Npars_K.push_back( 4);
+  for(int k=0; k < (signed)Npars_K.size();k++) this->Ndof_K.push_back( this->Nmeas_K[k] - this->Npars_K[k]);
+
+  
+
+  
+
+  
+  
 
   string Tag="UJ_"+to_string(UseJack)+"_TF_"+to_string(Use_three_finest)+"_a4_"+to_string(Include_a4);
 
   vector<string> contribs_3pt({"FA", "FA_u", "FA_d", "FV",  "FV_u", "FV_d",  "FA_T", "FA_T_u", "FA_T_d", "FV_T", "FV_T_u", "FV_T_d", "FB", "FB_u", "FB_d", "FT", "FT_u", "FT_d"});
-  vector<string> contribs_2pt({"mp", "fp", "phi", "mp_ov_fp"});
+  vector<string> contribs_2pt({"mp", "fp", "fp_a4_2pt", "fp_a4_3pt", "phi", "phi_a4_2pt", "phi_a4_3pt",  "mp_ov_fp", "mp_ov_fp_a4_2pt", "mp_ov_fp_a4_3pt"});
+ 
 
   //3pts
   for(int c=0; c<(signed)contribs_3pt.size();c++) {
@@ -97,6 +108,8 @@ void rt_FF_Bs::Read(string path, bool UseJ, bool three_finest, bool inc_a4, int 
       ifstream Read_ch2(path+"/jackknives/"+contribs_3pt[c]+"/ixg_"+to_string(ixg)+".jack");
       double A, B;  Read_ch2>>A>>B; Read_ch2.close(); ch2.push_back(B);
       FF.distr_list.emplace_back( UseJack, Read_From_File(path+"/jackknives/"+contribs_3pt[c]+"/ixg_"+to_string(ixg)+"_"+Tag+".jack", 1,  2,1));
+      cout<<"FF: "<<contribs_3pt[c]<<" ixg:"<<ixg<<endl;
+      printV(FF.distr_list[ixg-1].distr, "", 0);
     }
     Fill_FF(c, FF, ch2);
   }
@@ -105,6 +118,8 @@ void rt_FF_Bs::Read(string path, bool UseJ, bool three_finest, bool inc_a4, int 
     ifstream Read_ch2(path+"/jackknives/2pts/"+contribs_2pt[c]+".jack");
     double A, ch2;  Read_ch2>>A>>ch2; Read_ch2.close();
     distr_t FF(UseJack,  Read_From_File(path+"/jackknives/2pts/"+contribs_2pt[c]+"_"+Tag+".jack", 1,  2,1));
+    cout<<"contrib: "<<contribs_2pt[c]<<endl;
+    printV(FF.distr, "", 0);
     Fill_FF_2pt(c,FF,ch2);
   }
 
@@ -1446,6 +1461,7 @@ void Compute_Bs_mumu_gamma() {
       
 
   vector<rt_FF_Bs> FF_ret_list;
+  vector<rt_FF_Bs> FF_ret_list_check;
 
   /*
   vector<bool> Use_three_finest_list({0,0,0,0,0,1,1,1,1,1,0,0,0,0,0});
@@ -1511,11 +1527,26 @@ void Compute_Bs_mumu_gamma() {
     
     string Fit_tag= ( (Include_a4_list[i]==true)?"wa4_":"");
     Fit_tag = ( (Use_three_finest_list[i]==true)?"wtf_":Fit_tag);
+
+
+    //Compute form factors
     if(Compute_FF) {
-    FF_ret_list.push_back(Get_Bs_mumu_gamma_form_factors(num_xg_list[i], Perform_continuum_extrapolation_list[i], Use_three_finest_list[i], Include_a4_list[i], UseJack_list[i], Fit_tag, Corr_path_list[i], out_tag_list[i]));
-    }
+      FF_ret_list.push_back(Get_Bs_mumu_gamma_form_factors(num_xg_list[i], Perform_continuum_extrapolation_list[i], Use_three_finest_list[i], Include_a4_list[i], UseJack_list[i], Fit_tag, Corr_path_list[i], out_tag_list[i]));  }
+
+    //or read them from file
     else { FF_ret_list.emplace_back("../data/ph_emission/"+ph_type+"/"+MESON, UseJack_list[i], Use_three_finest_list[i], Include_a4_list[i], num_xg_list[i] );}
+
+    FF_ret_list_check.emplace_back("../data/ph_emission/"+ph_type+"/"+MESON, UseJack_list[i], Use_three_finest_list[i], Include_a4_list[i], num_xg_list[i]);
+
+    cout<<"checking phi: (a^2 fit)"<<endl;
+    for(int jj=0;jj<NJ;jj++) cout<<FF_ret_list[i].phi[0].distr[jj]<<" "<<FF_ret_list_check[i].phi[0].distr[jj]<<endl;
+    cout<<"checking phi: (a^4 fit 2pt)"<<endl;
+    for(int jj=0;jj<NJ;jj++) cout<<FF_ret_list[i].phi[1].distr[jj]<<" "<<FF_ret_list_check[i].phi[1].distr[jj]<<endl;
+    cout<<"checking phi: (a^4 fit 3pt)"<<endl;
+    for(int jj=0;jj<NJ;jj++) cout<<FF_ret_list[i].phi[2].distr[jj]<<" "<<FF_ret_list_check[i].phi[2].distr[jj]<<endl;
   }
+
+  
 
 
   //Fit F_Bs
@@ -1527,11 +1558,7 @@ void Compute_Bs_mumu_gamma() {
   
 
   
-  distr_t Lambda_LEC(1);
-  for(int i=0;i<NJ;i++) Lambda_LEC.distr.push_back( (0.50 +0.07/sqrt(NJ-1.0)));
-  distr_t R0(1);
-  for(int i=0;i<NJ;i++) R0.distr.push_back( 0.535 + 0.01/sqrt(NJ-1.0));
-
+  
   auto C_HQET = [&](double x) {
 
 
@@ -1584,13 +1611,21 @@ void Compute_Bs_mumu_gamma() {
     while( k*Nmasses + m < FF_SIZE) {
       int r= k*Nmasses+m;
       VAL_MASS.push_back( FF_ret_list[r].mass);
-      VAL_PHI.push_back( FF_ret_list[r].phi);
+      VAL_PHI.push_back( FF_ret_list[r].phi[0]);
+      VAL_PHI.push_back( FF_ret_list[r].phi[1]);
+      VAL_PHI.push_back( FF_ret_list[r].phi[2]);
       CH2_MASS.push_back( FF_ret_list[r].Ch2_mass*FF_ret_list[r].Ndof);
-      CH2_PHI.push_back( FF_ret_list[r].Ch2_phi*FF_ret_list[r].Ndof_K);
+      CH2_PHI.push_back( FF_ret_list[r].Ch2_phi[0]*FF_ret_list[r].Ndof_K[0]);
+      CH2_PHI.push_back( FF_ret_list[r].Ch2_phi[1]*FF_ret_list[r].Ndof_K[1]);
+      CH2_PHI.push_back( FF_ret_list[r].Ch2_phi[2]*FF_ret_list[r].Ndof_K[2]);
       Ndof_MASS.push_back( FF_ret_list[r].Ndof);
-      Ndof_PHI.push_back( FF_ret_list[r].Ndof_K);
+      Ndof_PHI.push_back( FF_ret_list[r].Ndof_K[0]);
+      Ndof_PHI.push_back( FF_ret_list[r].Ndof_K[1]);
+      Ndof_PHI.push_back( FF_ret_list[r].Ndof_K[2]);
       Nmeas_MASS.push_back( FF_ret_list[r].Nmeas);
-      Nmeas_PHI.push_back( FF_ret_list[r].Nmeas_K);
+      Nmeas_PHI.push_back( FF_ret_list[r].Nmeas_K[0]);
+      Nmeas_PHI.push_back( FF_ret_list[r].Nmeas_K[1]);
+      Nmeas_PHI.push_back( FF_ret_list[r].Nmeas_K[2]);
       k++;
     }
 
@@ -1821,7 +1856,7 @@ void Compute_Bs_mumu_gamma() {
   class ipar_fB {
   public:
     ipar_fB() : FF(0.0), FF_err(0.0) {}
-    double FF, FF_err, M, Mpole, Lambda;
+    double FF, FF_err, M, Mpole;
   };
   
   class fpar_fB {
@@ -1913,14 +1948,11 @@ void Compute_Bs_mumu_gamma() {
       data_fB[ijack][im].FF_err= phis.err(im);
       data_fB[ijack][im].M= masses.distr_list[im].distr[ijack];
       data_fB[ijack][im].Mpole= MS_bar_to_MRS(mc_MS_distr.distr[ijack]/ratio_mh[im] ); 
-      data_fB[ijack][im].Lambda = Lambda_LEC.distr[ijack];
       if(ijack==0) {
 	data_fB_ch2[ijack][im].FF = phis.ave(im);
 	data_fB_ch2[ijack][im].FF_err= phis.err(im);
 	data_fB_ch2[ijack][im].M = masses.ave(im);
 	data_fB_ch2[ijack][im].Mpole= MS_bar_to_MRS(mc_MS_distr.ave()/ratio_mh[im] ); 
-	data_fB_ch2[ijack][im].Lambda= Lambda_LEC.ave();
-	
       }
     }
   }
@@ -1974,8 +2006,7 @@ void Compute_Bs_mumu_gamma() {
     distr_t C_HQET_M(1);
     for(int ijack=0;ijack<NJ;ijack++) {
 
-      pp_fB.Lambda= Lambda_LEC.distr[ijack];
-
+     
       auto Fmh=[&R_mh, &A_mh, &B_mh, &C_mh, &ijack, &Minv, &mc_HQET, &MRS_to_mm, &Lambda_MS_bar](double x) {
 	double Mh = (1.0/Minv);
 	double mm= MRS_to_mm(x*mc_HQET.distr[ijack]);
@@ -2347,12 +2378,12 @@ void Compute_Bs_mumu_gamma() {
   //init bootstrap fit
   int num_xg=4;
   bootstrap_fit<fpar_MEX_comb,ipar_MEX_comb> bf_MEX_comb(NJ);
-  bf_MEX_comb.set_warmup_lev(2); //sets warmup
+  bf_MEX_comb.set_warmup_lev(1); //sets warmup
   bf_MEX_comb.Set_number_of_measurements(Nmasses*2*num_xg);
   bf_MEX_comb.Set_verbosity(1);
   //fit on mean values to get ch2
   bootstrap_fit<fpar_MEX_comb,ipar_MEX_comb> bf_MEX_comb_ch2(1);
-  bf_MEX_comb_ch2.set_warmup_lev(1); //sets warmup
+  bf_MEX_comb_ch2.set_warmup_lev(2); //sets warmup
   bf_MEX_comb_ch2.Set_number_of_measurements(Nmasses*2*num_xg);
   bf_MEX_comb_ch2.Set_verbosity(1);
   
@@ -2385,12 +2416,12 @@ void Compute_Bs_mumu_gamma() {
   //to make some test let us start by setting some parameters to zero
 
   bf_MEX_comb.Fix_par("B1", 0.0);
-  //bf_MEX_comb.Fix_par("B2", 0.0);
+  bf_MEX_comb.Fix_par("B2", 0.0);
   bf_MEX_comb.Fix_par("CV3", 0.0);
   //bf_MEX_comb.Fix_par("CA3", 0.0);
 
   bf_MEX_comb_ch2.Fix_par("B1", 0.0);
-  //bf_MEX_comb_ch2.Fix_par("B2", 0.0);
+  bf_MEX_comb_ch2.Fix_par("B2", 0.0);
   bf_MEX_comb_ch2.Fix_par("CV3", 0.0);
   //bf_MEX_comb_ch2.Fix_par("CA3", 0.0);
 
@@ -2635,10 +2666,7 @@ vector<double> xg_min_list(Nxgs), xg_max_list(Nxgs), qmin_list(Nxgs);
    
  
  
-  distr_t g_Bs_phi(1);
-  for(int i=0;i<NJ;i++) g_Bs_phi.distr.push_back( 0.27 + 0.27*GM()/sqrt(NJ-1.0));
-
-  
+    
    
     for(int it=0; it < Nxgs;it++) {
       for(int ijack=0;ijack<NJ;ijack++) {
@@ -6430,17 +6458,35 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //get ch2
   ch2_MP= Bt_fit_MP_ch2.get_ch2_ave();
 
+  rt_fit.mass = F0_MP;
+  rt_fit.Ch2_mass= ch2_MP/dof;
 
   //begin constrained fits
+  //we perform three different fits a^2, a^2 + a^4_tm and a^2 +a^4_OS
 
-   class ipar_FF_K {
+  rt_fit.Ndof_K.resize(3);
+  rt_fit.Npars_K.resize(3);
+  rt_fit.Ndof_K.resize(3);
+
+
+  vector<string> Tags_comb({"", "_a4_2pt", "_a4_3pt"});
+  vector<string> Tags_comb_({"", "a4_2pt_", "a4_3pt_"});
+  int c_comb=0;
+  string _Fit_tag_std= _Fit_tag;
+  string Fit_tag_std=Fit_tag;
+  for( auto &tg : Tags_comb) {
+
+    _Fit_tag= _Fit_tag_std+tg;
+    Fit_tag= Fit_tag_std+Tags_comb_[c_comb];
+    
+    class ipar_FF_K {
     public:
-     ipar_FF_K() : FF(0.0), FF_err(0.0) {}
-     double FF, FF_err, a;
-     int is;
-     bool Is_2pt;
+      ipar_FF_K() : FF(0.0), FF_err(0.0) {}
+      double FF, FF_err, a;
+      int is;
+      bool Is_2pt;
     };
-  
+    
     class fpar_FF_K {
     public:
       fpar_FF_K() {}
@@ -6477,6 +6523,9 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     bf_FF_K_ch2.Add_par("C1", 1.0, 0.01);
     bf_FF_K_ch2.Add_par("C2", 1.0, 0.01);
 
+    if(Fit_single_reg) crash("Only combined fits allowed for FP, phi, FP/MP");
+       
+
     if(Fit_single_reg && Reg_to_fit=="3pt") {
       bf_FF_K.Fix_par("D1", 0.0);
       bf_FF_K.Fix_par("D2", 0.0);
@@ -6493,17 +6542,31 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
     
     //count number of dof
     int dof_K= 2*Nens-3;
-    if(Include_a4==false) { bf_FF_K.Fix_par("D2", 0.0); bf_FF_K_ch2.Fix_par("D2",0.0); bf_FF_K.Fix_par("C2", 0.0); bf_FF_K_ch2.Fix_par("C2",0.0);}
-    else dof_K -= 2 ;
+
+    if(tg=="") {
+      bf_FF_K.Fix_par("D2",0.0); bf_FF_K_ch2.Fix_par("D2",0.0);
+      bf_FF_K.Fix_par("C2",0.0); bf_FF_K_ch2.Fix_par("C2",0.0);
+    }
+    else if(tg=="_a4_2pt") {
+      dof_K --;
+      bf_FF_K.Fix_par("C2",0.0); bf_FF_K_ch2.Fix_par("C2", 0.0);
+    }
+    else if(tg=="_a4_3pt") {
+      dof_K--;
+      bf_FF_K.Fix_par("D2", 0.0); bf_FF_K_ch2.Fix_par("D2", 0.0);
+    }
+    
+    
+    //if(Include_a4==false) { bf_FF_K.Fix_par("D2", 0.0); bf_FF_K_ch2.Fix_par("D2",0.0); bf_FF_K.Fix_par("C2", 0.0); bf_FF_K_ch2.Fix_par("C2",0.0);}
     if( Use_three_finest) dof_K-= 2;
 
     if(Fit_single_reg) dof_K=dof;
 
 
   //push_back info
-    rt_fit.Nmeas_K=(Fit_single_reg)?rt_fit.Nmeas:(2*Nens-2*(Use_three_finest==true));
-    rt_fit.Ndof_K= dof_K;
-    rt_fit.Npars_K= rt_fit.Nmeas_K-dof_K;
+    rt_fit.Nmeas_K[c_comb]=(Fit_single_reg)?rt_fit.Nmeas:(2*Nens-2*(Use_three_finest==true));
+    rt_fit.Ndof_K[c_comb]= dof_K;
+    rt_fit.Npars_K[c_comb]= rt_fit.Nmeas_K[c_comb]-dof_K;
   
 
   //ansatz
@@ -6597,8 +6660,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
    //print correlation matrix
    //print covariance matrix
-   ofstream Print_Cov_FP("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/FP.cov");
-   ofstream Print_Corr_FP("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/FP.corr");
+   ofstream Print_Cov_FP("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/FP_"+Fit_tag+".cov");
+   ofstream Print_Corr_FP("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/FP_"+Fit_tag+".corr");
    
 
    Print_Cov_FP<<Cov_Matrix_FP<<endl;  Print_Corr_FP<<Corr_Matrix_FP<<endl;
@@ -6711,8 +6774,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
    //print correlation matrix
    //print covariance matrix
-   ofstream Print_Cov_phi("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/phi.cov");
-   ofstream Print_Corr_phi("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/phi.corr");
+   ofstream Print_Cov_phi("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/phi_"+Fit_tag+".cov");
+   ofstream Print_Corr_phi("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/phi_"+Fit_tag+".corr");
    
 
    Print_Cov_phi<<Cov_Matrix_phi<<endl;  Print_Corr_phi<<Corr_Matrix_phi<<endl;
@@ -6826,8 +6889,8 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
    //print correlation matrix
    //print covariance matrix
-   ofstream Print_Cov_MP_ov_FP("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/mP_ov_fP.cov");
-   ofstream Print_Corr_MP_ov_FP("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/mP_ov_fP.corr");
+   ofstream Print_Cov_MP_ov_FP("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/mP_ov_fP_"+Fit_tag+".cov");
+   ofstream Print_Corr_MP_ov_FP("../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/corr_matrix_fit/mP_ov_fP_"+Fit_tag+".corr");
    
 
    Print_Cov_MP_ov_FP<<Cov_Matrix_MP_ov_FP<<endl;  Print_Corr_MP_ov_FP<<Corr_Matrix_MP_ov_FP<<endl;
@@ -6912,15 +6975,24 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   Print_To_File({}, {Bs_a_to_print, MP_ov_FP_to_print.ave(), MP_ov_FP_to_print.err(), MP_ov_FP_3pt_to_print.ave(), MP_ov_FP_3pt_to_print.err()} , "../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/mP_ov_fP"+_Fit_tag+".fit_func", "", "#a[fm]  FP FP_err   MP/FP  MP/FP_err");
   Print_To_File({}, {Bs_a_to_print, phi_to_print.ave(), phi_to_print.err(), phi_3pt_to_print.ave(), phi_3pt_to_print.err()}, "../data/ph_emission/"+ph_type+"/"+MESON+"/decay_const/phi"+_Fit_tag+".fit_func", "", "#a[fm]  phi phi_err");
 
-  //push back the result for the mass and decay constant
-  rt_fit.mass = F0_MP;
-  rt_fit.fp = F0_FP;
-  rt_fit.Ch2_mass= ch2_MP/dof;
-  rt_fit.Ch2_fp= ch2_FP/dof_K;
-  rt_fit.phi = F0_phi;
-  rt_fit.mp_ov_fp = F0_MP_ov_FP;
-  rt_fit.Ch2_phi = ch2_phi/dof_K;
-  rt_fit.Ch2_mp_ov_fp= ch2_MP_ov_FP/dof_K;
+  //push back the result for the combined fits
+ 
+  rt_fit.fp[c_comb] = F0_FP;
+  rt_fit.Ch2_fp[c_comb]= ch2_FP/dof_K;
+  rt_fit.phi[c_comb] = F0_phi;
+  rt_fit.mp_ov_fp[c_comb] = F0_MP_ov_FP;
+  rt_fit.Ch2_phi[c_comb] = ch2_phi/dof_K;
+  rt_fit.Ch2_mp_ov_fp[c_comb]= ch2_MP_ov_FP/dof_K;
+
+
+  cout<<"#### Tag: "<<tg<<"#####"<<endl;
+  cout<<"ch2(MP): "<< ch2_MP/dof<<endl;
+  cout<<"ch2(FP): "<< ch2_FP/dof_K<<endl;
+  cout<<"ch2(phi): "<< ch2_phi/dof_K<<endl;
+  cout<<"ch2(MP/FP): "<<ch2_MP_ov_FP/dof_K<<endl;
+  cout<<"###################################"<<endl;
+  c_comb++;
+  }
 
 
   //print ch2 summary
@@ -6950,12 +7022,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   cout<<"### FT d ###"<<endl;
   for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FT_d[ixg-1]<<endl; }
   
-  cout<<"##########"<<endl;
-  cout<<"ch2(MP): "<< ch2_MP/dof<<endl;
-  cout<<"ch2(FP): "<< ch2_FP/dof_K<<endl;
-  cout<<"ch2(phi): "<< ch2_phi/dof_K<<endl;
-  cout<<"ch2(MP/FP): "<<ch2_MP_ov_FP/dof_K<<endl;
-  cout<<"###################################"<<endl;
+ 
 
 
 

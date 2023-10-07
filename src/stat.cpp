@@ -900,8 +900,6 @@ distr_t AIC( const vector<distr_t> &VAL, const vector<double> &ch2, const vector
 
   int N=VAL.size();
   assert(N > 0);
-  bool UseJack= VAL[0].UseJack;
-  int Nj= VAL[0].distr.size();
   double F= ((NEIL)?2:1);
    
   distr_t RES= 0.0*VAL[0];
