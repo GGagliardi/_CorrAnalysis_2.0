@@ -37,7 +37,7 @@ const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
 bool Skip_spectral_density_analysis_strange=false;
-const bool Perform_continuum_extrapolation=false;
+const bool Perform_continuum_extrapolation=true;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
 
@@ -56,17 +56,17 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   
   if( reg=="tm") {
     if(channel=="Aii") {
-      if(Ens == "cB211b.072.64") {  Ra0 =2e7;  }
+      if(Ens == "cB211b.072.64") {  Ra0 =1e7;  }
       else if(Ens == "cB211b.072.96") { Ra0= 2e7;   }
       else if(Ens == "cC211a.06.80") { Ra0= 2e7;   } 
-      else if(Ens == "cC211a.06.112") { Ra0= 1e8;   }
+      else if(Ens == "cC211a.06.112") { Ra0= 2e7;   }
       else if(Ens == "cD211a.054.96") {  Ra0=8e6;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="Vii") {
-      if(Ens == "cB211b.072.64") { Ra0=2e5;   }
+      if(Ens == "cB211b.072.64") { Ra0=4e5;   }
       else if(Ens == "cB211b.072.96") { Ra0= 2e5;    } 
-      else if(Ens == "cC211a.06.80") {  Ra0=1e7;  } 
+      else if(Ens == "cC211a.06.80") {  Ra0=4e6;  } 
       else if(Ens == "cC211a.06.112") { Ra0= 2e6;   }
       else if(Ens == "cD211a.054.96") {  Ra0= 1e7;   }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
@@ -93,11 +93,11 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   else if(reg=="OS") {
     
     if(channel=="Aii") {
-      if(Ens == "cB211b.072.64") { Ra0=1e7;   }
+      if(Ens == "cB211b.072.64") { Ra0=7e6;   }
       else if(Ens == "cB211b.072.96") { Ra0=1e5;   }
       else if(Ens == "cC211a.06.80") { Ra0=3e6;   } 
-      else if(Ens == "cC211a.06.112") { Ra0= 1e8;   }
-      else if(Ens == "cD211a.054.96") {  Ra0=3e8;  } 
+      else if(Ens == "cC211a.06.112") { Ra0= 1e6;   }
+      else if(Ens == "cD211a.054.96") {  Ra0=1e8;  } 
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="Vii") {
@@ -987,7 +987,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
        
     if(!Skip_spectral_density_analysis_strange) {
 
-      distr_t resc_GeV = C_V*GAMMA_FACT/(pow(a_distr.ave(),3));
+      double resc_GeV = C_V*GAMMA_FACT/(pow(a_distr.ave(),3));
 
        
      
@@ -1621,8 +1621,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "V0", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_V0_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_V0, prec, SM_TYPE_0,K0, V0_tm, syst_V0_tm, mult, lV0_tm, MODE, "tm", "V0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_V0_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_V0, prec, SM_TYPE_0,K0_shifted, V0_tm, syst_s_V0_tm, mult, lV0_tm, MODE, "tm", "V0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_V0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_V0, prec, SM_TYPE_0,K0, V0_tm, syst_V0_tm, mult, lV0_tm, MODE, "tm", "V0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_V0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_V0, prec, SM_TYPE_0,K0_shifted, V0_tm, syst_s_V0_tm, mult, lV0_tm, MODE, "tm", "V0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_V0_tm = fabs( Br_s_sigma_V0_tm.ave() - Br_sigma_V0_tm.ave());
       Br_sigma_V0_tm= Br_sigma_V0_tm.ave() + (Br_sigma_V0_tm-Br_sigma_V0_tm.ave())*sqrt( pow(Br_sigma_V0_tm.err(),2) + pow(syst_s_V0_tm,2))/Br_sigma_V0_tm.err();
       end = chrono::system_clock::now();
@@ -1637,8 +1637,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "V0", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_V0_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_V0, prec, SM_TYPE_0,K0, V0_OS, syst_V0_OS, mult, lV0_OS, MODE, "OS", "V0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_V0_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_V0, prec, SM_TYPE_0,K0_shifted, V0_OS, syst_s_V0_OS, mult, lV0_OS, MODE, "OS", "V0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_V0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_V0, prec, SM_TYPE_0,K0, V0_OS, syst_V0_OS, mult, lV0_OS, MODE, "OS", "V0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_V0_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_OS_V0, prec, SM_TYPE_0,K0_shifted, V0_OS, syst_s_V0_OS, mult, lV0_OS, MODE, "OS", "V0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_V0_OS = fabs( Br_s_sigma_V0_OS.ave() - Br_sigma_V0_OS.ave());
       Br_sigma_V0_OS= Br_sigma_V0_OS.ave() + (Br_sigma_V0_OS-Br_sigma_V0_OS.ave())*sqrt( pow(Br_sigma_V0_OS.err(),2) + pow(syst_s_V0_OS,2))/Br_sigma_V0_OS.err();
       end = chrono::system_clock::now();

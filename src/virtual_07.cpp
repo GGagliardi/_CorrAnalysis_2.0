@@ -1,27 +1,29 @@
 #include "../include/virtual_07.h"
 #include "Corr_analysis.h"
+#include "Spectral.h"
 #include "numerics.h"
 #include "stat.h"
 using namespace std;
 
 bool verbose_lev_07=1;
 //Vfloat sigmas_07({1.5, 1.25, 1.0, 0.8, 0.6, 0.5, 0.4, 0.3}); // sigma in GeV
-Vfloat sigmas_07({0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2});
-Vfloat sigmas_07_w0({0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29,  0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0});
-int prec_07=128;
+Vfloat sigmas_07({1.0, 1.25, 1.5, 1.75, 2,2.25, 2.5, 2.75, 3.0});
+Vfloat sigmas_07_w0({0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29,  0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0,2.25,2.5,2.75,3.0});
+int prec_07=90;
 const string MODE_FF="TANT";
 const bool Skip_spectral_reconstruction_07 = false;
-const bool virtuality_scan = true;
+const bool virtuality_scan = false;
 const bool Use_preconditioning = true;
 const string  preco_tag= (Use_preconditioning)?"prec_":"";
 const double Mjpsi= 3.0969; //GeV
 const double Mphi= 1.019461; //GeV
 const double MDs_phys = 1.96847; // GeV
+const double MBs = 5.36692;
 const double E0_fact = 0.90;
 const bool CONS_EM_CURRENT = true;
 const string SM_TYPE = "FF_Exp";
-const double QU = -1.0/3;
-const double QD = -1.0 / 3;
+const double QU = -1.0/3.0;
+const double QD = -1.0 / 3.0;
 const double mh0 = 1.0 / 0.5074743143;
 const double mh1 = 1.0 / 0.4007494458;
 const double mh2=  1.0 / 0.3287466686;
@@ -244,10 +246,10 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   cout<<"ZT_C : "<<ZT_C.ave()<< " +- "<<ZT_C.err()<<endl;
   cout<<"ZT_D : "<<ZT_D.ave()<< " +- "<<ZT_D.err()<<endl;
 
-  cout<<"ZT_A : "<<ZV_A.ave()<< " +- "<<ZV_A.err()<<endl;
-  cout<<"ZT_B : "<<ZV_B.ave()<< " +- "<<ZV_B.err()<<endl;
-  cout<<"ZT_C : "<<ZV_C.ave()<< " +- "<<ZV_C.err()<<endl;
-  cout<<"ZT_D : "<<ZV_D.ave()<< " +- "<<ZV_D.err()<<endl;
+  cout<<"ZV_A : "<<ZV_A.ave()<< " +- "<<ZV_A.err()<<endl;
+  cout<<"ZV_B : "<<ZV_B.ave()<< " +- "<<ZV_B.err()<<endl;
+  cout<<"ZV_C : "<<ZV_C.ave()<< " +- "<<ZV_C.err()<<endl;
+  cout<<"ZV_D : "<<ZV_D.ave()<< " +- "<<ZV_D.err()<<endl;
 
 
   
@@ -272,6 +274,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   vector<vector<distr_t_list>> F_T_d_RE_sm_list(n_xg);
   vector<vector<distr_t_list>> F_T_d_IM_sm_list(n_xg);
 
+  vector<vector<distr_t_list>> F_T_d_MB_RE_sm_list(n_xg);
+  vector<vector<distr_t_list>> F_T_d_MB_IM_sm_list(n_xg);
+
   
 
   vector<vector<distr_t_list>> F_T_d_RE_VMD_sm_list(n_xg);
@@ -282,6 +287,16 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
   vector<vector<distr_t_list>> F_T_d_RE_VMD_III_state_sm_list(n_xg);
   vector<vector<distr_t_list>> F_T_d_IM_VMD_III_state_sm_list(n_xg);
+
+
+  vector<vector<distr_t_list>> F_T_d_MB_RE_VMD_sm_list(n_xg);
+  vector<vector<distr_t_list>> F_T_d_MB_IM_VMD_sm_list(n_xg);
+
+  vector<vector<distr_t_list>> F_T_d_MB_RE_VMD_II_state_sm_list(n_xg);
+  vector<vector<distr_t_list>> F_T_d_MB_IM_VMD_II_state_sm_list(n_xg);
+
+  vector<vector<distr_t_list>> F_T_d_MB_RE_VMD_III_state_sm_list(n_xg);
+  vector<vector<distr_t_list>> F_T_d_MB_IM_VMD_III_state_sm_list(n_xg);
 
   vector<distr_t_list> F_T_u_VMD_list;
   vector<distr_t_list> F_T_u_VMD_spectre_list;
@@ -312,12 +327,24 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     F_T_d_RE_VMD_III_state_sm_list[ixg].emplace_back(UseJack);
     F_T_d_IM_VMD_III_state_sm_list[ixg].emplace_back(UseJack);
 
+    F_T_d_MB_RE_VMD_sm_list[ixg].emplace_back(UseJack);
+    F_T_d_MB_IM_VMD_sm_list[ixg].emplace_back(UseJack);
+
+    F_T_d_MB_RE_VMD_II_state_sm_list[ixg].emplace_back(UseJack);
+    F_T_d_MB_IM_VMD_II_state_sm_list[ixg].emplace_back(UseJack);
+
+    F_T_d_MB_RE_VMD_III_state_sm_list[ixg].emplace_back(UseJack);
+    F_T_d_MB_IM_VMD_III_state_sm_list[ixg].emplace_back(UseJack);
+
 
     }
     
     for(int is=0; is<(signed)sigmas_07.size(); is++) {
       F_T_d_RE_sm_list[ixg].emplace_back(UseJack);
       F_T_d_IM_sm_list[ixg].emplace_back(UseJack);
+
+      F_T_d_MB_RE_sm_list[ixg].emplace_back(UseJack);
+      F_T_d_MB_IM_sm_list[ixg].emplace_back(UseJack);
 
       
     }
@@ -343,7 +370,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
        distr_t ret(1);
        for(int ijack=0;ijack<E.size();ijack++) {
 	 double x= (E.distr[ijack]-m.distr[ijack]);
-	 ret.distr.push_back(exp(-x)*sin(s)/( 1 + exp(-2*x) -2*cos(s)*exp(-x)));
+	 ret.distr.push_back( M_PI*Get_exact_gauss( E.distr[ijack], m.distr[ijack],  s, 0.0 ));
+	 //ret.distr.push_back(exp(-x)*sin(s)/( 1 + exp(-2*x) -2*cos(s)*exp(-x)));
        }
        return ret;
        
@@ -431,7 +459,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   //smeared kernel of the immaginary part
   auto K_IM = [](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
 
-    if(SM_TYPE=="FF_Gauss") return precPi()*Get_exact_gauss(E, m, s, E0);
+    //if(SM_TYPE=="FF_Gauss") return precPi()*Get_exact_gauss(E, m, s, E0);
+    return precPi()*Get_exact_gauss(E, m, s, E0);
     if(SM_TYPE=="FF_Gauss_Schwartz") return precPi()*Get_exact_gauss(E, m, s, E0);
     if(SM_TYPE=="FF_Cauchy") {
       PrecFloat t= (E-m);
@@ -620,10 +649,11 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       double theta=thetas[ixg];
       pt3_momenta pt3_mom_07(0.0, 0.0, thetas[ixg]/2.0, masses_u[ixg], masses_d[ixg], 0.0, L_info.L, L_info.T);
       double Eg= pt3_mom_07.Egamma();
-      distr_t Eg_off = M_P - Eg; 
+      distr_t Eg_off = M_P - Eg;
       double kz = pt3_mom_07.k()[2];
       distr_t xg= pt3_mom_07.x_gamma(M_P);
       distr_t xg_boot= pt3_mom_07.x_gamma(M_P_boot);
+      distr_t Eg_MB_off = MBs*a_distr*(1.0 -xg/2.0);
       xg_list.distr_list.push_back(xg);
 
       
@@ -646,7 +676,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	 
       distr_t_list T_u_std = 0.5*QU*Corr.corr_t(summ_master(C_T_u_data_std[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_u_data_std[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_T_u_xg_"+to_string(ixg));
       	 
-      distr_t_list T_d_std = 0.5*QU*Corr.corr_t(summ_master(C_T_d_data_std[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data_std[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_T_d_xg_"+to_string(ixg));
+      distr_t_list T_d_std = 0.5*QD*Corr.corr_t(summ_master(C_T_d_data_std[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data_std[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_T_d_xg_"+to_string(ixg));
       
       distr_t_list T_d = 0.5*QD*Corr.corr_t(summ_master(C_T_d_data[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_T_d_sp_xg_"+to_string(ixg));
       distr_t_list T_d_boot= 0.5*QD*Corr_boot.corr_t(summ_master(C_T_d_data[2][1][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data[2][1][ixg].col(Im_Re)[iens], -1.0)),"");
@@ -654,7 +684,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       Im_Re=0;
 
       distr_t_list B_u_std = 0.5*QU*Corr.corr_t(summ_master(C_B_u_data_std[1][1][ixg].col(Im_Re)[iens], C_B_u_data_std[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_u_xg_"+to_string(ixg));
-      distr_t_list B_d_std = 0.5*QU*Corr.corr_t(summ_master(C_B_d_data_std[1][1][ixg].col(Im_Re)[iens], C_B_d_data_std[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_u_xg_"+to_string(ixg));
+      distr_t_list B_d_std = 0.5*QD*Corr.corr_t(summ_master(C_B_d_data_std[1][1][ixg].col(Im_Re)[iens], C_B_d_data_std[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_u_xg_"+to_string(ixg));
       distr_t_list B_d = 0.5*QD*Corr.corr_t(summ_master(C_B_d_data[1][1][ixg].col(Im_Re)[iens], C_B_d_data[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_d_sp_xg_"+to_string(ixg));
       distr_t_list B_d_boot= 0.5*QD*Corr_boot.corr_t(summ_master(C_B_d_data[1][1][ixg].col(Im_Re)[iens], C_B_d_data[2][2][ixg].col(Im_Re)[iens]),"");
 
@@ -732,7 +762,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 	const double f1_real= exp(-(T/2-ty)*Eg);
 	const double f2_real= exp(-((3*T/2)-ty)*Eg);
-	
+
 	const double h1=HeavyTheta((T/2)-ty);
 	
 	const double h2=HeavyTheta(ty-(T/2));
@@ -974,8 +1004,16 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       distr_t_list phi_MT_distr= Corr_T_symm*EXPT_DL(eff_M_Td_distr);
       distr_t phi_MT = Corr_HLT.Fit_distr( Corr_T_symm*(EXPT_DL(eff_M_Td_distr)));
       distr_t phi_MT_boot= Corr_HLT_boot.Fit_distr( Corr_T_symm_boot*(EXPT_DL(eff_M_Td_boot_distr)));
-      distr_t_list Corr_T_VMD = phi_MT*EXPT_D(-1.0*eff_M_Td*a_distr, Corr_T.size());
-      distr_t_list Corr_T_VMD_boot = phi_MT_boot*EXPT_D(-1.0*eff_M_Td_boot, Corr_T_boot.size());
+
+
+      distr_t_list fake_distr_with_hole= Get_id_distr_list(Corr_T.size(), Njacks, UseJack);
+      fake_distr_with_hole.distr_list[0] = 0.0*fake_distr_with_hole.distr_list[0];
+
+      distr_t_list fake_boot_distr_with_hole= Get_id_distr_list(Corr_T.size(), 1000, 0);
+      fake_boot_distr_with_hole.distr_list[0] = 0.0*fake_boot_distr_with_hole.distr_list[0];
+      
+      distr_t_list Corr_T_VMD = fake_distr_with_hole*phi_MT*EXPT_D(-1.0*eff_M_Td*a_distr, Corr_T.size());
+      distr_t_list Corr_T_VMD_boot = fake_boot_distr_with_hole*phi_MT_boot*EXPT_D(-1.0*eff_M_Td_boot, Corr_T_boot.size());
 
            
       distr_t_list Corr_T_sub = Corr_T - Corr_T_VMD;
@@ -1083,9 +1121,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       Corr_HLT.Tmin = Tmin_old; Corr_HLT.Tmax= Tmax_old;
       Corr_HLT_boot.Tmin = Tmin_old; Corr_HLT_boot.Tmax= Tmax_old;
       
-      distr_t_list Corr_T_VMD_II = phi_prime_MT*EXPT_D(-1.0*eff_M_prime_Td*a_distr, Corr_T.size());
+      distr_t_list Corr_T_VMD_II = fake_distr_with_hole*phi_prime_MT*EXPT_D(-1.0*eff_M_prime_Td*a_distr, Corr_T.size());
       distr_t_list Corr_T_sub_II = Corr_T_sub - Corr_T_VMD_II;
-      distr_t_list Corr_T_boot_VMD_II = phi_prime_MT_boot*EXPT_D(-1.0*eff_M_prime_Td_boot, Corr_T.size());
+      distr_t_list Corr_T_boot_VMD_II = fake_boot_distr_with_hole*phi_prime_MT_boot*EXPT_D(-1.0*eff_M_prime_Td_boot, Corr_T.size());
       distr_t_list Corr_T_boot_sub_II = Corr_T_boot_sub - Corr_T_boot_VMD_II;
 
 
@@ -1185,10 +1223,12 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       
       Corr_HLT.Tmin = Tmin_old; Corr_HLT.Tmax= Tmax_old;
       Corr_HLT_boot.Tmin = Tmin_old; Corr_HLT_boot.Tmax= Tmax_old;
+
+    
       
-      distr_t_list Corr_T_VMD_III = phi_second_MT*EXPT_D(-1.0*eff_M_second_Td*a_distr, Corr_T.size());
+      distr_t_list Corr_T_VMD_III = fake_distr_with_hole*phi_second_MT*EXPT_D(-1.0*eff_M_second_Td*a_distr, Corr_T.size());
       distr_t_list Corr_T_sub_III = Corr_T_sub_II - Corr_T_VMD_III;
-      distr_t_list Corr_T_boot_VMD_III = phi_second_MT_boot*EXPT_D(-1.0*eff_M_second_Td_boot, Corr_T.size());
+      distr_t_list Corr_T_boot_VMD_III = fake_boot_distr_with_hole*phi_second_MT_boot*EXPT_D(-1.0*eff_M_second_Td_boot, Corr_T.size());
       distr_t_list Corr_T_boot_sub_III = Corr_T_boot_sub_II - Corr_T_boot_VMD_III;
 
 
@@ -1201,8 +1241,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       Print_To_File({}, { (Corr_T_sub*FACT).ave(), (Corr_T_sub*FACT).err(), (Corr_T_sub_II*FACT).ave(), (Corr_T_sub_II*FACT).err(), (Corr_T_sub_III*FACT).ave(), (Corr_T_sub_II*FACT).err() }, path_out+"/corr_2pts/"+TAG_CURR+"sub_HLT_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
 
       if(Use_preconditioning) {
-	Corr_T= Corr_T_sub_II;
-	Corr_T_boot= Corr_T_boot_sub_II;
+	Corr_T= Corr_T_sub;
+	Corr_T_boot= Corr_T_boot_sub;
       }
 
       Print_To_File({}, { (FACT*phi_MT_distr/a_distr).ave(), (FACT*phi_MT_distr/a_distr).err(), (FACT*phi_prime_MT_distr/a_distr).ave(), (FACT*phi_prime_MT_distr/a_distr).err(), (FACT*phi_second_MT_distr/a_distr).ave(), (FACT*phi_second_MT_distr/a_distr).err()}, path_out+"/FF_d_II/VMD_MT_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
@@ -1241,6 +1281,16 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 	F_T_d_RE_VMD_III_state_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave())   + FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave()) +  FACT*phi_second_MT*K_RE_distr( eff_M_second_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave())  );
 	F_T_d_IM_VMD_III_state_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off,  sigmas_07_w0[iss]*a_distr.ave())  + FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave()) +  FACT*phi_second_MT*K_IM_distr( eff_M_second_Td*a_distr, Eg_off, sigmas_07_w0[iss]*a_distr.ave())    );
+
+
+	F_T_d_MB_RE_VMD_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_MB_off, sigmas_07_w0[iss]*a_distr.ave()));
+	F_T_d_MB_IM_VMD_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_MB_off,  sigmas_07_w0[iss]*a_distr.ave()));
+
+	F_T_d_MB_RE_VMD_II_state_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_MB_off, sigmas_07_w0[iss]*a_distr.ave())   +  FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_MB_off, sigmas_07_w0[iss]*a_distr.ave())   );
+	F_T_d_MB_IM_VMD_II_state_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_MB_off,  sigmas_07_w0[iss]*a_distr.ave())  + FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_MB_off, sigmas_07_w0[iss]*a_distr.ave())    );
+
+	F_T_d_MB_RE_VMD_III_state_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_MB_off, sigmas_07_w0[iss]*a_distr.ave())   + FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_MB_off, sigmas_07_w0[iss]*a_distr.ave()) +  FACT*phi_second_MT*K_RE_distr( eff_M_second_Td*a_distr, Eg_MB_off, sigmas_07_w0[iss]*a_distr.ave())  );
+	F_T_d_MB_IM_VMD_III_state_sm_list[ixg][iss].distr_list.push_back( FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_MB_off,  sigmas_07_w0[iss]*a_distr.ave())  + FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_MB_off, sigmas_07_w0[iss]*a_distr.ave()) +  FACT*phi_second_MT*K_IM_distr( eff_M_second_Td*a_distr, Eg_MB_off, sigmas_07_w0[iss]*a_distr.ave())    );
 
 	distr_t_list VMD_VIRT_SCAN_RE(UseJack), VMD_VIRT_SCAN_IM(UseJack);
 	distr_t_list VMD_II_VIRT_SCAN_RE(UseJack), VMD_II_VIRT_SCAN_IM(UseJack);
@@ -1286,18 +1336,38 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 	  
 	  double syst_T;
-	  double mult_T_IM= 0.01;
-	  double mult_T_RE=0.03;
-	  double Ag_target=1e-4;
+	  double mult_T_IM= 0.5;
+	  double mult_T_RE=0.05;
+	  double Ag_target=1e-2;
 	  if(sigmas_07[isg] < 0.5) Ag_target=5e-2;
-	  else if(sigmas_07[isg] < 0.7) Ag_target=5e-3;
+	  else if(sigmas_07[isg] < 1.5) Ag_target=1e-1;
 	  double th= E0_fact*Mphi_motion;
 	  double l_re_T;
-	  
+    
 
-	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT, 0.0 , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1)+ ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_off, s) + FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_off, s) )) ;
+	  distr_t RE_sm= Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT, 0.0 , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1);
+	  RE_sm = RE_sm.ave() + (RE_sm - RE_sm.ave())*(sqrt( pow(syst_T,2) + pow(RE_sm.err(),2)))/RE_sm.err();
+
+	  distr_t IM_sm= Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT, 0.0 , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1);
+	  IM_sm = IM_sm.ave() + (IM_sm - IM_sm.ave())*(sqrt( pow(syst_T,2) + pow(IM_sm.err(),2)))/IM_sm.err();
+
+	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( RE_sm + ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_off, s) + 0.0*FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_off, s) ));
 	 	  	  
-	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( Get_Laplace_transfo ( Eg_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"T_"+Ens_tags[iens], Ag_target,0, FACT, 0.0 , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1) +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off, s)+FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_off, s)));
+	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( IM_sm  +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off, s)+0.0*FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_off, s) ));
+
+	  cout<<"#########################  E= MB - Egamma ######################### "<<endl<<flush;
+
+
+	  distr_t RE_MB_sm = Get_Laplace_transfo ( Eg_MB_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_RE",K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"MB_T_"+Ens_tags[iens], Ag_target,0, FACT, 0.0 , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1);
+	  RE_MB_sm = RE_MB_sm.ave() +  (RE_MB_sm - RE_MB_sm.ave())*(sqrt( pow(syst_T,2) + pow(RE_MB_sm.err(),2)))/RE_MB_sm.err();
+
+	  distr_t IM_MB_sm =  Get_Laplace_transfo ( Eg_MB_off.ave(),  s, th*a_distr.ave(),  Nts[iens], tmax-1, prec_07, SM_TYPE+"_IM",K_IM, Corr_T, syst_T, mult_T_IM ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"MB_T_"+Ens_tags[iens], Ag_target,0, FACT, 0.0 , preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.0,1);
+	  IM_MB_sm = IM_MB_sm.ave() +  (IM_MB_sm - IM_MB_sm.ave())*(sqrt( pow(syst_T,2) + pow(IM_MB_sm.err(),2)))/IM_MB_sm.err();
+	  
+	  F_T_d_MB_RE_sm_list[ixg][isg].distr_list.push_back( RE_MB_sm + ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_MB_off, s) + 0.0*FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_MB_off, s) ));
+	  
+	  F_T_d_MB_IM_sm_list[ixg][isg].distr_list.push_back( IM_MB_sm +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_MB_off, s)+ 0.0*FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_MB_off, s) ));
+	  
 
 	  if(virtuality_scan) {
 	    
@@ -1345,6 +1415,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
       Print_To_File( Ens_tags, { F_T_d_RE_sm_list[ixg][isg].ave(), F_T_d_RE_sm_list[ixg][isg].err(), F_T_d_IM_sm_list[ixg][isg].ave(), F_T_d_IM_sm_list[ixg][isg].err()     } , path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
 
+      Print_To_File( Ens_tags, { F_T_d_MB_RE_sm_list[ixg][isg].ave(), F_T_d_MB_RE_sm_list[ixg][isg].err(), F_T_d_MB_IM_sm_list[ixg][isg].ave(), F_T_d_MB_IM_sm_list[ixg][isg].err()     } , path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_MB_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+
 
     }
     }
@@ -1373,24 +1445,44 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       F_T_u_VMD_spectre_per_ens.distr_list.push_back( F_T_u_VMD_spectre_list[ixg].distr_list[iens]);
 
       distr_t_list F_T_d_RE_sm_per_ens_per_kin, F_T_d_IM_sm_per_ens_per_kin;
+      distr_t_list F_T_d_MB_RE_sm_per_ens_per_kin, F_T_d_MB_IM_sm_per_ens_per_kin;
+      
       distr_t_list F_T_d_RE_VMD_sm_per_ens_per_kin, F_T_d_IM_VMD_sm_per_ens_per_kin;
+      distr_t_list F_T_d_MB_RE_VMD_sm_per_ens_per_kin, F_T_d_MB_IM_VMD_sm_per_ens_per_kin;
+      
       distr_t_list F_T_d_RE_VMD_II_state_sm_per_ens_per_kin, F_T_d_IM_VMD_II_state_sm_per_ens_per_kin;
+      distr_t_list F_T_d_MB_RE_VMD_II_state_sm_per_ens_per_kin, F_T_d_MB_IM_VMD_II_state_sm_per_ens_per_kin;
+      
       distr_t_list F_T_d_RE_VMD_III_state_sm_per_ens_per_kin, F_T_d_IM_VMD_III_state_sm_per_ens_per_kin;
+      distr_t_list F_T_d_MB_RE_VMD_III_state_sm_per_ens_per_kin, F_T_d_MB_IM_VMD_III_state_sm_per_ens_per_kin;
+       
       
       if(!Skip_spectral_reconstruction_07) {
 	for(int iss=0; iss<(signed)sigmas_07_w0.size(); iss++) {
 	  F_T_d_RE_VMD_sm_per_ens_per_kin.distr_list.push_back( F_T_d_RE_VMD_sm_list[ixg][iss].distr_list[iens]);
 	  F_T_d_IM_VMD_sm_per_ens_per_kin.distr_list.push_back( F_T_d_IM_VMD_sm_list[ixg][iss].distr_list[iens]);
 
+	  F_T_d_MB_RE_VMD_sm_per_ens_per_kin.distr_list.push_back( F_T_d_MB_RE_VMD_sm_list[ixg][iss].distr_list[iens]);
+	  F_T_d_MB_IM_VMD_sm_per_ens_per_kin.distr_list.push_back( F_T_d_MB_IM_VMD_sm_list[ixg][iss].distr_list[iens]);
+
 	  F_T_d_RE_VMD_II_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_RE_VMD_II_state_sm_list[ixg][iss].distr_list[iens]);
 	  F_T_d_IM_VMD_II_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_IM_VMD_II_state_sm_list[ixg][iss].distr_list[iens]);
 
+	  F_T_d_MB_RE_VMD_II_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_MB_RE_VMD_II_state_sm_list[ixg][iss].distr_list[iens]);
+	  F_T_d_MB_IM_VMD_II_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_MB_IM_VMD_II_state_sm_list[ixg][iss].distr_list[iens]);
+
 	  F_T_d_RE_VMD_III_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_RE_VMD_III_state_sm_list[ixg][iss].distr_list[iens]);
 	  F_T_d_IM_VMD_III_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_IM_VMD_III_state_sm_list[ixg][iss].distr_list[iens]);
+
+	  F_T_d_MB_RE_VMD_III_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_MB_RE_VMD_III_state_sm_list[ixg][iss].distr_list[iens]);
+	  F_T_d_MB_IM_VMD_III_state_sm_per_ens_per_kin.distr_list.push_back( F_T_d_MB_IM_VMD_III_state_sm_list[ixg][iss].distr_list[iens]);
 	}
 	for(int isg=0;isg<(signed)sigmas_07.size(); isg++) {
 	  F_T_d_RE_sm_per_ens_per_kin.distr_list.push_back( F_T_d_RE_sm_list[ixg][isg].distr_list[iens]);
 	  F_T_d_IM_sm_per_ens_per_kin.distr_list.push_back( F_T_d_IM_sm_list[ixg][isg].distr_list[iens]);
+
+	  F_T_d_MB_RE_sm_per_ens_per_kin.distr_list.push_back( F_T_d_MB_RE_sm_list[ixg][isg].distr_list[iens]);
+	  F_T_d_MB_IM_sm_per_ens_per_kin.distr_list.push_back( F_T_d_MB_IM_sm_list[ixg][isg].distr_list[iens]);
 	}
 	
       Print_To_File( {}, {sigmas_07, F_T_d_RE_sm_per_ens_per_kin.ave(), F_T_d_RE_sm_per_ens_per_kin.err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
@@ -1399,6 +1491,15 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       Print_To_File( {}, {sigmas_07_w0, F_T_d_RE_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_RE_VMD_III_state_sm_per_ens_per_kin.err(), F_T_d_IM_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_IM_VMD_III_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_III_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
       Print_To_File( {}, {sigmas_07, (F_T_d_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+ F_T_d_I_per_ens[ixg]).ave(), (F_T_d_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+F_T_d_I_per_ens[ixg]).err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
       Print_To_File( {}, {sigmas_07, (F_T_d_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).ave(), (F_T_d_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+
+
+
+      Print_To_File( {}, {sigmas_07, F_T_d_MB_RE_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_sm_per_ens_per_kin.err(), F_T_d_MB_IM_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      Print_To_File( {}, {sigmas_07_w0, F_T_d_MB_RE_VMD_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_VMD_sm_per_ens_per_kin.err(), F_T_d_MB_IM_VMD_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_VMD_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      Print_To_File( {}, {sigmas_07_w0, F_T_d_MB_RE_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_VMD_II_state_sm_per_ens_per_kin.err(), F_T_d_MB_IM_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_VMD_II_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_MB_II_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      Print_To_File( {}, {sigmas_07_w0, F_T_d_MB_RE_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_VMD_III_state_sm_per_ens_per_kin.err(), F_T_d_MB_IM_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_VMD_III_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_MB_III_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      Print_To_File( {}, {sigmas_07, (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+ F_T_d_I_per_ens[ixg]).ave(), (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+F_T_d_I_per_ens[ixg]).err(), F_T_d_MB_IM_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_sm_per_ens_per_kin.err()}, path_out+"/FF/"+TAG_CURR+preco_tag+"F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+      Print_To_File( {}, {sigmas_07, (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).ave(), (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).err(), F_T_d_MB_IM_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d/"+TAG_CURR+preco_tag+"F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
       
       }
     }
@@ -1422,16 +1523,25 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     for(int isg=0;isg<(signed)sigmas_07.size(); isg++) {
 
       distr_t_list F_T_d_RE_sm_per_ens_per_sigma, F_T_d_IM_sm_per_ens_per_sigma;
+      distr_t_list F_T_d_MB_RE_sm_per_ens_per_sigma, F_T_d_MB_IM_sm_per_ens_per_sigma;
       
        for(int ixg=0;ixg<n_xg;ixg++) {
 	 F_T_d_RE_sm_per_ens_per_sigma.distr_list.push_back( F_T_d_RE_sm_list[ixg][isg].distr_list[iens]);
 	 F_T_d_IM_sm_per_ens_per_sigma.distr_list.push_back( F_T_d_IM_sm_list[ixg][isg].distr_list[iens]);
+
+	 F_T_d_MB_RE_sm_per_ens_per_sigma.distr_list.push_back( F_T_d_MB_RE_sm_list[ixg][isg].distr_list[iens]);
+	 F_T_d_MB_IM_sm_per_ens_per_sigma.distr_list.push_back( F_T_d_MB_IM_sm_list[ixg][isg].distr_list[iens]);
        }
 
        Print_To_File( {}, {xg_list.ave(), F_T_d_RE_sm_per_ens_per_sigma.ave(), F_T_d_RE_sm_per_ens_per_sigma.err(), F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
        Print_To_File( {}, {xg_list.ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).err(),  F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
        
        Print_To_File( {}, {xg_list.ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).err(),  F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
+
+        Print_To_File( {}, {xg_list.ave(), F_T_d_MB_RE_sm_per_ens_per_sigma.ave(), F_T_d_MB_RE_sm_per_ens_per_sigma.err(), F_T_d_MB_IM_sm_per_ens_per_sigma.ave(), F_T_d_MB_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_MB_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
+       Print_To_File( {}, {xg_list.ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).err(),  F_T_d_MB_IM_sm_per_ens_per_sigma.ave(), F_T_d_MB_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF/"+TAG_CURR+preco_tag+"F_MB_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
+       
+       Print_To_File( {}, {xg_list.ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).err(),  F_T_d_MB_IM_sm_per_ens_per_sigma.ave(), F_T_d_MB_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d/"+TAG_CURR+preco_tag+"F_MB_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
        
        
     }

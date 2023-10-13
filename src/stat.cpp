@@ -885,10 +885,26 @@ distr_t Get_id_jack_distr(int N) {
   return id_jack_distr;
 }
 
+distr_t Get_id_distr(int N, bool UseJack) {
+
+
+  distr_t id_jack_distr(UseJack);
+
+  for(int i=0;i<N;i++) id_jack_distr.distr.push_back(1);
+
+  return id_jack_distr;
+}
+
 
 distr_t_list Get_id_jack_distr_list(int size, int N) {
   distr_t_list return_distr(1);
   for(int i=0; i<size;i++) return_distr.distr_list.push_back( Get_id_jack_distr(N));
+  return return_distr;
+}
+
+distr_t_list Get_id_distr_list(int size, int N, bool UseJack) {
+  distr_t_list return_distr(UseJack);
+  for(int i=0; i<size;i++) return_distr.distr_list.push_back( Get_id_distr(N,UseJack));
   return return_distr;
 }
 

@@ -65,6 +65,7 @@
 #include <gsl/gsl_deriv.h>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_errno.h>
+#include <gsl/gsl_sf.h>
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 #include <boost/math/quadrature/naive_monte_carlo.hpp>
 #include <boost/math/differentiation/finite_difference.hpp>
@@ -168,7 +169,8 @@ double Root_Brent_sinh(double R, int nt, int NT);
 double DoConstantFit(Vfloat &data, Vfloat &err);
 double quad_interpolator(double y1, double y2, double y3, double Dx1, double Dx2, double Dx3, double Dx);
 void Print_To_File(const vector<string>& row_id, const VVfloat &data, string Path, string MODE, string Header);
-double Get_4l_alpha_s(double Q, double Nf, double Lambda=0.340);
+double Get_4l_alpha_s(double Q, double Nf, double Lambda = 0.340);
+double Get_3l_alpha_s(double Q, double Nf, double Lambda=0.340);
 double Get_2l_alpha_s( double Q, double Nf, double Lambda=0.340);
 void Print_4l_alpha_s();
 double m_MS_bar_m( double mu, double Nf, double Lambda, double m );

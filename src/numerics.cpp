@@ -541,20 +541,44 @@ void debug_loop()
 }
 
 
-double Get_2l_alpha_s( double Q, double Nf, double Lambda) {
+double Get_2l_alpha_s( double Q, double Nf, double Lambda) { //2loops
 
   double B0= 11.0 -(2.0/3.0)*Nf;
   double B1= 102.0 - (38.0/3)*Nf;
   double Q2= pow(Q,2);
   double L2= pow(Lambda,2);
-    return (4*M_PI/(B0*log(Q2/L2)))*( 1.0 - (B1/pow(B0,2))*log( fabs(log(Q2/L2)) )/log(Q2/L2));
+  return (4*M_PI/(B0*log(Q2/L2)))*( 1.0 - (B1/pow(B0,2))*log( fabs(log(Q2/L2)) )/log(Q2/L2));
   
 }
 
 
+double Get_3l_alpha_s( double Q, double Nf, double Lambda) { //3loop alpha 
+
+ 
+  double B0= (33.0-2.0*Nf)/(12.0*M_PI);
+  double B1= (153.0 - 19*Nf)/(24.0*M_PI*M_PI);
+  double B2= (2857.0 -5033.0*Nf/9.0 + 325.0*Nf*Nf/27.0)/(128.0*pow(M_PI,3));
+  double B3= 0.0;
+  double B4= 0.0;
+  double t=log(Q*Q/(Lambda*Lambda));
+  double l=log(t);
+ 
+  double ret = (1.0/(B0*t))*( 1 - B1*l/(B0*B0*t) + (pow(B1,2)*(pow(l,2) -l -1.0) + B0*B2)/(pow(B0,4)*pow(t,2)));
+  
+  ret = ret + (1.0/(B0*t))*(  (pow(B1,3)*(-2*pow(l,3)+5*pow(l,2)+ 4.0*l -1) - 6.0*B0*B2*B1*l + B0*B0*B3)/(2.0*pow(B0,6)*pow(t,3)));
+  
+  ret = ret + (1.0/(B0*t))*( (18.0*B0*B2*pow(B1,2)*(2*l*l -l -1.0) + pow(B1,4)*(6*pow(l,4) -26*pow(l,3) -9*l*l + 24*l + 7.0))/(6.0*pow(B0,8)*pow(t,4)));
+  
+  ret = ret + (1.0/(B0*t))*( ( -pow(B0,2)*B3*B1*(12*l+1) + 2*pow(B0,2)*5*pow(B2,2))/(6*pow(B0,8)*pow(t,4)));
+
+  ret = ret + (1.0/(B0*t))*( 2*pow(B0,2)*B0*B4)/(6*pow(B0,8)*pow(t,4));
+
+  return ret;
+
+}
 
 
-double Get_4l_alpha_s( double Q, double Nf, double Lambda) { //4loop alpha 
+double Get_4l_alpha_s( double Q, double Nf, double Lambda) { //5loop alpha 
 
   double zeta_3 = riemann_zeta(3);
   double zeta_4 = riemann_zeta(4);
@@ -580,8 +604,6 @@ double Get_4l_alpha_s( double Q, double Nf, double Lambda) { //4loop alpha
   ret = ret + (1.0/(B0*t))*( 2*pow(B0,2)*B0*B4)/(6*pow(B0,8)*pow(t,4));
 
   return ret;
-
-
 
 }
 
