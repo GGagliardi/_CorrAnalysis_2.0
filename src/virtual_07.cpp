@@ -7,11 +7,11 @@ using namespace std;
 
 bool verbose_lev_07=1;
 //Vfloat sigmas_07({1.5, 1.25, 1.0, 0.8, 0.6, 0.5, 0.4, 0.3}); // sigma in GeV
-Vfloat sigmas_07({1.0, 1.25, 1.5, 1.75, 2,2.25, 2.5, 2.75, 3.0});
+Vfloat sigmas_07({1.0, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3.0});
 Vfloat sigmas_07_w0({0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29,  0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0,2.25,2.5,2.75,3.0});
-int prec_07=90;
+int prec_07=128;
 const string MODE_FF="TANT";
-const bool Skip_spectral_reconstruction_07 = false;
+const bool Skip_spectral_reconstruction_07 = true;
 const bool virtuality_scan = false;
 const bool Use_preconditioning = true;
 const string  preco_tag= (Use_preconditioning)?"prec_":"";
@@ -64,6 +64,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
   vector<vector<vector<data_t>>> C_B_u_data_std(size_mu_nu), C_B_d_data_std(size_mu_nu);
   vector<vector<vector<data_t>>> C_T_u_data_std(size_mu_nu), C_T_d_data_std(size_mu_nu);
+
 
 
   data_t data_2pts_SM, data_2pts_SMSM;
@@ -197,6 +198,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
   //resample RCs
   distr_t ZT_A(UseJack), ZT_B(UseJack), ZT_C(UseJack), ZT_D(UseJack);
+  distr_t ZT_A_boot(0), ZT_B_boot(0), ZT_C_boot(0), ZT_D_boot(0);
   distr_t a_A(UseJack), a_B(UseJack), a_C(UseJack), a_D(UseJack);
   distr_t ZV_A(UseJack), ZV_B(UseJack), ZV_C(UseJack), ZV_D(UseJack);
 
@@ -227,6 +229,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     ZT_C.distr.push_back( L_info_C.ZT_RI2 + GM_07()*L_info_C.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
     ZT_D.distr.push_back( L_info_D.ZT_RI2 + GM_07()*L_info_D.ZT_RI2_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
 
+   
+
        
     ZV_A.distr.push_back( L_info_A.Zv_WI_strange + GM_07()*L_info_A.Zv_WI_strange_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
     ZV_B.distr.push_back( L_info_B.Zv_WI_strange + GM_07()*L_info_B.Zv_WI_strange_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
@@ -234,6 +238,15 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     ZV_D.distr.push_back( L_info_D.Zv_WI_strange + GM_07()*L_info_D.Zv_WI_strange_err/((UseJack==true)?sqrt(Njacks -1.0):1.0));
     
     
+  }
+
+  for(int iboot=0;iboot<1000;iboot++) {
+
+    ZT_A_boot.distr.push_back( L_info_A.ZT_RI2 + GM_07()*L_info_A.ZT_RI2_err);
+    ZT_B_boot.distr.push_back( L_info_B.ZT_RI2 + GM_07()*L_info_B.ZT_RI2_err);
+    ZT_C_boot.distr.push_back( L_info_C.ZT_RI2 + GM_07()*L_info_C.ZT_RI2_err);
+    ZT_D_boot.distr.push_back( L_info_D.ZT_RI2 + GM_07()*L_info_D.ZT_RI2_err);
+
   }
 
   cout<<"a_A: "<<a_A.ave()/fmTGeV << " +- "<<a_A.err()/fmTGeV<<endl;
@@ -261,6 +274,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   Vint Nts=C_B_d_data[1][1][0].nrows;
 
   distr_t_list xg_list(UseJack);
+  for(int ixg=0;ixg<4;ixg++) xg_list.distr_list.push_back( Get_id_distr(Njacks, UseJack)*(ixg+1)*0.1);
   vector<distr_t_list> F_T_u_list;
   vector<distr_t_list> F_T_d_I_list;
   vector<distr_t_list> FV_T_u_real_list;
@@ -356,10 +370,24 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
    auto K_RE_distr= [](const distr_t &E, const distr_t &m, double s) -> distr_t {
 
      distr_t ret(1);
-     for(int ijack=0;ijack<E.size();ijack++) {
-     double x= (E.distr[ijack]-m.distr[ijack]);
-     ret.distr.push_back(  ( cos(s)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(s)*exp(-x)));
+     if(SM_TYPE=="FF_Exp")  {
+       for(int ijack=0;ijack<E.size();ijack++) {
+	 double x= (E.distr[ijack]-m.distr[ijack]);
+	 ret.distr.push_back( 2*sinh(x)*cos(s)/(cosh(2*x) - cos(2*s)));
+	 //ret.distr.push_back(  ( cos(s)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(s)*exp(-x)));
+       }
      }
+
+     
+     else if(SM_TYPE=="FF_Gauss") {
+       for(int ijack=0;ijack<E.size();ijack++) {
+	 double x= (E.distr[ijack]-m.distr[ijack]);
+	 ret.distr.push_back(  ( cos(s)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(s)*exp(-x)));
+	 //ret.distr.push_back(sqrt(2)*DawsonF(PrecFloat(x/(sqrt(2.0)*s))).get()/s);
+       }
+     }
+     else crash("SM_TYPE: "+SM_TYPE+" not yet implemented");
+     
      return ret;
   
   };
@@ -368,11 +396,21 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 
        distr_t ret(1);
-       for(int ijack=0;ijack<E.size();ijack++) {
-	 double x= (E.distr[ijack]-m.distr[ijack]);
-	 ret.distr.push_back( M_PI*Get_exact_gauss( E.distr[ijack], m.distr[ijack],  s, 0.0 ));
-	 //ret.distr.push_back(exp(-x)*sin(s)/( 1 + exp(-2*x) -2*cos(s)*exp(-x)));
+       if(SM_TYPE=="FF_Exp") {
+	 for(int ijack=0;ijack<E.size();ijack++) {
+	   double x= (E.distr[ijack]-m.distr[ijack]);
+	   ret.distr.push_back ( 2*cosh(x)*sin(s)/(cosh(2*x) - cos(2*s)) );
+	   //ret.distr.push_back(exp(-x)*sin(s)/( 1 + exp(-2*x) -2*cos(s)*exp(-x)));
+	 }
        }
+       else if(SM_TYPE=="FF_Gauss") {
+	 for(int ijack=0;ijack<E.size();ijack++) {
+	   ret.distr.push_back( M_PI*Get_exact_gauss( E.distr[ijack], m.distr[ijack],  s, 0.0 ));
+	 }
+       }
+       else crash("SM_TYPE: "+SM_TYPE+" not yet implemented");
+
+        
        return ret;
        
   };
@@ -384,7 +422,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
     if(SM_TYPE=="FF_Gauss") {
       PrecFloat x = (E-m)/(sqrt(PrecFloat(2))*s);
-      return sqrt(2)*DawsonF(x)/s;
+      return  cos(s/2)/(cosh(x)/sinh(x/2) - cos(s)/sinh(x/2));
+      //return ( cos(s)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(s)*exp(-x));
+      //return sqrt(2)*DawsonF(x)/s;
     }
 
 
@@ -420,9 +460,12 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     if(SM_TYPE=="FF_Exp") {
       
       PrecFloat x= (E-m);
+
+      PrecFloat cosh_ov_sinh_half= (exp(x) + exp(-3*x))/(1-exp(-2*x)); 
+
+      return  2*cos(s)/(cosh_ov_sinh_half - cos(2*s)/sinh(x));
       
-      
-      return ( cos(s)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(s)*exp(-x));
+      //return ( cos(s)*exp(-x)-exp(-2*x))/( 1 + exp(-2*x) -2*cos(s)*exp(-x));
     }
     
     if(SM_TYPE=="FF_Sinh_half") {
@@ -459,15 +502,15 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   //smeared kernel of the immaginary part
   auto K_IM = [](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
 
-    //if(SM_TYPE=="FF_Gauss") return precPi()*Get_exact_gauss(E, m, s, E0);
-    return precPi()*Get_exact_gauss(E, m, s, E0);
-    if(SM_TYPE=="FF_Gauss_Schwartz") return precPi()*Get_exact_gauss(E, m, s, E0);
-    if(SM_TYPE=="FF_Cauchy") {
+    if(SM_TYPE=="FF_Gauss") return precPi()*Get_exact_gauss(E, m, s, E0);
+    //return precPi()*Get_exact_gauss(E, m, s, E0);
+    else if(SM_TYPE=="FF_Gauss_Schwartz") return precPi()*Get_exact_gauss(E, m, s, E0);
+    else if(SM_TYPE=="FF_Cauchy") {
       PrecFloat t= (E-m);
       return s/( t*t + s*s);
     }
 
-    if(SM_TYPE=="FF_Exp") {
+    else if(SM_TYPE=="FF_Exp") {
 
       PrecFloat x= (E-m);
 
@@ -475,11 +518,15 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       
       //PrecFloat norm= PrecFloat(2)*phi/precPi() ;
 
-      return (exp(-x)*sin(s))/( 1 + exp(-2*x) -2*cos(s)*exp(-x));
+      PrecFloat cosh_ov_cosh_half= (exp(x) + exp(-3*x))/(1+exp(-2*x)); 
+
+      return 2*sin(s)/(cosh_ov_cosh_half - cos(2*s)/cosh(x));
+
+      //return (exp(-x)*sin(s))/( 1 + exp(-2*x) -2*cos(s)*exp(-x));
       
     }
     
-    if(SM_TYPE=="FF_Sinh_half") {
+    else if(SM_TYPE=="FF_Sinh_half") {
       
       PrecFloat x = (E-m);
       
@@ -487,22 +534,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
     }
     
-    
-    
-    PrecFloat norm;
-    if( s > 1) norm= PrecFloat(2)*log( s + sqrt( s*s -1))/sqrt(s*s -1);
-    else if(s==1) norm=PrecFloat(2);
-    else {
-      PrecFloat phi= abs(atan( sqrt( 1 - s*s)/s));
-      norm= PrecFloat(2)*phi/sqrt( 1 - s*s);
-    }
-    
-    norm /= precPi();
-    norm = 1/norm;
 
-    PrecFloat t = E-m;
-    PrecFloat x = sinh(t);
-    return norm*s/( pow(x,2) + pow(s,2));
+    return PrecFloat(0);
     
   };
   
@@ -513,7 +546,6 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   boost::filesystem::create_directory( path_out+"/covariance");
   boost::filesystem::create_directory( path_out+"/FF_d_I");
   boost::filesystem::create_directory( path_out+"/FF_d_II");
-  boost::filesystem::create_directory( path_out+"/FF_d_II/VMD_virt_scan");
   boost::filesystem::create_directory( path_out+"/FF_u");
   boost::filesystem::create_directory( path_out+"/FF_d");
   boost::filesystem::create_directory( path_out+"/FF");
@@ -528,6 +560,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     
     if(MESON=="B0s") {
       if(Ens_tags[iens] == "cB211b.072.64") {  t_07_s=25; t_07_s_HLT=14; t_07_c=25;    }
+      else if(Ens_tags[iens] == "cD211a.054.96") {  t_07_s=35; t_07_s_HLT=22; t_07_c=35;    }
       else crash("B0s-crash-virtual");
     }
     else if(MESON=="B1s") {
@@ -540,8 +573,14 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     }
     else crash("Meson: "+MESON+" not yet simulated");
 
-    boost::filesystem::create_directory( path_out+"/"+data_2pts_SM.Tag[iens]);
     boost::filesystem::create_directory( path_out+"/corr");
+    boost::filesystem::create_directory( path_out+"/mass/"+data_2pts_SM.Tag[iens]);
+    boost::filesystem::create_directory( path_out+"/FF_d_I/"+data_2pts_SM.Tag[iens]);
+    boost::filesystem::create_directory( path_out+"/FF_d_II/"+data_2pts_SM.Tag[iens]);
+    boost::filesystem::create_directory( path_out+"/FF_d_II/"+data_2pts_SM.Tag[iens]+"/VMD_virt_scan");
+    boost::filesystem::create_directory( path_out+"/FF_u/"+data_2pts_SM.Tag[iens]);
+    boost::filesystem::create_directory( path_out+"/FF_d/"+data_2pts_SM.Tag[iens]);
+    boost::filesystem::create_directory( path_out+"/FF/"+data_2pts_SM.Tag[iens]);
     
     CorrAnalysis Corr(UseJack,Njacks,1000);
     Corr.Nt = Nts[iens];
@@ -567,10 +606,11 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     //RCs
     
     distr_t ZT, a_distr, ZV;
-    if(data_2pts_SM.Tag[iens].substr(1,1)=="A") { ZT=ZT_A; ZV=ZV_A; a_distr=a_A;}
-    else if(data_2pts_SM.Tag[iens].substr(1,1)=="B") { ZT= ZT_B; ZV=ZV_B; a_distr=a_B;}
-    else if(data_2pts_SM.Tag[iens].substr(1,1)=="C") { ZT= ZT_C; ZV=ZV_C; a_distr=a_C;}
-    else if(data_2pts_SM.Tag[iens].substr(1,1)=="D") { ZT= ZT_D; ZV=ZV_D; a_distr=a_D;}
+    distr_t ZT_boot;
+    if(data_2pts_SM.Tag[iens].substr(1,1)=="A") { ZT=ZT_A; ZV=ZV_A; ZT_boot = ZT_A_boot; a_distr=a_A;}
+    else if(data_2pts_SM.Tag[iens].substr(1,1)=="B") { ZT= ZT_B; ZV=ZV_B; ZT_boot = ZT_B_boot; a_distr=a_B;}
+    else if(data_2pts_SM.Tag[iens].substr(1,1)=="C") { ZT= ZT_C; ZV=ZV_C; ZT_boot = ZT_C_boot; a_distr=a_C;}
+    else if(data_2pts_SM.Tag[iens].substr(1,1)=="D") { ZT= ZT_D; ZV=ZV_D; ZT_boot = ZT_D_boot; a_distr=a_D;}
     else crash("Ensemble: "+data_2pts_SM.Tag[iens]+" not recognised");
 
 
@@ -611,6 +651,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     }
     else crash("In fixing [Tmin, Tmax] for smeared MP, Ensemble: "+data_2pts_SM.Tag[iens]+" not recognized");
 
+    Corr_boot.Tmin= Corr.Tmin; Corr_boot.Tmax=Corr.Tmax;
+
 
     //mass and decay constants
     distr_t_list pt2_distr_SM= Corr.corr_t(data_2pts_SM.col(0)[iens], path_out+"/corr_2pts/"+data_2pts_SM.Tag[iens]+"/corr_2pt_SM.dat");
@@ -635,6 +677,10 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
     distr_t M_P_boot = 0.5*( Corr_boot.Fit_distr( eff_mass_SMSM_boot) + Corr_boot.Fit_distr(eff_mass_SM_boot));
 
+  
+    distr_t mel_SMSM_boot= Corr_boot.Fit_distr(Corr_boot.mel_ov_mass_t(pt2_distr_SMSM_boot, ""))/2.0;
+  
+
 
     cout<<"MP: "<<(M_P/a_distr).ave()<<" +- "<<(M_P/a_distr).err()<<endl;
     cout<<"FP_SM: "<<(FP_SM/a_distr).ave()<<" +- "<<(FP_SM/a_distr).err()<<endl;
@@ -654,7 +700,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       distr_t xg= pt3_mom_07.x_gamma(M_P);
       distr_t xg_boot= pt3_mom_07.x_gamma(M_P_boot);
       distr_t Eg_MB_off = MBs*a_distr*(1.0 -xg/2.0);
-      xg_list.distr_list.push_back(xg);
+      //xg_list.distr_list.push_back(xg);
 
       
     
@@ -679,12 +725,12 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       distr_t_list T_d_std = 0.5*QD*Corr.corr_t(summ_master(C_T_d_data_std[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data_std[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_T_d_xg_"+to_string(ixg));
       
       distr_t_list T_d = 0.5*QD*Corr.corr_t(summ_master(C_T_d_data[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data[2][1][ixg].col(Im_Re)[iens], -1.0)), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_T_d_sp_xg_"+to_string(ixg));
-      distr_t_list T_d_boot= 0.5*QD*Corr_boot.corr_t(summ_master(C_T_d_data[2][1][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data[2][1][ixg].col(Im_Re)[iens], -1.0)),"");
+      distr_t_list T_d_boot= 0.5*QD*Corr_boot.corr_t(summ_master(C_T_d_data[1][2][ixg].col(Im_Re)[iens], Multiply_Vvector_by_scalar(C_T_d_data[2][1][ixg].col(Im_Re)[iens], -1.0)),"");
 
       Im_Re=0;
 
       distr_t_list B_u_std = 0.5*QU*Corr.corr_t(summ_master(C_B_u_data_std[1][1][ixg].col(Im_Re)[iens], C_B_u_data_std[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_u_xg_"+to_string(ixg));
-      distr_t_list B_d_std = 0.5*QD*Corr.corr_t(summ_master(C_B_d_data_std[1][1][ixg].col(Im_Re)[iens], C_B_d_data_std[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_u_xg_"+to_string(ixg));
+      distr_t_list B_d_std = 0.5*QD*Corr.corr_t(summ_master(C_B_d_data_std[1][1][ixg].col(Im_Re)[iens], C_B_d_data_std[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_d_xg_"+to_string(ixg));
       distr_t_list B_d = 0.5*QD*Corr.corr_t(summ_master(C_B_d_data[1][1][ixg].col(Im_Re)[iens], C_B_d_data[2][2][ixg].col(Im_Re)[iens]), path_out+"/corr_3pts/"+TAG_CURR+""+data_2pts_SM.Tag[iens]+"_B_d_sp_xg_"+to_string(ixg));
       distr_t_list B_d_boot= 0.5*QD*Corr_boot.corr_t(summ_master(C_B_d_data[1][1][ixg].col(Im_Re)[iens], C_B_d_data[2][2][ixg].col(Im_Re)[iens]),"");
 
@@ -701,24 +747,39 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       }
       CorrAnalysis Corr_VMD_anal(UseJack, Njacks,1000);
       if(MESON=="B0s") {
-	 Corr_VMD_anal.Tmin= 17;
-	 Corr_VMD_anal.Tmax= 30;
+	
+	if(Ens_tags[iens] == "cB211b.072.64") {
+	  Corr_VMD_anal.Tmin= 17;
+	  Corr_VMD_anal.Tmax= 30;
+	}
+	else if(Ens_tags[iens] == "cD211a.054.96") {
+	  Corr_VMD_anal.Tmin=21;
+	  Corr_VMD_anal.Tmax=35;
+	}
+	else crash("Ensemble: "+Ens_tags[iens]+" not yet implemented");
       }
       else if(MESON=="B1s") {
+	if(Ens_tags[iens] == "cB211b.072.64") {
 	Corr_VMD_anal.Tmin= 17;
 	Corr_VMD_anal.Tmax= 30;
+	}
+	else crash("Ensemble: "+Ens_tags[iens]+" not yet implemented");
       }
       else if(MESON=="B3s") {
-	 Corr_VMD_anal.Tmin= 17;
-	 Corr_VMD_anal.Tmax= 30;
+	if(Ens_tags[iens] == "cB211b.072.64") {
+	  Corr_VMD_anal.Tmin= 17;
+	  Corr_VMD_anal.Tmax= 30;
+	}
+	else crash("Ensemble: "+Ens_tags[iens]+" not yet implemented");
       }
       else crash("Meson: "+MESON+" not yet implemented");
+      
       Corr_VMD_anal.Nt=2*(Corr_Tu_2TO.size()-1);
       distr_t_list Corr_Tu_2TO_symm= Corr_Tu_2TO;
       for(int t=Corr_VMD_anal.Nt/2 +1;t<Corr_VMD_anal.Nt;t++) Corr_Tu_2TO_symm.distr_list.push_back( Corr_Tu_2TO.distr_list[Corr_VMD_anal.Nt -t]);
       distr_t_list eff_M_Tu_distr= Corr_VMD_anal.effective_mass_t(Corr_Tu_2TO_symm, "" );
       distr_t eff_M_Tu= Corr_VMD_anal.Fit_distr(eff_M_Tu_distr)/a_distr;
-      Print_To_File({}, {eff_M_Tu_distr.ave(), eff_M_Tu_distr.err()}, path_out+"/mass/"+TAG_CURR+"Vb_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File({}, {eff_M_Tu_distr.ave(), eff_M_Tu_distr.err()}, path_out+"/mass/"+Ens_tags[iens]+"/"+TAG_CURR+"Vb_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
       distr_t Ups_MT = Corr_VMD_anal.Fit_distr( Corr_Tu_2TO_symm*(EXPT_DL(eff_M_Tu_distr)));
       F_T_u_VMD_spectre_list[ixg].distr_list.push_back( Ups_MT*ZT*(1.0/(mel_SMSM*Eg))*EXP_D( M_P*t_07_c)*K_RE_distr( eff_M_Tu*a_distr, Eg_off, 1e-5));
       distr_t_list Corr_F_T_u_VMD = Ups_MT*EXPT_D(-1.0*eff_M_Tu*a_distr, Corr_Tu_2TO.size());
@@ -727,6 +788,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	F_T_u_VMD_distr = F_T_u_VMD_distr + Corr_F_T_u_VMD[ty]*EXP_D(ty*Eg_off);
       }
       F_T_u_VMD_list[ixg].distr_list.push_back( F_T_u_VMD_distr*ZT*(1.0/(mel_SMSM*Eg))*EXP_D( M_P*t_07_c));
+
+
+      
       //#######################################################
       
       
@@ -779,9 +843,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 
 
-	FA_T_d_real_ty.distr_list.push_back( ( B_d_std.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real)    )      ;
-	FA_T_d_sp_real_ty.distr_list.push_back( ( B_d.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
-	FA_T_u_real_ty.distr_list.push_back(  ( B_u_std.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_u_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
+	FA_T_d_real_ty.distr_list.push_back( ( B_d_std.distr_list[ty]*(1.0- 0.0*xg/2.0)   + 0.0*sign_kz*T_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real)    )      ;
+	FA_T_d_sp_real_ty.distr_list.push_back( ( B_d.distr_list[ty]*(1.0- 0.0*xg/2.0)   + 0.0*sign_kz*T_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
+	FA_T_u_real_ty.distr_list.push_back(  ( B_u_std.distr_list[ty]*(1.0- 0.0*xg/2.0)   + 0.0*sign_kz*T_u_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
 
 
 	FA_T_d_real_ty_psum.distr_list.push_back( ((ty==0)?FA_T_d_real_ty[ty]:(FA_T_d_real_ty_psum[ty-1] + FA_T_d_real_ty[ty])));
@@ -790,9 +854,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 
 
-	FV_T_d_real_ty.distr_list.push_back( (sign_kz*T_d_std.distr_list[ty]*(1.0- xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
-	FV_T_d_sp_real_ty.distr_list.push_back( (sign_kz*T_d.distr_list[ty]*(1.0- xg/2.0)   + B_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
-	FV_T_u_real_ty.distr_list.push_back(  (sign_kz*T_u_std.distr_list[ty]*(1.0- xg/2.0)   + B_u_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
+	FV_T_d_real_ty.distr_list.push_back( (sign_kz*T_d_std.distr_list[ty]*(1.0- 0.0*xg/2.0)   + 0.0*B_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
+	FV_T_d_sp_real_ty.distr_list.push_back( (sign_kz*T_d.distr_list[ty]*(1.0- 0.0*xg/2.0)   + 0.0*B_d.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
+	FV_T_u_real_ty.distr_list.push_back(  (sign_kz*T_u_std.distr_list[ty]*(1.0- 0.0*xg/2.0)   + 0.0*B_u_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real));
 
 
 	FV_T_d_real_ty_psum.distr_list.push_back( ((ty==0)?FV_T_d_real_ty[ty]:(FV_T_d_real_ty_psum[ty-1] + FV_T_d_real_ty[ty])));
@@ -873,19 +937,26 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       FV_T_d_sp_real_list[ixg].distr_list.push_back( FV_T_d_sp_real);
       FA_T_d_sp_real_list[ixg].distr_list.push_back( FA_T_d_sp_real);
 
-
       //print to File ty analysis
-      Print_To_File( { }, { F_T_d_ty.ave(), F_T_d_ty.err(), F_T_d_ty_psum.ave(), F_T_d_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-      Print_To_File( { }, { F_T_d_sp_ty.ave(), F_T_d_sp_ty.err(), F_T_d_sp_ty_psum.ave(), F_T_d_sp_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"ty_analysis_sp_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-      Print_To_File( { }, { F_T_u_ty.ave(), F_T_u_ty.err(),  F_T_u_ty_psum.ave(), F_T_u_ty_psum.err() }, path_out+"/FF_u/"+TAG_CURR+"ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { F_T_d_ty.ave(), F_T_d_ty.err(), F_T_d_ty_psum.ave(), F_T_d_ty_psum.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { F_T_d_sp_ty.ave(), F_T_d_sp_ty.err(), F_T_d_sp_ty_psum.ave(), F_T_d_sp_ty_psum.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"ty_analysis_sp_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { F_T_u_ty.ave(), F_T_u_ty.err(),  F_T_u_ty_psum.ave(), F_T_u_ty_psum.err() }, path_out+"/FF_u/"+Ens_tags[iens]+"/"+TAG_CURR+"ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
 
-      Print_To_File( { }, { FA_T_d_real_ty.ave(), FA_T_d_real_ty.err(), FA_T_d_real_ty_psum.ave(), FA_T_d_real_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"TA_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-      Print_To_File( { }, { FA_T_d_sp_real_ty.ave(), FA_T_d_sp_real_ty.err(), FA_T_d_sp_real_ty_psum.ave(), FA_T_d_sp_real_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"TA_real_ty_analysis_sp_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-      Print_To_File( { }, { FA_T_u_real_ty.ave(), FA_T_u_real_ty.err(),  FA_T_u_real_ty_psum.ave(), FA_T_u_real_ty_psum.err() }, path_out+"/FF_u/"+TAG_CURR+"TA_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { FA_T_d_real_ty.ave(), FA_T_d_real_ty.err(), FA_T_d_real_ty_psum.ave(), FA_T_d_real_ty_psum.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"TA_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { FA_T_d_sp_real_ty.ave(), FA_T_d_sp_real_ty.err(), FA_T_d_sp_real_ty_psum.ave(), FA_T_d_sp_real_ty_psum.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"TA_real_ty_analysis_sp_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { FA_T_u_real_ty.ave(), FA_T_u_real_ty.err(),  FA_T_u_real_ty_psum.ave(), FA_T_u_real_ty_psum.err() }, path_out+"/FF_u/"+Ens_tags[iens]+"/"+TAG_CURR+"TA_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
 
-      Print_To_File( { }, { FV_T_d_real_ty.ave(), FV_T_d_real_ty.err(), FV_T_d_real_ty_psum.ave(), FV_T_d_real_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"TV_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-      Print_To_File( { }, { FV_T_d_sp_real_ty.ave(), FV_T_d_sp_real_ty.err(), FV_T_d_sp_real_ty_psum.ave(), FV_T_d_sp_real_ty_psum.err()}, path_out+"/FF_d/"+TAG_CURR+"TV_real_ty_analysis_sp_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-      Print_To_File( { }, { FV_T_u_real_ty.ave(), FV_T_u_real_ty.err(),  FV_T_u_real_ty_psum.ave(), FV_T_u_real_ty_psum.err() }, path_out+"/FF_u/"+TAG_CURR+"TV_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { FV_T_d_real_ty.ave(), FV_T_d_real_ty.err(), FV_T_d_real_ty_psum.ave(), FV_T_d_real_ty_psum.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"TV_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { FV_T_d_sp_real_ty.ave(), FV_T_d_sp_real_ty.err(), FV_T_d_sp_real_ty_psum.ave(), FV_T_d_sp_real_ty_psum.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"TV_real_ty_analysis_sp_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { FV_T_u_real_ty.ave(), FV_T_u_real_ty.err(),  FV_T_u_real_ty_psum.ave(), FV_T_u_real_ty_psum.err() }, path_out+"/FF_u/"+Ens_tags[iens]+"/"+TAG_CURR+"TV_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+
+
+      Print_To_File( { }, { (FA_T_d_real_ty+FA_T_u_real_ty).ave(), (FA_T_d_real_ty+FA_T_u_real_ty).err(), (FA_T_d_real_ty_psum+FA_T_u_real_ty_psum).ave(), (FA_T_d_real_ty_psum+FA_T_u_real_ty).err()}, path_out+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"TA_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File( { }, { (FV_T_d_real_ty+FV_T_u_real_ty).ave(), (FV_T_d_real_ty+FV_T_u_real_ty).err(), (FV_T_d_real_ty_psum+FV_T_u_real_ty_psum).ave(), (FV_T_d_real_ty_psum+FV_T_u_real_ty).err()}, path_out+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+"TV_real_ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+        
+    
+      
+   
 
    
             
@@ -905,40 +976,106 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	Corr_TV_real_boot.distr_list.push_back(   sign_kz*T_d_boot.distr_list[t]*(1 - xg_boot/2.0) + B_d_boot.distr_list[t]*(xg_boot/2.0));
       }
 
-      int tmax= Corr_T.size();
+  
 
+      cout<<"ZT: "<<ZT_boot.ave()<<" +- "<<ZT_boot.err()<<" [boot], "<<ZT.ave()<<" +- "<<ZT.err()<<" [jack]"<<endl;
+      cout<<"mel: "<<mel_SMSM_boot.ave()<<" +- "<<mel_SMSM_boot.err()<<" [boot], "<<mel_SMSM.ave()<<" +- "<<mel_SMSM.err()<<" [jack]"<<endl;
+      cout<<"M_P: "<<M_P_boot.ave()<<" +- "<<M_P_boot.err()<<" [boot], "<<M_P.ave()<<" +- "<<M_P.err()<<" [jack]"<<endl;
+      cout<<"xg: "<<xg_boot.ave()<<" +- "<<xg_boot.err()<<" [boot], "<<xg.ave()<<" +- "<<xg.err()<<" [jack]"<<endl;
+      cout<<"Exp: "<<EXP_D(M_P*t_07_s_HLT).ave()<<" +- "<<EXP_D(M_P*t_07_s_HLT).err()<<" [boot], "<<Exp(M_P*t_07_s_HLT).ave()<<" +- "<<Exp(M_P*t_07_s_HLT).err()<<" [jack]"<<endl;
+
+      
+      
+      cout<<"Exp(m*t)_boot: "<<EXP_D(M_P_boot*t_07_s_HLT).size()<<endl;
+
+      //rescale error of corr_boot
+
+    
+      distr_t FACT_boot= ZT_boot*(1.0/(mel_SMSM_boot*Eg))*EXP_D( M_P_boot*t_07_s_HLT)*xg_boot/2.0;
+      distr_t_list Corr_T_boot_to_print=FACT_boot*Corr_T_boot;
       distr_t FACT= ZT*(1.0/(mel_SMSM*Eg) )*Exp( M_P*t_07_s_HLT)*xg/2.0;
       distr_t FACT_real = ZT*(1.0/(mel_SMSM*Eg) )*Exp( M_P*t_07_s_HLT);
+
+      for(int t=t_07_s_HLT; t<= Corr.Nt/2; t++) {
+
+	Corr_T_boot_to_print.distr_list[t-t_07_s_HLT] = Corr_T_boot_to_print.ave(t-t_07_s_HLT) + (Corr_T_boot_to_print.distr_list[t-t_07_s_HLT] - Corr_T_boot_to_print.ave(t-t_07_s_HLT))*(FACT*Corr_T).err(t-t_07_s_HLT)/Corr_T_boot_to_print.err(t-t_07_s_HLT);
+
+	Corr_T_boot.distr_list[t-t_07_s_HLT] =  Corr_T_boot.ave(t-t_07_s_HLT) + (Corr_T_boot.distr_list[t-t_07_s_HLT] - Corr_T_boot.ave(t-t_07_s_HLT))*(Corr_T).err(t-t_07_s_HLT)/Corr_T_boot.err(t-t_07_s_HLT);
+	
+      }
+      
+      
+      
+
+   
+
+      //print correlator to file
+      boost::filesystem::create_directory("../Nazario_data_C_HLT");
+      ofstream Print_boot("../Nazario_data_C_HLT/C_mh_"+to_string_with_precision(M_P.ave(), 6)+"_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens]+".boot");
+      Print_boot.precision(10);
+      Print_boot<<"#Nconfs=1000     T="<<Corr.Nt/2 - t_07_s_HLT<<endl;
+      for(int iboot=0;iboot<1000;iboot++) {
+	for(int t=t_07_s_HLT;t<=Corr.Nt/2; t++) Print_boot<<Corr_T_boot_to_print.distr_list[t-t_07_s_HLT].distr[iboot]<<endl ;
+      }
+      Print_boot.close();
+
+      int tmax= Corr_T.size();
+
+     
+      Print_To_File({}, { (Corr_T*FACT).ave(),  (Corr_T*FACT).err(),  (Corr_T_boot_to_print).ave(),  (Corr_T_boot_to_print).err()},  path_out+"/corr_2pts/HLT_boot_jack_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "",""); 
 
       
       CorrAnalysis Corr_HLT(UseJack, Njacks,1000);
       CorrAnalysis Corr_HLT_boot(0, Njacks, 1000);
       if(MESON=="B0s") {
 	if(ixg==0) {
-	  Corr_HLT.Tmin= 14;
-	  Corr_HLT.Tmax= 25;
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 14;
+	    Corr_HLT.Tmax= 25;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin= 21;
+	    Corr_HLT.Tmax= 35;
+	  }
 	}
 	else if(ixg==1) {
-	  Corr_HLT.Tmin= 14;
-	  Corr_HLT.Tmax= 25;
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 14;
+	    Corr_HLT.Tmax= 25;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin= 21;
+	    Corr_HLT.Tmax= 34;
+	  }
 	}
 	else if(ixg==2) {
-	  Corr_HLT.Tmin= 13;
-	  Corr_HLT.Tmax= 19;
-
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 13;
+	    Corr_HLT.Tmax= 19;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin= 21;
+	    Corr_HLT.Tmax= 33;
+	  }
 	}
 	else if(ixg==3) {
-	  Corr_HLT.Tmin= 13;
-	  Corr_HLT.Tmax= 18;
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 13;
+	    Corr_HLT.Tmax= 18;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin= 21;
+	    Corr_HLT.Tmax= 31;
+	  }
+	  
 	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
-
+	
       }
       else if(MESON=="B1s") {
-	 
 	 if(ixg==0) {
-	  Corr_HLT.Tmin= 17;
-	  Corr_HLT.Tmax= 21;
+	   Corr_HLT.Tmin= 17;
+	   Corr_HLT.Tmax= 21;
 	 }
 	 else if(ixg==1) {
 	   Corr_HLT.Tmin= 17;
@@ -958,8 +1095,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       else if(MESON=="B3s") {
 	
 	 if(ixg==0) {
-	  Corr_HLT.Tmin= 13;
-	  Corr_HLT.Tmax= 18;
+	   Corr_HLT.Tmin= 13;
+	   Corr_HLT.Tmax= 18;
 	 }
 	 else if(ixg==1) {
 	   Corr_HLT.Tmin= 14;
@@ -995,9 +1132,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       distr_t eff_M_Td= Corr_HLT.Fit_distr(eff_M_Td_distr)/a_distr;
       distr_t eff_M_Td_boot= Corr_HLT.Fit_distr(eff_M_Td_boot_distr);
       double Mphi_motion= sqrt( Mphi*Mphi + pow(kz/a_distr.ave(),2));
-      Print_To_File({}, {eff_M_Td_distr.ave(), eff_M_Td_distr.err()}, path_out+"/mass/"+TAG_CURR+"Vs_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File({}, {eff_M_Td_distr.ave(), eff_M_Td_distr.err()}, path_out+"/mass/"+Ens_tags[iens]+"/"+TAG_CURR+"Vs_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
      
-      Print_To_File({}, { (Corr_T*FACT).ave(), (Corr_T*FACT).err() }, path_out+"/corr_2pts/"+TAG_CURR+"HLT_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File({}, { (Corr_T*FACT).ave(), (Corr_T*FACT).err() }, path_out+"/corr_2pts/"+TAG_CURR+"HLT_"+Ens_tags[iens]+"_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
 
       cout<<"eff_M_T: "<<eff_M_Td.ave()<<" +- "<<eff_M_Td.err()<<" expected: "<<Mphi_motion<<endl;
 
@@ -1015,12 +1152,15 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       distr_t_list Corr_T_VMD = fake_distr_with_hole*phi_MT*EXPT_D(-1.0*eff_M_Td*a_distr, Corr_T.size());
       distr_t_list Corr_T_VMD_boot = fake_boot_distr_with_hole*phi_MT_boot*EXPT_D(-1.0*eff_M_Td_boot, Corr_T_boot.size());
 
+     
+      for(int t=1; t < Corr_T_VMD_boot.size(); t++) Corr_T_VMD_boot.distr_list[t] = Corr_T_VMD_boot.ave(t) + (Corr_T_VMD_boot.distr_list[t] - Corr_T_VMD_boot.ave(t))*Corr_T_VMD.err(t)/Corr_T_VMD_boot.err(t);
+     
            
       distr_t_list Corr_T_sub = Corr_T - Corr_T_VMD;
       distr_t_list Corr_T_boot_sub = Corr_T_boot - Corr_T_VMD_boot;
 
 
-      cout<<"PRINTING VMD PREDICTION FOR THE COUPLING for meson: "<<MESON+" xg: "<<xg_list.ave(ixg)<<endl;
+      cout<<"PRINTING VMD PREDICTION FOR THE COUPLING ofr meson: "<<MESON+" xg: "<<xg_list.ave(ixg)<<" Ensemble: "<<Ens_tags[iens]<<endl;
       cout<<"g+ * f_V : "<<(FACT*phi_MT/a_distr).ave()<<" +- " <<(FACT*phi_MT/a_distr).err()<<endl;
       cout<<"##############################################################################"<<endl;
 
@@ -1038,26 +1178,50 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	Corr_T_ary_symm.distr_list.push_back( Corr_T_sub.distr_list[Corr_HLT.Nt -t]);
 	Corr_T_ary_symm_boot.distr_list.push_back( Corr_T_boot_sub.distr_list[Corr_HLT.Nt -t]);
       }
-      distr_t_list eff_M_prime_Td_distr= Corr_HLT.effective_mass_t( Corr_T_ary_symm, path_out+"/mass/"+TAG_CURR+"Vs_exc_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2));
+      distr_t_list eff_M_prime_Td_distr= Corr_HLT.effective_mass_t( Corr_T_ary_symm, path_out+"/mass/"+Ens_tags[iens]+"/"+TAG_CURR+"Vs_exc_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2));
       distr_t_list eff_M_prime_Td_boot_distr= Corr_HLT.effective_mass_t( Corr_T_ary_symm_boot, "");
       int Tmin_old= Corr_HLT.Tmin; int Tmax_old= Corr_HLT.Tmax;
       if(MESON=="B0s") {
 	if(ixg==0) {
-	  Corr_HLT.Tmin= 5;
-	  Corr_HLT.Tmax= 9;
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 5;
+	    Corr_HLT.Tmax= 9;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin=9;
+	    Corr_HLT.Tmax=14;
+	  }
 	}
 	else if(ixg==1) {
-	  Corr_HLT.Tmin= 5;
-	  Corr_HLT.Tmax= 9;
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 5;
+	    Corr_HLT.Tmax= 9;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin=10;
+	    Corr_HLT.Tmax=14;
+	  }
 	}
 	else if(ixg==2) {
-	  Corr_HLT.Tmin= 4;
-	  Corr_HLT.Tmax= 6;
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 4;
+	    Corr_HLT.Tmax= 6;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin=10;
+	    Corr_HLT.Tmax=14;
+	  }
 
 	}
 	else if(ixg==3) {
-	  Corr_HLT.Tmin= 4;
-	  Corr_HLT.Tmax= 6;
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 4;
+	    Corr_HLT.Tmax= 6;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin=10;
+	    Corr_HLT.Tmax=14;
+	  }
 	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
 
@@ -1124,6 +1288,10 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       distr_t_list Corr_T_VMD_II = fake_distr_with_hole*phi_prime_MT*EXPT_D(-1.0*eff_M_prime_Td*a_distr, Corr_T.size());
       distr_t_list Corr_T_sub_II = Corr_T_sub - Corr_T_VMD_II;
       distr_t_list Corr_T_boot_VMD_II = fake_boot_distr_with_hole*phi_prime_MT_boot*EXPT_D(-1.0*eff_M_prime_Td_boot, Corr_T.size());
+    
+      for(int t=1; t < Corr_T_boot_VMD_II.size(); t++) Corr_T_boot_VMD_II.distr_list[t] = Corr_T_boot_VMD_II.ave(t) + (Corr_T_boot_VMD_II.distr_list[t] - Corr_T_boot_VMD_II.ave(t))*Corr_T_VMD_II.err(t)/Corr_T_boot_VMD_II.err(t);
+    
+      
       distr_t_list Corr_T_boot_sub_II = Corr_T_boot_sub - Corr_T_boot_VMD_II;
 
 
@@ -1141,29 +1309,52 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	Corr_T_aryary_symm.distr_list.push_back( Corr_T_sub_II.distr_list[Corr_HLT.Nt -t]);
 	Corr_T_aryary_symm_boot.distr_list.push_back( Corr_T_boot_sub_II.distr_list[Corr_HLT.Nt -t]);
       }
-      distr_t_list eff_M_second_Td_distr= Corr_HLT.effective_mass_t( Corr_T_aryary_symm, path_out+"/mass/"+TAG_CURR+"Vs_exc2_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2));
+      distr_t_list eff_M_second_Td_distr= Corr_HLT.effective_mass_t( Corr_T_aryary_symm, path_out+"/mass/"+Ens_tags[iens]+"/"+TAG_CURR+"Vs_exc2_eff_xg_"+to_string_with_precision(xg_list.ave(ixg),2));
       distr_t_list eff_M_second_Td_boot_distr= Corr_HLT.effective_mass_t( Corr_T_aryary_symm_boot, "");
       Tmin_old= Corr_HLT.Tmin; Tmax_old= Corr_HLT.Tmax;
       if(MESON=="B0s") {
 	if(ixg==0) {
-	  Corr_HLT.Tmin= 1;
-	  Corr_HLT.Tmax= 3;
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 1;
+	    Corr_HLT.Tmax= 3;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin=2;
+	    Corr_HLT.Tmax=4;
+	  }
 	}
 	else if(ixg==1) {
-	  Corr_HLT.Tmin= 1;
-	  Corr_HLT.Tmax= 3;
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 1;
+	    Corr_HLT.Tmax= 3;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin=2;
+	    Corr_HLT.Tmax=4;
+	  }
 	}
 	else if(ixg==2) {
-	  Corr_HLT.Tmin= 1;
-	  Corr_HLT.Tmax= 3;
-
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 1;
+	    Corr_HLT.Tmax= 3;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin=2;
+	    Corr_HLT.Tmax=4;
+	  }
 	}
 	else if(ixg==3) {
-	  Corr_HLT.Tmin= 1;
-	  Corr_HLT.Tmax= 3;
+	  if(Ens_tags[iens]=="cB211b.072.64") {
+	    Corr_HLT.Tmin= 1;
+	    Corr_HLT.Tmax= 3;
+	  }
+	  else if(Ens_tags[iens]=="cD211a.054.96") {
+	    Corr_HLT.Tmin=2;
+	    Corr_HLT.Tmax=4;
+	  }
 	}
 	else crash("ixg: "+to_string(ixg)+" not yet implemented");
-
+	
       }
       else if(MESON=="B1s") {
 	 
@@ -1229,6 +1420,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       distr_t_list Corr_T_VMD_III = fake_distr_with_hole*phi_second_MT*EXPT_D(-1.0*eff_M_second_Td*a_distr, Corr_T.size());
       distr_t_list Corr_T_sub_III = Corr_T_sub_II - Corr_T_VMD_III;
       distr_t_list Corr_T_boot_VMD_III = fake_boot_distr_with_hole*phi_second_MT_boot*EXPT_D(-1.0*eff_M_second_Td_boot, Corr_T.size());
+  
+      for(int t=1; t < Corr_T_boot_VMD_III.size(); t++) Corr_T_boot_VMD_III.distr_list[t] = Corr_T_boot_VMD_III.ave(t) + (Corr_T_boot_VMD_III.distr_list[t] - Corr_T_boot_VMD_III.ave(t))*Corr_T_VMD_III.err(t)/Corr_T_boot_VMD_III.err(t);
+  
       distr_t_list Corr_T_boot_sub_III = Corr_T_boot_sub_II - Corr_T_boot_VMD_III;
 
 
@@ -1238,14 +1432,14 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       //#########################################################################################################
 
       
-      Print_To_File({}, { (Corr_T_sub*FACT).ave(), (Corr_T_sub*FACT).err(), (Corr_T_sub_II*FACT).ave(), (Corr_T_sub_II*FACT).err(), (Corr_T_sub_III*FACT).ave(), (Corr_T_sub_II*FACT).err() }, path_out+"/corr_2pts/"+TAG_CURR+"sub_HLT_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File({}, { (Corr_T_sub*FACT).ave(), (Corr_T_sub*FACT).err(), (Corr_T_sub_II*FACT).ave(), (Corr_T_sub_II*FACT).err(), (Corr_T_sub_III*FACT).ave(), (Corr_T_sub_II*FACT).err() }, path_out+"/corr_2pts/"+TAG_CURR+"sub_HLT_"+Ens_tags[iens]+"_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
 
       if(Use_preconditioning) {
 	Corr_T= Corr_T_sub;
 	Corr_T_boot= Corr_T_boot_sub;
       }
 
-      Print_To_File({}, { (FACT*phi_MT_distr/a_distr).ave(), (FACT*phi_MT_distr/a_distr).err(), (FACT*phi_prime_MT_distr/a_distr).ave(), (FACT*phi_prime_MT_distr/a_distr).err(), (FACT*phi_second_MT_distr/a_distr).ave(), (FACT*phi_second_MT_distr/a_distr).err()}, path_out+"/FF_d_II/VMD_MT_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+      Print_To_File({}, { (FACT*phi_MT_distr/a_distr).ave(), (FACT*phi_MT_distr/a_distr).err(), (FACT*phi_prime_MT_distr/a_distr).ave(), (FACT*phi_prime_MT_distr/a_distr).err(), (FACT*phi_second_MT_distr/a_distr).ave(), (FACT*phi_second_MT_distr/a_distr).err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/VMD_MT_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
  
       //generate covariance matrix
       Vfloat cov_T, corr_T;
@@ -1309,11 +1503,11 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 	}
 
-	Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(), Njacks)*M_P/a_distr).ave(), VMD_VIRT_SCAN_RE.ave(), VMD_VIRT_SCAN_RE.err(), VMD_VIRT_SCAN_IM.ave(), VMD_VIRT_SCAN_IM.err()}, path_out+"/FF_d_II/VMD_virt_scan/xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_sm_"+to_string_with_precision(sigmas_07_w0[iss],3)+"_"+Ens_tags[iens], "", "");
+	Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(), Njacks)*M_P/a_distr).ave(), VMD_VIRT_SCAN_RE.ave(), VMD_VIRT_SCAN_RE.err(), VMD_VIRT_SCAN_IM.ave(), VMD_VIRT_SCAN_IM.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/VMD_virt_scan/xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_sm_"+to_string_with_precision(sigmas_07_w0[iss],3)+"_"+Ens_tags[iens], "", "");
 
-	Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(), Njacks)*M_P/a_distr).ave(), VMD_II_VIRT_SCAN_RE.ave(), VMD_II_VIRT_SCAN_RE.err(), VMD_II_VIRT_SCAN_IM.ave(), VMD_II_VIRT_SCAN_IM.err()}, path_out+"/FF_d_II/VMD_virt_scan/II_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_sm_"+to_string_with_precision(sigmas_07_w0[iss],3)+"_"+Ens_tags[iens], "", "");
+	Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(), Njacks)*M_P/a_distr).ave(), VMD_II_VIRT_SCAN_RE.ave(), VMD_II_VIRT_SCAN_RE.err(), VMD_II_VIRT_SCAN_IM.ave(), VMD_II_VIRT_SCAN_IM.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/VMD_virt_scan/II_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_sm_"+to_string_with_precision(sigmas_07_w0[iss],3)+"_"+Ens_tags[iens], "", "");
 
-	Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(), Njacks)*M_P/a_distr).ave(), VMD_III_VIRT_SCAN_RE.ave(), VMD_III_VIRT_SCAN_RE.err(), VMD_III_VIRT_SCAN_IM.ave(), VMD_III_VIRT_SCAN_IM.err()}, path_out+"/FF_d_II/VMD_virt_scan/III_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_sm_"+to_string_with_precision(sigmas_07_w0[iss],3)+"_"+Ens_tags[iens], "", "");
+	Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(), Njacks)*M_P/a_distr).ave(), VMD_III_VIRT_SCAN_RE.ave(), VMD_III_VIRT_SCAN_RE.err(), VMD_III_VIRT_SCAN_IM.ave(), VMD_III_VIRT_SCAN_IM.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/VMD_virt_scan/III_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_sm_"+to_string_with_precision(sigmas_07_w0[iss],3)+"_"+Ens_tags[iens], "", "");
       }
 
       
@@ -1337,6 +1531,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  
 	  double syst_T;
 	  double mult_T_IM= 0.5;
+	  if(SM_TYPE=="FF_Gauss") mult_T_IM=0.3;
 	  double mult_T_RE=0.05;
 	  double Ag_target=1e-2;
 	  if(sigmas_07[isg] < 0.5) Ag_target=5e-2;
@@ -1353,7 +1548,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 	  F_T_d_RE_sm_list[ixg][isg].distr_list.push_back( RE_sm + ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_off, s) + 0.0*FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_off, s) ));
 	 	  	  
-	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( IM_sm  +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off, s)+0.0*FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_off, s) ));
+	  F_T_d_IM_sm_list[ixg][isg].distr_list.push_back( IM_sm  +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_off, s)+ 0.0*FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_off, s) ));
 
 	  cout<<"#########################  E= MB - Egamma ######################### "<<endl<<flush;
 
@@ -1386,7 +1581,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	//if virtuality scan and first kinematic, print results
 	if(virtuality_scan) {
 	  for(int isg=0;isg<(signed)sigmas_07.size();isg++) {
-	    Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(),Njacks)*M_P/a_distr).ave(), F_T_d_RE_virt_scan[isg].ave(), F_T_d_RE_virt_scan[isg].err(), F_T_d_IM_virt_scan[isg].ave(), F_T_d_IM_virt_scan[isg].err() }, path_out+"/FF_d_II/VIRT_SCAN_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_xg_"+to_string_with_precision(0.1+0.1*ixg,2), "", "");
+	    Print_To_File({}, {(virtualities*Get_id_jack_distr_list(virtualities.size(),Njacks)*M_P/a_distr).ave(), F_T_d_RE_virt_scan[isg].ave(), F_T_d_RE_virt_scan[isg].err(), F_T_d_IM_virt_scan[isg].ave(), F_T_d_IM_virt_scan[isg].err() }, path_out+"/FF_d_II/"+Ens_tags[iens]+"/VIRT_SCAN_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_xg_"+to_string_with_precision(0.1+0.1*ixg,2), "", "");
 	  }
 	}
       }    
@@ -1395,9 +1590,12 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
   }
 
+  
+
   //print results
   //per kinematic
   for(int ixg=0;ixg<n_xg;ixg++) {
+
     Print_To_File( Ens_tags, { F_T_u_list[ixg].ave(), F_T_u_list[ixg].err()     } , path_out+"/FF_u/"+TAG_CURR+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
     Print_To_File( Ens_tags, { F_T_d_I_list[ixg].ave(), F_T_d_I_list[ixg].err()     } , path_out+"/FF_d_I/"+TAG_CURR+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
     Print_To_File( Ens_tags, { FV_T_u_real_list[ixg].ave(), FV_T_u_real_list[ixg].err()     } , path_out+"/FF_u/"+TAG_CURR+"FV_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
@@ -1410,6 +1608,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
     Print_To_File( Ens_tags, { F_T_u_VMD_list[ixg].ave(), F_T_u_VMD_list[ixg].err(), F_T_u_VMD_spectre_list[ixg].ave(), F_T_u_VMD_spectre_list[ixg].err()     } , path_out+"/FF_u/"+TAG_CURR+"VMD_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
 
+    
     if(!Skip_spectral_reconstruction_07) {
     for(int isg=0;isg<(signed)sigmas_07.size();isg++) {
 
@@ -1484,40 +1683,40 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  F_T_d_MB_RE_sm_per_ens_per_kin.distr_list.push_back( F_T_d_MB_RE_sm_list[ixg][isg].distr_list[iens]);
 	  F_T_d_MB_IM_sm_per_ens_per_kin.distr_list.push_back( F_T_d_MB_IM_sm_list[ixg][isg].distr_list[iens]);
 	}
+
 	
-      Print_To_File( {}, {sigmas_07, F_T_d_RE_sm_per_ens_per_kin.ave(), F_T_d_RE_sm_per_ens_per_kin.err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      Print_To_File( {}, {sigmas_07_w0, F_T_d_RE_VMD_sm_per_ens_per_kin.ave(), F_T_d_RE_VMD_sm_per_ens_per_kin.err(), F_T_d_IM_VMD_sm_per_ens_per_kin.ave(), F_T_d_IM_VMD_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      Print_To_File( {}, {sigmas_07_w0, F_T_d_RE_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_RE_VMD_II_state_sm_per_ens_per_kin.err(), F_T_d_IM_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_IM_VMD_II_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_II_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      Print_To_File( {}, {sigmas_07_w0, F_T_d_RE_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_RE_VMD_III_state_sm_per_ens_per_kin.err(), F_T_d_IM_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_IM_VMD_III_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_III_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      Print_To_File( {}, {sigmas_07, (F_T_d_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+ F_T_d_I_per_ens[ixg]).ave(), (F_T_d_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+F_T_d_I_per_ens[ixg]).err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      Print_To_File( {}, {sigmas_07, (F_T_d_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).ave(), (F_T_d_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-
-
-
-      Print_To_File( {}, {sigmas_07, F_T_d_MB_RE_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_sm_per_ens_per_kin.err(), F_T_d_MB_IM_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      Print_To_File( {}, {sigmas_07_w0, F_T_d_MB_RE_VMD_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_VMD_sm_per_ens_per_kin.err(), F_T_d_MB_IM_VMD_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_VMD_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      Print_To_File( {}, {sigmas_07_w0, F_T_d_MB_RE_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_VMD_II_state_sm_per_ens_per_kin.err(), F_T_d_MB_IM_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_VMD_II_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_MB_II_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      Print_To_File( {}, {sigmas_07_w0, F_T_d_MB_RE_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_VMD_III_state_sm_per_ens_per_kin.err(), F_T_d_MB_IM_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_VMD_III_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+TAG_CURR+"VMD_MB_III_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      Print_To_File( {}, {sigmas_07, (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+ F_T_d_I_per_ens[ixg]).ave(), (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+F_T_d_I_per_ens[ixg]).err(), F_T_d_MB_IM_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_sm_per_ens_per_kin.err()}, path_out+"/FF/"+TAG_CURR+preco_tag+"F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
-      Print_To_File( {}, {sigmas_07, (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).ave(), (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).err(), F_T_d_MB_IM_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d/"+TAG_CURR+preco_tag+"F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2)+"_"+Ens_tags[iens], "", "");
+	Print_To_File( {}, {sigmas_07, F_T_d_RE_sm_per_ens_per_kin.ave(), F_T_d_RE_sm_per_ens_per_kin.err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	Print_To_File( {}, {sigmas_07_w0, F_T_d_RE_VMD_sm_per_ens_per_kin.ave(), F_T_d_RE_VMD_sm_per_ens_per_kin.err(), F_T_d_IM_VMD_sm_per_ens_per_kin.ave(), F_T_d_IM_VMD_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/"+TAG_CURR+"VMD_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	Print_To_File( {}, {sigmas_07_w0, F_T_d_RE_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_RE_VMD_II_state_sm_per_ens_per_kin.err(), F_T_d_IM_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_IM_VMD_II_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/"+TAG_CURR+"VMD_II_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	Print_To_File( {}, {sigmas_07_w0, F_T_d_RE_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_RE_VMD_III_state_sm_per_ens_per_kin.err(), F_T_d_IM_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_IM_VMD_III_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/"+TAG_CURR+"VMD_III_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	Print_To_File( {}, {sigmas_07, (F_T_d_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+ F_T_d_I_per_ens[ixg]).ave(), (F_T_d_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+F_T_d_I_per_ens[ixg]).err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	Print_To_File( {}, {sigmas_07, (F_T_d_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).ave(), (F_T_d_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).err(), F_T_d_IM_sm_per_ens_per_kin.ave(), F_T_d_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	
       
+	Print_To_File( {}, {sigmas_07, F_T_d_MB_RE_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_sm_per_ens_per_kin.err(), F_T_d_MB_IM_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	Print_To_File( {}, {sigmas_07_w0, F_T_d_MB_RE_VMD_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_VMD_sm_per_ens_per_kin.err(), F_T_d_MB_IM_VMD_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_VMD_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/"+TAG_CURR+"VMD_F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	Print_To_File( {}, {sigmas_07_w0, F_T_d_MB_RE_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_VMD_II_state_sm_per_ens_per_kin.err(), F_T_d_MB_IM_VMD_II_state_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_VMD_II_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/"+TAG_CURR+"VMD_MB_II_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	Print_To_File( {}, {sigmas_07_w0, F_T_d_MB_RE_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_MB_RE_VMD_III_state_sm_per_ens_per_kin.err(), F_T_d_MB_IM_VMD_III_state_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_VMD_III_state_sm_per_ens_per_kin.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/"+TAG_CURR+"VMD_MB_III_state_F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	Print_To_File( {}, {sigmas_07, (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+ F_T_d_I_per_ens[ixg]).ave(), (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_u_per_ens[ixg]+F_T_d_I_per_ens[ixg]).err(), F_T_d_MB_IM_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_sm_per_ens_per_kin.err()}, path_out+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	Print_To_File( {}, {sigmas_07, (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).ave(), (F_T_d_MB_RE_sm_per_ens_per_kin+F_T_d_I_per_ens[ixg]).err(), F_T_d_MB_IM_sm_per_ens_per_kin.ave(), F_T_d_MB_IM_sm_per_ens_per_kin.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_MB_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+	
+		
       }
     }
 
-    Print_To_File( {}, {xg_list.ave(),  F_T_u_per_ens.ave(), F_T_u_per_ens.err()     } , path_out+"/FF_u/"+TAG_CURR+"F_T_"+Ens_tags[iens], "", "");
-    Print_To_File( {}, {xg_list.ave(), F_T_d_I_per_ens.ave(), F_T_d_I_per_ens.err()     } , path_out+"/FF_d_I/"+TAG_CURR+"F_T_"+Ens_tags[iens], "", "");
+    Print_To_File( {}, {xg_list.ave(),  F_T_u_per_ens.ave(), F_T_u_per_ens.err()     } , path_out+"/FF_u/"+Ens_tags[iens]+"/"+TAG_CURR+"F_T", "", "");
+    Print_To_File( {}, {xg_list.ave(), F_T_d_I_per_ens.ave(), F_T_d_I_per_ens.err()     } , path_out+"/FF_d_I/"+Ens_tags[iens]+"/"+TAG_CURR+"F_T", "", "");
+    Print_To_File( {}, {xg_list.ave(),  FV_T_u_real_per_ens.ave(), FV_T_u_real_per_ens.err()     } , path_out+"/FF_u/"+Ens_tags[iens]+"/"+TAG_CURR+"FV_T_real", "", "");
+    Print_To_File( {}, {xg_list.ave(), FV_T_d_real_per_ens.ave(), FV_T_d_real_per_ens.err()     } , path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"FV_T_real", "", "");
 
-    Print_To_File( {}, {xg_list.ave(),  FV_T_u_real_per_ens.ave(), FV_T_u_real_per_ens.err()     } , path_out+"/FF_u/"+TAG_CURR+"FV_T_real_"+Ens_tags[iens], "", "");
-    Print_To_File( {}, {xg_list.ave(), FV_T_d_real_per_ens.ave(), FV_T_d_real_per_ens.err()     } , path_out+"/FF_d/"+TAG_CURR+"FV_T_real_"+Ens_tags[iens], "", "");
+    Print_To_File( {}, {xg_list.ave(),  FA_T_u_real_per_ens.ave(), FA_T_u_real_per_ens.err()     } , path_out+"/FF_u/"+Ens_tags[iens]+"/"+TAG_CURR+"FA_T_real", "", "");
+    Print_To_File( {}, {xg_list.ave(), FA_T_d_real_per_ens.ave(), FA_T_d_real_per_ens.err()     } , path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"FA_T_real", "", "");
 
-    Print_To_File( {}, {xg_list.ave(),  FA_T_u_real_per_ens.ave(), FA_T_u_real_per_ens.err()     } , path_out+"/FF_u/"+TAG_CURR+"FA_T_real_"+Ens_tags[iens], "", "");
-    Print_To_File( {}, {xg_list.ave(), FA_T_d_real_per_ens.ave(), FA_T_d_real_per_ens.err()     } , path_out+"/FF_d/"+TAG_CURR+"FA_T_real_"+Ens_tags[iens], "", "");
-
-    Print_To_File( {}, {xg_list.ave(),  FA_T_d_sp_real_per_ens.ave(), FA_T_d_sp_real_per_ens.err()     } , path_out+"/FF_d/"+TAG_CURR+"FA_T_sp_real_"+Ens_tags[iens], "", "");
-    Print_To_File( {}, {xg_list.ave(), FV_T_d_sp_real_per_ens.ave(), FV_T_d_sp_real_per_ens.err()     } , path_out+"/FF_d/"+TAG_CURR+"FV_T_sp_real_"+Ens_tags[iens], "", "");
-
-    Print_To_File( {}, {xg_list.ave(),  F_T_u_VMD_per_ens.ave(), F_T_u_VMD_per_ens.err(), F_T_u_VMD_spectre_per_ens.ave(), F_T_u_VMD_spectre_per_ens.err()     } , path_out+"/FF_u/"+TAG_CURR+"VMD_F_T_"+Ens_tags[iens], "", "");
-
+    Print_To_File( {}, {xg_list.ave(),  FA_T_d_sp_real_per_ens.ave(), FA_T_d_sp_real_per_ens.err()     } , path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"FA_T_sp_real", "", "");
+    Print_To_File( {}, {xg_list.ave(), FV_T_d_sp_real_per_ens.ave(), FV_T_d_sp_real_per_ens.err()     } , path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"FV_T_sp_real", "", "");
+    
+    Print_To_File( {}, {xg_list.ave(),  F_T_u_VMD_per_ens.ave(), F_T_u_VMD_per_ens.err(), F_T_u_VMD_spectre_per_ens.ave(), F_T_u_VMD_spectre_per_ens.err()     } , path_out+"/FF_u/"+Ens_tags[iens]+"/"+TAG_CURR+"VMD_F_T", "", "");
+    
     
     if(!Skip_spectral_reconstruction_07) {
     for(int isg=0;isg<(signed)sigmas_07.size(); isg++) {
@@ -1533,15 +1732,17 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	 F_T_d_MB_IM_sm_per_ens_per_sigma.distr_list.push_back( F_T_d_MB_IM_sm_list[ixg][isg].distr_list[iens]);
        }
 
-       Print_To_File( {}, {xg_list.ave(), F_T_d_RE_sm_per_ens_per_sigma.ave(), F_T_d_RE_sm_per_ens_per_sigma.err(), F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
-       Print_To_File( {}, {xg_list.ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).err(),  F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
        
-       Print_To_File( {}, {xg_list.ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).err(),  F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
+       Print_To_File( {}, {xg_list.ave(), F_T_d_RE_sm_per_ens_per_sigma.ave(), F_T_d_RE_sm_per_ens_per_sigma.err(), F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3), "", "");
+       Print_To_File( {}, {xg_list.ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).err(),  F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3), "", "");
+       
+       Print_To_File( {}, {xg_list.ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).ave(), (F_T_d_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).err(),  F_T_d_IM_sm_per_ens_per_sigma.ave(), F_T_d_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_T_sm_"+to_string_with_precision(sigmas_07[isg],3), "", "");
 
-        Print_To_File( {}, {xg_list.ave(), F_T_d_MB_RE_sm_per_ens_per_sigma.ave(), F_T_d_MB_RE_sm_per_ens_per_sigma.err(), F_T_d_MB_IM_sm_per_ens_per_sigma.ave(), F_T_d_MB_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d_II/"+TAG_CURR+preco_tag+"F_MB_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
-       Print_To_File( {}, {xg_list.ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).err(),  F_T_d_MB_IM_sm_per_ens_per_sigma.ave(), F_T_d_MB_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF/"+TAG_CURR+preco_tag+"F_MB_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
-       
-       Print_To_File( {}, {xg_list.ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).err(),  F_T_d_MB_IM_sm_per_ens_per_sigma.ave(), F_T_d_MB_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d/"+TAG_CURR+preco_tag+"F_MB_T_sm_"+to_string_with_precision(sigmas_07[isg],3)+"_"+Ens_tags[iens], "", "");
+       Print_To_File( {}, {xg_list.ave(), F_T_d_MB_RE_sm_per_ens_per_sigma.ave(), F_T_d_MB_RE_sm_per_ens_per_sigma.err(), F_T_d_MB_IM_sm_per_ens_per_sigma.ave(), F_T_d_MB_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d_II/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_MB_T_sm_"+to_string_with_precision(sigmas_07[isg],3), "", "");
+       Print_To_File( {}, {xg_list.ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_u_per_ens+ F_T_d_I_per_ens).err(),  F_T_d_MB_IM_sm_per_ens_per_sigma.ave(), F_T_d_MB_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_MB_T_sm_"+to_string_with_precision(sigmas_07[isg],3), "", "");
+       Print_To_File( {}, {xg_list.ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).ave(), (F_T_d_MB_RE_sm_per_ens_per_sigma + F_T_d_I_per_ens).err(),  F_T_d_MB_IM_sm_per_ens_per_sigma.ave(), F_T_d_MB_IM_sm_per_ens_per_sigma.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+preco_tag+"F_MB_T_sm_"+to_string_with_precision(sigmas_07[isg],3), "", "");
+
+      
        
        
     }

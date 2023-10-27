@@ -14,8 +14,8 @@ const double qu = 2.0/3.0; //electric charge of u-type quark
 const double qd = -1.0/3.0; //electric charge of d-type quark
 const string Meson="Ds";
 double L_QCD= 0.3; //300 MeV
-int n_xg=2;
-int n_xg_rev=1;
+int n_xg=4;
+int n_xg_rev=3;
 Vfloat virt_list;
 bool verbose_lev=1;
 bool P5_ON_SOURCE=true;
@@ -23,12 +23,12 @@ bool Is_rep = false;
 Vfloat sigmas({0.6,0.5,0.4,0.35,0.3,0.25,0.2,0.15, 0.1}); //sigma in GeV  
 int prec=128;
 const string MODE_FF="TANT";
-bool CONS_EM_CURR=false;
+bool CONS_EM_CURR=true;
 const bool Skip_spectral_reconstruction=true;
 const bool Reconstruct_axial_part=true;
 const bool Reconstruct_vector_part=true;
 const bool Perform_FF_and_Br_reconstruction=false;
-const bool Perform_eps_extrapolation=true;
+const bool Perform_eps_extrapolation=false;
 const double Mjpsi= 3.0969; //GeV
 const double Mphi= 1.019461; //GeV
 const double MDs_phys= 1.96847; //GeV
@@ -382,7 +382,7 @@ void Get_radiative_form_factors_3d() {
   Vfloat Emax_List({10});
   vector<bool> Perform_theta_average_List({1});
   vector<string> SM_TYPE_List({"FF_Exp"});
-  vector<bool> CONS_EM_CURR_LIST({false});
+  vector<bool> CONS_EM_CURR_LIST({true});
   Vfloat E0_List({0.9});
   
   int N= beta_List.size();
@@ -1199,6 +1199,19 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
     distr_t_list ax_0_u_zz= qu*Corr.corr_t(C_A_u_data[3][3][0].col(0)[iens],"");
     distr_t_list ax_0_d_zz= qd*Corr.corr_t(C_A_d_data[3][3][0].col(0)[iens],"");
 
+
+    //partial sums of ax_0_u and ax_0_d
+
+    distr_t_list ax_0_u_psum(UseJack);
+    distr_t_list ax_0_d_psum(UseJack);
+    for(int t=0;t<Corr.Nt;t++) {
+      ax_0_u_psum.distr_list.push_back( ((t==0)?(0.0*Get_id_jack_distr(Njacks)):(ax_0_u_psum.distr_list[t-1]+ax_0_u.distr_list[t-1])));
+      ax_0_d_psum.distr_list.push_back( ((t==0)?(0.0*Get_id_jack_distr(Njacks)):(ax_0_d_psum.distr_list[t-1] + ax_0_d.distr_list[t-1])));
+    }
+
+    Print_To_File( {}, {ax_0_u.ave(), ax_0_u.err(), ax_0_u_psum.ave(), ax_0_u_psum.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/AX_0_u.dat", "", "# C(t)  psumC(t)");
+    Print_To_File( {}, {ax_0_d.ave(), ax_0_d.err(), ax_0_d_psum.ave(), ax_0_d_psum.err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/"+"C/"+data_2pts.Tag[iens]+"/AX_0_d.dat", "", "# C(t)  psumC(t)");
+
     ax_0_SUB_u_xx.push_back( ax_0_u);
     ax_0_SUB_d_xx.push_back( ax_0_d);
     ax_0_SUB_u_zz.push_back( ax_0_u_zz);
@@ -1918,10 +1931,10 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  Integrate_over_photon_insertion(ax_d, HA_d, Eg, t_weak,MP.ave(),0);
 	  //first time ordering
 	  Integrate_over_photon_insertion(ax_u, HA_u_1_TO, Eg, t_weak, MP.ave(), 1); 
-	  Integrate_over_photon_insertion(ax_d, HA_d_1_TO, Eg, t_weak,MP.ave(),1);
+	  Integrate_over_photon_insertion(ax_d, HA_d_1_TO, Eg, t_weak, MP.ave() ,1);
 	  //second time ordering
-	  Integrate_over_photon_insertion(ax_u, HA_u_2_TO, Eg, t_weak,MP.ave(),2); 
-	  Integrate_over_photon_insertion(ax_d, HA_d_2_TO, Eg, t_weak,MP.ave(),2);
+	  Integrate_over_photon_insertion(ax_u, HA_u_2_TO, Eg, t_weak, MP.ave() ,2); 
+	  Integrate_over_photon_insertion(ax_d, HA_d_2_TO, Eg, t_weak, MP.ave() ,2);
 	  //second time ordering w substraction of exponential
 	  string obs_u="u_A_mu_"+to_string(mu)+"_nu_"+to_string(nu);
 	  string obs_d="d_A_mu_"+to_string(mu)+"_nu_"+to_string(nu);
@@ -1983,7 +1996,8 @@ void Compute_form_factors_Nissa_3d(double beta, bool Integrate_Up_To_Emax, doubl
 	  //print as a function of tcut for fixed virtuality
 	  for(int iv=0;iv<(signed)virt_list.size();iv++) {
 	    //1+2 time orderings
-	    Print_To_File({}, { HA_u[iv].ave(), HA_u[iv].err(), HA_d[iv].ave(), HA_d[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
+	    Print_To_File({}, { (HA_u[iv]-renorm_A*0.5*ax_0_u_psum).ave(),(HA_u[iv]-renorm_A*0.5*ax_0_u_psum).err(), (HA_d[iv]-renorm_A*0.5*ax_0_d_psum).ave(), (HA_d[iv]-renorm_A*0.5*ax_0_d_psum).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_zero_mom_sub_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
+	    Print_To_File({}, { (HA_u[iv]).ave(),(HA_u[iv]).err(), (HA_d[iv]).ave(), (HA_d[iv]).err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");
 	    Print_To_File({}, { HA_tot[iv].ave(), HA_tot[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"A_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin A");
 	    //1 time ordering
 	    Print_To_File({}, { HA_u_1_TO[iv].ave(), HA_u_1_TO[iv].err(), HA_d_1_TO[iv].ave(), HA_d_1_TO[iv].err()}, "../data/ph_emission_3d_Tw_"+to_string(t_weak)+"/"+ph_type_mes+"/H/"+Ens_tags[iens]+"/"+TAG_CURR+"TO_1_A_quark_contr_mu_"+to_string(mu)+"_nu_"+to_string(nu)+"_ixg_"+to_string(ixg)+"_ixk_"+to_string(iv), "", "#tmin   Au  Ad");

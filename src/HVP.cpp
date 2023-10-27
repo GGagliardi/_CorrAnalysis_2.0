@@ -1,7 +1,8 @@
 #include "../include/HVP.h"
 
 
-const double DTT=0.5;
+const double DTT = 0.5;
+const double alpha = 1.0/137.035999;	     
 
 using namespace std;
 
@@ -10,7 +11,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
 
   int Njacks=50;
   bool UseJack=true;
-  double alpha = 1.0/137.035999;
+ 
   int Simps_ord=3;
   double fm_to_inv_Gev= 1.0/0.197327;
 
@@ -30,7 +31,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
   int Tdatas_opt=-1;
 
   
-  auto amu_HVP_func = [&V, &Ker, &UseJack, &Njacks, &alpha, &Simps_ord](double tcut) -> distr_t {
+  auto amu_HVP_func = [&V, &Ker, &UseJack, &Njacks,  &Simps_ord](double tcut) -> distr_t {
     
     distr_t ret_win(UseJack,UseJack?Njacks:800);
     for(int t=1;t<tcut;t++) ret_win = ret_win + 4.0*w(t,Simps_ord)*pow(alpha,2)*V.distr_list[t]*Ker.distr_list[t];
@@ -38,7 +39,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
     
   };
 
-  auto amu_HVP_int = [ &Ker_extended, &alpha, &Simps_ord](double t) -> distr_t {
+  auto amu_HVP_int = [ &Ker_extended, &Simps_ord](double t) -> distr_t {
 
     return 4.0*w(t,Simps_ord)*pow(alpha,2)*Ker_extended.distr_list[t];
 
@@ -378,10 +379,20 @@ void HVP() {
 
     Print_To_File(Tags, { amu_HVP.ave(), amu_HVP.err(), Tmins, Tmaxs}, "../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+".res", "", "");
 
-    cout<<"#### "<<Vk_data_tm.Tag[iens]<<" ###"<<endl;
-    cout<<"HVP tm: "<<amu_HVP_tm.ave()<<" +- "<<amu_HVP_tm.err()<<" stat. "<< (amu_HVP_tm.err()*100/amu_HVP_tm.ave())<<"%"<<endl;
-    cout<<"HVP OS: "<<amu_HVP_OS.ave()<<" +- "<<amu_HVP_OS.err()<<" stat. "<< (amu_HVP_OS.err()*100/amu_HVP_OS.ave())<<"%"<<endl;
-    cout<<"#######"<<endl;
+    //cout<<"#### "<<Vk_data_tm.Tag[iens]<<" ###"<<endl;
+    //cout<<"HVP tm: "<<amu_HVP_tm.ave()<<" +- "<<amu_HVP_tm.err()<<" stat. "<< (amu_HVP_tm.err()*100/amu_HVP_tm.ave())<<"%"<<endl;
+    //cout<<"HVP OS: "<<amu_HVP_OS.ave()<<" +- "<<amu_HVP_OS.err()<<" stat. "<< (amu_HVP_OS.err()*100/amu_HVP_OS.ave())<<"%"<<endl;
+    //cout<<"#######"<<endl;
+
+    auto K = [&](double Mv, double t, double size) -> double { return kernel_K(t, Mv);};
+    distr_t_list Ker_el = 4*pow(alpha,2)*distr_t_list::f_of_distr(K, a_distr*(0.0005/0.10565837) , Corr.Nt);
+    distr_t_list Ker_mu = 4*pow(alpha,2)*distr_t_list::f_of_distr(K, a_distr*(1.77/0.1056837) , Corr.Nt);
+
+    for(int t=1;t<Corr.Nt/2;t++) cout<<t<<" "<<(Ker_el*Vk_tm_distr).ave(t)<<" "<<(Ker_el*Vk_tm_distr).err(t)<<" "<<(Ker_mu*Vk_tm_distr).ave(t)<<" "<<(Ker_mu*Vk_tm_distr).err(t)<<endl;
+
+
+
+    exit(-1);
        
   }
 

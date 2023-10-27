@@ -306,7 +306,7 @@ boot_fit_data<T1> bootstrap_fit<T1,T2>::Perform_bootstrap_fit() {
   int boot_index=0;
   ib = &boot_index;
 
-  ROOT::Minuit2::MnMigrad migrad(*this, PList, 2);
+  ROOT::Minuit2::MnMigrad migrad(*this, PList, 3);
   
   
   

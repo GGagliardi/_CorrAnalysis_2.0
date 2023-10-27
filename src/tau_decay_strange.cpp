@@ -11,7 +11,7 @@ const int Njacks=50;
 const int Nboots=800;
 const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
-const int prec = 64;
+const int prec = 128;
 const double Nc=3;
 bool tau_strange_verbosity_lev=1;
 const double GF= 1.1663787*1e-5; //[GeV^-2]
@@ -37,7 +37,7 @@ const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
 bool Skip_spectral_density_analysis_strange=false;
-const bool Perform_continuum_extrapolation=true;
+const bool Perform_continuum_extrapolation=false;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
 
@@ -292,7 +292,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   //Analyze new strange run
   //###################################
 
-  bool Get_ASCII= false;
+  bool Get_ASCII= true;
 
     if(Get_ASCII) {
     //read binary files
@@ -1001,14 +1001,26 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       for(int rr=0;rr<Corr.Nt;rr++) {
 	TT.push_back(tt);
 	RR.push_back(rr);
-	cov_A0_tm.push_back( A0_tm_block_1_distr.distr_list[tt]%A0_tm_block_1_distr.distr_list[rr]);
-	cov_V0_tm.push_back( V0_tm_block_1_distr.distr_list[tt]%V0_tm_block_1_distr.distr_list[rr]);
-	cov_Ak_tm.push_back( Ak_tm_block_1_distr.distr_list[tt]%Ak_tm_block_1_distr.distr_list[rr]);
-	cov_Vk_tm.push_back( Vk_tm_block_1_distr.distr_list[tt]%Vk_tm_block_1_distr.distr_list[rr]);
-	cov_A0_OS.push_back( A0_OS_block_1_distr.distr_list[tt]%A0_OS_block_1_distr.distr_list[rr]);
-	cov_V0_OS.push_back( V0_OS_block_1_distr.distr_list[tt]%V0_OS_block_1_distr.distr_list[rr]);
-	cov_Ak_OS.push_back( Ak_OS_block_1_distr.distr_list[tt]%Ak_OS_block_1_distr.distr_list[rr]);
-	cov_Vk_OS.push_back( Vk_OS_block_1_distr.distr_list[tt]%Vk_OS_block_1_distr.distr_list[rr]);
+
+	double err_resc_A0_tm= A0_tm_distr.err(tt)*A0_tm_distr.err(rr)/(A0_tm_block_1_distr.err(tt)*A0_tm_block_1_distr.err(rr));
+	double err_resc_V0_tm= V0_tm_distr.err(tt)*V0_tm_distr.err(rr)/(V0_tm_block_1_distr.err(tt)*V0_tm_block_1_distr.err(rr));
+	double err_resc_Ak_tm= Ak_tm_distr.err(tt)*Ak_tm_distr.err(rr)/(Ak_tm_block_1_distr.err(tt)*Ak_tm_block_1_distr.err(rr));
+	double err_resc_Vk_tm= Vk_tm_distr.err(tt)*Vk_tm_distr.err(rr)/(Vk_tm_block_1_distr.err(tt)*Vk_tm_block_1_distr.err(rr));
+
+	double err_resc_A0_OS= A0_OS_distr.err(tt)*A0_OS_distr.err(rr)/(A0_OS_block_1_distr.err(tt)*A0_OS_block_1_distr.err(rr));
+	double err_resc_V0_OS= V0_OS_distr.err(tt)*V0_OS_distr.err(rr)/(V0_OS_block_1_distr.err(tt)*V0_OS_block_1_distr.err(rr));
+	double err_resc_Ak_OS= Ak_OS_distr.err(tt)*Ak_OS_distr.err(rr)/(Ak_OS_block_1_distr.err(tt)*Ak_OS_block_1_distr.err(rr));
+	double err_resc_Vk_OS= Vk_OS_distr.err(tt)*Vk_OS_distr.err(rr)/(Vk_OS_block_1_distr.err(tt)*Vk_OS_block_1_distr.err(rr));
+	
+	
+	cov_A0_tm.push_back( (A0_tm_block_1_distr.distr_list[tt]%A0_tm_block_1_distr.distr_list[rr])*err_resc_A0_tm);
+	cov_V0_tm.push_back( (V0_tm_block_1_distr.distr_list[tt]%V0_tm_block_1_distr.distr_list[rr])*err_resc_V0_tm);
+	cov_Ak_tm.push_back( (Ak_tm_block_1_distr.distr_list[tt]%Ak_tm_block_1_distr.distr_list[rr])*err_resc_Ak_tm);
+	cov_Vk_tm.push_back( (Vk_tm_block_1_distr.distr_list[tt]%Vk_tm_block_1_distr.distr_list[rr])*err_resc_Vk_tm);
+	cov_A0_OS.push_back( (A0_OS_block_1_distr.distr_list[tt]%A0_OS_block_1_distr.distr_list[rr])*err_resc_A0_OS);
+	cov_V0_OS.push_back( (V0_OS_block_1_distr.distr_list[tt]%V0_OS_block_1_distr.distr_list[rr])*err_resc_V0_OS);
+	cov_Ak_OS.push_back( (Ak_OS_block_1_distr.distr_list[tt]%Ak_OS_block_1_distr.distr_list[rr])*err_resc_Ak_OS);
+	cov_Vk_OS.push_back( (Vk_OS_block_1_distr.distr_list[tt]%Vk_OS_block_1_distr.distr_list[rr])*err_resc_Vk_OS);
 
 
 	corr_m_A0_tm.push_back( (A0_tm_block_1_distr.distr_list[tt]%A0_tm_block_1_distr.distr_list[rr])/(A0_tm_block_1_distr.err(tt)*A0_tm_block_1_distr.err(rr)));
@@ -1037,16 +1049,29 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     Vfloat cov_A0_H_tm, cov_V0_H_tm,  cov_Ak_H_tm, cov_Vk_H_tm, cov_A0_H_OS, cov_V0_H_OS,  cov_Ak_H_OS, cov_Vk_H_OS;
     Vfloat corr_m_A0_H_tm, corr_m_V0_H_tm,  corr_m_Ak_H_tm, corr_m_Vk_H_tm, corr_m_A0_H_OS, corr_m_V0_H_OS, corr_m_Ak_H_OS, corr_m_Vk_H_OS;
     for(int tt=0;tt<Corr.Nt;tt++)
-      for(int rr=0;rr<Corr.Nt;rr++) {
-	cov_A0_H_tm.push_back( A0_H_tm_block_1_distr.distr_list[tt]%A0_H_tm_block_1_distr.distr_list[rr]);
-	cov_V0_H_tm.push_back( V0_H_tm_block_1_distr.distr_list[tt]%V0_H_tm_block_1_distr.distr_list[rr]);
-	cov_Ak_H_tm.push_back( Ak_H_tm_block_1_distr.distr_list[tt]%Ak_H_tm_block_1_distr.distr_list[rr]);
-	cov_Vk_H_tm.push_back( Vk_H_tm_block_1_distr.distr_list[tt]%Vk_H_tm_block_1_distr.distr_list[rr]);
-	cov_A0_H_OS.push_back( A0_H_OS_block_1_distr.distr_list[tt]%A0_H_OS_block_1_distr.distr_list[rr]);
-	cov_V0_H_OS.push_back( V0_H_OS_block_1_distr.distr_list[tt]%V0_H_OS_block_1_distr.distr_list[rr]);
-	cov_Ak_H_OS.push_back( Ak_H_OS_block_1_distr.distr_list[tt]%Ak_H_OS_block_1_distr.distr_list[rr]);
-	cov_Vk_H_OS.push_back( Vk_H_OS_block_1_distr.distr_list[tt]%Vk_H_OS_block_1_distr.distr_list[rr]);
+      for(int rr=0;rr<Corr.Nt; rr++) {
 
+
+	double err_resc_A0_H_tm= A0_H_tm_distr.err(tt)*A0_H_tm_distr.err(rr)/(A0_H_tm_block_1_distr.err(tt)*A0_H_tm_block_1_distr.err(rr));
+	double err_resc_V0_H_tm= V0_H_tm_distr.err(tt)*V0_H_tm_distr.err(rr)/(V0_H_tm_block_1_distr.err(tt)*V0_H_tm_block_1_distr.err(rr));
+	double err_resc_Ak_H_tm= Ak_H_tm_distr.err(tt)*Ak_H_tm_distr.err(rr)/(Ak_H_tm_block_1_distr.err(tt)*Ak_H_tm_block_1_distr.err(rr));
+	double err_resc_Vk_H_tm= Vk_H_tm_distr.err(tt)*Vk_H_tm_distr.err(rr)/(Vk_H_tm_block_1_distr.err(tt)*Vk_H_tm_block_1_distr.err(rr));
+
+	double err_resc_A0_H_OS= A0_H_OS_distr.err(tt)*A0_H_OS_distr.err(rr)/(A0_H_OS_block_1_distr.err(tt)*A0_H_OS_block_1_distr.err(rr));
+	double err_resc_V0_H_OS= V0_H_OS_distr.err(tt)*V0_H_OS_distr.err(rr)/(V0_H_OS_block_1_distr.err(tt)*V0_H_OS_block_1_distr.err(rr));
+	double err_resc_Ak_H_OS= Ak_H_OS_distr.err(tt)*Ak_H_OS_distr.err(rr)/(Ak_H_OS_block_1_distr.err(tt)*Ak_H_OS_block_1_distr.err(rr));
+	double err_resc_Vk_H_OS= Vk_H_OS_distr.err(tt)*Vk_H_OS_distr.err(rr)/(Vk_H_OS_block_1_distr.err(tt)*Vk_H_OS_block_1_distr.err(rr));
+
+	cov_A0_H_tm.push_back( (A0_H_tm_block_1_distr.distr_list[tt]%A0_H_tm_block_1_distr.distr_list[rr])*err_resc_A0_H_tm);
+	cov_V0_H_tm.push_back( (V0_H_tm_block_1_distr.distr_list[tt]%V0_H_tm_block_1_distr.distr_list[rr])*err_resc_V0_H_tm);
+	cov_Ak_H_tm.push_back( (Ak_H_tm_block_1_distr.distr_list[tt]%Ak_H_tm_block_1_distr.distr_list[rr])*err_resc_Ak_H_tm);
+	cov_Vk_H_tm.push_back( (Vk_H_tm_block_1_distr.distr_list[tt]%Vk_H_tm_block_1_distr.distr_list[rr])*err_resc_Vk_H_tm);
+	cov_A0_H_OS.push_back( (A0_H_OS_block_1_distr.distr_list[tt]%A0_H_OS_block_1_distr.distr_list[rr])*err_resc_A0_H_OS);
+	cov_V0_H_OS.push_back( (V0_H_OS_block_1_distr.distr_list[tt]%V0_H_OS_block_1_distr.distr_list[rr])*err_resc_V0_H_OS);
+	cov_Ak_H_OS.push_back( (Ak_H_OS_block_1_distr.distr_list[tt]%Ak_H_OS_block_1_distr.distr_list[rr])*err_resc_Ak_H_OS);
+	cov_Vk_H_OS.push_back( (Vk_H_OS_block_1_distr.distr_list[tt]%Vk_H_OS_block_1_distr.distr_list[rr])*err_resc_Vk_H_OS);
+
+	
 
 	corr_m_A0_H_tm.push_back( (A0_H_tm_block_1_distr.distr_list[tt]%A0_H_tm_block_1_distr.distr_list[rr])/(A0_H_tm_block_1_distr.err(tt)*A0_H_tm_block_1_distr.err(rr)));
 	corr_m_V0_H_tm.push_back( (V0_H_tm_block_1_distr.distr_list[tt]%V0_H_tm_block_1_distr.distr_list[rr])/(V0_H_tm_block_1_distr.err(tt)*V0_H_tm_block_1_distr.err(rr)));

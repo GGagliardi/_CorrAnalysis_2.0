@@ -318,7 +318,7 @@ distr_t_list Get_id_jack_distr_list(int size, int N);
 distr_t Get_id_distr(int N, bool UseJack);
 distr_t_list Get_id_distr_list(int size, int N, bool UseJack);
 distr_t AIC( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas, bool NEIL=false );
-
+distr_t AIC_lin( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas, bool NEIL=false );
 
 
 distr_t_list EXP_DL(const distr_t_list &A);

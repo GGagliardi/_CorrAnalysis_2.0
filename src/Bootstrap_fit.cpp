@@ -6,7 +6,6 @@ using namespace std;
 
 
 
-
 double Boot_ave(Vfloat& A) {
 
   if(A.size() ==0) crash(" Boot_average called with an empty vector");

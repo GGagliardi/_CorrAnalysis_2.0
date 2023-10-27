@@ -895,7 +895,6 @@ distr_t Get_id_distr(int N, bool UseJack) {
   return id_jack_distr;
 }
 
-
 distr_t_list Get_id_jack_distr_list(int size, int N) {
   distr_t_list return_distr(1);
   for(int i=0; i<size;i++) return_distr.distr_list.push_back( Get_id_jack_distr(N));
@@ -927,15 +926,41 @@ distr_t AIC( const vector<distr_t> &VAL, const vector<double> &ch2, const vector
   for(int i=0; i<N;i++) {syst += W[i]*pow( VAL[i].ave() - RES.ave(),2); }
   syst= sqrt(syst);
 
+  RES = RES.ave() + (sqrt(pow(syst,2)+pow(RES.err(),2))/RES.err())*(RES - RES.ave());
+ 
+ 
+  return RES;
+}
+
+
+distr_t AIC_lin( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas,  bool NEIL ) {
+
+
+  if( (VAL.size() != ch2.size()) || (VAL.size() != Ndof.size()) || ( Ndof.size() != Nmeas.size())) crash("AIC analysis called with vectors of different sizes");
+
+  int N=VAL.size();
+  assert(N > 0);
+  double F= ((NEIL)?2:1);
+   
+  distr_t RES= 0.0*VAL[0];
+
+  vector<double> W(N,0.0);
+  double wtot=0; double syst=0;
+  for(int i=0; i<N;i++) { W[i] = exp(-0.5*( ch2[i] + 2*( Nmeas[i] - Ndof[i]) - F*Nmeas[i])); wtot += W[i]; }
+  for(int i=0; i<N;i++) { W[i] /= wtot; RES = RES + W[i]*VAL[i];}
+  for(int i=0; i<N;i++) {syst += W[i]*pow( VAL[i].ave() - RES.ave(),2); }
+  syst= sqrt(syst);
+
   RES = RES + (syst/RES.err())*(RES - RES.ave());
  
  
   return RES;
   
-  
-  
+   
 
 }
+
+
 
 
 

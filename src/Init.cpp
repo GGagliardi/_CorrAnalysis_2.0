@@ -1,4 +1,5 @@
 #include "../include/init.h"
+#include "RC_analysis.h"
 #include "chi_mag.h"
 
 
@@ -182,6 +183,12 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
     //do nothing
 
   }
+
+  else if(Analysis_Mode=="RC_analysis") {
+
+    //do nothing
+
+  }
   
   
   else crash("Analysis_Mode: "+Analysis_Mode+" not found");
@@ -274,6 +281,11 @@ void MasterClass_analysis::Analysis_manager() {
   if(Analysis_Mode=="HVP") {
     HVP();
   }
+
+  if(Analysis_Mode=="RC_analysis") {
+    Perform_RC_analysis();
+  }
+  
   
   return;
 

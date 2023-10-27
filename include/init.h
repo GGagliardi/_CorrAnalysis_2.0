@@ -18,6 +18,7 @@
 #include "semileptonic.h"
 #include "Bs_mumu_gamma.h"
 #include "HVP.h"
+#include "RC_analysis.h"
 
 using namespace std;
 

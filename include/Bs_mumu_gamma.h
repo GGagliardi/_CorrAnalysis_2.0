@@ -141,7 +141,7 @@ public:
 
 
 
-pair<double, double> WC(int id, double q2, double G1 = 0, double G2 = 0);
+pair<double, double> WC(int id, double q2, Vfloat G1=Vfloat({0,0,0,0,0}), Vfloat G2 = Vfloat({0,0,0,0,0}));
 void Get_Bs_xg_t_list(int num_xg);
 void Get_Bs_xg_to_spline();
 void Get_Bs_xg_to_spline_VMD();
@@ -239,15 +239,20 @@ double Compute_Bs_mumugamma_double_differential_decay_rate( int ijack, int NJ, d
   //Gamma
 
   double dx_b, dVtbs, dFBs, dtBs;
+  Vfloat Th(5), kappa(5);
   GaussianMersenne GPAR(854135);
   for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dx_b = rn*x_b_err/sqrt(NJ-1.0);}}
   for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dVtbs = rn*Vtbs_err/sqrt(NJ-1.0);}}
   for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dFBs = rn*FBs_err/sqrt(NJ-1.0);}}
   for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dtBs = rn*tBs_err/sqrt(NJ-1.0);}}
-
+  for(int j=0; j < 5; j++) {
+    for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {Th[j] = rn*2*M_PI/sqrt(NJ-1.0);}}
+    for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {kappa[j] = 1+ rn/sqrt(NJ-1.0);}}
+  }
 
   double ix_b = x_b + dx_b;
   double iVtbs = Vtbs + dVtbs;
+  
   double iFBs = FBs + dFBs;
   double itBs = tBs+ dtBs;
 
@@ -259,8 +264,8 @@ double Compute_Bs_mumugamma_double_differential_decay_rate( int ijack, int NJ, d
   double t= 0.5*(1+2*pow(x_mu,2) - s - csi);
   double u = t+csi;
   //get Wilson coefficients
-  double C9_R = WC(9,q2).first;
-  double C9_I = WC(9,q2).second;
+  double C9_R = WC(9,q2, kappa, Th).first;
+  double C9_I = WC(9,q2, kappa, Th).second;
   double C9_MOD = sqrt(pow(C9_R,2) + pow(C9_I,2));
   double C7 = WC(7,q2).first;
   double C10 = WC(10,q2).first;
@@ -269,18 +274,30 @@ double Compute_Bs_mumugamma_double_differential_decay_rate( int ijack, int NJ, d
   
   //define F functions
   auto F1 = [&]() { return  (pow(C9_MOD,2) + pow(C10,2))*pow(FV(xg),2) + pow(2*ix_b/s,2)*pow(C7,2)*( pow(FV_RE_T(xg),2) + pow(FV_IM_T(xg),2)) + (4.0*ix_b/s)*FV(xg)*C7*( C9_R*FV_RE_T(xg) +C9_I*FV_IM_T(xg));};
+
+  
   auto F2 = [&]() { return  (pow(C9_MOD,2) + pow(C10,2))*pow(FA(xg),2) + pow(2*ix_b/s,2)*pow(C7,2)*( pow(FA_RE_T(xg),2) + pow(FA_IM_T(xg),2)) + (4.0*ix_b/s)*FA(xg)*C7*( C9_R*FA_RE_T(xg) +C9_I*FA_IM_T(xg));};
+
+  
   //define B functions
   auto B0 = [&]() { return (s+4*pow(x_mu,2))*(F1()+F2()) -8*pow(x_mu,2)*pow(C10,2)*( pow(FV(xg),2) + pow(FA(xg),2)); };
-  auto B1 = [&]() { return 8*( s*FV(xg)*FA(xg)*C10*C9_R + ix_b*C7*C10*(FV(xg)*FA_RE_T(xg) + FA(xg)*FV_RE_T(xg)));};  
+  
+  auto B1 = [&]() { return 8*( s*FV(xg)*FA(xg)*C10*C9_R + ix_b*C7*C10*(FV(xg)*FA_RE_T(xg) + FA(xg)*FV_RE_T(xg)));};
+  
   auto B2 = [&]() { return s*(F1()+F2());};
+
+
+  
   //define G function
   auto G1 = [&]() { return K*( pow(xg,2)*B0() + xg*csi*B1() + pow(csi,2)*B2()); };
   auto G2 = [&]() { return K*pow(8*iFBs/MBs,2)*pow(C10*x_mu,2)*( (s+xg*xg/2)/( (u-x_mu*x_mu)*(t-x_mu*x_mu)) - pow( (xg*x_mu)/( (u-x_mu*x_mu)*(t-x_mu*x_mu)),2));};
   auto G12 = [&]() { return -K*(16*iFBs/MBs)*(pow(xg*x_mu,2)/( (u-x_mu*x_mu)*(t-x_mu*x_mu )))*( 2*(xg*ix_b/s)*C10*C7*FV_RE_T(xg) + csi*FA(xg)*pow(C10,2) + xg*FV(xg)*C10*C9_R);};
 
-  double Ag= 2.0*sqrt(1.0 -xg)/(xg*sqrt( 1 - xg- 4*pow(x_mu,2)));
-  return (1.0/Ag)*(G1()+0.0*G2()+0.0*G12())*itBs/hbar;
+  //double Ag= 2.0*sqrt(1.0 -xg)/(xg*sqrt( 1 - xg- 4*pow(x_mu,2)));
+  //return (1.0/Ag)*(G1()+0.0*G2()+0.0*G12())*itBs/hbar;
+
+  double Ag= 0.5*xg*sqrt( 1 - 4*pow(x_mu,2)/(1-xg));
+  return Ag*(G1()+0.0*G2()+0.0*G12())*itBs/hbar;
   
 
 };

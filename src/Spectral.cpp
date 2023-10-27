@@ -17,6 +17,7 @@ double Emax_int=4.0;
 bool ONLY_FORWARD=false;
 bool USE_GENERALIZED_NORM=false;
 
+
 using namespace std;
 
 
@@ -166,19 +167,22 @@ void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFlo
 
     if(Integrate_up_to_max_energy) {
 
-      if(SMEARING_FUNC=="FF_Gauss_IM") {
+      /*if(SMEARING_FUNC=="FF_Gauss_IM") {
 	ft(t-tmin) = precPi()*(exp(t_n*(t_n*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+t_n*s*s)/(sqrt(PrecFloat(2))*s))  - erf((E0-m+t_n*s*s)/(sqrt(PrecFloat(2))*s)))/2
-			       + ((ONLY_FORWARD)?PrecFloat(0):(exp(T_n*(T_n*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+T_n*s*s)/(sqrt(PrecFloat(2))*s))  - erf((E0-m+T_n*s*s)/(sqrt(PrecFloat(2))*s)))/2 ) )); }
-      else ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int, (verbosity_lev > 1));
+	+ ((ONLY_FORWARD)?PrecFloat(0):(exp(T_n*(T_n*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+T_n*s*s)/(sqrt(PrecFloat(2))*s))  - erf((E0-m+T_n*s*s)/(sqrt(PrecFloat(2))*s)))/2 ) )); } */
+      //else
+	ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int, (verbosity_lev > 1));
       
     }
     else {
+      /*
       if(SMEARING_FUNC=="FF_Gauss_IM") { ft(t-tmin) = precPi()*( exp(t_n*(t_n*s*s -2*m)/2)*( 1 - erf((E0-m+t_n*s*s)/(sqrt(PrecFloat(2))*s)))/2    + ((ONLY_FORWARD)?PrecFloat(0):( exp(T_n*(T_n*s*s -2*m)/2)*( 1 - erf((E0-m+T_n*s*s)/(sqrt(PrecFloat(2))*s)))/2  )))  ;
 	PrecFloat test= integrateUpToInfinite(ftT, E0.get(), (verbosity_lev > 1));
 	cout.precision(100);
 	cout<<"f("<<t<<"): EXACT: "<<ft(t-tmin)<<", NUM: "<<test<<endl<<flush;
-      }
-      else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get(), (verbosity_lev > 1));
+	} */
+      //else
+      ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get(), (verbosity_lev > 1));
 
     }
     
@@ -206,8 +210,9 @@ void Get_ft_std(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const Pre
 	return f(x,m,s,E0, jack_id)*(exp(-x*t) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(T-t))) ) ;
       };
 
-    if(SMEARING_FUNC=="FF_Gauss_IM")  ft(t-tmin) = precPi()*( exp(t*(t*s*s -2*m)/2)*(1 - erf((E0-m+t*s*s)/(sqrt(PrecFloat(2))*s)))/2  + ((ONLY_FORWARD)?PrecFloat(0):(exp(tr*(tr*s*s -2*m)/2)*(1 - erf((E0-m+tr*s*s)/(sqrt(PrecFloat(2))*s)))/2   )))  ;
-    else ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get(), (verbosity_lev > 1));
+    //if(SMEARING_FUNC=="FF_Gauss_IM")  ft(t-tmin) = precPi()*( exp(t*(t*s*s -2*m)/2)*(1 - erf((E0-m+t*s*s)/(sqrt(PrecFloat(2))*s)))/2  + ((ONLY_FORWARD)?PrecFloat(0):(exp(tr*(tr*s*s -2*m)/2)*(1 - erf((E0-m+tr*s*s)/(sqrt(PrecFloat(2))*s)))/2   )))  ;
+    //else
+    ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get(), (verbosity_lev > 1));
   }
 
 
@@ -231,10 +236,11 @@ void Get_ft_std_Emax(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, cons
 	return f(x,m,s,E0, jack_id)*(exp(-x*t) + ((ONLY_FORWARD)?PrecFloat(0.0):exp(-x*(T-t)))  ) ;
       };
 
-    if(SMEARING_FUNC=="FF_Gauss_IM") {
+    /*if(SMEARING_FUNC=="FF_Gauss_IM") {
       ft(t-tmin) = precPi()*( exp(t*(t*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+t*s*s)/(sqrt(PrecFloat(2))*s)) - erf((E0-m+t*s*s)/(sqrt(PrecFloat(2))*s)))/2
-		 + ((ONLY_FORWARD)?PrecFloat(0):( exp(tr*(tr*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+tr*s*s)/(sqrt(PrecFloat(2))*s)) - erf((E0-m+tr*s*s)/(sqrt(PrecFloat(2))*s)))/2  )));   }
-    else ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int, (verbosity_lev > 1));
+      + ((ONLY_FORWARD)?PrecFloat(0):( exp(tr*(tr*s*s -2*m)/2)*(erf((PrecFloat(Emax_int) -m+tr*s*s)/(sqrt(PrecFloat(2))*s)) - erf((E0-m+tr*s*s)/(sqrt(PrecFloat(2))*s)))/2  )));   } */
+    //else
+    ft(t-tmin) = integrateUpToXmax( ftT, E0.get(), Emax_int, (verbosity_lev > 1));
   }
   
 
@@ -1333,6 +1339,8 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
 distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact,const double &offset,  string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW,  bool GENERALIZED_NORM,  const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> F_NORM, const function<PrecFloat( PrecFloat )> Atr_gen_NORM) {
 
+
+  cout<<"precision used: "<<prec<<endl;
 
   Integrate_up_to_max_energy= Int_up_to_Max;
   Emax_int=Max_Erg;
