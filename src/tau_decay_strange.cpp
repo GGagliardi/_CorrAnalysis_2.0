@@ -7,8 +7,8 @@
 const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
 const bool UseJack=1;
-const int Njacks=50;
-const int Nboots=800;
+const int Njacks=75;
+const int Nboots=2000;
 const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
 const int prec = 128;
@@ -22,8 +22,8 @@ const double m_kappa_err = 0.0004;
 const double m_etas = 0.68989;
 const double m_etas_err= 0.00050;
 const double E0_l = 0.9*m_kappa;
-const double E0_sp = 0.9 * (m_kappa + MPiPhys);
-const double E0_A_sp = 0.9*(m_kappa+2*MPiPhys);
+const double E0_sp = E0_l; //0.9 * (m_kappa + MPiPhys);
+const double E0_A_sp = E0_l; // 0.9*(m_kappa+2*MPiPhys);
 const double Rs_HFLAV = 0.163260;
 const double D_Rs_HFLAV= 0.0027;
 Vfloat sigma_list_strange;
@@ -1129,7 +1129,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     //################   LIGHTER   ##############################
 
     bool Found_error_less_x_percent=false;
-    double x=10;
+    double x=15;
     //tm
     int tmax_tm_A0=1;
     while(!Found_error_less_x_percent && tmax_tm_A0 < Corr.Nt/2 -1 ) {
