@@ -468,7 +468,7 @@ Pfloat BootAve(const Vfloat &BootDistr) {
 
   int N= BootDistr.size();
   for(int i=0; i<N; i++)  ave_err.first += BootDistr[i]/N;
-  for(int i=0; i<N;i++) ave_err.second += pow( BootDistr[i]-ave_err.first,2)/(N-1.0);
+  for(int i=0; i<N; i++) ave_err.second += pow( BootDistr[i]-ave_err.first,2)/(N-1.0);
 
   ave_err.second = sqrt(ave_err.second);
   return ave_err;
@@ -908,20 +908,24 @@ distr_t_list Get_id_distr_list(int size, int N, bool UseJack) {
 }
 
 
-distr_t AIC( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas,  bool NEIL ) {
+distr_t AIC( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas,  bool NEIL, const vector<double> &mult ) {
 
-
+  Vfloat MULT;
+  if(mult.size() == 1 && mult[0] == 0) { MULT.resize(VAL.size(),1);}
+  else MULT=mult;
+  
   if( (VAL.size() != ch2.size()) || (VAL.size() != Ndof.size()) || ( Ndof.size() != Nmeas.size())) crash("AIC analysis called with vectors of different sizes");
-
+  
   int N=VAL.size();
   assert(N > 0);
   double F= ((NEIL)?2:1);
-   
-  distr_t RES= 0.0*VAL[0];
 
+  
+  distr_t RES= 0.0*VAL[0];
+  
   vector<double> W(N,0.0);
   double wtot=0; double syst=0;
-  for(int i=0; i<N;i++) { W[i] = exp(-0.5*( ch2[i] + 2*( Nmeas[i] - Ndof[i]) - F*Nmeas[i])); wtot += W[i]; }
+  for(int i=0; i<N;i++) { W[i] = MULT[i]*exp(-0.5*( ch2[i] + 2*( Nmeas[i] - Ndof[i]) - F*Nmeas[i])); wtot += W[i]; }
   for(int i=0; i<N;i++) { W[i] /= wtot; RES = RES + W[i]*VAL[i];}
   for(int i=0; i<N;i++) {syst += W[i]*pow( VAL[i].ave() - RES.ave(),2); }
   syst= sqrt(syst);
@@ -933,9 +937,13 @@ distr_t AIC( const vector<distr_t> &VAL, const vector<double> &ch2, const vector
 }
 
 
-distr_t AIC_lin( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas,  bool NEIL ) {
+distr_t AIC_lin( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas,  bool NEIL, const vector<double> &mult ) {
 
+  Vfloat MULT;
+  if(mult.size() == 1 && mult[0] == 0) { MULT.resize(VAL.size(),1);}
+  else MULT=mult;
 
+    
   if( (VAL.size() != ch2.size()) || (VAL.size() != Ndof.size()) || ( Ndof.size() != Nmeas.size())) crash("AIC analysis called with vectors of different sizes");
 
   int N=VAL.size();
@@ -946,7 +954,7 @@ distr_t AIC_lin( const vector<distr_t> &VAL, const vector<double> &ch2, const ve
 
   vector<double> W(N,0.0);
   double wtot=0; double syst=0;
-  for(int i=0; i<N;i++) { W[i] = exp(-0.5*( ch2[i] + 2*( Nmeas[i] - Ndof[i]) - F*Nmeas[i])); wtot += W[i]; }
+  for(int i=0; i<N;i++) { W[i] = MULT[i]*exp(-0.5*( ch2[i] + 2*( Nmeas[i] - Ndof[i]) - F*Nmeas[i])); wtot += W[i]; }
   for(int i=0; i<N;i++) { W[i] /= wtot; RES = RES + W[i]*VAL[i];}
   for(int i=0; i<N;i++) {syst += W[i]*pow( VAL[i].ave() - RES.ave(),2); }
   syst= sqrt(syst);
@@ -960,6 +968,52 @@ distr_t AIC_lin( const vector<distr_t> &VAL, const vector<double> &ch2, const ve
 
 }
 
+distr_t BMA_uniform( const vector<distr_t> &VAL, const vector<double> &ch2, const vector<int> &Ndof, const vector<int> &Nmeas, double ch2_th) {
+
+
+  
+  if( (VAL.size() != ch2.size()) || (VAL.size() != Ndof.size()) || ( Ndof.size() != Nmeas.size())) crash("AIC analysis called with vectors of different sizes");
+
+  int N=VAL.size();
+  
+  distr_t RES= 0.0*VAL[0];
+  
+  vector<double> W(N,0.0);
+  double wtot=0; double syst=0;
+  for(int i=0; i<N;i++) { W[i] = ((ch2[i]/Ndof[i] < ch2_th)?1.0:0) ; wtot += W[i]; }
+  for(int i=0; i<N;i++) { W[i] /= wtot; RES = RES + W[i]*VAL[i];}
+  for(int i=0; i<N;i++) {syst += W[i]*pow( VAL[i].ave() - RES.ave(),2); }
+  syst= sqrt(syst);
+
+  RES = RES.ave() + (sqrt(pow(syst,2)+pow(RES.err(),2))/RES.err())*(RES - RES.ave());
+ 
+ 
+  return RES;
+}
+
+distr_t BMA_Eq_29( const vector<distr_t> &VAL) {
+
+
+  
+ 
+  int N=VAL.size();
+  
+  distr_t RES= 0.0*VAL[0];
+  
+  vector<double> W(N,0.0);
+  double wtot=0; double syst=0;
+  for(int i=0; i<N;i++) { W[i] = 1.0/N ; wtot += W[i]; }
+  for(int i=0; i<N;i++) { W[i] /= wtot; RES = RES + W[i]*VAL[i];}
+  for(int i=0; i<N;i++) {syst += W[i]*pow( VAL[i].ave() - RES.ave(),2); }
+  syst= sqrt(syst);
+
+  RES = RES.ave() + (sqrt(pow(syst,2)+pow(RES.err(),2))/RES.err())*(RES - RES.ave());
+ 
+ 
+  return RES;
+
+
+}
 
 
 

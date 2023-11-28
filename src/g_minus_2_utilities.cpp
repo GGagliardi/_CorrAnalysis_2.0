@@ -650,6 +650,16 @@ void Generate_free_corr_data() {
 
   vector<pair<double, int>> amu_Tmax;
 
+  //amu_Tmax.push_back( make_pair( 0.00077, 64));
+
+  amu_Tmax.push_back( make_pair(0.018,64));
+  amu_Tmax.push_back( make_pair(0.020,64));
+  amu_Tmax.push_back( make_pair(0.018,96));
+  amu_Tmax.push_back( make_pair(0.020,96));
+  amu_Tmax.push_back( make_pair(0.013,96));
+  
+
+  /*
   //charm
 
   // A ensembles
@@ -714,7 +724,7 @@ void Generate_free_corr_data() {
   amu_Tmax.push_back(make_pair( 0.300, 24));
   amu_Tmax.push_back(make_pair( 2*0.300, 32));
   amu_Tmax.push_back(make_pair( 0.300, 32));
-  */
+  
 
   //light
   //amu_Tmax.push_back( make_pair( 2*0.00054, 96));
@@ -727,6 +737,11 @@ void Generate_free_corr_data() {
   //amu_Tmax.push_back( make_pair( 0.00072, 96));
 
   //amu_Tmax.push_back( make_pair(0.0, 200));
+
+
+  
+  */
+
   
   
   
@@ -893,11 +908,11 @@ void Compute_free_corr(double am, int Tmax) {
   //create directory
   boost::filesystem::create_directory("../Vkvk_cont");
   boost::filesystem::create_directory("../Vkvk_cont/a_mu_SD_scaling");
-  boost::filesystem::create_directory("../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,3));
+  boost::filesystem::create_directory("../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,5));
 
 
-  Print_To_File({}, {a2corr_pert_res_tm, corr_pert_res_tm, corr_pert_cont}, "../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,3)+"/OPPOR", "" , "");
-  Print_To_File({}, {a2corr_pert_res_OS, corr_pert_res_OS, corr_pert_cont}, "../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,3)+"/SAMER", "" , "");
+  Print_To_File({}, {a2corr_pert_res_tm, corr_pert_res_tm, corr_pert_cont}, "../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,5)+"/OPPOR", "" , "");
+  Print_To_File({}, {a2corr_pert_res_OS, corr_pert_res_OS, corr_pert_cont}, "../Vkvk_cont/"+to_string(Tmax)+"_m"+to_string_with_precision(am,5)+"/SAMER", "" , "");
   
 
   Vfloat amu_SD_OPPOR_list, amu_SD_OPPOR_diff_list, amu_SD_SAMER_list, amu_SD_SAMER_diff_list, a_lat_list;
@@ -941,7 +956,7 @@ void Compute_free_corr(double am, int Tmax) {
 
 
 
-    Print_To_File( {}, { a_lat_list, amu_SD_OPPOR_list, amu_SD_OPPOR_diff_list,  amu_SD_SAMER_list, amu_SD_SAMER_diff_list}, "../Vkvk_cont/a_mu_SD_scaling/scaling_am_"+to_string_with_precision(am,3)+".dat", "", "#a[fm] a_mu[tm]  Da_mu[tm] a_mu[OS]   Da_mu[OS]");
+    Print_To_File( {}, { a_lat_list, amu_SD_OPPOR_list, amu_SD_OPPOR_diff_list,  amu_SD_SAMER_list, amu_SD_SAMER_diff_list}, "../Vkvk_cont/a_mu_SD_scaling/scaling_am_"+to_string_with_precision(am,5)+".dat", "", "#a[fm] a_mu[tm]  Da_mu[tm] a_mu[OS]   Da_mu[OS]");
   
 
 

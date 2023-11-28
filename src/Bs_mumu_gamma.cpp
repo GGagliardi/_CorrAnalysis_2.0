@@ -29,15 +29,16 @@ const Vfloat ratio_mh({1, 1.0 / 1.4835, 1.0 / 2.02827, 1.0 / 2.53531, 1.0 / 3.04
 //const Vfloat ratio_mh({ 1.0/1.4835, 1.0/2.02827, 1.0/2.53531, 1.0/3.04236});
 const double mc_MS_bar_2_ave=  1.016392574;
 const double mc_MS_bar_2_err = 0.02247780935;
-const bool Compute_FF = true;
-const bool Skip_virtual_diagram = true;
+const bool Compute_FF = false;
+const bool Skip_virtual_diagram = false;
 const bool Generate_data_for_mass_spline = false;
 const bool Fit_single_reg = false;
 const string Reg_to_fit = "3pt";
 const double k_erf = 1e10;
 const bool plot_fit_func_fBs = false;
 const double MU_GLB = 5.367; // GeV
-const bool fit_FB_FT=false;
+const bool fit_FB_FT = false;
+const bool Perform_global_fit=false;
 
 
 void rt_FF_Bs::Print(string path) {
@@ -130,7 +131,7 @@ void rt_FF_Bs::Read(string path, bool UseJ, bool three_finest, bool inc_a4, int 
 
 
 
-pair<double,double> WC(int id, double q2, Vfloat G1, Vfloat G2) {
+pair<double,double> WC(int id, double q2, const Vfloat &G1, const Vfloat &G2, const Vfloat &BS_F, const Vfloat &Gammas_F) {
 
   //from https://arxiv.org/pdf/1712.07926.pdf
   if( id == 1) return make_pair(0.241,0);
@@ -145,17 +146,31 @@ pair<double,double> WC(int id, double q2, Vfloat G1, Vfloat G2) {
 
 
     
+    
 
-    vector<string> Res({"Psi_2S", "Psi_3770", "Psi_4040", "Psi_4160", "Psi_4415"});
+    vector<string> Res({"J_Psi", "Psi_2S", "Psi_3770", "Psi_4040", "Psi_4160", "Psi_4230", "Psi_4415", "Psi_4660"});
     double K= M_PI/180.0;
-    Vfloat Bs({8e-3, 9.6e-6, 10.7e-6,6.9e-6,2.0e-5 });
-    Vfloat Deltas({ 0, 0, 133*K, 301*K, 246*K});
-    Vfloat Gammas({ 2.94e-4, 2.72e-2, 8e-2, 7e-2, 6.2e-2}); //GeV
-    Vfloat Masses({3.686, 3.774, 4.039, 4.191, 4.421}); //GeV
+    Vfloat Bs({0.05961, 8e-3, 9.6e-6, 10.7e-6, 6.9e-6, 3.2e-5, 2.0e-5, 1.0e-5 });
+    Vfloat Bs_err({0.00033, 6e-4, 7e-7, 0.16e-5, 3.3e-6, 2.9e-5, 1e-5, 1e-5});
+    //Vfloat Deltas({ 0, 0, 133*K, 301*K, 246*K});
+    Vfloat Deltas(Res.size(), 0.0);
+    Vfloat Gammas({ 0.0926e-3, 2.94e-4, 2.72e-2, 8e-2, 7e-2, 4.8e-2, 6.2e-2, 7.2e-2}); //GeV
+    Vfloat DGammas({ 1.7e-6, 8e-6, 1e-3, 1e-2, 1e-2, 8e-3, 2.0e-2, 1.3e-2}); //GeV
+    Vfloat Masses({3.0969, 3.68610,  3.7737, 4.039, 4.191, 4.2225, 4.421, 4.630}); //GeV
+
+    for(int i=0;i<(signed)Res.size(); i++) {
+      Bs[i] += BS_F[i]*Bs_err[i];
+      Gammas[i] += Gammas_F[i]*DGammas[i];
+    }
+    
     for(int i=0; i < (signed)Res.size() ; i++) {
-      RE_C9 += ((9.0*M_PI)/(pow(alpha_em,2)))*Cbar*(1+G1[i])*(Masses[i]*Bs[i]*Gammas[i]/( pow( q2- pow(Masses[i],2),2) + pow( Masses[i]*Gammas[i],2)))*( cos(Deltas[i]+G2[i])*(q2 - pow(Masses[i],2)) + sin(Deltas[i]+G2[i])*Masses[i]*Gammas[i]);
+
+      double Cos = G2[i];
+      double Sin = sqrt( 1 - G2[i]*G2[i]);
       
-      IM_C9 +=  ((9.0*M_PI)/(pow(alpha_em,2)))*Cbar*(1+G1[i])*(Masses[i]*Bs[i]*Gammas[i]/( pow( q2- pow(Masses[i],2),2) + pow( Masses[i]*Gammas[i],2)))*( sin(Deltas[i]+G2[i])*(q2 - pow(Masses[i],2)) -cos(Deltas[i]+G2[i])*Masses[i]*Gammas[i]);
+      RE_C9 += ((9.0*M_PI)/(pow(alpha_em,2)))*Cbar*(1+G1[i])*(Masses[i]*Bs[i]*Gammas[i]/( pow( q2- pow(Masses[i],2),2) + pow( Masses[i]*Gammas[i],2)))*( Cos*(q2 - pow(Masses[i],2)) + Sin*Masses[i]*Gammas[i]);
+      
+      IM_C9 +=  ((9.0*M_PI)/(pow(alpha_em,2)))*Cbar*(1+G1[i])*(Masses[i]*Bs[i]*Gammas[i]/( pow( q2- pow(Masses[i],2),2) + pow( Masses[i]*Gammas[i],2)))*( Sin*(q2 - pow(Masses[i],2)) -Cos*Masses[i]*Gammas[i]);
     }
     
     return make_pair(RE_C9, IM_C9);
@@ -1273,8 +1288,85 @@ void Compute_Bs_mumu_gamma() {
     double q2= MBs*MBs*( 1 - xg);
     cout<<"xg: "<<xg<<" q2: "<<q2<<" C9: -4.21: C9_eff[RE]: "<<WC(9, q2).first<<" C9_eff[IM]: "<<WC(9, q2).second<<endl;
   }
+
+
+  int Npt_test=999;
+
+  auto F_null = [](double x) { return 0.0;};
+
+  for(int i=0;i<Npt_test;i++) {
+    double x= (i+1)*0.2/1000;
+    cout<<x<<" "<<Compute_Bs_mumugamma_differential_decay_rate(x, F_null, F_null, F_null, F_null, F_null, F_null, 0.2245, x_b, Vtbs, tBs, Vfloat(8,0), Vfloat(8,0), Vfloat(8,0), Vfloat(8,0),  "PT", "NO_CH")<<endl; 
+  }
   
+
+  cout<<"TESTING ERROR PROPAGATION ON C9"<<endl;
+  //testing error propagation on C9;
+
+  for(int ixg=0;ixg<100;ixg++) {
+
+    double xg =0.42 - ixg*(0.42/99);
+    double q2=MBs*MBs*(1-xg);
+
+    distr_t C9_RE_jack(1), C9_IM_jack(1);
+    distr_t C9_RE_boot(0), C9_IM_boot(0);
+
+    GaussianMersenne GPAR(854135);
+    UniformMersenne  RAN(45252, 0.0, 2*M_PI);
+    int NJJ=500;
+    for(int ijack=0;ijack<NJJ;ijack++) {
     
+      Vfloat CosTh(8), kappa(8), Bs_F(8), Gammas_F(8); 
+     
+     
+      for(int j=0; j < 8; j++) {
+	double unif=RAN();  {CosTh[j] = cos(unif)/sqrt(NJJ-1.0);}
+	double rn1=GPAR();   {kappa[j] = 0.75 + 0.75*rn1/sqrt(NJJ-1.0);}
+	double rn2=GPAR();  {Bs_F[j] = 1.0*rn2/sqrt(NJJ-1.0) ;}
+	double rn3=GPAR();  {Gammas_F[j] = 1.0*rn3/sqrt(NJJ-1.0) ;}
+      }
+      
+      C9_RE_jack.distr.push_back( WC(9, q2, kappa, CosTh, Bs_F, Gammas_F).first);
+      C9_IM_jack.distr.push_back( WC(9, q2, kappa, CosTh, Bs_F, Gammas_F).second);
+      
+    }
+
+    int NNboots=10000;
+
+    for(int iboot=0;iboot<NNboots;iboot++) {
+
+      Vfloat CosTh(8), kappa(8), Bs_F(8), Gammas_F(8); 
+      for(int j=0; j < 8; j++) {
+
+	double unif=RAN();  {CosTh[j] = cos(unif);}
+	double rn1=GPAR();  {kappa[j] = 0.75 + 0.75*rn1;}
+	double rn2=GPAR();  {Bs_F[j] = 1.0*rn2 ;}
+	double rn3=GPAR();   {Gammas_F[j] = 1.0*rn3 ;}
+      }
+      
+      C9_RE_boot.distr.push_back( WC(9, q2, kappa, CosTh, Bs_F, Gammas_F).first);
+      C9_IM_boot.distr.push_back( WC(9, q2, kappa, CosTh, Bs_F, Gammas_F).second);
+
+    }
+
+
+    double C9_RE_val= C9_RE_boot.ave(); double C9_RE_err= C9_RE_boot.err();
+    double C9_IM_val= C9_IM_boot.ave(); double C9_IM_err= C9_IM_boot.err();
+
+    distr_t C9_RE_resampled(1), C9_IM_resampled(1);
+    for(int i=0;i<NJ;i++) { C9_RE_resampled.distr.push_back( C9_RE_val + GPAR()*C9_RE_err/sqrt(NJ-1.0)); C9_IM_resampled.distr.push_back( C9_IM_val + GPAR()*C9_IM_err/sqrt(NJ-1.0)); }
+
+    if(ixg==50) { Print_To_File({}, {C9_RE_boot.distr, C9_IM_boot.distr}, "test_C9_distr", "", "");}
+
+    cout<<"xg: "<<xg<<endl;
+    cout<<"C9(RE): "<<C9_RE_jack.ave()<<" +- "<<C9_RE_jack.err()<<" [jack] , "<<C9_RE_boot.ave()<<" +- "<<C9_RE_boot.err()<<" [boot] "<<C9_RE_resampled.ave()<<" +- "<<C9_RE_resampled.err()<<" [jack resampled]"<<endl;
+    cout<<"C9(IM): "<<C9_IM_jack.ave()<<" +- "<<C9_IM_jack.err()<<" [jack] , "<<C9_IM_boot.ave()<<" +- "<<C9_IM_boot.err()<<" [boot] "<<C9_IM_resampled.ave()<<" +- "<<C9_IM_resampled.err()<<" [jack resampled]"<<endl;
+    cout<<"######"<<endl;
+    
+  }
+  
+
+  
 
 
 
@@ -1429,6 +1521,8 @@ void Compute_Bs_mumu_gamma() {
 
   cout<<"Comparing evolutor (mu1=4.203, mu2=3): EXACT: "<<MS_bar_mass_evolutor(4.203, 3, 4, Lambda_MS_bar, 0)<<" , APPROXIMATE: "<<MS_bar_mass_evolutor(4.203, 3, 4, Lambda_MS_bar, 1)<<endl;
 
+  cout<<"mb(5 GeV): "<<4.203*MS_bar_mass_evolutor(5, 4.203, 4, Lambda_MS_bar, 0)<<endl;
+ 
 
   //checking MRS calculation
   cout<<"Checking calculation of MRS masses"<<endl;
@@ -1438,6 +1532,8 @@ void Compute_Bs_mumu_gamma() {
  
   //determine the form factor corresponding to the emission of the real photon from O7
 
+  vector<rt_07_Bs> TFF_virtual_ret_list;
+
   if(!Skip_virtual_diagram) {
   
     vector<bool> UseJack_list_07({1,1,1});
@@ -1445,8 +1541,7 @@ void Compute_Bs_mumu_gamma() {
     vector<string> Corr_path_list_07({ "../Bs_mumu_gamma_data/07_virtual/mh0", "../Bs_mumu_gamma_data/07_virtual/mh1", "../Bs_mumu_gamma_data/07_virtual/mh3"  });
     vector<string> out_tag_list_07({"mh0", "mh1", "mh3"});
     vector<string> Meson_list_07({"B0s", "B1s", "B3s"});
-
-  vector<rt_07_Bs> TFF_virtual_ret_list;
+ 
   
   int NN= UseJack_list_07.size();
   for(int i=0;i<NN;i++) {
@@ -1464,6 +1559,8 @@ void Compute_Bs_mumu_gamma() {
   }
   
   }
+
+ 
 
 
 
@@ -1824,7 +1921,7 @@ void Compute_Bs_mumu_gamma() {
   //fit
   cout<<"Fitting Bs-meson mass"<<endl;
   Bt_fit_mh= bf_mh.Perform_bootstrap_fit();
-  Bt_fit_mh_ch2= bf_mh_ch2.Perform_bootstrap_fit();
+  Bt_fit_mh_ch2= bf_mh_ch2.Perform_bootstrap_fit();    
   int Npars= 2+ (Fix_R==true) + (Fix_C==true);
   double ch2_red_mh= Bt_fit_mh_ch2.get_ch2_ave()/( Nmasses -Npars);
 
@@ -1848,7 +1945,7 @@ void Compute_Bs_mumu_gamma() {
       double mm= MRS_to_mm(x);
       double a= Get_4l_alpha_s(mm, 4.0, Lambda_MS_bar);
       double log_mug= pow(a,9.0/25)*( 1 + 0.67235*a + 1.284*pow(a,2));
-      double MBs=5.36692;
+      //double MBs=5.36692;
       return (x/MBs)*mc_HQET.distr[ijack]*( R_mh.distr[ijack]  + A_mh.distr[ijack]*(1.0/x) + B_mh.distr[ijack]*pow(1.0/x,2) + C_mh.distr[ijack]*log_mug*pow(1.0/x,2)) -1.0 ;
       
     };
@@ -2033,7 +2130,7 @@ void Compute_Bs_mumu_gamma() {
 
   //### Determine Bs decay constant
   ipar_fB pp_Bs;
-  double MBs=5.36692;
+  //double MBs=5.36692;
   pp_Bs.M= MBs;
   for(int ijack=0;ijack<NJ;ijack++) {
     pp_Bs.Mpole= MS_bar_to_MRS(mb.distr[ijack] );
@@ -2084,6 +2181,412 @@ void Compute_Bs_mumu_gamma() {
   Print_To_File({}, {ratio_mh, (1.0/masses).ave(), (1.0/masses).err(), fps.ave(), fps.err(), HQET_on_simulated_m, pole_mass_on_simulated_m}, "../data/ph_emission/"+ph_type+"/Bs_extr/fBs.dat", "", "");
 
   }
+
+
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //##############################################                               ######################################################
+  //##############################################                               ######################################################
+  //##############################################                               ######################################################
+  //##############################################                               ######################################################
+  //##############################################       PRETTY DIAGRAM          ######################################################
+  //##############################################                               ######################################################
+  //##############################################                               ######################################################
+  //##############################################                               ######################################################
+  //##############################################                               ######################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+  //###################################################################################################################################
+
+
+
+
+  //mass extrapolation
+
+  
+  class ipar_pretty_b {
+  public:
+    ipar_pretty_b() : FF(0.0), FF_err(0.0) {}
+    double FF, FF_err, M, xg;
+  };
+  
+  class fpar_pretty_b {
+  public:
+    fpar_pretty_b() {}
+    fpar_pretty_b(const Vfloat &par) {
+      if((signed)par.size() != 3) crash("In class fpar_pretty_b  class constructor Vfloat par has size != 3");
+      A=par[0];
+      B=par[1];
+      C=par[2];
+    }
+    double A,B,C;
+  };
+
+
+  vector<distr_t_list> bar_FT_b(1);
+
+  for(int i=0; i<(signed)TFF_virtual_ret_list.size();i++) bar_FT_b.push_back( TFF_virtual_ret_list[i].Get_FF(0));
+
+  int Njacks_pretty= bar_FT_b[0][0].distr.size();
+  //init bootstrap fit
+  bootstrap_fit<fpar_pretty_b,ipar_pretty_b> bf_pretty_b(Njacks_pretty);
+  bf_pretty_b.set_warmup_lev(1); //sets warmup
+  bf_pretty_b.Set_number_of_measurements(12);
+  bf_pretty_b.Set_verbosity(1);
+  
+  
+  bf_pretty_b.Add_par("A", 0.01, 0.003);
+  bf_pretty_b.Add_par("B", 0.1 , 0.01);
+  bf_pretty_b.Add_par("C", 0.8 , 0.01);
+ 
+  //fit on mean values to get ch2
+  bootstrap_fit<fpar_pretty_b,ipar_pretty_b> bf_pretty_b_ch2(1);
+  bf_pretty_b_ch2.set_warmup_lev(1); //sets warmup
+  bf_pretty_b_ch2.Set_number_of_measurements(12);
+  bf_pretty_b_ch2.Set_verbosity(1);
+  bf_pretty_b_ch2.Add_par("A", 0.01, 0.003);
+  bf_pretty_b_ch2.Add_par("B", 0.1, 0.01); 
+  bf_pretty_b_ch2.Add_par("C", 0.8, 0.01);
+
+
+
+ 
+
+  //ansatz
+  bf_pretty_b.ansatz=  [ ](const fpar_pretty_b &p, const ipar_pretty_b &ip) {
+    return (p.A + p.B*ip.xg)/(ip.M*( 1 + 0.5*ip.xg + p.C/ip.M ))  ;
+  };
+  
+  bf_pretty_b.measurement=  [ ](const fpar_pretty_b &p, const ipar_pretty_b &ip) {
+    return ip.FF;
+  };
+  
+  bf_pretty_b.error=  [ ](const fpar_pretty_b &p, const ipar_pretty_b &ip) {
+    return ip.FF_err;
+  };
+	
+  bf_pretty_b_ch2.ansatz= bf_pretty_b.ansatz;
+  bf_pretty_b_ch2.measurement = bf_pretty_b.measurement;
+  bf_pretty_b_ch2.error = bf_pretty_b.error;
+
+
+
+  //insert covariance matrix
+  Eigen::MatrixXd Cov_Matrix_pretty_b(12,12);
+  Eigen::MatrixXd Corr_Matrix_pretty_b(12,12);
+  for(int i=0;i<12;i++)
+    for(int j=0;j<12;j++) {
+      Cov_Matrix_pretty_b(i,j) = bar_FT_b[(i+3)%3].distr_list[i/3]%bar_FT_b[(j+3)%3].distr_list[j/3];
+      
+    }
+
+  for(int i=0;i<12;i++) {
+    for(int j=0;j<12;j++) {
+      Corr_Matrix_pretty_b(i,j) = Cov_Matrix_pretty_b(i,j)/(sqrt(Corr_Matrix_pretty_b(i,i)*Corr_Matrix_pretty_b(j,j)));
+    }
+  }
+
+  //print on screen
+  cout<<"Correlation matrix pretty b"<<endl;
+  cout<<Corr_Matrix_pretty_b<<endl;
+  
+  //add cov matrix to bootstrap fit
+  bf_pretty_b.Add_covariance_matrix(Cov_Matrix_pretty_b);
+  bf_pretty_b_ch2.Add_covariance_matrix(Cov_Matrix_pretty_b);
+
+
+
+  //start fitting
+  //fill the data
+  vector<vector<ipar_pretty_b>> data_pretty_b(Njacks_pretty);
+  vector<vector<ipar_pretty_b>> data_pretty_b_ch2(1);
+  //allocate space for output result
+  boot_fit_data<fpar_pretty_b> Bt_fit_pretty_b;
+  boot_fit_data<fpar_pretty_b> Bt_fit_pretty_b_ch2;
+  for(auto &data_iboot: data_pretty_b) data_iboot.resize(Nmasses);
+  for(auto &data_iboot: data_pretty_b_ch2) data_iboot.resize(Nmasses);
+  for(int ijack=0;ijack<Njacks_pretty;ijack++) {
+    for(int im=0;im<12;im++) {
+      data_pretty_b[ijack][im].FF = bar_FT_b[(im+3)%3][im/3].distr[ijack];
+      data_pretty_b[ijack][im].FF_err= bar_FT_b[(im+3)%3].err(im/3);
+      data_pretty_b[ijack][im].M= masses.distr_list[(((im+3)%3) > 1)?3:(im/3)].distr[ijack];
+      data_pretty_b[ijack][im].xg= Bs_xg_t_list[im/3];
+      if(ijack==0) {
+	data_pretty_b_ch2[ijack][im].FF =  bar_FT_b[(im+3)%3][im/3].ave();
+	data_pretty_b_ch2[ijack][im].FF_err=  bar_FT_b[(im+3)%3][im/3].err();
+	data_pretty_b_ch2[ijack][im].M = masses.ave((((im+3)%3) > 1)?3:(im/3));
+	data_pretty_b_ch2[ijack][im].xg= Bs_xg_t_list[im/3];
+      }
+    }
+  }
+  
+  //append
+  bf_pretty_b.Append_to_input_par(data_pretty_b);
+  bf_pretty_b_ch2.Append_to_input_par(data_pretty_b_ch2);
+  //fit
+  cout<<"Fitting Bs-meson decay constant"<<endl;
+  Bt_fit_pretty_b= bf_pretty_b.Perform_bootstrap_fit();
+  Bt_fit_pretty_b_ch2= bf_pretty_b_ch2.Perform_bootstrap_fit();
+
+
+  
+  Bt_fit_pretty_b_ch2= bf_pretty_b_ch2.Perform_bootstrap_fit();
+  double ch2_red_pretty_b= Bt_fit_pretty_b_ch2.get_ch2_ave()/( Nmasses -bf_pretty_b.Get_number_of_fit_pars());
+
+  cout<<"reduced ch2 of pretty b: "<<ch2_red_pretty_b<<endl;
+  
+  //retrieve params
+  distr_t A_pb(1), B_pb(1), C_pb(1);
+  for(int ijack=0;ijack<NJ;ijack++) {
+    A_pb.distr.push_back( Bt_fit_pretty_b.par[ijack].A);
+    B_pb.distr.push_back( Bt_fit_pretty_b.par[ijack].B);
+    C_pb.distr.push_back( Bt_fit_pretty_b.par[ijack].C);
+  }
+
+  Vfloat xg_to_print_pretty;
+  int nxg_to_print_pretty=199;
+  for(int n=0;n<nxg_to_print_pretty;n++) xg_to_print_pretty.push_back( 0.0025*(n+1));
+
+  //print fit function
+  for(int im=0;im<3;im++) {
+    distr_t_list pretty_b_to_print(true, nxg_to_print_pretty, Njacks_pretty);
+    for(int n=0;n<nxg_to_print_pretty;n++) {
+      ipar_pretty_b ip_pretty_b;
+      ip_pretty_b.xg= xg_to_print_pretty[n];
+      for(int ijack=0;ijack<Njacks_pretty;ijack++) {
+	ip_pretty_b.M= masses.distr_list[ (im==2)?3:im ].distr[ijack];
+	pretty_b_to_print.distr_list[n].distr.push_back( bf_pretty_b.ansatz( Bt_fit_pretty_b.par[ijack], ip_pretty_b));
+      }
+    }
+    Print_To_File({}, {xg_to_print_pretty, pretty_b_to_print.ave(), pretty_b_to_print.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_b_im_"+to_string(im)+".fit_func", "" , "");
+    Print_To_File({}, {Bs_xg_t_list, bar_FT_b[im].ave(), bar_FT_b[im].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_b_im_"+to_string(im)+".dat", "" , "");
+  }
+
+  //determine pretty b at MBs mass
+
+  distr_t_list pretty_b_MB(1, nxg_to_print_pretty, Njacks_pretty);
+  for(int n=0;n<nxg_to_print_pretty;n++) {
+      ipar_pretty_b ip_pretty_b;
+      ip_pretty_b.xg= xg_to_print_pretty[n];
+      ip_pretty_b.M= MBs;
+      for(int ijack=0;ijack<Njacks_pretty;ijack++) {
+	pretty_b_MB.distr_list[n].distr.push_back( bf_pretty_b.ansatz( Bt_fit_pretty_b.par[ijack], ip_pretty_b));
+      }
+  }
+  Print_To_File({}, {xg_to_print_pretty, pretty_b_MB.ave(), pretty_b_MB.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_b_Bs.dat", "" , "");
+
+
+
+
+  
+
+  
+  
+  
+
+  exit(-1);
+ 
+  //pretty s 
+
+
+   class ipar_pretty_s {
+  public:
+    ipar_pretty_s() : FF(0.0), FF_err(0.0) {}
+     double FF, FF_err, M, xg, y;
+  };
+  
+  class fpar_pretty_s {
+  public:
+    fpar_pretty_s() {}
+    fpar_pretty_s(const Vfloat &par) {
+      if((signed)par.size() != 3) crash("In class fpar_pretty_s  class constructor Vfloat par has size != 3");
+      A=par[0];
+      B=par[1];
+      C=par[2];
+    }
+    double A,B,C;
+  };
+
+
+  vector<distr_t_list> bar_FT_s_RE(1);
+
+  vector<distr_t_list> bar_FT_s_RE_xg(4);
+
+  for(int i=0; i<(signed)TFF_virtual_ret_list.size();i++) bar_FT_s_RE.push_back( TFF_virtual_ret_list[i].Get_FF(1));
+
+  for(int ixg=0;ixg<(signed)Bs_xg_t_list.size();ixg++) {
+    for(int i=0; i<(signed)TFF_virtual_ret_list.size();i++) {
+      bar_FT_s_RE_xg[ixg].distr_list.push_back( TFF_virtual_ret_list[i].Get_FF(1).distr_list[ixg]);
+    }
+  }
+
+  Vfloat y_eff= TFF_virtual_ret_list[0].y_eff;
+
+  //init bootstrap fit
+  bootstrap_fit<fpar_pretty_s,ipar_pretty_s> bf_pretty_s(Njacks_pretty);
+  bf_pretty_s.set_warmup_lev(1); //sets warmup
+  bf_pretty_s.Set_number_of_measurements(12);
+  bf_pretty_s.Set_verbosity(1);
+  
+  
+  bf_pretty_s.Add_par("A", 0.01, 0.003);
+  bf_pretty_s.Add_par("B", -0.5 , 0.01);
+  bf_pretty_s.Add_par("C", 2.0 , 0.01);
+ 
+  //fit on mean values to get ch2
+  bootstrap_fit<fpar_pretty_s,ipar_pretty_s> bf_pretty_s_ch2(1);
+  bf_pretty_s_ch2.set_warmup_lev(1); //sets warmup
+  bf_pretty_s_ch2.Set_number_of_measurements(12);
+  bf_pretty_s_ch2.Set_verbosity(1);
+  bf_pretty_s_ch2.Add_par("A", -0.05, 0.003);
+  bf_pretty_s_ch2.Add_par("B", -0.5, 0.01); 
+  bf_pretty_s_ch2.Add_par("C", 2, 0.01);
+
+
+
+ 
+
+  //ansatz
+  bf_pretty_s.ansatz=  [ ](const fpar_pretty_s &p, const ipar_pretty_s &ip) {
+
+    double E_tilde= (ip.y*ip.M + (1-ip.y)*MBs)*(1 -0.5*ip.xg);
+    double En= sqrt( pow(p.C/ip.M,2) + pow(0.5*ip.xg,2));
+    return (p.A + p.B*ip.xg)/(ip.M*ip.M*En*(En -E_tilde/ip.M))  ;
+  };
+  
+  bf_pretty_s.measurement=  [ ](const fpar_pretty_s &p, const ipar_pretty_s &ip) {
+    return ip.FF;
+  };
+  
+  bf_pretty_s.error=  [ ](const fpar_pretty_s &p, const ipar_pretty_s &ip) {
+    return ip.FF_err;
+  };
+	
+  bf_pretty_s_ch2.ansatz= bf_pretty_s.ansatz;
+  bf_pretty_s_ch2.measurement = bf_pretty_s.measurement;
+  bf_pretty_s_ch2.error = bf_pretty_s.error;
+
+
+
+  //insert covariance matrix
+  Eigen::MatrixXd Cov_Matrix_pretty_s(12,12);
+  Eigen::MatrixXd Corr_Matrix_pretty_s(12,12);
+  for(int i=0;i<12;i++)
+    for(int j=0;j<12;j++) {
+      Cov_Matrix_pretty_s(i,j) = bar_FT_s_RE[(i+3)%3].distr_list[i/3]%bar_FT_s_RE[(j+3)%3].distr_list[j/3];
+      
+    }
+
+  for(int i=0;i<12;i++) {
+    for(int j=0;j<12;j++) {
+      Corr_Matrix_pretty_s(i,j) = Cov_Matrix_pretty_s(i,j)/(sqrt(Corr_Matrix_pretty_s(i,i)*Corr_Matrix_pretty_s(j,j)));
+    }
+  }
+
+  //print on screen
+  cout<<"Correlation matrix pretty s"<<endl;
+  cout<<Corr_Matrix_pretty_s<<endl;
+  
+  //add cov matrix to bootstrap fit
+  bf_pretty_s.Add_covariance_matrix(Cov_Matrix_pretty_s);
+  bf_pretty_s_ch2.Add_covariance_matrix(Cov_Matrix_pretty_s);
+
+
+
+  //start fitting
+  //fill the data
+  vector<vector<ipar_pretty_s>> data_pretty_s(Njacks_pretty);
+  vector<vector<ipar_pretty_s>> data_pretty_s_ch2(1);
+  //allocate space for output result
+  boot_fit_data<fpar_pretty_s> Bt_fit_pretty_s;
+  boot_fit_data<fpar_pretty_s> Bt_fit_pretty_s_ch2;
+  for(auto &data_iboot: data_pretty_s) data_iboot.resize(Nmasses);
+  for(auto &data_iboot: data_pretty_s_ch2) data_iboot.resize(Nmasses);
+  for(int ijack=0;ijack<Njacks_pretty;ijack++) {
+    for(int im=0;im<12;im++) {
+      data_pretty_s[ijack][im].FF = bar_FT_s_RE[(im+3)%3][im/3].distr[ijack];
+      data_pretty_s[ijack][im].FF_err= bar_FT_s_RE[(im+3)%3].err(im/3);
+      data_pretty_s[ijack][im].M= masses.distr_list[(((im+3)%3) > 1)?3:(im/3)].distr[ijack];
+      data_pretty_s[ijack][im].xg= Bs_xg_t_list[im/3];
+      data_pretty_s[ijack][im].y= y_eff[im/3];
+      if(ijack==0) {
+	data_pretty_s_ch2[ijack][im].FF =  bar_FT_s_RE[(im+3)%3][im/3].ave();
+	data_pretty_s_ch2[ijack][im].FF_err=  bar_FT_s_RE[(im+3)%3][im/3].err();
+	data_pretty_s_ch2[ijack][im].M = masses.ave((((im+3)%3) > 1)?3:(im/3));
+	data_pretty_s_ch2[ijack][im].xg= Bs_xg_t_list[im/3];
+	data_pretty_s_ch2[ijack][im].y = y_eff[im/3];
+      }
+    }
+  }
+  
+  //append
+  bf_pretty_s.Append_to_input_par(data_pretty_s);
+  bf_pretty_s_ch2.Append_to_input_par(data_pretty_s_ch2);
+  //fit
+  cout<<"Fitting Bs-meson decay constant"<<endl;
+  Bt_fit_pretty_s= bf_pretty_s.Perform_bootstrap_fit();
+  Bt_fit_pretty_s_ch2= bf_pretty_s_ch2.Perform_bootstrap_fit();
+
+
+  
+  Bt_fit_pretty_s_ch2= bf_pretty_s_ch2.Perform_bootstrap_fit();
+  double ch2_red_pretty_s= Bt_fit_pretty_s_ch2.get_ch2_ave()/( Nmasses -bf_pretty_s.Get_number_of_fit_pars());
+
+  cout<<"reduced ch2 of pretty b: "<<ch2_red_pretty_s<<endl;
+  
+  //retrieve params
+  distr_t A_ps_RE(1), B_ps_RE(1), C_ps_RE(1);
+  for(int ijack=0;ijack<NJ;ijack++) {
+    A_ps_RE.distr.push_back( Bt_fit_pretty_s.par[ijack].A);
+    B_ps_RE.distr.push_back( Bt_fit_pretty_s.par[ijack].B);
+    C_ps_RE.distr.push_back( Bt_fit_pretty_s.par[ijack].C);
+  }
+
+  
+  Vfloat Inv_Masses_to_print_pretty;
+  for(int i=0;i<200;i++) { Inv_Masses_to_print_pretty.push_back(   0.30*2*(i+1)/200  ) ;}
+  //print fit function
+  for(int ixg=0;ixg<(signed)Bs_xg_t_list.size();ixg++) {
+    distr_t_list pretty_s_to_print(true, Inv_Masses_to_print_pretty.size(), Njacks_pretty);
+    for(int n=0;n<200;n++) {
+      ipar_pretty_s ip_pretty_s;
+      ip_pretty_s.xg= Bs_xg_t_list[ixg];
+      ip_pretty_s.y = y_eff[ixg];
+      ip_pretty_s.M= 1.0/Inv_Masses_to_print_pretty[n];
+      for(int ijack=0;ijack<Njacks_pretty;ijack++) {
+	pretty_s_to_print.distr_list[n].distr.push_back( bf_pretty_s.ansatz( Bt_fit_pretty_s.par[ijack], ip_pretty_s));
+      }
+    }
+    Print_To_File({}, {Inv_Masses_to_print_pretty, pretty_s_to_print.ave(), pretty_s_to_print.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_s_RE_ixg_"+to_string(ixg)+".fit_func", "" , "");
+
+    vector<double> M_07({ masses.ave(0), masses.ave(1), masses.ave(3)});
+    
+    Print_To_File({}, {M_07, bar_FT_s_RE_xg[ixg].ave(), bar_FT_s_RE_xg[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_s_RE_im_"+to_string(ixg)+".dat", "" , "");
+  }
+
+  //determine pretty b at MBs mass
+
+  distr_t_list pretty_s_MB(1, nxg_to_print_pretty, Njacks_pretty);
+  for(int n=0;n<nxg_to_print_pretty;n++) {
+      ipar_pretty_s ip_pretty_s;
+      ip_pretty_s.xg= xg_to_print_pretty[n];
+      ip_pretty_s.M= MBs;
+      ip_pretty_s.y= 1.0;
+      for(int ijack=0;ijack<Njacks_pretty;ijack++) {
+	pretty_s_MB.distr_list[n].distr.push_back( bf_pretty_s.ansatz( Bt_fit_pretty_s.par[ijack], ip_pretty_s));
+      }
+  }
+  Print_To_File({}, {xg_to_print_pretty, pretty_s_MB.ave(), pretty_s_MB.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_s_RE_Bs.dat", "" , "");
+
+
+
+
+
+
+  
 	
 
   //###################################################################################################################################
@@ -2441,17 +2944,105 @@ void Compute_Bs_mumu_gamma() {
   //###################################################################################################################################
 
 
+  distr_t_list FA_uniform(1), FV_uniform(1), FTA_uniform(1), FTV_uniform(1), FA_d_uniform(1);
 
-  int Nfits=1;
   int num_xg=4;
   Vfloat xg_scan;
+  int separate_ud = false;
   int nxgs_to_spline=199;
   double ZT_MB = evolutor_ZT_MS_bar(2.0,5.367,4);
+  Vfloat ZT_Mh(Nmasses);
+  double ZT_fit_Mb=1.0;
+  for(int im=0;im<Nmasses;im++)  ZT_Mh[im] = 1.0 ; //evolutor_ZT_MS_bar(2.0, masses.ave(im),4);
+
+  printV(ZT_Mh, "ZT_Mh",1);
+
+   
   double evolutor_ZT = evolutor_ZT_MS_bar(2.0,5.0,4);
-  for(int ixg=0;ixg<nxgs_to_spline;ixg++) xg_scan.push_back( 0.0025*(ixg+1));
+  for(int ixg=0;ixg<nxgs_to_spline;ixg++)  xg_scan.push_back( 0.0025*(ixg+1));
 
   Vfloat Inv_Masses_to_print_MEX;
-  for(int i=0;i<1000;i++) { Inv_Masses_to_print_MEX.push_back(  0.30*2*i/999  ) ;}
+  for(int i=0;i<200;i++) { Inv_Masses_to_print_MEX.push_back(   0.30*2*(i+1)/200  ) ;}
+  Vfloat ZT_Mh_to_print(Inv_Masses_to_print_MEX.size());
+  for(int i=0;i<(signed)ZT_Mh_to_print.size(); i++) ZT_Mh_to_print[i] =  1.0;  //evolutor_ZT_MS_bar(2.0, 1.0/Inv_Masses_to_print_MEX[i],4);  
+
+  
+  if(Perform_global_fit) {
+
+  int Nfits=0;
+  int multi_M2=0;
+
+  vector<int> Is_M2_fit;
+ 
+
+  //define the fit poll
+
+  vector<map<string, int>> Fix_fit_pars_list;
+
+  for(int dR= 0; dR <=1 ; dR ++) {
+    for(int dC=0; dC<=1; dC ++) {
+      for(int fix_den=0; fix_den<1 ; fix_den++) {
+	for(int l3=0; l3<=1; l3++) {
+	  for(int V2=0;V2<=2;V2++) {
+	    for(int A2=0;A2<=2;A2++) {
+	      for(int TV2=0;TV2<=2; TV2++) {
+		for(int TA2=0; TA2<=1; TA2++) {
+
+		  map<string,int> Fix_fit_pars;
+
+		  Fix_fit_pars.insert({"A1",dR});
+		  Fix_fit_pars.insert({"A2", dC});
+		  Fix_fit_pars.insert({"M3", l3});
+		  Fix_fit_pars.insert({"M4", 1});
+		  Fix_fit_pars.insert({"SV1", (V2+2)%2});
+		  Fix_fit_pars.insert({"SV2", V2/2 });
+		  Fix_fit_pars.insert({"SA1", (A2+2)%2});
+		  Fix_fit_pars.insert({"SA2", A2/2 });
+		  Fix_fit_pars.insert({"STV1", (TV2+2)%2});
+		  Fix_fit_pars.insert({"STV2", TV2/2 });
+		  Fix_fit_pars.insert({"STA2", TA2 });
+		  Fix_fit_pars.insert({"fix_T_den", fix_den});
+		  
+
+		  //number of always fitted parameters:  A,DV,DA,M1,M2,TVM1,TAE1,TVE1,LAMBDA
+
+		  int Npars= 9;
+
+		  Npars += dR + dC + l3 + (V2 != 0) + (A2 != 0) + (TV2 != 0) + (TA2 != 0);
+		  
+		  if(Npars<=14 &&  (TV2 != 1 || TA2 != 1)) {
+		    Nfits++;
+		    if( V2+A2+TV2+TA2 > 0) { multi_M2++; Is_M2_fit.push_back(1);}
+		    else Is_M2_fit.push_back(0);
+		    Fix_fit_pars_list.push_back(Fix_fit_pars);
+		  }
+		  
+		}
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  vector<distr_t> CA_list, CV_list, CA_T_list, R_list, RT_list, M3_list, M4_list;
+
+  cout<<"TOTAL NUMBER OF FITS: "<<Nfits<<endl;
+  
+  vector<int> separate_ud_list(Nfits,0);
+
+  vector<double> mult_fits;
+  for(int ifit=0;ifit<Nfits;ifit++) {
+    if(Is_M2_fit[ifit] == 1) mult_fits.push_back(1.0/(double)multi_M2) ;
+    else mult_fits.push_back(1.0);
+  }
+
+  
+  
+
+  
+ 
   
   
   vector<vector<distr_t>> FV_extr(nxgs_to_spline), FA_extr(nxgs_to_spline), FTV_extr(nxgs_to_spline), FTA_extr(nxgs_to_spline), FV_d_extr(nxgs_to_spline), FA_d_extr(nxgs_to_spline), FTV_d_extr(nxgs_to_spline), FTA_d_extr(nxgs_to_spline), FV_u_extr(nxgs_to_spline), FA_u_extr(nxgs_to_spline), FTV_u_extr(nxgs_to_spline), FTA_u_extr(nxgs_to_spline);
@@ -2489,9 +3080,99 @@ void Compute_Bs_mumu_gamma() {
     FTA_sims_m_dep[ixg].resize(Inv_Masses_to_print_MEX.size());
   }
 
+
+
+  //COMPUTE COVARIANCE MATRIX
+  cout<<"Computing covariance matrix of global fit"<<endl;
+
+  vector<vector<distr_t_list>> FF_M_list_boot_new= FF_M_list_boot;
+  vector<vector<distr_t_list>> FF_M_list_new = FF_M_list;
+  //{"FA", "FA_u", "FA_d", "FV",  "FV_u", "FV_d",  "FA_T", "FA_T_u", "FA_T_d", "FV_T", "FV_T_u", "FV_T_d", "FB", "FB_u", "FB_d", "FT", "FT_u", "FT_d"}
+  int id_TA=8; int id_TV=11; 
+  if(fit_FB_FT) {
+    id_TA=14;
+    id_TV=17;
+  }
+
+  if(!separate_ud) {
+
+    for(int imass=0;imass<Nmasses;imass++) {
+      FF_M_list_boot_new[2][imass] = FF_M_list_boot_new[2][imass] + FF_M_list_boot_new[1][imass];
+      //FF_M_list_boot_new[1][imass] = 0.0*FF_M_list_boot_new[1][imass];
+      FF_M_list_new[2][imass] = FF_M_list_new[2][imass] + FF_M_list_new[1][imass];
+      //FF_M_list_new[1][imass] = 0.0*FF_M_list_new[1][imass];
+
+      FF_M_list_boot_new[5][imass] = FF_M_list_boot_new[5][imass] + FF_M_list_boot_new[4][imass];
+      //FF_M_list_boot_new[4][imass] = 0.0*FF_M_list_boot_new[4][imass];
+      FF_M_list_new[5][imass] = FF_M_list_new[5][imass] + FF_M_list_new[4][imass];
+      //FF_M_list_new[4][imass] = 0.0*FF_M_list_new[5][imass];
+
+      FF_M_list_boot_new[id_TA][imass] = FF_M_list_boot_new[id_TA][imass] + FF_M_list_boot_new[id_TA-1][imass];
+      //FF_M_list_boot_new[id_TA-1][imass] = 0.0*FF_M_list_boot_new[id_TA-1][imass];
+      FF_M_list_new[id_TA][imass] = FF_M_list_new[id_TA][imass] + FF_M_list_new[id_TA-1][imass];
+      //FF_M_list_new[id_TA-1][imass] = 0.0*FF_M_list_new[id_TA-1][imass];
+
+      FF_M_list_boot_new[id_TV][imass] = FF_M_list_boot_new[id_TV][imass] + FF_M_list_boot_new[id_TV-1][imass];
+      //FF_M_list_boot_new[id_TV-1][imass] = 0.0*FF_M_list_boot_new[id_TV-1][imass];
+      FF_M_list_new[id_TV][imass] = FF_M_list_new[id_TV][imass] + FF_M_list_new[id_TV-1][imass];
+      //FF_M_list_new[id_TV-1][imass] = 0.0*FF_M_list_new[id_TV-1][imass];
+
+    }
+
+  }
+
+    //insert covariance matrix
+  Eigen::MatrixXd Cov_Matrix_comb_FF(Nmasses*8*num_xg,Nmasses*8*num_xg);
+  Eigen::MatrixXd Corr_Matrix_comb_FF(Nmasses*8*num_xg,Nmasses*8*num_xg);
+  for(int m=0;m< Nmasses*8*num_xg;m++)
+    for(int n=0;n< Nmasses*8*num_xg ;n++) { Cov_Matrix_comb_FF(m,n)=0; Corr_Matrix_comb_FF(m,n)=0;}
+  
+  for(int i=0;i<Nmasses;i++)
+    for(int j=0;j<Nmasses;j++) 
+      for(int ix=0; ix < num_xg; ix++)
+	for(int jx=0; jx<num_xg;jx++) {
+	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix , j*8*num_xg + 8*jx) = ((FF_M_list_boot_new[2][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[2][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[2][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[2][j].distr_list[jx]/fps_boot.distr_list[j]).err());
+	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 1 , j*8*num_xg + 8*jx + 1) = ((FF_M_list_boot_new[5][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[5][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[5][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[5][j].distr_list[jx]/fps_boot.distr_list[j]).err());
+	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 2 , j*8*num_xg + 8*jx + 2) =   ((FF_M_list_boot_new[1][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[1][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[1][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[1][j].distr_list[jx]/fps_boot.distr_list[j]).err());
+	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 3 , j*8*num_xg + 8*jx + 3) =    ((FF_M_list_boot_new[4][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[4][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[4][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[4][j].distr_list[jx]/fps_boot.distr_list[j]).err());
+ 
+	  //tensor
+	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix+4 , j*8*num_xg + 8*jx+4) = ((FF_M_list_boot_new[id_TA][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[id_TA][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[id_TA][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[id_TA][j].distr_list[jx]/fps_boot.distr_list[j]).err());
+	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 5 , j*8*num_xg + 8*jx + 5) = ((FF_M_list_boot_new[id_TV][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[id_TV][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[id_TV][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[id_TV][j].distr_list[jx]/fps_boot.distr_list[j]).err());
+	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 6 , j*8*num_xg + 8*jx + 6) =   ((FF_M_list_boot_new[id_TA-1][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[id_TA-1][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[id_TA-1][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[id_TA-1][j].distr_list[jx]/fps_boot.distr_list[j]).err());
+	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 7 , j*8*num_xg + 8*jx + 7) =    ((FF_M_list_boot_new[id_TV-1][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[id_TV-1][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[id_TV-1][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[id_TV-1][j].distr_list[jx]/fps_boot.distr_list[j]).err());
+
+	  
+	  
+	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix , j*8*num_xg + 8*jx) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix , j*8*num_xg + 8*jx)*(FF_M_list_new[2][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[2][j].distr_list[jx]/fps.distr_list[j]).err();
+	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +1 , j*8*num_xg + 8*jx +1) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +1 , j*8*num_xg + 8*jx +1)*(FF_M_list_new[5][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[5][j].distr_list[jx]/fps.distr_list[j]).err();
+	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +2 , j*8*num_xg + 8*jx +2) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +2 , j*8*num_xg + 8*jx +2)*(FF_M_list_new[1][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[1][j].distr_list[jx]/fps.distr_list[j]).err();
+	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +3 , j*8*num_xg + 8*jx +3) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +3 , j*8*num_xg + 8*jx +3)*(FF_M_list_new[4][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[4][j].distr_list[jx]/fps.distr_list[j]).err();
+
+	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix+4 , j*8*num_xg + 8*jx+4) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +4  , j*8*num_xg + 8*jx +4)*(FF_M_list_new[id_TA][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[id_TA][j].distr_list[jx]/fps.distr_list[j]).err();
+	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +5 , j*8*num_xg + 8*jx +5) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +5 , j*8*num_xg + 8*jx +5)*(FF_M_list_new[id_TV][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[id_TV][j].distr_list[jx]/fps.distr_list[j]).err();
+	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +6 , j*8*num_xg + 8*jx +6) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +6 , j*8*num_xg + 8*jx +6)*(FF_M_list_new[id_TA-1][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[id_TA-1][j].distr_list[jx]/fps.distr_list[j]).err();
+	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +7 , j*8*num_xg + 8*jx +7) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +7 , j*8*num_xg + 8*jx +7)*(FF_M_list_new[id_TV-1][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[id_TV-1][j].distr_list[jx]/fps.distr_list[j]).err();
+
+	  
+	  //Cov_Matrix_comb_FF(i*2*num_xg + 2*ix , j*2*num_xg + 2*jx + 1) = (FF_M_list_new[2][i].distr_list[ix]/fps.distr_list[i])%(FF_M_list_new[5][j].distr_list[jx]/fps.distr_list[j]);
+	  //Cov_Matrix_comb_FF(i*2*num_xg + 2*ix + 1 , j*2*num_xg + 2*jx) = (FF_M_list_new[5][i].distr_list[ix]/fps.distr_list[i])%(FF_M_list_new[2][j].distr_list[jx]/fps.distr_list[j]);
+	}
+
+  //for(int m=0;m < Nmasses*4*num_xg; m++)
+  //for(int n=0; n< Nmasses*4*num_xg;n++) Corr_Matrix_comb_FF(m,n) = Cov_Matrix_comb_FF(m,n)/sqrt( Cov_Matrix_comb_FF(m,m)*Cov_Matrix_comb_FF(n,n));
+
+
+      
+  cout<<"Corr matrix determinant: "<<Corr_Matrix_comb_FF.determinant()<<endl;    
+  
+  //print on screen
+  cout<<"Correlation matrix comb"<<endl;
+  cout<<Corr_Matrix_comb_FF<<endl;
+
  
 
-  vector<int> separate_ud_list(Nfits,0);
+  
 
  
   vector<int> Ndofs, Nmeasurements; vector<double> Ch2s;
@@ -2500,32 +3181,31 @@ void Compute_Bs_mumu_gamma() {
 
     cout<<"ifit: "<<ifit<<endl;
 
-    int separate_ud= separate_ud_list[ifit];
+  
 
     //index corresponding to FA_d and FV_d is 2 and 5
 
-  
-  
-  class ipar_MEX_comb {
-  public:
-    ipar_MEX_comb() : FF(0.0), FF_err(0.0) {}
-    double FF, FF_err, M, xg, imass, ixg;
-    string W;
-  };
-  
-  class fpar_MEX_comb {
-  public:
-    fpar_MEX_comb() {}
+   
+    class ipar_MEX_comb {
+    public:
+      ipar_MEX_comb() : FF(0.0), FF_err(0.0) {}
+      double FF, FF_err, M, xg, imass, ixg, Z;
+      string W;
+    };
+    
+    class fpar_MEX_comb {
+    public:
+      fpar_MEX_comb() {}
     fpar_MEX_comb(const Vfloat &par) {
       if((signed)par.size() != 39) crash("In class fpar_MEX_comb  class constructor Vfloat par has size != 39");
-
+      
       //A is 1/LB
       A=par[0];
 
       //parameters entering radiative corrections and related to moments of LCDA
       R1=par[1];
       R2=par[2];
-
+      
       //quasi pole parameters DV for vector and DA for axial
       DV=par[3];
       DA=par[4];
@@ -2534,198 +3214,235 @@ void Compute_Bs_mumu_gamma() {
 
       M1=par[5];
       M2=par[6];
-      M3=par[7];
-      M4=par[8];
+     
 
       //parameters in 1/(M^2) and 1/(M^2*x*x) and 1/(M^2*x) for FVd and FAd
-      SV1=par[9];
-      SV2=par[10];
-      SV3=par[11];
-      SA1=par[12];
-      SA2=par[13];
-      SA3=par[14];
+     
+      SV3=par[7];
+      SA3=par[8];
 
       //non-common parameters in 1/M and 1/Mx correction to LO for FVu and FAu
 
-      BV1= par[15];
-      BV2= par[16];
-      BA1= par[17];
-      BA2= par[18];
+      BV1= par[9];
+      BV2= par[10];
+      BA1= par[11];
+      BA2= par[12];
 
       //parameters for the tensor currents 
-      A1=par[19];
-      A2=par[20];
+     
 
       //parameters entering radiative corrections
-      RTV1=par[21];
-      RTV2=par[22];
-      RTA1=par[23];
-      RTA2=par[24];
+      RTV1=par[13];
+      RTV2=par[14];
+      RTA1=par[15];
+      RTA2=par[16];
 
       //parameters of the 1/M and 1/Eg expansion
-      TVE1 = par[25];
-      TVM1 = par[26];
-      TAE1 = par[27];
-      TAM1 = par[28];
+      TVE1 = par[17];
+      TVM1 = par[18];
+      TAE1 = par[19];
+      TAM1 = par[20];
 
       //parameters in 1/(M^2) and 1/(M^2*x*x) and 1/(M^2*x) for FTVd and FTAd
-      STV1=par[29];
-      STV2=par[30];
-      STV3=par[31];
-      STA1=par[32];
-      STA2=par[33];
-      STA3=par[34];
+     
+      STV3=par[21];
+      STA1=par[22];     
+      STA3=par[23];
 
       //parameters entering 1/M and 1/Mx corrections to LO
-      BTV1 = par[35];
-      BTV2 = par[36];
-      BTA1 = par[37];
-      BTA2 = par[38];
+      BTV1 = par[24];
+      BTV2 = par[25];
+      BTA1 = par[26];
+      BTA2 = par[27];
+
+      
+      //prior pars 
+      M3=par[28];
+      M4=par[29];
+      A1=par[30];
+      A2=par[31];
+      SV1=par[32];
+      SV2=par[33];
+      SA1=par[34];
+      SA2=par[35];
+      STV1=par[36];
+      STV2=par[37];
+      STA2=par[38];
       
       
      
     }
-    double A,R1,R2, DV, DA,M1, M2, M3, M4, SV1, SV2, SV3,  SA1, SA2, SA3, BV1, BV2, BA1, BA2;
-    double A1, A2, RTV1, RTV2, RTA1, RTA2, TVE1, TVM1, TAE1, TAM1, STV1, STV2, STV3, STA1, STA2, STA3, BTV1, BTV2, BTA1, BTA2;
-  };
-  
-  
-  //init bootstrap fit
+      double A,R1,R2, DV, DA,M1, M2,  SV3,   SA3, BV1, BV2, BA1, BA2;
+      double  RTV1, RTV2, RTA1, RTA2, TVE1, TVM1, TAE1, TAM1, STV3, STA1, STA3, BTV1, BTV2, BTA1, BTA2;
+      //prior pars
+      double M3, M4, A1, A2, SV1, SV2, SA1, SA2, STV1, STV2, STA2;
+    };
+    
+    
+    //init bootstrap fit
 
-  bootstrap_fit<fpar_MEX_comb,ipar_MEX_comb> bf_MEX_comb(NJ);
-  bf_MEX_comb.set_warmup_lev(2); //sets warmup
-  bf_MEX_comb.Set_number_of_measurements(Nmasses*8*num_xg);
-  bf_MEX_comb.Set_verbosity(1);
-  //fit on mean values to get ch2
-  bootstrap_fit<fpar_MEX_comb,ipar_MEX_comb> bf_MEX_comb_ch2(1);
-  bf_MEX_comb_ch2.set_warmup_lev(2); //sets warmup
-  bf_MEX_comb_ch2.Set_number_of_measurements(Nmasses*8*num_xg);
-  bf_MEX_comb_ch2.Set_verbosity(1);
-  
-
-  bf_MEX_comb.Add_par("A", 1.0/0.5, 0.1/0.5);
-  bf_MEX_comb.Add_par("R1", 0.1, 0.01);
-  bf_MEX_comb.Add_par("R2", 0.1, 0.01);
-  bf_MEX_comb.Add_par("DV", 0.24, 0.1*0.24);
-  bf_MEX_comb.Add_par("DA", 0.5, 0.1*0.5);
-  bf_MEX_comb.Add_par("M1", 1.0, 0.1 );
-  bf_MEX_comb.Add_par("M2", 1.0, 0.1 );
-  bf_MEX_comb.Add_par("M3", 1.0, 0.1 );
-  bf_MEX_comb.Add_par("M4", -2, 0.1 );
-  bf_MEX_comb.Add_par("SV1", 1.0, 0.1);
-  bf_MEX_comb.Add_par("SV2", 1.0, 0.1);
-  bf_MEX_comb.Add_par("SV3", 1.0, 0.1);
-  bf_MEX_comb.Add_par("SA1", 1.0, 0.1);
-  bf_MEX_comb.Add_par("SA2", 1.0, 0.1);
-  bf_MEX_comb.Add_par("SA3", 1.0, 0.1);
-  bf_MEX_comb.Add_par("BV1", 1.0, 0.1);
-  bf_MEX_comb.Add_par("BV2", 1.0, 0.1);
-  bf_MEX_comb.Add_par("BA1", 1.0, 0.1);
-  bf_MEX_comb.Add_par("BA2", 1.0, 0.1);
-
+    bootstrap_fit<fpar_MEX_comb,ipar_MEX_comb> bf_MEX_comb(NJ);
+    bf_MEX_comb.set_warmup_lev(0); //sets warmup
+    bf_MEX_comb.Set_number_of_measurements(Nmasses*8*num_xg);
+    bf_MEX_comb.Set_verbosity(1);
+    //fit on mean values to get ch2
+    bootstrap_fit<fpar_MEX_comb,ipar_MEX_comb> bf_MEX_comb_ch2(1);
+    bf_MEX_comb_ch2.set_warmup_lev(0); //sets warmup
+    bf_MEX_comb_ch2.Set_number_of_measurements(Nmasses*8*num_xg);
+    bf_MEX_comb_ch2.Set_verbosity(1);
+    
+    
+    bf_MEX_comb.Add_par("A", 1.0/0.5, 0.1/0.5);
+    bf_MEX_comb.Add_par("R1", 0.1, 0.01);
+    bf_MEX_comb.Add_par("R2", 0.1, 0.01);
+    bf_MEX_comb.Add_par("DV", 0.24, 0.1*0.24);
+    bf_MEX_comb.Add_par("DA", 0.5, 0.1*0.5);
+    bf_MEX_comb.Add_par("M1", 0.6, 0.06 );
+    bf_MEX_comb.Add_par("M2", -1.0, 0.05 );
+    bf_MEX_comb.Add_par("SV3", 1.0, 0.1);
+    bf_MEX_comb.Add_par("SA3", 1.0, 0.1);
+    bf_MEX_comb.Add_par("BV1", 1.0, 0.1);
+    bf_MEX_comb.Add_par("BV2", 1.0, 0.1);
+    bf_MEX_comb.Add_par("BA1", 1.0, 0.1);
+    bf_MEX_comb.Add_par("BA2", 1.0, 0.1);
+    
+    //parameters of the tensor form factors
+    bf_MEX_comb.Add_par("RTV1", 0.1, 0.01);
+    bf_MEX_comb.Add_par("RTV2", 0.1, 0.01);
+    bf_MEX_comb.Add_par("RTA1", 0.1, 0.01);
+    bf_MEX_comb.Add_par("RTA2", 0.1, 0.01);
+    bf_MEX_comb.Add_par("TVE1", -0.05, 0.01);
+    bf_MEX_comb.Add_par("TVM1", 2.0, 0.1);
+    bf_MEX_comb.Add_par("TAE1", -0.05, 0.01);
+    bf_MEX_comb.Add_par("TAM1", 4.0, 0.1);
+    bf_MEX_comb.Add_par("STV3", 1.0, 0.1);
+    bf_MEX_comb.Add_par("STA1", 1.0, 0.1);
+    bf_MEX_comb.Add_par("STA3", 1.0, 0.1);
+    bf_MEX_comb.Add_par("BTV1", 1.0, 0.1);
+    bf_MEX_comb.Add_par("BTV2", 1.0, 0.1);
+    bf_MEX_comb.Add_par("BTA1", 1.0, 0.1);
+    bf_MEX_comb.Add_par("BTA2", 1.0, 0.1);
+    
+    bf_MEX_comb_ch2.Add_par("A", 1.0/0.5, 0.1/0.5);
+    bf_MEX_comb_ch2.Add_par("R1", 0.1, 0.01);
+    bf_MEX_comb_ch2.Add_par("R2", 0.1, 0.01);
+    bf_MEX_comb_ch2.Add_par("DV", 0.24, 0.1*0.24);
+    bf_MEX_comb_ch2.Add_par("DA", 0.5, 0.1*0.5);
+    bf_MEX_comb_ch2.Add_par("M1", 0.6, 0.06 );
+    bf_MEX_comb_ch2.Add_par("M2", -1.0, 0.05 );
+    bf_MEX_comb_ch2.Add_par("SV3", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("SA3", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("BV1", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("BV2", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("BA1", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("BA2", 1.0, 0.1);
   //parameters of the tensor form factors
-  bf_MEX_comb.Add_par("A1", 1.0/0.5, 0.1/0.5);
-  bf_MEX_comb.Add_par("A2", 0.1, 0.01);
-  bf_MEX_comb.Add_par("RTV1", 0.1, 0.01);
-  bf_MEX_comb.Add_par("RTV2", 0.1, 0.01);
-  bf_MEX_comb.Add_par("RTA1", 0.1, 0.01);
-  bf_MEX_comb.Add_par("RTA2", 0.1, 0.01);
-  bf_MEX_comb.Add_par("TVE1", -0.05, 0.01);
-  bf_MEX_comb.Add_par("TVM1", 2.0, 0.1);
-  bf_MEX_comb.Add_par("TAE1", -0.05, 0.01);
-  bf_MEX_comb.Add_par("TAM1", 4.0, 0.1);
-  bf_MEX_comb.Add_par("STV1", 1.0, 0.1);
-  bf_MEX_comb.Add_par("STV2", 1.0, 0.1);
-  bf_MEX_comb.Add_par("STV3", 1.0, 0.1);
-  bf_MEX_comb.Add_par("STA1", 1.0, 0.1);
-  bf_MEX_comb.Add_par("STA2", 1.0, 0.1);
-  bf_MEX_comb.Add_par("STA3", 1.0, 0.1);
-  bf_MEX_comb.Add_par("BTV1", 1.0, 0.1);
-  bf_MEX_comb.Add_par("BTV2", 1.0, 0.1);
-  bf_MEX_comb.Add_par("BTA1", 1.0, 0.1);
-  bf_MEX_comb.Add_par("BTA2", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("RTV1", 0.1, 0.01);
+    bf_MEX_comb_ch2.Add_par("RTV2", 0.1, 0.01);
+    bf_MEX_comb_ch2.Add_par("RTA1", 0.1, 0.01);
+    bf_MEX_comb_ch2.Add_par("RTA2", 0.1, 0.01);
+    bf_MEX_comb_ch2.Add_par("TVE1", -0.05, 0.01);
+    bf_MEX_comb_ch2.Add_par("TVM1", 2.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("TAE1", -0.05, 0.01);
+    bf_MEX_comb_ch2.Add_par("TAM1", 4.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("STV3", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("STA1", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("STA3", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("BTV1", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("BTV2", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("BTA1", 1.0, 0.1);
+    bf_MEX_comb_ch2.Add_par("BTA2", 1.0, 0.1);
 
-  bf_MEX_comb_ch2.Add_par("A", 1.0/0.5, 0.1/0.5);
-  bf_MEX_comb_ch2.Add_par("R1", 0.1, 0.01);
-  bf_MEX_comb_ch2.Add_par("R2", 0.1, 0.01);
-  bf_MEX_comb_ch2.Add_par("DV", 0.24, 0.1*0.24);
-  bf_MEX_comb_ch2.Add_par("DA", 0.5, 0.1*0.5);
-  bf_MEX_comb_ch2.Add_par("M1", 1.0, 0.1 );
-  bf_MEX_comb_ch2.Add_par("M2", 1.0, 0.1 );
-  bf_MEX_comb_ch2.Add_par("M3", 1.0, 0.1 );
-  bf_MEX_comb_ch2.Add_par("M4", -2.0, 0.1 );
-  bf_MEX_comb_ch2.Add_par("SV1", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("SV2", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("SV3", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("SA1", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("SA2", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("SA3", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("BV1", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("BV2", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("BA1", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("BA2", 1.0, 0.1);
-  //parameters of the tensor form factors
-  bf_MEX_comb_ch2.Add_par("A1", 1.0/0.5, 0.1/0.5);
-  bf_MEX_comb_ch2.Add_par("A2", 0.1, 0.01);
-  bf_MEX_comb_ch2.Add_par("RTV1", 0.1, 0.01);
-  bf_MEX_comb_ch2.Add_par("RTV2", 0.1, 0.01);
-  bf_MEX_comb_ch2.Add_par("RTA1", 0.1, 0.01);
-  bf_MEX_comb_ch2.Add_par("RTA2", 0.1, 0.01);
-  bf_MEX_comb_ch2.Add_par("TVE1", -0.05, 0.01);
-  bf_MEX_comb_ch2.Add_par("TVM1", 2.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("TAE1", -0.05, 0.01);
-  bf_MEX_comb_ch2.Add_par("TAM1", 4.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("STV1", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("STV2", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("STV3", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("STA1", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("STA2", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("STA3", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("BTV1", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("BTV2", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("BTA1", 1.0, 0.1);
-  bf_MEX_comb_ch2.Add_par("BTA2", 1.0, 0.1);
 
+    bf_MEX_comb.Add_par("M3", -0.2, 0.01); bf_MEX_comb_ch2.Add_par("M3", -0.2, 0.01);
+    bf_MEX_comb.Add_par("M4", -1.2, 0.1); bf_MEX_comb_ch2.Add_par("M4", -1.2,0.1);
+    bf_MEX_comb.Add_par("A1",0.1*1.0/0.5, 0.1*0.1/0.5); bf_MEX_comb_ch2.Add_par("A1",0.1*1.0/0.5, 0.1*0.1/0.5);
+    bf_MEX_comb.Add_par("A2",0.0, 0.1); bf_MEX_comb_ch2.Add_par("A2",0.0, 0.1*0.1);
+
+    bf_MEX_comb.Add_par("SV1",0.0, 0.1); bf_MEX_comb_ch2.Add_par("SV1",0.0, 0.1);
+    bf_MEX_comb.Add_par("SV2",0.0, 0.1); bf_MEX_comb_ch2.Add_par("SV2",0.0, 0.1);
+    bf_MEX_comb.Add_par("SA1",0.0, 0.1); bf_MEX_comb_ch2.Add_par("SA1",0.0, 0.1);
+    bf_MEX_comb.Add_par("SA2",0.0, 0.1); bf_MEX_comb_ch2.Add_par("SA2",0.0, 0.1);
+    bf_MEX_comb.Add_par("STV1",0.0, 0.1); bf_MEX_comb_ch2.Add_par("STV1",0.0, 0.1);
+    bf_MEX_comb.Add_par("STV2",0.0, 0.1); bf_MEX_comb_ch2.Add_par("STV2",0.0, 0.1);
+    bf_MEX_comb.Add_par("STA2",0.0, 0.1); bf_MEX_comb_ch2.Add_par("STA2",0.0, 0.1);
+    
+   
+    //add priors
+    map<string,int>::iterator it_prior;
+    it_prior= Fix_fit_pars_list[ifit].find("M3");
+    if(it_prior != Fix_fit_pars_list[ifit].end()) {
+      if(it_prior->second == 1) {
+	bf_MEX_comb.Add_prior_par("M3", -0.2, 0.01); bf_MEX_comb_ch2.Add_prior_par("M3", -0.2, 0.01);
+      }
+    }
+
+    it_prior= Fix_fit_pars_list[ifit].find("M4");
+    if(it_prior != Fix_fit_pars_list[ifit].end()) {
+      if(it_prior->second == 1) {
+	bf_MEX_comb.Add_prior_par("M4", -1.2, 0.1); bf_MEX_comb_ch2.Add_prior_par("M4", -1.2,0.1);
+      }
+    }
+
+  
+    
+    it_prior= Fix_fit_pars_list[ifit].find("A1");
+    if(it_prior != Fix_fit_pars_list[ifit].end()) {
+      if(it_prior->second == 1) {
+	bf_MEX_comb.Add_prior_par("A1", 0.1*1.0/0.5, 0.1*0.1/0.5); bf_MEX_comb_ch2.Add_prior_par("A1", 0.1*1.0/0.5, 0.1*0.1/0.5);
+      }
+    }
+
+    it_prior= Fix_fit_pars_list[ifit].find("A2");
+    if(it_prior != Fix_fit_pars_list[ifit].end()) {
+      if(it_prior->second == 1) {
+	bf_MEX_comb.Add_prior_par("A2", 0.0, 0.1); bf_MEX_comb_ch2.Add_prior_par("A2", 0.0, 0.1);
+      }
+    }    
+    vector<string> M2_pars({"SV1", "SV2", "SA1", "SA2", "STV1", "STV2", "STA2"});
+    for( auto &mpar : M2_pars) {
+      it_prior= Fix_fit_pars_list[ifit].find(mpar);
+      if(it_prior == Fix_fit_pars_list[ifit].end()) crash("Cannot find par: "+mpar+" in fit list");
+      if(it_prior != Fix_fit_pars_list[ifit].end()) {
+	if(it_prior->second == 1) {
+	  cout<<"Adding prior: "<<mpar<<endl;
+	  bf_MEX_comb.Add_prior_par(mpar, 0.0, 0.1); bf_MEX_comb_ch2.Add_prior_par(mpar, 0.0, 0.1);
+	}
+      }
+    }
+    
+  
+
+    
+ 
   //############### FIXING PARAMETERS ####################
   
 
   bf_MEX_comb.Fix_par("R1", 0.0); bf_MEX_comb_ch2.Fix_par("R1", 0.0);
   bf_MEX_comb.Fix_par("R2", 0.0); bf_MEX_comb_ch2.Fix_par("R2", 0.0);
-  //bf_MEX_comb.Fix_par("M3", 0.0) ; bf_MEX_comb_ch2.Fix_par("M3", 0.0);
-  //bf_MEX_comb.Fix_par("M4", 0.0) ; bf_MEX_comb_ch2.Fix_par("M4", 0.0);
-  bf_MEX_comb.Fix_par("SV1", 0.0); bf_MEX_comb_ch2.Fix_par("SV1", 0.0);
-  bf_MEX_comb.Fix_par("SV2", 0.0); bf_MEX_comb_ch2.Fix_par("SV2", 0.0);
   bf_MEX_comb.Fix_par("SV3", 0.0); bf_MEX_comb_ch2.Fix_par("SV3", 0.0);
-  bf_MEX_comb.Fix_par("SA1", 0.0); bf_MEX_comb_ch2.Fix_par("SA1", 0.0);
-  bf_MEX_comb.Fix_par("SA2", 0.0);  bf_MEX_comb_ch2.Fix_par("SA2", 0.0);
   bf_MEX_comb.Fix_par("SA3", 0.0);  bf_MEX_comb_ch2.Fix_par("SA3", 0.0);
-  //bf_MEX_comb.Fix_par("BV1", 0.0);  bf_MEX_comb_ch2.Fix_par("BV1", 0.0);
-  //bf_MEX_comb.Fix_par("BV2", 0.0);  bf_MEX_comb_ch2.Fix_par("BV2", 0.0);
-  //bf_MEX_comb.Fix_par("BA1", 0.0);  bf_MEX_comb_ch2.Fix_par("BA1", 0.0);
-  //bf_MEX_comb.Fix_par("BA2", 0.0);  bf_MEX_comb_ch2.Fix_par("BA2", 0.0);
-
-  
+   
   //fix parameters of tensor form factors
-  bf_MEX_comb.Fix_par("A1",0.0) ; bf_MEX_comb_ch2.Fix_par("A1",0.0);
-  bf_MEX_comb.Fix_par("A2",0.0) ; bf_MEX_comb_ch2.Fix_par("A2",0.0);
   bf_MEX_comb.Fix_par("RTV1", 0.0); bf_MEX_comb_ch2.Fix_par("RTV1", 0.0);
   bf_MEX_comb.Fix_par("RTV2", 0.0); bf_MEX_comb_ch2.Fix_par("RTV2", 0.0);
   bf_MEX_comb.Fix_par("RTA1", 0.0); bf_MEX_comb_ch2.Fix_par("RTA1", 0.0);
   bf_MEX_comb.Fix_par("RTA2", 0.0); bf_MEX_comb_ch2.Fix_par("RTA2", 0.0);
-
-
-  //bf_MEX_comb.Fix_par("TVE1", 0.0); bf_MEX_comb_ch2.Fix_par("TVE1", 0.0);
-
-  
-  //bf_MEX_comb.Fix_par("STV1", 0.0); bf_MEX_comb_ch2.Fix_par("STV1", 0.0);
-  bf_MEX_comb.Fix_par("STV2", 0.0); bf_MEX_comb_ch2.Fix_par("STV2", 0.0);
+  bf_MEX_comb.Fix_par("TAM1", 0.0); bf_MEX_comb_ch2.Fix_par("TAM1", 0.0);
+  bf_MEX_comb.Fix_par("STA1", 0.0);  bf_MEX_comb_ch2.Fix_par("STA1", 0.0);
   bf_MEX_comb.Fix_par("STV3", 0.0); bf_MEX_comb_ch2.Fix_par("STV3", 0.0);
-  //bf_MEX_comb.Fix_par("STA1", 0.0); bf_MEX_comb_ch2.Fix_par("STA1", 0.0);
-  bf_MEX_comb.Fix_par("STA2", 0.0);  bf_MEX_comb_ch2.Fix_par("STA2", 0.0);
   bf_MEX_comb.Fix_par("STA3", 0.0);  bf_MEX_comb_ch2.Fix_par("STA3", 0.0);
 
-  bf_MEX_comb.Fix_par("BTV2", 0.0) ; bf_MEX_comb_ch2.Fix_par("BTV2", 0.0);
-
+  int fix_T_den= Fix_fit_pars_list[ifit].find("fix_T_den")->second;
+  
+  map<string, int>::iterator it;
+  for (it = Fix_fit_pars_list[ifit].begin(); it != Fix_fit_pars_list[ifit].end(); it++)
+    {
+      if (it->first != "fix_T_den") {
+	if(it->second == 0) { bf_MEX_comb.Fix_par(it->first, 0.0); bf_MEX_comb_ch2.Fix_par(it->first, 0.0);}
+      }
+    }
+  
   if(!separate_ud) {
     bf_MEX_comb.Fix_par("BV1", 0.0);  bf_MEX_comb_ch2.Fix_par("BV1", 0.0);
     bf_MEX_comb.Fix_par("BV2", 0.0);  bf_MEX_comb_ch2.Fix_par("BV2", 0.0);
@@ -2738,8 +3455,7 @@ void Compute_Bs_mumu_gamma() {
     bf_MEX_comb.Fix_par("BTA2", 0.0) ; bf_MEX_comb_ch2.Fix_par("BTA2", 0.0);
   }
   
- 
-  
+   
  
   double L_MSb=Get_Lambda_MS_bar(4);
   double alpha_MU_GLB=Get_4l_alpha_s(MU_GLB,4,L_MSb);
@@ -2756,7 +3472,7 @@ void Compute_Bs_mumu_gamma() {
 
  
 
-  bf_MEX_comb.ansatz =  [&L_MSb, &alpha_MU_GLB, &zeta_3, &zeta_4, &zeta_5, &b0, &b1,&b2, &b3, &b4,  &Fit_mode, &ZT_MB, &separate_ud](const fpar_MEX_comb &p, const ipar_MEX_comb &ip) {
+  bf_MEX_comb.ansatz =  [&L_MSb, &alpha_MU_GLB, &zeta_3, &zeta_4, &zeta_5, &b0, &b1,&b2, &b3, &b4,  &Fit_mode, &ZT_MB, &separate_ud, &fix_T_den](const fpar_MEX_comb &p, const ipar_MEX_comb &ip) {
 
     if((separate_ud == 0)  && ip.W.substr( ip.W.length() -1, 1) == "u") return 0.0;
 
@@ -2857,28 +3573,29 @@ void Compute_Bs_mumu_gamma() {
 
           
     if (ip.W =="Vd") {
-      return (Q/x)*(1.0/(1 + 2*p.DV/(x*M*M)))*( Rad*p.A + (p.M1)/M + (p.M2)/(M*x) + (1.0+p.M3)/(M*x) + (1.0+p.M4)/M  + p.SV1*LB/(M*M) + p.SV2*LB/(M*M*x) + p.SV3*LB/(M*M*x*x));   
+      return (Q/x)*(1.0/(1 + 2*p.DV/(x*M*M)))*( Rad*p.A + (p.M1)/M + (p.M2)/(M*x) + (1.0+p.M3)/(M*x) + (1.0)/(M +p.M4*LB)  + p.SV1*LB/(M*M) + p.SV2*LB/(M*M*x) + p.SV3*LB/(M*M*x*x));   
     }
     else if (ip.W == "Ad") {
-      return (Q/x)*(1.0/( 1  +  2*p.DA/(x*M) ) )*( Rad*p.A + (p.M1)/M + p.M2/(M*x) +2*p.DA*Rad*p.A/(M*x) -(1.0+p.M3)/(M*x) -(1.0+p.M4)/M + p.SA1*LB/(M*M) + p.SA2*LB/(M*M*x) + p.SA3*LB/(M*M*x*x));   
+      return (Q/x)*(1.0/( 1  +  2*p.DA/(x*M) ) )*( Rad*p.A + (p.M1)/M + p.M2/(M*x) + 2*p.DA*Rad*p.A/(M*x) -(1.0+p.M3)/(M*x) -(1.0)/(M+p.M4*LB) + p.SA1*LB/(M*M) + p.SA2*LB/(M*M*x) + p.SA3*LB/(M*M*x*x));   
     }
     else if(ip.W =="Vu") { //return 0.0; 
       return (Q/(M*x))*(1.0/(1+2*p.DV/(x*M*M)))*(1.0 + p.BV1*LB/M + p.BV2*LB/(M*x) );
     }
+
     else if(ip.W == "Au") {// return 0.0;
       return (Q/(M*x))*(1.0/(1+2*p.DA/(x*M)))*(1.0 + p.BA1*LB/M + p.BA2*LB/(M*x) );
     }
     else if (ip.W =="TVd") {
-      return (1.0/ZT_MB)*(Q/x)*(1.0/(1 + 2*p.DV/(x*M*M)))*( Rad_TV*(p.A1+p.A) + p.TVM1/M + p.TVE1/(M*x) + p.STV1/(M*M) + p.STV2*LB/(M*M*x) + p.STV3*LB/(M*M*x*x));   
+      return (1.0/ip.Z)*(Q/x)*((1.0 + (1-fix_T_den)*2*p.DV/(M*M))/(1 + (1-fix_T_den*x)*2*p.DV/(x*M*M)))*( Rad_TV*(p.A1+p.A) + p.TVM1/M + (1-x)*p.TVE1/(M*x) + p.STV1*LB/(M*M) + p.STV2*(1-x)*LB/(M*M*x) + p.STV3*LB/(M*M*x*x));   
     }
     else if (ip.W == "TAd") {
-      return (1.0/ZT_MB)*(Q/x)*(1.0/( 1  +  2*p.DA/(x*M) ) )*( Rad_TA*(p.A+p.A1+p.A2) + (p.TAM1)/M + p.TAE1/(M*x) + p.STA1*LB/(M*M) + p.STA2*LB/(M*M*x) + p.STA3*LB/(M*M*x*x));   
+      return (1.0/ip.Z)*(Q/x)*((1.0+  (1-fix_T_den)*2*((p.DA+p.A2)/M))/( 1  + (1-fix_T_den*x)*2*(p.DA+p.A2)/(x*M) ) )*( Rad_TA*(p.A+p.A1) + (p.TVM1)/M + (1-x)*(p.TAE1)/(M*x) + p.STV1*LB/(M*M) + (p.STA2)*(1-x)*LB/(M*M*x) + p.STA3*LB/(M*M*x*x));   
     }
     else if(ip.W =="TVu") { //return 0.0; 
-      return (1.0/ZT_MB)*(Q/(M*x))*(1.0/(1+2*p.DV/(x*M*M)))*(1.0 + p.BTV1*LB/M + p.BTV2*LB/(M*x) );
+      return (1.0/ip.Z)*(Q/(M*x))*(1.0/(1+2*p.DV/(x*M*M)))*(1.0 + p.BTV1*LB/M + p.BTV2*LB/(M*x) );
     }
     else if(ip.W == "TAu") {// return 0.0;
-      return (1.0/ZT_MB)*(Q/(M*x))*(1.0/(1+2*p.DA/(x*M)))*(1.0 + p.BTA1*LB/M + p.BTA2*LB/(M*x) );
+      return (1.0/ip.Z)*(Q/(M*x))*(1.0/(1+2*p.DA/(x*M)))*(1.0 + p.BTA1*LB/M + p.BTA2*LB/(M*x) );
     }
     else crash("channel: "+ip.W+" not recognized");
 
@@ -2902,99 +3619,16 @@ void Compute_Bs_mumu_gamma() {
 	  
     return ip.FF_err;
   };
-	
-	
+
+ 	
   bf_MEX_comb_ch2.ansatz= bf_MEX_comb.ansatz;
   bf_MEX_comb_ch2.measurement = bf_MEX_comb.measurement;
   bf_MEX_comb_ch2.error = bf_MEX_comb.error;
 
-  cout<<"Computing covariance matrix of global fit"<<endl;
-
-  vector<vector<distr_t_list>> FF_M_list_boot_new= FF_M_list_boot;
-  vector<vector<distr_t_list>> FF_M_list_new = FF_M_list;
-  //{"FA", "FA_u", "FA_d", "FV",  "FV_u", "FV_d",  "FA_T", "FA_T_u", "FA_T_d", "FV_T", "FV_T_u", "FV_T_d", "FB", "FB_u", "FB_d", "FT", "FT_u", "FT_d"}
-  int id_TA=8; int id_TV=11; 
-  if(fit_FB_FT) {
-    id_TA=14;
-    id_TV=17;
-  }
-
-  if(!separate_ud) {
-
-    for(int imass=0;imass<Nmasses;imass++) {
-      FF_M_list_boot_new[2][imass] = FF_M_list_boot_new[2][imass] + FF_M_list_boot_new[1][imass];
-      //FF_M_list_boot_new[1][imass] = 0.0*FF_M_list_boot_new[1][imass];
-      FF_M_list_new[2][imass] = FF_M_list_new[2][imass] + FF_M_list_new[1][imass];
-      //FF_M_list_new[1][imass] = 0.0*FF_M_list_new[1][imass];
-
-      FF_M_list_boot_new[5][imass] = FF_M_list_boot_new[5][imass] + FF_M_list_boot_new[4][imass];
-      //FF_M_list_boot_new[4][imass] = 0.0*FF_M_list_boot_new[4][imass];
-      FF_M_list_new[5][imass] = FF_M_list_new[5][imass] + FF_M_list_new[4][imass];
-      //FF_M_list_new[4][imass] = 0.0*FF_M_list_new[5][imass];
-
-      FF_M_list_boot_new[id_TA][imass] = FF_M_list_boot_new[id_TA][imass] + FF_M_list_boot_new[id_TA-1][imass];
-      //FF_M_list_boot_new[id_TA-1][imass] = 0.0*FF_M_list_boot_new[id_TA-1][imass];
-      FF_M_list_new[id_TA][imass] = FF_M_list_new[id_TA][imass] + FF_M_list_new[id_TA-1][imass];
-      //FF_M_list_new[id_TA-1][imass] = 0.0*FF_M_list_new[id_TA-1][imass];
-
-      FF_M_list_boot_new[id_TV][imass] = FF_M_list_boot_new[id_TV][imass] + FF_M_list_boot_new[id_TV-1][imass];
-      //FF_M_list_boot_new[id_TV-1][imass] = 0.0*FF_M_list_boot_new[id_TV-1][imass];
-      FF_M_list_new[id_TV][imass] = FF_M_list_new[id_TV][imass] + FF_M_list_new[id_TV-1][imass];
-      //FF_M_list_new[id_TV-1][imass] = 0.0*FF_M_list_new[id_TV-1][imass];
-
-    }
-
-  }
 
 
-  //insert covariance matrix
-  Eigen::MatrixXd Cov_Matrix_comb_FF(Nmasses*8*num_xg,Nmasses*8*num_xg);
-  Eigen::MatrixXd Corr_Matrix_comb_FF(Nmasses*8*num_xg,Nmasses*8*num_xg);
-  for(int m=0;m< Nmasses*8*num_xg;m++)
-    for(int n=0;n< Nmasses*8*num_xg ;n++) { Cov_Matrix_comb_FF(m,n)=0; Corr_Matrix_comb_FF(m,n)=0;}
-  
-  for(int i=0;i<Nmasses;i++)
-    for(int j=0;j<Nmasses;j++) 
-      for(int ix=0; ix < num_xg; ix++)
-	for(int jx=0; jx<num_xg;jx++) {
-	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix , j*8*num_xg + 8*jx) = ((FF_M_list_boot_new[2][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[2][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[2][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[2][j].distr_list[jx]/fps_boot.distr_list[j]).err());
-	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 1 , j*8*num_xg + 8*jx + 1) = ((FF_M_list_boot_new[5][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[5][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[5][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[5][j].distr_list[jx]/fps_boot.distr_list[j]).err());
-	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 2 , j*8*num_xg + 8*jx + 2) =   ((FF_M_list_boot_new[1][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[1][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[1][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[1][j].distr_list[jx]/fps_boot.distr_list[j]).err());
-	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 3 , j*8*num_xg + 8*jx + 3) =    ((FF_M_list_boot_new[4][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[4][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[4][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[4][j].distr_list[jx]/fps_boot.distr_list[j]).err());
- 
-	  //tensor
-	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix+4 , j*8*num_xg + 8*jx+4) = ((FF_M_list_boot_new[id_TA][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[id_TA][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[id_TA][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[id_TA][j].distr_list[jx]/fps_boot.distr_list[j]).err());
-	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 5 , j*8*num_xg + 8*jx + 5) = ((FF_M_list_boot_new[id_TV][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[id_TV][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[id_TV][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[id_TV][j].distr_list[jx]/fps_boot.distr_list[j]).err());
-	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 6 , j*8*num_xg + 8*jx + 6) =   ((FF_M_list_boot_new[id_TA-1][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[id_TA-1][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[id_TA-1][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[id_TA-1][j].distr_list[jx]/fps_boot.distr_list[j]).err());
-	  Corr_Matrix_comb_FF(i*8*num_xg + 8*ix + 7 , j*8*num_xg + 8*jx + 7) =    ((FF_M_list_boot_new[id_TV-1][i].distr_list[ix]/fps_boot.distr_list[i])%(FF_M_list_boot_new[id_TV-1][j].distr_list[jx]/fps_boot.distr_list[j]))/( (FF_M_list_boot_new[id_TV-1][i].distr_list[ix]/fps_boot.distr_list[i]).err()*(FF_M_list_boot_new[id_TV-1][j].distr_list[jx]/fps_boot.distr_list[j]).err());
-
-	  
-	  
-	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix , j*8*num_xg + 8*jx) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix , j*8*num_xg + 8*jx)*(FF_M_list_new[2][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[2][j].distr_list[jx]/fps.distr_list[j]).err();
-	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +1 , j*8*num_xg + 8*jx +1) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +1 , j*8*num_xg + 8*jx +1)*(FF_M_list_new[5][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[5][j].distr_list[jx]/fps.distr_list[j]).err();
-	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +2 , j*8*num_xg + 8*jx +2) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +2 , j*8*num_xg + 8*jx +2)*(FF_M_list_new[1][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[1][j].distr_list[jx]/fps.distr_list[j]).err();
-	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +3 , j*8*num_xg + 8*jx +3) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +3 , j*8*num_xg + 8*jx +3)*(FF_M_list_new[4][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[4][j].distr_list[jx]/fps.distr_list[j]).err();
-
-	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix+4 , j*8*num_xg + 8*jx+4) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +4  , j*8*num_xg + 8*jx +4)*(FF_M_list_new[id_TA][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[id_TA][j].distr_list[jx]/fps.distr_list[j]).err();
-	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +5 , j*8*num_xg + 8*jx +5) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +5 , j*8*num_xg + 8*jx +5)*(FF_M_list_new[id_TV][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[id_TV][j].distr_list[jx]/fps.distr_list[j]).err();
-	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +6 , j*8*num_xg + 8*jx +6) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +6 , j*8*num_xg + 8*jx +6)*(FF_M_list_new[id_TA-1][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[id_TA-1][j].distr_list[jx]/fps.distr_list[j]).err();
-	  Cov_Matrix_comb_FF(i*8*num_xg + 8*ix +7 , j*8*num_xg + 8*jx +7) = Corr_Matrix_comb_FF(i*8*num_xg + 8*ix +7 , j*8*num_xg + 8*jx +7)*(FF_M_list_new[id_TV-1][i].distr_list[ix]/fps.distr_list[i]).err()*(FF_M_list_new[id_TV-1][j].distr_list[jx]/fps.distr_list[j]).err();
-
-	  
-	  //Cov_Matrix_comb_FF(i*2*num_xg + 2*ix , j*2*num_xg + 2*jx + 1) = (FF_M_list_new[2][i].distr_list[ix]/fps.distr_list[i])%(FF_M_list_new[5][j].distr_list[jx]/fps.distr_list[j]);
-	  //Cov_Matrix_comb_FF(i*2*num_xg + 2*ix + 1 , j*2*num_xg + 2*jx) = (FF_M_list_new[5][i].distr_list[ix]/fps.distr_list[i])%(FF_M_list_new[2][j].distr_list[jx]/fps.distr_list[j]);
-	}
-
-  //for(int m=0;m < Nmasses*4*num_xg; m++)
-  //for(int n=0; n< Nmasses*4*num_xg;n++) Corr_Matrix_comb_FF(m,n) = Cov_Matrix_comb_FF(m,n)/sqrt( Cov_Matrix_comb_FF(m,m)*Cov_Matrix_comb_FF(n,n));
 
 
-      
-  cout<<"Corr matrix determinant: "<<Corr_Matrix_comb_FF.determinant()<<endl;    
-  
-  //print on screen
-  cout<<"Correlation matrix comb"<<endl;
-  cout<<Corr_Matrix_comb_FF<<endl;
   
   //add cov matrix to bootstrap fit
   bf_MEX_comb.Add_covariance_matrix(Cov_Matrix_comb_FF);
@@ -3023,6 +3657,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb[ijack][8*im*num_xg+ 8*ixg].W= "Ad";
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg].imass = im;
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg].ixg = ixg;
+	data_MEX_comb[ijack][8*im*num_xg +8*ixg].Z = ZT_Mh[im];
 
 	data_MEX_comb[ijack][8*im*num_xg+8*ixg+1].FF = (FF_M_list_new[5][im].distr_list[ixg]/fps.distr_list[im]).distr[ijack];
 	data_MEX_comb[ijack][8*im*num_xg+8*ixg+1].FF_err= (FF_M_list_new[5][im].distr_list[ixg]/fps.distr_list[im]).err();
@@ -3031,6 +3666,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb[ijack][8*im*num_xg+ 8*ixg+1].W= "Vd";
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+1].imass = im;
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+1].ixg = ixg;
+	data_MEX_comb[ijack][8*im*num_xg +8*ixg+1].Z = ZT_Mh[im];
 
 
 	data_MEX_comb[ijack][8*im*num_xg+8*ixg+2].FF = (FF_M_list_new[1][im].distr_list[ixg]/fps.distr_list[im]).distr[ijack];
@@ -3040,6 +3676,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb[ijack][8*im*num_xg+ 8*ixg+2].W= "Au";
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+2].imass = im;
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+2].ixg = ixg;
+	data_MEX_comb[ijack][8*im*num_xg +8*ixg+2].Z = ZT_Mh[im];
 
 
 	data_MEX_comb[ijack][8*im*num_xg+8*ixg+3].FF = (FF_M_list_new[4][im].distr_list[ixg]/fps.distr_list[im]).distr[ijack];
@@ -3049,6 +3686,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb[ijack][8*im*num_xg+ 8*ixg+3].W= "Vu";
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+3].imass = im;
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+3].ixg = ixg;
+	data_MEX_comb[ijack][8*im*num_xg +8*ixg+3].Z = ZT_Mh[im];
 
 
 
@@ -3060,6 +3698,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb[ijack][8*im*num_xg+ 8*ixg+4].W= "TAd";
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+4].imass = im;
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+4].ixg = ixg;
+	data_MEX_comb[ijack][8*im*num_xg +8*ixg+4].Z = ZT_Mh[im];
 
 	data_MEX_comb[ijack][8*im*num_xg+8*ixg+5].FF = (FF_M_list_new[id_TV][im].distr_list[ixg]/fps.distr_list[im]).distr[ijack];
 	data_MEX_comb[ijack][8*im*num_xg+8*ixg+5].FF_err= (FF_M_list_new[id_TV][im].distr_list[ixg]/fps.distr_list[im]).err();
@@ -3068,7 +3707,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb[ijack][8*im*num_xg+ 8*ixg+5].W= "TVd";
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+5].imass = im;
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+5].ixg = ixg;
-
+	data_MEX_comb[ijack][8*im*num_xg +8*ixg+5].Z = ZT_Mh[im];
 
 	data_MEX_comb[ijack][8*im*num_xg+8*ixg+6].FF = (FF_M_list_new[id_TA-1][im].distr_list[ixg]/fps.distr_list[im]).distr[ijack];
 	data_MEX_comb[ijack][8*im*num_xg+8*ixg+6].FF_err= (FF_M_list_new[id_TA-1][im].distr_list[ixg]/fps.distr_list[im]).err();
@@ -3077,6 +3716,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb[ijack][8*im*num_xg+ 8*ixg+6].W= "TAu";
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+6].imass = im;
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+6].ixg = ixg;
+	data_MEX_comb[ijack][8*im*num_xg +8*ixg+6].Z = ZT_Mh[im];
 
 
 	data_MEX_comb[ijack][8*im*num_xg+8*ixg+7].FF = (FF_M_list_new[id_TV-1][im].distr_list[ixg]/fps.distr_list[im]).distr[ijack];
@@ -3086,6 +3726,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb[ijack][8*im*num_xg+ 8*ixg+7].W= "TVu";
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+7].imass = im;
 	data_MEX_comb[ijack][8*im*num_xg +8*ixg+7].ixg = ixg;
+	data_MEX_comb[ijack][8*im*num_xg +8*ixg+7].Z = ZT_Mh[im];
 
 	
       if(ijack==0) {  
@@ -3096,6 +3737,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb_ch2[ijack][8*im*num_xg+ 8*ixg].W= "Ad";
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg].imass = im;
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg].ixg = ixg;
+	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg].Z = ZT_Mh[im];
 
 	data_MEX_comb_ch2[ijack][8*im*num_xg+8*ixg+1].FF = (FF_M_list_new[5][im].distr_list[ixg]/fps.distr_list[im]).ave();
 	data_MEX_comb_ch2[ijack][8*im*num_xg+8*ixg+1].FF_err= (FF_M_list_new[5][im].distr_list[ixg]/fps.distr_list[im]).err();
@@ -3104,6 +3746,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb_ch2[ijack][8*im*num_xg+ 8*ixg+1].W= "Vd";
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+1].imass = im;
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+1].ixg = ixg;
+	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+1].Z = ZT_Mh[im];
 		
 
 	data_MEX_comb_ch2[ijack][8*im*num_xg+8*ixg+2].FF = (FF_M_list_new[1][im].distr_list[ixg]/fps.distr_list[im]).ave();
@@ -3113,6 +3756,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb_ch2[ijack][8*im*num_xg+ 8*ixg+2].W= "Au";
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+2].imass = im;
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+2].ixg = ixg;
+	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+2].Z = ZT_Mh[im];
        
 
 	data_MEX_comb_ch2[ijack][8*im*num_xg+8*ixg+3].FF = (FF_M_list_new[4][im].distr_list[ixg]/fps.distr_list[im]).ave();
@@ -3122,6 +3766,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb_ch2[ijack][8*im*num_xg+ 8*ixg+3].W= "Vu";
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+3].imass = im;
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+3].ixg = ixg;
+	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+3].Z = ZT_Mh[im];
 
 	
 	data_MEX_comb_ch2[ijack][8*im*num_xg+ 8*ixg+4].FF = (FF_M_list_new[id_TA][im].distr_list[ixg]/fps.distr_list[im]).ave();
@@ -3131,6 +3776,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb_ch2[ijack][8*im*num_xg+ 8*ixg+4].W= "TAd";
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+4].imass = im;
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+4].ixg = ixg;
+	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+4].Z = ZT_Mh[im];
 
 	data_MEX_comb_ch2[ijack][8*im*num_xg+8*ixg+5].FF = (FF_M_list_new[id_TV][im].distr_list[ixg]/fps.distr_list[im]).ave();
 	data_MEX_comb_ch2[ijack][8*im*num_xg+8*ixg+5].FF_err= (FF_M_list_new[id_TV][im].distr_list[ixg]/fps.distr_list[im]).err();
@@ -3139,6 +3785,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb_ch2[ijack][8*im*num_xg+ 8*ixg+5].W= "TVd";
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+5].imass = im;
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+5].ixg = ixg;
+	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+5].Z = ZT_Mh[im];
 
 
 	data_MEX_comb_ch2[ijack][8*im*num_xg+8*ixg+6].FF = (FF_M_list_new[id_TA-1][im].distr_list[ixg]/fps.distr_list[im]).ave();
@@ -3148,6 +3795,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb_ch2[ijack][8*im*num_xg+ 8*ixg+6].W= "TAu";
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+6].imass = im;
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+6].ixg = ixg;
+	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+6].Z = ZT_Mh[im];
 
 
 	data_MEX_comb_ch2[ijack][8*im*num_xg+8*ixg+7].FF = (FF_M_list_new[id_TV-1][im].distr_list[ixg]/fps.distr_list[im]).ave();
@@ -3157,6 +3805,7 @@ void Compute_Bs_mumu_gamma() {
 	data_MEX_comb_ch2[ijack][8*im*num_xg+ 8*ixg+7].W= "TVu";
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+7].imass = im;
 	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+7].ixg = ixg;
+	data_MEX_comb_ch2[ijack][8*im*num_xg +8*ixg+7].Z = ZT_Mh[im];
 		
       }
       }
@@ -3166,8 +3815,7 @@ void Compute_Bs_mumu_gamma() {
   cout<<"####################################################"<<endl;
 
   //for (auto &d: data_MEX_comb_ch2[0]) cout<<"ch: "<<d.W<<"xg: "<<d.xg<<" FF: "<<d.FF<<" +- "<<d.FF_err<<endl;
-
-
+ 
   cout<<"####################################################"<<endl;
 
   int Nmeas=Nmasses*num_xg*4*((separate_ud==0)?1:2);
@@ -3177,22 +3825,66 @@ void Compute_Bs_mumu_gamma() {
   //cout<<"Npars: "<<Npars<<endl;
 
 
-  
   //append
   bf_MEX_comb.Append_to_input_par(data_MEX_comb);
   bf_MEX_comb_ch2.Append_to_input_par(data_MEX_comb_ch2);
+  //append prior pars
+  it_prior= Fix_fit_pars_list[ifit].find("M3");
+  if(it_prior != Fix_fit_pars_list[ifit].end()) {
+    if(it_prior->second == 1) {
+      for(int ij=0;ij< NJ;ij++) 
+	{bf_MEX_comb.Append_to_prior("M3", 0.0, 0.3); bf_MEX_comb_ch2.Append_to_prior("M3", 0.0,0.3);}
+    }
+  }
+  
+  it_prior= Fix_fit_pars_list[ifit].find("M4");
+  if(it_prior != Fix_fit_pars_list[ifit].end()) {
+    if(it_prior->second == 1) {
+      for(int ij=0;ij< NJ;ij++) 
+	{bf_MEX_comb.Append_to_prior("M4", -1.5, 1); bf_MEX_comb_ch2.Append_to_prior("M4", -1.5,1);}
+    }
+  }
+   
+  it_prior= Fix_fit_pars_list[ifit].find("A1");
+  if(it_prior != Fix_fit_pars_list[ifit].end()) {
+    if(it_prior->second == 1) {
+      for(int ij=0;ij< NJ;ij++) 
+	{bf_MEX_comb.Append_to_prior("A1", 0.0, 0.4); bf_MEX_comb_ch2.Append_to_prior("A1", 0.0,0.4);}
+    }
+  }
+  it_prior= Fix_fit_pars_list[ifit].find("A2");
+  if(it_prior != Fix_fit_pars_list[ifit].end()) {
+    if(it_prior->second == 1) {
+      for(int ij=0;ij< NJ;ij++) 
+	{bf_MEX_comb.Append_to_prior("A2", 0.0, 0.4); bf_MEX_comb_ch2.Append_to_prior("A2", 0.0,0.4);}
+    }
+  }    
+  for( auto &mpar : M2_pars) {
+    it_prior= Fix_fit_pars_list[ifit].find(mpar);
+    if(it_prior != Fix_fit_pars_list[ifit].end()) {
+      if(it_prior->second == 1) {
+	for(int ij=0;ij< NJ;ij++) {
+	  bf_MEX_comb.Append_to_prior(mpar, 0.0, 5.0); bf_MEX_comb_ch2.Append_to_prior(mpar, 0.0, 5.0); }
+	}
+    }
+  }
+  
+
+  
   //fit
   Bt_fit_MEX_comb= bf_MEX_comb.Perform_bootstrap_fit();
   Bt_fit_MEX_comb_ch2= bf_MEX_comb_ch2.Perform_bootstrap_fit();
+
+    
   double ch2_red_MEX_comb= Bt_fit_MEX_comb_ch2.get_ch2_ave()/( Nmeas -Npars);
 
+ 
   Ndofs.push_back( Nmeas-Npars);
   Nmeasurements.push_back( Nmeas);
   Ch2s.push_back( Bt_fit_MEX_comb_ch2.get_ch2_ave());
 
 
-
-
+ 
  	
   //retrieve params
   distr_t A(1),  R1(1), R2(1), DV(1), DA(1), M1(1), M2(1), M3(1), M4(1),  SV1(1), SV2(1), SV3(1), SA1(1), SA2(1), SA3(1), BV1(1), BV2(1), BA1(1), BA2(1);
@@ -3256,8 +3948,18 @@ void Compute_Bs_mumu_gamma() {
 
     
   }
-  
 
+ 
+  //push_back important fit parameters
+  CA_list.push_back( DA);
+  CV_list.push_back( DV);
+  CA_T_list.push_back( DA+A2);
+  R_list.push_back( A);
+  RT_list.push_back( A + A1);
+  M3_list.push_back( M3+1.0);
+  M4_list.push_back( M4);
+
+ 
 
   //print fit function
   distr_t_list F_MEX_fit(1);
@@ -3265,6 +3967,7 @@ void Compute_Bs_mumu_gamma() {
   //### Determine FF at Bs meson mass
   ipar_MEX_comb pp_Bs_comb;
   pp_Bs_comb.M= MBs;
+  pp_Bs_comb.Z= ZT_fit_Mb;
  
   //scan over xg
  
@@ -3375,6 +4078,7 @@ void Compute_Bs_mumu_gamma() {
 
       ipar_MEX_comb pp;
       pp.M = 1.0/Inv_Masses_to_print_MEX[im];
+      pp.Z= ZT_Mh_to_print[im];
       pp.xg= Bs_xg_t_list[ixg];
       pp.ixg= ixg;
       
@@ -3511,6 +4215,13 @@ void Compute_Bs_mumu_gamma() {
   cout<<"BTA2: "<<(BTA2).ave()<< "+-"<<(BTA2).err()<<endl;
   
  
+ 
+
+
+  //evaluate the rate
+
+  }
+
   cout<<"ZT(2GeV)/ZT(MB) : "<<1.0/ZT_MB<<endl;
   cout<<"ZT(5GeV)/ZT(2GeV) NNNLO: "<<evolutor_ZT<<endl;
   cout<<"ZT(5GeV)/ZT(2GeV) NNLO: "<<evolutor_ZT_MS_bar(2.0, 5.0, 3)<<endl;
@@ -3518,32 +4229,97 @@ void Compute_Bs_mumu_gamma() {
   cout<<"ZT(1GeV)/ZT(2GeV) NNLO: "<<evolutor_ZT_MS_bar(2.0, 1.0, 3)<<endl;
 
 
-  //evaluate the rate
-
-  }
-
-
-  //perform Akaike analysis over the different fits
+  //perform Akaike analysis of the different fits
   distr_t_list FA_AIC(1), FV_AIC(1), FTA_AIC(1), FTV_AIC(1), FA_d_AIC(1), FV_d_AIC(1), FTA_d_AIC(1), FTV_d_AIC(1), FA_u_AIC(1), FV_u_AIC(1), FTA_u_AIC(1), FTV_u_AIC(1);
+
+  //perform BMA uniform analysis of the different fits
+  distr_t_list FA_d_uniform(1), FV_d_uniform(1), FTA_d_uniform(1), FTV_d_uniform(1), FA_u_uniform(1), FV_u_uniform(1), FTA_u_uniform(1), FTV_u_uniform(1);
+
+  distr_t AVE_CA(1), AVE_CV(1), AVE_CA_T(1), AVE_R(1), AVE_RT(1), AVE_M3(1), AVE_M4(1);
+  distr_t AVE_uniform_CA(1), AVE_uniform_CV(1), AVE_uniform_CA_T(1), AVE_uniform_R(1), AVE_uniform_RT(1), AVE_uniform_M3(1), AVE_uniform_M4(1);
+
+  AVE_CA = AIC(CA_list, Ch2s, Ndofs, Nmeasurements, 0, mult_fits);
+  AVE_CV = AIC(CV_list, Ch2s, Ndofs, Nmeasurements, 0, mult_fits);
+  AVE_CA_T = AIC(CA_T_list, Ch2s, Ndofs, Nmeasurements, 0, mult_fits);
+  AVE_R = AIC(R_list, Ch2s, Ndofs, Nmeasurements, 0, mult_fits);
+  AVE_RT = AIC(RT_list, Ch2s, Ndofs, Nmeasurements, 0, mult_fits);
+  AVE_M3 = AIC(M3_list, Ch2s, Ndofs, Nmeasurements, 0, mult_fits);
+  AVE_M4 = AIC(M4_list, Ch2s, Ndofs, Nmeasurements, 0, mult_fits);
+
+
+  AVE_uniform_CA = BMA_uniform(CA_list, Ch2s, Ndofs, Nmeasurements, 1.4);
+  AVE_uniform_CV = BMA_uniform(CV_list, Ch2s, Ndofs, Nmeasurements, 1.4);
+  AVE_uniform_CA_T = BMA_uniform(CA_T_list, Ch2s, Ndofs, Nmeasurements, 1.4);
+  AVE_uniform_R = BMA_uniform(R_list, Ch2s, Ndofs, Nmeasurements, 1.4);
+  AVE_uniform_RT = BMA_uniform(RT_list, Ch2s, Ndofs, Nmeasurements, 1.4);
+  AVE_uniform_M3 = BMA_uniform(M3_list, Ch2s, Ndofs, Nmeasurements, 1.4);
+  AVE_uniform_M4 = BMA_uniform(M4_list, Ch2s, Ndofs, Nmeasurements, 1.4);
+
+ 
+  vector<double> W(Nfits,0.0);
+  double wtot=0;
+  for(int i=0; i<Nfits;i++) { W[i] = mult_fits[i]*exp(-0.5*( Ch2s[i] + 2*( Nmeasurements[i] - Ndofs[i]) - Nmeasurements[i])); wtot += W[i]; }
+  for(int i=0; i<Nfits;i++) { W[i] /= wtot; }
+  for(int i=0;i<Nfits;i++) cout<<"ifit: "<<i<<" mult: "<<mult_fits[i]<<" w[ifit]: "<<W[i]<<endl;
+
+  //print averaged pars
+  cout<<"################# PRINT AIC AVERAGED PARAMETERS: ################## "<<endl;
+  cout<<"DA: "<<AVE_CA.ave()<<" "<<AVE_CA.err()<<endl;
+  cout<<"DV: "<<AVE_CV.ave()<<" "<<AVE_CV.err()<<endl;
+  cout<<"DA_T: "<<AVE_CA_T.ave()<<" "<<AVE_CA_T.err()<<endl;
+  cout<<"R: "<<AVE_R.ave()<<" "<<AVE_R.err()<<endl;
+  cout<<"RT: "<<AVE_RT.ave()<<" "<<AVE_RT.err()<<endl;
+  cout<<"M3: "<<AVE_M3.ave()<<" "<<AVE_M3.err()<<endl;
+  cout<<"M4: "<<AVE_M4.ave()<<" "<<AVE_M4.err()<<endl;
+  cout<<"################################################################### "<<endl;
+  cout<<"################# PRINT UNIFORM BMA AVERAGED PARAMETERS: ################## "<<endl;
+  cout<<"DA: "<<AVE_uniform_CA.ave()<<" "<<AVE_uniform_CA.err()<<endl;
+  cout<<"DV: "<<AVE_uniform_CV.ave()<<" "<<AVE_uniform_CV.err()<<endl;
+  cout<<"DA_T: "<<AVE_uniform_CA_T.ave()<<" "<<AVE_uniform_CA_T.err()<<endl;
+  cout<<"R: "<<AVE_uniform_R.ave()<<" "<<AVE_uniform_R.err()<<endl;
+  cout<<"RT: "<<AVE_uniform_RT.ave()<<" "<<AVE_uniform_RT.err()<<endl;
+  cout<<"M3: "<<AVE_uniform_M3.ave()<<" "<<AVE_uniform_M3.err()<<endl;
+  cout<<"M4: "<<AVE_uniform_M4.ave()<<" "<<AVE_uniform_M4.err()<<endl;
+  cout<<"################################################################### "<<endl;
+
+
 
   for(int ixg=0; ixg<nxgs_to_spline;ixg++) {
 
-    FA_AIC.distr_list.push_back( AIC(FA_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
-    FV_AIC.distr_list.push_back( AIC(FV_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
-    FTA_AIC.distr_list.push_back( AIC(FTA_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
-    FTV_AIC.distr_list.push_back( AIC(FTV_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
+    FA_AIC.distr_list.push_back( AIC(FA_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
+    FV_AIC.distr_list.push_back( AIC(FV_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
+    FTA_AIC.distr_list.push_back( AIC(FTA_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
+    FTV_AIC.distr_list.push_back( AIC(FTV_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
 
     
-    FA_d_AIC.distr_list.push_back( AIC(FA_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
-    FV_d_AIC.distr_list.push_back( AIC(FV_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
-    FTA_d_AIC.distr_list.push_back( AIC(FTA_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
-    FTV_d_AIC.distr_list.push_back( AIC(FTV_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
+    FA_d_AIC.distr_list.push_back( AIC(FA_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
+    FV_d_AIC.distr_list.push_back( AIC(FV_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
+    FTA_d_AIC.distr_list.push_back( AIC(FTA_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
+    FTV_d_AIC.distr_list.push_back( AIC(FTV_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
 
 
-    FA_u_AIC.distr_list.push_back( AIC(FA_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
-    FV_u_AIC.distr_list.push_back( AIC(FV_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
-    FTA_u_AIC.distr_list.push_back( AIC(FTA_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ;
-    FTV_u_AIC.distr_list.push_back( AIC(FTV_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,0)) ; 
+    FA_u_AIC.distr_list.push_back( AIC(FA_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
+    FV_u_AIC.distr_list.push_back( AIC(FV_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
+    FTA_u_AIC.distr_list.push_back( AIC(FTA_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
+    FTV_u_AIC.distr_list.push_back( AIC(FTV_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,0, mult_fits)) ;
+
+
+    FA_uniform.distr_list.push_back( BMA_uniform(FA_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+    FV_uniform.distr_list.push_back( BMA_uniform(FV_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+    FTA_uniform.distr_list.push_back( BMA_uniform(FTA_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+    FTV_uniform.distr_list.push_back( BMA_uniform(FTV_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+
+    
+    FA_d_uniform.distr_list.push_back( BMA_uniform(FA_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+    FV_d_uniform.distr_list.push_back( BMA_uniform(FV_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+    FTA_d_uniform.distr_list.push_back( BMA_uniform(FTA_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+    FTV_d_uniform.distr_list.push_back( BMA_uniform(FTV_d_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+
+
+    FA_u_uniform.distr_list.push_back( BMA_uniform(FA_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+    FV_u_uniform.distr_list.push_back( BMA_uniform(FV_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+    FTA_u_uniform.distr_list.push_back( BMA_uniform(FTA_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ;
+    FTV_u_uniform.distr_list.push_back( BMA_uniform(FTV_u_extr[ixg], Ch2s, Ndofs, Nmeasurements,1.4)) ; 
 
   }
 
@@ -3552,6 +4328,10 @@ void Compute_Bs_mumu_gamma() {
   vector<distr_t_list> FA_mass_dep_AIC, FV_mass_dep_AIC, FTA_mass_dep_AIC, FTV_mass_dep_AIC;
   vector<distr_t_list> FA_d_mass_dep_AIC, FV_d_mass_dep_AIC, FTA_d_mass_dep_AIC, FTV_d_mass_dep_AIC;
   vector<distr_t_list> FA_u_mass_dep_AIC, FV_u_mass_dep_AIC, FTA_u_mass_dep_AIC, FTV_u_mass_dep_AIC;
+
+  vector<distr_t_list> FA_mass_dep_uniform, FV_mass_dep_uniform, FTA_mass_dep_uniform, FTV_mass_dep_uniform;
+  vector<distr_t_list> FA_d_mass_dep_uniform, FV_d_mass_dep_uniform, FTA_d_mass_dep_uniform, FTV_d_mass_dep_uniform;
+  vector<distr_t_list> FA_u_mass_dep_uniform, FV_u_mass_dep_uniform, FTA_u_mass_dep_uniform, FTV_u_mass_dep_uniform;
 
   for(int ixg=0;ixg<num_xg;ixg++) {
 
@@ -3569,26 +4349,58 @@ void Compute_Bs_mumu_gamma() {
     FV_u_mass_dep_AIC.emplace_back(1);
     FTA_u_mass_dep_AIC.emplace_back(1);
     FTV_u_mass_dep_AIC.emplace_back(1);
+
+    FA_mass_dep_uniform.emplace_back(1);
+    FV_mass_dep_uniform.emplace_back(1);
+    FTA_mass_dep_uniform.emplace_back(1);
+    FTV_mass_dep_uniform.emplace_back(1);
+
+    FA_d_mass_dep_uniform.emplace_back(1);
+    FV_d_mass_dep_uniform.emplace_back(1);
+    FTA_d_mass_dep_uniform.emplace_back(1);
+    FTV_d_mass_dep_uniform.emplace_back(1);
+
+    FA_u_mass_dep_uniform.emplace_back(1);
+    FV_u_mass_dep_uniform.emplace_back(1);
+    FTA_u_mass_dep_uniform.emplace_back(1);
+    FTV_u_mass_dep_uniform.emplace_back(1);
+    
   }
 
   for(int ixg=0; ixg<num_xg;ixg++) {
 
     for(int im=0;im< (signed)Inv_Masses_to_print_MEX.size(); im++) {
     
-      FA_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FA_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
-      FV_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FV_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
-      FTA_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTA_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
-      FTV_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTV_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
+      FA_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FA_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
+      FV_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FV_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
+      FTA_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTA_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
+      FTV_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTV_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
 
-      FA_d_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FA_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
-      FV_d_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FV_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
-      FTA_d_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTA_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
-      FTV_d_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTV_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
+      FA_d_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FA_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
+      FV_d_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FV_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
+      FTA_d_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTA_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
+      FTV_d_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTV_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
 
-      FA_u_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FA_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
-      FV_u_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FV_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
-      FTA_u_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTA_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
-      FTV_u_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTV_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0));
+      FA_u_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FA_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
+      FV_u_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FV_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
+      FTA_u_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTA_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
+      FTV_u_mass_dep_AIC[ixg].distr_list.push_back(  AIC( FTV_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 0, mult_fits));
+      
+
+      FA_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FA_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+      FV_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FV_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+      FTA_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FTA_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+      FTV_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FTV_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+
+      FA_d_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FA_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+      FV_d_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FV_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+      FTA_d_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FTA_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+      FTV_d_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FTV_d_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+
+      FA_u_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FA_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+      FV_u_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FV_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+      FTA_u_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FTA_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
+      FTV_u_mass_dep_uniform[ixg].distr_list.push_back(  BMA_uniform( FTV_u_sims_m_dep[ixg][im], Ch2s, Ndofs, Nmeasurements, 1.4));
 
 
     }
@@ -3596,12 +4408,14 @@ void Compute_Bs_mumu_gamma() {
    
     
     //print the results
-    
+
+    //AIC
     
     Print_To_File({}, {Inv_Masses_to_print_MEX, FA_d_mass_dep_AIC[ixg].ave(), FA_d_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_d_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
     Print_To_File({}, {Inv_Masses_to_print_MEX, FV_d_mass_dep_AIC[ixg].ave(), FV_d_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_d_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
     Print_To_File({}, {Inv_Masses_to_print_MEX, FA_u_mass_dep_AIC[ixg].ave(), FA_u_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_u_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
     Print_To_File({}, {Inv_Masses_to_print_MEX, FV_u_mass_dep_AIC[ixg].ave(), FV_u_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_u_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    //tot
     Print_To_File({}, {Inv_Masses_to_print_MEX, FA_mass_dep_AIC[ixg].ave(), FA_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
     Print_To_File({}, {Inv_Masses_to_print_MEX, FV_mass_dep_AIC[ixg].ave(), FV_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
     
@@ -3610,7 +4424,24 @@ void Compute_Bs_mumu_gamma() {
     Print_To_File({}, {Inv_Masses_to_print_MEX, FTA_u_mass_dep_AIC[ixg].ave(), FTA_u_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_T_u_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
     Print_To_File({}, {Inv_Masses_to_print_MEX, FTV_u_mass_dep_AIC[ixg].ave(), FTV_u_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_u_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
     Print_To_File({}, {Inv_Masses_to_print_MEX, FTA_mass_dep_AIC[ixg].ave(), FTA_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_T_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
-    Print_To_File({}, {Inv_Masses_to_print_MEX, FTV_mass_dep_AIC[ixg].ave(), FTV_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/comb_fits/FV_T_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FTV_mass_dep_AIC[ixg].ave(), FTV_mass_dep_AIC[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_comb_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+
+    //uniform
+
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FA_d_mass_dep_uniform[ixg].ave(), FA_d_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_d_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FV_d_mass_dep_uniform[ixg].ave(), FV_d_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_d_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FA_u_mass_dep_uniform[ixg].ave(), FA_u_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_u_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FV_u_mass_dep_uniform[ixg].ave(), FV_u_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_u_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    //tot
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FA_mass_dep_uniform[ixg].ave(), FA_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FV_mass_dep_uniform[ixg].ave(), FV_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FTA_d_mass_dep_uniform[ixg].ave(), FTA_d_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_T_d_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FTV_d_mass_dep_uniform[ixg].ave(), FTV_d_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_d_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FTA_u_mass_dep_uniform[ixg].ave(), FTA_u_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_T_u_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FTV_u_mass_dep_uniform[ixg].ave(), FTV_u_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_u_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FTA_mass_dep_uniform[ixg].ave(), FTA_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FA_T_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
+    Print_To_File({}, {Inv_Masses_to_print_MEX, FTV_mass_dep_uniform[ixg].ave(), FTV_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
     
   }
 
@@ -3635,7 +4466,46 @@ void Compute_Bs_mumu_gamma() {
   Print_To_File({}, {xg_scan, (FTV_u_AIC*f_Bs).ave(), (FTV_u_AIC*f_Bs).err(), FTV_u_AIC.ave(), FTV_u_AIC.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_u_comb_Bs_fit.dat", "", "");
 
 
+  Print_To_File({}, {xg_scan, (FA_uniform*f_Bs).ave(), (FA_uniform*f_Bs).err(),  FA_uniform.ave(), FA_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FA_comb_uniform_Bs_fit.dat", "", "");
+  Print_To_File({}, {xg_scan, (FV_uniform*f_Bs).ave(), (FV_uniform*f_Bs).err(), FV_uniform.ave(), FV_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FV_comb_uniform_Bs_fit.dat", "", "");
+  Print_To_File({}, {xg_scan, (FTA_uniform*f_Bs).ave(), (FTA_uniform*f_Bs).err(),  FTA_uniform.ave(), FTA_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FA_T_comb_uniform_Bs_fit.dat", "", "");
+  Print_To_File({}, {xg_scan, (FTV_uniform*f_Bs).ave(), (FTV_uniform*f_Bs).err(), FTV_uniform.ave(), FTV_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_comb_uniform_Bs_fit.dat", "", "");
+ 
+  
+  Print_To_File({}, {xg_scan, (FA_d_uniform*f_Bs).ave(), (FA_d_uniform*f_Bs).err(),  FA_d_uniform.ave(), FA_d_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FA_d_comb_uniform_Bs_fit.dat", "", "");
+  Print_To_File({}, {xg_scan, (FV_d_uniform*f_Bs).ave(), (FV_d_uniform*f_Bs).err(), FV_d_uniform.ave(), FV_d_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FV_d_comb_uniform_Bs_fit.dat", "", "");
+  Print_To_File({}, {xg_scan, (FA_u_uniform*f_Bs).ave(), (FA_u_uniform*f_Bs).err(),  FA_u_uniform.ave(), FA_u_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FA_u_comb_uniform_Bs_fit.dat", "", "");
+  Print_To_File({}, {xg_scan, (FV_u_uniform*f_Bs).ave(), (FV_u_uniform*f_Bs).err(), FV_u_uniform.ave(), FV_u_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FV_u_comb_uniform_Bs_fit.dat", "", "");
+  
+  Print_To_File({}, {xg_scan, (FTA_d_uniform*f_Bs).ave(), (FTA_d_uniform*f_Bs).err(),  FTA_d_uniform.ave(), FTA_d_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FA_T_d_comb_uniform_Bs_fit.dat", "", "");
+  Print_To_File({}, {xg_scan, (FTV_d_uniform*f_Bs).ave(), (FTV_d_uniform*f_Bs).err(), FTV_d_uniform.ave(), FTV_d_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_d_comb_uniform_Bs_fit.dat", "", "");
+  Print_To_File({}, {xg_scan, (FTA_u_uniform*f_Bs).ave(), (FTA_u_uniform*f_Bs).err(),  FTA_u_uniform.ave(), FTA_u_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FA_T_u_comb_uniform_Bs_fit.dat", "", "");
+  Print_To_File({}, {xg_scan, (FTV_u_uniform*f_Bs).ave(), (FTV_u_uniform*f_Bs).err(), FTV_u_uniform.ave(), FTV_u_uniform.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_u_comb_uniform_Bs_fit.dat", "", "");
+
+
+  //print jackknives of global fit
+  boost::filesystem::create_directory("../data/ph_emission/"+ph_type+"/Bs_extr/jackknife");
+  
+  for(int ixg=0; ixg<nxgs_to_spline;ixg++) {
+    Print_To_File({}, { (FA_uniform).distr_list[ixg].distr, (FV_uniform).distr_list[ixg].distr, (FTA_uniform).distr_list[ixg].distr, (FTV_uniform).distr_list[ixg].distr }, "../data/ph_emission/"+ph_type+"/Bs_extr/jackknife/FF_ixg_"+to_string(ixg)+".dat", "", "#jackks"); 
+  }
+
+  }
+  else {
+    for(int ixg=0;ixg<nxgs_to_spline;ixg++) {
+      FA_uniform.distr_list.emplace_back(true, Read_From_File( "../data/ph_emission/"+ph_type+"/Bs_extr/jackknife/FF_ixg_"+to_string(ixg)+".dat", 1,5, 1));
+      FV_uniform.distr_list.emplace_back(true, Read_From_File( "../data/ph_emission/"+ph_type+"/Bs_extr/jackknife/FF_ixg_"+to_string(ixg)+".dat", 2,5, 1));
+      FTA_uniform.distr_list.emplace_back(true, Read_From_File( "../data/ph_emission/"+ph_type+"/Bs_extr/jackknife/FF_ixg_"+to_string(ixg)+".dat", 3,5, 1));
+      FTV_uniform.distr_list.emplace_back(true, Read_From_File( "../data/ph_emission/"+ph_type+"/Bs_extr/jackknife/FF_ixg_"+to_string(ixg)+".dat", 4, 5, 1));
+    }
+  }
+
+  
+
+
   //spline the results for the total
+
+  int Nb=800;
 
 
 
@@ -3645,25 +4515,37 @@ void Compute_Bs_mumu_gamma() {
   vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FTA_interpol;
   vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> FTV_interpol;
 
+  vector<boost::math::interpolators::cardinal_cubic_b_spline<double>> pretty_b_interpol;
+
+
+  
   
   for(int ijack=0;ijack<NJ;ijack++) {
 
     Vfloat FA_jacks, FV_jacks, FTA_jacks, FTV_jacks;
 
-    for(int ixg=0;ixg<nxgs_to_spline;ixg++) { FA_jacks.push_back( (FA_AIC*f_Bs).distr_list[ixg].distr[ijack]); FV_jacks.push_back( (FV_AIC*f_Bs).distr_list[ixg].distr[ijack]); FTA_jacks.push_back((FTA_AIC*f_Bs).distr_list[ixg].distr[ijack]); FTV_jacks.push_back( (FTV_AIC*f_Bs).distr_list[ixg].distr[ijack]);}
+    Vfloat pretty_b_jacks;
 
+    for(int ixg=0;ixg<nxgs_to_spline;ixg++) { FA_jacks.push_back( (FA_uniform*f_Bs).distr_list[ixg].distr[ijack]); FV_jacks.push_back( (FV_uniform*f_Bs).distr_list[ixg].distr[ijack]); FTA_jacks.push_back((FTA_uniform*f_Bs).distr_list[ixg].distr[ijack]); FTV_jacks.push_back( (FTV_uniform*f_Bs).distr_list[ixg].distr[ijack]); pretty_b_jacks.push_back( pretty_b_MB.distr_list[ixg].distr[ijack]);  }
+ 
     FA_interpol.emplace_back( FA_jacks.begin(), FA_jacks.end(), 0.0025, 0.0025);
+ 
     FV_interpol.emplace_back( FV_jacks.begin(), FV_jacks.end(), 0.0025, 0.0025);
-    FTA_interpol.emplace_back( FTA_jacks.begin(), FTA_jacks.end(), 0.0025, 0.0025);
+ 
     FTV_interpol.emplace_back( FTV_jacks.begin(), FTV_jacks.end(), 0.0025, 0.0025);
-    
+ 
+    FTA_interpol.emplace_back( FTA_jacks.begin(), FTA_jacks.end(), 0.0025, 0.0025);
 
+    pretty_b_interpol.emplace_back( pretty_b_jacks.begin(), pretty_b_jacks.end(), 0.0025, 0.0025);
+ 
   }
 
 
 
+
+
    
-  
+  cout<<"SPLINE GENERATED"<<endl;
   
   
 
@@ -3674,43 +4556,190 @@ void Compute_Bs_mumu_gamma() {
 
    
 
-  int Nxgs=199;
-  distr_t_list rate_Bs(true, Nxgs), rate_Bs_diff(true,Nxgs), AFB_Bs(true, Nxgs);
+  //int Nxgs=99;
+  int Nxgs=30;
+  distr_t_list rate_Bs_SD(true, Nxgs), rate_Bs_INT(true,Nxgs), rate_Bs_diff_SD(true,Nxgs), AFB_Bs(true,Nxgs), rate_Bs_diff_PT(true,Nxgs), rate_Bs_diff_INT(true,Nxgs);
+
+  
+  vector<distr_t_list> rate_Bs_SD_boot, rate_Bs_INT_boot, rate_Bs_diff_SD_boot, AFB_Bs_boot;
+  distr_t_list rate_Bs_SD_NOCH(true,Nxgs), rate_Bs_INT_NOCH(true, Nxgs), rate_Bs_diff_SD_NOCH(true,Nxgs);
+  vector<distr_t_list> rate_Bs_diff_PT_boot, rate_Bs_diff_INT_boot;
+  distr_t_list rate_Bs_diff_INT_NOCH(true, Nxgs);
   vector<double> xg_min_list(Nxgs), xg_max_list(Nxgs), qmin_list(Nxgs);
   double Mb=5.36692;
-  for(int it=0;it<Nxgs;it++) { xg_min_list[it] = 0.0; xg_max_list[it] =  0.0025*(it+1); qmin_list[it] = Mb*sqrt(1-xg_max_list[it]);  }
-   
+  for(int it=0;it<Nxgs;it++) { xg_min_list[it] = 0.0; xg_max_list[it] =  0.0129166666666*(it+1); qmin_list[it] = Mb*sqrt(1-xg_max_list[it]);  }
+  //for(int it=0;it<Nxgs;it++) { xg_min_list[it] = 0.0; xg_max_list[it] =  0.005*(it+1); qmin_list[it] = Mb*sqrt(1-xg_max_list[it]);  }
+
+
+  //resize boot vectors
+  for(int it=0;it<Nxgs;it++) {
+    rate_Bs_SD_boot.emplace_back(true, Nb);
+    rate_Bs_INT_boot.emplace_back(true,Nb);
+    rate_Bs_diff_SD_boot.emplace_back(true, Nb);
+    AFB_Bs_boot.emplace_back(true, Nb);
+    rate_Bs_diff_INT_boot.emplace_back(true, Nb);
+    rate_Bs_diff_PT_boot.emplace_back(true,Nb);
+  }
+
  
-  distr_t a1(1) ;
+  //##############       generate input parameters        #####################
+  
+  distr_t a1_distr(false) ;   distr_t mb_distr(false);
+  distr_t xb_distr(false), Vtbs_distr(false), tbs_distr(false);
+
+  distr_t a1_distr_std(true) ;   distr_t mb_distr_std(true);
+  distr_t xb_distr_std(true), Vtbs_distr_std(true), tbs_distr_std(true);
+  
+  vector<vector<double>> kappa_distr(Nb), Cos_distr(Nb), W_distr(Nb), Br_distr(Nb);
   GaussianMersenne GPP(854135);
-  distr_t mb_distr;
-  for(int ijack=0;ijack<NJ;ijack++) mb_distr.distr.push_back( 4.18 + 0.03*GPP()/sqrt(1.0*NJ-1.0));
-  for(int ijack=0;ijack<NJ;ijack++) a1.distr.push_back( -0.13 + GPP()*0.13/sqrt(1.0*NJ-1.0));
-    
-   
+  UniformMersenne  RAN(45252, 0.0, 2*M_PI);
+  
+
+  for(int ib=0;ib<Nb;ib++) mb_distr.distr.push_back( 4.18 + 0.03*GPP());
+  for(int ib=0;ib<Nb;ib++) a1_distr.distr.push_back( -0.13 + GPP()*0.13);
+  for(int ib=0;ib<Nb;ib++) xb_distr.distr.push_back( x_b + GPP()*x_b_err);
+  for(int ib=0;ib<Nb;ib++) Vtbs_distr.distr.push_back( Vtbs + GPP()*Vtbs_err);
+  for(int ib=0;ib<Nb;ib++) tbs_distr.distr.push_back( tBs + GPP()*tBs_err);
+
+  for(int ib=0;ib<NJ;ib++) mb_distr_std.distr.push_back( 4.18 + (1.0/sqrt(NJ-1.0))*0.03*GPP());
+  for(int ib=0;ib<NJ;ib++) a1_distr_std.distr.push_back( -0.13 + (1.0/sqrt(NJ-1.0))*GPP()*0.13);
+  for(int ib=0;ib<NJ;ib++) xb_distr_std.distr.push_back( x_b + (1.0/sqrt(NJ-1.0))*GPP()*x_b_err);
+  for(int ib=0;ib<NJ;ib++) Vtbs_distr_std.distr.push_back( Vtbs + (1.0/sqrt(NJ-1.0))*GPP()*Vtbs_err);
+  for(int ib=0;ib<NJ;ib++) tbs_distr_std.distr.push_back( tBs + (1.0/sqrt(NJ-1.0))*GPP()*tBs_err);
+
+  for(int nres=0;nres<8;nres++) {
+    for(int ib=0;ib<Nb;ib++) kappa_distr[ib].push_back( 0.75 + 0.75*GPP());
+    for(int ib=0;ib<Nb;ib++) Cos_distr[ib].push_back( cos( RAN()));
+    for(int ib=0;ib<Nb;ib++) W_distr[ib].push_back( GPP());
+    for(int ib=0;ib<Nb;ib++) Br_distr[ib].push_back( GPP());
+  }
+
+
+  //###########################################################################
+
+    #pragma omp parallel for schedule(dynamic)
     for(int it=0; it < Nxgs;it++) {
       for(int ijack=0;ijack<NJ;ijack++) {
 
+
 	auto FV = [&FV_interpol, &ijack](double x)  { return FV_interpol[ijack](x) ;};
 	auto FA = [&FA_interpol, &ijack](double x)  { return FA_interpol[ijack](x) ;};
-	auto FV_T = [&FTA_interpol, &evolutor_ZT, &a1, &f_Bs, &mb_distr, &ijack](double x) { return (evolutor_ZT*FTA_interpol[ijack](x)  + (16.0/(3.0*WC(7,0).first))*(a1*f_Bs/mb_distr).distr[ijack] );};
-	auto FA_T = [&FTV_interpol, &evolutor_ZT, &ijack](double x) { return evolutor_ZT*FTV_interpol[ijack](x);};
+	auto FV_T = [&FTV_interpol, &pretty_b_interpol, &evolutor_ZT, &ijack](double x) { return evolutor_ZT*(FTV_interpol[ijack](x) + pretty_b_interpol[ijack](x));};
+	auto FA_T = [&FTA_interpol, &pretty_b_interpol, &evolutor_ZT, &ijack](double x) { return evolutor_ZT*(FTA_interpol[ijack](x) + pretty_b_interpol[ijack](x));};
 	auto F_T_IM = [](double x) { return 0.0;};
 	
-	rate_Bs.distr_list[it].distr.push_back(  Compute_Bs_mumugamma_decay_rate( ijack, NJ, FV, FA, FV_T, FA_T, F_T_IM, F_T_IM , xg_max_list[it], xg_min_list[it]  ));
-	rate_Bs_diff.distr_list[it].distr.push_back( Compute_Bs_mumugamma_differential_decay_rate(ijack, NJ, xg_max_list[it], FV, FA, FV_T, FA_T, F_T_IM, F_T_IM ));
-	AFB_Bs.distr_list[it].distr.push_back( Compute_AFB(ijack, NJ, xg_max_list[it], FV, FA, FV_T, FA_T, F_T_IM, F_T_IM ));
+    
+
+	for(int iboot=0;iboot<Nb;iboot++) {
+
+	  int K= iboot;
+
+	  double a1_val= a1_distr.distr[K];
+	  double mb_val= mb_distr.distr[K];
+	  double xb_val= xb_distr.distr[K];
+	  double Vtbs_val= Vtbs_distr.distr[K];
+	  double tbs_val = tbs_distr.distr[K];
+	  Vfloat kappa_list = kappa_distr[K];
+	  Vfloat Cos_list = Cos_distr[K];
+	  Vfloat W_list = W_distr[K];
+	  Vfloat Br_list = Br_distr[K];
+
+
+
+
+	  
+	  auto FV_T_eff = [&FV_T, &a1_val, &f_Bs, &mb_val, &ijack](double x) { return FV_T(x) +  (16.0/(3.0*WC(7,0).first))*(a1_val*f_Bs.distr[ijack]/mb_val);};
+	  auto FV_T_eff_std = [&FV_T, &a1_distr_std, &f_Bs, &mb_distr_std, &ijack](double x) { return FV_T(x) +  (16.0/(3.0*WC(7,0).first))*(a1_distr_std.distr[ijack]*f_Bs.distr[ijack]/mb_distr_std.distr[ijack]);};
+	 
+
+	
+
+	 
+
+	 
+	  
+	  rate_Bs_SD_boot[it].distr_list[iboot].distr.push_back(  Compute_Bs_mumugamma_decay_rate( FV, FA, FV_T_eff, FA_T, F_T_IM, F_T_IM , f_Bs.distr[ijack] , xb_val, Vtbs_val, tbs_val, kappa_list, Cos_list, W_list, Br_list, "SD",  "CH",   xg_max_list[it], xg_min_list[it] ));
+	 
+
+	  
+	  rate_Bs_INT_boot[it].distr_list[iboot].distr.push_back(  Compute_Bs_mumugamma_decay_rate(FV, FA, FV_T_eff, FA_T, F_T_IM, F_T_IM , f_Bs.distr[ijack] ,  xb_val, Vtbs_val, tbs_val, kappa_list, Cos_list, W_list, Br_list, "INT","CH", xg_max_list[it], xg_min_list[it] ));
+
+
+	  
+	  rate_Bs_diff_PT_boot[it].distr_list[iboot].distr.push_back( Compute_Bs_mumugamma_differential_decay_rate(xg_max_list[it], FV, FA, FV_T_eff, FA_T, F_T_IM, F_T_IM, f_Bs.distr[ijack] ,  xb_val, Vtbs_val, tbs_val, kappa_list, Cos_list, W_list, Br_list, "PT", "NO_CH"));
+
+
+	  
+	  rate_Bs_diff_INT_boot[it].distr_list[iboot].distr.push_back( Compute_Bs_mumugamma_differential_decay_rate(xg_max_list[it], FV, FA, FV_T_eff, FA_T, F_T_IM, F_T_IM, f_Bs.distr[ijack] , xb_val, Vtbs_val, tbs_val, kappa_list, Cos_list, W_list, Br_list , "INT", "CH"));
+
+
+	  
+	  rate_Bs_diff_SD_boot[it].distr_list[iboot].distr.push_back( Compute_Bs_mumugamma_differential_decay_rate(xg_max_list[it], FV, FA, FV_T_eff, FA_T, F_T_IM, F_T_IM, f_Bs.distr[ijack] ,  xb_val, Vtbs_val, tbs_val, kappa_list, Cos_list, W_list, Br_list  ,  "SD" , "CH"));
+
+
+	  
+	  AFB_Bs_boot[it].distr_list[iboot].distr.push_back( Compute_AFB( xg_max_list[it], FV, FA, FV_T_eff, FA_T, F_T_IM, F_T_IM, f_Bs.distr[ijack] ,  xb_val, Vtbs_val, tbs_val, kappa_list, Cos_list, W_list, Br_list  ,  "SD", "CH" ));
+
+
+	  
+
+
+
+	  if(iboot==0) {
+	  
+
+	  
+	  rate_Bs_SD_NOCH.distr_list[it].distr.push_back(  Compute_Bs_mumugamma_decay_rate( FV, FA, FV_T_eff_std, FA_T, F_T_IM, F_T_IM , f_Bs.distr[ijack] , xb_distr_std.distr[ijack], Vtbs_distr_std.distr[ijack], tbs_distr_std.distr[ijack], kappa_list, Cos_list, W_list, Br_list , "SD", "NO_CH",  xg_max_list[it], xg_min_list[it] ));
+	  
+	  rate_Bs_INT_NOCH.distr_list[it].distr.push_back(  Compute_Bs_mumugamma_decay_rate(FV, FA, FV_T_eff_std, FA_T, F_T_IM, F_T_IM , f_Bs.distr[ijack] , xb_distr_std.distr[ijack], Vtbs_distr_std.distr[ijack], tbs_distr_std.distr[ijack], kappa_list, Cos_list, W_list, Br_list , "INT", "NO_CH", xg_max_list[it], xg_min_list[it] ));
+	  
+	  rate_Bs_diff_INT_NOCH.distr_list[it].distr.push_back( Compute_Bs_mumugamma_differential_decay_rate(xg_max_list[it], FV, FA, FV_T_eff_std, FA_T, F_T_IM, F_T_IM, f_Bs.distr[ijack] , xb_distr_std.distr[ijack], Vtbs_distr_std.distr[ijack], tbs_distr_std.distr[ijack], kappa_list, Cos_list, W_list, Br_list , "INT", "NO_CH"));
+	  
+	  rate_Bs_diff_SD_NOCH.distr_list[it].distr.push_back( Compute_Bs_mumugamma_differential_decay_rate( xg_max_list[it], FV, FA, FV_T_eff_std, FA_T, F_T_IM, F_T_IM, f_Bs.distr[ijack] , xb_distr_std.distr[ijack], Vtbs_distr_std.distr[ijack], tbs_distr_std.distr[ijack], kappa_list, Cos_list, W_list, Br_list , "SD" , "NO_CH"));
+
+	
+
+	  }
+	  
+	   
+
+	}
+
+	
+	
       }
+
+      cout<<"Computed rate for xg: "<<xg_max_list[it]<<endl;
+
+      //combine jacknife and boostrap
+
+      rate_Bs_SD.distr_list[it] = BMA_Eq_29( rate_Bs_SD_boot[it].distr_list);
+      rate_Bs_INT.distr_list[it] = BMA_Eq_29( rate_Bs_INT_boot[it].distr_list);
+      rate_Bs_diff_PT.distr_list[it] = BMA_Eq_29( rate_Bs_diff_PT_boot[it].distr_list);
+      rate_Bs_diff_INT.distr_list[it] = BMA_Eq_29( rate_Bs_diff_INT_boot[it].distr_list);
+      rate_Bs_diff_SD.distr_list[it] = BMA_Eq_29( rate_Bs_diff_SD_boot[it].distr_list);
+      AFB_Bs.distr_list[it] = BMA_Eq_29( AFB_Bs_boot[it].distr_list);
+      
     }
   
 
-  //Bs
-  Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_Bs.ave(), rate_Bs.err(), rate_Bs_diff.ave(), rate_Bs_diff.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_Bs.dat", "", "#qmin[GeV] xg_min xg_max  rate   rate_diff    ");
-  Print_To_File( {}, { qmin_list, xg_max_list, AFB_Bs.ave(), AFB_Bs.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/AFB_Bs.dat", "", "#q[GeV] xg   AFG    ");
-     
-  cout<<"Done! Bye"<<endl;
     
-  return;
+    
+    //Bs
+    Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_Bs_SD.ave(), rate_Bs_SD.err(), rate_Bs_SD_NOCH.ave(), rate_Bs_SD_NOCH.err() }, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_Bs_SD.dat", "", "#qmin[GeV] xg_min xg_max  rate ");
+    Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_Bs_INT.ave(), rate_Bs_INT.err(), rate_Bs_INT_NOCH.ave(), rate_Bs_INT_NOCH.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_Bs_INT.dat", "", "#qmin[GeV] xg_min xg_max  rate");
+    Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, (rate_Bs_INT+rate_Bs_SD).ave(), (rate_Bs_INT+rate_Bs_SD).err(), (rate_Bs_INT_NOCH+rate_Bs_SD_NOCH).ave(), (rate_Bs_INT_NOCH+rate_Bs_SD_NOCH).err() }, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_Bs_SDINT.dat", "", "#qmin[GeV] xg_min xg_max  rate");
+    
+    
+    
+    Print_To_File( {}, { qmin_list, xg_max_list, rate_Bs_diff_PT.ave(), rate_Bs_diff_PT.err() }, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_diff_Bs_PT.dat", "", "#qmin[GeV] xg_max  rate ");
+    Print_To_File( {}, { qmin_list, xg_max_list, rate_Bs_diff_INT.ave(), rate_Bs_diff_INT.err(), rate_Bs_diff_INT_NOCH.ave(), rate_Bs_diff_INT_NOCH.err() }, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_diff_Bs_INT.dat", "", "#qmin[GeV] xg_max  rate");
+    Print_To_File( {}, { qmin_list, xg_max_list, rate_Bs_diff_SD.ave(), rate_Bs_diff_SD.err(), rate_Bs_diff_SD_NOCH.ave(), rate_Bs_diff_SD_NOCH.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_diff_Bs_SD.dat", "", "#qmin[GeV] xg_max  rate");
+    Print_To_File( {}, { qmin_list, xg_max_list, AFB_Bs.ave(), AFB_Bs.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/AFB_Bs.dat", "", "#q[GeV] xg   AFG    ");
+     
+    cout<<"Done! Bye"<<endl;
+    
+    return;
 }
 
 

@@ -22,8 +22,8 @@ using namespace std;
 
 //######### LIST OF INPUT PARAMETERS TO COMPUTE DECAY RATE      ################
 const double MBs= 5.36692; //GeV
-const double tBs = 1.526e-12; // seconds
-const double tBs_err= 0.015e-12; //second                              //  
+const double tBs = 1.521e-12; // seconds
+const double tBs_err= 0.005e-12; //second                              //  
 const double hbar =6.582119569e-25; //GeV * seconds
 const double Gamma_Bs = hbar / tBs; // total width of the Bs in GeV                                    //
 const double FBs = 0.2303;          //
@@ -141,7 +141,7 @@ public:
 
 
 
-pair<double, double> WC(int id, double q2, Vfloat G1=Vfloat({0,0,0,0,0}), Vfloat G2 = Vfloat({0,0,0,0,0}));
+pair<double, double> WC(int id, double q2, const Vfloat &G1=Vfloat({0,0,0,0,0,0,0,0}), const Vfloat &G2 = Vfloat({0,0,0,0,0,0,0,0}), const Vfloat &BS_F= Vfloat({0,0,0,0,0,0,0,0}), const Vfloat &Gammas_F=Vfloat({0,0,0,0,0,0,0,0}));
 void Get_Bs_xg_t_list(int num_xg);
 void Get_Bs_xg_to_spline();
 void Get_Bs_xg_to_spline_VMD();
@@ -156,14 +156,14 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6>
-double Compute_AFB(int ijack, int NJ, double xg, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T) {
+double Compute_AFB( double xg, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T,  double FBS, double xb_val, double Vtbs_val, double tBs_val, Vfloat kappa_list, const Vfloat &Cos_list, const Vfloat &W_list, const  Vfloat &Br_list, string MODE, string CH) {
 
-  double diff_br= Compute_Bs_mumugamma_differential_decay_rate(ijack, NJ, xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T , FA_IM_T); 
+  double diff_br= Compute_Bs_mumugamma_differential_decay_rate(xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T , FA_IM_T, FBS, xb_val, Vtbs_val, tBs_val, kappa_list, Cos_list, W_list, Br_list,  MODE, CH); 
 
   double val_FW, err_FW, val_BW, err_BW;
-  double prec=1e-7;
+  double prec=5e-5;
 
-  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate(ijack, NJ, xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T);};
+  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate( xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T, FBS, xb_val, Vtbs_val, tBs_val, kappa_list, Cos_list, W_list, Br_list,  MODE, CH);};
 
   gsl_function_pp<decltype(FUNC_DOUBLE_DIFF_RATE)> integrand(FUNC_DOUBLE_DIFF_RATE);
 		      gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
@@ -171,8 +171,8 @@ double Compute_AFB(int ijack, int NJ, double xg, T1&& FV, T2&& FA, T3&& FV_RE_T,
 		      gsl_integration_qags(G, 0, 1.0,  0.0, prec, 1000, w, &val_FW, &err_FW);
 		      gsl_integration_qags(G, -1.0, 0,  0.0, prec, 1000, w, &val_BW, &err_BW);
 		      gsl_integration_workspace_free(w);
-		      if(fabs(err_FW/val_FW) > 5*prec) crash("In Compute_AFB, FW,  cannot reach target precision: "+to_string_with_precision(prec,5));
-		      if(fabs(err_BW/val_BW) > 5*prec) crash("In Compute_AFB, BW,  cannot reach target precision: "+to_string_with_precision(prec,5));
+		      if(fabs(err_FW/val_FW) > 2*prec) crash("In Compute_AFB, FW,  cannot reach target precision: "+to_string_with_precision(prec,5));
+		      if(fabs(err_BW/val_BW) > 2*prec) crash("In Compute_AFB, BW,  cannot reach target precision: "+to_string_with_precision(prec,5));
 		      return (val_FW-val_BW)/diff_br;
 
   
@@ -183,19 +183,19 @@ double Compute_AFB(int ijack, int NJ, double xg, T1&& FV, T2&& FA, T3&& FV_RE_T,
 
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5 , typename T6> 
-double Compute_Bs_mumugamma_decay_rate(int ijack, int NJ, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T, double xmax=xg_max,  double xmin=xg_min   ) {
+double Compute_Bs_mumugamma_decay_rate( T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T,  double FBS, double xb_val, double Vtbs_val, double tBs_val, const  Vfloat &kappa_list, const  Vfloat &Cos_list, const Vfloat &W_list, const Vfloat &Br_list,  string MODE, string CH,  double xmax=xg_max,  double xmin=xg_min) {
 
-  auto FUNC_DIFF_RATE = [&](double xg) { return Compute_Bs_mumugamma_differential_decay_rate(ijack, NJ, xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T);};
+  auto FUNC_DIFF_RATE = [&](double xg) { return Compute_Bs_mumugamma_differential_decay_rate( xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T, FBS,  xb_val, Vtbs_val, tBs_val, kappa_list, Cos_list, W_list, Br_list,  MODE, CH);};
 
   
   double val, err;
-  double prec=1e-7;
+  double prec=5e-5;
   gsl_function_pp<decltype(FUNC_DIFF_RATE)> integrand(FUNC_DIFF_RATE);
 		      gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G = static_cast<gsl_function*>(&integrand);
 		      gsl_integration_qags(G, xmin, xmax,  0.0, prec, 1000, w, &val, &err);
 		      gsl_integration_workspace_free(w);
-		      if(fabs(err/val) > 5*prec) crash("In Compute_differential_decay_rate, cannot reach target precision: "+to_string_with_precision(prec,5));
+		      if(fabs(err/val) > 2*prec) crash("In Compute_differential_decay_rate, cannot reach target precision: "+to_string_with_precision(prec,5));
 
 		      return val;
 
@@ -205,23 +205,23 @@ double Compute_Bs_mumugamma_decay_rate(int ijack, int NJ, T1&& FV, T2&& FA, T3&&
 
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5 , typename T6 > 
-double Compute_Bs_mumugamma_differential_decay_rate(int ijack, int NJ,  double xg,  T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T) {
+double Compute_Bs_mumugamma_differential_decay_rate( double xg,  T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T,  double FBS, double xb_val, double Vtbs_val, double tBs_val, const Vfloat &kappa_list, const Vfloat &Cos_list, const Vfloat &W_list, const Vfloat &Br_list, string MODE, string CH) {
 
   //integrate at fixed xg
 
   //integration variable is costheta
 
-  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate(ijack, NJ, xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T);};
+  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate(xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T, FBS,  xb_val, Vtbs_val, tBs_val, kappa_list, Cos_list, W_list, Br_list,  MODE, CH);};
 
   
   double val, err;
-  double prec=1e-7;
+  double prec=1e-4;
   gsl_function_pp<decltype(FUNC_DOUBLE_DIFF_RATE)> integrand(FUNC_DOUBLE_DIFF_RATE);
 		      gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
 		      gsl_function *G = static_cast<gsl_function*>(&integrand);
 		      gsl_integration_qags(G, -1.0, 1.0,  0.0, prec, 1000, w, &val, &err);
 		      gsl_integration_workspace_free(w);
-		      if(fabs(err/val) > 5*prec) crash("In Compute_differential_decay_rate, cannot reach target precision: "+to_string_with_precision(prec,5));
+		      if(fabs(err/val) > 2*prec) crash("In Compute_differential_decay_rate, cannot reach target precision: "+to_string_with_precision(prec,5));
 
 		      return val;
 		      
@@ -230,32 +230,18 @@ double Compute_Bs_mumugamma_differential_decay_rate(int ijack, int NJ,  double x
 
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5 , typename T6  > 
-double Compute_Bs_mumugamma_double_differential_decay_rate( int ijack, int NJ, double xg, double costh, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T) {
+double Compute_Bs_mumugamma_double_differential_decay_rate(  double xg, double costh, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T, double FBS, double xb_val, double Vtbs_val, double tBs_val, const Vfloat &kappa_list, const Vfloat &Cos_list, const Vfloat &W_list, const Vfloat &Br_list,   string MODE, string CH) {
 
 
-  //xb
-  //Vts
-  //FB
-  //Gamma
+ 
 
-  double dx_b, dVtbs, dFBs, dtBs;
-  Vfloat Th(5), kappa(5);
-  GaussianMersenne GPAR(854135);
-  for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dx_b = rn*x_b_err/sqrt(NJ-1.0);}}
-  for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dVtbs = rn*Vtbs_err/sqrt(NJ-1.0);}}
-  for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dFBs = rn*FBs_err/sqrt(NJ-1.0);}}
-  for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {dtBs = rn*tBs_err/sqrt(NJ-1.0);}}
-  for(int j=0; j < 5; j++) {
-    for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {Th[j] = rn*2*M_PI/sqrt(NJ-1.0);}}
-    for(int i=0;i<NJ;i++) { double rn=GPAR(); if(i==ijack) {kappa[j] = 1+ rn/sqrt(NJ-1.0);}}
-  }
-
-  double ix_b = x_b + dx_b;
-  double iVtbs = Vtbs + dVtbs;
-  
-  double iFBs = FBs + dFBs;
-  double itBs = tBs+ dtBs;
-
+  double ix_b = xb_val;
+  double iVtbs = Vtbs_val;
+  double iFBs = FBS;
+  double itBs = tBs_val;
+  Vfloat kappa=kappa_list;
+  if(CH=="NO_CH") { kappa.clear() ; kappa.resize(8,-1) ;};
+    
   //define Mandelstam variables in terms of xg and th
   // s = 1-s 
   double s=1-xg;
@@ -264,8 +250,8 @@ double Compute_Bs_mumugamma_double_differential_decay_rate( int ijack, int NJ, d
   double t= 0.5*(1+2*pow(x_mu,2) - s - csi);
   double u = t+csi;
   //get Wilson coefficients
-  double C9_R = WC(9,q2, kappa, Th).first;
-  double C9_I = WC(9,q2, kappa, Th).second;
+  double C9_R = WC(9,q2, kappa, Cos_list, Br_list,  W_list).first;
+  double C9_I = WC(9,q2, kappa, Cos_list, Br_list, W_list).second;
   double C9_MOD = sqrt(pow(C9_R,2) + pow(C9_I,2));
   double C7 = WC(7,q2).first;
   double C10 = WC(10,q2).first;
@@ -297,7 +283,10 @@ double Compute_Bs_mumugamma_double_differential_decay_rate( int ijack, int NJ, d
   //return (1.0/Ag)*(G1()+0.0*G2()+0.0*G12())*itBs/hbar;
 
   double Ag= 0.5*xg*sqrt( 1 - 4*pow(x_mu,2)/(1-xg));
-  return Ag*(G1()+0.0*G2()+0.0*G12())*itBs/hbar;
+  if(MODE=="SD") return Ag*G1()*itBs/hbar;
+  else if(MODE=="INT") return Ag*G12()*itBs/hbar;
+  else if(MODE=="PT") return Ag*G2()*itBs/hbar;
+  else  return Ag*(G1()+G2()+G12())*itBs/hbar;
   
 
 };

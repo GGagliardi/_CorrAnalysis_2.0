@@ -9,6 +9,7 @@
 #include "scale_setting.h"
 #include "gm2.h"
 #include "stat.h"
+#include "binary_io.h"
 
 
 

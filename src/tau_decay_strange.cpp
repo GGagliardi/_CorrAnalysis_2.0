@@ -23,7 +23,7 @@ const double m_etas = 0.68989;
 const double m_etas_err= 0.00050;
 const double E0_l = 0.9*m_kappa;
 const double E0_sp = E0_l; //0.9 * (m_kappa + MPiPhys);
-const double E0_A_sp = E0_l; // 0.9*(m_kappa+2*MPiPhys);
+double E0_A_sp = E0_l; // 0.9*(m_kappa+2*MPiPhys);
 const double Rs_HFLAV = 0.163260;
 const double D_Rs_HFLAV= 0.0027;
 Vfloat sigma_list_strange;
@@ -58,7 +58,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
     if(channel=="Aii") {
       if(Ens == "cB211b.072.64") {  Ra0 =1e7;  }
       else if(Ens == "cB211b.072.96") { Ra0= 2e7;   }
-      else if(Ens == "cC211a.06.80") { Ra0= 2e7;   } 
+      else if(Ens == "cC211a.06.80") { Ra0= 1e8;   } 
       else if(Ens == "cC211a.06.112") { Ra0= 2e7;   }
       else if(Ens == "cD211a.054.96") {  Ra0=8e6;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
@@ -80,11 +80,11 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="V0") {
-      if(Ens == "cB211b.072.64") { Ra0=5e7;   }
+      if(Ens == "cB211b.072.64") { Ra0=1e7;   }
       else if(Ens == "cB211b.072.96") { Ra0=5e7;   }
-      else if(Ens == "cC211a.06.80") {  Ra0=1e7;  }
-      else if(Ens == "cC211a.06.112") { Ra0= 7e6;   }
-      else if(Ens == "cD211a.054.96") { Ra0=1e7;   }
+      else if(Ens == "cC211a.06.80") {  Ra0=5e7;  }
+      else if(Ens == "cC211a.06.112") { Ra0= 1e8;   }
+      else if(Ens == "cD211a.054.96") { Ra0=7e7;   }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -95,23 +95,23 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
     if(channel=="Aii") {
       if(Ens == "cB211b.072.64") { Ra0=7e6;   }
       else if(Ens == "cB211b.072.96") { Ra0=1e5;   }
-      else if(Ens == "cC211a.06.80") { Ra0=3e6;   } 
-      else if(Ens == "cC211a.06.112") { Ra0= 1e6;   }
+      else if(Ens == "cC211a.06.80") { Ra0=2e8;   }  //increase E_th
+      else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
       else if(Ens == "cD211a.054.96") {  Ra0=1e8;  } 
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="Vii") {
       if(Ens == "cB211b.072.64") {   Ra0= 6e5;   }
       else if(Ens == "cB211b.072.96") {  Ra0= 6e5;    }
-      else if(Ens == "cC211a.06.80") {   Ra0= 1e8;   }
+      else if(Ens == "cC211a.06.80") {   Ra0= 5e7;   }
       else if(Ens == "cC211a.06.112") { Ra0= 5e7;   }
-      else if(Ens == "cD211a.054.96") {  Ra0=4e7;  }
+      else if(Ens == "cD211a.054.96") {  Ra0=2e7;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="A0") {
       if(Ens == "cB211b.072.64") { Ra0=2e5;   }
       else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
-      else if(Ens == "cC211a.06.80") { Ra0=1e7;   }
+      else if(Ens == "cC211a.06.80") { Ra0=5e6;   }
       else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
       else if(Ens == "cD211a.054.96") { Ra0=1e7;   }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
@@ -119,9 +119,9 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
     else if(channel=="V0") {
       if(Ens == "cB211b.072.64") { Ra0=5e7;   }
       else if(Ens == "cB211b.072.96") { Ra0=5e7;   }
-      else if(Ens == "cC211a.06.80") { Ra0=5e8;   }
+      else if(Ens == "cC211a.06.80") { Ra0=1e9;   }
       else if(Ens == "cC211a.06.112") { Ra0= 7e8;   }
-      else if(Ens == "cD211a.054.96") { Ra0=8e8;  } 
+      else if(Ens == "cD211a.054.96") { Ra0=5e9;  } 
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -1129,7 +1129,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     //################   LIGHTER   ##############################
 
     bool Found_error_less_x_percent=false;
-    double x=15;
+    double x=30;
     //tm
     int tmax_tm_A0=1;
     while(!Found_error_less_x_percent && tmax_tm_A0 < Corr.Nt/2 -1 ) {
@@ -1556,7 +1556,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       }
       else cout<<"."<<flush;
 
-     
+      double E0_A_sp_old= E0_l;
+      E0_A_sp = (ls_data_tm_VKVK.Tag[iens] == "cC211a.06.80")?0.9*(m_kappa +  MPiPhys  ):E0_A_sp_old; 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "Aii", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
       Br_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS, syst_Aii_OS, mult, lAii_OS, MODE, "OS", "Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, 0.0, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
@@ -1564,6 +1565,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       distr_t preco_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS - Aii_OS_gs.ave(), syst_Aii_OS, mult, lAii_OS, MODE, "OS", "preco_Aii_strange_"+ls_data_OS_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, A_K1_OS.ave()*K1_dub(m_K1_OS.ave(), s), "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Aii_OS = fabs( Br_s_sigma_Aii_OS.ave() - Br_sigma_Aii_OS.ave());
       Br_sigma_Aii_OS= Br_sigma_Aii_OS.ave() + (Br_sigma_Aii_OS-Br_sigma_Aii_OS.ave())*sqrt( pow(Br_sigma_Aii_OS.err(),2) + pow(syst_s_Aii_OS,2))/Br_sigma_Aii_OS.err();
+
+      E0_A_sp= E0_A_sp_old;
      
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1713,6 +1716,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       }
       else cout<<"."<<flush;
 
+      E0_A_sp_old= E0_l;
+      E0_A_sp = (ls_data_tm_VKVK.Tag[iens] == "cC211a.06.80")?0.9*(m_kappa +  MPiPhys  ):E0_A_sp_old; 
      
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "Aii", "OS" , s, ls_H_data_tm_VKVK.Tag[iens] );
@@ -1728,7 +1733,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	cout<<"Elapsed time[Aii_H_OS, sigma: "<<s<<", Ens: "<<ls_H_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Aii_H_OS<<" s"<<endl<<flush;
       }
       else cout<<"."<<flush;
-      
+      E0_A_sp = E0_A_sp_old;
 
      
       start = chrono::system_clock::now();

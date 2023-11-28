@@ -740,6 +740,7 @@ double MS_bar_to_pole_mass_bis( double mu, double Nf, double Lambda, double m , 
   //cout<<"mm: "<<mm<<" mcmc: "<<mcmc<<" A: "<<A<<endl;
   return mm*( 1 + A*(4.0/3) + pow( A, 2)*( 13.4434 - 1.0414*(Nf-1) -1.0414*(1- 4.0*(mcmc/mm)/3.0 )) + pow(A,3)*( 0.6527*pow(Nf,2) -26.655*Nf + 190.595));  
 
+  
 }
 
 

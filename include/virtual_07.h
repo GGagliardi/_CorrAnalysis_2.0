@@ -19,23 +19,17 @@
 class rt_07_Bs {
 
 public:
-  rt_07_Bs() : UseJack(1),  F_T_u(1), F_T_d(1),  Nmeas(0), Npars(0), Ndof(0), Use_three_finest(0), Include_a4(0), num_xg(0) { };
-  rt_07_Bs(bool x) : UseJack(x),  F_T_u(x), F_T_d(x),  Nmeas(0), Npars(0), Ndof(0), Use_three_finest(0), Include_a4(0), num_xg(0) {    };
-  distr_t_list Get_FF(int i) { vector<distr_t_list> A({ F_T_u, F_T_d}); return A[i];}
-  Vfloat   Get_ch2(int i) { VVfloat A({  Ch2_F_T_u, Ch2_F_T_d}); return A[i];}
+  rt_07_Bs() : UseJack(1),  F_T_u(1), F_T_d_RE(1), F_T_d_IM(1),  num_xg(0), y_eff(0) { MESON="" ; };
+  rt_07_Bs(bool x) : UseJack(x),  F_T_u(x), F_T_d_RE(x), F_T_d_IM(x),  num_xg(0), y_eff(0) { MESON="";   };
+  distr_t_list Get_FF(int i) { vector<distr_t_list> A({ F_T_u, F_T_d_RE, F_T_d_IM}); return A[i];}
+  
   
 
   bool UseJack;
-  distr_t mass;
-  distr_t fp;
-  distr_t_list F_T_u, F_T_d;
-  Vfloat  Ch2_F_T_u, Ch2_F_T_d;
-  int Nmeas;
-  int Npars;
-  int Ndof;
-  bool Use_three_finest;
-  bool Include_a4;
+  distr_t_list F_T_u, F_T_d_RE, F_T_d_IM;
   int num_xg;
+  Vfloat y_eff;
+  string MESON;
 };
 
 

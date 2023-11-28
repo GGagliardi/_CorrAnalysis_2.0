@@ -11,7 +11,6 @@ const double fm_to_inv_Gev = 1.0 / 0.197327;
 const int Nconfs=30;
 using namespace std;
 
-
 void Perform_RC_analysis() {
 
   
@@ -415,7 +414,7 @@ void Perform_RC_analysis() {
 
 
 	  //propagate systematic error
-	  distr_t RES= AIC( {R, R_const}, { ch2_red_msea*Ndof, ch2_red_msea_const*Ndof_const}, {Ndof, Ndof_const}, {Nmeas, Nmeas} );
+	  distr_t RES= AIC( {R, R_const}, { ch2_red_msea*Ndof, ch2_red_msea_const*Ndof_const}, {Ndof, Ndof_const}, {Nmeas, Nmeas}, 0 );
 	  
 	  Z_extr[irc].distr_list.push_back(RES);
 	  
