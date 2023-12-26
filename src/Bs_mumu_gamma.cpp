@@ -38,7 +38,9 @@ const double k_erf = 1e10;
 const bool plot_fit_func_fBs = false;
 const double MU_GLB = 5.367; // GeV
 const bool fit_FB_FT = false;
-const bool Perform_global_fit=false;
+const bool Perform_global_fit = false;
+const bool Get_KMN_JPZ_FF = false;
+const bool Compute_rate=false;
 
 
 void rt_FF_Bs::Print(string path) {
@@ -197,8 +199,6 @@ void Get_Bs_lattice_spacings_to_print() {
   int Nlat=300;
   double sx= 0.08*1.5/(Nlat-1.0); //fm
   for(int a=0;a<Nlat;a++) Bs_a_to_print.push_back( sx*a);
-
-
 }
 
 void Get_Bs_xg_to_spline() {
@@ -1653,8 +1653,7 @@ void Compute_Bs_mumu_gamma() {
   }
 
   
-
-
+ 
   //Fit F_Bs
 
   
@@ -2201,8 +2200,12 @@ void Compute_Bs_mumu_gamma() {
   //###################################################################################################################################
   //###################################################################################################################################
 
+  int nxg_to_print_pretty=199;
+  distr_t_list pretty_b_MB(1, nxg_to_print_pretty, NJ);
+  distr_t_list pretty_b_MB_red(1, nxg_to_print_pretty, NJ);
+  distr_t_list pretty_s_MB(1, nxg_to_print_pretty, NJ);
 
-
+  if(!Skip_virtual_diagram) {
 
   //mass extrapolation
 
@@ -2226,11 +2229,18 @@ void Compute_Bs_mumu_gamma() {
   };
 
 
-  vector<distr_t_list> bar_FT_b(1);
+  vector<distr_t_list> bar_FT_b;
 
+ 
   for(int i=0; i<(signed)TFF_virtual_ret_list.size();i++) bar_FT_b.push_back( TFF_virtual_ret_list[i].Get_FF(0));
 
   int Njacks_pretty= bar_FT_b[0][0].distr.size();
+
+  cout<<"Njacks pretty: "<<Njacks_pretty<<endl;
+
+  if(Njacks_pretty != NJ) crash("Njacks pretty and NJ are not equal");
+
+   
   //init bootstrap fit
   bootstrap_fit<fpar_pretty_b,ipar_pretty_b> bf_pretty_b(Njacks_pretty);
   bf_pretty_b.set_warmup_lev(1); //sets warmup
@@ -2238,18 +2248,18 @@ void Compute_Bs_mumu_gamma() {
   bf_pretty_b.Set_verbosity(1);
   
   
-  bf_pretty_b.Add_par("A", 0.01, 0.003);
+  bf_pretty_b.Add_par("A", 0.2, 0.01);
   bf_pretty_b.Add_par("B", 0.1 , 0.01);
-  bf_pretty_b.Add_par("C", 0.8 , 0.01);
+  bf_pretty_b.Add_par("C", -0.7 , 0.1);
  
   //fit on mean values to get ch2
   bootstrap_fit<fpar_pretty_b,ipar_pretty_b> bf_pretty_b_ch2(1);
   bf_pretty_b_ch2.set_warmup_lev(1); //sets warmup
   bf_pretty_b_ch2.Set_number_of_measurements(12);
   bf_pretty_b_ch2.Set_verbosity(1);
-  bf_pretty_b_ch2.Add_par("A", 0.01, 0.003);
+  bf_pretty_b_ch2.Add_par("A", 0.2, 0.01);
   bf_pretty_b_ch2.Add_par("B", 0.1, 0.01); 
-  bf_pretty_b_ch2.Add_par("C", 0.8, 0.01);
+  bf_pretty_b_ch2.Add_par("C", -0.7, 0.1);
 
 
 
@@ -2272,7 +2282,9 @@ void Compute_Bs_mumu_gamma() {
   bf_pretty_b_ch2.measurement = bf_pretty_b.measurement;
   bf_pretty_b_ch2.error = bf_pretty_b.error;
 
+  
 
+    
 
   //insert covariance matrix
   Eigen::MatrixXd Cov_Matrix_pretty_b(12,12);
@@ -2280,12 +2292,11 @@ void Compute_Bs_mumu_gamma() {
   for(int i=0;i<12;i++)
     for(int j=0;j<12;j++) {
       Cov_Matrix_pretty_b(i,j) = bar_FT_b[(i+3)%3].distr_list[i/3]%bar_FT_b[(j+3)%3].distr_list[j/3];
-      
     }
 
   for(int i=0;i<12;i++) {
     for(int j=0;j<12;j++) {
-      Corr_Matrix_pretty_b(i,j) = Cov_Matrix_pretty_b(i,j)/(sqrt(Corr_Matrix_pretty_b(i,i)*Corr_Matrix_pretty_b(j,j)));
+      Corr_Matrix_pretty_b(i,j) = Cov_Matrix_pretty_b(i,j)/(sqrt(Cov_Matrix_pretty_b(i,i)*Cov_Matrix_pretty_b(j,j)));
     }
   }
 
@@ -2294,8 +2305,10 @@ void Compute_Bs_mumu_gamma() {
   cout<<Corr_Matrix_pretty_b<<endl;
   
   //add cov matrix to bootstrap fit
-  bf_pretty_b.Add_covariance_matrix(Cov_Matrix_pretty_b);
-  bf_pretty_b_ch2.Add_covariance_matrix(Cov_Matrix_pretty_b);
+  //bf_pretty_b.Add_covariance_matrix(Cov_Matrix_pretty_b);
+  //bf_pretty_b_ch2.Add_covariance_matrix(Cov_Matrix_pretty_b);
+
+  
 
 
 
@@ -2306,88 +2319,103 @@ void Compute_Bs_mumu_gamma() {
   //allocate space for output result
   boot_fit_data<fpar_pretty_b> Bt_fit_pretty_b;
   boot_fit_data<fpar_pretty_b> Bt_fit_pretty_b_ch2;
-  for(auto &data_iboot: data_pretty_b) data_iboot.resize(Nmasses);
-  for(auto &data_iboot: data_pretty_b_ch2) data_iboot.resize(Nmasses);
+  boot_fit_data<fpar_pretty_b> Bt_fit_pretty_b_red;
+  boot_fit_data<fpar_pretty_b> Bt_fit_pretty_b_red_ch2;
+  for(auto &data_iboot: data_pretty_b) data_iboot.resize(12);
+  for(auto &data_iboot: data_pretty_b_ch2) data_iboot.resize(12);
   for(int ijack=0;ijack<Njacks_pretty;ijack++) {
     for(int im=0;im<12;im++) {
       data_pretty_b[ijack][im].FF = bar_FT_b[(im+3)%3][im/3].distr[ijack];
       data_pretty_b[ijack][im].FF_err= bar_FT_b[(im+3)%3].err(im/3);
-      data_pretty_b[ijack][im].M= masses.distr_list[(((im+3)%3) > 1)?3:(im/3)].distr[ijack];
+      data_pretty_b[ijack][im].M= masses.distr_list[(((im+3)%3) > 1)?3:((im+3)%3)].distr[ijack];
       data_pretty_b[ijack][im].xg= Bs_xg_t_list[im/3];
       if(ijack==0) {
 	data_pretty_b_ch2[ijack][im].FF =  bar_FT_b[(im+3)%3][im/3].ave();
 	data_pretty_b_ch2[ijack][im].FF_err=  bar_FT_b[(im+3)%3][im/3].err();
-	data_pretty_b_ch2[ijack][im].M = masses.ave((((im+3)%3) > 1)?3:(im/3));
+	data_pretty_b_ch2[ijack][im].M = masses.ave((((im+3)%3) > 1)?3:((im+3)%3));
 	data_pretty_b_ch2[ijack][im].xg= Bs_xg_t_list[im/3];
       }
     }
   }
-  
   //append
   bf_pretty_b.Append_to_input_par(data_pretty_b);
   bf_pretty_b_ch2.Append_to_input_par(data_pretty_b_ch2);
+  
   //fit
   cout<<"Fitting Bs-meson decay constant"<<endl;
   Bt_fit_pretty_b= bf_pretty_b.Perform_bootstrap_fit();
   Bt_fit_pretty_b_ch2= bf_pretty_b_ch2.Perform_bootstrap_fit();
+  bf_pretty_b.Fix_par("B",0.0);
+  bf_pretty_b_ch2.Fix_par("B",0.0);
+  Bt_fit_pretty_b_red= bf_pretty_b.Perform_bootstrap_fit();
+  Bt_fit_pretty_b_red_ch2= bf_pretty_b_ch2.Perform_bootstrap_fit();
 
 
   
   Bt_fit_pretty_b_ch2= bf_pretty_b_ch2.Perform_bootstrap_fit();
-  double ch2_red_pretty_b= Bt_fit_pretty_b_ch2.get_ch2_ave()/( Nmasses -bf_pretty_b.Get_number_of_fit_pars());
+  double ch2_red_pretty_b= Bt_fit_pretty_b_ch2.get_ch2_ave()/( 12 -bf_pretty_b.Get_number_of_fit_pars());
 
+  cout<<"number of fit pars: "<<bf_pretty_b.Get_number_of_fit_pars()<<endl;
   cout<<"reduced ch2 of pretty b: "<<ch2_red_pretty_b<<endl;
   
   //retrieve params
   distr_t A_pb(1), B_pb(1), C_pb(1);
+  distr_t A_pb_red(1), C_pb_red(1);
   for(int ijack=0;ijack<NJ;ijack++) {
     A_pb.distr.push_back( Bt_fit_pretty_b.par[ijack].A);
     B_pb.distr.push_back( Bt_fit_pretty_b.par[ijack].B);
     C_pb.distr.push_back( Bt_fit_pretty_b.par[ijack].C);
+
+
+    A_pb_red.distr.push_back( Bt_fit_pretty_b_red.par[ijack].A);
+    C_pb_red.distr.push_back( Bt_fit_pretty_b_red.par[ijack].C);
   }
 
+  cout<<"Effective pole position: "<<2*5.367 + C_pb.ave()<<" +- "<<C_pb.err()<<" [GeV] "<<endl;
+  cout<<"Lambda_T : "<<C_pb.ave()<<" +- "<<C_pb.err()<<" [GeV] "<<endl;
+  cout<<"Lambda_T red: "<<C_pb_red.ave()<<" +- "<<C_pb_red.err()<<" [GeV] "<<endl;
+  
+
   Vfloat xg_to_print_pretty;
-  int nxg_to_print_pretty=199;
+ 
   for(int n=0;n<nxg_to_print_pretty;n++) xg_to_print_pretty.push_back( 0.0025*(n+1));
 
   //print fit function
   for(int im=0;im<3;im++) {
     distr_t_list pretty_b_to_print(true, nxg_to_print_pretty, Njacks_pretty);
+    distr_t_list pretty_b_to_print_red(true, nxg_to_print_pretty, Njacks_pretty);
     for(int n=0;n<nxg_to_print_pretty;n++) {
       ipar_pretty_b ip_pretty_b;
       ip_pretty_b.xg= xg_to_print_pretty[n];
       for(int ijack=0;ijack<Njacks_pretty;ijack++) {
 	ip_pretty_b.M= masses.distr_list[ (im==2)?3:im ].distr[ijack];
-	pretty_b_to_print.distr_list[n].distr.push_back( bf_pretty_b.ansatz( Bt_fit_pretty_b.par[ijack], ip_pretty_b));
+	pretty_b_to_print.distr_list[n].distr[ijack] = bf_pretty_b.ansatz( Bt_fit_pretty_b.par[ijack], ip_pretty_b);
+	pretty_b_to_print_red.distr_list[n].distr[ijack] = bf_pretty_b.ansatz( Bt_fit_pretty_b_red.par[ijack], ip_pretty_b);
       }
     }
-    Print_To_File({}, {xg_to_print_pretty, pretty_b_to_print.ave(), pretty_b_to_print.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_b_im_"+to_string(im)+".fit_func", "" , "");
+    Print_To_File({}, {xg_to_print_pretty, pretty_b_to_print.ave(), pretty_b_to_print.err(), pretty_b_to_print_red.ave(), pretty_b_to_print_red.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_b_im_"+to_string(im)+".fit_func", "" , "");
     Print_To_File({}, {Bs_xg_t_list, bar_FT_b[im].ave(), bar_FT_b[im].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_b_im_"+to_string(im)+".dat", "" , "");
   }
 
   //determine pretty b at MBs mass
 
-  distr_t_list pretty_b_MB(1, nxg_to_print_pretty, Njacks_pretty);
+  
   for(int n=0;n<nxg_to_print_pretty;n++) {
       ipar_pretty_b ip_pretty_b;
       ip_pretty_b.xg= xg_to_print_pretty[n];
       ip_pretty_b.M= MBs;
       for(int ijack=0;ijack<Njacks_pretty;ijack++) {
-	pretty_b_MB.distr_list[n].distr.push_back( bf_pretty_b.ansatz( Bt_fit_pretty_b.par[ijack], ip_pretty_b));
+	pretty_b_MB.distr_list[n].distr[ijack] =  bf_pretty_b.ansatz( Bt_fit_pretty_b.par[ijack], ip_pretty_b);
+	pretty_b_MB_red.distr_list[n].distr[ijack] =  bf_pretty_b.ansatz( Bt_fit_pretty_b_red.par[ijack], ip_pretty_b);
       }
   }
-  Print_To_File({}, {xg_to_print_pretty, pretty_b_MB.ave(), pretty_b_MB.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_b_Bs.dat", "" , "");
+  Print_To_File({}, {xg_to_print_pretty, pretty_b_MB.ave(), pretty_b_MB.err(), pretty_b_MB_red.ave(), pretty_b_MB_red.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_b_Bs.dat", "" , "");
 
 
 
 
   
-
-  
-  
-  
-
-  exit(-1);
+ 
  
   //pretty s 
 
@@ -2411,17 +2439,23 @@ void Compute_Bs_mumu_gamma() {
   };
 
 
-  vector<distr_t_list> bar_FT_s_RE(1);
+  vector<distr_t_list> bar_FT_s_RE;
+  vector<distr_t_list> bar_FT_s_IM;
 
   vector<distr_t_list> bar_FT_s_RE_xg(4);
+  vector<distr_t_list> bar_FT_s_IM_xg(4);
 
   for(int i=0; i<(signed)TFF_virtual_ret_list.size();i++) bar_FT_s_RE.push_back( TFF_virtual_ret_list[i].Get_FF(1));
+  for(int i=0; i<(signed)TFF_virtual_ret_list.size();i++) bar_FT_s_IM.push_back( TFF_virtual_ret_list[i].Get_FF(2));
 
   for(int ixg=0;ixg<(signed)Bs_xg_t_list.size();ixg++) {
     for(int i=0; i<(signed)TFF_virtual_ret_list.size();i++) {
       bar_FT_s_RE_xg[ixg].distr_list.push_back( TFF_virtual_ret_list[i].Get_FF(1).distr_list[ixg]);
+      bar_FT_s_IM_xg[ixg].distr_list.push_back( TFF_virtual_ret_list[i].Get_FF(2).distr_list[ixg]);
     }
   }
+
+ 
 
   Vfloat y_eff= TFF_virtual_ret_list[0].y_eff;
 
@@ -2432,9 +2466,9 @@ void Compute_Bs_mumu_gamma() {
   bf_pretty_s.Set_verbosity(1);
   
   
-  bf_pretty_s.Add_par("A", 0.01, 0.003);
-  bf_pretty_s.Add_par("B", -0.5 , 0.01);
-  bf_pretty_s.Add_par("C", 2.0 , 0.01);
+  bf_pretty_s.Add_par("A", -0.05, 0.003);
+  bf_pretty_s.Add_par("B", -0.05 , 0.001);
+  bf_pretty_s.Add_par("C", 1.5 , 0.01);
  
   //fit on mean values to get ch2
   bootstrap_fit<fpar_pretty_s,ipar_pretty_s> bf_pretty_s_ch2(1);
@@ -2442,8 +2476,8 @@ void Compute_Bs_mumu_gamma() {
   bf_pretty_s_ch2.Set_number_of_measurements(12);
   bf_pretty_s_ch2.Set_verbosity(1);
   bf_pretty_s_ch2.Add_par("A", -0.05, 0.003);
-  bf_pretty_s_ch2.Add_par("B", -0.5, 0.01); 
-  bf_pretty_s_ch2.Add_par("C", 2, 0.01);
+  bf_pretty_s_ch2.Add_par("B", -0.05, 0.001); 
+  bf_pretty_s_ch2.Add_par("C", 1.5, 0.01);
 
 
 
@@ -2482,7 +2516,7 @@ void Compute_Bs_mumu_gamma() {
 
   for(int i=0;i<12;i++) {
     for(int j=0;j<12;j++) {
-      Corr_Matrix_pretty_s(i,j) = Cov_Matrix_pretty_s(i,j)/(sqrt(Corr_Matrix_pretty_s(i,i)*Corr_Matrix_pretty_s(j,j)));
+      Corr_Matrix_pretty_s(i,j) = Cov_Matrix_pretty_s(i,j)/(sqrt(Cov_Matrix_pretty_s(i,i)*Cov_Matrix_pretty_s(j,j)));
     }
   }
 
@@ -2491,8 +2525,8 @@ void Compute_Bs_mumu_gamma() {
   cout<<Corr_Matrix_pretty_s<<endl;
   
   //add cov matrix to bootstrap fit
-  bf_pretty_s.Add_covariance_matrix(Cov_Matrix_pretty_s);
-  bf_pretty_s_ch2.Add_covariance_matrix(Cov_Matrix_pretty_s);
+  //bf_pretty_s.Add_covariance_matrix(Cov_Matrix_pretty_s);
+  //bf_pretty_s_ch2.Add_covariance_matrix(Cov_Matrix_pretty_s);
 
 
 
@@ -2503,19 +2537,19 @@ void Compute_Bs_mumu_gamma() {
   //allocate space for output result
   boot_fit_data<fpar_pretty_s> Bt_fit_pretty_s;
   boot_fit_data<fpar_pretty_s> Bt_fit_pretty_s_ch2;
-  for(auto &data_iboot: data_pretty_s) data_iboot.resize(Nmasses);
-  for(auto &data_iboot: data_pretty_s_ch2) data_iboot.resize(Nmasses);
+  for(auto &data_iboot: data_pretty_s) data_iboot.resize(12);
+  for(auto &data_iboot: data_pretty_s_ch2) data_iboot.resize(12);
   for(int ijack=0;ijack<Njacks_pretty;ijack++) {
     for(int im=0;im<12;im++) {
       data_pretty_s[ijack][im].FF = bar_FT_s_RE[(im+3)%3][im/3].distr[ijack];
       data_pretty_s[ijack][im].FF_err= bar_FT_s_RE[(im+3)%3].err(im/3);
-      data_pretty_s[ijack][im].M= masses.distr_list[(((im+3)%3) > 1)?3:(im/3)].distr[ijack];
+      data_pretty_s[ijack][im].M= masses.distr_list[(((im+3)%3) > 1)?3:((im+3)%3)].distr[ijack];
       data_pretty_s[ijack][im].xg= Bs_xg_t_list[im/3];
       data_pretty_s[ijack][im].y= y_eff[im/3];
       if(ijack==0) {
 	data_pretty_s_ch2[ijack][im].FF =  bar_FT_s_RE[(im+3)%3][im/3].ave();
 	data_pretty_s_ch2[ijack][im].FF_err=  bar_FT_s_RE[(im+3)%3][im/3].err();
-	data_pretty_s_ch2[ijack][im].M = masses.ave((((im+3)%3) > 1)?3:(im/3));
+	data_pretty_s_ch2[ijack][im].M = masses.ave((((im+3)%3) > 1)?3:((im+3)%3));
 	data_pretty_s_ch2[ijack][im].xg= Bs_xg_t_list[im/3];
 	data_pretty_s_ch2[ijack][im].y = y_eff[im/3];
       }
@@ -2528,18 +2562,16 @@ void Compute_Bs_mumu_gamma() {
   //fit
   cout<<"Fitting Bs-meson decay constant"<<endl;
   Bt_fit_pretty_s= bf_pretty_s.Perform_bootstrap_fit();
-  Bt_fit_pretty_s_ch2= bf_pretty_s_ch2.Perform_bootstrap_fit();
-
-
+  
   
   Bt_fit_pretty_s_ch2= bf_pretty_s_ch2.Perform_bootstrap_fit();
-  double ch2_red_pretty_s= Bt_fit_pretty_s_ch2.get_ch2_ave()/( Nmasses -bf_pretty_s.Get_number_of_fit_pars());
+  double ch2_red_pretty_s= Bt_fit_pretty_s_ch2.get_ch2_ave()/( 12 -bf_pretty_s.Get_number_of_fit_pars());
 
-  cout<<"reduced ch2 of pretty b: "<<ch2_red_pretty_s<<endl;
+  cout<<"reduced ch2 of pretty s: "<<ch2_red_pretty_s<<endl;
   
   //retrieve params
   distr_t A_ps_RE(1), B_ps_RE(1), C_ps_RE(1);
-  for(int ijack=0;ijack<NJ;ijack++) {
+  for(int ijack=0;ijack<Njacks_pretty;ijack++) {
     A_ps_RE.distr.push_back( Bt_fit_pretty_s.par[ijack].A);
     B_ps_RE.distr.push_back( Bt_fit_pretty_s.par[ijack].B);
     C_ps_RE.distr.push_back( Bt_fit_pretty_s.par[ijack].C);
@@ -2557,26 +2589,27 @@ void Compute_Bs_mumu_gamma() {
       ip_pretty_s.y = y_eff[ixg];
       ip_pretty_s.M= 1.0/Inv_Masses_to_print_pretty[n];
       for(int ijack=0;ijack<Njacks_pretty;ijack++) {
-	pretty_s_to_print.distr_list[n].distr.push_back( bf_pretty_s.ansatz( Bt_fit_pretty_s.par[ijack], ip_pretty_s));
+	pretty_s_to_print.distr_list[n].distr[ijack] = bf_pretty_s.ansatz( Bt_fit_pretty_s.par[ijack], ip_pretty_s);
       }
     }
     Print_To_File({}, {Inv_Masses_to_print_pretty, pretty_s_to_print.ave(), pretty_s_to_print.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_s_RE_ixg_"+to_string(ixg)+".fit_func", "" , "");
 
     vector<double> M_07({ masses.ave(0), masses.ave(1), masses.ave(3)});
     
-    Print_To_File({}, {M_07, bar_FT_s_RE_xg[ixg].ave(), bar_FT_s_RE_xg[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_s_RE_im_"+to_string(ixg)+".dat", "" , "");
+    Print_To_File({}, {M_07, bar_FT_s_RE_xg[ixg].ave(), bar_FT_s_RE_xg[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_s_RE_ixg_"+to_string(ixg)+".dat", "" , "");
+    Print_To_File({}, {M_07, bar_FT_s_IM_xg[ixg].ave(), bar_FT_s_IM_xg[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_s_IM_ixg_"+to_string(ixg)+".dat", "" , "");
   }
 
   //determine pretty b at MBs mass
 
-  distr_t_list pretty_s_MB(1, nxg_to_print_pretty, Njacks_pretty);
+ 
   for(int n=0;n<nxg_to_print_pretty;n++) {
       ipar_pretty_s ip_pretty_s;
       ip_pretty_s.xg= xg_to_print_pretty[n];
       ip_pretty_s.M= MBs;
       ip_pretty_s.y= 1.0;
       for(int ijack=0;ijack<Njacks_pretty;ijack++) {
-	pretty_s_MB.distr_list[n].distr.push_back( bf_pretty_s.ansatz( Bt_fit_pretty_s.par[ijack], ip_pretty_s));
+	pretty_s_MB.distr_list[n].distr[ijack] = bf_pretty_s.ansatz( Bt_fit_pretty_s.par[ijack], ip_pretty_s);
       }
   }
   Print_To_File({}, {xg_to_print_pretty, pretty_s_MB.ave(), pretty_s_MB.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_s_RE_Bs.dat", "" , "");
@@ -2586,7 +2619,7 @@ void Compute_Bs_mumu_gamma() {
 
 
 
-  
+  }
 	
 
   //###################################################################################################################################
@@ -3833,7 +3866,7 @@ void Compute_Bs_mumu_gamma() {
   if(it_prior != Fix_fit_pars_list[ifit].end()) {
     if(it_prior->second == 1) {
       for(int ij=0;ij< NJ;ij++) 
-	{bf_MEX_comb.Append_to_prior("M3", 0.0, 0.3); bf_MEX_comb_ch2.Append_to_prior("M3", 0.0,0.3);}
+	{bf_MEX_comb.Append_to_prior("M3", 0.0, 1); bf_MEX_comb_ch2.Append_to_prior("M3", 0.0,1);} //0.3
     }
   }
   
@@ -4444,7 +4477,6 @@ void Compute_Bs_mumu_gamma() {
     Print_To_File({}, {Inv_Masses_to_print_MEX, FTV_mass_dep_uniform[ixg].ave(), FTV_mass_dep_uniform[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/FV_T_comb_uniform_ixg_"+to_string(ixg+1)+".fit_func", "", "");
     
   }
-
  
 
   // print results at Bs as a function of xg
@@ -4501,7 +4533,7 @@ void Compute_Bs_mumu_gamma() {
   }
 
   
-
+  if(Compute_rate) {
 
   //spline the results for the total
 
@@ -4529,17 +4561,20 @@ void Compute_Bs_mumu_gamma() {
     for(int ixg=0;ixg<nxgs_to_spline;ixg++) { FA_jacks.push_back( (FA_uniform*f_Bs).distr_list[ixg].distr[ijack]); FV_jacks.push_back( (FV_uniform*f_Bs).distr_list[ixg].distr[ijack]); FTA_jacks.push_back((FTA_uniform*f_Bs).distr_list[ixg].distr[ijack]); FTV_jacks.push_back( (FTV_uniform*f_Bs).distr_list[ixg].distr[ijack]); pretty_b_jacks.push_back( pretty_b_MB.distr_list[ixg].distr[ijack]);  }
  
     FA_interpol.emplace_back( FA_jacks.begin(), FA_jacks.end(), 0.0025, 0.0025);
- 
+    
     FV_interpol.emplace_back( FV_jacks.begin(), FV_jacks.end(), 0.0025, 0.0025);
- 
+    
     FTV_interpol.emplace_back( FTV_jacks.begin(), FTV_jacks.end(), 0.0025, 0.0025);
- 
+    
     FTA_interpol.emplace_back( FTA_jacks.begin(), FTA_jacks.end(), 0.0025, 0.0025);
-
+    
     pretty_b_interpol.emplace_back( pretty_b_jacks.begin(), pretty_b_jacks.end(), 0.0025, 0.0025);
- 
+    
   }
 
+
+
+  
 
 
 
@@ -4558,6 +4593,7 @@ void Compute_Bs_mumu_gamma() {
 
   //int Nxgs=99;
   int Nxgs=30;
+  Nxgs=53;
   distr_t_list rate_Bs_SD(true, Nxgs), rate_Bs_INT(true,Nxgs), rate_Bs_diff_SD(true,Nxgs), AFB_Bs(true,Nxgs), rate_Bs_diff_PT(true,Nxgs), rate_Bs_diff_INT(true,Nxgs);
 
   
@@ -4567,8 +4603,12 @@ void Compute_Bs_mumu_gamma() {
   distr_t_list rate_Bs_diff_INT_NOCH(true, Nxgs);
   vector<double> xg_min_list(Nxgs), xg_max_list(Nxgs), qmin_list(Nxgs);
   double Mb=5.36692;
-  for(int it=0;it<Nxgs;it++) { xg_min_list[it] = 0.0; xg_max_list[it] =  0.0129166666666*(it+1); qmin_list[it] = Mb*sqrt(1-xg_max_list[it]);  }
-  //for(int it=0;it<Nxgs;it++) { xg_min_list[it] = 0.0; xg_max_list[it] =  0.005*(it+1); qmin_list[it] = Mb*sqrt(1-xg_max_list[it]);  }
+  // for(int it=0;it<Nxgs;it++) { xg_min_list[it] = 0.0; xg_max_list[it] =  0.0129166666666*(it+1); qmin_list[it] = Mb*sqrt(1-xg_max_list[it]);  }
+ 
+
+  //interval 4.0 to 5.3
+
+  for(int it=0; it < Nxgs;it++) { qmin_list[it] = 4.0 + 0.025*it; xg_min_list[it] = 0.0; xg_max_list[it] = 1- pow(qmin_list[it]/Mb,2) ; }
 
 
   //resize boot vectors
@@ -4589,11 +4629,17 @@ void Compute_Bs_mumu_gamma() {
 
   distr_t a1_distr_std(true) ;   distr_t mb_distr_std(true);
   distr_t xb_distr_std(true), Vtbs_distr_std(true), tbs_distr_std(true);
+
+  distr_t fbs_boot(false);
   
   vector<vector<double>> kappa_distr(Nb), Cos_distr(Nb), W_distr(Nb), Br_distr(Nb);
   GaussianMersenne GPP(854135);
   UniformMersenne  RAN(45252, 0.0, 2*M_PI);
-  
+
+  distr_t pretty_s_RE(1), pretty_s_IM(1);
+
+  for(int i=0;i<NJ;i++) { pretty_s_RE.distr.push_back( -0.02 + GPP()*0.02/sqrt(NJ-1.0)) ;};
+  for(int i=0;i<NJ;i++) { pretty_s_IM.distr.push_back( 0.02 + GPP()*0.02/sqrt(NJ-1.0)) ; };
 
   for(int ib=0;ib<Nb;ib++) mb_distr.distr.push_back( 4.18 + 0.03*GPP());
   for(int ib=0;ib<Nb;ib++) a1_distr.distr.push_back( -0.13 + GPP()*0.13);
@@ -4614,6 +4660,527 @@ void Compute_Bs_mumu_gamma() {
     for(int ib=0;ib<Nb;ib++) Br_distr[ib].push_back( GPP());
   }
 
+  distr_t G_FV_KMN(false), G_FA_KMN(false), G_FTV_KMN(false), G_FTA_KMN(false), G_barF_KMN(false);
+
+  //for KMN
+  for(int iboot=0;iboot<Nb;iboot++) {
+    G_FV_KMN.distr.push_back( GPP());
+    G_FA_KMN.distr.push_back( GPP());
+    G_FTV_KMN.distr.push_back( GPP());
+    G_FTA_KMN.distr.push_back( GPP());
+    G_barF_KMN.distr.push_back( GPP());
+    fbs_boot.distr.push_back( f_Bs.ave() + f_Bs.err()*GPP());
+  }
+
+  //read JSON file for JPZ data
+  // Open the file for reading
+  //FILE* fp = fopen("../data/ph_emission/rph/Bs_extr/BtoGam_FF.json", "r");
+ 
+  // Use a FileReadStream to
+  // read the data from the file
+  //char readBuffer[65536];
+  //rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+
+  ifstream ifs("../data/ph_emission/rph/Bs_extr/BtoGam_FF.json");
+
+  if (!ifs.is_open())
+    {
+      throw runtime_error("..");
+    }
+  
+  rapidjson::IStreamWrapper isw(ifs);
+  
+  // Parse the JSON data
+  // using a Document object
+  rapidjson::Document d;
+  d.ParseStream(isw);
+
+  // Check if the document is valid 
+    if (d.HasParseError()) { 
+        cerr << "Error: failed to parse JSON document"
+	     << endl;
+	cout<<rapidjson::GetParseError_En( d.GetParseError() )<<" at offset: "<<d.GetErrorOffset()<<endl;
+        ifs.close(); 
+        exit(-1); 
+    } 
+
+
+  ifs.close();
+  
+  // Close the file
+  //fclose(fp);
+
+  cout<<d["Bs"].GetType()<<endl;
+
+  vector<string> FF_names({"Tpara", "Tperp", "Vpara", "Vperp"});
+
+  vector<vector<double>> A_val(4), A_err(4);
+
+  
+  
+  for(int i=0;i<4;i++) { A_val[i].resize(4); A_err[i].resize(4);}
+  
+ 
+ 
+ 
+  
+ 
+  for(int i=0;i<4;i++) {
+    for(int s=0; s <(signed)FF_names.size(); s++) {
+      
+      A_val[s][i]  = d["Bs"]["central"][FF_names[s].c_str()][("a"+to_string(i)).c_str()].GetDouble();
+      A_err[s][i]  = d["Bs"]["uncertainty"][FF_names[s].c_str()][("a"+to_string(i)).c_str()].GetDouble();
+    }
+  }
+
+ 
+
+  Eigen::VectorXd params_val(16);
+
+  for(int s=0; s<4;s++) {
+    for(int i=0;i<4;i++) {
+      params_val(4*s+i) = A_val[s][i];
+    }
+  }
+
+
+
+  //Read covariance matrix
+  Eigen::MatrixXd Cov_JPZ(16, 16);
+
+  for(int s1=0;s1<(signed)FF_names.size();s1++) {
+    for(int s2=0;s2<(signed)FF_names.size(); s2++) {
+      for(int i=0;i<4;i++) {
+	for(int j=0; j<4; j++) {
+	  Cov_JPZ( 4*s1 + i , 4*s2+ j) = d["Bs"]["covariance"][(FF_names[s1]+FF_names[s2]).c_str()][("a"+to_string(i)+"a"+to_string(j)).c_str()].GetDouble();
+	}
+      }
+    }
+  }
+
+
+
+  /*
+  for(int s1=0;s1<(signed)FF_names.size();s1++) {
+    for(int s2=0;s2<(signed)FF_names.size(); s2++) {
+      for(int i=0;i<4;i++) {
+	for(int j=0; j<4; j++) {
+	  Cov_JPZ(4*s1+ i , 4*s2+ j) = Cov_JPZ(4*s1+i, 4*s2+j)*A_err[s1][i]*A_err[s2][j];
+	}
+      }
+    }
+    }*/
+
+  vector<vector<double>> Tpara_boot, Tperp_boot, Vpara_boot, Vperp_boot;
+
+  
+  GaussianMersenne GJPZ(231450765);
+  for(int iboot=0;iboot<Nb;iboot++) {
+    Vfloat params=Covariate(Cov_JPZ, params_val, GJPZ);
+    vector<vector<double>> TT(4) ;
+    for(auto &T: TT) T.resize(4);
+    
+    for(int s=0;s<4;s++) {
+      for(int i=0;i<4;i++) {
+	TT[s][i] = params[4*s+i];
+      }
+    }
+
+    Tpara_boot.push_back(TT[0]);
+    Tperp_boot.push_back(TT[1]);
+    Vpara_boot.push_back(TT[2]);
+    Vperp_boot.push_back(TT[3]);
+  }
+
+   
+  if(Get_KMN_JPZ_FF) {
+  
+  
+
+    
+  
+  
+  distr_t_list rate_KMN(false, Nxgs), rate_JPZ(false, Nxgs);
+
+  
+
+ 
+
+  //determine FF from KMN
+  #pragma omp parallel for schedule(dynamic)
+  for(int it=0;it< Nxgs;it++) {
+    for(int iboot=0;iboot<Nb;iboot++) {
+
+
+      //##################### KMN ######################
+
+   
+      auto FV_KMN = [&iboot, &G_FV_KMN](double x) {
+	double A= 0.111;
+	double s1=0.144;
+	double s2=0.722;
+	double MR2= 5.415;
+	MR2 *= MR2;
+	double q2= (1-x)*MBs*MBs;
+	double v1 = A/(  ( 1 - q2/MR2)*(1 - s1*q2/MR2 + s2*pow( q2/MR2,2)));
+	double v2 = A/( 1- q2/MR2);
+	return v1 + G_FV_KMN.distr[iboot]*0.68*fabs( v2-v1);
+	
+      };
+
+      auto FA_KMN = [&iboot, &G_FA_KMN](double x) {
+	double A= 0.069;
+	double s1=-0.031;
+	double s2=0.384;
+	double MR2= 5.829;
+	MR2 *= MR2;
+	double q2= (1-x)*MBs*MBs;
+	double v1 = A/(  ( 1 - q2/MR2)*(1 - s1*q2/MR2 + s2*pow( q2/MR2,2)));
+	double v2 = A/( 1- q2/MR2);
+	return v1 + G_FA_KMN.distr[iboot]*0.68*fabs( v2-v1);
+	
+      };
+
+      auto FTA_KMN = [&iboot, &G_FTA_KMN, &G_barF_KMN](double x) {
+	double A= 0.119;
+	double s1=-0.063;
+	double s2=0.321;
+	double MR2= 5.829;
+	MR2 *= MR2;
+	double q2= (1-x)*MBs*MBs;
+	double v1 = A/(  ( 1 - q2/MR2)*(1 - s1*q2/MR2 + s2*pow( q2/MR2,2)));
+	double v2 = A/( 1- q2/MR2);
+	double fem = (-1.0/3.0)*(0.2205 + G_barF_KMN.distr[iboot]*0.0045);
+	double g= -0.27 + G_barF_KMN.distr[iboot]*0.01;
+	double Mphi=1.019;
+	double Gamma=0.00427;
+	double barF= A -2*fem*g*(q2/Mphi)*(q2-Mphi*Mphi)/( pow(q2 - Mphi*Mphi,2) + pow(Mphi*Gamma,2)); 
+
+	
+	return v1 + G_FTA_KMN.distr[iboot]*0.68*fabs( v2-v1) + barF;
+	
+      };
+
+      auto FTV_KMN = [&iboot, &G_FTV_KMN, &G_barF_KMN](double x) {
+	double A= 0.119;
+	double s1=0.163;
+	double s2=0.751;
+	double MR2= 5.415;
+	MR2 *= MR2;
+	double q2= (1-x)*MBs*MBs;
+	double v1 = A/(  ( 1 - q2/MR2)*(1 - s1*q2/MR2 + s2*pow( q2/MR2,2)));
+	double v2 = A/( 1- q2/MR2);
+
+	double fem = (-1.0/3.0)*(0.2205 + G_barF_KMN.distr[iboot]*0.0045);
+	double g= -0.27 + G_barF_KMN.distr[iboot]*0.01;
+	double Mphi=1.019;
+	double Gamma=0.00427;
+	double barF= A -2*fem*g*(q2/Mphi)*(q2-Mphi*Mphi)/( pow(q2 - Mphi*Mphi,2) + pow(Mphi*Gamma,2)); 
+	
+	return v1 + G_FTV_KMN.distr[iboot]*0.68*fabs( v2-v1) + barF;
+	
+      };
+
+      auto bar_F_IM_KMN = [&iboot, &G_barF_KMN](double x) {
+
+	double A= 0.119;
+	double q2= (1-x)*MBs*MBs;
+	double fem = (-1.0/3.0)*(0.2205 + G_barF_KMN.distr[iboot]*0.0045);
+	double g= -0.27 + G_barF_KMN.distr[iboot]*0.01;
+	double Mphi=1.019;
+	double Gamma=0.00427;
+	double barF= A +  2*fem*g*(q2/Mphi)*Mphi*Gamma/( pow(q2 - Mphi*Mphi,2) + pow(Mphi*Gamma,2)); 
+	return barF;
+
+      };
+
+
+      //####################  JPZ  ##################################
+
+    
+      auto FV_JPZ = [&iboot, &Vperp_boot](double x) {
+
+	double tp= pow(MBs + 0.770,2);
+	double tm= pow(MBs - 0.770,2);
+	double t0= tp*( 1 -sqrt( 1.0 - (tm/tp)));
+	double q2=(1-x)*MBs*MBs;
+	double z= (sqrt(tp-q2) -sqrt(tp-t0))/(sqrt(tp-q2) + sqrt(tp-t0));
+	double z0= (sqrt(tp-0.0) -sqrt(tp-t0))/(sqrt(tp-0.0) + sqrt(tp-t0));
+	double dz= z-z0;
+	double res= 0.0;
+	for(int i=0;i<4;i++) res += Vperp_boot[iboot][i]*pow(dz,i);
+	double Mstar2= pow(5.4154,2);
+	return res/(1- q2/Mstar2);
+      };
+
+       auto FA_JPZ = [&iboot, &Vpara_boot](double x) {
+
+	 double tp= pow(MBs + 0.770,2);
+	 double tm= pow(MBs - 0.770,2);
+	 double t0= tp*( 1 -sqrt( 1.0 - (tm/tp)));
+	 double q2=(1-x)*MBs*MBs;
+	 double z= (sqrt(tp-q2) -sqrt(tp-t0))/(sqrt(tp-q2) + sqrt(tp-t0));
+	 double z0= (sqrt(tp-0.0) -sqrt(tp-t0))/(sqrt(tp-0.0) + sqrt(tp-t0));
+	 double dz= z-z0;
+	 double res= 0.0;
+	 for(int i=0;i<4;i++) res += Vpara_boot[iboot][i]*pow(dz,i);
+	 double Mstar2= pow(5.8287,2);
+	 return res/(1- q2/Mstar2);
+       };
+       
+       
+       auto FTV_JPZ = [&iboot, &Tperp_boot](double x) {
+	 
+	 double tp= pow(MBs + 0.770,2);
+	 double tm= pow(MBs - 0.770,2);
+	 double t0= tp*( 1 -sqrt( 1.0 - (tm/tp)));
+	 double q2=(1-x)*MBs*MBs;
+	 double z= (sqrt(tp-q2) -sqrt(tp-t0))/(sqrt(tp-q2) + sqrt(tp-t0));
+	 double z0= (sqrt(tp-0.0) -sqrt(tp-t0))/(sqrt(tp-0.0) + sqrt(tp-t0));
+	 double dz= z-z0;
+	 double res= 0.0;
+	 for(int i=0;i<4;i++) res += Tperp_boot[iboot][i]*pow(dz,i);
+	 double Mstar2= pow(5.4154,2);
+	 return res/(1- q2/Mstar2);
+       };
+       
+       auto FTA_JPZ = [&iboot, &Tpara_boot](double x) {
+
+	 double tp= pow(MBs + 0.770,2);
+	 double tm= pow(MBs - 0.770,2);
+	 double t0= tp*( 1 -sqrt( 1.0 - (tm/tp)));
+	 double q2=(1-x)*MBs*MBs;
+	 double z= (sqrt(tp-q2) -sqrt(tp-t0))/(sqrt(tp-q2) + sqrt(tp-t0));
+	 double z0= (sqrt(tp-0.0) -sqrt(tp-t0))/(sqrt(tp-0.0) + sqrt(tp-t0));
+	 double dz= z-z0;
+	 double res= 0.0;
+	 for(int i=0;i<4;i++) res += Tpara_boot[iboot][i]*pow(dz,i);
+	 double Mstar2= pow(5.8287,2);
+	 return res/(1- q2/Mstar2);
+       };
+
+       auto bar_F_IM_JPZ = [](double x) {
+	 return 0.0;
+       };
+       
+    
+      
+       
+       double a1_val= a1_distr.distr[iboot];
+       double mb_val= mb_distr.distr[iboot];
+       double xb_val= xb_distr.distr[iboot];
+       double Vtbs_val= Vtbs_distr.distr[iboot];
+       double tbs_val = tbs_distr.distr[iboot];
+       Vfloat kappa_list = kappa_distr[iboot];
+       Vfloat Cos_list = Cos_distr[iboot];
+       Vfloat W_list = W_distr[iboot];
+       Vfloat Br_list = Br_distr[iboot];
+       
+      
+       
+       auto FV_T_eff_KMN = [&FTV_KMN, &a1_val, &fbs_boot, &mb_val, &iboot ](double x) { return FTV_KMN(x) +  (16.0/(3.0*WC(7,0).first))*(a1_val*fbs_boot.distr[iboot]/mb_val);};
+
+       auto FV_T_eff_JPZ = [&FTV_JPZ, &a1_val, &fbs_boot, &mb_val, &iboot ](double x) { return FTV_JPZ(x) +  (16.0/(3.0*WC(7,0).first))*(a1_val*fbs_boot.distr[iboot]/mb_val);};
+
+     
+      double rate_SD_KMN =  Compute_Bs_mumugamma_decay_rate( FV_KMN, FA_KMN, FV_T_eff_KMN, FTA_KMN, bar_F_IM_KMN, bar_F_IM_KMN , fbs_boot.distr[iboot] , xb_val, Vtbs_val, tbs_val, kappa_list, Cos_list, W_list, Br_list, "SD",  "CH",   xg_max_list[it], xg_min_list[it] );
+
+      double rate_INT_KMN = Compute_Bs_mumugamma_decay_rate( FV_KMN, FA_KMN, FV_T_eff_KMN, FTA_KMN, bar_F_IM_KMN, bar_F_IM_KMN , fbs_boot.distr[iboot] , xb_val, Vtbs_val, tbs_val, kappa_list, Cos_list, W_list, Br_list, "INT",  "CH",   xg_max_list[it], xg_min_list[it] );
+
+      rate_KMN.distr_list[it].distr.push_back(rate_SD_KMN+ rate_INT_KMN);
+
+    
+      double rate_SD_JPZ =  Compute_Bs_mumugamma_decay_rate( FV_JPZ, FA_JPZ, FV_T_eff_JPZ, FTA_JPZ, bar_F_IM_JPZ, bar_F_IM_JPZ , fbs_boot.distr[iboot] , xb_val, Vtbs_val, tbs_val, kappa_list, Cos_list, W_list, Br_list, "SD",  "CH",   xg_max_list[it], xg_min_list[it] );
+
+      double rate_INT_JPZ = Compute_Bs_mumugamma_decay_rate( FV_JPZ, FA_JPZ, FV_T_eff_JPZ, FTA_JPZ, bar_F_IM_JPZ, bar_F_IM_JPZ , fbs_boot.distr[iboot] , xb_val, Vtbs_val, tbs_val, kappa_list, Cos_list, W_list, Br_list, "INT",  "CH",   xg_max_list[it], xg_min_list[it] );
+
+      rate_JPZ.distr_list[it].distr.push_back(rate_SD_JPZ+rate_INT_JPZ);
+
+        
+	 
+          
+
+    }
+
+    cout<<"ixg: "<<it<<" completed!"<<endl;
+
+  }
+
+  distr_t_list FV_plot_KMN(false), FA_plot_KMN(false), FTV_plot_KMN(false), FTA_plot_KMN(false);
+
+  distr_t_list FV_plot_JPZ(false), FA_plot_JPZ(false), FTV_plot_JPZ(false), FTA_plot_JPZ(false);
+
+  for(auto &xg: xg_scan) {
+
+    distr_t FV_KMN_D(false), FA_KMN_D(false), FTV_KMN_D(false), FTA_KMN_D(false);
+
+    distr_t FV_JPZ_D(false), FA_JPZ_D(false), FTV_JPZ_D(false), FTA_JPZ_D(false);
+    
+    for(int iboot=0;iboot<Nb;iboot++) {
+
+       auto FV_KMN = [&iboot, &G_FV_KMN](double x) {
+	double A= 0.111;
+	double s1=0.144;
+	double s2=0.722;
+	double MR2= 5.415;
+	MR2 *= MR2;
+	double q2= (1-x)*MBs*MBs;
+	double v1 = A/(  ( 1 - q2/MR2)*(1 - s1*q2/MR2 + s2*pow( q2/MR2,2)));
+	double v2 = A/( 1- q2/MR2);
+	return v1 + G_FV_KMN.distr[iboot]*0.68*fabs( v2-v1);
+	
+      };
+
+      auto FA_KMN = [&iboot, &G_FA_KMN](double x) {
+	double A= 0.069;
+	double s1=-0.031;
+	double s2=0.384;
+	double MR2= 5.829;
+	MR2 *= MR2;
+	double q2= (1-x)*MBs*MBs;
+	double v1 = A/(  ( 1 - q2/MR2)*(1 - s1*q2/MR2 + s2*pow( q2/MR2,2)));
+	double v2 = A/( 1- q2/MR2);
+	return v1 + G_FA_KMN.distr[iboot]*0.68*fabs( v2-v1);
+	
+      };
+
+      auto FTA_KMN = [&iboot, &G_FTA_KMN](double x) {
+	double A= 0.119;
+	double s1=-0.063;
+	double s2=0.321;
+	double MR2= 5.829;
+	MR2 *= MR2;
+	double q2= (1-x)*MBs*MBs;
+	double v1 = A/(  ( 1 - q2/MR2)*(1 - s1*q2/MR2 + s2*pow( q2/MR2,2)));
+	double v2 = A/( 1- q2/MR2);
+	
+	return v1 + G_FTA_KMN.distr[iboot]*0.68*fabs( v2-v1);
+	
+      };
+
+      auto FTV_KMN = [&iboot, &G_FTV_KMN](double x) {
+	double A= 0.119;
+	double s1=0.163;
+	double s2=0.751;
+	double MR2= 5.415;
+	MR2 *= MR2;
+	double q2= (1-x)*MBs*MBs;
+	double v1 = A/(  ( 1 - q2/MR2)*(1 - s1*q2/MR2 + s2*pow( q2/MR2,2)));
+	double v2 = A/( 1- q2/MR2);
+
+	
+	return v1 + G_FTV_KMN.distr[iboot]*0.68*fabs( v2-v1);
+	
+      };
+
+
+        auto FV_JPZ = [&iboot, &Vperp_boot](double x) {
+
+	double tp= pow(MBs + 0.770,2);
+	double tm= pow(MBs - 0.770,2);
+	double t0= tp*( 1 -sqrt( 1 - (tm/tp)));
+	double q2=(1-x)*MBs*MBs;
+	double z= (sqrt(tp-q2) -sqrt(tp-t0))/(sqrt(tp-q2) + sqrt(tp-t0));
+	double z0= (sqrt(tp-0.0) -sqrt(tp-t0))/(sqrt(tp-0.0) + sqrt(tp-t0));
+	double dz= z-z0;
+	double res= 0.0;
+	for(int i=0;i<4;i++) res += Vperp_boot[iboot][i]*pow(dz,i);
+	double Mstar2= pow(5.4154,2);
+	return res/(1- q2/Mstar2);
+      };
+
+       auto FA_JPZ = [&iboot, &Vpara_boot](double x) {
+
+	 double tp= pow(MBs + 0.770,2);
+	 double tm= pow(MBs - 0.770,2);
+	 double t0= tp*( 1 -sqrt( 1 - (tm/tp)));
+	 double q2=(1-x)*MBs*MBs;
+	 double z= (sqrt(tp-q2) -sqrt(tp-t0))/(sqrt(tp-q2) + sqrt(tp-t0));
+	 double z0= (sqrt(tp-0.0) -sqrt(tp-t0))/(sqrt(tp-0.0) + sqrt(tp-t0));
+	 double dz= z-z0;
+	 double res= 0.0;
+	 for(int i=0;i<4;i++) res += Vpara_boot[iboot][i]*pow(dz,i);
+	 double Mstar2= pow(5.8287,2);
+	 return res/(1- q2/Mstar2);
+       };
+       
+       
+       auto FTV_JPZ = [&iboot, &Tperp_boot](double x) {
+	 
+	 double tp= pow(MBs + 0.770,2);
+	 double tm= pow(MBs - 0.770,2);
+	 double t0= tp*( 1 -sqrt( 1 - (tm/tp)));
+	 double q2=(1-x)*MBs*MBs;
+	 double z= (sqrt(tp-q2) -sqrt(tp-t0))/(sqrt(tp-q2) + sqrt(tp-t0));
+	 double z0= (sqrt(tp-0.0) -sqrt(tp-t0))/(sqrt(tp-0.0) + sqrt(tp-t0));
+	 double dz= z-z0;
+	 double res= 0.0;
+	 for(int i=0;i<4;i++) res += Tperp_boot[iboot][i]*pow(dz,i);
+	 double Mstar2= pow(5.4154,2);
+	 return res/(1- q2/Mstar2);
+       };
+       
+       auto FTA_JPZ = [&iboot, &Tpara_boot](double x) {
+
+	 double tp= pow(MBs + 0.770,2);
+	 double tm= pow(MBs - 0.770,2);
+	 double t0= tp*( 1 -sqrt( 1 - (tm/tp)));
+	 double q2=(1-x)*MBs*MBs;
+	 double z= (sqrt(tp-q2) -sqrt(tp-t0))/(sqrt(tp-q2) + sqrt(tp-t0));
+	 double z0= (sqrt(tp-0.0) -sqrt(tp-t0))/(sqrt(tp-0.0) + sqrt(tp-t0));
+	 double dz= z-z0;
+	 double res= 0.0;
+	 for(int i=0;i<4;i++) res += Tpara_boot[iboot][i]*pow(dz,i);
+	 double Mstar2= pow(5.8287,2);
+	 return res/(1- q2/Mstar2);
+      };
+      
+
+      FV_KMN_D.distr.push_back( FV_KMN(xg));
+      FA_KMN_D.distr.push_back( FA_KMN(xg));
+      FTV_KMN_D.distr.push_back( FTV_KMN(xg));
+      FTA_KMN_D.distr.push_back( FTA_KMN(xg));
+
+      FV_JPZ_D.distr.push_back( FV_JPZ(xg));
+      FA_JPZ_D.distr.push_back( FA_JPZ(xg));
+      FTV_JPZ_D.distr.push_back( FTV_JPZ(xg));
+      FTA_JPZ_D.distr.push_back( FTA_JPZ(xg));
+      
+    }
+
+    FV_plot_KMN.distr_list.push_back( FV_KMN_D);
+    FA_plot_KMN.distr_list.push_back( FA_KMN_D);
+    FTV_plot_KMN.distr_list.push_back( FTV_KMN_D);
+    FTA_plot_KMN.distr_list.push_back( FTA_KMN_D);
+
+    FV_plot_JPZ.distr_list.push_back( FV_JPZ_D);
+    FA_plot_JPZ.distr_list.push_back( FA_JPZ_D);
+    FTV_plot_JPZ.distr_list.push_back( FTV_JPZ_D);
+    FTA_plot_JPZ.distr_list.push_back( FTA_JPZ_D);
+  }
+
+  boost::filesystem::create_directory("../data/ph_emission/rph/Bs_extr/KMN");
+
+  Print_To_File({}, {xg_scan, FV_plot_KMN.ave(), FV_plot_KMN.err()}, "../data/ph_emission/rph/Bs_extr/KMN/FV.dat", "", "");
+  Print_To_File({}, {xg_scan, FA_plot_KMN.ave(), FA_plot_KMN.err()}, "../data/ph_emission/rph/Bs_extr/KMN/FA.dat", "", "");
+  Print_To_File({}, {xg_scan, FTV_plot_KMN.ave(), FTV_plot_KMN.err()}, "../data/ph_emission/rph/Bs_extr/KMN/FTV.dat", "", "");
+  Print_To_File({}, {xg_scan, FTA_plot_KMN.ave(), FTA_plot_KMN.err()}, "../data/ph_emission/rph/Bs_extr/KMN/FTA.dat", "", "");
+
+  Print_To_File({}, {qmin_list, xg_min_list, xg_max_list, rate_KMN.ave(), rate_KMN.err()}, "../data/ph_emission/rph/Bs_extr/KMN/rate_SD_INT.dat", "", "");
+
+
+  boost::filesystem::create_directory("../data/ph_emission/rph/Bs_extr/JPZ");
+
+  Print_To_File({}, {xg_scan, FV_plot_JPZ.ave(), FV_plot_JPZ.err()}, "../data/ph_emission/rph/Bs_extr/JPZ/FV.dat", "", "");
+  Print_To_File({}, {xg_scan, FA_plot_JPZ.ave(), FA_plot_JPZ.err()}, "../data/ph_emission/rph/Bs_extr/JPZ/FA.dat", "", "");
+  Print_To_File({}, {xg_scan, FTV_plot_JPZ.ave(), FTV_plot_JPZ.err()}, "../data/ph_emission/rph/Bs_extr/JPZ/FTV.dat", "", "");
+  Print_To_File({}, {xg_scan, FTA_plot_JPZ.ave(), FTA_plot_JPZ.err()}, "../data/ph_emission/rph/Bs_extr/JPZ/FTA.dat", "", "");
+
+  Print_To_File({}, {qmin_list, xg_min_list, xg_max_list, rate_JPZ.ave(), rate_JPZ.err()}, "../data/ph_emission/rph/Bs_extr/JPZ/rate_SD_INT.dat", "", "");
+
+ 
+  }
+
 
   //###########################################################################
 
@@ -4624,9 +5191,9 @@ void Compute_Bs_mumu_gamma() {
 
 	auto FV = [&FV_interpol, &ijack](double x)  { return FV_interpol[ijack](x) ;};
 	auto FA = [&FA_interpol, &ijack](double x)  { return FA_interpol[ijack](x) ;};
-	auto FV_T = [&FTV_interpol, &pretty_b_interpol, &evolutor_ZT, &ijack](double x) { return evolutor_ZT*(FTV_interpol[ijack](x) + pretty_b_interpol[ijack](x));};
-	auto FA_T = [&FTA_interpol, &pretty_b_interpol, &evolutor_ZT, &ijack](double x) { return evolutor_ZT*(FTA_interpol[ijack](x) + pretty_b_interpol[ijack](x));};
-	auto F_T_IM = [](double x) { return 0.0;};
+	auto FV_T = [&FTV_interpol, &pretty_b_interpol, &pretty_s_RE,  &evolutor_ZT, &ijack](double x) { return evolutor_ZT*(FTV_interpol[ijack](x) + pretty_b_interpol[ijack](x) +pretty_s_RE.distr[ijack] );};
+	auto FA_T = [&FTA_interpol, &pretty_b_interpol, &pretty_s_RE, &evolutor_ZT, &ijack](double x) { return evolutor_ZT*(FTA_interpol[ijack](x) + pretty_b_interpol[ijack](x)  +pretty_s_RE.distr[ijack] );};
+	auto F_T_IM = [&pretty_s_IM, &ijack](double x) { return pretty_s_IM.distr[ijack];};
 	
     
 
@@ -4723,7 +5290,19 @@ void Compute_Bs_mumu_gamma() {
     }
   
 
-    
+    //Print table on screen
+    cout<<" & " <<"\\multicolumn{7}{c}{$\\sqrt{q^{2}_{\\rm cut}} [\\rm{GeV}]$} \\hline"<<endl;  
+    cout<<" & $4.0$ & $4.1$ & $4.2$ & $4.3$ & $4.4$ & $4.5$ & $4.6$ \\hline"<<endl;
+    cout<<" $\\mathcal{B}_{\\rm SD+INT}$  ";
+    for(int i=0;i<7;i++) cout<<"& $ "<<(rate_Bs_SD + rate_Bs_INT).distr_list[4*i].ave()<<"("<<(rate_Bs_SD + rate_Bs_INT).distr_list[4*i].err()<<")$ ";
+    cout<<"\\hline"<<endl;
+    cout<<" & $4.7$ & $4.8$ & $4.9$ & $5.0$ & $5.1$ & $5.2$ & $5.3$ \\hline"<<endl;
+    cout<<" $\\mathcal{B}_{\\rm SD+INT}$  ";
+    for(int i=7;i<14;i++) cout<<"& $ "<<(rate_Bs_SD + rate_Bs_INT).distr_list[4*i].ave()<<"("<<(rate_Bs_SD + rate_Bs_INT).distr_list[4*i].err()<<")$ ";
+    cout<<"\\hline"<<endl;
+
+    cout<<"printing actual q_max: "<<endl;
+    for(int i=0;i<14;i++) cout<<qmin_list[i*4]<<endl;
     
     //Bs
     Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_Bs_SD.ave(), rate_Bs_SD.err(), rate_Bs_SD_NOCH.ave(), rate_Bs_SD_NOCH.err() }, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_Bs_SD.dat", "", "#qmin[GeV] xg_min xg_max  rate ");
@@ -4738,6 +5317,8 @@ void Compute_Bs_mumu_gamma() {
     Print_To_File( {}, { qmin_list, xg_max_list, AFB_Bs.ave(), AFB_Bs.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/AFB_Bs.dat", "", "#q[GeV] xg   AFG    ");
      
     cout<<"Done! Bye"<<endl;
+
+  }
     
     return;
 }
@@ -6038,11 +6619,11 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
       //improved estimator (zero-momentum-subtracted FB)
 
-      distr_t_list Ax_T_tens_u_impr_11 = Ax_T_tens_u[1-off_i][1-off_T] -  1.0/((1.0/TA0_u_distr_11)*EXP_PH);
-      distr_t_list Ax_T_tens_u_impr_22 = Ax_T_tens_u[2-off_i][2-off_T] -  1.0/((1.0/TA0_u_distr_22)*EXP_PH);
+      distr_t_list Ax_T_tens_u_impr_11 = Ax_T_tens_u[1-off_i][1-off_T] -  0.0*1.0/((1.0/TA0_u_distr_11)*EXP_PH);
+      distr_t_list Ax_T_tens_u_impr_22 = Ax_T_tens_u[2-off_i][2-off_T] -  0.0*1.0/((1.0/TA0_u_distr_22)*EXP_PH);
 
-      distr_t_list Ax_T_tens_d_impr_11 = Ax_T_tens_d[1-off_i][1-off_T] - 1.0/((1.0/TA0_d_distr_11)*EXP_PH) ;
-      distr_t_list Ax_T_tens_d_impr_22 = Ax_T_tens_d[2-off_i][2-off_T] - 1.0/((1.0/TA0_d_distr_22)*EXP_PH);
+      distr_t_list Ax_T_tens_d_impr_11 = Ax_T_tens_d[1-off_i][1-off_T] - 0.0*1.0/((1.0/TA0_d_distr_11)*EXP_PH) ;
+      distr_t_list Ax_T_tens_d_impr_22 = Ax_T_tens_d[2-off_i][2-off_T] - 0.0*1.0/((1.0/TA0_d_distr_22)*EXP_PH);
     
       //Compute FV and FA
       distr_t_list FA_T_distr =0.5*RF*(Z_T/Zv)*(FP_SM/(-1.0*FA0_distr))*( Ax_T_tens[1-off_i][1-off_T]*(1-xg/2) - sign_kz*Vec_T_tens[1-off_i][2-off_T]*(xg/2) + Ax_T_tens[2-off_i][2-off_T]*(1-xg/2) +sign_kz*Vec_T_tens[2-off_i][1-off_T]*(xg/2))*(1.0/Eg)*EXP_PH;
@@ -6316,9 +6897,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   //continuum extrapolation
 
 
- 
- 
-
+  
   if(Perform_continuum_extrapolation) {
 
 
@@ -8919,7 +9498,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   
 
   
-
+  
 
 
   //MP/FP
@@ -9067,37 +9646,41 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
   cout<<"ch2(phi): "<< ch2_phi/dof_K<<endl;
   cout<<"ch2(MP/FP): "<<ch2_MP_ov_FP/dof_K<<endl;
   cout<<"###################################"<<endl;
-  c_comb++;
+  c_comb++; 
   }
 
-
-  //print ch2 summary
-  cout<<"#######   SUMMARY OF Ch2 ##########"<<endl;
-  cout<<"### FA u ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_u[ixg-1]<<endl; }
-  cout<<"### FA d ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_d[ixg-1]<<endl; }
-  cout<<"### FV u ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_u[ixg-1]<<endl; }
-  cout<<"### FV d ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_d[ixg-1]<<endl; }
-  cout<<"### FAT u ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_T_u[ixg-1]<<endl; }
-  cout<<"### FAT d ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_T_d[ixg-1]<<endl; }
-  cout<<"### FVT u ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_T_u[ixg-1]<<endl; }
-  cout<<"### FVT d ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_T_d[ixg-1]<<endl; }
-  cout<<"### FB u ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FB_u[ixg-1]<<endl; }
-  cout<<"### FB d ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FB_d[ixg-1]<<endl; }
-  cout<<"### FT u ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FT_u[ixg-1]<<endl; }
-  cout<<"### FT d ###"<<endl;
-  for(int ixg=1;ixg<num_xg;ixg++) { cout<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FT_d[ixg-1]<<endl; }
+  //print ch2 summa
   
+  ofstream print_ch2("ch2_"+MESON+"_"+Analysis_tag+".txt");
+
+  
+  print_ch2<<"#######   SUMMARY OF Ch2 ##########"<<endl;
+  print_ch2<<"### FA u ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_u[ixg-1]<<endl; }
+  print_ch2<<"### FA d ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_d[ixg-1]<<endl; }
+  print_ch2<<"### FV u ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_u[ixg-1]<<endl; }
+  print_ch2<<"### FV d ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_d[ixg-1]<<endl; }
+  print_ch2<<"### FAT u ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_T_u[ixg-1]<<endl; }
+  print_ch2<<"### FAT d ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FA_T_d[ixg-1]<<endl; }
+  print_ch2<<"### FVT u ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_T_u[ixg-1]<<endl; }
+  print_ch2<<"### FVT d ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FV_T_d[ixg-1]<<endl; }
+  print_ch2<<"### FB u ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FB_u[ixg-1]<<endl; }
+  print_ch2<<"### FB d ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FB_d[ixg-1]<<endl; }
+  print_ch2<<"### FT u ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FT_u[ixg-1]<<endl; }
+  print_ch2<<"### FT d ###"<<endl;
+  for(int ixg=1;ixg<num_xg;ixg++) { print_ch2<<"ch2(xg: "<<Bs_xg_t_list[ixg-1]<<"): "<<ch2_FT_d[ixg-1]<<endl; }
+
+  print_ch2.close();
  
 
 

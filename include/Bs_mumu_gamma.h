@@ -16,6 +16,14 @@
 #include "virtual_FF_t_interval_list.h"
 #include "ChPT_form_factors.h"
 #include "virtual_07.h"
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/ostreamwrapper.h"
+#include "rapidjson/error/en.h"
+#include "rapidjson/error/error.h"
 
 using namespace std;
 

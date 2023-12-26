@@ -189,7 +189,18 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
     //do nothing
 
   }
-  
+
+  else if(Analysis_Mode=="scale_setting") {
+
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode=="l7_Weinberg") {
+
+    //do nothing
+
+  }
   
   else crash("Analysis_Mode: "+Analysis_Mode+" not found");
   
@@ -284,6 +295,14 @@ void MasterClass_analysis::Analysis_manager() {
 
   if(Analysis_Mode=="RC_analysis") {
     Perform_RC_analysis();
+  }
+
+  if(Analysis_Mode=="scale_setting") {
+    Get_scale_setting();
+  }
+
+  if(Analysis_Mode=="l7_Weinberg") {
+    l7_Weinberg();
   }
   
   

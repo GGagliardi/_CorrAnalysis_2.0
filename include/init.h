@@ -19,6 +19,8 @@
 #include "Bs_mumu_gamma.h"
 #include "HVP.h"
 #include "RC_analysis.h"
+#include "scale_setting_main.h"
+#include "l7_Weinberg.h"
 
 using namespace std;
 

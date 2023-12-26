@@ -155,6 +155,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00039;
     a_from_afp =  0.0907593; //0.0908026;
     a_from_afp_err = 0.00053917; //0.000535517;
+    a_from_afp_FLAG= 0.0906879;
+    a_from_afp_FLAG_err= 0.000509984;
     a_nucleon=0.09295;
     a_nucleon_err=0.00047;
     Za=0.724;
@@ -216,6 +218,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00012;
     a_from_afp= 0.08829; //0.079616;
     a_from_afp_err = 0.00012;
+    a_from_afp_FLAG= 0.08829; //0.079616;
+    a_from_afp_FLAG_err = 0.00012;
     a_nucleon=0.08829;
     a_nucleon_err=0.00012;
     Za=0;
@@ -252,6 +256,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00030;
     a_from_afp= 0.0795739; //0.079616;
     a_from_afp_err = 0.000132632; // 0.000127363;
+    a_from_afp_FLAG= 0.0795189;
+    a_from_afp_FLAG_err=3.32677e-05;
     a_nucleon=0.07975;
     a_nucleon_err=0.00032;
     Za=0.746;
@@ -302,6 +308,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00026;
     a_from_afp = 0.0682083;// 0.0682068;
     a_from_afp_err  = 0.000134938;// 0.000117345;
+    a_from_afp_FLAG=0.0682856;
+    a_from_afp_FLAG_err=7.09949e-05;
     a_nucleon=0.06860;
     a_nucleon_err=0.00020;
     Za=0.761;
@@ -339,6 +347,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err=  0.0002;
     a_from_afp = 0.0569183;// 0.0569252;
     a_from_afp_err = 0.000115387;// 0.000103587;
+    a_from_afp_FLAG=0.056901;
+    a_from_afp_FLAG_err=5.29205e-05;
     a_nucleon= 0.05777; //fake
     a_nucleon_err= 0.0002; //fake
     Za= 0.76217;
@@ -371,6 +381,48 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
 
 
   }
+
+  else if(Tag.substr(1,1)=="E") {
+    a= 0;
+    a_err=  0.0;
+    a_from_afp = 0.0488471;
+    a_from_afp_err = 5.34768e-05;
+    a_from_afp_FLAG= 0.0487416;
+    a_from_afp_FLAG_err = 6.10718e-05;
+    a_nucleon= 0.0; //fake
+    a_nucleon_err= 0.0; //fake
+    Za= 0.0;
+    Za_err=0.0;
+    Za_WI = 0.0 ;
+    Za_WI_err = 0.0 ;
+    Zv_WI = 0.0 ;
+    Zv_WI_err = 0.0;
+    Zv= 0.0;
+    Zv_err = 0.0;
+
+    //
+    Za_WI_strange= 0.7854226014701348;
+    Za_WI_strange_err = 7.397851471381889e-05;
+    
+    Zv_WI_strange = 0.7582458516592967;
+    Zv_WI_strange_err = 6.477780894772179e-06;
+
+    ZT_RI2 = 0.0;
+    ZT_RI2_err = 0.0;
+
+    ZT_RI2_M3= 0.0;
+    ZT_RI2_M3_err= 0.0;
+
+      
+    ms_L= 0.011; ms_M= 0.012;
+    ms_L_new= 0.011; ms_M_new= 0.012;
+    mc_L=0.165; mc_M=0.175; mc_H=0.175; //mc_H is fake 
+
+
+
+  }
+
+  
 
   else crash("In LatticeInfo::LatInfo_new_ens Ensemble: "+Tag+" not found while reading lattice spacing");
 
@@ -419,6 +471,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   
   else if(Tag=="cD211a.054.96") {
     L=96; T=192; ml=0.00054;
+  }
+
+  else if(Tag=="cE211a.044.112") {
+    L=112; T=2*112; ml=0.00044;
   }
   else crash("In LatticeInfo::LatInfo_new_ens Ensemble: "+Tag+" not found");
   
