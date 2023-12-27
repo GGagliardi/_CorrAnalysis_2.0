@@ -280,6 +280,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
       Za_WI_strange_err = 0.00026;
       Zv_WI_strange = 0.706382;
       Zv_WI_strange_err = 2.4e-5;
+
+      ms_L=0.019; ms_M=0.021;
+      ms_L_new=0.018; ms_M_new=0.020;
+      mc_L= 0.21000; mc_M=0.23000; mc_H=0.25000;
     
     }
     else if (Tag == "cB211b.072.96") {
@@ -294,13 +298,15 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
       Za_WI_strange_err = 0.00015;
       Zv_WI_strange = 0.706406;
       Zv_WI_strange_err = 1.7e-5;
+      
+      ms_L=0.019; ms_M=0.021;
+      ms_L_new=0.018; ms_M_new=0.019;
+      mc_L= 0.21000; mc_M=0.23000; mc_H=0.25000;
    
     }
     Zv=0.7131;
     Zv_err=0.0006;
-    ms_L=0.019; ms_M=0.021;
-    ms_L_new=0.018; ms_M_new=0.020;
-    mc_L= 0.21000; mc_M=0.23000; mc_H=0.25000;
+   
   }
 
   else if(Tag.substr(1,1)=="C") {
@@ -387,8 +393,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err=  0.0;
     a_from_afp = 0.0488471;
     a_from_afp_err = 5.34768e-05;
-    a_from_afp_FLAG= 0.0487416;
-    a_from_afp_FLAG_err = 6.10718e-05;
+    a_from_afp_FLAG= 0.0489042;
+    a_from_afp_FLAG_err = 6.01389e-05;
     a_nucleon= 0.0; //fake
     a_nucleon_err= 0.0; //fake
     Za= 0.0;

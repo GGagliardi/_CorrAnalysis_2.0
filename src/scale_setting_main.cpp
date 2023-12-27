@@ -43,8 +43,9 @@ void Get_scale_setting() {
       //read binary
           
       cout<<"Analyzing Ens: "<<Ens_T1[it]<<endl<<flush;
+
       
-	FILE *stream = fopen( ("../gm2_tau_rep_bin/"+Ens_T1[it]+"/ll_TM_P5P5").c_str(), "rb");
+      FILE *stream = fopen( ("../gm2_tau_rep_bin/"+Ens_T1[it]+"/"+((Ens_TT1[it]=="cE211a.044.112")?"mix_l_l_TM_P5P5":"ll_TM_P5P5")).c_str(), "rb");
         size_t Nconfs, T, Nhits;
 	bin_read(Nconfs, stream);
 	bin_read(Nhits, stream);
@@ -192,11 +193,11 @@ void Get_scale_setting() {
       CorrAnalysis Corr(UseJack, Njacks,Nboots);
       Corr.Nt = pt2_pion.nrows[iens];
       //Analyze correlators
-      if(pt2_pion.Tag[iens].substr(1,12)=="B211b.072.96") {Corr.Tmin=30; Corr.Tmax=70;}
-      else if(pt2_pion.Tag[iens].substr(1,12)=="B211b.072.64") { Corr.Tmin=27; Corr.Tmax=50;}
-      else if(pt2_pion.Tag[iens].substr(1,1)=="C") {Corr.Tmin=40; Corr.Tmax=60;}
+      if(pt2_pion.Tag[iens].substr(1,12)=="B211b.072.96") {Corr.Tmin=55; Corr.Tmax=80;}
+      else if(pt2_pion.Tag[iens].substr(1,12)=="B211b.072.64") { Corr.Tmin=40; Corr.Tmax=56;}
+      else if(pt2_pion.Tag[iens].substr(1,1)=="C") {Corr.Tmin=40; Corr.Tmax=70;}
       else if(pt2_pion.Tag[iens].substr(1,1)=="D") {Corr.Tmin=41; Corr.Tmax=80;}
-      else if(pt2_pion.Tag[iens].substr(1,1)=="E") {Corr.Tmin=63; Corr.Tmax=90;}
+      else if(pt2_pion.Tag[iens].substr(1,1)=="E") {Corr.Tmin=80; Corr.Tmax=100;}
       else crash("In scale setting analysis cannot find Tmin,Tmax for ensemble: "+pt2_pion.Tag[iens]);
       distr_t_list pion_corr = Corr.corr_t(pt2_pion.col(0)[iens], "");
       distr_t_list Mpi_eff_distr = Corr.effective_mass_t(pt2_pion.col(0)[iens], "../data/scale_setting/Mp/Mpi_"+pt2_pion.Tag[iens]+".dat");

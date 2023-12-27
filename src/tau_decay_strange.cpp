@@ -17,8 +17,8 @@ bool tau_strange_verbosity_lev=1;
 const double GF= 1.1663787*1e-5; //[GeV^-2]
 //CKM matrix elements
 const double m_tau = 1.77686;
-const double m_kappa = 0.4946; //old is 0.4942
-const double m_kappa_err = 0.0004e-5;
+const double m_kappa = 0.494600000; //old is 0.4942
+const double m_kappa_err = 0.0004e-8;
 const double m_etas = 0.68989;
 const double m_etas_err= 0.00050;
 const double E0_l = 0.9*m_kappa;
@@ -36,7 +36,7 @@ const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
-bool Skip_spectral_density_analysis_strange=true;
+bool Skip_spectral_density_analysis_strange=false;
 const bool Perform_continuum_extrapolation=false;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
@@ -54,6 +54,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   if(Ens=="cZ211a.077.64") Ens = "cB211b.072.64";
 
   if(Ens=="cE211a.044.112") Ens="cD211a.054.96";
+  if(Ens=="cB211a.072.96") Ens="cB211a.072.64";
 
   
   if( reg=="tm") {
@@ -173,13 +174,13 @@ void tau_decay_analysis_strange() {
   //Vfloat Emax_list({4.0, 4.0 , 4.0, 4.0, 5.0, 4.0});
   //vector<bool> Is_Emax_Finite({1,1,1,1,1,0});
 
-  Vfloat betas({ 3.99, 2.99, 4.99, 5.99, 2.99});
-  Vfloat Emax_list({4.0, 4.0 , 4.0, 4.0, 5.0});
-  vector<bool> Is_Emax_Finite({1,1,1,1,1});
+  //Vfloat betas({ 3.99, 2.99, 4.99, 5.99, 2.99});
+  //Vfloat Emax_list({4.0, 4.0 , 4.0, 4.0, 5.0});
+  //vector<bool> Is_Emax_Finite({1,1,1,1,1});
   
-  //Vfloat betas({ 3.99 });
-  //Vfloat Emax_list({4.0});
-  //vector<bool> Is_Emax_Finite({1});
+  Vfloat betas({ 3.99 , 4.99 });
+  Vfloat Emax_list({4.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,1});
 
   
 
@@ -309,8 +310,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     boost::filesystem::create_directory("../tau_decay_strange");
     
 
-    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.72.64", "D.54.96", "E.44.112"});
-    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64","cD211a.054.96", "cE211a.044.112"});
+    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.72.64", "B.72.96" , "D.54.96", "E.44.112"});
+    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64", "cB211b.072.96" , "cD211a.054.96", "cE211a.044.112"});
 
     for( int it=0; it<(signed)Ens_T1.size(); it++) {
 
@@ -1068,7 +1069,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     int Tmin_1_minus_OS=0; int Tmax_1_minus_OS=0;
     int Tmin_1_plus_OS=0;  int Tmax_1_plus_OS=0;
     
-    if(ll_data_OS_P5P5.Tag[iens] == "cB211b.072.64") {
+    if(ll_data_OS_P5P5.Tag[iens] == "cB211b.072.64" || ll_data_OS_P5P5.Tag[iens] == "cB211b.072.96" ) {
       
       Tmin_1_minus_tm=21;   Tmax_1_minus_tm=26;
       Tmin_1_plus_tm=18;   Tmax_1_plus_tm=21;
@@ -1144,7 +1145,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
     int Tmin_P5=0;
     int Tmax_P5=0;
-    if( ls_data_tm_VKVK.Tag[iens] =="cB211b.072.96")     { Tmin_P5=30; Tmax_P5=70;}
+    if( ls_data_tm_VKVK.Tag[iens] =="cB211b.072.96")     { Tmin_P5=33; Tmax_P5=59;}
     else if(ls_data_tm_VKVK.Tag[iens] =="cB211b.072.64") { Tmin_P5=30; Tmax_P5=60;}
     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C")  { Tmin_P5=40; Tmax_P5=70;}
     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D")  { Tmin_P5=41; Tmax_P5=80;}
