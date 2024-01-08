@@ -44,7 +44,7 @@ using namespace std;
 
 double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, string channel, string reg, double s, string Ens ) {
 
-  if(channel=="T") channel="Vii";
+  if(channel=="T") channel="Aii";
   if(channel=="L") channel="A0";
  
   double Ra0=-1;
@@ -686,6 +686,10 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   double a_A_ave, a_A_err, a_B_ave, a_B_err, a_C_ave, a_C_err, a_D_ave, a_D_err, a_Z_ave, a_Z_err, a_E_ave, a_E_err;
   double ZV_A_ave, ZV_A_err, ZV_B_ave, ZV_B_err, ZV_C_ave, ZV_C_err, ZV_D_ave, ZV_D_err, ZV_Z_ave, ZV_Z_err, ZV_E_ave, ZV_E_err ;
   double ZA_A_ave, ZA_A_err, ZA_B_ave, ZA_B_err, ZA_C_ave, ZA_C_err, ZA_D_ave, ZA_D_err, ZA_Z_ave, ZA_Z_err, ZA_E_ave, ZA_E_err;
+
+  distr_t ZV_A_boot(false), ZV_B_boot(false), ZV_C_boot(false), ZV_D_boot(false), ZV_E_boot(false);
+  distr_t ZA_A_boot(false), ZA_B_boot(false), ZA_C_boot(false), ZA_D_boot(false), ZA_E_boot(false);
+  
   a_info.LatInfo_new_ens("cA211a.53.24");
   a_A_ave= a_info.a_from_afp_FLAG;
   a_A_err= a_info.a_from_afp_FLAG_err;
@@ -776,6 +780,22 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       ZV_E.distr.push_back(  ZV_E_ave + GM()*ZV_E_err);
       
     }
+  }
+
+  for(int iboot=0;iboot<Nboots;iboot++) {
+    ZA_A_boot.distr.push_back( ZA_A_ave + GM()*ZA_A_err);
+    ZV_A_boot.distr.push_back(  ZV_A_ave + GM()*ZV_A_err);
+    ZA_B_boot.distr.push_back(  ZA_B_ave + GM()*ZA_B_err);
+    ZV_B_boot.distr.push_back(  ZV_B_ave + GM()*ZV_B_err);
+    ZA_C_boot.distr.push_back(  ZA_C_ave + GM()*ZA_C_err);
+    ZV_C_boot.distr.push_back(  ZV_C_ave + GM()*ZV_C_err);
+    ZA_D_boot.distr.push_back(  ZA_D_ave + GM()*ZA_D_err);
+    ZV_D_boot.distr.push_back(  ZV_D_ave + GM()*ZV_D_err);
+    ZA_E_boot.distr.push_back(  ZA_E_ave + GM()*ZA_E_err);
+    ZV_E_boot.distr.push_back(  ZV_E_ave + GM()*ZV_E_err);
+    
+
+
   }
 
 
@@ -956,11 +976,11 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      //get lattice spacing
      distr_t a_distr(UseJack);
      distr_t Zv(UseJack), Za(UseJack);
-     if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; }
-     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C;}
-     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D;}
-     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="Z") {a_distr=a_Z; Zv = ZV_Z; Za = ZA_Z;}
-     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="E") {a_distr=a_E; Zv = ZV_E; Za = ZA_E;}
+     distr_t Zv_BOOT(false), Za_BOOT(false);
+     if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; Zv_BOOT= ZV_B_boot; Za_BOOT=ZA_B_boot; }
+     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C; Zv_BOOT= ZV_C_boot; Za_BOOT=ZA_C_boot;   }
+     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; Zv_BOOT= ZV_D_boot; Za_BOOT=ZA_D_boot; }
+     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="E") {a_distr=a_E; Zv = ZV_E; Za = ZA_E; Zv_BOOT= ZV_E_boot; Za_BOOT=ZA_E_boot; }
      else crash("lattice spacing distribution for Ens: "+ls_data_tm_VKVK.Tag[iens]+" not found");
      
   
@@ -1019,8 +1039,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_tm_block_1_distr = Corr_block_1.corr_t(ls_data_tm_A0A0.col(0)[iens], "");
     V0_tm_block_1_distr = Corr_block_1.corr_t(ls_data_tm_V0V0.col(0)[iens], "");
 
-    T_tm_block_1_distr = Vk_tm_block_1_distr + Ak_tm_block_1_distr;
-    L_tm_block_1_distr = V0_tm_block_1_distr + A0_tm_block_1_distr;
+    T_tm_block_1_distr = Za_BOOT*Za_BOOT*Vk_tm_block_1_distr + Zv_BOOT*Zv_BOOT*Ak_tm_block_1_distr;
+    L_tm_block_1_distr = Za_BOOT*Za_BOOT*V0_tm_block_1_distr + Zv_BOOT*Zv_BOOT*A0_tm_block_1_distr;
 
     //light-OS sector
     Vk_OS_block_1_distr = Corr_block_1.corr_t(ls_data_OS_VKVK.col(0)[iens], "");
@@ -1028,8 +1048,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_OS_block_1_distr = Corr_block_1.corr_t(ls_data_OS_A0A0.col(0)[iens], "");
     V0_OS_block_1_distr = Corr_block_1.corr_t(ls_data_OS_V0V0.col(0)[iens], "");
 
-    T_OS_block_1_distr = Vk_OS_block_1_distr + Ak_OS_block_1_distr;
-    L_OS_block_1_distr = V0_OS_block_1_distr + A0_OS_block_1_distr;
+    T_OS_block_1_distr = Zv_BOOT*Zv_BOOT*Vk_OS_block_1_distr + Za_BOOT*Za_BOOT*Ak_OS_block_1_distr;
+    L_OS_block_1_distr = Zv_BOOT*Zv_BOOT*V0_OS_block_1_distr + Za_BOOT*Za_BOOT*A0_OS_block_1_distr;
 
     
 
@@ -1066,8 +1086,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     V0_H_tm_distr = Corr.corr_t(ls_H_data_tm_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
     P5_H_tm_distr = Corr.corr_t(ls_H_data_tm_P5P5.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/P5_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
 
-    T_H_tm_distr= Vk_H_tm_distr + Ak_H_tm_distr;
-    L_H_tm_distr= V0_H_tm_distr + A0_H_tm_distr;
+    T_H_tm_distr= Za*Za*Vk_H_tm_distr + Zv*Zv*Ak_H_tm_distr;
+    L_H_tm_distr= Za*Za*V0_H_tm_distr + Zv*Zv*A0_H_tm_distr;
 
     //light-OS sector
     Vk_H_OS_distr = Corr.corr_t(ls_H_data_OS_VKVK.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/Vk_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
@@ -1075,8 +1095,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_H_OS_distr = Corr.corr_t(ls_H_data_OS_A0A0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/A0_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
     V0_H_OS_distr = Corr.corr_t(ls_H_data_OS_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
 
-    T_H_OS_distr= Vk_H_OS_distr + Ak_H_OS_distr;
-    L_H_OS_distr= V0_H_OS_distr + A0_H_OS_distr;
+    T_H_OS_distr= Zv*Zv*Vk_H_OS_distr + Za*Za*Ak_H_OS_distr;
+    L_H_OS_distr= Zv*Zv*V0_H_OS_distr + Za*Za*A0_H_OS_distr;
 
     //analyze data with Njacks=Nconfs
     //light-tm sector
@@ -1085,8 +1105,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_H_tm_block_1_distr = Corr_block_1.corr_t(ls_H_data_tm_A0A0.col(0)[iens], "");
     V0_H_tm_block_1_distr = Corr_block_1.corr_t(ls_H_data_tm_V0V0.col(0)[iens], "");
 
-    T_H_tm_block_1_distr = Vk_H_tm_block_1_distr + Ak_H_tm_block_1_distr;
-    L_H_tm_block_1_distr = V0_H_tm_block_1_distr + A0_H_tm_block_1_distr;
+    T_H_tm_block_1_distr = Za_BOOT*Za_BOOT*Vk_H_tm_block_1_distr + Zv_BOOT*Zv_BOOT*Ak_H_tm_block_1_distr;
+    L_H_tm_block_1_distr = Za_BOOT*Za_BOOT*V0_H_tm_block_1_distr + Zv_BOOT*Zv_BOOT*A0_H_tm_block_1_distr;
 
     //light-OS sector
     Vk_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_VKVK.col(0)[iens], "");
@@ -1094,8 +1114,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_A0A0.col(0)[iens], "");
     V0_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_V0V0.col(0)[iens], "");
 
-    T_H_OS_block_1_distr = Vk_H_OS_block_1_distr + Ak_H_OS_block_1_distr;
-    L_H_OS_block_1_distr = V0_H_OS_block_1_distr + A0_H_OS_block_1_distr;
+    T_H_OS_block_1_distr = Zv_BOOT*Zv_BOOT*Vk_H_OS_block_1_distr + Za_BOOT*Za_BOOT*Ak_H_OS_block_1_distr;
+    L_H_OS_block_1_distr = Zv_BOOT*Zv_BOOT*V0_H_OS_block_1_distr + Za_BOOT*Za_BOOT*A0_H_OS_block_1_distr;
 
     //############# HEAVIER MASS ################//
 
@@ -2130,7 +2150,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       D(2);
       
-      Br_sigma_T_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_T, prec, SM_TYPE_1,K1, T_tm, syst_T_tm, mult, lT_tm, MODE, "tm", "T_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_T_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_T, prec, SM_TYPE_1 ,K1, T_tm, syst_T_tm, mult, lT_tm, MODE, "tm", "T_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       Br_s_sigma_T_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_T, prec, SM_TYPE_1, K1_shifted, T_tm, syst_s_T_tm, mult, lT_tm, MODE, "tm", "T_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
       D(3);
@@ -2153,6 +2173,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "T", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
       Br_sigma_T_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_T, prec, SM_TYPE_1,K1, T_OS, syst_T_OS, mult, lT_OS, MODE, "OS", "T_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+
+      D(6);
+      
       Br_s_sigma_T_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_T, prec, SM_TYPE_1,K1_shifted, T_OS, syst_s_T_OS, mult, lT_OS, MODE, "OS", "T_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
       syst_s_T_OS = fabs( Br_s_sigma_T_OS.ave() - Br_sigma_T_OS.ave());
