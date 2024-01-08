@@ -186,6 +186,8 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
 
 
 
+
+
 void HVP() {
 
 
@@ -457,6 +459,66 @@ void HVP() {
     }
 
 
+    bool Get_ASCII_charm= true;
+
+    if(Get_ASCII_charm) {
+    //read binary files
+    boost::filesystem::create_directory("../charm_E");
+    
+
+    vector<string> Ens_T1({"E.44.112"});
+    vector<string> Ens_TT1({"cE211a.044.112"});
+
+    for( int it=0; it<(signed)Ens_T1.size(); it++) {
+
+      vector<string> channels({"mix_s_c1",  "mix_s_c2", "mix_s_c3"});
+
+      for(auto &channel : channels) {
+	boost::filesystem::create_directory("../charm_E/"+channel);
+	boost::filesystem::create_directory("../charm_E/"+channel+"/"+Ens_TT1[it]);
+      }
+      //read binary
+      vector<string> Corr_tags({"TM_P5P5", "OS_P5P5"});
+
+          
+      for(int id=0; id<(signed)Corr_tags.size(); id++) {
+
+	cout<<"Corr: "<<Corr_tags[id]<<endl;
+	for( auto &channel: channels) {
+
+	FILE *stream = fopen( ("../charm_E_bin/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
+        size_t Nconfs, T, Nhits;
+	bin_read(Nconfs, stream);
+	bin_read(Nhits, stream);
+	bin_read(T, stream);
+	cout<<"channel: "<<channel<<endl;
+	cout<<"Nconfs: "<<Nconfs<<endl;
+	cout<<"T: "<<T<<" "<<T/2+1<<endl;
+	cout<<"Nhits: "<<Nhits<<endl;
+	for(size_t iconf=0;iconf<Nconfs;iconf++) {
+	  vector<double> C(T/2+1);
+	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
+	  boost::filesystem::create_directory("../charm_E/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf));
+	  ofstream PrintCorr("../charm_E/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf)+"/mes_contr_"+channel+"_"+Corr_tags[id]);
+	  PrintCorr.precision(16);
+	  PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
+	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
+	  if(Corr_tags[id].substr(3,4) == "VKTK" || Corr_tags[id].substr(3,4) == "TKVK") { for(size_t t=T/2+1; t<T;t++) PrintCorr<<-1*C[T-t]<<endl;   }
+	  else  {for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;}
+	  PrintCorr.close();
+	
+	}
+
+	fclose(stream);
+
+	}
+	
+      }
+    }
+    }
+
+    
+
     auto Sort_easy = [](string A, string B) {
 
       int conf_length_A= A.length();
@@ -475,7 +537,7 @@ void HVP() {
     };
    
 
-    D(1);
+  
 
     data_t V_strange_L, V_strange_OS_L, V_strange_M, V_strange_OS_M;
     data_t corr_P5P5_strange, corr_P5P5_OS_strange, corr_P5P5_strange_heavy, corr_P5P5_OS_strange_heavy;
@@ -484,37 +546,69 @@ void HVP() {
     //L
     V_strange_L.Read("../E112_RCs/mix_s1_s1", "mes_contr_mix_s1_s1_TM_VKVK", "VKVK", Sort_easy);
     V_strange_OS_L.Read("../E112_RCs/mix_s1_s1", "mes_contr_mix_s1_s1_OS_VKVK", "VKVK", Sort_easy);
-    D(2);
     //M
     V_strange_M.Read("../E112_RCs/mix_s2_s2", "mes_contr_mix_s2_s2_TM_VKVK", "VKVK", Sort_easy); 
     V_strange_OS_M.Read("../E112_RCs/mix_s2_s2", "mes_contr_mix_s2_s2_OS_VKVK", "VKVK", Sort_easy);
-    D(3);
     //P5P5
     corr_P5P5_strange.Read("../E112_RCs/mix_s1_s1", "mes_contr_mix_s1_s1_TM_P5P5", "P5P5", Sort_easy);
     corr_P5P5_OS_strange.Read("../E112_RCs/mix_s1_s1", "mes_contr_mix_s1_s1_OS_P5P5", "P5P5", Sort_easy);
     corr_P5P5_strange_heavy.Read("../E112_RCs/mix_s2_s2", "mes_contr_mix_s2_s2_TM_P5P5", "P5P5", Sort_easy);
     corr_P5P5_OS_strange_heavy.Read("../E112_RCs/mix_s2_s2", "mes_contr_mix_s2_s2_OS_P5P5","P5P5",Sort_easy);
-    D(4);
     //A0P5
     corr_A0P5_strange.Read("../E112_RCs/mix_s1_s1", "mes_contr_mix_s1_s1_TM_A0P5", "A0P5", Sort_easy);
     corr_A0P5_OS_strange.Read("../E112_RCs/mix_s1_s1", "mes_contr_mix_s1_s1_OS_A0P5", "A0P5", Sort_easy);
     corr_A0P5_strange_heavy.Read("../E112_RCs/mix_s2_s2", "mes_contr_mix_s2_s2_TM_A0P5", "A0P5", Sort_easy);
     corr_A0P5_OS_strange_heavy.Read("../E112_RCs/mix_s2_s2", "mes_contr_mix_s2_s2_OS_A0P5", "A0P5", Sort_easy);
-    D(5);
     //VKVK light
     data_t V_light_tm, V_light_OS;
     V_light_tm.Read("../E112_RCs/mix_l_l", "mes_contr_mix_l_l_TM_VKVK", "VKVK", Sort_easy);
     V_light_OS.Read("../E112_RCs/mix_l_l", "mes_contr_mix_l_l_OS_VKVK", "VKVK", Sort_easy);
     int id_E=0;
     
-    D(6);
-  
-  CorrAnalysis Corr(UseJack, Njacks,100);
-  Corr.Nt = V_strange_L.nrows[id_E];
+    CorrAnalysis Corr(UseJack, Njacks,100);
+    Corr.Nt = V_strange_L.nrows[id_E];
 
-  boost::filesystem::create_directory("../data/RC_analysis_E");
+    boost::filesystem::create_directory("../data/RC_analysis_E");
+
+    
+    data_t c1_s, c2_s, c3_s  ;
+
+
+    distr_t aE(UseJack);
+    for(int ijack=0;ijack<Njacks;ijack++) { aE.distr.push_back( 0.0489042 + GM()*6.01389e-05/sqrt(Njacks-1.0));}
+
+    aE = aE*fm_to_inv_Gev;
+
+    c1_s.Read("../charm_E/mix_s_c1", "mes_contr_mix_s_c1_TM_P5P5", "P5P5", Sort_easy);
+    c2_s.Read("../charm_E/mix_s_c2", "mes_contr_mix_s_c2_TM_P5P5", "P5P5", Sort_easy);
+    c3_s.Read("../charm_E/mix_s_c3", "mes_contr_mix_s_c3_TM_P5P5", "P5P5", Sort_easy);
+
+    distr_t_list corr_s_c1 = Corr.corr_t( c1_s.col(0)[id_E], "");
+    distr_t_list corr_s_c2 = Corr.corr_t( c2_s.col(0)[id_E], "");
+    distr_t_list corr_s_c3 = Corr.corr_t( c3_s.col(0)[id_E], "");
+
+    Corr.Tmin=49;
+    Corr.Tmax=85;
+
+
+    boost::filesystem::create_directory("../data/charmed_new_ens");
+    
+
+    distr_t eff_mass_Ds_1 = Corr.Fit_distr( Corr.effective_mass_t( corr_s_c1, "../data/charmed_new_ens/Ds_1"));
+    distr_t eff_mass_Ds_2 = Corr.Fit_distr( Corr.effective_mass_t( corr_s_c2, "../data/charmed_new_ens/Ds_2"));
+    distr_t eff_mass_Ds_3 = Corr.Fit_distr( Corr.effective_mass_t( corr_s_c3, "../data/charmed_new_ens/Ds_3"));
+
+    cout<<" Ds1: "<<( eff_mass_Ds_1/aE).ave()<<" +- "<<( eff_mass_Ds_1/aE).err()<<endl;
+
+    cout<<" Ds2: "<<( eff_mass_Ds_2/aE).ave()<<" +- "<<( eff_mass_Ds_3/aE).err()<<endl;
+
+    cout<<" Ds3: "<<( eff_mass_Ds_3/aE).ave()<<" +- "<<( eff_mass_Ds_3/aE).err()<<endl;
+
+    
   
 
+    
+    
   distr_t_list corr_s_V_L_tm = Corr.corr_t( V_strange_L.col(0)[id_E], "");
   distr_t_list corr_s_V_L_OS = Corr.corr_t( V_strange_OS_L.col(0)[id_E], "");
 

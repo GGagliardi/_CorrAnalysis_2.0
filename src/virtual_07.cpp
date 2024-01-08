@@ -284,6 +284,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   for(int ixg=0;ixg<4;ixg++) xg_list.distr_list.push_back( Get_id_distr(Njacks, UseJack)*(ixg+1)*0.1);
   vector<distr_t_list> F_T_u_list;
   vector<distr_t_list> F_T_d_I_list;
+  vector<distr_t_list> F_T_d_I_ori_list;
+  vector<distr_t_list> F_T_d_I_ori_sp_list;
   vector<distr_t_list> F_T_d_I_list_15;
   vector<distr_t_list> F_T_d_I_list_7;
   vector<distr_t_list> F_T_d_sp_I_list;
@@ -300,11 +302,16 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
   vector<distr_t_list> FV_T_d_sp_real_list;
   vector<distr_t_list> FA_T_d_sp_real_list;
+
+  vector<distr_t_list> reminder_F_T_d_list;
+  vector<distr_t_list> reminder_F_T_d_sp_list;
   
 
   vector<vector<distr_t_list>> F_T_d_MB_RE_sm_list(n_xg);
   vector<vector<distr_t_list>> F_T_d_MB_IM_sm_list(n_xg);
   vector<vector<distr_t_list>> F_T_d_MB_IM_Gauss_sm_list(n_xg);
+
+  vector<vector<distr_t_list>> F_T_d_MB_RE_sm_list_no_sub(n_xg);
    
 
   vector<vector<distr_t_list>> F_T_d_MB_RE_sm_list_15(n_xg);
@@ -333,6 +340,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
     F_T_u_list.emplace_back(UseJack);
     F_T_d_I_list.emplace_back(UseJack);
+    F_T_d_I_ori_list.emplace_back(UseJack);
+    F_T_d_I_ori_sp_list.emplace_back(UseJack);
     F_T_d_I_list_15.emplace_back(UseJack);
     F_T_d_I_list_7.emplace_back(UseJack);
     F_T_d_sp_I_list.emplace_back(UseJack);
@@ -352,6 +361,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
     FV_T_d_sp_real_list.emplace_back(UseJack);
     FA_T_d_sp_real_list.emplace_back(UseJack);
+
+    reminder_F_T_d_list.emplace_back(UseJack);
+    reminder_F_T_d_sp_list.emplace_back(UseJack);
 
     for(int iss=0; iss<(signed)sigmas_07_w0.size(); iss ++) {
 
@@ -373,6 +385,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       F_T_d_MB_RE_sm_list[ixg].emplace_back(UseJack);
       F_T_d_MB_IM_sm_list[ixg].emplace_back(UseJack);
       F_T_d_MB_IM_Gauss_sm_list[ixg].emplace_back(UseJack);
+
+      F_T_d_MB_RE_sm_list_no_sub[ixg].emplace_back(UseJack);
 
       F_T_d_MB_RE_sm_list_15[ixg].emplace_back(UseJack);
       F_T_d_MB_IM_sm_list_15[ixg].emplace_back(UseJack);
@@ -658,24 +672,26 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	   	     
 	     return ret;
 	     
-	   };
+       };
 
       
-      F_T_u_VMD_spectre_list[ixg].distr_list.push_back( Ups_MT*ZT*(1.0/(mel_SMSM*Eg))*EXP_D( M_P*t_07_c)*K_RE_distr_u_VMD( eff_M_Tu*a_distr, Eg_off, 1e-5));
-      distr_t_list Corr_F_T_u_VMD = Ups_MT*EXPT_D(-1.0*eff_M_Tu*a_distr, Corr_Tu_2TO.size());
-      distr_t F_T_u_VMD_distr(UseJack, Njacks);
-      for(int ty=1;ty<Corr_Tu_2TO.size(); ty++) {
-	F_T_u_VMD_distr = F_T_u_VMD_distr + Corr_F_T_u_VMD[ty]*EXP_D(ty*Eg_off);
-      }
-      F_T_u_VMD_list[ixg].distr_list.push_back( F_T_u_VMD_distr*ZT*(1.0/(mel_SMSM*Eg))*EXP_D( M_P*t_07_c));
-
-
-      
-      //#######################################################
-      
+       F_T_u_VMD_spectre_list[ixg].distr_list.push_back( Ups_MT*ZT*(1.0/(mel_SMSM*Eg))*EXP_D( M_P*t_07_c)*K_RE_distr_u_VMD( eff_M_Tu*a_distr, Eg_off, 1e-5));
+       distr_t_list Corr_F_T_u_VMD = Ups_MT*EXPT_D(-1.0*eff_M_Tu*a_distr, Corr_Tu_2TO.size());
+       distr_t F_T_u_VMD_distr(UseJack, Njacks);
+       for(int ty=1;ty<Corr_Tu_2TO.size(); ty++) {
+	 F_T_u_VMD_distr = F_T_u_VMD_distr + Corr_F_T_u_VMD[ty]*EXP_D(ty*Eg_off);
+       }
+       F_T_u_VMD_list[ixg].distr_list.push_back( F_T_u_VMD_distr*ZT*(1.0/(mel_SMSM*Eg))*EXP_D( M_P*t_07_c));
+       
+       
+       
+       //#######################################################
+       
       
       distr_t F_T_u(UseJack, Njacks);
       distr_t F_T_d_I(UseJack, Njacks);
+      distr_t F_T_d_I_ori(UseJack,Njacks);
+      distr_t F_T_d_I_ori_sp(UseJack,Njacks);
       distr_t F_T_d_I_15(UseJack, Njacks);
       distr_t F_T_d_I_7(UseJack, Njacks);
       
@@ -709,6 +725,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
       distr_t reminder_F_T_d_I_15(UseJack,Njacks), reminder_F_T_d_I_7(UseJack,Njacks);
 
+      distr_t_list C_0_corr(UseJack);
+
       
       auto HeavyTheta=[](const int x) {  return ((x>=0)+(x>0))/2.0;   };
       auto Exp= [&Njacks, &UseJack](const distr_t &A) -> distr_t { distr_t ret(UseJack); for(int ijack=0;ijack<Njacks;ijack++) ret.distr.push_back( exp(A.distr[ijack])); return ret;};
@@ -719,6 +737,10 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	const distr_t f1=  Exp(-(T/2-ty)*Eg_off);
 
 	const distr_t f2= Exp(-((3*T/2)-ty)*Eg_off);
+
+	const distr_t f1_s=  Exp(-(T/2-ty)*Eg_off);
+
+	const distr_t f2_s= Exp(-((3*T/2)-ty)*Eg_off);
 
 	const double f1_real= exp(-(T/2-ty)*Eg);
 	const double f2_real= exp(-((3*T/2)-ty)*Eg);
@@ -777,8 +799,12 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	FV_T_d_sp_real_ty_psum.distr_list.push_back( ((ty==0)?FV_T_d_sp_real_ty[ty]:(FV_T_d_sp_real_ty_psum[ty-1] + FV_T_d_sp_real_ty[ty])));
 	FV_T_u_real_ty_psum.distr_list.push_back( ((ty==0)?FV_T_u_real_ty[ty]:(FV_T_u_real_ty_psum[ty-1] + FV_T_u_real_ty[ty])));
 
-	
+	//if(ty != t_07_c) {
+	//if(ty== t_07_c +1 || ty== t_07_c-1)  F_T_u = F_T_u +  0.5*(sign_kz*T_u_std.distr_list[ty]*(xg/2.0)   + B_u_std.distr_list[ty]*xg/2.0 )*(h1*f1+ h2*f2);
+	// else F_T_u = F_T_u +  (sign_kz*T_u_std.distr_list[ty]*(xg/2.0)   + B_u_std.distr_list[ty]*xg/2.0 )*(h1*f1+ h2*f2);
+	// }
 	F_T_u = F_T_u +  (sign_kz*T_u_std.distr_list[ty]*(xg/2.0)   + B_u_std.distr_list[ty]*xg/2.0 )*(h1*f1+ h2*f2);
+	
 	FV_T_u_real = FV_T_u_real + (sign_kz*T_u_std.distr_list[ty]*(1.0- xg/2.0)   + B_u_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
 	FV_T_d_real = FV_T_d_real + (sign_kz*T_d_std.distr_list[ty]*(1.0- xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
 	FA_T_u_real = FA_T_u_real + ( B_u_std.distr_list[ty]*(1.0- xg/2.0)   + sign_kz*T_u_std.distr_list[ty]*xg/2.0 )*(h1*f1_real+ h2*f2_real);
@@ -797,12 +823,99 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	
 	
 	if(ty<= t_07_s) {  //SHOULD BE <= t_07_s
-	  F_T_d_I = F_T_d_I + (sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_sub+ h2*f2_sub);
+
+	 
+
+	  //interpolate the correlator at t=t_07_s
+	  distr_t corr_tw_minus(UseJack);
+	  distr_t corr_tw_plus(UseJack);
+	  distr_t corr_tw_minus_2(UseJack);
+	  distr_t corr_tw_plus_2(UseJack);
+	  if(ty==t_07_s) {
+	    
+	    int t1= t_07_s-1;
+	    int t2= t_07_s-2;
+	    int t3= t_07_s-3;
+
+	    int t4= t_07_s+1;
+	    int t5= t_07_s+2;
+	    int t6= t_07_s+3;
+
+	    distr_t C0= (sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0);
+
+	    distr_t C1= (sign_kz*T_d_std.distr_list[t1]*(xg/2.0)   + B_d_std.distr_list[t1]*xg/2.0);
+	    distr_t C2= (sign_kz*T_d_std.distr_list[t2]*(xg/2.0)   + B_d_std.distr_list[t2]*xg/2.0);
+	    distr_t C3= (sign_kz*T_d_std.distr_list[t3]*(xg/2.0)   + B_d_std.distr_list[t3]*xg/2.0);
+	    
+	    distr_t C4= (sign_kz*T_d_std.distr_list[t4]*(xg/2.0)   + B_d_std.distr_list[t4]*xg/2.0);
+	    distr_t C5= (sign_kz*T_d_std.distr_list[t5]*(xg/2.0)   + B_d_std.distr_list[t5]*xg/2.0);
+	    distr_t C6= (sign_kz*T_d_std.distr_list[t6]*(xg/2.0)   + B_d_std.distr_list[t6]*xg/2.0);
+
+	   
+	    //if(C1.ave()*C2.ave() < 0 || C2.ave()*C3.ave() < 0) crash("While finding C_s(tw-), correlators do not have same sign");
+	    //if(C4.ave()*C5.ave() < 0 || C5.ave()*C6.ave() < 0) crash("While finding C_s(tw+), correlators do not have same sign");
+	    int sign=1;
+	    if(C1.ave()<0) sign=-1;
+	    
+	    //for(int ijack=0;ijack<Njacks;ijack++) corr_tw_minus.distr.push_back( sign*exp(  quad_interpolator(log(fabs(C1.distr[ijack])), log(fabs(C2.distr[ijack])), log(fabs(C3.distr[ijack])), -1,-2,-3,0)));
+	    
+	    for(int ijack=0;ijack<Njacks;ijack++) corr_tw_minus.distr.push_back(  quad_interpolator(C1.distr[ijack], C2.distr[ijack], C3.distr[ijack], -1,-2,-3,0));
+	    for(int ijack=0;ijack<Njacks;ijack++) corr_tw_minus_2.distr.push_back(  lin_interpolator(C1.distr[ijack], C2.distr[ijack],-1,-2,0));
+	  
+	    cout<<"sign for C(tw-) ixg: "<<ixg<<" MESON: "<<MESON<<" : "<<sign<<endl;
+	    cout<<"C1: "<<(C1).ave()<<" C2: "<<(C2).ave()<<" C3: "<<(C3).ave()<<endl;
+	    cout<<"C_minus quadratic: "<<(corr_tw_minus).ave()<<endl;
+	    cout<<"C_minus linear: "<<(corr_tw_minus_2).ave()<<endl;
+
+	    sign=1;
+	    if(C4.ave()<0) sign=-1;
+	    
+	    //for(int ijack=0;ijack<Njacks;ijack++) corr_tw_plus.distr.push_back( sign*exp(  quad_interpolator(log(fabs(C4.distr[ijack])), log(fabs(C5.distr[ijack])), log(fabs(C6.distr[ijack])), 1,2,3,0)));
+
+	    for(int ijack=0;ijack<Njacks;ijack++) corr_tw_plus.distr.push_back(  quad_interpolator(C4.distr[ijack], C5.distr[ijack], C6.distr[ijack], 1,2,3,0));
+	    for(int ijack=0;ijack<Njacks;ijack++) corr_tw_plus_2.distr.push_back(  lin_interpolator(C4.distr[ijack], C5.distr[ijack],1,2,0));
+	   
+	    
+	    cout<<"sign for C(tw+): ixg"<<ixg<<" MESON: "<<MESON<<" : "<<sign<<endl;
+	    cout<<"C4: "<<(C4).ave()<<" C5: "<<(C5).ave()<<" C6: "<<(C6).ave()<<endl;
+	    cout<<"C_plus quadratic: "<<corr_tw_plus.ave()<<endl;
+	    cout<<"C_plus linear: "<<corr_tw_plus_2.ave()<<endl;
+
+	    double syst_min= 0.5*fabs(corr_tw_minus.ave()-corr_tw_minus_2.ave());
+	    corr_tw_minus= 0.5*(corr_tw_minus+corr_tw_minus_2);
+	    corr_tw_minus= corr_tw_minus.ave() + (corr_tw_minus -corr_tw_minus.ave())*sqrt( pow(corr_tw_minus.err(),2)+ pow(syst_min,2))/corr_tw_minus.err();
+
+	    double syst_max= 0.5*fabs(corr_tw_plus.ave()-corr_tw_plus_2.ave());
+	    corr_tw_plus= 0.5*(corr_tw_plus+corr_tw_plus_2);
+	    corr_tw_plus= corr_tw_plus.ave() + (corr_tw_plus -corr_tw_plus.ave())*sqrt( pow(corr_tw_plus.err(),2)+ pow(syst_max,2))/corr_tw_plus.err();
+
+	    cout<<"C(tw-)+C(tw+)/2 : "<<(corr_tw_minus+corr_tw_plus).ave()*0.5<<" +- "<<(corr_tw_minus+corr_tw_plus).err()*0.5<<endl;
+	    cout<<"C(0): "<<(C0).ave()<<" +- "<<(C0).err()<<endl;
+
+	    corr_tw_minus= corr_tw_minus*(Exp(-(T/2-ty)*Eg_off));
+	    corr_tw_plus= corr_tw_plus*(Exp(-(T/2-ty)*Eg_off));
+
+
+	    C_0_corr.distr_list.push_back( corr_tw_minus);
+	    C_0_corr.distr_list.push_back( 0.5*(corr_tw_minus+corr_tw_plus));
+	    C_0_corr.distr_list.push_back( corr_tw_plus);
+
+
+	    
+	    
+	  }
+	  else corr_tw_minus = 0.0*Get_id_distr(Njacks, UseJack);
+	  
+	  
+	  F_T_d_I = F_T_d_I + (sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0)*(h1*f1_sub+ h2*f2_sub);
+	  F_T_d_I_ori = F_T_d_I_ori + ((ty != t_07_s)?(sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0)*(h1*f1_s+ h2*f2_s):0.5*corr_tw_minus);
 	  F_T_d_I_15 = F_T_d_I_15 + (sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_sub_15+ h2*f2_sub_15);
 	  F_T_d_I_7 = F_T_d_I_7 + (sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1*f1_sub_7+ h2*f2_sub_7);
 	}
-	if(ty <= t_07_s_HLT) {
+	
+	if(ty <= t_07_s_HLT) {	  
 	  F_T_d_I_sp = F_T_d_I_sp + (sign_kz*T_d.distr_list[ty]*(xg/2.0) + B_d.distr_list[ty]*xg/2.0)*(h1*f1_sub_sp+h2*f2_sub_sp);
+	  F_T_d_I_ori_sp = F_T_d_I_ori_sp + (sign_kz*T_d.distr_list[ty]*(xg/2.0) + B_d.distr_list[ty]*xg/2.0)*(h1*f1_s+h2*f2_s);
 	}
 
 	//collect reminders
@@ -824,12 +937,28 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       F_T_d_I_7 = F_T_d_I_7 + reminder_F_T_d_I_7;
       F_T_d_I_sp = F_T_d_I_sp + reminder_F_T_d_I_sp;
 
-    
+
+      reminder_F_T_d_I = reminder_F_T_d_I*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
+      reminder_F_T_d_I_sp = reminder_F_T_d_I_sp*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT);
+
+      distr_t comb_F_d = ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s))*Exp( M_P*t_07_s);
+
+      distr_t comb_F_u = ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_c))*Exp( M_P*t_07_c);
+
+      
+   
+      Print_To_File({}, {((comb_F_d/a_distr)*(sign_kz*T_d_std*(xg/2.0)   + B_d_std*xg/2.0)*Exp(-T*Eg_off/2)*EXPT_D( Eg_off,T_d_std.size())).ave(), ( (comb_F_d/a_distr)*(sign_kz*T_d_std*(xg/2.0)   + B_d_std*xg/2.0)*Exp(-T*Eg_off/2)*EXPT_D( Eg_off,T_d_std.size())).err() }, path_out+"/corr_2pts/CT_d_xg_"+to_string(ixg)+"_"+Ens_tags[iens], "", "");
+
+      Print_To_File({}, {((comb_F_u/a_distr)*(sign_kz*T_u_std*(xg/2.0)   + B_u_std*xg/2.0)*Exp(-T*Eg_off/2)*EXPT_D( Eg_off,T_u_std.size())).ave(), ( (comb_F_u/a_distr)*(sign_kz*T_u_std*(xg/2.0)   + B_u_std*xg/2.0)*Exp(-T*Eg_off/2)*EXPT_D( Eg_off,T_u_std.size())).err() }, path_out+"/corr_2pts/CT_u_xg_"+to_string(ixg)+"_"+Ens_tags[iens], "", "");
+
+      Print_To_File({}, { Vfloat({-0.0001,0,0.0001}), ((comb_F_d/a_distr)*C_0_corr).ave(), ((comb_F_d/a_distr)*C_0_corr).err()}, path_out+"/corr_2pts/C0T_d_xg_"+to_string(ixg)+"_"+Ens_tags[iens], "", "");
       
          
       //normalize
       F_T_u = F_T_u*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_c))*Exp( M_P*t_07_c) ;
       F_T_d_I = F_T_d_I*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
+      F_T_d_I_ori = F_T_d_I_ori*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
+      F_T_d_I_ori_sp = F_T_d_I_ori_sp*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT) ;
       F_T_d_I_15 = F_T_d_I_15*ZT*(1.0/(mel_SMSM*Eg))*Exp( 1.5*a_distr*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
       F_T_d_I_7 = F_T_d_I_7*ZT*(1.0/(mel_SMSM*Eg))*Exp( 0.7*a_distr*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
 	  
@@ -877,6 +1006,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       //push_back
       F_T_u_list[ixg].distr_list.push_back( F_T_u);
       F_T_d_I_list[ixg].distr_list.push_back( F_T_d_I);
+      F_T_d_I_ori_list[ixg].distr_list.push_back( F_T_d_I_ori);
+      F_T_d_I_ori_sp_list[ixg].distr_list.push_back( F_T_d_I_ori_sp);
       F_T_d_I_list_15[ixg].distr_list.push_back( F_T_d_I_15);
       F_T_d_I_list_7[ixg].distr_list.push_back( F_T_d_I_7);
       F_T_d_sp_I_list[ixg].distr_list.push_back( F_T_d_I_sp);
@@ -892,6 +1023,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
       FV_T_d_sp_real_list[ixg].distr_list.push_back( FV_T_d_sp_real);
       FA_T_d_sp_real_list[ixg].distr_list.push_back( FA_T_d_sp_real);
+
+      reminder_F_T_d_list[ixg].distr_list.push_back( reminder_F_T_d_I);
+      reminder_F_T_d_sp_list[ixg].distr_list.push_back( reminder_F_T_d_I_sp);
 
       //print to File ty analysis
       Print_To_File( { }, { F_T_d_ty.ave(), F_T_d_ty.err(), F_T_d_ty_psum.ave(), F_T_d_ty_psum.err()}, path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"ty_analysis_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
@@ -1868,6 +2002,34 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	    
 	    if( MESON == "B3s") mult_T_IM=4;
 
+	    if( (MESON =="B3s") && (sigmas_07[isg] > 3.9) && (Ens_tags[iens] == "cB211b.072.64") ) mult_T_RE=10;
+
+
+	    
+
+	    if( MESON=="B3s" && sigmas_07[isg] > 3.9) {
+	      if(ixg==0) mult_T_IM=1.0;
+	      if(ixg==1) mult_T_IM=0.4;
+	      if(ixg==2) mult_T_IM=0.1;
+	      if(ixg==3) mult_T_IM=0.1;
+	      
+	    }
+
+	    //Vfloat sigmas_07({1.75, 2, 2.25, 2.5, 2.75, 3.0, 3.5, 4.0, 4.5});  
+
+	    if(MESON=="B3s" && ixg==0) {
+	      if(sigmas_07[isg] < 1.8) mult_T_IM=2.5;
+	      if(sigmas_07[isg] > 1.99 && sigmas_07[isg] < 2.28) mult_T_IM=1.0;
+	      if(sigmas_07[isg] > 2.4 && sigmas_07[isg] < 4.6) mult_T_IM=0.4;
+	      
+	    }
+	    
+	    if(MESON=="B3s" && ixg==1) {
+	      if(sigmas_07[isg] > 2.74 || sigmas_07[isg] < 3.1) mult_T_IM=1.0;
+	      if(sigmas_07[isg] > 3.49) mult_T_IM=0.1;
+
+	    }
+
 	  }
 	  
 	 
@@ -1890,6 +2052,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
 	
 	  distr_t OFFSET_RE=  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr_sub( eff_M_Td*a_distr, Eg_MB_off, s) + 0.0*FACT*phi_prime_MT*K_RE_distr_sub( eff_M_prime_Td*a_distr, Eg_MB_off, s) ) + F_T_d_I -REMINDER_MB;
+
 
 	  
 	  distr_t RE_MB_sm = Get_Laplace_transfo_tmin( Eg_MB_off.ave(),  s, th*a_distr.ave(),  Nts[iens], 1, tmax_new, prec_07, SM_FF+"_RE_ixg_"+to_string(ixg+1),K_RE, Corr_T, syst_T, mult_T_RE ,  l_re_T, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"MB_T_"+Ens_tags[iens], Ag_target,0, FACT, OFFSET_RE,  preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.00,1);
@@ -1937,6 +2100,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  
 	  
 	  F_T_d_MB_RE_sm_list[ixg][isg].distr_list.push_back( RE_MB_sm + ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr_sub( eff_M_Td*a_distr, Eg_MB_off, s) + 0.0*FACT*phi_prime_MT*K_RE_distr_sub( eff_M_prime_Td*a_distr, Eg_MB_off, s) ));
+
+	  F_T_d_MB_RE_sm_list_no_sub[ixg][isg].distr_list.push_back( RE_MB_sm + REMINDER_MB+  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr( eff_M_Td*a_distr, Eg_MB_off, s) + 0.0*FACT*phi_prime_MT*K_RE_distr( eff_M_prime_Td*a_distr, Eg_MB_off, s) ));
 	  
 	  F_T_d_MB_IM_sm_list[ixg][isg].distr_list.push_back( IM_MB_sm +  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_IM_distr( eff_M_Td*a_distr, Eg_MB_off, s)+ 0.0*FACT*phi_prime_MT*K_IM_distr( eff_M_prime_Td*a_distr, Eg_MB_off, s) ));
 
@@ -2329,7 +2494,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   for(int ixg=0;ixg<n_xg;ixg++) {
 
     Print_To_File( Ens_tags, { F_T_u_list[ixg].ave(), F_T_u_list[ixg].err()     } , path_out+"/FF_u/"+TAG_CURR+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
-    Print_To_File( Ens_tags, { F_T_d_I_list[ixg].ave(), F_T_d_I_list[ixg].err() , F_T_d_sp_I_list[ixg].ave(), F_T_d_sp_I_list[ixg].err()    } , path_out+"/FF_d_I/"+TAG_CURR+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
+    Print_To_File( Ens_tags, { F_T_d_I_list[ixg].ave(), F_T_d_I_list[ixg].err() , F_T_d_sp_I_list[ixg].ave(), F_T_d_sp_I_list[ixg].err(), F_T_d_I_ori_list[ixg].ave(), F_T_d_I_ori_list[ixg].err()    } , path_out+"/FF_d_I/"+TAG_CURR+"F_T_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
     Print_To_File( Ens_tags, { FV_T_u_real_list[ixg].ave(), FV_T_u_real_list[ixg].err()     } , path_out+"/FF_u/"+TAG_CURR+"FV_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
     Print_To_File( Ens_tags, { FV_T_d_real_list[ixg].ave(), FV_T_d_real_list[ixg].err()     } , path_out+"/FF_d/"+TAG_CURR+"FV_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
     Print_To_File( Ens_tags, { FA_T_u_real_list[ixg].ave(), FA_T_u_real_list[ixg].err()     } , path_out+"/FF_u/"+TAG_CURR+"FA_T_real_xg_"+to_string_with_precision(xg_list.ave(ixg),2), "", "");
@@ -2363,6 +2528,10 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     distr_t_list FA_T_d_sp_real_per_ens(UseJack), FV_T_d_sp_real_per_ens(UseJack);
     distr_t_list F_T_u_VMD_per_ens(UseJack), F_T_u_VMD_spectre_per_ens(UseJack);
     distr_t_list F_T_d_sp_I_per_ens(UseJack);
+    distr_t_list F_T_d_I_ori_per_ens(UseJack);
+    distr_t_list F_T_d_I_ori_sp_per_ens(UseJack);
+
+    distr_t_list reminder_F_T_d_per_ens(UseJack), reminder_F_T_d_sp_per_ens(UseJack);
 
 
     distr_t_list F_T_d_I_per_ens_15(UseJack), F_T_d_I_per_ens_7(UseJack);
@@ -2370,6 +2539,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     for(int ixg=0;ixg<n_xg;ixg++) {
       F_T_u_per_ens.distr_list.push_back( F_T_u_list[ixg].distr_list[iens]);
       F_T_d_I_per_ens.distr_list.push_back( F_T_d_I_list[ixg].distr_list[iens]);
+      F_T_d_I_ori_per_ens.distr_list.push_back( F_T_d_I_ori_list[ixg].distr_list[iens]);
+      F_T_d_I_ori_sp_per_ens.distr_list.push_back( F_T_d_I_ori_sp_list[ixg].distr_list[iens]);
       F_T_d_I_per_ens_15.distr_list.push_back( F_T_d_I_list_15[ixg].distr_list[iens]);
       F_T_d_I_per_ens_7.distr_list.push_back( F_T_d_I_list_7[ixg].distr_list[iens]);
       
@@ -2390,6 +2561,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
       F_T_u_VMD_per_ens.distr_list.push_back( F_T_u_VMD_list[ixg].distr_list[iens]);
       F_T_u_VMD_spectre_per_ens.distr_list.push_back( F_T_u_VMD_spectre_list[ixg].distr_list[iens]);
+
+      reminder_F_T_d_per_ens.distr_list.push_back( reminder_F_T_d_list[ixg].distr_list[iens]);
+      reminder_F_T_d_sp_per_ens.distr_list.push_back( reminder_F_T_d_sp_list[ixg].distr_list[iens]);
 
       
       distr_t_list F_T_d_MB_RE_sm_per_ens_per_kin, F_T_d_MB_IM_sm_per_ens_per_kin;
@@ -2458,7 +2632,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     }
 
     Print_To_File( {}, {xg_list.ave(), F_T_u_per_ens.ave(), F_T_u_per_ens.err()     } , path_out+"/FF_u/"+Ens_tags[iens]+"/"+TAG_CURR+"F_T", "", "");
-    Print_To_File( {}, {xg_list.ave(), F_T_d_I_per_ens.ave(), F_T_d_I_per_ens.err(), F_T_d_sp_I_per_ens.ave(), F_T_d_sp_I_per_ens.err()     } , path_out+"/FF_d_I/"+Ens_tags[iens]+"/"+TAG_CURR+"F_T", "", "");
+    Print_To_File( {}, {xg_list.ave(), F_T_d_I_per_ens.ave(), F_T_d_I_per_ens.err(), F_T_d_sp_I_per_ens.ave(), F_T_d_sp_I_per_ens.err(), F_T_d_I_ori_per_ens.ave(), F_T_d_I_ori_per_ens.err() , F_T_d_I_ori_sp_per_ens.ave(), F_T_d_I_ori_sp_per_ens.err()    } , path_out+"/FF_d_I/"+Ens_tags[iens]+"/"+TAG_CURR+"F_T", "", "");
     Print_To_File( {}, {xg_list.ave(),  FV_T_u_real_per_ens.ave(), FV_T_u_real_per_ens.err()     } , path_out+"/FF_u/"+Ens_tags[iens]+"/"+TAG_CURR+"FV_T_real", "", "");
     Print_To_File( {}, {xg_list.ave(), FV_T_d_real_per_ens.ave(), FV_T_d_real_per_ens.err()     } , path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"FV_T_real", "", "");
 
@@ -2475,6 +2649,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     Print_To_File( {}, {xg_list.ave(), FV_T_d_sp_real_per_ens.ave(), FV_T_d_sp_real_per_ens.err()     } , path_out+"/FF_d/"+Ens_tags[iens]+"/"+TAG_CURR+"FV_T_sp_real", "", "");
     
     Print_To_File( {}, {xg_list.ave(),  F_T_u_VMD_per_ens.ave(), F_T_u_VMD_per_ens.err(), F_T_u_VMD_spectre_per_ens.ave(), F_T_u_VMD_spectre_per_ens.err()     } , path_out+"/FF_u/"+Ens_tags[iens]+"/"+TAG_CURR+"VMD_F_T", "", "");
+
+      Print_To_File( {}, {xg_list.ave(), reminder_F_T_d_per_ens.ave(), reminder_F_T_d_per_ens.err(), reminder_F_T_d_sp_per_ens.ave(), reminder_F_T_d_sp_per_ens.err() } , path_out+"/FF_d_I/"+Ens_tags[iens]+"/"+TAG_CURR+"reminder_F_T", "", "");
+
     
     
     if(!Skip_spectral_reconstruction_07) {
@@ -2507,6 +2684,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	Print_To_File({},{F_T_d_MB_RE_sm_list[ixg][isg].distr_list[iens].distr, F_T_d_MB_IM_sm_list[ixg][isg].distr_list[iens].distr, F_T_d_MB_IM_Gauss_sm_list[ixg][isg].distr_list[iens].distr}, path_out+"/FF_d/"+Ens_tags[iens]+"/jackknife/ixg_"+to_string(ixg)+"/FF_MB_isg_"+to_string(isg)+".dat","",  "Njacks: "+to_string(Njacks));
 	Print_To_File({},{F_T_d_MB_RE_sm_list_15[ixg][isg].distr_list[iens].distr, F_T_d_MB_IM_sm_list_15[ixg][isg].distr_list[iens].distr}, path_out+"/FF_d/"+Ens_tags[iens]+"/jackknife/ixg_"+to_string(ixg)+"/FF_15_MB_isg_"+to_string(isg)+".dat","", "Njacks: "+to_string(Njacks));
 	Print_To_File({},{F_T_d_MB_RE_sm_list_7[ixg][isg].distr_list[iens].distr, F_T_d_MB_IM_sm_list_7[ixg][isg].distr_list[iens].distr}, path_out+"/FF_d/"+Ens_tags[iens]+"/jackknife/ixg_"+to_string(ixg)+"/FF_7_MB_isg_"+to_string(isg)+".dat","",  "Njacks: "+to_string(Njacks));
+	Print_To_File({},{F_T_d_MB_RE_sm_list_no_sub[ixg][isg].distr_list[iens].distr}, path_out+"/FF_d/"+Ens_tags[iens]+"/jackknife/ixg_"+to_string(ixg)+"/FF_no_sub_MB_isg_"+to_string(isg)+".dat","",  "Njacks: "+to_string(Njacks));
 	
       }
       
@@ -2531,6 +2709,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       F_T_d_MB_IM_sm_list_15[ixg][isg] = Get_id_distr_list(Nens, Njacks, UseJack);
       F_T_d_MB_RE_sm_list_7[ixg][isg] = Get_id_distr_list(Nens, Njacks, UseJack);
       F_T_d_MB_IM_sm_list_7[ixg][isg] = Get_id_distr_list(Nens, Njacks, UseJack);
+
+      F_T_d_MB_RE_sm_list_no_sub[ixg][isg] = Get_id_distr_list(Nens, Njacks, UseJack);
       
       for(int iens=0;iens<Nens;iens++) {
 	 
@@ -2544,6 +2724,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	
 	F_T_d_MB_RE_sm_list_7[ixg][isg].distr_list[iens].distr= Read_From_File( path_out+"/FF_d/"+Ens_tags[iens]+"/jackknife/ixg_"+to_string(ixg)+"/FF_7_MB_isg_"+to_string(isg)+".dat", 1, 3,1);
 	F_T_d_MB_IM_sm_list_7[ixg][isg].distr_list[iens].distr= Read_From_File( path_out+"/FF_d/"+Ens_tags[iens]+"/jackknife/ixg_"+to_string(ixg)+"/FF_7_MB_isg_"+to_string(isg)+".dat", 2, 3,1);
+
+
+	F_T_d_MB_RE_sm_list_no_sub[ixg][isg].distr_list[iens].distr = Read_From_File( path_out+"/FF_d/"+Ens_tags[iens]+"/jackknife/ixg_"+to_string(ixg)+"/FF_no_sub_MB_isg_"+to_string(isg)+".dat", 1, 2,1);
       }
     }
   }
@@ -2554,6 +2737,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   printV(F_T_d_MB_IM_sm_list[0][0].distr_list[0].distr, "IM", 1);
   //extrapolate the results for each sigma and xg to the continuum limit, employing either a constant or linear fit in a^2 (to be combined with BMA with uniform weight 1/2 )
 
+  distr_t_list F_T_d_I_ori_extr(UseJack);
+  distr_t_list F_T_d_I_sub_extr(UseJack);
 
   for(int ixg=0; ixg<n_xg;ixg++) {
 
@@ -2589,17 +2774,81 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
    
     // s-quark contribution
 
+     
+      distr_t FT_I_ori(UseJack);
+
+      distr_t s_I_ori_B64(UseJack), s_I_ori_D96(UseJack) ;
+      for(int iens=0;iens<Ens_tags.size();iens++) {
+	if(Ens_tags[iens] == "cB211b.072.64") {
+	  s_I_ori_B64= F_T_d_I_ori_list[ixg][iens];
+	}
+	else {
+	  s_I_ori_D96= F_T_d_I_ori_list[ixg][iens];
+	}
+      }
+
+      distr_t FT_I_ori_const =  (1/pow(s_I_ori_B64.err(),2))*s_I_ori_B64 + (1/pow(s_I_ori_D96.err(),2))*s_I_ori_D96;
+      FT_I_ori_const = FT_I_ori_const/(  (1/pow(s_I_ori_B64.err(),2)) + (1/pow(s_I_ori_D96.err(),2))   );
+      distr_t FT_I_ori_a2= s_I_ori_D96*a_B*a_B - s_I_ori_B64*a_D*a_D;
+      FT_I_ori_a2 = FT_I_ori_a2/( a_B*a_B - a_D*a_D);
+      ch2_const = pow( (FT_I_ori_const.ave() - s_I_ori_B64.ave())/s_I_ori_B64.err(),2) + pow( (FT_I_ori_const.ave() - s_I_ori_D96.ave())/s_I_ori_D96.err(),2);
+      //combine using Eq. 29
+      if(ch2_const < 2) {
+	FT_I_ori  = BMA_Eq_29( {FT_I_ori_const, FT_I_ori_a2});
+      }
+      else FT_I_ori= FT_I_ori_a2;
+
+      F_T_d_I_ori_extr.distr_list.push_back(FT_I_ori);
+
+
+      distr_t FT_I_sub(UseJack);
+
+      distr_t s_I_sub_B64(UseJack), s_I_sub_D96(UseJack) ;
+      for(int iens=0;iens<Ens_tags.size();iens++) {
+	if(Ens_tags[iens] == "cB211b.072.64") {
+	  s_I_sub_B64= F_T_d_I_list[ixg][iens];
+	}
+	else {
+	  s_I_sub_D96= F_T_d_I_list[ixg][iens];
+	}
+      }
+
+      distr_t FT_I_sub_const =  (1/pow(s_I_sub_B64.err(),2))*s_I_sub_B64 + (1/pow(s_I_sub_D96.err(),2))*s_I_sub_D96;
+      FT_I_sub_const = FT_I_sub_const/(  (1/pow(s_I_sub_B64.err(),2)) + (1/pow(s_I_sub_D96.err(),2))   );
+      distr_t FT_I_sub_a2= s_I_sub_D96*a_B*a_B - s_I_sub_B64*a_D*a_D;
+      FT_I_sub_a2 = FT_I_sub_a2/( a_B*a_B - a_D*a_D);
+      ch2_const = pow( (FT_I_sub_const.ave() - s_I_sub_B64.ave())/s_I_sub_B64.err(),2) + pow( (FT_I_sub_const.ave() - s_I_sub_D96.ave())/s_I_sub_D96.err(),2);
+      //combine using Eq. 29
+      if(ch2_const < 2) {
+	FT_I_sub  = BMA_Eq_29( {FT_I_sub_const, FT_I_sub_a2});
+      }
+      else FT_I_sub= FT_I_sub_a2;
+
+      FT_I_sub= FT_I_sub_a2;
+
+      F_T_d_I_sub_extr.distr_list.push_back(FT_I_sub);
+      
+	
+
       distr_t_list FT_s_RE_sigma(UseJack), FT_s_IM_sigma(UseJack), FT_s_IM_Gauss_sigma(UseJack);
       distr_t_list FT_s_RE_sigma_15(UseJack), FT_s_IM_sigma_15(UseJack);
       distr_t_list FT_s_RE_sigma_7(UseJack), FT_s_IM_sigma_7(UseJack);
+      distr_t_list FT_s_RE_sigma_no_sub(UseJack);
+      distr_t_list FT_s_RE_sigma_no_sub_B64(UseJack);
+      distr_t_list FT_s_RE_sigma_no_sub_D96(UseJack);
 
+      
     for(int is=0;is<(signed)sigma_simulated[ixg].size();is++) {
 
      
       
 	distr_t s_I_B64(UseJack), s_I_D96(UseJack) ;
+	
+
 	distr_t s_II_B64(UseJack), s_II_D96(UseJack);
 	distr_t s_B64_IM(UseJack), s_D96_IM(UseJack);
+
+	distr_t s_II_B64_no_sub(UseJack), s_II_D96_no_sub(UseJack);
 
 	distr_t s_I_B64_15(UseJack), s_I_D96_15(UseJack) ;
 	distr_t s_II_B64_15(UseJack), s_II_D96_15(UseJack);
@@ -2618,7 +2867,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	    s_B64_IM= F_T_d_MB_IM_sm_list[ixg][is][iens];
 	    s_B64_IM_Gauss= F_T_d_MB_IM_Gauss_sm_list[ixg][is][iens];
 
-
+	  	   
 	    s_I_B64_15= F_T_d_I_list_15[ixg][iens];
             s_II_B64_15= F_T_d_MB_RE_sm_list_15[ixg][is][iens];
 	    s_B64_IM_15= F_T_d_MB_IM_sm_list_15[ixg][is][iens];
@@ -2626,6 +2875,10 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	    s_I_B64_7= F_T_d_I_list_7[ixg][iens];
             s_II_B64_7= F_T_d_MB_RE_sm_list_7[ixg][is][iens];
 	    s_B64_IM_7= F_T_d_MB_IM_sm_list_7[ixg][is][iens];
+
+	    s_II_B64_no_sub = F_T_d_MB_RE_sm_list_no_sub[ixg][is][iens];
+
+	    FT_s_RE_sigma_no_sub_B64.distr_list.push_back( s_II_B64_no_sub);
 	    
 	  }
 	  else {
@@ -2634,6 +2887,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	    s_D96_IM= F_T_d_MB_IM_sm_list[ixg][is][iens];
 	    s_D96_IM_Gauss= F_T_d_MB_IM_Gauss_sm_list[ixg][is][iens];
 
+
 	    s_I_D96_15= F_T_d_I_list_15[ixg][iens];
 	    s_II_D96_15= F_T_d_MB_RE_sm_list_15[ixg][is][iens];
 	    s_D96_IM_15= F_T_d_MB_IM_sm_list_15[ixg][is][iens];
@@ -2641,7 +2895,10 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	    s_I_D96_7= F_T_d_I_list_7[ixg][iens];
 	    s_II_D96_7= F_T_d_MB_RE_sm_list_7[ixg][is][iens];
 	    s_D96_IM_7= F_T_d_MB_IM_sm_list_7[ixg][is][iens];
-	    
+
+	    s_II_D96_no_sub = F_T_d_MB_RE_sm_list_no_sub[ixg][is][iens];
+
+	    FT_s_RE_sigma_no_sub_D96.distr_list.push_back( s_II_D96_no_sub);
 	    
 	    
 	  }
@@ -2657,6 +2914,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	
 	distr_t s_B64_RE_7 = s_I_B64_7 + s_II_B64_7;
 	distr_t s_D96_RE_7 = s_I_D96_7 + s_II_D96_7;
+
+	distr_t s_B64_RE_no_sub= s_II_B64_no_sub;
+	distr_t s_D96_RE_no_sub= s_II_D96_no_sub;
 	
 	//extrapolate
 
@@ -2672,6 +2932,13 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  FT_s_RE  = BMA_Eq_29( {FT_s_RE_const, FT_s_RE_a2});
 	}
 	else FT_s_RE= FT_s_RE_a2;
+
+
+
+
+
+
+	
 
 
 	distr_t FT_s_RE_const_15 =  (1/pow(s_B64_RE_15.err(),2))*s_B64_RE_15 + (1/pow(s_D96_RE_15.err(),2))*s_D96_RE_15;
@@ -2698,6 +2965,21 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  FT_s_RE_7  = BMA_Eq_29( {FT_s_RE_const_7, FT_s_RE_a2_7});
 	}
 	else FT_s_RE_7= FT_s_RE_a2_7;
+
+
+	//no sub
+ 
+	distr_t FT_s_RE_const_no_sub =  (1/pow(s_B64_RE_no_sub.err(),2))*s_B64_RE_no_sub + (1/pow(s_D96_RE_no_sub.err(),2))*s_D96_RE_no_sub;
+	FT_s_RE_const_no_sub = FT_s_RE_const_no_sub/(  (1/pow(s_B64_RE_no_sub.err(),2)) + (1/pow(s_D96_RE_no_sub.err(),2))   );
+	distr_t FT_s_RE_a2_no_sub= s_D96_RE_no_sub*a_B*a_B - s_B64_RE_no_sub*a_D*a_D;
+	FT_s_RE_a2_no_sub = FT_s_RE_a2_no_sub/( a_B*a_B - a_D*a_D);
+	ch2_const = pow( (FT_s_RE_const_no_sub.ave() - s_B64_RE_no_sub.ave())/s_B64_RE_no_sub.err(),2) + pow( (FT_s_RE_const_no_sub.ave() - s_D96_RE_no_sub.ave())/s_D96_RE_no_sub.err(),2);
+	//combine using Eq. 29
+	distr_t FT_s_RE_no_sub(UseJack);
+	if(ch2_const < 2) {
+	  FT_s_RE_no_sub  = BMA_Eq_29( {FT_s_RE_const_no_sub, FT_s_RE_a2_no_sub});
+	}
+	else FT_s_RE_no_sub= FT_s_RE_a2_no_sub;
 
 	
 
@@ -2768,15 +3050,26 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	FT_s_IM_sigma.distr_list.push_back(FT_s_IM);
 	FT_s_IM_Gauss_sigma.distr_list.push_back(FT_s_IM_Gauss);
 
+
 	FT_s_RE_sigma_15.distr_list.push_back(FT_s_RE_15);
 	FT_s_IM_sigma_15.distr_list.push_back(FT_s_IM_15);
 
 	FT_s_RE_sigma_7.distr_list.push_back(FT_s_RE_7);
 	FT_s_IM_sigma_7.distr_list.push_back(FT_s_IM_7);
 
+
+	FT_s_RE_sigma_no_sub.distr_list.push_back(FT_s_RE_no_sub);
+
+	
+
 	
 
     }
+
+
+    //print result for nosub
+
+    Print_To_File({}, {sigma_simulated[ixg], FT_s_RE_sigma_no_sub_B64.ave(), FT_s_RE_sigma_no_sub_B64.err(),  FT_s_RE_sigma_no_sub_D96.ave(), FT_s_RE_sigma_no_sub_D96.err() , FT_s_RE_sigma_no_sub.ave(), FT_s_RE_sigma_no_sub.err()}, path_out+"/FF_d_extr/FT_s_sub_ixg_"+to_string(ixg)+".dat", "", "");
 
   
 
@@ -2924,6 +3217,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       if(is < 5) { data_07[ijack][is].Is_five_finest= true;}
       else data_07[ijack][is].Is_five_finest= false;
 
+
       data_07[ijack][is+sigma_to_fit].FF_RE = 0.0;
       data_07[ijack][is+sigma_to_fit].FF_RE_err= 1.0;
       data_07[ijack][is+sigma_to_fit].FF_IM = (FT_s_IM_Gauss_sigma[is]).distr[ijack];
@@ -3049,11 +3343,27 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   //get fit function
 
   Vfloat sigmas_to_print;
+  Vfloat sigmas_to_print_0;
   int Nsigmas_to_print=400;
+  if(MESON== "B0s") sigmas_to_print_0.push_back( -0.03);
+  if(MESON== "B1s") sigmas_to_print_0.push_back( -0.02);
+  if(MESON== "B3s") sigmas_to_print_0.push_back( -0.01);
+
+  
+  
   for(int n=0;n<Nsigmas_to_print;n++) sigmas_to_print.push_back( n*6.0/(Nsigmas_to_print-1));
 
   distr_t_list F_print_RE(UseJack, Nsigmas_to_print, Njacks), F_print_IM(UseJack, Nsigmas_to_print, Njacks), F_print_IM_Gauss(UseJack,Nsigmas_to_print, Njacks);
-  
+
+  distr_t_list F_print_RE_0(UseJack), F_print_IM_0(UseJack);
+
+  double sRE= fabs( R_RE.ave() - R_RE_red.ave())*erf(  fabs(R_RE.ave() - R_RE_red.ave())/(sqrt(2.0)*R_RE_red.err())   );
+  double sIM= fabs( R_IM.ave() - R_IM_red.ave())*erf(  fabs(R_IM.ave() - R_IM_red.ave())/(sqrt(2.0)*R_IM_red.err())   );
+
+   
+  F_print_RE_0.distr_list.push_back(  R_RE.ave() + (R_RE -R_RE.ave())*sqrt( pow(R_RE.err(),2) + pow(sRE,2))/R_RE.err());
+  F_print_IM_0.distr_list.push_back(  R_IM.ave() + (R_IM -R_IM.ave())*sqrt( pow(R_IM.err(),2) + pow(sIM,2))/R_IM.err());
+    
   for(int n=0;n<Nsigmas_to_print;n++) {
 
     ipar_07 fS;
@@ -3081,9 +3391,10 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     //extrapolate to vanishing sigma
     class ipar_07_comb {
     public:
-      ipar_07_comb() : FF(0.0), FF_err(0), Is_RE(0) {}
-      double FF, FF_err, sigma;
+      ipar_07_comb() : FF(0.0), FF_err(0), Is_RE(0), G1(0.0), G2(0.0), G3(0.0) {}
+      double FF, FF_err, sigma, I_ori;
       bool Is_RE;
+      double G1, G2, G3;
      
     };
   
@@ -3091,7 +3402,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     public:
       fpar_07_comb() {}
       fpar_07_comb(const Vfloat &par) {
-	if((signed)par.size() != 5) crash("In class fpar_07_comb  class constructor Vfloat par has size != 4");
+	if((signed)par.size() != 5) crash("In class fpar_07_comb  class constructor Vfloat par has size != 5");
 
 	TH=par[0];
 	A=par[1];
@@ -3102,6 +3413,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       }
       double TH,A, A1, A2, A3;
     };
+
+    bool fix_TH=false;
+    bool Fit_I_TO=false;
     
     //init bootstrap fit
     bootstrap_fit<fpar_07_comb,ipar_07_comb> bf_07_comb(Njacks);
@@ -3109,15 +3423,18 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     bf_07_comb.Set_number_of_measurements(2*sigma_to_fit);
     bf_07_comb.Set_verbosity(1);
 
-    bf_07_comb.Add_par("TH", 3.0, 0.05);
+    bf_07_comb.Add_par("TH", 0.3, 0.05);
     bf_07_comb.Add_par("A", -0.003, 0.001);
     bf_07_comb.Add_par("A1", 0.05, 0.005);
     bf_07_comb.Add_par("A2", 0.03, 0.003);
     bf_07_comb.Add_par("A3", 0.003, 0.001);
-    bf_07_comb.Add_prior_par("TH", 2.5, 0.05);
+    bf_07_comb.Add_prior_par("TH", 0.5, 0.05);
+    bf_07_comb.Add_prior_par("A", -0.003, 0.001);
     bf_07_comb.Add_prior_par("A1", 0.05, 0.005);
     bf_07_comb.Add_prior_par("A2", 0.03, 0.003);
     bf_07_comb.Add_prior_par("A3", 0.003, 0.001);
+
+   
     
 
    
@@ -3128,16 +3445,31 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     bf_07_comb_ch2.Set_number_of_measurements(2*sigma_to_fit);
     bf_07_comb_ch2.Set_verbosity(1);
 
-    bf_07_comb_ch2.Add_par("TH", 3.0, 0.05);
+    bf_07_comb_ch2.Add_par("TH", 0.3, 0.05);
     bf_07_comb_ch2.Add_par("A", -0.003, 0.001);
     bf_07_comb_ch2.Add_par("A1", 0.05, 0.005);
     bf_07_comb_ch2.Add_par("A2", 0.03, 0.003);
     bf_07_comb_ch2.Add_par("A3", 0.003, 0.001);
 
-    bf_07_comb_ch2.Add_prior_par("TH", 2.5, 0.3);
+    bf_07_comb_ch2.Add_prior_par("TH", 0.5, 0.05);
+    bf_07_comb_ch2.Add_prior_par("A", -0.003, 0.001);
     bf_07_comb_ch2.Add_prior_par("A1", 0.05, 0.005);
     bf_07_comb_ch2.Add_prior_par("A2", 0.03, 0.003);
     bf_07_comb_ch2.Add_prior_par("A3", 0.003, 0.001);
+
+
+    if(fix_TH) {
+
+      bf_07_comb.Fix_par("TH",1e3);
+      bf_07_comb_ch2.Fix_par("TH",1e3);
+      
+    }
+
+    
+    if(!Fit_I_TO) {
+      bf_07_comb.Fix_par("A",0.0);
+      bf_07_comb_ch2.Fix_par("A",0.0);
+    }
     
       
 
@@ -3151,45 +3483,135 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     double Eph1= sqrt(pow(1.019,2) + pow(0.5*xg*Mp_cont,2));
     double Eph2= sqrt(pow(1.680,2) + pow(0.5*xg*Mp_cont,2));
     double Eph3= sqrt(pow(2.163,2) + pow(0.5*xg*Mp_cont,2));
-    double G1= 0.004249/2.0;
-    double G2= 0.150/2.0;
-    double G3= 0.103/2.0;
+    distr_t G1_distr(UseJack), G2_distr(UseJack), G3_distr(UseJack);
+    double G1_ave= 0.004249/2.0; double G1_err= 0.000013/2.0;
+    double G2_ave= 0.150/2.0;    double G2_err= 0.050/2.0;
+    double G3_ave= 0.103/2.0;    double G3_err=0.025/2.0;
+
+    for(int ijack=0;ijack<Njacks;ijack++) {
+      G1_distr.distr.push_back( G1_ave+ GM_07()*G1_err/sqrt(Njacks-1.0));
+      G2_distr.distr.push_back( G2_ave+ GM_07()*G2_err/sqrt(Njacks-1.0));
+      G3_distr.distr.push_back( G3_ave+ GM_07()*G3_err/sqrt(Njacks-1.0));
+    }
+      
 
     string MODE_SPECTR="";
-
     
+   
     //ansatz
-    bf_07_comb.ansatz =  [&Et, &Eph1, &Eph2, &Eph3, &G1, &G2, &G3, &MODE_SPECTR](const fpar_07_comb &p, const ipar_07_comb &ip) {
+    bf_07_comb.ansatz =  [&Et, &Eph1, &Eph2, &Eph3,  &MODE_SPECTR, &fix_TH](const fpar_07_comb &p, const ipar_07_comb &ip) {
 
+      double TH= Eph3 + sqrt(p.TH*p.TH);
+      Vfloat As({p.A1, p.A2, p.A3});
+      Vfloat Gs({ip.G1, ip.G2, ip.G3});
+      Vfloat Ephs({Eph1,Eph2,Eph3});
       
-      double D= p.TH*( p.A1*(G1)/(pow(p.TH-Eph1,2) + pow(G1,2)) +  p.A2*(G2)/(pow(p.TH-Eph2,2) + pow(G2,2)) +p.A3*(G3)/(pow(p.TH-Eph3,2) + pow(G3,2))                     );
-
-      if(MODE_SPECTR == "sqrt") D= sqrt(p.TH)*( p.A1*(G1)/(pow(p.TH-Eph1,2) + pow(G1,2)) +  p.A2*(G2)/(pow(p.TH-Eph2,2) + pow(G2,2)) +p.A3*(G3)/(pow(p.TH-Eph3,2) + pow(G3,2))                     );
-
-
+      //coupling D #####################
+      double D=  TH*( p.A1*(ip.G1)/(pow(TH-Eph1,2) + pow(ip.G1,2)) +  p.A2*(ip.G2)/(pow(TH-Eph2,2) + pow(ip.G2,2)) +p.A3*(ip.G3)/(pow(TH-Eph3,2) + pow(ip.G3,2)) );
+      if(MODE_SPECTR == "sqrt")  D= sqrt(TH)*( p.A1*(ip.G1)/(pow(TH-Eph1,2) + pow(ip.G1,2)) +  p.A2*(ip.G2)/(pow(TH-Eph2,2) + pow(ip.G2,2)) +p.A3*(ip.G3)/(pow(TH-Eph3,2) + pow(ip.G3,2)) );
+      if(MODE_SPECTR == "quad")  D= pow(TH,2)*( p.A1*(ip.G1)/(pow(TH-Eph1,2) + pow(ip.G1,2)) +  p.A2*(ip.G2)/(pow(TH-Eph2,2) + pow(ip.G2,2)) +p.A3*(ip.G3)/(pow(TH-Eph3,2) + pow(ip.G3,2)) );
+      //###############################
+      
+      //######## real part ###############
       if(ip.Is_RE) {
 
-	double x_res= -p.A1*(Et-Eph1)/(pow(Et-Eph1,2) + pow(G1+ip.sigma,2)) +  -p.A2*(Et-Eph2)/(pow(Et-Eph2,2) + pow(G2+ip.sigma,2)) +  -p.A3*(Et-Eph3)/(pow(Et-Eph3,2) + pow(G3+ip.sigma,2)) ;
+	double x_res_ori= -p.A1*(Et-Eph1)/(pow(Et-Eph1,2) + pow(ip.G1+ip.sigma,2)) +  -p.A2*(Et-Eph2)/(pow(Et-Eph2,2) + pow(ip.G2+ip.sigma,2)) +  -p.A3*(Et-Eph3)/(pow(Et-Eph3,2) + pow(ip.G3+ip.sigma,2)) ;
+	double x_res_0_ori= -p.A1*(0.0-Eph1)/(pow(0.0-Eph1,2) + pow(ip.G1,2)) +  -p.A2*(0.0-Eph2)/(pow(0.0-Eph2,2) + pow(ip.G2,2)) +  -p.A3*(0.0-Eph3)/(pow(0.0-Eph3,2) + pow(ip.G3,2)) ;
 
-	
+	double x_phi= -p.A1*(Et-Eph1)/(pow(Et-Eph1,2) + pow(ip.G1+ip.sigma,2));
+	double x_phi_1680= -p.A2*(Et-Eph2)/(pow(Et-Eph2,2) + pow(ip.G2+ip.sigma,2));
+	double x_phi_2200= -p.A3*(Et-Eph3)/(pow(Et-Eph3,2) + pow(ip.G3+ip.sigma,2));
+
+
+
+	double x_res=0;
+	double x_res_0=0;
+
+	complex I(0.0,1.0);
+	double e=ip.sigma;
+
+	for(int n=0;n<(signed)As.size();n++) {
+
+	  complex r= ((Ephs[n]-I*e -Et + ((TH > Et)?2.0*I*Gs[n]:0.0))*M_PI + 2.0*(-Ephs[n] + I*e + Et)*atan( (Ephs[n] -TH)/Gs[n]) + Gs[n]*( 2.0*I*atan( e/(Et-TH)) -log( pow(Ephs[n]-TH,2) + pow(Gs[n],2)) + log( pow(e,2) + pow(Et-TH,2))))/( (pow(Gs[n],2) + (Et -Ephs[n] +I*e)*(Et-Ephs[n]+I*e)));
+
+	  complex r0 = ((Ephs[n] + 2.0*I*Gs[n])*M_PI -2.0*I*Gs[n]*atan(e/TH) -2.0*(Ephs[n])*atan( (Ephs[n]-TH)/Gs[n]) + Gs[n]*log( ( pow(TH,2))/( pow(Gs[n],2) + pow(TH-Ephs[n],2))))/( pow(Gs[n],2) + (Ephs[n])*(Ephs[n]));
+
+	  x_res += real(r)*As[n]/(2.0*M_PI);
+
+	  //if(n==0) cout<<"RE phi: original: "<<x_phi<<" , new: "<<real(r)*As[n]/(2.0*M_PI)<<endl;
+	  //if(n==1) cout<<"RE phi(1680): original: "<<x_phi_1680<<" , new: "<<real(r)*As[n]/(2.0*M_PI)<<endl;
+	  //if(n==2) cout<<"RE phi(2200): original: "<<x_phi_2200<<" , new: "<<real(r)*As[n]/(2.0*M_PI)<<endl;
+	  
+	  x_res_0 += real(r0)*As[n]/(2.0*M_PI);
+
+	  //if(n==0) cout<<"RE0 phi: original: "<<-p.A1*(0.0-Eph1)/(pow(0.0-Eph1,2) + pow(ip.G1,2))<<" , new: "<<real(r0)*As[n]/(2.0*M_PI)<<endl;
+	  //if(n==1) cout<<"RE0 phi(1680): "<<real(r0)*As[n]/(2.0*M_PI)<<endl;
+	  //if(n==2) cout<<"RE0 phi(2200): "<<real(r0)*As[n]/(2.0*M_PI)<<endl;
+
+	}
+
+	//cout<<"x_res(RE) original: "<<x_res_ori<<" , new: "<<x_res<<endl;
+	//cout<<"x_res0(RE) original: "<<x_res_0_ori<<" , new: "<<x_res_0<<endl;
+
+
         complex z(Et,ip.sigma);
-	double x_cont= real( -D*log(1.0 - z/p.TH)/z)/M_PI;
+	double x_cont= real( -D*log(1.0 - z/TH)/z)/M_PI;
+	double x_cont_0 = D/(M_PI*TH);
 
-	if(MODE_SPECTR=="sqrt") x_cont= real( 2*D*atanh(sqrt(z/p.TH))/sqrt(z))/M_PI;
+	//if(fix_TH)  return p.A + x_res;
 
-	return p.A +  x_res + x_cont;
+	if(MODE_SPECTR=="sqrt") {
+	  x_cont= real( 2*D*atanh(sqrt(z/TH))/sqrt(z))/M_PI;
+	  x_cont_0 = 2*D/(M_PI*TH);
+	}
+	if(MODE_SPECTR=="quad") {
+	  x_cont = real( -D*log(1.0-z/TH)/(z*z)  -D/(TH*z))/M_PI;
+	  x_cont_0 = D/(M_PI*2*TH*TH);
+	}
+
+	return (p.A+ ip.I_ori) +  x_res + x_cont -x_cont_0 -x_res_0;
+      }
+      //#################################################################################################
+
+      
+      
+      double x_res_ori= p.A1*(ip.G1+ip.sigma)/(pow(Et-Eph1,2) + pow(ip.G1+ip.sigma,2)) +  p.A2*(ip.G2+ip.sigma)/(pow(Et-Eph2,2) + pow(ip.G2+ip.sigma,2)) + p.A3*(ip.G3+ip.sigma)/(pow(Et-Eph3,2) + pow(ip.G3+ip.sigma,2))  ;
+
+
+      double x_phi_IM= p.A1*(ip.G1+ip.sigma)/(pow(Et-Eph1,2) + pow(ip.G1+ip.sigma,2));
+      double x_phi_1680_IM= p.A2*(ip.G2+ip.sigma)/(pow(Et-Eph2,2) + pow(ip.G2+ip.sigma,2));
+      double x_phi_2200_IM= p.A3*(ip.G3+ip.sigma)/(pow(Et-Eph3,2) + pow(ip.G3+ip.sigma,2));
+
+      double x_res=0;
+
+      complex I(0.0,1.0);
+      double e=ip.sigma;
+
+      for(int n=0;n<(signed)As.size();n++) {
+
+	complex r= ((Ephs[n]-I*e -Et + ((TH > Et)?2.0*I*Gs[n]:0.0))*M_PI + 2.0*(-Ephs[n] + I*e + Et)*atan( (Ephs[n] -TH)/Gs[n]) + Gs[n]*( 2.0*I*atan( e/(Et-TH)) -log( pow(Ephs[n]-TH,2) + pow(Gs[n],2)) + log( pow(e,2) + pow(Et-TH,2))))/( (pow(Gs[n],2) + (Et -Ephs[n] +I*e)*(Et-Ephs[n]+I*e)));
+
+	x_res += imag(r)*As[n]/(2.0*M_PI);
+
+	//if(ip.sigma==0.0001) {
+	//if(n==0) cout<<"IM phi : original: "<<x_phi_IM<<" , new: "<<imag(r)*As[n]/(2.0*M_PI)<<endl;
+	//if(n==1) cout<<"IM phi(1680) : original: "<<x_phi_1680_IM<<" , new: "<<imag(r)*As[n]/(2.0*M_PI)<<endl;
+	//if(n==2) cout<<"IM phi(2200) : original: "<<x_phi_2200_IM<<" , new: "<<imag(r)*As[n]/(2.0*M_PI)<<endl;
+	//}
+
       }
 
-      
-      double x_res= p.A1*(G1+ip.sigma)/(pow(Et-Eph1,2) + pow(G1+ip.sigma,2)) +  p.A2*(G2+ip.sigma)/(pow(Et-Eph2,2) + pow(G2+ip.sigma,2)) + p.A3*(G3+ip.sigma)/(pow(Et-Eph3,2) + pow(G3+ip.sigma,2))  ;
+      //if(ip.sigma==0.0001) cout<<"x_res(IM) original: "<<x_res_ori<<" , new: "<<x_res<<endl;
 
       complex z(Et,ip.sigma);
-      double x_cont= imag( -D*log(1.0 - z/p.TH)/z)/M_PI;
+      double x_cont= imag( -D*log(1.0 - z/TH)/z)/M_PI;
 
+      if(fix_TH) return x_res;
       
-      if(MODE_SPECTR=="sqrt") x_cont= imag( 2*D*atanh(sqrt(z/p.TH))/sqrt(z))/M_PI;
+      if(MODE_SPECTR=="sqrt") x_cont= imag( 2*D*atanh(sqrt(z/TH))/sqrt(z))/M_PI;
+      if(MODE_SPECTR=="quad") x_cont = imag( -D*log(1.0-z/TH)/(z*z)  -D/(TH*z))/M_PI;
 
-      return x_res + x_cont;
+      return  x_res + x_cont;
       
           	 	  
     };
@@ -3220,6 +3642,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   boot_fit_data<fpar_07_comb> Bt_fit_07_comb;
   boot_fit_data<fpar_07_comb> Bt_fit_07_comb_ch2;
 
+  boot_fit_data<fpar_07_comb> Bt_fit_07_comb_sqrt;
+  boot_fit_data<fpar_07_comb> Bt_fit_07_comb_sqrt_ch2;
+
   
   
   for(auto &data_iboot: data_07_comb) data_iboot.resize(2*sigma_to_fit);
@@ -3229,11 +3654,19 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
       data_07_comb[ijack][is].FF = (FT_s_RE_sigma[is]).distr[ijack];
       data_07_comb[ijack][is].FF_err= (FT_s_RE_sigma[is]).err();
       data_07_comb[ijack][is].sigma = sigma_simulated[ixg][is];
+      data_07_comb[ijack][is].I_ori = FT_I_sub.distr[ijack];
+      data_07_comb[ijack][is].G1= G1_distr.distr[ijack];
+      data_07_comb[ijack][is].G2= G2_distr.distr[ijack];
+      data_07_comb[ijack][is].G3= G3_distr.distr[ijack];
       data_07_comb[ijack][is].Is_RE = true;
 
       data_07_comb[ijack][is+sigma_to_fit].FF = (FT_s_IM_sigma[is]).distr[ijack];
       data_07_comb[ijack][is+sigma_to_fit].FF_err= (FT_s_IM_sigma[is]).err();
       data_07_comb[ijack][is+sigma_to_fit].sigma = sigma_simulated[ixg][is];
+      data_07_comb[ijack][is+sigma_to_fit].I_ori = FT_I_sub.distr[ijack];
+      data_07_comb[ijack][is+sigma_to_fit].G1= G1_distr.distr[ijack];
+      data_07_comb[ijack][is+sigma_to_fit].G2= G2_distr.distr[ijack];
+      data_07_comb[ijack][is+sigma_to_fit].G3= G3_distr.distr[ijack];
       data_07_comb[ijack][is+sigma_to_fit].Is_RE = false;
      
         
@@ -3242,11 +3675,19 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	data_07_comb_ch2[ijack][is].FF = (FT_s_RE_sigma[is]).ave();
 	data_07_comb_ch2[ijack][is].FF_err= (FT_s_RE_sigma[is]).err();
 	data_07_comb_ch2[ijack][is].sigma = sigma_simulated[ixg][is];
+	data_07_comb_ch2[ijack][is].I_ori = FT_I_sub.ave();
+	data_07_comb_ch2[ijack][is].G1= G1_distr.ave();
+	data_07_comb_ch2[ijack][is].G2= G2_distr.ave();
+	data_07_comb_ch2[ijack][is].G3= G3_distr.ave();
 	data_07_comb_ch2[ijack][is].Is_RE = true;
 	
 	data_07_comb_ch2[ijack][is+sigma_to_fit].FF = (FT_s_IM_sigma[is]).ave();
 	data_07_comb_ch2[ijack][is+sigma_to_fit].FF_err= (FT_s_IM_sigma[is]).err();
 	data_07_comb_ch2[ijack][is+sigma_to_fit].sigma = sigma_simulated[ixg][is];
+	data_07_comb_ch2[ijack][is+sigma_to_fit].I_ori = FT_I_sub.ave();
+	data_07_comb_ch2[ijack][is+sigma_to_fit].G1= G1_distr.ave();
+	data_07_comb_ch2[ijack][is+sigma_to_fit].G2= G2_distr.ave();
+	data_07_comb_ch2[ijack][is+sigma_to_fit].G3= G3_distr.ave();
 	data_07_comb_ch2[ijack][is+sigma_to_fit].Is_RE = false;
 
 	
@@ -3259,12 +3700,13 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
     double gc=0.047;
     if(MESON=="B1s") gc=0.042;
-    if(MESON=="B2s") gc=0.042;
+    if(MESON=="B3s") gc=0.040;
 
-    bf_07_comb.Append_to_prior("TH", 2.5, 0.5); bf_07_comb_ch2.Append_to_prior("TH", 2.5 ,0.5);
-    bf_07_comb.Append_to_prior("A1", gc, 0.1*gc); bf_07_comb_ch2.Append_to_prior("A1", gc,0.1*gc);
-    bf_07_comb.Append_to_prior("A2", gc, 0.5*gc); bf_07_comb_ch2.Append_to_prior("A2", gc,0.5*gc);
-    bf_07_comb.Append_to_prior("A3", gc, gc); bf_07_comb_ch2.Append_to_prior("A3", gc,gc);
+    bf_07_comb.Append_to_prior("TH", (fix_TH)?1e3:0.5, 0.5); bf_07_comb_ch2.Append_to_prior("TH", (fix_TH)?1e3:0.5 ,0.5);
+    bf_07_comb.Append_to_prior("A", (Fit_I_TO)?-0.005:0.0, 0.005); bf_07_comb_ch2.Append_to_prior("A", (Fit_I_TO)?-0.005:0.0 ,0.005);
+    bf_07_comb.Append_to_prior("A1", gc, 0.10*gc); bf_07_comb_ch2.Append_to_prior("A1", gc,0.10*gc);
+    bf_07_comb.Append_to_prior("A2", 0.5*gc, 0.5*gc); bf_07_comb_ch2.Append_to_prior("A2", 0.5*gc,0.5*gc);
+    bf_07_comb.Append_to_prior("A3", 0.5*gc, 0.5*gc); bf_07_comb_ch2.Append_to_prior("A3", 0.5*gc,0.5*gc);
     
   }
   
@@ -3274,13 +3716,17 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   //fit
   cout<<"Fitting real part of the form factor for ixg: "<<ixg<<endl;
 
-
-
+  cout<<"I TO: "<<FT_I_ori.ave()<<" +- "<<FT_I_ori.err()<<endl;
   Bt_fit_07_comb= bf_07_comb.Perform_bootstrap_fit();
   Bt_fit_07_comb_ch2= bf_07_comb_ch2.Perform_bootstrap_fit();
+  MODE_SPECTR="sqrt";
+  Bt_fit_07_comb_sqrt= bf_07_comb.Perform_bootstrap_fit();
+  Bt_fit_07_comb_sqrt_ch2= bf_07_comb_ch2.Perform_bootstrap_fit();
   Use_five_finest=true;
 
   distr_t A(UseJack),  A1(UseJack), A2(UseJack), A3(UseJack), TH(UseJack);
+
+  distr_t A_sqrt(UseJack),  A1_sqrt(UseJack), A2_sqrt(UseJack), A3_sqrt(UseJack), TH_sqrt(UseJack);
 
  
 
@@ -3291,12 +3737,47 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     A2.distr.push_back( Bt_fit_07_comb.par[ijack].A2);
     A3.distr.push_back( Bt_fit_07_comb.par[ijack].A3);
     TH.distr.push_back( Bt_fit_07_comb.par[ijack].TH);
+
+
+    A_sqrt.distr.push_back( Bt_fit_07_comb_sqrt.par[ijack].A);
+    A1_sqrt.distr.push_back( Bt_fit_07_comb_sqrt.par[ijack].A1);
+    A2_sqrt.distr.push_back( Bt_fit_07_comb_sqrt.par[ijack].A2);
+    A3_sqrt.distr.push_back( Bt_fit_07_comb_sqrt.par[ijack].A3);
+    TH_sqrt.distr.push_back( Bt_fit_07_comb_sqrt.par[ijack].TH);
   }
 
   //get fit function
 
 
   distr_t_list F_print_COMB_RE(UseJack, Nsigmas_to_print, Njacks), F_print_COMB_IM(UseJack, Nsigmas_to_print, Njacks);
+
+  distr_t_list F_print_COMB_SQRT_RE(UseJack, Nsigmas_to_print, Njacks), F_print_COMB_SQRT_IM(UseJack, Nsigmas_to_print, Njacks);
+
+
+  distr_t F_RE_lin(UseJack); distr_t F_RE_sqrt(UseJack);
+  distr_t F_IM_lin(UseJack); distr_t F_IM_sqrt(UseJack);
+
+  for(int ijack=0;ijack<Njacks;ijack++) {
+    ipar_07_comb fS;
+    fS.sigma= 1e-10;
+    fS.I_ori=FT_I_sub.distr[ijack];
+    fS.G1 = G1_distr.distr[ijack];
+    fS.G2 = G2_distr.distr[ijack];
+    fS.G3 = G3_distr.distr[ijack];
+
+    MODE_SPECTR="";
+    fS.Is_RE=true;
+    F_RE_lin.distr.push_back( bf_07_comb.ansatz( Bt_fit_07_comb.par[ijack], fS) );
+    fS.Is_RE=false;
+    F_IM_lin.distr.push_back( bf_07_comb.ansatz( Bt_fit_07_comb.par[ijack], fS) );
+    
+    MODE_SPECTR="sqrt";
+    fS.Is_RE=true;
+    F_RE_sqrt.distr.push_back( bf_07_comb.ansatz( Bt_fit_07_comb_sqrt.par[ijack], fS));
+    fS.Is_RE=false;
+    F_IM_sqrt.distr.push_back( bf_07_comb.ansatz( Bt_fit_07_comb_sqrt.par[ijack], fS));
+
+  }
   
   for(int n=0;n<Nsigmas_to_print;n++) {
 
@@ -3304,10 +3785,23 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     fS.sigma= sigmas_to_print[n];
    
     for(int ijack=0;ijack<Njacks;ijack++) {
+
+      fS.I_ori= FT_I_sub.distr[ijack];
+      fS.G1 = G1_distr.distr[ijack];
+      fS.G2 = G2_distr.distr[ijack];
+      fS.G3 = G3_distr.distr[ijack];
+
+      MODE_SPECTR="";
       fS.Is_RE=true;
       F_print_COMB_RE.distr_list[n].distr[ijack] = bf_07_comb.ansatz( Bt_fit_07_comb.par[ijack], fS);
       fS.Is_RE=false;
       F_print_COMB_IM.distr_list[n].distr[ijack] = bf_07_comb.ansatz( Bt_fit_07_comb.par[ijack], fS);
+      
+      MODE_SPECTR="sqrt";
+      fS.Is_RE=true;
+      F_print_COMB_SQRT_RE.distr_list[n].distr[ijack] = bf_07_comb.ansatz( Bt_fit_07_comb_sqrt.par[ijack], fS);
+      fS.Is_RE=false;
+      F_print_COMB_SQRT_IM.distr_list[n].distr[ijack] = bf_07_comb.ansatz( Bt_fit_07_comb_sqrt.par[ijack], fS);
    
     }
     
@@ -3334,47 +3828,68 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
   //print spectral density at epsilon=0
   Vfloat Ergs;
-  int Nergs=501;
-  for(int ierg=0;ierg<Nergs;ierg++) Ergs.push_back(ierg*0.01);
+  int Nergs=5001;
+  for(int ierg=0;ierg<Nergs;ierg++) Ergs.push_back(ierg*0.001);
 
   distr_t_list sp_dens(UseJack, Nergs, Njacks);
   distr_t_list sp_dens_s_small(UseJack, Nergs,Njacks);
+
+  MODE_SPECTR="";
 
   for(int ierg=0;ierg<Nergs;ierg++) {
 
     double E= Ergs[ierg];
 
     for(int ijack=0;ijack<Njacks;ijack++) {
+
+     
+      
+
+      double G1= G1_distr.distr[ijack];
+      double G2= G2_distr.distr[ijack];
+      double G3= G3_distr.distr[ijack];
       double A1_v= A1.distr[ijack];
       double A2_v= A2.distr[ijack];
       double A3_v= A3.distr[ijack];
       double TH_v= TH.distr[ijack];
+      
+      Et = E;
+      ipar_07_comb Ip_s;
+      Ip_s.Is_RE = false;
+      Ip_s.G1= G1;
+      Ip_s.G2= G2;
+      Ip_s.G3= G3;
+      Ip_s.sigma=0.0001;
 
-      double s=0.001;
+      double TH= Eph3 + sqrt(TH_v*TH_v);
 
-      double res_s=2*A1_v*(G1+s)/( pow(E-Eph1,2) + pow(G1+s,2)) + 2*A2_v*(G2+s)/( pow(E-Eph2,2) + pow(G2+s,2)) + 2*A3_v*(G3+s)/( pow(E-Eph3,2) + pow(G3+s,2)) ;
+      fpar_07_comb Fp_s({TH_v, 0.0, A1_v, A2_v, A3_v});
+      
+      double res_s= bf_07_comb.ansatz(Fp_s, Ip_s);
 
+     
       double res= 2*A1_v*G1/( pow(E-Eph1,2) + pow(G1,2)) + 2*A2_v*G2/( pow(E-Eph2,2) + pow(G2,2)) + 2*A3_v*G3/( pow(E-Eph3,2) + pow(G3,2));
       
 
-      double D= 2*A1_v*G1/( pow(TH_v-Eph1,2) + pow(G1,2)) + 2*A2_v*G2/( pow(TH_v-Eph2,2) + pow(G2,2)) + 2*A3_v*G3/( pow(TH_v-Eph3,2) + pow(G3,2));
+      double D= 2*A1_v*G1/( pow(TH-Eph1,2) + pow(G1,2)) + 2*A2_v*G2/( pow(TH-Eph2,2) + pow(G2,2)) + 2*A3_v*G3/( pow(TH-Eph3,2) + pow(G3,2));
+      double rho_cont=0;
+      
+      if(MODE_SPECTR=="sqrt") { D *= sqrt(TH); rho_cont = D/sqrt(E); }
+      if(MODE_SPECTR=="quad") { D *= pow(TH,2);  rho_cont = D/pow(E,2);}
+      else { D *= TH; rho_cont = D/E;}
       
       
-      if(E > TH_v) sp_dens.distr_list[ierg].distr[ijack] = res + D/((MODE_SPECTR=="sqrt")?sqrt(E):E);
+      if(E > TH) sp_dens.distr_list[ierg].distr[ijack] = rho_cont;
       else  sp_dens.distr_list[ierg].distr[ijack] =  res;
 
-      complex z(E,s);
-      double x_cont= imag( -D*log(1.0 - z/TH_v)/z)/M_PI;
-
-      if(MODE_SPECTR=="sqrt")  x_cont = imag( 2*D*atanh( sqrt(z/TH_v))/sqrt(z))/M_PI ; 
-
-      sp_dens_s_small.distr_list[ierg].distr[ijack] = res_s + x_cont; 
+      
+      sp_dens_s_small.distr_list[ierg].distr[ijack] = res_s; 
       
     }
 
   }
 
-  Print_To_File({}, {sp_dens.ave(), sp_dens.err(), sp_dens_s_small.ave(), sp_dens_s_small.err()}, path_out+"/FF_d_extr/sp_dens_ixg_"+to_string(ixg)+".data", "", "");
+  Print_To_File({}, {Ergs, sp_dens.ave(), sp_dens.err(), sp_dens_s_small.ave(), sp_dens_s_small.err()}, path_out+"/FF_d_extr/sp_dens_ixg_"+to_string(ixg)+".data", "", "");
 
 
   //##############################################################################################################################################
@@ -3391,22 +3906,38 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
   string out_path_data = path_out+"/FF_d_extr/FT_ixg_"+to_string(ixg)+".data" ;
   string out_path_fit_func = path_out+"/FF_d_extr/FT_ixg_"+to_string(ixg)+".fit_func";
   string out_path_fit_func_comb = path_out+"/FF_d_extr/FT_ixg_"+to_string(ixg)+"_comb.fit_func";
+  string out_path_fit_func_comb_sqrt = path_out+"/FF_d_extr/FT_ixg_"+to_string(ixg)+"_comb_sqrt.fit_func";
   
   Print_To_File({}, {sigma_simulated[ixg], FT_s_RE_sigma.ave(), FT_s_RE_sigma.err(), FT_s_IM_sigma.ave(), FT_s_IM_sigma.err(), FT_s_IM_Gauss_sigma.ave(), FT_s_IM_Gauss_sigma.err()}, out_path_data, "", "");
   Print_To_File({}, {sigma_simulated[ixg], FT_s_RE_sigma_15.ave(), FT_s_RE_sigma_15.err(), FT_s_IM_sigma_15.ave(), FT_s_IM_sigma_15.err()},  path_out+"/FF_d_extr/FT_15_ixg_"+to_string(ixg)+".data", "", "");
   Print_To_File({}, {sigma_simulated[ixg], FT_s_RE_sigma_7.ave(), FT_s_RE_sigma_7.err(), FT_s_IM_sigma_7.ave(), FT_s_IM_sigma_7.err()},  path_out+"/FF_d_extr/FT_7_ixg_"+to_string(ixg)+".data", "", "");
-  Print_To_File({}, {sigma_simulated[ixg], FT_s_RE_sigma.ave(), FT_s_RE_sigma.err(), FT_s_IM_sigma.ave(), FT_s_IM_sigma.err(), FT_s_IM_Gauss_sigma.ave(), FT_s_IM_Gauss_sigma.err()}, out_path_data, "", "");
+  Print_To_File({}, {sigma_simulated[ixg], FT_s_RE_sigma_no_sub.ave(), FT_s_RE_sigma_no_sub.err()},  path_out+"/FF_d_extr/FT_no_sub_ixg_"+to_string(ixg)+".data", "", "");
   Print_To_File({}, {sigmas_to_print, F_print_RE.ave(), F_print_RE.err(), F_print_IM.ave(), F_print_IM.err(), F_print_IM_Gauss.ave(), F_print_IM_Gauss.err()}, out_path_fit_func, "", "");
+  Print_To_File({}, {sigmas_to_print_0, F_print_RE_0.ave(), F_print_RE_0.err(), F_print_IM_0.ave(), F_print_IM_0.err()}, out_path_fit_func+"_0", "", "");
 
   Print_To_File({}, {sigmas_to_print, F_print_COMB_RE.ave(), F_print_COMB_RE.err(), F_print_COMB_IM.ave(), F_print_COMB_IM.err()}, out_path_fit_func_comb, "", "");
 
+  Print_To_File({}, {sigmas_to_print, F_print_COMB_SQRT_RE.ave(), F_print_COMB_SQRT_RE.err(), F_print_COMB_SQRT_IM.ave(), F_print_COMB_SQRT_IM.err()}, out_path_fit_func_comb_sqrt, "", "");
   
   
   double syst_RE= fabs( R_RE.ave() - R_RE_red.ave())*erf(  fabs(R_RE.ave() - R_RE_red.ave())/(sqrt(2.0)*R_RE_red.err())   );
   double syst_IM= fabs( R_IM.ave() - R_IM_red.ave())*erf(  fabs(R_IM.ave() - R_IM_red.ave())/(sqrt(2.0)*R_IM_red.err())   );
+
+  R_RE = R_RE.ave() + (R_RE -R_RE.ave())*sqrt( pow(R_RE.err(),2) + pow(syst_RE,2))/R_RE.err();
+  R_IM = R_IM.ave() + (R_IM -R_IM.ave())*sqrt( pow(R_IM.err(),2) + pow(syst_IM,2))/R_IM.err();
+
+  distr_t ave_RE = (1.0/2.0)*( R_RE +  F_RE_sqrt);
+  distr_t ave_IM = (1.0/2.0)*( R_IM +  F_IM_sqrt);
+
+  double syst_RE_tot= 0.5*fabs( R_RE.ave() - F_RE_sqrt.ave());
+  double syst_IM_tot= 0.5*fabs( R_IM.ave() - F_IM_sqrt.ave());
+
+  ave_RE = ave_RE.ave() + (ave_RE - ave_RE.ave())*sqrt( pow(ave_RE.err(),2) + pow(syst_RE_tot,2))/ave_RE.err();
+
+  ave_IM = ave_IM.ave() + (ave_IM - ave_IM.ave())*fabs( ave_IM.err() + syst_IM_tot)/ave_IM.err();
   
-  return_class.F_T_d_RE.distr_list.push_back( R_RE.ave() + (R_RE -R_RE.ave())*sqrt( pow(R_RE.err(),2) + pow(syst_RE,2))/R_RE.err());
-  return_class.F_T_d_IM.distr_list.push_back( R_IM.ave() + (R_IM -R_IM.ave())*sqrt( pow(R_IM.err(),2) + pow(syst_IM,2))/R_IM.err());
+  return_class.F_T_d_RE.distr_list.push_back( R_RE );
+  return_class.F_T_d_IM.distr_list.push_back( ave_IM );
   
   
   
@@ -3420,6 +3951,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
     
   }
 
+  //print extrapolated ori
+  Print_To_File({}, {xg_list.ave() ,F_T_d_I_ori_extr.ave(), F_T_d_I_ori_extr.err()}, path_out+"/FF_d_extr/F_T_d_ori.data", "", "");
   
   return_class.num_xg= n_xg;
   return_class.MESON= MESON;

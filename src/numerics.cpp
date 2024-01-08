@@ -318,6 +318,17 @@ double DoConstantFit(Vfloat &data, Vfloat &err) {
   return result;
 }
 
+double lin_interpolator(double y1, double y2, double Dx1, double Dx2,double Dx) {
+
+  double n1= y1*Dx2;
+  double n2= y2*Dx1;
+
+  double a0= (n1-n2)/(Dx2-Dx1);
+  double a1 = (y1-a0)/Dx1;
+
+  return a0+a1*Dx;
+}
+
 
 double quad_interpolator(double y1, double y2, double y3, double Dx1, double Dx2, double Dx3, double Dx) {
 

@@ -184,6 +184,12 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
 
   }
 
+  else if(Analysis_Mode=="HVP_strange") {
+
+    //do nothing
+
+  }
+
   else if(Analysis_Mode=="RC_analysis") {
 
     //do nothing
@@ -291,6 +297,10 @@ void MasterClass_analysis::Analysis_manager() {
 
   if(Analysis_Mode=="HVP") {
     HVP();
+  }
+
+  if(Analysis_Mode=="HVP_strange") {
+    HVP_strange();
   }
 
   if(Analysis_Mode=="RC_analysis") {

@@ -7,7 +7,7 @@
 const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
 const bool UseJack=1;
-const int Njacks=75;
+const int Njacks=50;
 const int Nboots=2000;
 const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
@@ -22,8 +22,8 @@ const double m_kappa_err = 0.0004e-8;
 const double m_etas = 0.68989;
 const double m_etas_err= 0.00050;
 const double E0_l = 0.9*m_kappa;
-const double E0_sp = E0_l; //0.9 * (m_kappa + MPiPhys);
-double E0_A_sp = E0_l; // 0.9*(m_kappa+2*MPiPhys);
+const double E0_sp = 0.9 * (m_kappa + MPiPhys); //E0_l
+double E0_A_sp = E0_sp; // 0.9*(m_kappa+2*MPiPhys);
 const double Rs_HFLAV = 0.163260;
 const double D_Rs_HFLAV= 0.0027;
 Vfloat sigma_list_strange;
@@ -54,7 +54,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   if(Ens=="cZ211a.077.64") Ens = "cB211b.072.64";
 
   if(Ens=="cE211a.044.112") Ens="cD211a.054.96";
-  if(Ens=="cB211a.072.96") Ens="cB211a.072.64";
+  if(Ens=="cB211b.072.96") Ens="cB211b.072.64";
 
   
   if( reg=="tm") {
@@ -788,6 +788,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   vector<distr_t_list> Br_A0_tau_tm, Br_V0_tau_tm, Br_Aii_tau_tm, Br_Vii_tau_tm;
   vector<distr_t_list> Br_A0_tau_OS, Br_V0_tau_OS, Br_Aii_tau_OS, Br_Vii_tau_OS;
 
+  vector<distr_t_list> Br_T_tau_tm, Br_L_tau_tm, Br_T_tau_OS, Br_L_tau_OS;
+
    
   VVfloat syst_per_ens_tm_A0(Nens);
   VVfloat syst_per_ens_tm_V0(Nens);
@@ -800,6 +802,12 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   VVfloat syst_per_ens_tm(Nens);
   VVfloat syst_per_ens_OS(Nens);
 
+  VVfloat syst_per_ens_tm_T(Nens);
+  VVfloat syst_per_ens_tm_L(Nens);
+
+  VVfloat syst_per_ens_OS_T(Nens);
+  VVfloat syst_per_ens_OS_L(Nens);
+
 
   for(int iens=0; iens<Nens; iens++) {
     Br_tau_tm.emplace_back( UseJack, sigma_list_strange.size());
@@ -807,6 +815,12 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     Br_V0_tau_tm.emplace_back( UseJack, sigma_list_strange.size());
     Br_Aii_tau_tm.emplace_back( UseJack, sigma_list_strange.size());
     Br_Vii_tau_tm.emplace_back( UseJack, sigma_list_strange.size());
+
+    Br_T_tau_tm.emplace_back( UseJack, sigma_list_strange.size());
+    Br_L_tau_tm.emplace_back( UseJack, sigma_list_strange.size());
+    
+    
+   
     
     Br_tau_OS.emplace_back( UseJack, sigma_list_strange.size());
     Br_A0_tau_OS.emplace_back( UseJack, sigma_list_strange.size());
@@ -814,17 +828,26 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     Br_Aii_tau_OS.emplace_back( UseJack, sigma_list_strange.size());
     Br_Vii_tau_OS.emplace_back( UseJack, sigma_list_strange.size());
 
+    Br_T_tau_OS.emplace_back( UseJack, sigma_list_strange.size());
+    Br_L_tau_OS.emplace_back( UseJack, sigma_list_strange.size());
+
     syst_per_ens_tm_A0[iens].resize(sigma_list_strange.size());
     syst_per_ens_tm_V0[iens].resize(sigma_list_strange.size());
     syst_per_ens_tm_Ak[iens].resize(sigma_list_strange.size());
     syst_per_ens_tm_Vk[iens].resize(sigma_list_strange.size());
     syst_per_ens_tm[iens].resize(sigma_list_strange.size());
 
+    syst_per_ens_tm_T[iens].resize(sigma_list_strange.size());
+    syst_per_ens_tm_L[iens].resize(sigma_list_strange.size());
+
     syst_per_ens_OS_A0[iens].resize(sigma_list_strange.size());
     syst_per_ens_OS_V0[iens].resize(sigma_list_strange.size());
     syst_per_ens_OS_Ak[iens].resize(sigma_list_strange.size());
     syst_per_ens_OS_Vk[iens].resize(sigma_list_strange.size());
     syst_per_ens_OS[iens].resize(sigma_list_strange.size());
+
+    syst_per_ens_OS_T[iens].resize(sigma_list_strange.size());
+    syst_per_ens_OS_L[iens].resize(sigma_list_strange.size());
        
     
 
@@ -955,6 +978,16 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     distr_t_list Vk_OS_block_1_distr,  Ak_OS_block_1_distr, A0_OS_block_1_distr, V0_OS_block_1_distr;
     distr_t_list P5_tm_distr;
 
+
+    //tm
+    distr_t_list T_tm_distr, L_tm_distr;
+    //tm block1
+    distr_t_list L_tm_block_1_distr, T_tm_block_1_distr;
+    //OS
+    distr_t_list T_OS_distr, L_OS_distr;
+    //OS block1
+    distr_t_list T_OS_block_1_distr,  L_OS_block_1_distr;
+
    
     //light-tm sector
     Vk_tm_distr = Corr.corr_t(ls_data_tm_VKVK.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/Vk_tm_"+ls_data_tm_VKVK.Tag[iens]+".dat");
@@ -963,11 +996,17 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     V0_tm_distr = Corr.corr_t(ls_data_tm_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_tm_"+ls_data_tm_VKVK.Tag[iens]+".dat");
     P5_tm_distr = Corr.corr_t(ls_data_tm_P5P5.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/P5_tm_"+ls_data_tm_VKVK.Tag[iens]+".dat");
 
+    T_tm_distr= Za*Za*Vk_tm_distr + Zv*Zv*Ak_tm_distr;
+    L_tm_distr= Za*Za*V0_tm_distr + Zv*Zv*A0_tm_distr;
+
     //light-OS sector
     Vk_OS_distr = Corr.corr_t(ls_data_OS_VKVK.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/Vk_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
     Ak_OS_distr = Corr.corr_t(ls_data_OS_AKAK.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/Ak_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
     A0_OS_distr = Corr.corr_t(ls_data_OS_A0A0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/A0_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
     V0_OS_distr = Corr.corr_t(ls_data_OS_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
+
+    T_OS_distr= Zv*Zv*Vk_OS_distr + Za*Za*Ak_OS_distr;
+    L_OS_distr= Zv*Zv*V0_OS_distr + Za*Za*A0_OS_distr;
 
 
     
@@ -978,11 +1017,19 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_tm_block_1_distr = Corr_block_1.corr_t(ls_data_tm_A0A0.col(0)[iens], "");
     V0_tm_block_1_distr = Corr_block_1.corr_t(ls_data_tm_V0V0.col(0)[iens], "");
 
+    T_tm_block_1_distr = Vk_tm_block_1_distr + Ak_tm_block_1_distr;
+    L_tm_block_1_distr = V0_tm_block_1_distr + A0_tm_block_1_distr;
+
     //light-OS sector
     Vk_OS_block_1_distr = Corr_block_1.corr_t(ls_data_OS_VKVK.col(0)[iens], "");
     Ak_OS_block_1_distr = Corr_block_1.corr_t(ls_data_OS_AKAK.col(0)[iens], "");
     A0_OS_block_1_distr = Corr_block_1.corr_t(ls_data_OS_A0A0.col(0)[iens], "");
     V0_OS_block_1_distr = Corr_block_1.corr_t(ls_data_OS_V0V0.col(0)[iens], "");
+
+    T_OS_block_1_distr = Vk_OS_block_1_distr + Ak_OS_block_1_distr;
+    L_OS_block_1_distr = V0_OS_block_1_distr + A0_OS_block_1_distr;
+
+    
 
     //############# LIGHTER MASS ################//
 
@@ -999,6 +1046,16 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     //OS block1
     distr_t_list Vk_H_OS_block_1_distr,  Ak_H_OS_block_1_distr, A0_H_OS_block_1_distr, V0_H_OS_block_1_distr;
     distr_t_list P5_H_tm_distr;
+
+
+    //tm
+    distr_t_list T_H_tm_distr, L_H_tm_distr;
+    //tm block1
+    distr_t_list L_H_tm_block_1_distr, T_H_tm_block_1_distr;
+    //OS
+    distr_t_list T_H_OS_distr, L_H_OS_distr;
+    //OS block1
+    distr_t_list T_H_OS_block_1_distr,  L_H_OS_block_1_distr;
    
     //light-tm sector
     Vk_H_tm_distr = Corr.corr_t(ls_H_data_tm_VKVK.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/Vk_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
@@ -1007,11 +1064,17 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     V0_H_tm_distr = Corr.corr_t(ls_H_data_tm_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
     P5_H_tm_distr = Corr.corr_t(ls_H_data_tm_P5P5.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/P5_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
 
+    T_H_tm_distr= Vk_H_tm_distr + Ak_H_tm_distr;
+    L_H_tm_distr= V0_H_tm_distr + A0_H_tm_distr;
+
     //light-OS sector
     Vk_H_OS_distr = Corr.corr_t(ls_H_data_OS_VKVK.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/Vk_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
     Ak_H_OS_distr = Corr.corr_t(ls_H_data_OS_AKAK.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/Ak_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
     A0_H_OS_distr = Corr.corr_t(ls_H_data_OS_A0A0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/A0_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
     V0_H_OS_distr = Corr.corr_t(ls_H_data_OS_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
+
+    T_H_OS_distr= Vk_H_OS_distr + Ak_H_OS_distr;
+    L_H_OS_distr= V0_H_OS_distr + A0_H_OS_distr;
 
     //analyze data with Njacks=Nconfs
     //light-tm sector
@@ -1020,11 +1083,17 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_H_tm_block_1_distr = Corr_block_1.corr_t(ls_H_data_tm_A0A0.col(0)[iens], "");
     V0_H_tm_block_1_distr = Corr_block_1.corr_t(ls_H_data_tm_V0V0.col(0)[iens], "");
 
+    T_H_tm_block_1_distr = Vk_H_tm_block_1_distr + Ak_H_tm_block_1_distr;
+    L_H_tm_block_1_distr = V0_H_tm_block_1_distr + A0_H_tm_block_1_distr;
+
     //light-OS sector
     Vk_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_VKVK.col(0)[iens], "");
     Ak_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_AKAK.col(0)[iens], "");
     A0_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_A0A0.col(0)[iens], "");
     V0_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_V0V0.col(0)[iens], "");
+
+    T_H_OS_block_1_distr = Vk_H_OS_block_1_distr + Ak_H_OS_block_1_distr;
+    L_H_OS_block_1_distr = V0_H_OS_block_1_distr + A0_H_OS_block_1_distr;
 
     //############# HEAVIER MASS ################//
 
@@ -1184,6 +1253,10 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
     Vfloat cov_A0_tm, cov_V0_tm,  cov_Ak_tm, cov_Vk_tm, cov_A0_OS, cov_V0_OS,  cov_Ak_OS, cov_Vk_OS, TT, RR;
     Vfloat corr_m_A0_tm, corr_m_V0_tm,  corr_m_Ak_tm, corr_m_Vk_tm, corr_m_A0_OS, corr_m_V0_OS, corr_m_Ak_OS, corr_m_Vk_OS;
+
+    Vfloat cov_T_tm, cov_L_tm, cov_T_OS, cov_L_OS;
+    Vfloat corr_m_T_tm, corr_m_L_tm, corr_m_T_OS, corr_m_L_OS;
+    
     for(int tt=0;tt<Corr.Nt;tt++)
       for(int rr=0;rr<Corr.Nt;rr++) {
 	TT.push_back(tt);
@@ -1194,10 +1267,19 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	double err_resc_Ak_tm= Ak_tm_distr.err(tt)*Ak_tm_distr.err(rr)/(Ak_tm_block_1_distr.err(tt)*Ak_tm_block_1_distr.err(rr));
 	double err_resc_Vk_tm= Vk_tm_distr.err(tt)*Vk_tm_distr.err(rr)/(Vk_tm_block_1_distr.err(tt)*Vk_tm_block_1_distr.err(rr));
 
+
+	double err_resc_T_tm= T_tm_distr.err(tt)*T_tm_distr.err(rr)/(T_tm_block_1_distr.err(tt)*T_tm_block_1_distr.err(rr));
+	double err_resc_L_tm= L_tm_distr.err(tt)*L_tm_distr.err(rr)/(L_tm_block_1_distr.err(tt)*L_tm_block_1_distr.err(rr));
+
+	
+
 	double err_resc_A0_OS= A0_OS_distr.err(tt)*A0_OS_distr.err(rr)/(A0_OS_block_1_distr.err(tt)*A0_OS_block_1_distr.err(rr));
 	double err_resc_V0_OS= V0_OS_distr.err(tt)*V0_OS_distr.err(rr)/(V0_OS_block_1_distr.err(tt)*V0_OS_block_1_distr.err(rr));
 	double err_resc_Ak_OS= Ak_OS_distr.err(tt)*Ak_OS_distr.err(rr)/(Ak_OS_block_1_distr.err(tt)*Ak_OS_block_1_distr.err(rr));
 	double err_resc_Vk_OS= Vk_OS_distr.err(tt)*Vk_OS_distr.err(rr)/(Vk_OS_block_1_distr.err(tt)*Vk_OS_block_1_distr.err(rr));
+
+	double err_resc_T_OS= T_OS_distr.err(tt)*T_OS_distr.err(rr)/(T_OS_block_1_distr.err(tt)*T_OS_block_1_distr.err(rr));
+	double err_resc_L_OS= L_OS_distr.err(tt)*L_OS_distr.err(rr)/(L_OS_block_1_distr.err(tt)*L_OS_block_1_distr.err(rr));
 	
 	
 	cov_A0_tm.push_back( (A0_tm_block_1_distr.distr_list[tt]%A0_tm_block_1_distr.distr_list[rr])*err_resc_A0_tm);
@@ -1210,6 +1292,12 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	cov_Vk_OS.push_back( (Vk_OS_block_1_distr.distr_list[tt]%Vk_OS_block_1_distr.distr_list[rr])*err_resc_Vk_OS);
 
 
+	cov_T_tm.push_back( (T_tm_block_1_distr.distr_list[tt]%T_tm_block_1_distr.distr_list[rr])*err_resc_T_tm);
+	cov_L_tm.push_back( (L_tm_block_1_distr.distr_list[tt]%L_tm_block_1_distr.distr_list[rr])*err_resc_L_tm);
+	cov_T_OS.push_back( (T_OS_block_1_distr.distr_list[tt]%T_OS_block_1_distr.distr_list[rr])*err_resc_T_OS);
+	cov_L_OS.push_back( (L_OS_block_1_distr.distr_list[tt]%L_OS_block_1_distr.distr_list[rr])*err_resc_L_OS);
+
+
 	corr_m_A0_tm.push_back( (A0_tm_block_1_distr.distr_list[tt]%A0_tm_block_1_distr.distr_list[rr])/(A0_tm_block_1_distr.err(tt)*A0_tm_block_1_distr.err(rr)));
 	corr_m_V0_tm.push_back( (V0_tm_block_1_distr.distr_list[tt]%V0_tm_block_1_distr.distr_list[rr])/(V0_tm_block_1_distr.err(tt)*V0_tm_block_1_distr.err(rr)));
 	corr_m_Ak_tm.push_back( (Ak_tm_block_1_distr.distr_list[tt]%Ak_tm_block_1_distr.distr_list[rr])/( Ak_tm_block_1_distr.err(tt)*Ak_tm_block_1_distr.err(rr)));
@@ -1218,6 +1306,13 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	corr_m_V0_OS.push_back( (V0_OS_block_1_distr.distr_list[tt]%V0_OS_block_1_distr.distr_list[rr])/( V0_OS_block_1_distr.err(tt)*V0_OS_block_1_distr.err(rr)));
 	corr_m_Ak_OS.push_back( (Ak_OS_block_1_distr.distr_list[tt]%Ak_OS_block_1_distr.distr_list[rr])/( Ak_OS_block_1_distr.err(tt)*Ak_OS_block_1_distr.err(rr)));
 	corr_m_Vk_OS.push_back( (Vk_OS_block_1_distr.distr_list[tt]%Vk_OS_block_1_distr.distr_list[rr])/( Vk_OS_block_1_distr.err(tt)*Vk_OS_block_1_distr.err(rr)));
+
+
+	corr_m_T_tm.push_back( (T_tm_block_1_distr.distr_list[tt]%T_tm_block_1_distr.distr_list[rr])/(T_tm_block_1_distr.err(tt)*T_tm_block_1_distr.err(rr)));
+	corr_m_L_tm.push_back( (L_tm_block_1_distr.distr_list[tt]%L_tm_block_1_distr.distr_list[rr])/(L_tm_block_1_distr.err(tt)*L_tm_block_1_distr.err(rr)));
+	corr_m_T_OS.push_back( (T_OS_block_1_distr.distr_list[tt]%T_OS_block_1_distr.distr_list[rr])/(T_OS_block_1_distr.err(tt)*T_OS_block_1_distr.err(rr)));
+	corr_m_L_OS.push_back( (L_OS_block_1_distr.distr_list[tt]%L_OS_block_1_distr.distr_list[rr])/(L_OS_block_1_distr.err(tt)*L_OS_block_1_distr.err(rr)));
+	
       }
 
     Print_To_File({}, {TT,RR,cov_A0_tm, corr_m_A0_tm}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/A0_tm_"+ls_data_tm_VKVK.Tag[iens]+".dat", "", "");
@@ -1229,12 +1324,22 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     Print_To_File({}, {TT,RR,cov_Ak_OS, corr_m_Ak_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/Aii_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat", "", "");
     Print_To_File({}, {TT,RR,cov_Vk_OS, corr_m_Vk_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/Vii_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat", "", "");
 
+    Print_To_File({}, {TT,RR,cov_T_tm, corr_m_T_tm}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/T_tm_"+ls_data_tm_VKVK.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_L_tm, corr_m_L_tm}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/L_tm_"+ls_data_tm_VKVK.Tag[iens]+".dat", "", "");
+
+    Print_To_File({}, {TT,RR,cov_T_OS, corr_m_T_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/T_OS_"+ls_data_OS_VKVK.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_L_OS, corr_m_L_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/L_OS_"+ls_data_OS_VKVK.Tag[iens]+".dat", "", "");
+
 
     
     //########### HEAVIER MASS #############
 
     Vfloat cov_A0_H_tm, cov_V0_H_tm,  cov_Ak_H_tm, cov_Vk_H_tm, cov_A0_H_OS, cov_V0_H_OS,  cov_Ak_H_OS, cov_Vk_H_OS;
     Vfloat corr_m_A0_H_tm, corr_m_V0_H_tm,  corr_m_Ak_H_tm, corr_m_Vk_H_tm, corr_m_A0_H_OS, corr_m_V0_H_OS, corr_m_Ak_H_OS, corr_m_Vk_H_OS;
+
+    Vfloat cov_T_H_tm, cov_L_H_tm, cov_T_H_OS, cov_L_H_OS;
+    Vfloat corr_m_T_H_tm, corr_m_L_H_tm, corr_m_T_H_OS, corr_m_L_H_OS;
+    
     for(int tt=0;tt<Corr.Nt;tt++)
       for(int rr=0;rr<Corr.Nt; rr++) {
 
@@ -1244,10 +1349,18 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	double err_resc_Ak_H_tm= Ak_H_tm_distr.err(tt)*Ak_H_tm_distr.err(rr)/(Ak_H_tm_block_1_distr.err(tt)*Ak_H_tm_block_1_distr.err(rr));
 	double err_resc_Vk_H_tm= Vk_H_tm_distr.err(tt)*Vk_H_tm_distr.err(rr)/(Vk_H_tm_block_1_distr.err(tt)*Vk_H_tm_block_1_distr.err(rr));
 
+	double err_resc_T_H_tm= T_H_tm_distr.err(tt)*T_H_tm_distr.err(rr)/(T_H_tm_block_1_distr.err(tt)*T_H_tm_block_1_distr.err(rr));
+	double err_resc_L_H_tm= L_H_tm_distr.err(tt)*L_H_tm_distr.err(rr)/(L_H_tm_block_1_distr.err(tt)*L_H_tm_block_1_distr.err(rr));
+
+	
+
 	double err_resc_A0_H_OS= A0_H_OS_distr.err(tt)*A0_H_OS_distr.err(rr)/(A0_H_OS_block_1_distr.err(tt)*A0_H_OS_block_1_distr.err(rr));
 	double err_resc_V0_H_OS= V0_H_OS_distr.err(tt)*V0_H_OS_distr.err(rr)/(V0_H_OS_block_1_distr.err(tt)*V0_H_OS_block_1_distr.err(rr));
 	double err_resc_Ak_H_OS= Ak_H_OS_distr.err(tt)*Ak_H_OS_distr.err(rr)/(Ak_H_OS_block_1_distr.err(tt)*Ak_H_OS_block_1_distr.err(rr));
 	double err_resc_Vk_H_OS= Vk_H_OS_distr.err(tt)*Vk_H_OS_distr.err(rr)/(Vk_H_OS_block_1_distr.err(tt)*Vk_H_OS_block_1_distr.err(rr));
+	
+	double err_resc_T_H_OS= T_H_OS_distr.err(tt)*T_H_OS_distr.err(rr)/(T_H_OS_block_1_distr.err(tt)*T_H_OS_block_1_distr.err(rr));
+	double err_resc_L_H_OS= L_H_OS_distr.err(tt)*L_H_OS_distr.err(rr)/(L_H_OS_block_1_distr.err(tt)*L_H_OS_block_1_distr.err(rr));
 
 	cov_A0_H_tm.push_back( (A0_H_tm_block_1_distr.distr_list[tt]%A0_H_tm_block_1_distr.distr_list[rr])*err_resc_A0_H_tm);
 	cov_V0_H_tm.push_back( (V0_H_tm_block_1_distr.distr_list[tt]%V0_H_tm_block_1_distr.distr_list[rr])*err_resc_V0_H_tm);
@@ -1258,6 +1371,10 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	cov_Ak_H_OS.push_back( (Ak_H_OS_block_1_distr.distr_list[tt]%Ak_H_OS_block_1_distr.distr_list[rr])*err_resc_Ak_H_OS);
 	cov_Vk_H_OS.push_back( (Vk_H_OS_block_1_distr.distr_list[tt]%Vk_H_OS_block_1_distr.distr_list[rr])*err_resc_Vk_H_OS);
 
+	cov_T_H_tm.push_back( (T_H_tm_block_1_distr.distr_list[tt]%T_H_tm_block_1_distr.distr_list[rr])*err_resc_T_H_tm);
+	cov_L_H_tm.push_back( (L_H_tm_block_1_distr.distr_list[tt]%L_H_tm_block_1_distr.distr_list[rr])*err_resc_L_H_tm);
+	cov_T_H_OS.push_back( (T_H_OS_block_1_distr.distr_list[tt]%T_H_OS_block_1_distr.distr_list[rr])*err_resc_T_H_OS);
+	cov_L_H_OS.push_back( (L_H_OS_block_1_distr.distr_list[tt]%L_H_OS_block_1_distr.distr_list[rr])*err_resc_L_H_OS);
 	
 
 	corr_m_A0_H_tm.push_back( (A0_H_tm_block_1_distr.distr_list[tt]%A0_H_tm_block_1_distr.distr_list[rr])/(A0_H_tm_block_1_distr.err(tt)*A0_H_tm_block_1_distr.err(rr)));
@@ -1268,6 +1385,12 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	corr_m_V0_H_OS.push_back( (V0_H_OS_block_1_distr.distr_list[tt]%V0_H_OS_block_1_distr.distr_list[rr])/( V0_H_OS_block_1_distr.err(tt)*V0_H_OS_block_1_distr.err(rr)));
 	corr_m_Ak_H_OS.push_back( (Ak_H_OS_block_1_distr.distr_list[tt]%Ak_H_OS_block_1_distr.distr_list[rr])/( Ak_H_OS_block_1_distr.err(tt)*Ak_H_OS_block_1_distr.err(rr)));
 	corr_m_Vk_H_OS.push_back( (Vk_H_OS_block_1_distr.distr_list[tt]%Vk_H_OS_block_1_distr.distr_list[rr])/( Vk_H_OS_block_1_distr.err(tt)*Vk_H_OS_block_1_distr.err(rr)));
+
+	corr_m_T_H_tm.push_back( (T_H_tm_block_1_distr.distr_list[tt]%T_H_tm_block_1_distr.distr_list[rr])/(T_H_tm_block_1_distr.err(tt)*T_H_tm_block_1_distr.err(rr)));
+	corr_m_L_H_tm.push_back( (L_H_tm_block_1_distr.distr_list[tt]%L_H_tm_block_1_distr.distr_list[rr])/(L_H_tm_block_1_distr.err(tt)*L_H_tm_block_1_distr.err(rr)));
+	corr_m_T_H_OS.push_back( (T_H_OS_block_1_distr.distr_list[tt]%T_H_OS_block_1_distr.distr_list[rr])/(T_H_OS_block_1_distr.err(tt)*T_H_OS_block_1_distr.err(rr)));
+	corr_m_L_H_OS.push_back( (L_H_OS_block_1_distr.distr_list[tt]%L_H_OS_block_1_distr.distr_list[rr])/(L_H_OS_block_1_distr.err(tt)*L_H_OS_block_1_distr.err(rr)));
+	
       }
 
     Print_To_File({}, {TT,RR,cov_A0_H_tm, corr_m_A0_H_tm}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/A0_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat", "", "");
@@ -1278,12 +1401,19 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     Print_To_File({}, {TT,RR,cov_V0_H_OS, corr_m_V0_H_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/V0_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat", "", "");
     Print_To_File({}, {TT,RR,cov_Ak_H_OS, corr_m_Ak_H_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/Aii_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat", "", "");
     Print_To_File({}, {TT,RR,cov_Vk_H_OS, corr_m_Vk_H_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/Vii_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat", "", "");
-    
 
+    Print_To_File({}, {TT,RR,cov_T_H_tm, corr_m_T_H_tm}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/T_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_L_H_tm, corr_m_L_H_tm}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/L_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_T_H_OS, corr_m_T_H_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/T_H_OS_"+ls_H_data_OS_VKVK.Tag[iens]+".dat", "", "");
+    Print_To_File({}, {TT,RR,cov_L_H_OS, corr_m_L_H_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/L_H_OS_"+ls_H_data_OS_VKVK.Tag[iens]+".dat", "", "");
        
 
     distr_t_list A0_tm, V0_tm,  Aii_tm, A0_OS, V0_OS, Aii_OS, Vii_tm, Vii_OS;
     distr_t_list A0_H_tm, V0_H_tm,  Aii_H_tm, A0_H_OS, V0_H_OS, Aii_H_OS, Vii_H_tm, Vii_H_OS;
+
+
+    distr_t_list T_tm , T_OS, L_tm, L_OS;
+    distr_t_list T_H_tm, T_H_OS, L_H_tm, L_H_OS;
     
     
     //######### DEFINE 0th and ii component of C^munu ###########
@@ -1293,22 +1423,30 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     V0_tm = V0_tm_distr;
     Aii_tm =Ak_tm_distr;
     Vii_tm = Vk_tm_distr;
+    T_tm = T_tm_distr;
+    L_tm = L_tm_distr;
     //OS
     A0_OS = A0_OS_distr;
     V0_OS = V0_OS_distr;
     Aii_OS = Ak_OS_distr;
     Vii_OS = Vk_OS_distr;
+    T_OS= T_OS_distr;
+    L_OS= L_OS_distr;
     //heavier
     //tm
     A0_H_tm = A0_H_tm_distr;
     V0_H_tm = V0_H_tm_distr;
     Aii_H_tm =Ak_H_tm_distr;
     Vii_H_tm = Vk_H_tm_distr;
+    T_H_tm= T_H_tm_distr;
+    L_H_tm= L_H_tm_distr;
     //OS
     A0_H_OS = A0_H_OS_distr;
     V0_H_OS = V0_H_OS_distr;
     Aii_H_OS = Ak_H_OS_distr;
     Vii_H_OS = Vk_H_OS_distr;
+    T_H_OS= T_H_OS_distr;
+    L_H_OS= L_H_OS_distr;
     //###########################################################
 
 
@@ -1355,6 +1493,26 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
     Found_error_less_x_percent=false;
 
+    int tmax_tm_T=1;
+    while(!Found_error_less_x_percent && tmax_tm_T < Corr.Nt/2 -1 ) {
+   
+      if( (T_tm.distr_list[tmax_tm_T]).err()/fabs( (T_tm.distr_list[tmax_tm_T]).ave()) <  0.01*x) tmax_tm_T++;
+      else Found_error_less_x_percent=true;
+    }
+
+    Found_error_less_x_percent=false;
+
+
+    int tmax_tm_L=1;
+    while(!Found_error_less_x_percent && tmax_tm_L < Corr.Nt/2 -1 ) {
+   
+      if( (L_tm.distr_list[tmax_tm_L]).err()/fabs( (L_tm.distr_list[tmax_tm_L]).ave()) <  0.01*x) tmax_tm_L++;
+      else Found_error_less_x_percent=true;
+    }
+
+    Found_error_less_x_percent=false;
+
+    //#########################################################################
     //OS
 
     int tmax_OS_A0=1;
@@ -1391,6 +1549,29 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       if( (Vii_OS.distr_list[tmax_OS_1_Vii]).err()/fabs( (Vii_OS.distr_list[tmax_OS_1_Vii]).ave()) <  0.01*x) tmax_OS_1_Vii++;
       else Found_error_less_x_percent=true;
     }
+
+
+    int tmax_OS_T=1;
+    while(!Found_error_less_x_percent && tmax_OS_T < Corr.Nt/2 -1 ) {
+   
+      if( (T_OS.distr_list[tmax_OS_T]).err()/fabs( (T_OS.distr_list[tmax_OS_T]).ave()) <  0.01*x) tmax_OS_T++;
+      else Found_error_less_x_percent=true;
+    }
+
+    Found_error_less_x_percent=false;
+
+
+    int tmax_OS_L=1;
+    while(!Found_error_less_x_percent && tmax_OS_L < Corr.Nt/2 -1 ) {
+   
+      if( (L_OS.distr_list[tmax_OS_L]).err()/fabs( (L_OS.distr_list[tmax_OS_L]).ave()) <  0.01*x) tmax_OS_L++;
+      else Found_error_less_x_percent=true;
+    }
+
+    Found_error_less_x_percent=false;
+
+
+    
 
     //################   HEAVIER   ##############################
 
@@ -1433,6 +1614,29 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
     Found_error_less_x_percent=false;
 
+
+    int tmax_H_tm_T=1;
+    while(!Found_error_less_x_percent && tmax_H_tm_T < Corr.Nt/2 -1 ) {
+   
+      if( (T_H_tm.distr_list[tmax_H_tm_T]).err()/fabs( (T_H_tm.distr_list[tmax_H_tm_T]).ave()) <  0.01*x) tmax_H_tm_T++;
+      else Found_error_less_x_percent=true;
+    }
+
+    Found_error_less_x_percent=false;
+
+
+    int tmax_H_tm_L=1;
+    while(!Found_error_less_x_percent && tmax_H_tm_L < Corr.Nt/2 -1 ) {
+   
+      if( (L_H_tm.distr_list[tmax_H_tm_L]).err()/fabs( (L_H_tm.distr_list[tmax_H_tm_L]).ave()) <  0.01*x) tmax_H_tm_L++;
+      else Found_error_less_x_percent=true;
+    }
+
+    Found_error_less_x_percent=false;
+
+
+    
+
     //OS
 
     int tmax_H_OS_A0=1;
@@ -1469,6 +1673,26 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       if( (Vii_H_OS.distr_list[tmax_H_OS_1_Vii]).err()/fabs( (Vii_H_OS.distr_list[tmax_H_OS_1_Vii]).ave()) <  0.01*x) tmax_H_OS_1_Vii++;
       else Found_error_less_x_percent=true;
     }
+
+
+    int tmax_H_OS_T=1;
+    while(!Found_error_less_x_percent && tmax_H_OS_T < Corr.Nt/2 -1 ) {
+   
+      if( (T_H_OS.distr_list[tmax_H_OS_T]).err()/fabs( (T_H_OS.distr_list[tmax_H_OS_T]).ave()) <  0.01*x) tmax_H_OS_T++;
+      else Found_error_less_x_percent=true;
+    }
+
+    Found_error_less_x_percent=false;
+
+
+    int tmax_H_OS_L=1;
+    while(!Found_error_less_x_percent && tmax_H_OS_L < Corr.Nt/2 -1 ) {
+   
+      if( (L_H_OS.distr_list[tmax_H_OS_L]).err()/fabs( (L_H_OS.distr_list[tmax_H_OS_L]).ave()) <  0.01*x) tmax_H_OS_L++;
+      else Found_error_less_x_percent=true;
+    }
+
+    Found_error_less_x_percent=false;
     
     
 
@@ -1631,6 +1855,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     if(Use_t_up_to_T_half_strange) {
       tmax_tm_1_Aii = tmax_tm_1_Vii= tmax_tm_A0 = tmax_OS_A0 = tmax_tm_V0 = tmax_OS_V0 = tmax_OS_1_Aii = tmax_OS_1_Vii= Corr.Nt/2 -1;
       tmax_H_tm_1_Aii = tmax_H_tm_1_Vii= tmax_H_tm_A0 = tmax_H_OS_A0 = tmax_H_tm_V0 = tmax_H_OS_V0 = tmax_H_OS_1_Aii = tmax_H_OS_1_Vii= Corr.Nt/2 -1;
+
+      tmax_tm_T = tmax_tm_L = tmax_OS_T = tmax_OS_L = Corr.Nt/2 -1;
+      tmax_H_tm_T = tmax_H_tm_L = tmax_H_OS_T = tmax_H_OS_L = Corr.Nt/2 -1;
     }
 
   
@@ -1661,6 +1888,11 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       distr_t Br_sigma_Aii_OS;
       distr_t Br_sigma_Vii_OS;
 
+      distr_t Br_sigma_T_tm;
+      distr_t Br_sigma_L_tm;
+      distr_t Br_sigma_T_OS;
+      distr_t Br_sigma_L_OS;
+
       distr_t Br_s_sigma_A0_tm;
       distr_t Br_s_sigma_V0_tm;
       distr_t Br_s_sigma_Aii_tm;
@@ -1669,15 +1901,25 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       distr_t Br_s_sigma_V0_OS;
       distr_t Br_s_sigma_Aii_OS;
       distr_t Br_s_sigma_Vii_OS;
+
+      distr_t Br_s_sigma_T_tm;
+      distr_t Br_s_sigma_L_tm;
+      distr_t Br_s_sigma_T_OS;
+      distr_t Br_s_sigma_L_OS;
    
       //int tmax= T/2 -4;
       double lA0_tm, lAii_tm, lVii_tm, lV0_tm;
       double lA0_OS, lAii_OS, lVii_OS, lV0_OS;
+      double lT_tm, lL_tm, lT_OS, lL_OS;
       double syst_A0_tm, syst_Aii_tm, syst_Vii_tm, syst_V0_tm;
       double syst_A0_OS, syst_Aii_OS, syst_Vii_OS, syst_V0_OS;
+      double syst_T_tm, syst_L_tm, syst_T_OS, syst_L_OS;
+      
 
       double syst_s_A0_tm, syst_s_Aii_tm, syst_s_Vii_tm, syst_s_V0_tm;
       double syst_s_A0_OS, syst_s_Aii_OS, syst_s_Vii_OS, syst_s_V0_OS;
+      double syst_s_T_tm, syst_s_L_tm, syst_s_T_OS, syst_s_L_OS;
+      
 
       //#####    HEAVIER  ##########
       distr_t Br_sigma_A0_H_tm;
@@ -1689,6 +1931,11 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       distr_t Br_sigma_Aii_H_OS;
       distr_t Br_sigma_Vii_H_OS;
 
+      distr_t Br_sigma_T_H_tm;
+      distr_t Br_sigma_L_H_tm;
+      distr_t Br_sigma_T_H_OS;
+      distr_t Br_sigma_L_H_OS;
+
       distr_t Br_s_sigma_A0_H_tm;
       distr_t Br_s_sigma_V0_H_tm;
       distr_t Br_s_sigma_Aii_H_tm;
@@ -1697,15 +1944,23 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       distr_t Br_s_sigma_V0_H_OS;
       distr_t Br_s_sigma_Aii_H_OS;
       distr_t Br_s_sigma_Vii_H_OS;
+
+      distr_t Br_s_sigma_T_H_tm;
+      distr_t Br_s_sigma_L_H_tm;
+      distr_t Br_s_sigma_T_H_OS;
+      distr_t Br_s_sigma_L_H_OS;
    
       //int tmax= T/2 -4;
       double lA0_H_tm, lAii_H_tm, lVii_H_tm, lV0_H_tm;
       double lA0_H_OS, lAii_H_OS, lVii_H_OS, lV0_H_OS;
+      double lT_H_tm, lL_H_tm, lT_H_OS, lL_H_OS;
       double syst_A0_H_tm, syst_Aii_H_tm, syst_Vii_H_tm, syst_V0_H_tm;
       double syst_A0_H_OS, syst_Aii_H_OS, syst_Vii_H_OS, syst_V0_H_OS;
+      double syst_T_H_tm, syst_L_H_tm, syst_T_H_OS, syst_L_H_OS;
 
       double syst_s_A0_H_tm, syst_s_Aii_H_tm, syst_s_Vii_H_tm, syst_s_V0_H_tm;
       double syst_s_A0_H_OS, syst_s_Aii_H_OS, syst_s_Vii_H_OS, syst_s_V0_H_OS;
+      double syst_s_T_H_tm, syst_s_L_H_tm, syst_s_T_H_OS, syst_s_L_H_OS;
       
       
       double mult=1e4;
@@ -1728,9 +1983,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       
       auto start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax,  "Aii", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm, syst_Aii_tm, mult, lAii_tm, MODE, "tm", "Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      Br_s_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_tm, syst_s_Aii_tm, mult, lAii_tm, MODE, "tm", "Aii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      distr_t preco_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm - Aii_tm_gs.ave(), syst_Aii_tm, mult, lAii_tm, MODE, "tm", "preco_Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, A_K1_tm.ave()*K1_dub(m_K1_tm.ave(), s), "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm, syst_Aii_tm, mult, lAii_tm, MODE, "tm", "Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_s_sigma_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_tm, syst_s_Aii_tm, mult, lAii_tm, MODE, "tm", "Aii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      distr_t preco_Aii_tm = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_tm - Aii_tm_gs.ave(), syst_Aii_tm, mult, lAii_tm, MODE, "tm", "preco_Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, A_K1_tm.ave()*K1_dub(m_K1_tm.ave(), s), "tau_decay", cov_Ak_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Aii_tm = fabs( Br_s_sigma_Aii_tm.ave() - Br_sigma_Aii_tm.ave());
       Br_sigma_Aii_tm= Br_sigma_Aii_tm.ave() + (Br_sigma_Aii_tm-Br_sigma_Aii_tm.ave())*sqrt( pow(Br_sigma_Aii_tm.err(),2) + pow(syst_s_Aii_tm,2))/Br_sigma_Aii_tm.err();
       auto end = chrono::system_clock::now();
@@ -1743,17 +1998,17 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       }
       else cout<<"."<<flush;
 
-      double E0_A_sp_old= E0_l;
-      E0_A_sp = (ls_data_tm_VKVK.Tag[iens] == "cC211a.06.80")?0.9*(m_kappa +  MPiPhys  ):E0_A_sp_old; 
+      //double E0_A_sp_old= E0_l;
+      //E0_A_sp = (ls_data_tm_VKVK.Tag[iens] == "cC211a.06.80")?0.9*(m_kappa +  MPiPhys  ):E0_A_sp_old; 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "Aii", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
       Br_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS, syst_Aii_OS, mult, lAii_OS, MODE, "OS", "Aii_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, 0.0, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       Br_s_sigma_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_OS, syst_s_Aii_OS, mult, lAii_OS, MODE, "OS", "Aii_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0,resc_GeV*Za*Za, 0.0, "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      distr_t preco_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS - Aii_OS_gs.ave(), syst_Aii_OS, mult, lAii_OS, MODE, "OS", "preco_Aii_strange_"+ls_data_OS_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, A_K1_OS.ave()*K1_dub(m_K1_OS.ave(), s), "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      distr_t preco_Aii_OS = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_OS_1_Aii, prec, SM_TYPE_1,K1, Aii_OS - Aii_OS_gs.ave(), syst_Aii_OS, mult, lAii_OS, MODE, "OS", "preco_Aii_strange_"+ls_data_OS_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, A_K1_OS.ave()*K1_dub(m_K1_OS.ave(), s), "tau_decay", cov_Ak_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Aii_OS = fabs( Br_s_sigma_Aii_OS.ave() - Br_sigma_Aii_OS.ave());
       Br_sigma_Aii_OS= Br_sigma_Aii_OS.ave() + (Br_sigma_Aii_OS-Br_sigma_Aii_OS.ave())*sqrt( pow(Br_sigma_Aii_OS.err(),2) + pow(syst_s_Aii_OS,2))/Br_sigma_Aii_OS.err();
 
-      E0_A_sp= E0_A_sp_old;
+      //E0_A_sp= E0_A_sp_old;
      
       end = chrono::system_clock::now();
       elapsed_seconds = end-start;
@@ -1838,6 +2093,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "V0", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
       Br_sigma_V0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_V0, prec, SM_TYPE_0,K0, V0_tm, syst_V0_tm, mult, lV0_tm, MODE, "tm", "V0_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       Br_s_sigma_V0_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_tm_V0, prec, SM_TYPE_0,K0_shifted, V0_tm, syst_s_V0_tm, mult, lV0_tm, MODE, "tm", "V0_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+
       syst_s_V0_tm = fabs( Br_s_sigma_V0_tm.ave() - Br_sigma_V0_tm.ave());
       Br_sigma_V0_tm= Br_sigma_V0_tm.ave() + (Br_sigma_V0_tm-Br_sigma_V0_tm.ave())*sqrt( pow(Br_sigma_V0_tm.err(),2) + pow(syst_s_V0_tm,2))/Br_sigma_V0_tm.err();
       end = chrono::system_clock::now();
@@ -1866,6 +2122,81 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       else cout<<"."<<flush;
 
 
+
+      start = chrono::system_clock::now();
+      if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "T", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
+      Br_sigma_T_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_T, prec, SM_TYPE_0,K1, T_tm, syst_T_tm, mult, lT_tm, MODE, "tm", "T_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_T_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_T_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_T, prec, SM_TYPE_0,K1_shifted, T_tm, syst_s_T_tm, mult, lT_tm, MODE, "tm", "T_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_T_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+
+      syst_s_T_tm = fabs( Br_s_sigma_T_tm.ave() - Br_sigma_T_tm.ave());
+      Br_sigma_T_tm= Br_sigma_T_tm.ave() + (Br_sigma_T_tm-Br_sigma_T_tm.ave())*sqrt( pow(Br_sigma_T_tm.err(),2) + pow(syst_s_T_tm,2))/Br_sigma_T_tm.err();
+      end = chrono::system_clock::now();
+      elapsed_seconds = end-start;
+      double time_T_tm= elapsed_seconds.count();
+      if(tau_strange_verbosity_lev) {
+	cout<<endl<<flush;
+	cout<<"Elapsed time[T_tm, sigma: "<<s<<", Ens: "<<ls_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_T_tm<<" s"<<endl<<flush;
+      }
+      else cout<<"."<<flush;
+
+
+      start = chrono::system_clock::now();
+      if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "T", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
+      Br_sigma_T_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_T, prec, SM_TYPE_0,K1, T_OS, syst_T_OS, mult, lT_OS, MODE, "OS", "T_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_T_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_T_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_T, prec, SM_TYPE_0,K1_shifted, T_OS, syst_s_T_OS, mult, lT_OS, MODE, "OS", "T_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_T_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+
+      syst_s_T_OS = fabs( Br_s_sigma_T_OS.ave() - Br_sigma_T_OS.ave());
+      Br_sigma_T_OS= Br_sigma_T_OS.ave() + (Br_sigma_T_OS-Br_sigma_T_OS.ave())*sqrt( pow(Br_sigma_T_OS.err(),2) + pow(syst_s_T_OS,2))/Br_sigma_T_OS.err();
+      end = chrono::system_clock::now();
+      elapsed_seconds = end-start;
+      double time_T_OS= elapsed_seconds.count();
+      if(tau_strange_verbosity_lev) {
+	cout<<endl<<flush;
+	cout<<"Elapsed time[T_OS, sigma: "<<s<<", Ens: "<<ls_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_T_OS<<" s"<<endl<<flush;
+      }
+      else cout<<"."<<flush;
+
+
+
+      start = chrono::system_clock::now();
+      if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "L", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
+      Br_sigma_L_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_L, prec, SM_TYPE_0,K0, L_tm, syst_L_tm, mult, lL_tm, MODE, "tm", "L_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_L_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_L_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_L, prec, SM_TYPE_0,K0_shifted, L_tm, syst_s_L_tm, mult, lL_tm, MODE, "tm", "L_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_L_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+
+      syst_s_L_tm = fabs( Br_s_sigma_L_tm.ave() - Br_sigma_L_tm.ave());
+      Br_sigma_L_tm= Br_sigma_L_tm.ave() + (Br_sigma_L_tm-Br_sigma_L_tm.ave())*sqrt( pow(Br_sigma_L_tm.err(),2) + pow(syst_s_L_tm,2))/Br_sigma_L_tm.err();
+      end = chrono::system_clock::now();
+      elapsed_seconds = end-start;
+      double time_L_tm= elapsed_seconds.count();
+      if(tau_strange_verbosity_lev) {
+	cout<<endl<<flush;
+	cout<<"Elapsed time[L_tm, sigma: "<<s<<", Ens: "<<ls_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_L_tm<<" s"<<endl<<flush;
+      }
+      else cout<<"."<<flush;
+
+
+      start = chrono::system_clock::now();
+      if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "L", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
+      Br_sigma_L_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_L, prec, SM_TYPE_0,K0, L_OS, syst_L_OS, mult, lL_OS, MODE, "OS", "L_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_L_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_L_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_L, prec, SM_TYPE_0,K0_shifted, L_OS, syst_s_L_OS, mult, lL_OS, MODE, "OS", "L_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_L_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+
+      syst_s_L_OS = fabs( Br_s_sigma_L_OS.ave() - Br_sigma_L_OS.ave());
+      Br_sigma_L_OS= Br_sigma_L_OS.ave() + (Br_sigma_L_OS-Br_sigma_L_OS.ave())*sqrt( pow(Br_sigma_L_OS.err(),2) + pow(syst_s_L_OS,2))/Br_sigma_L_OS.err();
+      end = chrono::system_clock::now();
+      elapsed_seconds = end-start;
+      double time_L_OS= elapsed_seconds.count();
+      if(tau_strange_verbosity_lev) {
+	cout<<endl<<flush;
+	cout<<"Elapsed time[L_OS, sigma: "<<s<<", Ens: "<<ls_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_L_OS<<" s"<<endl<<flush;
+      }
+      else cout<<"."<<flush;
+      
+
+
+    
+
+
+
       
 
       thread_times_tm[is] = make_tuple(omp_get_thread_num(), time_A0_tm, time_V0_tm,  time_Aii_tm, time_Vii_tm);
@@ -1889,8 +2220,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax,  "Aii", "tm" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_Aii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_H_tm, syst_Aii_H_tm, mult, lAii_H_tm, MODE, "tm", "Aii_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
-      Br_s_sigma_Aii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_H_tm, syst_s_Aii_H_tm, mult, lAii_H_tm, MODE, "tm", "Aii_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_sigma_Aii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_H_tm_1_Aii, prec, SM_TYPE_1,K1, Aii_H_tm, syst_Aii_H_tm, mult, lAii_H_tm, MODE, "tm", "Aii_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
+      Br_s_sigma_Aii_H_tm = Get_Laplace_transfo(  0.0,  s, E0_A_sp*a_distr.ave(),  T, tmax_H_tm_1_Aii, prec, SM_TYPE_1,K1_shifted, Aii_H_tm, syst_s_Aii_H_tm, mult, lAii_H_tm, MODE, "tm", "Aii_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_Ak_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta);
       syst_s_Aii_H_tm = fabs( Br_s_sigma_Aii_H_tm.ave() - Br_sigma_Aii_H_tm.ave());
       Br_sigma_Aii_H_tm= Br_sigma_Aii_H_tm.ave() + (Br_sigma_Aii_H_tm-Br_sigma_Aii_H_tm.ave())*sqrt( pow(Br_sigma_Aii_H_tm.err(),2) + pow(syst_s_Aii_H_tm,2))/Br_sigma_Aii_H_tm.err();
       end = chrono::system_clock::now();
@@ -1903,8 +2234,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       }
       else cout<<"."<<flush;
 
-      E0_A_sp_old= E0_l;
-      E0_A_sp = (ls_data_tm_VKVK.Tag[iens] == "cC211a.06.80")?0.9*(m_kappa +  MPiPhys  ):E0_A_sp_old; 
+      //E0_A_sp_old= E0_l;
+      //E0_A_sp = (ls_data_tm_VKVK.Tag[iens] == "cC211a.06.80")?0.9*(m_kappa +  MPiPhys  ):E0_A_sp_old; 
      
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "Aii", "OS" , s, ls_H_data_tm_VKVK.Tag[iens] );
@@ -1920,7 +2251,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	cout<<"Elapsed time[Aii_H_OS, sigma: "<<s<<", Ens: "<<ls_H_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_Aii_H_OS<<" s"<<endl<<flush;
       }
       else cout<<"."<<flush;
-      E0_A_sp = E0_A_sp_old;
+      //E0_A_sp = E0_A_sp_old;
 
      
       start = chrono::system_clock::now();
@@ -1991,8 +2322,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "V0", "tm" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_V0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_V0, prec, SM_TYPE_0,K0, V0_H_tm, syst_V0_H_tm, mult, lV0_H_tm, MODE, "tm", "V0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_V0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_V0, prec, SM_TYPE_0,K0_shifted, V0_H_tm, syst_s_V0_H_tm, mult, lV0_H_tm, MODE, "tm", "V0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_V0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_tm_V0, prec, SM_TYPE_0,K0, V0_H_tm, syst_V0_H_tm, mult, lV0_H_tm, MODE, "tm", "V0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_V0_H_tm = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_tm_V0, prec, SM_TYPE_0,K0_shifted, V0_H_tm, syst_s_V0_H_tm, mult, lV0_H_tm, MODE, "tm", "V0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za, 0.0, "tau_decay", cov_V0_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_V0_H_tm = fabs( Br_s_sigma_V0_H_tm.ave() - Br_sigma_V0_H_tm.ave());
       Br_sigma_V0_H_tm= Br_sigma_V0_H_tm.ave() + (Br_sigma_V0_H_tm-Br_sigma_V0_H_tm.ave())*sqrt( pow(Br_sigma_V0_H_tm.err(),2) + pow(syst_s_V0_H_tm,2))/Br_sigma_V0_H_tm.err();
       end = chrono::system_clock::now();
@@ -2007,8 +2338,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "V0", "OS" , s, ls_H_data_tm_VKVK.Tag[iens] );
-      Br_sigma_V0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_V0, prec, SM_TYPE_0,K0, V0_H_OS, syst_V0_H_OS, mult, lV0_H_OS, MODE, "OS", "V0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_V0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_V0, prec, SM_TYPE_0,K0_shifted, V0_H_OS, syst_s_V0_H_OS, mult, lV0_H_OS, MODE, "OS", "V0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_V0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_OS_V0, prec, SM_TYPE_0,K0, V0_H_OS, syst_V0_H_OS, mult, lV0_H_OS, MODE, "OS", "V0_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_V0_H_OS = Get_Laplace_transfo(  0.0,  s, E0_l*a_distr.ave(),  T, tmax_H_OS_V0, prec, SM_TYPE_0,K0_shifted, V0_H_OS, syst_s_V0_H_OS, mult, lV0_H_OS, MODE, "OS", "V0_s_strange_H_"+ls_H_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv, 0.0, "tau_decay", cov_V0_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
       syst_s_V0_H_OS = fabs( Br_s_sigma_V0_H_OS.ave() - Br_sigma_V0_H_OS.ave());
       Br_sigma_V0_H_OS= Br_sigma_V0_H_OS.ave() + (Br_sigma_V0_H_OS-Br_sigma_V0_H_OS.ave())*sqrt( pow(Br_sigma_V0_H_OS.err(),2) + pow(syst_s_V0_H_OS,2))/Br_sigma_V0_H_OS.err();
       end = chrono::system_clock::now();
@@ -2017,6 +2348,77 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       if(tau_strange_verbosity_lev) {
 	cout<<endl<<flush;
 	cout<<"Elapsed time[V0_H_OS, sigma: "<<s<<", Ens: "<<ls_H_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_V0_H_OS<<" s"<<endl<<flush;
+      }
+      else cout<<"."<<flush;
+
+
+
+
+      start = chrono::system_clock::now();
+      if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "T", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
+      Br_sigma_T_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_T, prec, SM_TYPE_0,K1, T_H_tm, syst_T_H_tm, mult, lT_H_tm, MODE, "tm", "T_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_T_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_T_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_T, prec, SM_TYPE_0,K1_shifted, T_H_tm, syst_s_T_H_tm, mult, lT_H_tm, MODE, "tm", "T_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_T_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+
+      syst_s_T_H_tm = fabs( Br_s_sigma_T_H_tm.ave() - Br_sigma_T_H_tm.ave());
+      Br_sigma_T_H_tm= Br_sigma_T_H_tm.ave() + (Br_sigma_T_H_tm-Br_sigma_T_H_tm.ave())*sqrt( pow(Br_sigma_T_H_tm.err(),2) + pow(syst_s_T_H_tm,2))/Br_sigma_T_H_tm.err();
+      end = chrono::system_clock::now();
+      elapsed_seconds = end-start;
+      double time_T_H_tm= elapsed_seconds.count();
+      if(tau_strange_verbosity_lev) {
+	cout<<endl<<flush;
+	cout<<"Elapsed time[T_H_tm, sigma: "<<s<<", Ens: "<<ls_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_T_H_tm<<" s"<<endl<<flush;
+      }
+      else cout<<"."<<flush;
+
+
+      start = chrono::system_clock::now();
+      if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "T", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
+      Br_sigma_T_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_T, prec, SM_TYPE_0,K1, T_H_OS, syst_T_H_OS, mult, lT_H_OS, MODE, "OS", "T_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_T_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_T_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_T, prec, SM_TYPE_0,K1_shifted, T_H_OS, syst_s_T_H_OS, mult, lT_H_OS, MODE, "OS", "T_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_T_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+
+      syst_s_T_H_OS = fabs( Br_s_sigma_T_H_OS.ave() - Br_sigma_T_H_OS.ave());
+      Br_sigma_T_H_OS= Br_sigma_T_H_OS.ave() + (Br_sigma_T_H_OS-Br_sigma_T_H_OS.ave())*sqrt( pow(Br_sigma_T_H_OS.err(),2) + pow(syst_s_T_H_OS,2))/Br_sigma_T_H_OS.err();
+      end = chrono::system_clock::now();
+      elapsed_seconds = end-start;
+      double time_T_H_OS= elapsed_seconds.count();
+      if(tau_strange_verbosity_lev) {
+	cout<<endl<<flush;
+	cout<<"Elapsed time[T_H_OS, sigma: "<<s<<", Ens: "<<ls_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_T_H_OS<<" s"<<endl<<flush;
+      }
+      else cout<<"."<<flush;
+
+
+
+      start = chrono::system_clock::now();
+      if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "L", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
+      Br_sigma_L_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_L, prec, SM_TYPE_0,K0, L_H_tm, syst_L_H_tm, mult, lL_H_tm, MODE, "tm", "L_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_L_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_L_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_L, prec, SM_TYPE_0,K0_shifted, L_H_tm, syst_s_L_H_tm, mult, lL_H_tm, MODE, "tm", "L_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_L_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+
+      syst_s_L_H_tm = fabs( Br_s_sigma_L_H_tm.ave() - Br_sigma_L_H_tm.ave());
+      Br_sigma_L_H_tm= Br_sigma_L_H_tm.ave() + (Br_sigma_L_H_tm-Br_sigma_L_H_tm.ave())*sqrt( pow(Br_sigma_L_H_tm.err(),2) + pow(syst_s_L_H_tm,2))/Br_sigma_L_H_tm.err();
+      end = chrono::system_clock::now();
+      elapsed_seconds = end-start;
+      double time_L_H_tm= elapsed_seconds.count();
+      if(tau_strange_verbosity_lev) {
+	cout<<endl<<flush;
+	cout<<"Elapsed time[L_H_tm, sigma: "<<s<<", Ens: "<<ls_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_L_H_tm<<" s"<<endl<<flush;
+      }
+      else cout<<"."<<flush;
+
+
+      start = chrono::system_clock::now();
+      if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "L", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
+      Br_sigma_L_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_L, prec, SM_TYPE_0,K0, L_H_OS, syst_L_H_OS, mult, lL_H_OS, MODE, "OS", "L_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_L_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_L_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_L, prec, SM_TYPE_0,K0_shifted, L_H_OS, syst_s_L_H_OS, mult, lL_H_OS, MODE, "OS", "L_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV, 0.0, "tau_decay", cov_L_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+
+      syst_s_L_H_OS = fabs( Br_s_sigma_L_H_OS.ave() - Br_sigma_L_H_OS.ave());
+      Br_sigma_L_H_OS= Br_sigma_L_H_OS.ave() + (Br_sigma_L_H_OS-Br_sigma_L_H_OS.ave())*sqrt( pow(Br_sigma_L_H_OS.err(),2) + pow(syst_s_L_H_OS,2))/Br_sigma_L_H_OS.err();
+      end = chrono::system_clock::now();
+      elapsed_seconds = end-start;
+      double time_L_H_OS= elapsed_seconds.count();
+      if(tau_strange_verbosity_lev) {
+	cout<<endl<<flush;
+	cout<<"Elapsed time[L_H_OS, sigma: "<<s<<", Ens: "<<ls_data_tm_VKVK.Tag[iens]<<", rank: "<<rank<<", #thread="<<omp_get_thread_num()<<"] : "<<time_L_H_OS<<" s"<<endl<<flush;
       }
       else cout<<"."<<flush;
 
@@ -2034,11 +2436,19 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       vector<distr_t> BR_LIST_Aii_tm({ Br_sigma_Aii_tm, Br_sigma_Aii_H_tm});
       vector<distr_t> BR_LIST_A0_tm({ Br_sigma_A0_tm, Br_sigma_A0_H_tm});
       vector<distr_t> BR_LIST_V0_tm({ Br_sigma_V0_tm, Br_sigma_V0_H_tm});
+
+      vector<distr_t> BR_LIST_T_tm({ Br_sigma_T_tm, Br_sigma_T_H_tm});
+      vector<distr_t> BR_LIST_L_tm({ Br_sigma_T_tm, Br_sigma_L_H_tm});
+     
+     
       //OS
       vector<distr_t> BR_LIST_Vii_OS({ Br_sigma_Vii_OS, Br_sigma_Vii_H_OS});
       vector<distr_t> BR_LIST_Aii_OS({ Br_sigma_Aii_OS, Br_sigma_Aii_H_OS});
       vector<distr_t> BR_LIST_A0_OS({ Br_sigma_A0_OS, Br_sigma_A0_H_OS});
       vector<distr_t> BR_LIST_V0_OS({ Br_sigma_V0_OS, Br_sigma_V0_H_OS});
+
+      vector<distr_t> BR_LIST_T_OS({ Br_sigma_T_OS, Br_sigma_T_H_OS});
+      vector<distr_t> BR_LIST_L_OS({ Br_sigma_T_OS, Br_sigma_L_H_OS});
 
       //tm
       distr_t Br_sigma_Vii_tm_extr=  Obs_extrapolation_meson_mass(BR_LIST_Vii_tm, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "Vii_tm_extrapolation_"+ls_data_tm_VKVK.Tag[iens]+"_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat",  UseJack, "SPLINE" );
@@ -2050,6 +2460,12 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       distr_t Br_sigma_Aii_OS_extr=  Obs_extrapolation_meson_mass(BR_LIST_Aii_OS, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "Aii_OS_extrapolation_"+ls_data_OS_VKVK.Tag[iens]+"_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat",  UseJack, "SPLINE" );
       distr_t Br_sigma_A0_OS_extr=  Obs_extrapolation_meson_mass(BR_LIST_A0_OS, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "A0_OS_extrapolation_"+ls_data_OS_VKVK.Tag[iens]+"_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat",  UseJack, "SPLINE" );
       distr_t Br_sigma_V0_OS_extr=  Obs_extrapolation_meson_mass(BR_LIST_V0_OS, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "V0_OS_extrapolation_"+ls_data_OS_VKVK.Tag[iens]+"_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat",  UseJack, "SPLINE" );
+
+      distr_t Br_sigma_T_tm_extr=  Obs_extrapolation_meson_mass(BR_LIST_T_tm, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "T_tm_extrapolation_"+ls_data_OS_VKVK.Tag[iens]+"_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat",  UseJack, "SPLINE" );
+      distr_t Br_sigma_L_tm_extr=  Obs_extrapolation_meson_mass(BR_LIST_L_tm, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "L_tm_extrapolation_"+ls_data_OS_VKVK.Tag[iens]+"_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat",  UseJack, "SPLINE" );
+
+      distr_t Br_sigma_T_OS_extr=  Obs_extrapolation_meson_mass(BR_LIST_T_OS, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "T_OS_extrapolation_"+ls_data_OS_VKVK.Tag[iens]+"_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat",  UseJack, "SPLINE" );
+      distr_t Br_sigma_L_OS_extr=  Obs_extrapolation_meson_mass(BR_LIST_L_OS, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "L_OS_extrapolation_"+ls_data_OS_VKVK.Tag[iens]+"_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat",  UseJack, "SPLINE" );
       
 
 
@@ -2061,12 +2477,19 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       syst_per_ens_tm_Ak[iens][is]=  Br_sigma_Aii_tm_extr.ave()*max(   syst_Aii_tm/Br_sigma_Aii_tm.ave(), syst_Aii_H_tm/Br_sigma_Aii_H_tm.ave() ); // syst_Aii_tm;
       syst_per_ens_tm_Vk[iens][is]=   Br_sigma_Vii_tm_extr.ave()*max(  syst_Vii_tm/Br_sigma_Vii_tm.ave(),  syst_Vii_H_tm/Br_sigma_Vii_H_tm.ave() ); // syst_Vii_tm;
       syst_per_ens_tm[iens][is]= sqrt( pow(syst_per_ens_tm_A0[iens][is],2)+ pow(syst_per_ens_tm_Ak[iens][is],2)+ pow(syst_per_ens_tm_Vk[iens][is],2) + pow(syst_per_ens_tm_V0[iens][is],2));
+
+      syst_per_ens_tm_T[iens][is]=   Br_sigma_T_tm_extr.ave()*max(  syst_T_tm/Br_sigma_T_tm.ave(),  syst_T_H_tm/Br_sigma_T_H_tm.ave() ); // syst_T_tm;
+      syst_per_ens_tm_L[iens][is]=   Br_sigma_L_tm_extr.ave()*max(  syst_L_tm/Br_sigma_L_tm.ave(),  syst_L_H_tm/Br_sigma_L_H_tm.ave() ); // syst_L_tm;
+      
               
       syst_per_ens_OS_A0[iens][is] = Br_sigma_A0_OS_extr.ave()*max(  syst_A0_OS/Br_sigma_A0_OS.ave(),  syst_A0_H_OS/Br_sigma_A0_H_OS.ave() ); // syst_A0_OS;
       syst_per_ens_OS_V0[iens][is] =  Br_sigma_V0_OS_extr.ave()*max( syst_V0_OS/Br_sigma_V0_OS.ave(),  syst_V0_H_OS/Br_sigma_V0_H_OS.ave() ); // syst_V0_OS;
       syst_per_ens_OS_Ak[iens][is]=  Br_sigma_Aii_OS_extr.ave()*max( syst_Aii_OS/Br_sigma_Aii_OS.ave(), syst_Aii_H_OS/Br_sigma_Aii_H_OS.ave() ); // syst_Aii_OS;
       syst_per_ens_OS_Vk[iens][is]=   Br_sigma_Vii_OS_extr.ave()*max(  syst_Vii_OS/Br_sigma_Vii_OS.ave(),  syst_Vii_H_OS/Br_sigma_Vii_H_OS.ave() ); // syst_Vii_OS;
       syst_per_ens_OS[iens][is]=  sqrt( pow(syst_per_ens_OS_A0[iens][is],2)+ pow(syst_per_ens_OS_Ak[iens][is],2)+ pow(syst_per_ens_OS_Vk[iens][is],2) + pow(syst_per_ens_OS_V0[iens][is],2));
+
+      syst_per_ens_OS_T[iens][is]=   Br_sigma_T_OS_extr.ave()*max(  syst_T_OS/Br_sigma_T_OS.ave(),  syst_T_H_OS/Br_sigma_T_H_OS.ave() ); // syst_T_OS;
+      syst_per_ens_OS_L[iens][is]=   Br_sigma_L_OS_extr.ave()*max(  syst_L_OS/Br_sigma_L_OS.ave(),  syst_L_H_OS/Br_sigma_L_H_OS.ave() ); // syst_L_OS;
 
      
       
@@ -2082,6 +2505,12 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       Br_Vii_tau_OS[iens].distr_list[is] = Br_sigma_Vii_OS_extr;
       Br_A0_tau_OS[iens].distr_list[is] = Br_sigma_A0_OS_extr;
       Br_V0_tau_OS[iens].distr_list[is] = Br_sigma_V0_OS_extr;
+
+      Br_T_tau_tm[iens].distr_list[is] = Br_sigma_T_tm_extr;
+      Br_L_tau_tm[iens].distr_list[is] = Br_sigma_L_tm_extr;
+
+      Br_T_tau_OS[iens].distr_list[is] = Br_sigma_T_OS_extr;
+      Br_L_tau_OS[iens].distr_list[is] = Br_sigma_L_OS_extr;
 
 
       cout<<"Ensemble: "<<ls_data_tm_VKVK.Tag[iens]<<", sigma: "<<s<<" completed!"<<endl<<flush;
@@ -2122,7 +2551,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     Print_To_File({}, {sigma_list_strange, Br_A0_tau_tm[iens].ave(), Br_A0_tau_tm[iens].err(), syst_per_ens_tm_A0[iens], Br_V0_tau_tm[iens].ave(), Br_V0_tau_tm[iens].err(), syst_per_ens_tm_V0[iens], Br_Aii_tau_tm[iens].ave(), Br_Aii_tau_tm[iens].err(), syst_per_ens_tm_Ak[iens], Br_Vii_tau_tm[iens].ave(), Br_Vii_tau_tm[iens].err(), syst_per_ens_tm_Vk[iens]}, "../data/tau_decay/"+Tag_reco_type+"/strange/Br/br_contrib_tm_"+MODE+"_sm_func_mode_"+to_string(sm_func_mode)+"_"+ls_data_tm_VKVK.Tag[iens]+".dat", "", "#sigma Br_A0 Br_V0 Br_Aii Br_Vii");
     Print_To_File({}, {sigma_list_strange, Br_A0_tau_OS[iens].ave(), Br_A0_tau_OS[iens].err(), syst_per_ens_OS_A0[iens], Br_V0_tau_OS[iens].ave(), Br_V0_tau_OS[iens].err(), syst_per_ens_OS_V0[iens], Br_Aii_tau_OS[iens].ave(), Br_Aii_tau_OS[iens].err(), syst_per_ens_OS_Ak[iens], Br_Vii_tau_OS[iens].ave(), Br_Vii_tau_OS[iens].err(), syst_per_ens_OS_Vk[iens]}, "../data/tau_decay/"+Tag_reco_type+"/strange/Br/br_contrib_OS_"+MODE+"_sm_func_mode_"+to_string(sm_func_mode)+"_"+ls_data_tm_VKVK.Tag[iens]+".dat", "", "#sigma Br_A0 Br_V0 Br_Aii Br_Vii");
 
-    
+    Print_To_File({}, {sigma_list_strange, Br_T_tau_tm[iens].ave(), Br_T_tau_tm[iens].err(), syst_per_ens_tm_T[iens], Br_L_tau_tm[iens].ave(), Br_L_tau_tm[iens].err(), syst_per_ens_tm_L[iens]}, "../data/tau_decay/"+Tag_reco_type+"/strange/Br/br_TL_contrib_tm_"+MODE+"_sm_func_mode_"+to_string(sm_func_mode)+"_"+ls_data_tm_VKVK.Tag[iens]+".dat", "", "#sigma Br_T Br_L");
+
+    Print_To_File({}, {sigma_list_strange, Br_T_tau_OS[iens].ave(), Br_T_tau_OS[iens].err(), syst_per_ens_OS_T[iens], Br_L_tau_OS[iens].ave(), Br_L_tau_OS[iens].err(), syst_per_ens_OS_L[iens]}, "../data/tau_decay/"+Tag_reco_type+"/strange/Br/br_TL_contrib_OS_"+MODE+"_sm_func_mode_"+to_string(sm_func_mode)+"_"+ls_data_tm_VKVK.Tag[iens]+".dat", "", "#sigma Br_T Br_L");
     
     
 
@@ -2160,10 +2591,18 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/V0V0/"+ls_data_tm_VKVK.Tag[i_ens]);
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/AkAk/"+ls_data_tm_VKVK.Tag[i_ens]);
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/VkVk/"+ls_data_tm_VKVK.Tag[i_ens]);
+
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/T/"+ls_data_tm_VKVK.Tag[i_ens]);
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/L/"+ls_data_tm_VKVK.Tag[i_ens]);
+
+    
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/A0A0/"+ls_data_tm_VKVK.Tag[i_ens]);
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/V0V0/"+ls_data_tm_VKVK.Tag[i_ens]);
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/AkAk/"+ls_data_tm_VKVK.Tag[i_ens]);
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/VkVk/"+ls_data_tm_VKVK.Tag[i_ens]);
+
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/T/"+ls_data_tm_VKVK.Tag[i_ens]);
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/L/"+ls_data_tm_VKVK.Tag[i_ens]);
 
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/A0A0/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/V0V0/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
@@ -2174,6 +2613,13 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/AkAk/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/VkVk/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
 
+
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/T/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/L/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
+
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/T/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
+    boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/L/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode));
+
   
     for(int is=0; is<(signed)sigma_list_strange.size();is++) {
       //print jackknife distribution for tm and OS
@@ -2182,30 +2628,53 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       ofstream Print_tm_AkAk("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/AkAk/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".jack");
       ofstream Print_tm_VkVk("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/VkVk/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".jack");
 
+      ofstream Print_tm_T("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/T/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".jack");
+      ofstream Print_tm_L("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/L/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".jack");
+
       ofstream Print_OS_A0A0("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/A0A0/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".jack");
       ofstream Print_OS_V0V0("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/V0V0/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".jack");
       ofstream Print_OS_AkAk("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/AkAk/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".jack");
       ofstream Print_OS_VkVk("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/VkVk/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".jack");
+
+      ofstream Print_OS_T("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/T/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".jack");
+      ofstream Print_OS_L("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/L/"+ls_data_tm_VKVK.Tag[i_ens]+"/sm_func_mode_"+to_string(sm_func_mode)+"/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".jack");
      
       for(int ijack=0; ijack<Njacks;ijack++) {
 	Print_tm_A0A0<<Br_A0_tau_tm[i_ens].distr_list[is].distr[ijack]<<endl;
 	Print_tm_V0V0<<Br_V0_tau_tm[i_ens].distr_list[is].distr[ijack]<<endl;
 	Print_tm_AkAk<<Br_Aii_tau_tm[i_ens].distr_list[is].distr[ijack]<<endl;
 	Print_tm_VkVk<<Br_Vii_tau_tm[i_ens].distr_list[is].distr[ijack]<<endl;
+
+	Print_tm_T<<Br_T_tau_tm[i_ens].distr_list[is].distr[ijack]<<endl;
+	Print_tm_L<<Br_L_tau_tm[i_ens].distr_list[is].distr[ijack]<<endl;
+	
 	Print_OS_A0A0<<Br_A0_tau_OS[i_ens].distr_list[is].distr[ijack]<<endl;
 	Print_OS_V0V0<<Br_V0_tau_OS[i_ens].distr_list[is].distr[ijack]<<endl;
 	Print_OS_AkAk<<Br_Aii_tau_OS[i_ens].distr_list[is].distr[ijack]<<endl;
 	Print_OS_VkVk<<Br_Vii_tau_OS[i_ens].distr_list[is].distr[ijack]<<endl;
+
+	Print_OS_T<<Br_T_tau_OS[i_ens].distr_list[is].distr[ijack]<<endl;
+	Print_OS_L<<Br_L_tau_OS[i_ens].distr_list[is].distr[ijack]<<endl;
+
+	
       }
       Print_tm_A0A0.close();
       Print_tm_V0V0.close();
       Print_tm_AkAk.close();
       Print_tm_VkVk.close();
+
+      Print_tm_T.close();
+      Print_tm_L.close();
+      
       Print_OS_A0A0.close();
       Print_OS_V0V0.close();
       Print_OS_AkAk.close();
       Print_OS_VkVk.close();
-     
+
+      Print_OS_T.close();
+      Print_OS_L.close();
+
+      
     }
 
    
