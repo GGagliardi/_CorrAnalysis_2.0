@@ -44,6 +44,8 @@ using namespace std;
 
 double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, string channel, string reg, double s, string Ens ) {
 
+  if(channel=="T") channel="Vii";
+  if(channel=="L") channel="A0";
  
   double Ra0=-1;
   int alpha_m= (int)(alpha+1);
