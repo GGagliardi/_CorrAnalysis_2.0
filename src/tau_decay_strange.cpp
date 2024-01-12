@@ -7,7 +7,7 @@
 const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
 const bool UseJack=1;
-const int Njacks=50;
+const int Njacks=75;
 const int Nboots=2000;
 const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
@@ -290,11 +290,15 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/V0V0");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/AkAk");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/VkVk");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/T");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/tm/L");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/A0A0");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/V0V0");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/AkAk");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/VkVk");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/T");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/jackknife/OS/L");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/Br");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/corr");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/mass");
@@ -1476,7 +1480,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     //################   LIGHTER   ##############################
 
     bool Found_error_less_x_percent=false;
-    double x=30;
+    double x=50;
     //tm
     int tmax_tm_A0=1;
     while(!Found_error_less_x_percent && tmax_tm_A0 < Corr.Nt/2 -1 ) {

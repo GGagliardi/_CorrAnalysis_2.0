@@ -191,6 +191,11 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
 void HVP() {
 
 
+  int Njacks=50;
+  bool UseJack=true;
+  double qu= 2.0/3.0;
+  double qd= -1.0/3.0;
+  double fm_to_inv_Gev= 1.0/0.197327;
 
 
 
@@ -213,6 +218,124 @@ void HVP() {
   GaussianMersenne GV(645611);
   distr_t Vus(false);
   distr_t Vud(false);
+
+  //Gounaris Sakurai model
+
+  int npts_spline= 400;
+  int Luscher_num_zeroes= 22;
+  int Nresonances=20;
+  //Init LL_functions;
+  //find first  zeros of the Lusher functions
+  Vfloat Luscher_zeroes;
+  Zeta_function_zeroes(Luscher_num_zeroes, Luscher_zeroes);
+
+  //############################################INTERPOLATE PHI FUNCTION AND DERIVATIVES#############################
+
+  VVfloat phi_data, phi_der_data;
+  Vfloat sx_int;
+  Vfloat sx_der, dx_der;
+  Vfloat Dz;
+
+  for(int L_zero=0;L_zero<Nresonances+1;L_zero++) {
+    cout<<"Computing n(Lusch): "<<L_zero<<endl;
+    double sx, dx;
+    //interpolating between the Luscher_zero[L_zero-1] and Luscher_zero[L_zero];
+    if(L_zero==0) { sx_int.push_back(0.0); sx=0.0;}
+    else {sx=Luscher_zeroes[L_zero-1];  sx_int.push_back(sx);}
+    dx= Luscher_zeroes[L_zero];
+    phi_data.resize(L_zero+1);
+    phi_der_data.resize(L_zero+1);
+    phi_data[L_zero].push_back(L_zero==0?0.0:-M_PI/2.0);
+    //divide interval into thousand points;
+    double dz = (dx-sx)/npts_spline;
+    Dz.push_back(dz);
+
+
+    for(int istep=1;istep<=npts_spline-1;istep++) { double pt= sx+dz*istep; phi_data[L_zero].push_back( phi(sqrt(pt)));}
+
+    phi_data[L_zero].push_back(M_PI/2.0);
+    double sx_der_loc =  phi_der_for_back(sqrt(sx)+1e-14, 1);
+    double dx_der_loc =  phi_der_for_back(sqrt(dx)-1e-14, -1);
+    sx_der.push_back(sx_der_loc);
+    dx_der.push_back(dx_der_loc);
+
+    phi_der_data[L_zero].push_back(sx_der_loc);
+    for(int istep=1;istep<=npts_spline-1;istep++) { double pt= sx+dz*istep; phi_der_data[L_zero].push_back( phi_der(sqrt(pt)));}
+    phi_der_data[L_zero].push_back(dx_der_loc);
+    
+  }
+
+
+
+ 
+   
+
+  LL_functions LL(phi_data,phi_der_data,sx_der, dx_der, sx_int, Dz, Nresonances, Luscher_zeroes);
+    
+  //###########################################END INTERPOLATION PHI FUNCTION AND DERIVATIVES################################
+  cout<<"####Spline for phi(x) and phi'(x) successfully generated!"<<endl;
+
+  double vol1= 5.1*fm_to_inv_Gev;
+  double vol2= 9*fm_to_inv_Gev;
+
+  Vfloat En1;
+  LL.Find_pipi_energy_lev(vol1, 0.770, 5.5, 0.140, 0.0, En1);
+
+  Vfloat En2;
+  LL.Find_pipi_energy_lev(vol2, 0.770, 5.5, 0.140, 0.0, En2);
+  ofstream PGS("../data/GS_Humb.dat");
+  for(int i=0; i<Nresonances;i++) PGS<<2.0*sqrt( pow(En1[i],2) + pow(0.139,2))<<" "<<LL.Amplitude(En1[i],vol1 , 0.770, 5.5, 0.140, 0.0)<<" "<<2.0*sqrt( pow(En2[i],2) + pow(0.140,2))<<" "<<LL.Amplitude(En2[i],vol2 , 0.770, 5.5, 0.140, 0.0)<<endl;
+
+  PGS.close();
+
+  Vfloat epsilons({0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.05});
+
+  int Num_ergs=400;
+  Vfloat Ergs;
+  for(int i=0;i<Num_ergs;i++) Ergs.push_back( i*2.0/(Num_ergs-1.0));
+
+  VVfloat  IM_H1(epsilons.size()), IM_H2(epsilons.size());
+
+  for(int i=0; i<(signed)epsilons.size(); i++) {
+    double eps = epsilons[i];
+
+    for(int j=0;j<Num_ergs;j++) {
+      double res1=0;
+      double res2=0;
+      for(int ires=0;ires<Nresonances;ires++) {
+
+	double E1= 2.0*sqrt( pow(En1[ires],2) + pow(0.139,2));
+	double E2= 2.0*sqrt( pow(En2[ires],2) + pow(0.139,2)); 
+	
+	res1 += LL.Amplitude(En1[ires],vol1 , 0.770, 5.5, 0.140, 0.0)*(eps/2.0)*(1.0/( pow((Ergs[j] - E1),2) + eps*eps));
+	res2 += LL.Amplitude(En2[ires],vol2 , 0.770, 5.5, 0.140, 0.0)*(eps/2.0)*(1.0/( pow((Ergs[j] - E2),2) + eps*eps));
+      }
+
+      IM_H1[i].push_back(res1);
+      IM_H2[i].push_back(res2);
+    }
+    
+    Print_To_File({}, {Ergs, IM_H1[i], IM_H2[i]}, "../data/eps_"+to_string(i)+".dat", "", "");
+
+  }
+
+
+  //print correlator
+  Vfloat ts;
+  for(int t=0;t<101;t++) ts.push_back( 2.0 + 2.0*t/100.0);
+
+  Vfloat corr;
+  for(int t=0;t<101;t++) corr.push_back( (10.0/9.0)*4.0*pow(alpha,2)*LL.V_pipi(ts[t]*fm_to_inv_Gev, vol1, 0.770, 5.5, 0.140, 0.0,  En1));
+    
+  for (int t=0;t<101;t++) {
+    cout<<ts[t]<<" "<<corr[t]<<endl;
+  }
+
+  exit(-1);
+
+  
+  
+  
 
   for(int iboot=0;iboot<NB;iboot++) {
     B_TK.distr.push_back(   (6.957 + GV()*0.096)*1e-3);
@@ -248,12 +371,7 @@ void HVP() {
 
   
 
-  int Njacks=50;
-  bool UseJack=true;
-  double qu= 2.0/3.0;
-  double qd= -1.0/3.0;
-  double fm_to_inv_Gev= 1.0/0.197327;
-
+ 
   //create directories
   boost::filesystem::create_directory("../data/HVP");
   boost::filesystem::create_directory("../data/HVP/Bounding");
