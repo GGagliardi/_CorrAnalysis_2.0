@@ -1576,7 +1576,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       else Found_error_less_x_percent=true;
     }
 
-
+    Found_error_less_x_percent=false;
+    
     int tmax_OS_T=1;
     while(!Found_error_less_x_percent && tmax_OS_T < Corr.Nt/2 -1 ) {
    
@@ -1700,7 +1701,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       else Found_error_less_x_percent=true;
     }
 
-
+    Found_error_less_x_percent=false;
+    
     int tmax_H_OS_T=1;
     while(!Found_error_less_x_percent && tmax_H_OS_T < Corr.Nt/2 -1 ) {
    
