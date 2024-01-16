@@ -170,6 +170,139 @@ void tau_decay_analysis_strange() {
 
 
 
+   //Analyze new strange run
+  //###################################
+
+  bool Get_ASCII= true;
+
+    if(Get_ASCII) {
+    //read binary files
+    boost::filesystem::create_directory("../tau_decay_strange");
+    
+
+    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.72.64", "B.72.96" , "D.54.96", "E.44.112"});
+    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64", "cB211b.072.96" , "cD211a.054.96", "cE211a.044.112"});
+
+    for( int it=0; it<(signed)Ens_T1.size(); it++) {
+
+      vector<string> channels({"mix_l_l",  "mix_l_s1", "mix_l_s2", "mix_s1_s1", "mix_s2_s2"});
+
+      for(auto &channel : channels) {
+	boost::filesystem::create_directory("../tau_decay_strange/"+channel);
+	boost::filesystem::create_directory("../tau_decay_strange/"+channel+"/"+Ens_TT1[it]);
+      }
+      //read binary
+      vector<string> Corr_tags({"TM_VKVK", "TM_AKAK", "TM_A0A0", "TM_V0V0", "TM_P5P5", "TM_S0S0", "OS_VKVK", "OS_AKAK", "OS_A0A0", "OS_V0V0", "OS_P5P5", "OS_S0S0"});
+
+          
+      for(int id=0; id<(signed)Corr_tags.size(); id++) {
+
+
+
+	for( auto &channel: channels) {
+
+	FILE *stream = fopen( ("../gm2_tau_rep_bin/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
+        size_t Nconfs, T, Nhits;
+	bin_read(Nconfs, stream);
+	bin_read(Nhits, stream);
+	bin_read(T, stream);
+
+	cout<<"Nconfs: "<<Nconfs<<endl;
+	cout<<"T: "<<T<<" "<<T/2+1<<endl;
+	cout<<"Nhits: "<<Nhits<<endl;
+	for(size_t iconf=0;iconf<Nconfs;iconf++) {
+	  vector<double> C(T/2+1);
+	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
+	  boost::filesystem::create_directory("../tau_decay_strange/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf));
+	  ofstream PrintCorr("../tau_decay_strange/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf)+"/mes_contr_"+channel+"_"+Corr_tags[id]);
+	  PrintCorr.precision(16);
+	  PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
+	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
+	  if(Corr_tags[id].substr(3,4) == "VKTK" || Corr_tags[id].substr(3,4) == "TKVK") { for(size_t t=T/2+1; t<T;t++) PrintCorr<<-1*C[T-t]<<endl;   }
+	  else  {for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;}
+	  PrintCorr.close();
+
+	}
+
+	fclose(stream);
+
+	}
+	
+      }
+    }
+    }
+
+    bool Get_ASCII_dm=false;
+
+    if(Get_ASCII_dm) {
+
+      cout<<"Analyzing light-quark mass corrections"<<endl;
+
+    //mass correction
+     boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction");
+     boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/mix_l1_s");
+     boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/mix_l2_s");
+
+
+     vector<string> Ens_T1 = {"B.072.64"};
+     vector<string> Ens_TT1 = {"cB211b.072.64"};
+
+
+     for( int it=0; it<(signed)Ens_T1.size(); it++) {
+
+       vector<string> channels({"mix_l1_s", "mix_l2_s"});
+
+      for(auto &channel : channels) {
+	boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/"+channel);
+	boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/"+channel+"/"+Ens_TT1[it]);
+      }
+      //read binary
+      vector<string> Corr_tags({"TM_VKVK", "TM_AKAK", "TM_A0A0", "TM_V0V0", "TM_P5P5", "TM_S0S0", "OS_VKVK", "OS_AKAK", "OS_A0A0", "OS_V0V0", "OS_P5P5", "OS_S0S0"});
+
+          
+      for(int id=0; id<(signed)Corr_tags.size(); id++) {
+
+
+
+	for( auto &channel: channels) {
+
+	FILE *stream = fopen( ("../tau_decay_strange_bin_mu_corr/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
+        size_t Nconfs, T, Nhits;
+	bin_read(Nconfs, stream);
+	bin_read(Nhits, stream);
+	bin_read(T, stream);
+
+	cout<<"Nconfs: "<<Nconfs<<endl;
+	cout<<"T: "<<T<<" "<<T/2+1<<endl;
+	cout<<"Nhits: "<<Nhits<<endl;
+	for(size_t iconf=0;iconf<Nconfs;iconf++) {
+	  vector<double> C(T/2+1);
+	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
+	  boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf));
+	  ofstream PrintCorr("../tau_decay_strange/light_mass_correction/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf)+"/mes_contr_"+channel+"_"+Corr_tags[id]);
+	  PrintCorr.precision(16);
+	  PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
+	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
+	  if(Corr_tags[id].substr(3,4) == "VKTK" || Corr_tags[id].substr(3,4) == "TKVK") { for(size_t t=T/2+1; t<T;t++) PrintCorr<<-1*C[T-t]<<endl;   }
+	  else  {for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;}
+	  PrintCorr.close();
+
+	}
+
+	fclose(stream);
+
+	}
+	
+      }
+     }
+
+     D(100);
+
+    
+    }
+
+
+
   get_sigma_list_strange();
 
 
@@ -307,136 +440,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
   cout<<"done!"<<endl;
 
-  //Analyze new strange run
-  //###################################
-
-  bool Get_ASCII= true;
-
-    if(Get_ASCII) {
-    //read binary files
-    boost::filesystem::create_directory("../tau_decay_strange");
-    
-
-    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.72.64", "B.72.96" , "D.54.96", "E.44.112"});
-    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64", "cB211b.072.96" , "cD211a.054.96", "cE211a.044.112"});
-
-    for( int it=0; it<(signed)Ens_T1.size(); it++) {
-
-      vector<string> channels({"mix_l_l",  "mix_l_s1", "mix_l_s2", "mix_s1_s1", "mix_s2_s2"});
-
-      for(auto &channel : channels) {
-	boost::filesystem::create_directory("../tau_decay_strange/"+channel);
-	boost::filesystem::create_directory("../tau_decay_strange/"+channel+"/"+Ens_TT1[it]);
-      }
-      //read binary
-      vector<string> Corr_tags({"TM_VKVK", "TM_AKAK", "TM_A0A0", "TM_V0V0", "TM_P5P5", "TM_S0S0", "OS_VKVK", "OS_AKAK", "OS_A0A0", "OS_V0V0", "OS_P5P5", "OS_S0S0"});
-
-          
-      for(int id=0; id<(signed)Corr_tags.size(); id++) {
-
-
-
-	for( auto &channel: channels) {
-
-	FILE *stream = fopen( ("../gm2_tau_rep_bin/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
-        size_t Nconfs, T, Nhits;
-	bin_read(Nconfs, stream);
-	bin_read(Nhits, stream);
-	bin_read(T, stream);
-
-	cout<<"Nconfs: "<<Nconfs<<endl;
-	cout<<"T: "<<T<<" "<<T/2+1<<endl;
-	cout<<"Nhits: "<<Nhits<<endl;
-	for(size_t iconf=0;iconf<Nconfs;iconf++) {
-	  vector<double> C(T/2+1);
-	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
-	  boost::filesystem::create_directory("../tau_decay_strange/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf));
-	  ofstream PrintCorr("../tau_decay_strange/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf)+"/mes_contr_"+channel+"_"+Corr_tags[id]);
-	  PrintCorr.precision(16);
-	  PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
-	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
-	  if(Corr_tags[id].substr(3,4) == "VKTK" || Corr_tags[id].substr(3,4) == "TKVK") { for(size_t t=T/2+1; t<T;t++) PrintCorr<<-1*C[T-t]<<endl;   }
-	  else  {for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;}
-	  PrintCorr.close();
-
-	}
-
-	fclose(stream);
-
-	}
-	
-      }
-    }
-    }
-
-    bool Get_ASCII_dm=false;
-
-    if(Get_ASCII_dm) {
-
-      cout<<"Analyzing light-quark mass corrections"<<endl;
-
-    //mass correction
-     boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction");
-     boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/mix_l1_s");
-     boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/mix_l2_s");
-
-
-     vector<string> Ens_T1 = {"B.072.64"};
-     vector<string> Ens_TT1 = {"cB211b.072.64"};
-
-
-     for( int it=0; it<(signed)Ens_T1.size(); it++) {
-
-       vector<string> channels({"mix_l1_s", "mix_l2_s"});
-
-      for(auto &channel : channels) {
-	boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/"+channel);
-	boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/"+channel+"/"+Ens_TT1[it]);
-      }
-      //read binary
-      vector<string> Corr_tags({"TM_VKVK", "TM_AKAK", "TM_A0A0", "TM_V0V0", "TM_P5P5", "TM_S0S0", "OS_VKVK", "OS_AKAK", "OS_A0A0", "OS_V0V0", "OS_P5P5", "OS_S0S0"});
-
-          
-      for(int id=0; id<(signed)Corr_tags.size(); id++) {
-
-
-
-	for( auto &channel: channels) {
-
-	FILE *stream = fopen( ("../tau_decay_strange_bin_mu_corr/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
-        size_t Nconfs, T, Nhits;
-	bin_read(Nconfs, stream);
-	bin_read(Nhits, stream);
-	bin_read(T, stream);
-
-	cout<<"Nconfs: "<<Nconfs<<endl;
-	cout<<"T: "<<T<<" "<<T/2+1<<endl;
-	cout<<"Nhits: "<<Nhits<<endl;
-	for(size_t iconf=0;iconf<Nconfs;iconf++) {
-	  vector<double> C(T/2+1);
-	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
-	  boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf));
-	  ofstream PrintCorr("../tau_decay_strange/light_mass_correction/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf)+"/mes_contr_"+channel+"_"+Corr_tags[id]);
-	  PrintCorr.precision(16);
-	  PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
-	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
-	  if(Corr_tags[id].substr(3,4) == "VKTK" || Corr_tags[id].substr(3,4) == "TKVK") { for(size_t t=T/2+1; t<T;t++) PrintCorr<<-1*C[T-t]<<endl;   }
-	  else  {for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;}
-	  PrintCorr.close();
-
-	}
-
-	fclose(stream);
-
-	}
-	
-      }
-     }
-
-     D(100);
-
-    
-    }
+ 
 
     
  
