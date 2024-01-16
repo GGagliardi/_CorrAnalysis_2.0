@@ -155,8 +155,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00039;
     a_from_afp =  0.0907593; //0.0908026;
     a_from_afp_err = 0.00053917; //0.000535517;
-    a_from_afp_FLAG= 0.0906879;
-    a_from_afp_FLAG_err= 0.000509984;
+    a_from_afp_FLAG= 0.0906883;
+    a_from_afp_FLAG_err= 0.000510322;
     a_nucleon=0.09295;
     a_nucleon_err=0.00047;
     Za=0.724;
@@ -256,8 +256,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00030;
     a_from_afp= 0.0795739; //0.079616;
     a_from_afp_err = 0.000132632; // 0.000127363;
-    a_from_afp_FLAG= 0.0795189;
-    a_from_afp_FLAG_err=3.32677e-05;
+    a_from_afp_FLAG= 0.0795131;
+    a_from_afp_FLAG_err=3.52596e-05;
     a_nucleon=0.07975;
     a_nucleon_err=0.00032;
     Za=0.746;
@@ -314,8 +314,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00026;
     a_from_afp = 0.0682083;// 0.0682068;
     a_from_afp_err  = 0.000134938;// 0.000117345;
-    a_from_afp_FLAG=0.0682856;
-    a_from_afp_FLAG_err=7.09949e-05;
+    a_from_afp_FLAG=0.0681569;
+    a_from_afp_FLAG_err=8.2454e-05;
     a_nucleon=0.06860;
     a_nucleon_err=0.00020;
     Za=0.761;
@@ -353,8 +353,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err=  0.0002;
     a_from_afp = 0.0569183;// 0.0569252;
     a_from_afp_err = 0.000115387;// 0.000103587;
-    a_from_afp_FLAG=0.056901;
-    a_from_afp_FLAG_err=5.29205e-05;
+    a_from_afp_FLAG=0.0568756;
+    a_from_afp_FLAG_err=5.89089e-05;
     a_nucleon= 0.05777; //fake
     a_nucleon_err= 0.0002; //fake
     Za= 0.76217;
@@ -393,8 +393,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err=  0.0;
     a_from_afp = 0.0488471;
     a_from_afp_err = 5.34768e-05;
-    a_from_afp_FLAG= 0.0489042;
-    a_from_afp_FLAG_err = 6.01389e-05;
+    a_from_afp_FLAG= 0.0489061;
+    a_from_afp_FLAG_err = 5.99147e-05;
     a_nucleon= 0.0; //fake
     a_nucleon_err= 0.0; //fake
     Za= 0.0;
@@ -407,11 +407,11 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_err = 0.0;
 
     //
-    Za_WI_strange= 0.7854226014701348;
-    Za_WI_strange_err = 7.397851471381889e-05;
+    Za_WI_strange= 0.7854224386568596;
+    Za_WI_strange_err = 7.37626786405621e-05;
     
-    Zv_WI_strange = 0.7582458516592967;
-    Zv_WI_strange_err = 6.477780894772179e-06;
+    Zv_WI_strange = 0.7582316794779995;
+    Zv_WI_strange_err = 6.790392603635336e-06;
 
     ZT_RI2 = 0.0;
     ZT_RI2_err = 0.0;

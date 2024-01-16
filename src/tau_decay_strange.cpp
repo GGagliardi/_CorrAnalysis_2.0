@@ -8,7 +8,7 @@ const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
 const bool UseJack=1;
 const int Njacks=50;
-const int Nboots=10000;
+const int Nboots=5000;
 const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
 const int prec = 128;
@@ -155,7 +155,8 @@ void get_sigma_list_strange() {
   double s_max= 0.2;
   double s_min= 0.004420;
 
-  sigma_list_strange= { 0.004, 0.02, 0.04, 0.08, 0.12, 0.16};
+  //sigma_list_strange= { 0.004, 0.02, 0.04, 0.08, 0.12, 0.16};
+  sigma_list_strange= { 0.02, 0.04, 0.08, 0.12, 0.16};
   return;
 
  
@@ -1240,11 +1241,11 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
     int Tmin_P5=0;
     int Tmax_P5=0;
-    if( ls_data_tm_VKVK.Tag[iens] =="cB211b.072.96")     { Tmin_P5=33; Tmax_P5=59;}
-    else if(ls_data_tm_VKVK.Tag[iens] =="cB211b.072.64") { Tmin_P5=30; Tmax_P5=60;}
+    if( ls_data_tm_VKVK.Tag[iens] =="cB211b.072.96")     { Tmin_P5=33; Tmax_P5=57;}
+    else if(ls_data_tm_VKVK.Tag[iens] =="cB211b.072.64") { Tmin_P5=45; Tmax_P5=59;}
     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C")  { Tmin_P5=35; Tmax_P5=63;}
     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D")  { Tmin_P5=37; Tmax_P5=72;}
-    else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="E")  { Tmin_P5=47; Tmax_P5=85;}
+    else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="E")  { Tmin_P5=60; Tmax_P5=85;}
     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="Z")  { Tmin_P5=26; Tmax_P5=45;}
     else crash("Cannot recognize the ensemble: "+ls_data_tm_VKVK.Tag[iens]+" in assigning Tmin_P5,Tmax_P5 for ensemble: ");
 

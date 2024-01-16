@@ -20,15 +20,15 @@ Vfloat virt_list;
 bool verbose_lev=1;
 bool P5_ON_SOURCE=true;
 bool Is_rep = false;
-Vfloat sigmas({0.6,0.5,0.4,0.35,0.3,0.25,0.2,0.15, 0.1}); //sigma in GeV  
+Vfloat sigmas({0.6,0.5,0.4,0.35,0.3,0.25,0.2,0.15, 0.1, 0.05}); //sigma in GeV  
 int prec=128;
 const string MODE_FF="TANT";
-bool CONS_EM_CURR=true;
+bool CONS_EM_CURR=false;
 const bool Skip_spectral_reconstruction=true;
 const bool Reconstruct_axial_part=true;
 const bool Reconstruct_vector_part=true;
 const bool Perform_FF_and_Br_reconstruction=false;
-const bool Perform_eps_extrapolation=false;
+const bool Perform_eps_extrapolation=true;
 const double Mjpsi= 3.0969; //GeV
 const double Mphi= 1.019461; //GeV
 const double MDs_phys= 1.96847; //GeV
@@ -382,7 +382,7 @@ void Get_radiative_form_factors_3d() {
   Vfloat Emax_List({10});
   vector<bool> Perform_theta_average_List({1});
   vector<string> SM_TYPE_List({"FF_Exp"});
-  vector<bool> CONS_EM_CURR_LIST({true});
+  vector<bool> CONS_EM_CURR_LIST({false});
   Vfloat E0_List({0.9});
   
   int N= beta_List.size();

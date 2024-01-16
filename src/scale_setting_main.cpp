@@ -46,37 +46,37 @@ void Get_scale_setting() {
 
       
       FILE *stream = fopen( ("../gm2_tau_rep_bin/"+Ens_T1[it]+"/"+((Ens_TT1[it]=="cE211a.044.112")?"mix_l_l_TM_P5P5":"ll_TM_P5P5")).c_str(), "rb");
-        size_t Nconfs, T, Nhits;
-	bin_read(Nconfs, stream);
-	bin_read(Nhits, stream);
-	bin_read(T, stream);
+      size_t Nconfs, T, Nhits;
+      bin_read(Nconfs, stream);
+      bin_read(Nhits, stream);
+      bin_read(T, stream);
 
-	cout<<"Nconfs: "<<Nconfs<<endl<<flush;
-	cout<<"T: "<<T<<" "<<T/2+1<<endl<<flush;
-	cout<<"Nhits: "<<Nhits<<endl<<flush;
-	for(size_t iconf=0;iconf<Nconfs;iconf++) {
+      cout<<"Nconfs: "<<Nconfs<<endl<<flush;
+      cout<<"T: "<<T<<" "<<T/2+1<<endl<<flush;
+      cout<<"Nhits: "<<Nhits<<endl<<flush;
+      for(size_t iconf=0;iconf<Nconfs;iconf++) {
+	
+	string conf_id = to_string(iconf);
+	if(conf_id.length() == 1) conf_id = "000"+conf_id;
+	if(conf_id.length() == 2) conf_id = "00"+conf_id;
+	if(conf_id.length() == 3) conf_id = "0"+conf_id;
+	if(conf_id.length() > 4 ) crash("conf_id.size(): "+to_string(conf_id.size())+" conf: "+conf_id);
 
-	  string conf_id = to_string(iconf);
-	  if(conf_id.length() == 1) conf_id = "000"+conf_id;
-	  if(conf_id.length() == 2) conf_id = "00"+conf_id;
-	  if(conf_id.length() == 3) conf_id = "0"+conf_id;
-	  if(conf_id.length() > 4 ) crash("conf_id.size(): "+to_string(conf_id.size())+" conf: "+conf_id);
-
-	  conf_id = conf_id+"_r0";
-	  vector<double> C(T/2+1);
-	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
-	  boost::filesystem::create_directory("../corr_scale_setting/light/"+Ens_TT1[it]+"/"+conf_id);
-	  ofstream PrintCorr("../corr_scale_setting/light/"+Ens_TT1[it]+"/"+conf_id+"/mes_contr_2pts_ll_1");
-	  PrintCorr.precision(16);
-	  PrintCorr<<"# "<<"P5P5"<<endl;
-	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<"   "<<"0.000000"<<endl;
-	  for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<"   "<<"0.000000"<<endl;
-	  PrintCorr.close();
-
-	}
-
-	fclose(stream);
-
+	conf_id = conf_id+"_r0";
+	vector<double> C(T/2+1);
+	for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
+	boost::filesystem::create_directory("../corr_scale_setting/light/"+Ens_TT1[it]+"/"+conf_id);
+	ofstream PrintCorr("../corr_scale_setting/light/"+Ens_TT1[it]+"/"+conf_id+"/mes_contr_2pts_ll_1");
+	PrintCorr.precision(16);
+	PrintCorr<<"# "<<"P5P5"<<endl;
+	for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<"   "<<"0.000000"<<endl;
+	for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<"   "<<"0.000000"<<endl;
+	PrintCorr.close();
+	
+      }
+      
+      fclose(stream);
+      
 	
 	
 	cout<<"Ens: "<<Ens_T1[it]<<" finished!"<<endl;
@@ -193,11 +193,11 @@ void Get_scale_setting() {
       CorrAnalysis Corr(UseJack, Njacks,Nboots);
       Corr.Nt = pt2_pion.nrows[iens];
       //Analyze correlators
-      if(pt2_pion.Tag[iens].substr(1,12)=="B211b.072.96") {Corr.Tmin=55; Corr.Tmax=80;}
-      else if(pt2_pion.Tag[iens].substr(1,12)=="B211b.072.64") { Corr.Tmin=40; Corr.Tmax=56;}
-      else if(pt2_pion.Tag[iens].substr(1,1)=="C") {Corr.Tmin=40; Corr.Tmax=70;}
-      else if(pt2_pion.Tag[iens].substr(1,1)=="D") {Corr.Tmin=41; Corr.Tmax=80;}
-      else if(pt2_pion.Tag[iens].substr(1,1)=="E") {Corr.Tmin=80; Corr.Tmax=100;}
+      if(pt2_pion.Tag[iens].substr(1,12)=="B211b.072.96") {Corr.Tmin=40; Corr.Tmax=80;}
+      else if(pt2_pion.Tag[iens].substr(1,12)=="B211b.072.64") { Corr.Tmin=35; Corr.Tmax=55;}
+      else if(pt2_pion.Tag[iens].substr(1,1)=="C") {Corr.Tmin=43; Corr.Tmax=65;}
+      else if(pt2_pion.Tag[iens].substr(1,1)=="D") {Corr.Tmin=45; Corr.Tmax=80;}
+      else if(pt2_pion.Tag[iens].substr(1,1)=="E") {Corr.Tmin=60; Corr.Tmax=90;}
       else crash("In scale setting analysis cannot find Tmin,Tmax for ensemble: "+pt2_pion.Tag[iens]);
       distr_t_list pion_corr = Corr.corr_t(pt2_pion.col(0)[iens], "");
       distr_t_list Mpi_eff_distr = Corr.effective_mass_t(pt2_pion.col(0)[iens], "../data/scale_setting/Mp/Mpi_"+pt2_pion.Tag[iens]+".dat");

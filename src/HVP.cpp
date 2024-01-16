@@ -219,6 +219,8 @@ void HVP() {
   distr_t Vus(false);
   distr_t Vud(false);
 
+
+  /*
   //Gounaris Sakurai model
 
   int npts_spline= 400;
@@ -231,6 +233,7 @@ void HVP() {
 
   //############################################INTERPOLATE PHI FUNCTION AND DERIVATIVES#############################
 
+  
   VVfloat phi_data, phi_der_data;
   Vfloat sx_int;
   Vfloat sx_der, dx_der;
@@ -334,7 +337,7 @@ void HVP() {
   exit(-1);
 
   
-  
+  */
   
 
   for(int iboot=0;iboot<NB;iboot++) {

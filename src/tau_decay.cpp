@@ -8,7 +8,7 @@ const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
 const double e2 = alpha*4.0*M_PI;
 const bool UseJack=1;
-const int Njacks=50;
+const int Njacks=75;
 const int Nboots=800;
 const double qu= 2.0/3.0;
 const double qd= -1.0/3.0;
@@ -877,7 +877,7 @@ void Compute_tau_decay_width(bool Is_Emax_Finite, double Emax, double beta,LL_fu
     
 
     bool Found_error_less_x_percent=false;
-    double x=15;
+    double x=30;
     //tm
     int tmax_tm_0=1;
     while(!Found_error_less_x_percent && tmax_tm_0 < Corr.Nt/2 -1 ) {
