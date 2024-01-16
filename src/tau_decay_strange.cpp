@@ -314,9 +314,14 @@ void tau_decay_analysis_strange() {
   //Vfloat Emax_list({4.0, 4.0 , 4.0, 4.0, 5.0});
   //vector<bool> Is_Emax_Finite({1,1,1,1,1});
   
-  Vfloat betas({ 3.99 , 4.99 });
-  Vfloat Emax_list({4.0, 4.0});
-  vector<bool> Is_Emax_Finite({1,1});
+  //Vfloat betas({ 3.99 , 4.99 });
+  //Vfloat Emax_list({4.0, 4.0});
+  //vector<bool> Is_Emax_Finite({1,1});
+
+
+  Vfloat betas({ 3.99  });
+  Vfloat Emax_list({4.0});
+  vector<bool> Is_Emax_Finite({1});
 
   
 
