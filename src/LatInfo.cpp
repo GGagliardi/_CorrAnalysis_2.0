@@ -172,8 +172,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Za_WI_charm_extr = 0.66016;
     Za_WI_charm_extr_err = 0.0014;
 
-    ZT_RI2 = 0.8173;
-    ZT_RI2_err = sqrt(pow(0.0013,2) + pow(0.0008,2));
+    ZT_RI2 =  0.812823;  //0.8173;
+    ZT_RI2_err = 1.5*0.00732542; // sqrt(pow(0.0013,2) + pow(0.0008,2));
 
     ZT_RI2_M3= 0.8100;
     ZT_RI2_M3_err= sqrt( pow(0.0015,2) + pow(0.0008,2));
@@ -263,8 +263,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Za=0.746;
     Za_err=0.008;
 
-    ZT_RI2 = 0.8403;
-    ZT_RI2_err = sqrt(pow(0.0017,2) + pow(0.0008,2));
+    ZT_RI2 = 0.831275; //0.8403;
+    ZT_RI2_err = 1.5*0.00676006; //sqrt(pow(0.0017,2) + pow(0.0008,2));
 
     ZT_RI2_M3= 0.8261;
     ZT_RI2_M3_err= sqrt( pow(0.0023,2) + pow(0.0008,2));
@@ -335,8 +335,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_WI_strange_err = 1.9e-5;
 
 
-    ZT_RI2 = 0.8623;
-    ZT_RI2_err = sqrt(pow(0.0019,2) + pow(0.0008,2));
+    ZT_RI2 = 0.852704; // 0.8623;
+    ZT_RI2_err = 1.5*0.00596131 ; // sqrt(pow(0.0019,2) + pow(0.0008,2));
 
     ZT_RI2_M3= 0.8545;
     ZT_RI2_M3_err = sqrt( pow(0.0019,2) + pow(0.0008,2));
@@ -373,8 +373,8 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_WI_strange = 0.744106;
     Zv_WI_strange_err = 1.2e-5;
 
-    ZT_RI2 = 0.8872;
-    ZT_RI2_err = sqrt(pow(0.0008,2) + pow(0.0008,2));
+    ZT_RI2 =  0.876344; //0.8872;
+    ZT_RI2_err = 1.5*0.00482717; //sqrt(pow(0.0008,2) + pow(0.0008,2));
 
     ZT_RI2_M3= 0.8785;
     ZT_RI2_M3_err= sqrt( pow(0.0008,2) + pow(0.0008,2));

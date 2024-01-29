@@ -300,6 +300,32 @@ auto summ_master(const std::vector<T>& t0,const std::vector<V>&...t)
 }
 
 
+template <typename T,
+	  typename...V>
+T multiply_master(const T& t,const V&...v)
+{
+  return (v*...*t);
+}
+
+template <typename T,
+	  typename...V>
+auto multiply_master(const std::vector<T>& t0,const std::vector<V>&...t)
+{
+   
+  static_assert((std::is_same_v<T,V> and...),"Needs to call with the same container type");
+  
+    
+  std::vector<T> res(t0.size());
+  
+  for(std::size_t i=0;i<t0.size();i++)
+    res[i]=multiply_master(t0[i],t[i]...);
+  
+  return res;
+}
+
+
+
+
 template <typename T>
 double R_brent( T&& F, double xmin, double xmax) {
 

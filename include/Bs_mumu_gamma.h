@@ -164,14 +164,14 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6>
-double Compute_AFB( double xg, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T,  double FBS, double xb_val, double Vtbs_val, double tBs_val, Vfloat kappa_list, const Vfloat &Cos_list, const Vfloat &W_list, const  Vfloat &Br_list, string MODE, string CH) {
+double Compute_AFB( double xg, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T,  double FBS, double xb_val, double Vtbs_val, double tBs_val, Vfloat kappa_list, const Vfloat &Th_list, const Vfloat &W_list, const  Vfloat &Br_list, string MODE, string CH) {
 
-  double diff_br= Compute_Bs_mumugamma_differential_decay_rate(xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T , FA_IM_T, FBS, xb_val, Vtbs_val, tBs_val, kappa_list, Cos_list, W_list, Br_list,  MODE, CH); 
+  double diff_br= Compute_Bs_mumugamma_differential_decay_rate(xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T , FA_IM_T, FBS, xb_val, Vtbs_val, tBs_val, kappa_list, Th_list, W_list, Br_list,  MODE, CH); 
 
   double val_FW, err_FW, val_BW, err_BW;
   double prec=5e-5;
 
-  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate( xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T, FBS, xb_val, Vtbs_val, tBs_val, kappa_list, Cos_list, W_list, Br_list,  MODE, CH);};
+  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate( xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T, FBS, xb_val, Vtbs_val, tBs_val, kappa_list, Th_list, W_list, Br_list,  MODE, CH);};
 
   gsl_function_pp<decltype(FUNC_DOUBLE_DIFF_RATE)> integrand(FUNC_DOUBLE_DIFF_RATE);
 		      gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
@@ -191,9 +191,9 @@ double Compute_AFB( double xg, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&
 
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5 , typename T6> 
-double Compute_Bs_mumugamma_decay_rate( T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T,  double FBS, double xb_val, double Vtbs_val, double tBs_val, const  Vfloat &kappa_list, const  Vfloat &Cos_list, const Vfloat &W_list, const Vfloat &Br_list,  string MODE, string CH,  double xmax=xg_max,  double xmin=xg_min) {
+double Compute_Bs_mumugamma_decay_rate( T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T ,   T6&& FA_IM_T,  double FBS, double xb_val, double Vtbs_val, double tBs_val, const  Vfloat &kappa_list, const  Vfloat &Th_list, const Vfloat &W_list, const Vfloat &Br_list,  string MODE, string CH,  double xmax=xg_max,  double xmin=xg_min) {
 
-  auto FUNC_DIFF_RATE = [&](double xg) { return Compute_Bs_mumugamma_differential_decay_rate( xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T, FBS,  xb_val, Vtbs_val, tBs_val, kappa_list, Cos_list, W_list, Br_list,  MODE, CH);};
+  auto FUNC_DIFF_RATE = [&](double xg) { return Compute_Bs_mumugamma_differential_decay_rate( xg, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T, FBS,  xb_val, Vtbs_val, tBs_val, kappa_list, Th_list, W_list, Br_list,  MODE, CH);};
 
   
   double val, err;
@@ -213,13 +213,13 @@ double Compute_Bs_mumugamma_decay_rate( T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_
 
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5 , typename T6 > 
-double Compute_Bs_mumugamma_differential_decay_rate( double xg,  T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T,  double FBS, double xb_val, double Vtbs_val, double tBs_val, const Vfloat &kappa_list, const Vfloat &Cos_list, const Vfloat &W_list, const Vfloat &Br_list, string MODE, string CH) {
+double Compute_Bs_mumugamma_differential_decay_rate( double xg,  T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T,  double FBS, double xb_val, double Vtbs_val, double tBs_val, const Vfloat &kappa_list, const Vfloat &Th_list, const Vfloat &W_list, const Vfloat &Br_list, string MODE, string CH) {
 
   //integrate at fixed xg
 
   //integration variable is costheta
 
-  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate(xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T, FBS,  xb_val, Vtbs_val, tBs_val, kappa_list, Cos_list, W_list, Br_list,  MODE, CH);};
+  auto FUNC_DOUBLE_DIFF_RATE = [&](double costh) { return Compute_Bs_mumugamma_double_differential_decay_rate(xg, costh, FV, FA, FV_RE_T, FA_RE_T, FV_IM_T, FA_IM_T, FBS,  xb_val, Vtbs_val, tBs_val, kappa_list, Th_list, W_list, Br_list,  MODE, CH);};
 
   
   double val, err;
@@ -238,7 +238,7 @@ double Compute_Bs_mumugamma_differential_decay_rate( double xg,  T1&& FV, T2&& F
 
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5 , typename T6  > 
-double Compute_Bs_mumugamma_double_differential_decay_rate(  double xg, double costh, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T, double FBS, double xb_val, double Vtbs_val, double tBs_val, const Vfloat &kappa_list, const Vfloat &Cos_list, const Vfloat &W_list, const Vfloat &Br_list,   string MODE, string CH) {
+double Compute_Bs_mumugamma_double_differential_decay_rate(  double xg, double costh, T1&& FV, T2&& FA, T3&& FV_RE_T, T4&& FA_RE_T, T5&& FV_IM_T , T6&& FA_IM_T, double FBS, double xb_val, double Vtbs_val, double tBs_val, const Vfloat &kappa_list, const Vfloat &Th_list, const Vfloat &W_list, const Vfloat &Br_list,   string MODE, string CH) {
 
 
  
@@ -258,8 +258,8 @@ double Compute_Bs_mumugamma_double_differential_decay_rate(  double xg, double c
   double t= 0.5*(1+2*pow(x_mu,2) - s - csi);
   double u = t+csi;
   //get Wilson coefficients
-  double C9_R = WC(9,q2, kappa, Cos_list, Br_list,  W_list).first;
-  double C9_I = WC(9,q2, kappa, Cos_list, Br_list, W_list).second;
+  double C9_R = WC(9,q2, kappa, Th_list, Br_list,  W_list).first;
+  double C9_I = WC(9,q2, kappa, Th_list, Br_list, W_list).second;
   double C9_MOD = sqrt(pow(C9_R,2) + pow(C9_I,2));
   double C7 = WC(7,q2).first;
   double C10 = WC(10,q2).first;

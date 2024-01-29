@@ -207,6 +207,19 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
     //do nothing
 
   }
+
+  else if(Analysis_Mode=="weak_annihilation_inclusive") {
+
+    //do nothing
+  }
+
+  else if(Analysis_Mode=="test") {
+
+    //do nothing
+
+  }
+
+  
   
   else crash("Analysis_Mode: "+Analysis_Mode+" not found");
   
@@ -314,7 +327,16 @@ void MasterClass_analysis::Analysis_manager() {
   if(Analysis_Mode=="l7_Weinberg") {
     l7_Weinberg();
   }
+
+  if(Analysis_Mode=="weak_annihilation_inclusive") {
+
+    compute_weak_annihilation();
+  }
+
   
+  if(Analysis_Mode=="test") {
+    test();
+  }
   
   return;
 

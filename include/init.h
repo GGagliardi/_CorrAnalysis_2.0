@@ -22,6 +22,8 @@
 #include "RC_analysis.h"
 #include "scale_setting_main.h"
 #include "l7_Weinberg.h"
+#include "tests.h"
+#include "weak_annihilation_inclusive.h"
 
 using namespace std;
 

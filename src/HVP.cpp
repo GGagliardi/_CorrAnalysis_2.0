@@ -9,10 +9,10 @@ using namespace std;
 void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const distr_t &a, string path,distr_t lowest_mass) {
 
 
-  int Njacks=50;
+  int Njacks=56;
   bool UseJack=true;
  
-  int Simps_ord=3;
+  int Simps_ord=2;
   double fm_to_inv_Gev= 1.0/0.197327;
 
 
@@ -79,7 +79,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
       
     bool eff_mass_is_nan= isnan( eff_mass_V.ave(tcut));
     bool update_min_Tdata=true;
-    if(eff_mass_is_nan || (eff_mass_V.err(tcut)/eff_mass_V.ave(tcut) > 0.05) || (eff_mass_V.ave(tcut) < 0 )) update_min_Tdata=false;
+    if(eff_mass_is_nan || (eff_mass_V.err(tcut)/eff_mass_V.ave(tcut) > 0.20) || (eff_mass_V.ave(tcut) < 0 )) update_min_Tdata=false;
 
     if(update_min_Tdata) slice_to_use_for_eff_mass=tcut;
       
@@ -106,7 +106,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
    
 
 
-  //find interval where difference between amu_HVP_min_Tdata and amu_HVP_max_Tdata is smaller than 0.3 sigma
+  //find interval where difference between amu_HVP_min_Tdata and amu_HVP_max_Tdata is smaller than 0.2 sigma
   //average
   bool Found_Tdata_opt=false;
   int tdata_opt=1;
@@ -115,7 +115,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
   while(!Found_Tdata_opt && tdata_opt < T/2) {
 
     distr_t diff_max_min = amu_HVP_max_Tdata.distr_list[tdata_opt-1] - amu_HVP_min_Tdata.distr_list[tdata_opt-1];
-    if( diff_max_min.ave()/min( amu_HVP_max_Tdata.err(tdata_opt-1) , amu_HVP_min_Tdata.err(tdata_opt-1)) < 0.3) Found_Tdata_opt=true;
+    if( diff_max_min.ave()/min( amu_HVP_max_Tdata.err(tdata_opt-1) , amu_HVP_min_Tdata.err(tdata_opt-1)) < 1) Found_Tdata_opt=true;
     else tdata_opt++;
   }
 
@@ -132,7 +132,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
 
 
     bool fit_to_constant=true;
-    //average over min max over an interval of 0.5 fm
+    //average over min max over an interval of 1 fm
     if( amu_HVP_max_Tdata.size() != amu_HVP_min_Tdata.size()) crash("Size of amu_HVP_max_Tdata and amu_HVP_min_Tdata are not equal");
     int S_Tdata= amu_HVP_min_Tdata.size();
     int DT = min( (int)(DTT*fm_to_inv_Gev/a.ave()), (S_Tdata -tdata_opt));
@@ -170,10 +170,17 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
 
   }
 
+  distr_t_list amu_HVP_VEC(UseJack);
+  vector<double> Is_in_fit_int;
+  for(int i=0;i<(signed)TCUTS.size(); i++) {
+    amu_HVP_VEC.distr_list.push_back( amu_HVP);
+    Is_in_fit_int.push_back(( (i >= Tdatas_opt) && (i <= (Tdatas_opt+  DTT*fm_to_inv_Gev/a.ave())))?1.0:0.0);
+  }
+
   Tcut_opt= Tdatas_opt;
       
   //Print to File
-  Print_To_File({}, {TCUTS, amu_HVP_min_Tdata.ave(), amu_HVP_min_Tdata.err(), amu_HVP_max_Tdata.ave(), amu_HVP_max_Tdata.err(), amu_HVP_T_2.ave(), amu_HVP_T_2.err(), Is_T_data_opt}, path+".bound", "", "#tcut   lower    upper     T/2      Is_Tcut_opt.       Tcut_opt= "+to_string(Tdatas_opt));
+  Print_To_File({}, {TCUTS, amu_HVP_min_Tdata.ave(), amu_HVP_min_Tdata.err(), amu_HVP_max_Tdata.ave(), amu_HVP_max_Tdata.err(), amu_HVP_T_2.ave(), amu_HVP_T_2.err(), amu_HVP_VEC.ave(), amu_HVP_VEC.err(), Is_in_fit_int, Is_T_data_opt}, path+".bound", "", "#tcut   lower    upper     T/2  result   Is_in_fit_int?     Is_Tcut_opt.       Tcut_opt= "+to_string(Tdatas_opt));
 
 
 
@@ -191,7 +198,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
 void HVP() {
 
 
-  int Njacks=50;
+  int Njacks=56;
   bool UseJack=true;
   double qu= 2.0/3.0;
   double qd= -1.0/3.0;
@@ -416,6 +423,45 @@ void HVP() {
     }
     return A_bis<B_bis;
   };
+
+
+  auto Sort_old_light_confs = [](string A, string B) {
+
+			   
+
+			    int conf_length_A= A.length();
+			    int conf_length_B= B.length();
+
+			    int pos_a_slash=-1;
+			    int pos_b_slash=-1;
+			    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+			    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+
+			    string A_bis= A.substr(pos_a_slash+1);
+			    string B_bis= B.substr(pos_b_slash+1);
+
+			    //A_bis=A;
+			    //B_bis=B;
+
+			     
+			    string conf_num_A = A_bis.substr(0,4);
+			    string conf_num_B = B_bis.substr(0,4);
+							       
+		      
+			    string rA = A_bis.substr(A_bis.length()-2);
+			    string rB = B_bis.substr(B_bis.length()-2);
+			    if(rA.substr(0,1) == "r") { 
+			      int n1 = stoi(A_bis.substr(A_bis.length()-1));
+			      int n2 = stoi(B_bis.substr(B_bis.length()-1));
+			      if(rA == rB) {
+			      if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+			      else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+			      else crash("stream not recognized");
+			      }
+			      else return n1<n2;
+			    }
+			    return A_bis<B_bis;
+			  };
   
   
   data_t Vk_data_tm, Vk_data_OS, P5P5_data_tm;
@@ -423,6 +469,12 @@ void HVP() {
   Vk_data_tm.Read("../R_ratio_data/light", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
   P5P5_data_tm.Read("../R_ratio_data/light", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
   Vk_data_OS.Read("../R_ratio_data/light", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
+
+  data_t Vk_data_defl_tm, Vk_data_defl_OS;
+
+  Vk_data_defl_tm.Read("../new_gm2_project/semid_nev400_nts1024/AkAk_r+1_r-1", "corr", "" ,  Sort_old_light_confs);
+  Vk_data_defl_OS.Read("../new_gm2_project/semid_nev400_nts1024/VkVk_r+1_r+1", "corr", "" ,  Sort_old_light_confs);
+  
 
 
   //############################################################################################
@@ -756,8 +808,7 @@ void HVP() {
   Corr.Tmax=100;
 
 
-  D(3);
-  
+   
   LatticeInfo L_info;
      
   L_info.LatInfo_new_ens(V_light_tm.Tag[id_E]);
@@ -921,11 +972,34 @@ void HVP() {
 
     int L= L_info.L;
 
+    distr_t_list Vk_DD_tm_distr(UseJack), Vk_SS_tm_distr(UseJack), Vk_SD_tm_distr(UseJack);
+    distr_t_list Vk_DD_OS_distr(UseJack), Vk_SS_OS_distr(UseJack), Vk_SD_OS_distr(UseJack);
+    distr_t_list Vk_DEFL_tm_distr(UseJack), Vk_DEFL_OS_distr(UseJack);
       
        
     distr_t_list Vk_tm_distr = 1e10*Za*Za*(pow(qu,2)+pow(qd,2))*Corr.corr_t( Vk_data_tm.col(0)[iens] , "../data/HVP/Corr/Vk_tm_"+Vk_data_tm.Tag[iens]+".dat");
     distr_t_list Vk_OS_distr = 1e10*Zv*Zv*(pow(qu,2)+pow(qd,2))*Corr.corr_t( Vk_data_OS.col(0)[iens] , "../data/HVP/Corr/Vk_OS_"+Vk_data_OS.Tag[iens]+".dat");
     distr_t_list P5_distr= Corr.corr_t( P5P5_data_tm.col(0)[iens] , "");
+
+    if(Vk_data_tm.Tag[iens].substr(1,12) == "B211b.072.64") {
+
+      distr_t R_TM= 1.0/( 1e10*Za*Za*(pow(qu,2)+pow(qd,2)));
+      distr_t R_OS= 1.0/( 1e10*Zv*Zv*(pow(qu,2)+pow(qd,2)));
+      
+      Vk_DD_tm_distr = 1e10*Za*Za*(pow(qu,2)+pow(qd,2))*Corr.corr_t( Vk_data_defl_tm.col(1)[iens] , "../data/HVP/Corr/Vk_DD_tm_"+Vk_data_tm.Tag[iens]+".dat");
+      Vk_SD_tm_distr = 2*1e10*Za*Za*(pow(qu,2)+pow(qd,2))*Corr.corr_t( Vk_data_defl_tm.col(3)[iens] , "../data/HVP/Corr/Vk_SD_tm_"+Vk_data_tm.Tag[iens]+".dat");
+      Vk_SS_tm_distr = 1e10*Za*Za*(pow(qu,2)+pow(qd,2))*Corr.corr_t( Vk_data_defl_tm.col(5)[iens] , "../data/HVP/Corr/Vk_SS_tm_"+Vk_data_tm.Tag[iens]+".dat");
+      Vk_DEFL_tm_distr = Vk_DD_tm_distr+Vk_SD_tm_distr+Vk_SS_tm_distr;
+      Print_To_File({},{(R_TM*Vk_DEFL_tm_distr).ave(),(R_TM*Vk_DEFL_tm_distr).err()}, "../data/HVP/Corr/Vk_DEF_tm_"+Vk_data_tm.Tag[iens]+".dat.t", "", ""); 
+
+      Vk_DD_OS_distr = 1e10*Zv*Zv*(pow(qu,2)+pow(qd,2))*Corr.corr_t( Vk_data_defl_OS.col(1)[iens] , "../data/HVP/Corr/Vk_DD_OS_"+Vk_data_tm.Tag[iens]+".dat");
+      Vk_SD_OS_distr = 2*1e10*Zv*Zv*(pow(qu,2)+pow(qd,2))*Corr.corr_t( Vk_data_defl_OS.col(3)[iens] , "../data/HVP/Corr/Vk_SD_OS_"+Vk_data_tm.Tag[iens]+".dat");
+      Vk_SS_OS_distr = 1e10*Zv*Zv*(pow(qu,2)+pow(qd,2))*Corr.corr_t( Vk_data_defl_OS.col(5)[iens] , "../data/HVP/Corr/Vk_SS_OS_"+Vk_data_tm.Tag[iens]+".dat");
+      Vk_DEFL_OS_distr = Vk_DD_OS_distr+Vk_SD_OS_distr+Vk_SS_OS_distr;
+      
+      Print_To_File({},{(R_OS*Vk_DEFL_OS_distr).ave(),(R_OS*Vk_DEFL_OS_distr).err()}, "../data/HVP/Corr/Vk_DEF_OS_"+Vk_data_tm.Tag[iens]+".dat.t", "", ""); 
+      
+    }
 
     if(Vk_data_tm.Tag[iens].substr(1,12)=="B211b.072.96") {Corr.Tmin=30; Corr.Tmax=70;}
     else if(Vk_data_tm.Tag[iens].substr(1,12)=="B211b.072.64") { Corr.Tmin=27; Corr.Tmax=50;}
@@ -951,10 +1025,37 @@ void HVP() {
     distr_t amu_HVP_OS(UseJack);
     int Tcut_opt_tm, Tcut_opt_OS;
 
-  
+   
           
-    Bounding_HVP(amu_HVP_tm, Tcut_opt_tm,  Vk_tm_distr, a_distr,"../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_tm" , p2_mot_tm);
+    Bounding_HVP(amu_HVP_tm, Tcut_opt_tm,  Vk_tm_distr, a_distr,"../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_tm" , p2_mot);
     Bounding_HVP(amu_HVP_OS, Tcut_opt_OS, Vk_OS_distr, a_distr, "../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_OS" , p2_mot);
+
+    distr_t amu_HVP_defl_tm(UseJack), amu_HVP_defl_OS(UseJack);
+    int Tcut_opt_defl_tm, Tcut_opt_defl_OS;
+
+    Vfloat thetas;
+    for(int i=0;i<100;i++) thetas.push_back( 2*M_PI*i/(99.0));
+    distr_t_list amu_HVP_theta(UseJack);
+    vector<int> Tcut_opt_theta;
+    
+    if(Vk_data_tm.Tag[iens].substr(1,12) == "B211b.072.64") {
+
+      
+      Bounding_HVP(amu_HVP_defl_tm, Tcut_opt_defl_tm, Vk_DEFL_tm_distr, a_distr,"../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_DEFL_tm" , p2_mot);
+      Bounding_HVP(amu_HVP_defl_OS, Tcut_opt_defl_OS, Vk_DEFL_OS_distr, a_distr, "../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_DEFL_OS" , p2_mot);
+
+
+    
+      for(int i=0;i<100;i++) {
+	int tcut; distr_t amu(UseJack);
+	distr_t_list VK =  pow(cos(thetas[i]),2)*Vk_DEFL_tm_distr +  pow(sin(thetas[i]),2)*Vk_DEFL_OS_distr;
+	Bounding_HVP(amu, tcut,  VK, a_distr,"../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_TH_"+to_string(thetas[i]) , p2_mot);
+	Tcut_opt_theta.push_back(tcut);
+	amu_HVP_theta.distr_list.push_back( amu);
+	
+      }
+      
+    }
 
   
 
@@ -966,11 +1067,30 @@ void HVP() {
     vector<double> Tmins({(double)Tcut_opt_tm, (double)Tcut_opt_OS});
     vector<double> Tmaxs({ Tcut_opt_tm + DTT*fm_to_inv_Gev/a_distr.ave(), Tcut_opt_OS + DTT*fm_to_inv_Gev/a_distr.ave()});
 
+  
+
     Print_To_File(Tags, { amu_HVP.ave(), amu_HVP.err(), Tmins, Tmaxs}, "../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+".res", "", "");
+
+    if(Vk_data_tm.Tag[iens].substr(1,12) == "B211b.072.64") {
+      distr_t_list amu_defl_HVP;
+      amu_defl_HVP.distr_list.push_back(amu_HVP_defl_tm);
+      amu_defl_HVP.distr_list.push_back(amu_HVP_defl_OS);
+      vector<double> Tmins_defl({(double)Tcut_opt_defl_tm, (double)Tcut_opt_defl_OS});
+      vector<double> Tmaxs_defl({ Tcut_opt_defl_tm+ DTT*fm_to_inv_Gev/a_distr.ave(), Tcut_opt_defl_OS + DTT*fm_to_inv_Gev/a_distr.ave()});
+      Print_To_File(Tags, { amu_defl_HVP.ave(), amu_defl_HVP.err(), Tmins_defl, Tmaxs_defl}, "../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_defl.res", "", "");
+    }
 
     cout<<"#### "<<Vk_data_tm.Tag[iens]<<" ###"<<endl;
     cout<<"HVP tm: "<<amu_HVP_tm.ave()<<" +- "<<amu_HVP_tm.err()<<" stat. "<< (amu_HVP_tm.err()*100/amu_HVP_tm.ave())<<"%"<<endl;
     cout<<"HVP OS: "<<amu_HVP_OS.ave()<<" +- "<<amu_HVP_OS.err()<<" stat. "<< (amu_HVP_OS.err()*100/amu_HVP_OS.ave())<<"%"<<endl;
+    if(Vk_data_tm.Tag[iens].substr(1,12) == "B211b.072.64") {
+       cout<<"HVP(defl) tm: "<<amu_HVP_defl_tm.ave()<<" +- "<<amu_HVP_defl_tm.err()<<" stat. "<< (amu_HVP_defl_tm.err()*100/amu_HVP_defl_tm.ave())<<"%"<<endl;
+       cout<<"HVP(defl) OS: "<<amu_HVP_defl_OS.ave()<<" +- "<<amu_HVP_defl_OS.err()<<" stat. "<< (amu_HVP_defl_OS.err()*100/amu_HVP_defl_OS.ave())<<"%"<<endl;
+       cout<<"#######THETA#######"<<endl;
+       for(int i=0;i<(signed)thetas.size();i++) {
+	 cout<<"HVP(defl, th: "<<thetas[i]<<" ) :"<<amu_HVP_theta.ave(i)<<" +- "<<amu_HVP_theta.err(i)<<" stat. "<< (amu_HVP_theta.err(i)*100/amu_HVP_theta.ave(i))<<"%"<<endl;
+       }
+    }
     cout<<"#######"<<endl;
 
     auto K = [&](double Mv, double t, double size) -> double { return kernel_K(t, Mv);};

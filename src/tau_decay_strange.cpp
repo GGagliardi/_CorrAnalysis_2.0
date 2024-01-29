@@ -7,7 +7,7 @@
 const double MPiPhys=0.135;
 const double alpha = 1.0/137.04;
 const bool UseJack=1;
-const int Njacks=50;
+const int Njacks=100;
 const int Nboots=5000;
 const double ln2_10=3.32192809489;
 const double fm_to_inv_Gev= 1.0/0.197327;
@@ -21,9 +21,9 @@ const double m_kappa = 0.494600000; //old is 0.4942
 const double m_kappa_err = 0.0004e-8;
 const double m_etas = 0.68989;
 const double m_etas_err= 0.00050;
-const double E0_l = 0.9*m_kappa;
-const double E0_sp = 0.9 * (m_kappa + MPiPhys); //E0_l
-double E0_A_sp = E0_sp; // 0.9*(m_kappa+2*MPiPhys);
+const double E0_l = 0.5*m_kappa;
+const double E0_sp = 0.5*m_kappa; // 0.9*(m_kappa+MPiPhys); //0.9 * (m_kappa + MPiPhys); //E0_l
+double E0_A_sp = 0.5*m_kappa; //0.9*(m_kappa+ 2*MPiPhys); // 0.9*(m_kappa+2*MPiPhys);
 const double Rs_HFLAV = 0.163260;
 const double D_Rs_HFLAV= 0.0027;
 Vfloat sigma_list_strange;
@@ -36,7 +36,7 @@ const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
-bool Skip_spectral_density_analysis_strange=false;
+bool Skip_spectral_density_analysis_strange=true;
 const bool Perform_continuum_extrapolation=false;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
@@ -232,7 +232,7 @@ void tau_decay_analysis_strange() {
     }
     }
 
-    bool Get_ASCII_dm=false;
+    bool Get_ASCII_dm=true;
 
     if(Get_ASCII_dm) {
 
@@ -244,8 +244,8 @@ void tau_decay_analysis_strange() {
      boost::filesystem::create_directory("../tau_decay_strange/light_mass_correction/mix_l2_s");
 
 
-     vector<string> Ens_T1 = {"B.072.64"};
-     vector<string> Ens_TT1 = {"cB211b.072.64"};
+     vector<string> Ens_T1 = {"C.06.80", "C.06.112", "B.72.64", "B.72.96" , "D.54.96", "E.44.112"};
+     vector<string> Ens_TT1 = {"cC211a.06.80", "cC211a.06.112", "cB211b.072.64", "cB211b.072.96" , "cD211a.054.96", "cE211a.044.112"};
 
 
      for( int it=0; it<(signed)Ens_T1.size(); it++) {
@@ -314,14 +314,12 @@ void tau_decay_analysis_strange() {
   //Vfloat Emax_list({4.0, 4.0 , 4.0, 4.0, 5.0});
   //vector<bool> Is_Emax_Finite({1,1,1,1,1});
   
-  //Vfloat betas({ 3.99 , 4.99 });
-  //Vfloat Emax_list({4.0, 4.0});
-  //vector<bool> Is_Emax_Finite({1,1});
+  Vfloat betas({ 3.99 , 4.99 });
+  Vfloat Emax_list({4.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,1});
 
 
-  Vfloat betas({ 3.99  });
-  Vfloat Emax_list({4.0});
-  vector<bool> Is_Emax_Finite({1});
+ 
 
   
 
@@ -580,6 +578,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   ss_data_OS_S0S0.Read("../tau_decay_strange/mix_s1_s1", "mes_contr_mix_s1_s1_OS_S0S0", "S0S0", Sort_easy);
   ls_data_OS_S0S0.Read("../tau_decay_strange/mix_l_s1", "mes_contr_mix_l_s1_OS_S0S0", "S0S0", Sort_easy);
 
+  
 
   //heavier strange mass
 
@@ -1032,8 +1031,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     V0_tm_distr = Corr.corr_t(ls_data_tm_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_tm_"+ls_data_tm_VKVK.Tag[iens]+".dat");
     P5_tm_distr = Corr.corr_t(ls_data_tm_P5P5.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/P5_tm_"+ls_data_tm_VKVK.Tag[iens]+".dat");
 
-    T_tm_distr= Za*Za*Vk_tm_distr + Zv*Zv*Ak_tm_distr;
-    L_tm_distr= Za*Za*V0_tm_distr + Zv*Zv*A0_tm_distr;
+  
 
     //light-OS sector
     Vk_OS_distr = Corr.corr_t(ls_data_OS_VKVK.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/Vk_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
@@ -1041,8 +1039,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_OS_distr = Corr.corr_t(ls_data_OS_A0A0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/A0_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
     V0_OS_distr = Corr.corr_t(ls_data_OS_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
 
-    T_OS_distr= Zv*Zv*Vk_OS_distr + Za*Za*Ak_OS_distr;
-    L_OS_distr= Zv*Zv*V0_OS_distr + Za*Za*A0_OS_distr;
+   
 
 
     
@@ -1053,8 +1050,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_tm_block_1_distr = Corr_block_1.corr_t(ls_data_tm_A0A0.col(0)[iens], "");
     V0_tm_block_1_distr = Corr_block_1.corr_t(ls_data_tm_V0V0.col(0)[iens], "");
 
-    T_tm_block_1_distr = Za_BOOT*Za_BOOT*Vk_tm_block_1_distr + Zv_BOOT*Zv_BOOT*Ak_tm_block_1_distr;
-    L_tm_block_1_distr = Za_BOOT*Za_BOOT*V0_tm_block_1_distr + Zv_BOOT*Zv_BOOT*A0_tm_block_1_distr;
+  
 
     //light-OS sector
     Vk_OS_block_1_distr = Corr_block_1.corr_t(ls_data_OS_VKVK.col(0)[iens], "");
@@ -1062,8 +1058,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_OS_block_1_distr = Corr_block_1.corr_t(ls_data_OS_A0A0.col(0)[iens], "");
     V0_OS_block_1_distr = Corr_block_1.corr_t(ls_data_OS_V0V0.col(0)[iens], "");
 
-    T_OS_block_1_distr = Zv_BOOT*Zv_BOOT*Vk_OS_block_1_distr + Za_BOOT*Za_BOOT*Ak_OS_block_1_distr;
-    L_OS_block_1_distr = Zv_BOOT*Zv_BOOT*V0_OS_block_1_distr + Za_BOOT*Za_BOOT*A0_OS_block_1_distr;
+  
 
     
 
@@ -1100,8 +1095,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     V0_H_tm_distr = Corr.corr_t(ls_H_data_tm_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
     P5_H_tm_distr = Corr.corr_t(ls_H_data_tm_P5P5.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/P5_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
 
-    T_H_tm_distr= Za*Za*Vk_H_tm_distr + Zv*Zv*Ak_H_tm_distr;
-    L_H_tm_distr= Za*Za*V0_H_tm_distr + Zv*Zv*A0_H_tm_distr;
+
+    
+   
 
     //light-OS sector
     Vk_H_OS_distr = Corr.corr_t(ls_H_data_OS_VKVK.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/Vk_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
@@ -1109,8 +1105,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_H_OS_distr = Corr.corr_t(ls_H_data_OS_A0A0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/A0_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
     V0_H_OS_distr = Corr.corr_t(ls_H_data_OS_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_H_OS_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
 
-    T_H_OS_distr= Zv*Zv*Vk_H_OS_distr + Za*Za*Ak_H_OS_distr;
-    L_H_OS_distr= Zv*Zv*V0_H_OS_distr + Za*Za*A0_H_OS_distr;
+  
 
     //analyze data with Njacks=Nconfs
     //light-tm sector
@@ -1119,8 +1114,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_H_tm_block_1_distr = Corr_block_1.corr_t(ls_H_data_tm_A0A0.col(0)[iens], "");
     V0_H_tm_block_1_distr = Corr_block_1.corr_t(ls_H_data_tm_V0V0.col(0)[iens], "");
 
-    T_H_tm_block_1_distr = Za_BOOT*Za_BOOT*Vk_H_tm_block_1_distr + Zv_BOOT*Zv_BOOT*Ak_H_tm_block_1_distr;
-    L_H_tm_block_1_distr = Za_BOOT*Za_BOOT*V0_H_tm_block_1_distr + Zv_BOOT*Zv_BOOT*A0_H_tm_block_1_distr;
+   
 
     //light-OS sector
     Vk_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_VKVK.col(0)[iens], "");
@@ -1128,8 +1122,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_A0A0.col(0)[iens], "");
     V0_H_OS_block_1_distr = Corr_block_1.corr_t(ls_H_data_OS_V0V0.col(0)[iens], "");
 
-    T_H_OS_block_1_distr = Zv_BOOT*Zv_BOOT*Vk_H_OS_block_1_distr + Za_BOOT*Za_BOOT*Ak_H_OS_block_1_distr;
-    L_H_OS_block_1_distr = Zv_BOOT*Zv_BOOT*V0_H_OS_block_1_distr + Za_BOOT*Za_BOOT*A0_H_OS_block_1_distr;
+  
 
     //############# HEAVIER MASS ################//
 
@@ -1139,6 +1132,13 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      distr_t_list V0V0_tm_dm_distr(UseJack), VKVK_tm_dm_distr(UseJack),  A0A0_tm_dm_distr(UseJack), AKAK_tm_dm_distr(UseJack);
 
      distr_t_list V0V0_OS_dm_distr(UseJack), VKVK_OS_dm_distr(UseJack),  A0A0_OS_dm_distr(UseJack), AKAK_OS_dm_distr(UseJack);
+
+
+     //light- quark mass corrections bootstrap
+
+     distr_t_list V0V0_tm_block_1_dm_distr(false), VKVK_tm_block_1_dm_distr(false),  A0A0_tm_block_1_dm_distr(false), AKAK_tm_block_1_dm_distr(false);
+
+     distr_t_list V0V0_OS_block_1_dm_distr(false), VKVK_OS_block_1_dm_distr(false),  A0A0_OS_block_1_dm_distr(false), AKAK_OS_block_1_dm_distr(false);
 
    
      bool read_dm=false;
@@ -1162,11 +1162,82 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
        AKAK_OS_dm_distr = Corr.corr_t( summ_master( ls_ph_data_OS_AKAK.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_OS_AKAK.col(0)[iens_dm], -1.0))  , "../data/tau_decay/"+Tag_reco_type+"/strange/corr/AK_dm_OS_"+ls_H_data_OS_AKAK.Tag[iens]+".dat");
 
 
+       V0V0_tm_block_1_dm_distr = Corr_block_1.corr_t( summ_master( ls_ph_data_tm_V0V0.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_tm_V0V0.col(0)[iens_dm], -1.0)), "");
+       VKVK_tm_block_1_dm_distr = Corr_block_1.corr_t( summ_master( ls_ph_data_tm_VKVK.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_tm_VKVK.col(0)[iens_dm], -1.0)), "");
+       A0A0_tm_block_1_dm_distr = Corr_block_1.corr_t( summ_master( ls_ph_data_tm_A0A0.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_tm_A0A0.col(0)[iens_dm], -1.0)), "");
+       AKAK_tm_block_1_dm_distr = Corr_block_1.corr_t( summ_master( ls_ph_data_tm_AKAK.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_tm_AKAK.col(0)[iens_dm], -1.0)), "");
+
+
+       V0V0_OS_block_1_dm_distr = Corr_block_1.corr_t( summ_master( ls_ph_data_OS_V0V0.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_OS_V0V0.col(0)[iens_dm], -1.0)), "");
+       VKVK_OS_block_1_dm_distr = Corr_block_1.corr_t( summ_master( ls_ph_data_OS_VKVK.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_OS_VKVK.col(0)[iens_dm], -1.0)), "");
+       A0A0_OS_block_1_dm_distr = Corr_block_1.corr_t( summ_master( ls_ph_data_OS_A0A0.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_OS_A0A0.col(0)[iens_dm], -1.0)), "");
+       AKAK_OS_block_1_dm_distr = Corr_block_1.corr_t( summ_master( ls_ph_data_OS_AKAK.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_OS_AKAK.col(0)[iens_dm], -1.0)), "");
+
+       V0_tm_distr = V0_tm_distr + V0V0_tm_dm_distr;
+       Vk_tm_distr = Vk_tm_distr + VKVK_tm_dm_distr;
+       A0_tm_distr = A0_tm_distr + A0A0_tm_dm_distr;
+       Ak_tm_distr = Ak_tm_distr + AKAK_tm_dm_distr;
+
+       V0_OS_distr = V0_OS_distr + V0V0_OS_dm_distr;
+       Vk_OS_distr = Vk_OS_distr + VKVK_OS_dm_distr;
+       A0_OS_distr = A0_OS_distr + A0A0_OS_dm_distr;
+       Ak_OS_distr = Ak_OS_distr + AKAK_OS_dm_distr;
+
+
+       V0_tm_block_1_distr = V0_tm_block_1_distr + V0V0_tm_block_1_dm_distr;
+       Vk_tm_block_1_distr = Vk_tm_block_1_distr + VKVK_tm_block_1_dm_distr;
+       A0_tm_block_1_distr = A0_tm_block_1_distr + A0A0_tm_block_1_dm_distr;
+       Ak_tm_block_1_distr = Ak_tm_block_1_distr + AKAK_tm_block_1_dm_distr;
+
+       V0_OS_block_1_distr = V0_OS_block_1_distr + V0V0_OS_block_1_dm_distr;
+       Vk_OS_block_1_distr = Vk_OS_block_1_distr + VKVK_OS_block_1_dm_distr;
+       A0_OS_block_1_distr = A0_OS_block_1_distr + A0A0_OS_block_1_dm_distr;
+       Ak_OS_block_1_distr = Ak_OS_block_1_distr + AKAK_OS_block_1_dm_distr;
+
+
+       V0_H_tm_distr = V0_H_tm_distr + V0V0_tm_dm_distr;
+       Vk_H_tm_distr = Vk_H_tm_distr + VKVK_tm_dm_distr;
+       A0_H_tm_distr = A0_H_tm_distr + A0A0_tm_dm_distr;
+       Ak_H_tm_distr = Ak_H_tm_distr + AKAK_tm_dm_distr;
+
+       V0_H_OS_distr = V0_H_OS_distr + V0V0_OS_dm_distr;
+       Vk_H_OS_distr = Vk_H_OS_distr + VKVK_OS_dm_distr;
+       A0_H_OS_distr = A0_H_OS_distr + A0A0_OS_dm_distr;
+       Ak_H_OS_distr = Ak_H_OS_distr + AKAK_OS_dm_distr;
+
+
+       V0_H_tm_block_1_distr = V0_H_tm_block_1_distr + V0V0_tm_block_1_dm_distr;
+       Vk_H_tm_block_1_distr = Vk_H_tm_block_1_distr + VKVK_tm_block_1_dm_distr;
+       A0_H_tm_block_1_distr = A0_H_tm_block_1_distr + A0A0_tm_block_1_dm_distr;
+       Ak_H_tm_block_1_distr = Ak_H_tm_block_1_distr + AKAK_tm_block_1_dm_distr;
+
+       V0_H_OS_block_1_distr = V0_H_OS_block_1_distr + V0V0_OS_block_1_dm_distr;
+       Vk_H_OS_block_1_distr = Vk_H_OS_block_1_distr + VKVK_OS_block_1_dm_distr;
+       A0_H_OS_block_1_distr = A0_H_OS_block_1_distr + A0A0_OS_block_1_dm_distr;
+       Ak_H_OS_block_1_distr = Ak_H_OS_block_1_distr + AKAK_OS_block_1_dm_distr;
+       
+
      }
     
-
-
-
+     //compute T and L correlators
+     T_tm_distr= Za.ave()*Za.ave()*( Vk_tm_distr + (Zv*Zv/(Za.ave()*Za.ave()))*Ak_tm_distr);
+     L_tm_distr= Zv.ave()*Zv.ave()*( A0_tm_distr + (Za*Za/(Zv.ave()*Zv.ave()))*V0_tm_distr);
+     T_OS_distr= Zv.ave()*Zv.ave()*( Vk_OS_distr + (Za*Za/(Zv.ave()*Zv.ave()))*Ak_OS_distr);
+     L_OS_distr= Za.ave()*Za.ave()*( A0_OS_distr + (Zv*Zv/(Za.ave()*Za.ave()))*V0_OS_distr);
+     T_tm_block_1_distr = Za_BOOT.ave()*Za_BOOT.ave()*( Vk_tm_block_1_distr + (Zv_BOOT*Zv_BOOT/pow(Za_BOOT.ave(),2))*Ak_tm_block_1_distr);
+     L_tm_block_1_distr = Zv_BOOT.ave()*Zv_BOOT.ave()*( A0_tm_block_1_distr + (Za_BOOT*Za_BOOT/pow(Zv_BOOT.ave(),2))*V0_tm_block_1_distr);
+     T_OS_block_1_distr = Zv_BOOT.ave()*Zv_BOOT.ave()*( Vk_OS_block_1_distr + (Za_BOOT*Za_BOOT/pow(Zv_BOOT.ave(),2))*Ak_OS_block_1_distr);
+     L_OS_block_1_distr = Za_BOOT.ave()*Za_BOOT.ave()*( A0_OS_block_1_distr + (Zv_BOOT*Zv_BOOT/pow(Za_BOOT.ave(),2))*V0_OS_block_1_distr);
+     T_H_tm_distr= Za.ave()*Za.ave()*( Vk_H_tm_distr + (Zv*Zv/pow(Za.ave(),2))*Ak_H_tm_distr);
+     L_H_tm_distr= Zv.ave()*Zv.ave()*( A0_H_tm_distr + (Za*Za/pow(Zv.ave(),2))*V0_H_tm_distr);
+     T_H_OS_distr= Zv.ave()*Zv.ave()*( Vk_H_OS_distr + (Za*Za/pow(Zv.ave(),2))*Ak_H_OS_distr);
+     L_H_OS_distr= Za.ave()*Za.ave()*( A0_H_OS_distr + (Zv*Zv/pow(Za.ave(),2))*V0_H_OS_distr);
+     T_H_tm_block_1_distr = Za_BOOT.ave()*Za_BOOT.ave()*( Vk_H_tm_block_1_distr + (Zv_BOOT*Zv_BOOT/pow(Za_BOOT.ave(),2))*Ak_H_tm_block_1_distr);
+     L_H_tm_block_1_distr = Zv_BOOT.ave()*Zv_BOOT.ave()*( A0_H_tm_block_1_distr + (Za_BOOT*Za_BOOT/pow(Zv_BOOT.ave(),2))*V0_H_tm_block_1_distr);
+     T_H_OS_block_1_distr = Zv_BOOT.ave()*Zv_BOOT.ave()*( Vk_H_OS_block_1_distr + (Za_BOOT*Za_BOOT/pow(Zv_BOOT.ave(),2))*Ak_H_OS_block_1_distr);
+     L_H_OS_block_1_distr = Za_BOOT.ave()*Za_BOOT.ave()*( A0_H_OS_block_1_distr + (Zv_BOOT*Zv_BOOT/pow(Za_BOOT.ave(),2))*V0_H_OS_block_1_distr);
+     
+     
     //set plateaux for J^P = 1^- and J^P = 1^+
 
     int Tmin_1_minus_tm=0; int Tmax_1_minus_tm=0;
@@ -1898,6 +1969,29 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       tmax_H_tm_T = tmax_H_tm_L = tmax_H_OS_T = tmax_H_OS_L = Corr.Nt/2 -1;
     }
 
+
+    /*
+    if( ls_H_data_tm_VKVK.Tag[iens] == "cB211b.072.96") {
+
+      tmax_tm_A0 = 64;
+      tmax_OS_A0 = 64;
+      tmax_H_tm_A0 = 64;
+      tmax_H_OS_A0 = 64;
+
+
+      tmax_tm_1_Vii=tmax_OS_1_Vii=tmax_H_tm_1_Vii=tmax_H_OS_1_Vii=30;
+
+    }
+
+    if( ls_H_data_tm_VKVK.Tag[iens] == "cE211a.044.112") {
+
+      tmax_tm_A0= 111;
+      tmax_OS_A0= 111;
+      tmax_H_tm_A0=111;
+      tmax_H_OS_A0=111;
+
+      } */
+    
   
     cout<<"sigma list : {"<<sigma_list_strange[0];
     for(int is=1;is<(signed)sigma_list_strange.size();is++) { cout<<","<<sigma_list_strange[is]<<flush;}
@@ -2159,13 +2253,18 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       }
       else cout<<"."<<flush;
 
-      
-      start = chrono::system_clock::now();
-      if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "T", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
 
       
-      Br_sigma_T_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_T, prec, SM_TYPE_1 ,K1, T_tm, syst_T_tm, mult, lT_tm, MODE, "tm", "T_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_T_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_T, prec, SM_TYPE_1, K1_shifted, T_tm, syst_s_T_tm, mult, lT_tm, MODE, "tm", "T_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      
+      start = chrono::system_clock::now();
+
+      
+      
+      if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "T", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
+      
+      
+      Br_sigma_T_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_T, prec, SM_TYPE_1 ,K1, T_tm, syst_T_tm, mult, lT_tm, MODE, "tm", "T_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za/(Za.ave()*Za.ave()), 0.0, "tau_decay", cov_T_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_T_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_T, prec, SM_TYPE_1, K1_shifted, T_tm, syst_s_T_tm, mult, lT_tm, MODE, "tm", "T_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za/(Za.ave()*Za.ave()), 0.0, "tau_decay", cov_T_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
       
       syst_s_T_tm = fabs( Br_s_sigma_T_tm.ave() - Br_sigma_T_tm.ave());
@@ -2182,10 +2281,10 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "T", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_T_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_T, prec, SM_TYPE_1,K1, T_OS, syst_T_OS, mult, lT_OS, MODE, "OS", "T_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_T_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_T, prec, SM_TYPE_1,K1, T_OS, syst_T_OS, mult, lT_OS, MODE, "OS", "T_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv/(Zv.ave()*Zv.ave()), 0.0, "tau_decay", cov_T_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
             
-      Br_s_sigma_T_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_T, prec, SM_TYPE_1,K1_shifted, T_OS, syst_s_T_OS, mult, lT_OS, MODE, "OS", "T_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_T_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_T, prec, SM_TYPE_1,K1_shifted, T_OS, syst_s_T_OS, mult, lT_OS, MODE, "OS", "T_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv/(Zv.ave()*Zv.ave()), 0.0, "tau_decay", cov_T_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
       syst_s_T_OS = fabs( Br_s_sigma_T_OS.ave() - Br_sigma_T_OS.ave());
       Br_sigma_T_OS= Br_sigma_T_OS.ave() + (Br_sigma_T_OS-Br_sigma_T_OS.ave())*sqrt( pow(Br_sigma_T_OS.err(),2) + pow(syst_s_T_OS,2))/Br_sigma_T_OS.err();
@@ -2202,8 +2301,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "L", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_L_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_L, prec, SM_TYPE_0,K0, L_tm, syst_L_tm, mult, lL_tm, MODE, "tm", "L_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_L_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_L_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_L, prec, SM_TYPE_0,K0_shifted, L_tm, syst_s_L_tm, mult, lL_tm, MODE, "tm", "L_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_L_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_L_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_L, prec, SM_TYPE_0,K0, L_tm, syst_L_tm, mult, lL_tm, MODE, "tm", "L_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv/(Zv.ave()*Zv.ave()), 0.0, "tau_decay", cov_L_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_L_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_tm_L, prec, SM_TYPE_0,K0_shifted, L_tm, syst_s_L_tm, mult, lL_tm, MODE, "tm", "L_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv/(Zv.ave()*Zv.ave()), 0.0, "tau_decay", cov_L_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
       syst_s_L_tm = fabs( Br_s_sigma_L_tm.ave() - Br_sigma_L_tm.ave());
       Br_sigma_L_tm= Br_sigma_L_tm.ave() + (Br_sigma_L_tm-Br_sigma_L_tm.ave())*sqrt( pow(Br_sigma_L_tm.err(),2) + pow(syst_s_L_tm,2))/Br_sigma_L_tm.err();
@@ -2219,8 +2318,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "L", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_L_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_L, prec, SM_TYPE_0,K0, L_OS, syst_L_OS, mult, lL_OS, MODE, "OS", "L_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_L_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_L_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_L, prec, SM_TYPE_0,K0_shifted, L_OS, syst_s_L_OS, mult, lL_OS, MODE, "OS", "L_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_L_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_L_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_L, prec, SM_TYPE_0,K0, L_OS, syst_L_OS, mult, lL_OS, MODE, "OS", "L_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za/(Za.ave()*Za.ave()), 0.0, "tau_decay", cov_L_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_L_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_OS_L, prec, SM_TYPE_0,K0_shifted, L_OS, syst_s_L_OS, mult, lL_OS, MODE, "OS", "L_s_strange_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za/(Za.ave()*Za.ave()), 0.0, "tau_decay", cov_L_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
       syst_s_L_OS = fabs( Br_s_sigma_L_OS.ave() - Br_sigma_L_OS.ave());
       Br_sigma_L_OS= Br_sigma_L_OS.ave() + (Br_sigma_L_OS-Br_sigma_L_OS.ave())*sqrt( pow(Br_sigma_L_OS.err(),2) + pow(syst_s_L_OS,2))/Br_sigma_L_OS.err();
@@ -2233,7 +2332,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       }
       else cout<<"."<<flush;
       
-
+      
 
     
 
@@ -2394,12 +2493,12 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       else cout<<"."<<flush;
 
 
-
+      
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "T", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_T_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_T, prec, SM_TYPE_1,K1, T_H_tm, syst_T_H_tm, mult, lT_H_tm, MODE, "tm", "T_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_T_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_T, prec, SM_TYPE_1,K1_shifted, T_H_tm, syst_s_T_H_tm, mult, lT_H_tm, MODE, "tm", "T_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_T_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_T, prec, SM_TYPE_1,K1, T_H_tm, syst_T_H_tm, mult, lT_H_tm, MODE, "tm", "T_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za/(Za.ave()*Za.ave()), 0.0, "tau_decay", cov_T_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_T_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_T, prec, SM_TYPE_1,K1_shifted, T_H_tm, syst_s_T_H_tm, mult, lT_H_tm, MODE, "tm", "T_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za/(Za.ave()*Za.ave()), 0.0, "tau_decay", cov_T_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
       syst_s_T_H_tm = fabs( Br_s_sigma_T_H_tm.ave() - Br_sigma_T_H_tm.ave());
       Br_sigma_T_H_tm= Br_sigma_T_H_tm.ave() + (Br_sigma_T_H_tm-Br_sigma_T_H_tm.ave())*sqrt( pow(Br_sigma_T_H_tm.err(),2) + pow(syst_s_T_H_tm,2))/Br_sigma_T_H_tm.err();
@@ -2415,8 +2514,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "T", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_T_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_T, prec, SM_TYPE_1,K1, T_H_OS, syst_T_H_OS, mult, lT_H_OS, MODE, "OS", "T_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_T_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_T, prec, SM_TYPE_1,K1_shifted, T_H_OS, syst_s_T_H_OS, mult, lT_H_OS, MODE, "OS", "T_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_T_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_T_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_T, prec, SM_TYPE_1,K1, T_H_OS, syst_T_H_OS, mult, lT_H_OS, MODE, "OS", "T_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv/(Zv.ave()*Zv.ave()), 0.0, "tau_decay", cov_T_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_T_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_T, prec, SM_TYPE_1,K1_shifted, T_H_OS, syst_s_T_H_OS, mult, lT_H_OS, MODE, "OS", "T_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv/(Zv.ave()*Zv.ave()), 0.0, "tau_decay", cov_T_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
       syst_s_T_H_OS = fabs( Br_s_sigma_T_H_OS.ave() - Br_sigma_T_H_OS.ave());
       Br_sigma_T_H_OS= Br_sigma_T_H_OS.ave() + (Br_sigma_T_H_OS-Br_sigma_T_H_OS.ave())*sqrt( pow(Br_sigma_T_H_OS.err(),2) + pow(syst_s_T_H_OS,2))/Br_sigma_T_H_OS.err();
@@ -2433,8 +2532,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "L", "tm" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_L_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_L, prec, SM_TYPE_0,K0, L_H_tm, syst_L_H_tm, mult, lL_H_tm, MODE, "tm", "L_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_L_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_L_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_L, prec, SM_TYPE_0,K0_shifted, L_H_tm, syst_s_L_H_tm, mult, lL_H_tm, MODE, "tm", "L_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_L_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_L_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_L, prec, SM_TYPE_0,K0, L_H_tm, syst_L_H_tm, mult, lL_H_tm, MODE, "tm", "L_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv/(Zv.ave()*Zv.ave()), 0.0, "tau_decay", cov_L_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_L_H_tm = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_tm_L, prec, SM_TYPE_0,K0_shifted, L_H_tm, syst_s_L_H_tm, mult, lL_H_tm, MODE, "tm", "L_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Zv*Zv/(Zv.ave()*Zv.ave()), 0.0, "tau_decay", cov_L_H_tm, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
       syst_s_L_H_tm = fabs( Br_s_sigma_L_H_tm.ave() - Br_sigma_L_H_tm.ave());
       Br_sigma_L_H_tm= Br_sigma_L_H_tm.ave() + (Br_sigma_L_H_tm-Br_sigma_L_H_tm.ave())*sqrt( pow(Br_sigma_L_H_tm.err(),2) + pow(syst_s_L_H_tm,2))/Br_sigma_L_H_tm.err();
@@ -2450,8 +2549,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
       start = chrono::system_clock::now();
       if( (beta > 2) && Use_Customized_plateaux_strange) mult=  Customized_plateaux_tau_spectre_strange( beta, Emax, "L", "OS" , s, ls_data_tm_VKVK.Tag[iens] );
-      Br_sigma_L_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_L, prec, SM_TYPE_0,K0, L_H_OS, syst_L_H_OS, mult, lL_H_OS, MODE, "OS", "L_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_L_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
-      Br_s_sigma_L_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_L, prec, SM_TYPE_0,K0_shifted, L_H_OS, syst_s_L_H_OS, mult, lL_H_OS, MODE, "OS", "L_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV_distr, 0.0, "tau_decay", cov_L_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_sigma_L_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_L, prec, SM_TYPE_0,K0, L_H_OS, syst_L_H_OS, mult, lL_H_OS, MODE, "OS", "L_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za/(Za.ave()*Za.ave()), 0.0, "tau_decay", cov_L_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
+      Br_s_sigma_L_H_OS = Get_Laplace_transfo(  0.0,  s, E0_sp*a_distr.ave(),  T, tmax_H_OS_L, prec, SM_TYPE_0,K0_shifted, L_H_OS, syst_s_L_H_OS, mult, lL_H_OS, MODE, "OS", "L_s_strange_H_"+ls_data_tm_VKVK.Tag[iens], 1e-3,0, resc_GeV*Za*Za/(Za.ave()*Za.ave()), 0.0, "tau_decay", cov_L_H_OS, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, beta );
 
       syst_s_L_H_OS = fabs( Br_s_sigma_L_H_OS.ave() - Br_sigma_L_H_OS.ave());
       Br_sigma_L_H_OS= Br_sigma_L_H_OS.ave() + (Br_sigma_L_H_OS-Br_sigma_L_H_OS.ave())*sqrt( pow(Br_sigma_L_H_OS.err(),2) + pow(syst_s_L_H_OS,2))/Br_sigma_L_H_OS.err();

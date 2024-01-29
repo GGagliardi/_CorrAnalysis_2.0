@@ -13,7 +13,7 @@ Vfloat sigmas_07({1.75, 2, 2.25, 2.5, 2.75, 3.0, 3.5, 4.0, 4.5});
 Vfloat sigmas_07_w0({0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29,  0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0,2.25,2.5,2.75,3.0});
 int prec_07=128;
 const string MODE_FF="TANT";
-const bool Skip_spectral_reconstruction_07 = true;
+const bool Skip_spectral_reconstruction_07 = false;
 const bool virtuality_scan = false;
 const bool Use_preconditioning = true;
 const string  preco_tag= (Use_preconditioning)?"prec_":"";
