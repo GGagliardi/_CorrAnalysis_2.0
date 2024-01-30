@@ -136,15 +136,15 @@ void rt_FF_Bs::Read(string path, bool UseJ, bool three_finest, bool inc_a4, int 
 pair<double,double> WC(int id, double q2, const Vfloat &G1, const Vfloat &G2, const Vfloat &BS_F, const Vfloat &Gammas_F) {
 
   //from https://arxiv.org/pdf/1712.07926.pdf
-  if( id == 1) return make_pair(0.241,0); // make_pair(0.147,0);  // make_pair(0.241,0); Dmitri
-  if( id == 2) return make_pair(-1.1,0); //make_pair(-1.053,0); //make_pair(-1.1,0); Dmitri
-  if( id == 7 ) return make_pair(0.312,0); //make_pair(0.33,0); // make_pair(0.312,0);
-  if( id == 10) return make_pair(4.41,0); //make_pair(4.262,0);  //  make_pair(4.41,0); Dmitri
+  if( id == 1) return  make_pair(0.147,0);  // make_pair(0.241,0); Dmitri
+  if( id == 2) return make_pair(-1.053,0); //make_pair(-1.1,0); Dmitri
+  if( id == 7 ) return make_pair(0.33,0); // make_pair(0.312,0);
+  if( id == 10) return make_pair(4.262,0);  //  make_pair(4.41,0); Dmitri
   if( id == 9) {
 
-    double RE_C9 = -4.21; //  -4.327; // -4.21;
+    double RE_C9 =   -4.327; // -4.21;
     double IM_C9 = 0.0;
-    double Cbar= 0.359/3.0; // ( -0.147 + (1.053/3.0));   // 0.359/3.0;
+    double Cbar=  ( -0.147 + (1.053/3.0));   // 0.359/3.0;
 
 
     
@@ -162,7 +162,7 @@ pair<double,double> WC(int id, double q2, const Vfloat &G1, const Vfloat &G2, co
 
     for(int i=0;i<(signed)Res.size(); i++) {
       Bs[i] += BS_F[i]*Bs_err[i];
-      Gammas[i] += Gammas_F[i]*DGammas[i];
+      Gammas[i] += 0.0*Gammas_F[i]*DGammas[i];
     }
     
     for(int i=0; i < (signed)Res.size() ; i++) {
@@ -4669,7 +4669,48 @@ void Compute_Bs_mumu_gamma() {
 
 
 
-  
+  auto FA_boot = [&FA_interpol, &NJ](double x, int i) {
+
+    double ave=0;
+    for(int ijack=0;ijack<NJ;ijack++) ave += FA_interpol[ijack](x)/NJ;
+    return sqrt(NJ-1.0)*(FA_interpol[i](x) - ave);
+    
+  };
+
+  auto FV_boot = [&FV_interpol, &NJ](double x, int i) {
+
+    double ave=0;
+    for(int ijack=0;ijack<NJ;ijack++) ave += FV_interpol[ijack](x)/NJ;
+    return sqrt(NJ-1.0)*(FV_interpol[i](x) - ave);
+    
+  };
+
+
+   auto FTA_boot = [&FTA_interpol, &NJ](double x, int i) {
+
+    double ave=0;
+    for(int ijack=0;ijack<NJ;ijack++) ave += FTA_interpol[ijack](x)/NJ;
+    return sqrt(NJ-1.0)*(FTA_interpol[i](x) - ave);
+    
+  };
+
+  auto FTV_boot = [&FTV_interpol, &NJ](double x, int i) {
+
+    double ave=0;
+    for(int ijack=0;ijack<NJ;ijack++) ave += FTV_interpol[ijack](x)/NJ;
+    return sqrt(NJ-1.0)*(FTV_interpol[i](x) - ave);
+    
+  };
+
+
+  auto pretty_b_boot = [&pretty_b_interpol, &NJ](double x, int i) {
+
+    double ave=0;
+    for(int ijack=0;ijack<NJ;ijack++) ave += pretty_b_interpol[ijack](x)/NJ;
+    return sqrt(NJ-1.0)*(pretty_b_interpol[i](x) - ave);
+    
+  };
+
 
 
 
@@ -4689,7 +4730,7 @@ void Compute_Bs_mumu_gamma() {
   //int Nxgs=99;
   int Nxgs=30;
   Nxgs=53;
-  Nxgs=1;
+  //Nxgs=1;
   distr_t_list rate_Bs_SD(true, Nxgs), rate_Bs_INT(true,Nxgs), rate_Bs_diff_SD(true,Nxgs), AFB_Bs(true,Nxgs), rate_Bs_diff_PT(true,Nxgs), rate_Bs_diff_INT(true,Nxgs);
 
 
@@ -4707,8 +4748,8 @@ void Compute_Bs_mumu_gamma() {
 
   //interval 4.0 to 5.3
 
-  //for(int it=0; it < Nxgs;it++) { qmin_list[it] = 4.0 + 0.025*it; xg_min_list[it] = 0.0; xg_max_list[it] = 1- pow(qmin_list[it]/Mb,2) ; }
-  for(int it=0; it<Nxgs;it++) { qmin_list[it] = 4.2; xg_min_list[it] = 0.0; xg_max_list[it] = 1- pow(qmin_list[it]/Mb,2) ; }
+  for(int it=0; it < Nxgs;it++) { qmin_list[it] = 4.0 + 0.025*it; xg_min_list[it] = 0.0; xg_max_list[it] = 1- pow(qmin_list[it]/Mb,2) ; }
+  //for(int it=0; it<Nxgs;it++) { qmin_list[it] = 4.2; xg_min_list[it] = 0.0; xg_max_list[it] = 1- pow(qmin_list[it]/Mb,2) ; }
 
   //resize boot vectors
   for(int it=0;it<Nxgs;it++) {
@@ -4735,6 +4776,9 @@ void Compute_Bs_mumu_gamma() {
   vector<vector<double>> kappa_distr(Nb), Th_distr(Nb), W_distr(Nb), Br_distr(Nb);
   GaussianMersenne GPP(854135);
   UniformMersenne  RAN(45252, 0.0, 2*M_PI);
+  RandomMersenne RM(65784743,NJ-1);
+  vector<int> Rbo;
+  for(int i=0;i<Nb;i++) Rbo.push_back( RM());
 
 
   for(int i=0;i<5000;i++) {
@@ -5290,10 +5334,45 @@ void Compute_Bs_mumu_gamma() {
   //###########################################################################
 
 
+  distr_t_list rate_SD_PB(false), rate_INT_PB(false), rate_diff_SD_PB(false), rate_diff_INT_PB(false);
+
+
   cout<<"Starting calculation of the rate! "<<endl;
 
     #pragma omp parallel for schedule(dynamic)
     for(int it=0; it < Nxgs;it++) {
+
+      for(int jboot=0;jboot<Nb;jboot++) {
+
+	 int JK= jboot;
+
+	 double a1_val= a1_distr.distr[JK];
+	 double mb_val= mb_distr.distr[JK];
+	 double xb_val= xb_distr.distr[JK];
+	 double Vtbs_val= Vtbs_distr.distr[JK];
+	 double tbs_val = tbs_distr.distr[JK];
+	 Vfloat kappa_list = kappa_distr[JK];
+	 Vfloat Th_list = Th_distr[JK];
+	 Vfloat W_list = W_distr[JK];
+	 Vfloat Br_list = Br_distr[JK];
+	 int R= Rbo[jboot];
+	 double pr_s_re= (pretty_s_RE.distr[R]- pretty_s_RE.ave())*sqrt(NJ-1.0);
+	 double pr_s_im= (pretty_s_IM.distr[R]- pretty_s_IM.ave())*sqrt(NJ-1.0);
+	 double f = (f_Bs.distr[R]-f_Bs.ave())*sqrt(NJ-1.0);
+	 auto FA_B = [ &FA_boot, &R](double x) { return FA_boot(x,R);};
+	 auto FV_B = [ &FV_boot, &R](double x) { return FV_boot(x,R);};
+	 auto FTA_B = [ &FTA_boot, &pretty_b_boot, &pr_s_re, &R, &evolutor_ZT](double x) { return evolutor_ZT*(FTA_boot(x,R) + pretty_b_boot(x,R) + pr_s_re)  ;};
+	 auto FTV_B = [ &FTV_boot, &pretty_b_boot, &pr_s_re, &R, &evolutor_ZT](double x) { return evolutor_ZT*(FTV_boot(x,R) + pretty_b_boot(x,R) + pr_s_re)  ;};
+	 auto FT_IM_B = [ &pr_s_im, &evolutor_ZT](double x) { return evolutor_ZT*pr_s_im;};
+
+	 rate_SD_PB.distr_list.push_back(   Compute_Bs_mumugamma_decay_rate( FV_B, FA_B, FTV_B, FTA_B, FT_IM_B, FT_IM_B , f , xb_val, Vtbs_val, tbs_val, kappa_list, Th_list, W_list, Br_list, "SD",  "CH",   xg_max_list[it], xg_min_list[it] )); 
+	 rate_INT_PB.distr_list.push_back(   Compute_Bs_mumugamma_decay_rate( FV_B, FA_B, FTV_B, FTA_B, FT_IM_B, FT_IM_B , f , xb_val, Vtbs_val, tbs_val, kappa_list, Th_list, W_list, Br_list, "INT",  "CH",   xg_max_list[it], xg_min_list[it] ));
+	 rate_diff_SD_PB.distr_list.push_back( Compute_Bs_mumugamma_differential_decay_rate(xg_max_list[it], FV_B, FA_B, FTV_B, FTA_B, FT_IM_B, FT_IM_B, f ,  xb_val, Vtbs_val, tbs_val, kappa_list, Th_list, W_list, Br_list, "SD", "CH"));
+	 rate_diff_INT_PB.distr_list.push_back( Compute_Bs_mumugamma_differential_decay_rate(xg_max_list[it], FV_B, FA_B, FTV_B, FTA_B, FT_IM_B, FT_IM_B, f ,  xb_val, Vtbs_val, tbs_val, kappa_list, Th_list, W_list, Br_list, "INT", "CH"));
+	
+
+      }
+      
       for(int ijack=0;ijack<NJ;ijack++) {
 
 
@@ -5315,7 +5394,8 @@ void Compute_Bs_mumu_gamma() {
 	  double Vtbs_val= Vtbs_distr.distr[K];
 	  double tbs_val = tbs_distr.distr[K];
 	  Vfloat kappa_list = kappa_distr[K];
-	  Vfloat Th_list = Th_distr[K];
+
+          Vfloat Th_list = Th_distr[K];
 	  Vfloat W_list = W_distr[K];
 	  Vfloat Br_list = Br_distr[K];
 
@@ -5404,7 +5484,7 @@ void Compute_Bs_mumu_gamma() {
       
     }
   
-    /*
+    
     //Print table on screen
     cout<<" & " <<"\\multicolumn{7}{c}{$\\sqrt{q^{2}_{\\rm cut}} [\\rm{GeV}]$} \\hline"<<endl;  
     cout<<" & $4.0$ & $4.1$ & $4.2$ & $4.3$ & $4.4$ & $4.5$ & $4.6$ \\hline"<<endl;
@@ -5418,7 +5498,7 @@ void Compute_Bs_mumu_gamma() {
 
     cout<<"printing actual q_max: "<<endl;
     for(int i=0;i<14;i++) cout<<qmin_list[i*4]<<endl;
-    */
+    
     //Bs
     Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_Bs_SD.ave(), rate_Bs_SD.err(), rate_Bs_SD_NOCH.ave(), rate_Bs_SD_NOCH.err(), rate_Bs_SD_FV_only.ave(), rate_Bs_SD_FV_only.err() }, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_Bs_SD.dat", "", "#qmin[GeV] xg_min xg_max  rate ");
     Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_Bs_INT.ave(), rate_Bs_INT.err(), rate_Bs_INT_NOCH.ave(), rate_Bs_INT_NOCH.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_Bs_INT.dat", "", "#qmin[GeV] xg_min xg_max  rate");
@@ -5430,6 +5510,15 @@ void Compute_Bs_mumu_gamma() {
     Print_To_File( {}, { qmin_list, xg_max_list, rate_Bs_diff_INT.ave(), rate_Bs_diff_INT.err(), rate_Bs_diff_INT_NOCH.ave(), rate_Bs_diff_INT_NOCH.err() }, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_diff_Bs_INT.dat", "", "#qmin[GeV] xg_max  rate");
     Print_To_File( {}, { qmin_list, xg_max_list, rate_Bs_diff_SD.ave(), rate_Bs_diff_SD.err(), rate_Bs_diff_SD_NOCH.ave(), rate_Bs_diff_SD_NOCH.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_diff_Bs_SD.dat", "", "#qmin[GeV] xg_max  rate");
     Print_To_File( {}, { qmin_list, xg_max_list, AFB_Bs.ave(), AFB_Bs.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/AFB_Bs.dat", "", "#q[GeV] xg   AFG    ");
+
+
+    //PRINT PURE BOOTSTRAP RATE
+    Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_SD_PB.ave(), rate_SD_PB.err() }, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_Bs_SD_PB.dat", "", "#qmin[GeV] xg_min xg_max  rate ");
+    Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, rate_INT_PB.ave(), rate_INT_PB.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_Bs_INT_PB.dat", "", "#qmin[GeV] xg_min xg_max  rate");
+    Print_To_File( {}, { qmin_list, xg_min_list, xg_max_list, (rate_INT_PB+rate_SD_PB).ave(), (rate_INT_PB+rate_SD_PB).err() }, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_Bs_SDINT_PB.dat", "", "#qmin[GeV] xg_min xg_max  rate");
+    Print_To_File( {}, { qmin_list, xg_max_list, rate_diff_INT_PB.ave(), rate_diff_INT_PB.err()  }, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_diff_Bs_INT_PB.dat", "", "#qmin[GeV] xg_max  rate");
+    Print_To_File( {}, { qmin_list, xg_max_list, rate_diff_SD_PB.ave(), rate_diff_SD_PB.err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/rate_diff_Bs_SD_PB.dat", "", "#qmin[GeV] xg_max  rate");
+    
      
     cout<<"Done! Bye"<<endl;
 
