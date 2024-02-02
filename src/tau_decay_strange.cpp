@@ -1200,7 +1200,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      for(int j=0;j<Nens_mcorr;j++) {
        if( ls_ph_data_OS_A0A0.Tag[j] == ll_data_OS_P5P5.Tag[iens]) { read_dm=true; iens_dm=j;}
      }
-   
+
+     if(!read_dm) crash("Cannot find dm-corrections for ensemble: "+ll_data_OS_P5P5.Tag[iens]);
 
      if(read_dm) {
        
@@ -1274,22 +1275,22 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      }
     
      //compute T and L correlators
-     T_tm_distr= Za.ave()*Za.ave()*( Vk_tm_distr + (Zv*Zv/(Za.ave()*Za.ave()))*Ak_tm_distr);
-     L_tm_distr= Zv.ave()*Zv.ave()*( A0_tm_distr + (Za*Za/(Zv.ave()*Zv.ave()))*V0_tm_distr);
-     T_OS_distr= Zv.ave()*Zv.ave()*( Vk_OS_distr + (Za*Za/(Zv.ave()*Zv.ave()))*Ak_OS_distr);
-     L_OS_distr= Za.ave()*Za.ave()*( A0_OS_distr + (Zv*Zv/(Za.ave()*Za.ave()))*V0_OS_distr);
-     T_tm_block_1_distr = Za_BOOT.ave()*Za_BOOT.ave()*( Vk_tm_block_1_distr + (Zv_BOOT*Zv_BOOT/pow(Za_BOOT.ave(),2))*Ak_tm_block_1_distr);
-     L_tm_block_1_distr = Zv_BOOT.ave()*Zv_BOOT.ave()*( A0_tm_block_1_distr + (Za_BOOT*Za_BOOT/pow(Zv_BOOT.ave(),2))*V0_tm_block_1_distr);
-     T_OS_block_1_distr = Zv_BOOT.ave()*Zv_BOOT.ave()*( Vk_OS_block_1_distr + (Za_BOOT*Za_BOOT/pow(Zv_BOOT.ave(),2))*Ak_OS_block_1_distr);
-     L_OS_block_1_distr = Za_BOOT.ave()*Za_BOOT.ave()*( A0_OS_block_1_distr + (Zv_BOOT*Zv_BOOT/pow(Za_BOOT.ave(),2))*V0_OS_block_1_distr);
-     T_H_tm_distr= Za.ave()*Za.ave()*( Vk_H_tm_distr + (Zv*Zv/pow(Za.ave(),2))*Ak_H_tm_distr);
-     L_H_tm_distr= Zv.ave()*Zv.ave()*( A0_H_tm_distr + (Za*Za/pow(Zv.ave(),2))*V0_H_tm_distr);
-     T_H_OS_distr= Zv.ave()*Zv.ave()*( Vk_H_OS_distr + (Za*Za/pow(Zv.ave(),2))*Ak_H_OS_distr);
-     L_H_OS_distr= Za.ave()*Za.ave()*( A0_H_OS_distr + (Zv*Zv/pow(Za.ave(),2))*V0_H_OS_distr);
-     T_H_tm_block_1_distr = Za_BOOT.ave()*Za_BOOT.ave()*( Vk_H_tm_block_1_distr + (Zv_BOOT*Zv_BOOT/pow(Za_BOOT.ave(),2))*Ak_H_tm_block_1_distr);
-     L_H_tm_block_1_distr = Zv_BOOT.ave()*Zv_BOOT.ave()*( A0_H_tm_block_1_distr + (Za_BOOT*Za_BOOT/pow(Zv_BOOT.ave(),2))*V0_H_tm_block_1_distr);
-     T_H_OS_block_1_distr = Zv_BOOT.ave()*Zv_BOOT.ave()*( Vk_H_OS_block_1_distr + (Za_BOOT*Za_BOOT/pow(Zv_BOOT.ave(),2))*Ak_H_OS_block_1_distr);
-     L_H_OS_block_1_distr = Za_BOOT.ave()*Za_BOOT.ave()*( A0_H_OS_block_1_distr + (Zv_BOOT*Zv_BOOT/pow(Za_BOOT.ave(),2))*V0_H_OS_block_1_distr);
+     T_tm_distr= Za.ave()*Za.ave()*( Vk_tm_distr + (Zv*Zv/(Za*Za))*Ak_tm_distr);
+     L_tm_distr= Zv.ave()*Zv.ave()*( A0_tm_distr + (Za*Za/(Zv*Zv))*V0_tm_distr);
+     T_OS_distr= Zv.ave()*Zv.ave()*( Vk_OS_distr + (Za*Za/(Zv*Zv))*Ak_OS_distr);
+     L_OS_distr= Za.ave()*Za.ave()*( A0_OS_distr + (Zv*Zv/(Za*Za))*V0_OS_distr);
+     T_tm_block_1_distr = Za.ave()*Za.ave()*( Vk_tm_block_1_distr + (Zv*Zv/(Za*Za)).ave()*Ak_tm_block_1_distr);
+     L_tm_block_1_distr = Zv.ave()*Zv.ave()*( A0_tm_block_1_distr + (Za*Za/(Zv*Zv)).ave()*V0_tm_block_1_distr);
+     T_OS_block_1_distr = Zv.ave()*Zv.ave()*( Vk_OS_block_1_distr + (Za*Za/(Zv*Zv)).ave()*Ak_OS_block_1_distr);
+     L_OS_block_1_distr = Za.ave()*Za.ave()*( A0_OS_block_1_distr + (Zv*Zv/(Za*Za)).ave()*V0_OS_block_1_distr);
+     T_H_tm_distr= Za.ave()*Za.ave()*( Vk_H_tm_distr + (Zv*Zv/(Za*Za)).ave()*Ak_H_tm_distr);
+     L_H_tm_distr= Zv.ave()*Zv.ave()*( A0_H_tm_distr + (Za*Za/(Zv*Zv)).ave()*V0_H_tm_distr);
+     T_H_OS_distr= Zv.ave()*Zv.ave()*( Vk_H_OS_distr + (Za*Za/(Zv*Zv)).ave()*Ak_H_OS_distr);
+     L_H_OS_distr= Za.ave()*Za.ave()*( A0_H_OS_distr + (Zv*Zv/(Za*Za)).ave()*V0_H_OS_distr);
+     T_H_tm_block_1_distr = Za.ave()*Za.ave()*( Vk_H_tm_block_1_distr + (Zv*Zv/(Za*Za)).ave()*Ak_H_tm_block_1_distr);
+     L_H_tm_block_1_distr = Zv.ave()*Zv.ave()*( A0_H_tm_block_1_distr + (Za*Za/(Zv*Zv)).ave()*V0_H_tm_block_1_distr);
+     T_H_OS_block_1_distr = Zv.ave()*Zv.ave()*( Vk_H_OS_block_1_distr + (Za*Za/(Zv*Zv)).ave()*Ak_H_OS_block_1_distr);
+     L_H_OS_block_1_distr = Za.ave()*Za.ave()*( A0_H_OS_block_1_distr + (Zv*Zv/(Za*Za)).ave()*V0_H_OS_block_1_distr);
      
      
     //set plateaux for J^P = 1^- and J^P = 1^+
