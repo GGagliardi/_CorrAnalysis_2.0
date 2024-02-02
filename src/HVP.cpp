@@ -9,7 +9,7 @@ using namespace std;
 void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const distr_t &a, string path,distr_t lowest_mass) {
 
 
-  int Njacks=56;
+  int Njacks=158;
   bool UseJack=true;
  
   int Simps_ord=2;
@@ -79,7 +79,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
       
     bool eff_mass_is_nan= isnan( eff_mass_V.ave(tcut));
     bool update_min_Tdata=true;
-    if(eff_mass_is_nan || (eff_mass_V.err(tcut)/eff_mass_V.ave(tcut) > 0.20) || (eff_mass_V.ave(tcut) < 0 )) update_min_Tdata=false;
+    if(eff_mass_is_nan || (eff_mass_V.err(tcut)/eff_mass_V.ave(tcut) > 0.10) || (eff_mass_V.ave(tcut) < 0 )) update_min_Tdata=false;
 
     if(update_min_Tdata) slice_to_use_for_eff_mass=tcut;
       
@@ -115,7 +115,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
   while(!Found_Tdata_opt && tdata_opt < T/2) {
 
     distr_t diff_max_min = amu_HVP_max_Tdata.distr_list[tdata_opt-1] - amu_HVP_min_Tdata.distr_list[tdata_opt-1];
-    if( diff_max_min.ave()/min( amu_HVP_max_Tdata.err(tdata_opt-1) , amu_HVP_min_Tdata.err(tdata_opt-1)) < 1) Found_Tdata_opt=true;
+    if( fabs(diff_max_min.ave())/min( amu_HVP_max_Tdata.err(tdata_opt-1) , amu_HVP_min_Tdata.err(tdata_opt-1)) < 0.5) Found_Tdata_opt=true;
     else tdata_opt++;
   }
 
@@ -198,7 +198,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
 void HVP() {
 
 
-  int Njacks=56;
+  int Njacks=158;
   bool UseJack=true;
   double qu= 2.0/3.0;
   double qd= -1.0/3.0;
@@ -472,8 +472,8 @@ void HVP() {
 
   data_t Vk_data_defl_tm, Vk_data_defl_OS;
 
-  Vk_data_defl_tm.Read("../new_gm2_project/semid_nev400_nts1024/AkAk_r+1_r-1", "corr", "" ,  Sort_old_light_confs);
-  Vk_data_defl_OS.Read("../new_gm2_project/semid_nev400_nts1024/VkVk_r+1_r+1", "corr", "" ,  Sort_old_light_confs);
+  Vk_data_defl_tm.Read("../new_gm2_project/semid_new_nev400_nts1024/AkAk_r+1_r-1", "corr", "" ,  Sort_old_light_confs);
+  Vk_data_defl_OS.Read("../new_gm2_project/semid_new_nev400_nts1024/VkVk_r+1_r+1", "corr", "" ,  Sort_old_light_confs);
   
 
 
@@ -821,6 +821,8 @@ void HVP() {
   distr_t Meta_tm_M = Corr.Fit_distr( Corr.effective_mass_t(corr_s_P_M_tm, "../data/RC_analysis_E/eta_M_tm"));
   distr_t Meta_OS_L = Corr.Fit_distr( Corr.effective_mass_t(corr_s_P_L_OS, "../data/RC_analysis_E/eta_L_OS"));
   distr_t Meta_OS_M = Corr.Fit_distr( Corr.effective_mass_t(corr_s_P_M_OS, "../data/RC_analysis_E/eta_M_OS"));
+
+
   
   distr_t_list RV_L = 2*ams1*corr_s_P_L_tm/(distr_t_list::derivative(corr_s_AP_L_tm, 0));  
   distr_t_list RV_M = 2*ams2*corr_s_P_M_tm/(distr_t_list::derivative(corr_s_AP_M_tm, 0));
@@ -836,7 +838,7 @@ void HVP() {
   Print_To_File({}, {RA_L.ave(), RA_L.err(), RA_M.ave(), RA_M.err()} , "../data/RC_analysis_E/RA.dat", "", "");
 
   Corr.Tmin=47;
-  Corr.Tmax=87;
+  Corr.Tmax=100;
 
   distr_t Zv_L = Corr.Fit_distr(RV_L);
   distr_t Zv_M = Corr.Fit_distr(RV_M);
@@ -1002,7 +1004,7 @@ void HVP() {
     }
 
     if(Vk_data_tm.Tag[iens].substr(1,12)=="B211b.072.96") {Corr.Tmin=30; Corr.Tmax=70;}
-    else if(Vk_data_tm.Tag[iens].substr(1,12)=="B211b.072.64") { Corr.Tmin=27; Corr.Tmax=50;}
+    else if(Vk_data_tm.Tag[iens].substr(1,12)=="B211b.072.64") { Corr.Tmin=35; Corr.Tmax=55;}
     else if(Vk_data_tm.Tag[iens].substr(1,1)=="C") {Corr.Tmin=40; Corr.Tmax=60;}
     else if(Vk_data_tm.Tag[iens].substr(1,1)=="D") {Corr.Tmin=41; Corr.Tmax=80;}
     else crash("In scale setting analysis cannot find Tmin,Tmax for ensemble: "+Vk_data_tm.Tag[iens]);
@@ -1057,7 +1059,12 @@ void HVP() {
       
     }
 
-  
+
+    double M1 = 0.750*a_distr.ave(); double M2= 0.850*a_distr.ave(); double M3=0.95;
+
+    auto C1 = [&M1, &a_distr, T=Corr.Nt](double t) { return 0.5*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M1*t) + exp(-M1*(T-t))); };
+    auto C2 = [&M2, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M2*t) + exp(-M2*(T-t))); };
+    auto C3 = [&M3, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M3*t) + exp(-M3*(T-t))); };
 
    
     vector<string> Tags({"tm", "OS"});
@@ -1087,13 +1094,30 @@ void HVP() {
        cout<<"HVP(defl) tm: "<<amu_HVP_defl_tm.ave()<<" +- "<<amu_HVP_defl_tm.err()<<" stat. "<< (amu_HVP_defl_tm.err()*100/amu_HVP_defl_tm.ave())<<"%"<<endl;
        cout<<"HVP(defl) OS: "<<amu_HVP_defl_OS.ave()<<" +- "<<amu_HVP_defl_OS.err()<<" stat. "<< (amu_HVP_defl_OS.err()*100/amu_HVP_defl_OS.ave())<<"%"<<endl;
        cout<<"#######THETA#######"<<endl;
-       for(int i=0;i<(signed)thetas.size();i++) {
-	 cout<<"HVP(defl, th: "<<thetas[i]<<" ) :"<<amu_HVP_theta.ave(i)<<" +- "<<amu_HVP_theta.err(i)<<" stat. "<< (amu_HVP_theta.err(i)*100/amu_HVP_theta.ave(i))<<"%"<<endl;
-       }
+       //for(int i=0;i<(signed)thetas.size();i++) {
+       //cout<<"HVP(defl, th: "<<thetas[i]<<" ) :"<<amu_HVP_theta.ave(i)<<" +- "<<amu_HVP_theta.err(i)<<" stat. "<< (amu_HVP_theta.err(i)*100/amu_HVP_theta.ave(i))<<"%"<<endl;
+       //}
     }
     cout<<"#######"<<endl;
 
     auto K = [&](double Mv, double t, double size) -> double { return kernel_K(t, Mv);};
+
+    distr_t_list Ker = distr_t_list::f_of_distr(K, a_distr , Corr.Nt/2);
+
+    distr_t HVP_B_1(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_2(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_3(UseJack,UseJack?Njacks:800);
+    
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_1 = HVP_B_1 + 4.0*w(t,2)*pow(alpha,2)*C1(t)*Ker.distr_list[t];
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_2 = HVP_B_2 + 4.0*w(t,2)*pow(alpha,2)*C2(t)*Ker.distr_list[t];
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_2 = HVP_B_2 + 4.0*w(t,2)*pow(alpha,2)*C2(t)*Ker.distr_list[t];
+
+
+    
+    cout<<"########BOUNDING ENS: "<<Vk_data_tm.Tag[iens]<<"########"<<endl;
+    cout<<"HVP(1): "<<HVP_B_1.ave()<<" +- "<<HVP_B_1.err()<<endl;
+    cout<<"HVP(2): "<<HVP_B_2.ave()<<" +- "<<HVP_B_2.err()<<endl;
+    
     //distr_t_list Ker_el = 4*pow(alpha,2)*distr_t_list::f_of_distr(K, a_distr*(0.0005/0.10565837) , Corr.Nt);
     //distr_t_list Ker_mu = 4*pow(alpha,2)*distr_t_list::f_of_distr(K, a_distr*(1.77/0.1056837) , Corr.Nt);
 
