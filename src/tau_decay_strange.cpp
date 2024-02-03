@@ -29,14 +29,14 @@ Vfloat sigma_list_strange;
 const double C_V = 2*M_PI/(pow(m_tau,3));
 const double GAMMA_FACT= 12*M_PI; //12*M_PI*pow(Vud*GF,2);
 const string MODE="TANT";
-bool Use_t_up_to_T_half_strange=false;
+bool Use_t_up_to_T_half_strange=true;
 const int sm_func_mode= 0;
 const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
-bool Skip_spectral_density_analysis_strange=true;
-const bool Perform_continuum_extrapolation=true;
+bool Skip_spectral_density_analysis_strange=false;
+const bool Perform_continuum_extrapolation=false;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
 
@@ -60,7 +60,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   
   if( reg=="tm") {
     if(channel=="Aii") {
-      if(Ens == "cB211b.072.64") {  Ra0 =1e7;  }
+      if(Ens == "cB211b.072.64") {  Ra0 =6e6;  }
       else if(Ens == "cB211b.072.96") { Ra0= 4e8;   }
       else if(Ens == "cC211a.06.80") { Ra0= 2e7;   } 
       else if(Ens == "cC211a.06.112") { Ra0= 2e7;   }
@@ -97,7 +97,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
     }
     else if(channel=="T") {
       if(Ens == "cB211b.072.64") { Ra0=2e5;   }
-      else if(Ens == "cB211b.072.96") { Ra0=4e5;   }
+      else if(Ens == "cB211b.072.96") { Ra0=3e5;   }
       else if(Ens == "cC211a.06.80") { Ra0=6e5;   }
       else if(Ens == "cC211a.06.112") { Ra0= 4e5;   }
       else if(Ens == "cD211a.054.96") { Ra0=2e6;  }
@@ -141,7 +141,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else if(Ens == "cB211b.072.96") { Ra0=1.6e6;   }
       else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
       else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
-      else if(Ens == "cD211a.054.96") { Ra0=1e7;   }
+      else if(Ens == "cD211a.054.96") { Ra0=3e6;   }
       else if(Ens == "cE211a.044.112") {  Ra0=1e8;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
@@ -155,11 +155,11 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="T") {
-      if(Ens == "cB211b.072.64") { Ra0=7e5;   }
+      if(Ens == "cB211b.072.64") { Ra0=2e4;   }
       else if(Ens == "cB211b.072.96") { Ra0=4e5;   }
       else if(Ens == "cC211a.06.80") { Ra0=2e5;   }
       else if(Ens == "cC211a.06.112") { Ra0= 2e5;   }
-      else if(Ens == "cD211a.054.96") { Ra0=3e6;  }
+      else if(Ens == "cD211a.054.96") { Ra0=5.5e4;  }
       else if(Ens == "cE211a.044.112") {  Ra0=9e5;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
@@ -167,8 +167,8 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       if(Ens == "cB211b.072.64") { Ra0=2e5;   }
       else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
       else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
-      else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
-      else if(Ens == "cD211a.054.96") { Ra0=1e7;  }
+      else if(Ens == "cC211a.06.112") { Ra0= 5e6;   }
+      else if(Ens == "cD211a.054.96") { Ra0=3e6;  }
       else if(Ens == "cE211a.044.112") {  Ra0=3.5e7;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
@@ -1554,6 +1554,10 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	corr_m_L_H_OS.push_back( (L_H_OS_block_1_distr.distr_list[tt]%L_H_OS_block_1_distr.distr_list[rr])/(L_H_OS_block_1_distr.err(tt)*L_H_OS_block_1_distr.err(rr)));
 	
       }
+
+
+    //set to zero correlation and covariance if < 0.1
+   
 
     Print_To_File({}, {TT,RR,cov_A0_H_tm, corr_m_A0_H_tm}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/A0_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat", "", "");
     Print_To_File({}, {TT,RR,cov_V0_H_tm, corr_m_V0_H_tm}, "../data/tau_decay/"+Tag_reco_type+"/strange/covariance/V0_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat", "", "");
