@@ -60,10 +60,10 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   
   if( reg=="tm") {
     if(channel=="Aii") {
-      if(Ens == "cB211b.072.64") {  Ra0 =6e6;  }
+      if(Ens == "cB211b.072.64") {  Ra0 =3e6;  }
       else if(Ens == "cB211b.072.96") { Ra0= 4e8;   }
-      else if(Ens == "cC211a.06.80") { Ra0= 2e7;   } 
-      else if(Ens == "cC211a.06.112") { Ra0= 2e7;   }
+      else if(Ens == "cC211a.06.80") { Ra0= 6e6;   } 
+      else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
       else if(Ens == "cD211a.054.96") {  Ra0=8e6;  }
       else if(Ens == "cE211a.044.112") {  Ra0=4e6;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
@@ -80,9 +80,9 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
     else if(channel=="A0") {
       if(Ens == "cB211b.072.64") { Ra0=1e7;   }
       else if(Ens == "cB211b.072.96") { Ra0=1e7;   }
-      else if(Ens == "cC211a.06.80") {  Ra0=1e7;  }
-      else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
-      else if(Ens == "cD211a.054.96") { Ra0=9e7;   }
+      else if(Ens == "cC211a.06.80") {  Ra0=1e6;  }
+      else if(Ens == "cC211a.06.112") { Ra0= 1e6;   }
+      else if(Ens == "cD211a.054.96") { Ra0=5e7;   }
       else if(Ens == "cE211a.044.112") {  Ra0=3.5e8;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
@@ -96,21 +96,21 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="T") {
-      if(Ens == "cB211b.072.64") { Ra0=2e5;   }
-      else if(Ens == "cB211b.072.96") { Ra0=3e5;   }
+      if(Ens == "cB211b.072.64") { Ra0=2e4;   }
+      else if(Ens == "cB211b.072.96") { Ra0=2e5;   }
       else if(Ens == "cC211a.06.80") { Ra0=6e5;   }
       else if(Ens == "cC211a.06.112") { Ra0= 4e5;   }
-      else if(Ens == "cD211a.054.96") { Ra0=2e6;  }
+      else if(Ens == "cD211a.054.96") { Ra0=7.5e4;  }
       else if(Ens == "cE211a.044.112") {  Ra0=9e5;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="L") {
       if(Ens == "cB211b.072.64") { Ra0=2e6;   }
       else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
-      else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
-      else if(Ens == "cC211a.06.112") { Ra0= 1e6;   }
+      else if(Ens == "cC211a.06.80") { Ra0=5e5;   }
+      else if(Ens == "cC211a.06.112") { Ra0= 5e5;   }
       else if(Ens == "cD211a.054.96") { Ra0=5e6;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=2e7;  }
+      else if(Ens == "cE211a.044.112") {  Ra0=6e5;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -119,11 +119,11 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   else if(reg=="OS") {
     
     if(channel=="Aii") {
-      if(Ens == "cB211b.072.64") { Ra0=7e6;   }
+      if(Ens == "cB211b.072.64") { Ra0=1.7e6;   }
       else if(Ens == "cB211b.072.96") { Ra0=1.5e7;   }
-      else if(Ens == "cC211a.06.80") { Ra0=2e7;   }  //increase E_th
+      else if(Ens == "cC211a.06.80") { Ra0=1.2e7;   }  //increase E_th
       else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
-      else if(Ens == "cD211a.054.96") {  Ra0=1e8;  }
+      else if(Ens == "cD211a.054.96") {  Ra0=5.5e7;  }
       else if(Ens == "cE211a.044.112") {  Ra0=8e6;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
@@ -155,21 +155,21 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="T") {
-      if(Ens == "cB211b.072.64") { Ra0=2e4;   }
+      if(Ens == "cB211b.072.64") { Ra0=1.3e4;   }
       else if(Ens == "cB211b.072.96") { Ra0=4e5;   }
       else if(Ens == "cC211a.06.80") { Ra0=2e5;   }
       else if(Ens == "cC211a.06.112") { Ra0= 2e5;   }
-      else if(Ens == "cD211a.054.96") { Ra0=5.5e4;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=9e5;  }
+      else if(Ens == "cD211a.054.96") { Ra0=3.5e4;  }
+      else if(Ens == "cE211a.044.112") {  Ra0=2e5;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else if(channel=="L") {
-      if(Ens == "cB211b.072.64") { Ra0=2e5;   }
-      else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
+      if(Ens == "cB211b.072.64") { Ra0=1e5;   }
+      else if(Ens == "cB211b.072.96") { Ra0=3e5;   }
       else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
       else if(Ens == "cC211a.06.112") { Ra0= 5e6;   }
       else if(Ens == "cD211a.054.96") { Ra0=3e6;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=3.5e7;  }
+      else if(Ens == "cE211a.044.112") {  Ra0=2e7;  }
       else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
     }
     else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -1093,7 +1093,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_OS_distr = Corr.corr_t(ls_data_OS_A0A0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/A0_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
     V0_OS_distr = Corr.corr_t(ls_data_OS_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_OS_"+ls_data_tm_VKVK.Tag[iens]+".dat");
 
-   
+
+    distr_t_list MK_OS_A0_distr = Corr.effective_mass_t(A0_OS_distr, "../data/tau_decay/"+Tag_reco_type+"/strange/masses/"+ll_data_OS_P5P5.Tag[iens]+"/eff_mass_K_OS_A0");
 
 
     
@@ -1148,7 +1149,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     A0_H_tm_distr = Corr.corr_t(ls_H_data_tm_A0A0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/A0_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
     V0_H_tm_distr = Corr.corr_t(ls_H_data_tm_V0V0.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
     P5_H_tm_distr = Corr.corr_t(ls_H_data_tm_P5P5.col(0)[iens], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/P5_H_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
-
+    
 
     
    

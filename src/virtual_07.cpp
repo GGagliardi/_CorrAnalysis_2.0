@@ -13,7 +13,7 @@ Vfloat sigmas_07({1.75, 2, 2.25, 2.5, 2.75, 3.0, 3.5, 4.0, 4.5});
 Vfloat sigmas_07_w0({0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29,  0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0,2.25,2.5,2.75,3.0});
 int prec_07=128;
 const string MODE_FF="TANT";
-const bool Skip_spectral_reconstruction_07 = false;
+const bool Skip_spectral_reconstruction_07 = true;
 const bool virtuality_scan = false;
 const bool Use_preconditioning = true;
 const string  preco_tag= (Use_preconditioning)?"prec_":"";
@@ -723,6 +723,8 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
       distr_t reminder_FV_T_d_I_real(UseJack,Njacks), reminder_FA_T_d_I_real(UseJack,Njacks) , reminder_F_T_d_I(UseJack,Njacks), reminder_F_T_d_I_sp(UseJack,Njacks);
 
+      distr_t TO2_reminder(UseJack,Njacks), TO2_reminder_sp(UseJack,Njacks);
+
       distr_t reminder_F_T_d_I_15(UseJack,Njacks), reminder_F_T_d_I_7(UseJack,Njacks);
 
       distr_t_list C_0_corr(UseJack);
@@ -926,6 +928,13 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	reminder_F_T_d_I_15= reminder_F_T_d_I_15 +  (sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1+h2)*Exp( -1.0*1.5*a_distr*abs(T/2 - t_07_s));
 	reminder_F_T_d_I_7= reminder_F_T_d_I_7 +  (sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1+h2)*Exp( -1.0*0.7*a_distr*abs(T/2 - t_07_s));
 	reminder_F_T_d_I_sp= reminder_F_T_d_I_sp +   (sign_kz*T_d.distr_list[ty]*(xg/2.0) + B_d.distr_list[ty]*xg/2.0)*(h1+h2)*Exp( -1.0*Eg_off*abs(T/2 - t_07_s_HLT));
+
+	if(ty> t_07_s) {
+	  TO2_reminder = TO2_reminder +  (sign_kz*T_d_std.distr_list[ty]*(xg/2.0)   + B_d_std.distr_list[ty]*xg/2.0 )*(h1+h2)*Exp( -1.0*Eg_off*abs(T/2 - t_07_s));
+	}
+	if(ty> t_07_s_HLT) {
+	  TO2_reminder_sp = TO2_reminder_sp +  (sign_kz*T_d.distr_list[ty]*(xg/2.0)   + B_d.distr_list[ty]*xg/2.0 )*(h1+h2)*Exp( -1.0*Eg_off*abs(T/2 - t_07_s_HLT));
+	}
 	
       }
 
@@ -940,6 +949,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
       reminder_F_T_d_I = reminder_F_T_d_I*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
       reminder_F_T_d_I_sp = reminder_F_T_d_I_sp*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT);
+
+      TO2_reminder = TO2_reminder*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s))*Exp( M_P*t_07_s) ;
+      TO2_reminder_sp = TO2_reminder_sp*ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s_HLT))*Exp( M_P*t_07_s_HLT);
 
       distr_t comb_F_d = ZT*(1.0/(mel_SMSM*Eg))*Exp( Eg_off*abs(T/2 - t_07_s))*Exp( M_P*t_07_s);
 
@@ -1811,6 +1823,87 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
       for(int isg=0;isg<(signed)sigmas_07.size();isg++) {  if(iens==0) sigma_simulated[ixg][isg] = sigmas_07[isg]*Eg_MB_off_new.ave()/MBs; }
 
+      string SM_FF_0 = "FF_Exp";
+      
+       auto K_RE_0= [&SM_FF_0](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
+    
+
+	     if(SM_FF_0=="FF_Gauss") {
+	       PrecFloat x= (E-m);
+	       
+	       PrecFloat cosh_ov_sinh_half= (exp(x) + exp(-3*x))/(1-exp(-2*x)); 
+      
+	       return  2*cos(s)/(cosh_ov_sinh_half - cos(2*s)/sinh(x));
+      
+	     }
+
+
+	     
+	     if(SM_FF_0=="FF_Exp") {
+      
+	       PrecFloat x= (E-m);
+	       
+	       PrecFloat cosh_ov_sinh_half= (exp(x) + exp(-3*x))/(1-exp(-2*x)); 
+	       
+	       return  2*cos(s)/(cosh_ov_sinh_half - cos(2*s)/sinh(x));
+	       
+	      
+	     }
+         
+	     exit(-1);
+	     return 0;
+       };
+
+
+         auto K_RE_0_distr= [&SM_FF_0](const distr_t &E, const distr_t &m, double s) -> distr_t {
+	     
+	     distr_t ret(1);
+	     if(SM_FF_0=="FF_Exp")  {
+	       for(int ijack=0;ijack<E.size();ijack++) {
+		 double x= (E.distr[ijack]-m.distr[ijack]);
+		 double y= E.distr[ijack];
+		 ret.distr.push_back(2*sinh(y)*cos(0)/(cosh(2*y) - cos(2*0))  );
+	       }
+	     }
+	     
+	     
+	     else if(SM_FF_0=="FF_Gauss") {
+	       for(int ijack=0;ijack<E.size();ijack++) {
+		 double x= (E.distr[ijack]-m.distr[ijack]);
+		 double y= E.distr[ijack];
+		 ret.distr.push_back(2*sinh(y)*cos(0)/(cosh(2*y) - cos(2*0))  );
+	       }
+	     }
+	     else crash("SM_FF: "+SM_FF_0+" not yet implemented");
+	     
+	     return ret;
+	     
+	   };
+
+      //0 REMINDER FROM HLT
+       double th_0= E0_fact*Mphi_motion;
+       double l_re_T_0, syst_T_0;
+       distr_t REMINDER_MB_from_HLT=  Get_Laplace_transfo_tmin( 0.0,  0.0, th_0*a_distr.ave(),  Nts[iens], 1,  tmax_new, prec_07, SM_FF_0+"_RE_ixg_"+to_string(ixg+1),K_RE_0, Corr_T, syst_T_0, 1e-5 ,  l_re_T_0, MODE_FF, "E0_"+to_string_with_precision(E0_fact,1), TAG_CURR+"MB_T_"+Ens_tags[iens], 1e-6,0, FACT, Get_id_jack_distr(Njacks)*0.0,  "zero_energy_"+preco_tag+MESON+"_07_FF_Tw_"+to_string(t_07_s_HLT), cov_T, fake_func,0, fake_func_d ,  1 , 4.0, 0.00,1);
+
+       distr_t REMINDER_MB_PHI_from_HLT=  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_0_distr( eff_M_Td*a_distr, 0.0*Eg_MB_off, 0.0)) ;
+
+       distr_t REMINDER_MB(UseJack,Njacks);
+       
+       for(int t=1;t<Corr_T.size();t++) REMINDER_MB = REMINDER_MB + FACT*Corr_T[t];
+
+       distr_t REMINDER_MB_TOT(UseJack,Njacks);
+       
+       for(int t=1;t<Corr_T_ori.size();t++) REMINDER_MB_TOT = REMINDER_MB_TOT + FACT*Corr_T_ori[t];
+
+       cout<<"REM MB: "<<REMINDER_MB.ave()<<" +- "<<REMINDER_MB.err()<<" REM MB(HLT): "<<REMINDER_MB_from_HLT.ave()<<" +- "<<REMINDER_MB_from_HLT.err()<<endl;
+       cout<<"REM MB(inc phi:): "<<(REMINDER_MB+REMINDER_MB_PHI_from_HLT).ave()<<" +- "<<(REMINDER_MB+REMINDER_MB_PHI_from_HLT).err()<<" REM MB(inc phi: HLT): "<<(REMINDER_MB_from_HLT+REMINDER_MB_PHI_from_HLT).ave()<<" +- "<<(REMINDER_MB_from_HLT+REMINDER_MB_PHI_from_HLT).err()<<endl;
+       cout<<"REM MB(full sum:): "<<(REMINDER_MB_TOT).ave()<<" +- "<<(REMINDER_MB_TOT).err()<<" REM MB(inc phi: HLT): "<<(REMINDER_MB_from_HLT+REMINDER_MB_PHI_from_HLT).ave()<<" +- "<<(REMINDER_MB_from_HLT+REMINDER_MB_PHI_from_HLT).err()<<endl;
+
+       cout<<"REM TOT: "<<reminder_F_T_d_I.ave()<<" +- "<<reminder_F_T_d_I.err()<<" SP: "<<reminder_F_T_d_I_sp.ave()<<" +- "<<reminder_F_T_d_I_sp.err()<<endl;
+       cout<<"REM 2TO: "<<TO2_reminder.ave()<<" +- "<<TO2_reminder.err()<<" SP: "<<TO2_reminder_sp.ave()<<" +- "<<TO2_reminder_sp.err()<<endl;
+
+       REMINDER_MB= REMINDER_MB_from_HLT;
+
       if(!Skip_spectral_reconstruction_07) {
 
 	vector<distr_t_list> F_T_d_RE_virt_scan;
@@ -2046,9 +2139,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 	  s= s*Eg_MB_off.ave()/(MBs*a_distr.ave());
 	 
 
-	  distr_t REMINDER_MB(UseJack,Njacks);
-
-	  for(int t=1;t<Corr_T.size();t++) REMINDER_MB = REMINDER_MB + FACT*Corr_T[t]; 
+	
 
 	
 	  distr_t OFFSET_RE=  ((Use_preconditioning==false)?0.0:1.0)*(FACT*phi_MT*K_RE_distr_sub( eff_M_Td*a_distr, Eg_MB_off, s) + 0.0*FACT*phi_prime_MT*K_RE_distr_sub( eff_M_prime_Td*a_distr, Eg_MB_off, s) ) + F_T_d_I -REMINDER_MB;
@@ -3936,7 +4027,7 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
   ave_IM = ave_IM.ave() + (ave_IM - ave_IM.ave())*fabs( ave_IM.err() + syst_IM_tot)/ave_IM.err();
   
-  return_class.F_T_d_RE.distr_list.push_back( R_RE );
+  return_class.F_T_d_RE.distr_list.push_back( ave_RE );
   return_class.F_T_d_IM.distr_list.push_back( ave_IM );
   
   

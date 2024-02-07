@@ -30,7 +30,7 @@ const Vfloat ratio_mh({1, 1.0 / 1.4835, 1.0 / 2.02827, 1.0 / 2.53531, 1.0 / 3.04
 const double mc_MS_bar_2_ave=  1.016392574;
 const double mc_MS_bar_2_err = 0.02247780935;
 const bool Compute_FF = false;
-const bool Skip_virtual_diagram = true;
+const bool Skip_virtual_diagram = false;
 const bool Generate_data_for_mass_spline = false;
 const bool Fit_single_reg = false;
 const string Reg_to_fit = "3pt";
@@ -40,7 +40,7 @@ const double MU_GLB = 5.367; // GeV
 const bool fit_FB_FT = false;
 const bool Perform_global_fit = false;
 const bool Get_KMN_JPZ_FF = false;
-const bool Compute_rate=true;
+const bool Compute_rate=false;
 
 
 void rt_FF_Bs::Print(string path) {
@@ -2412,7 +2412,28 @@ void Compute_Bs_mumu_gamma() {
   }
   Print_To_File({}, {xg_to_print_pretty, pretty_b_MB.ave(), pretty_b_MB.err(), pretty_b_MB_red.ave(), pretty_b_MB_red.err()},  "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_b_Bs.dat", "" , "");
 
+  vector<distr_t_list> bar_FT_s_RE_xg(4);
+  vector<distr_t_list> bar_FT_s_IM_xg(4);
 
+  vector<distr_t_list> bar_FT_s_RE;
+  vector<distr_t_list> bar_FT_s_IM;
+
+  for(int i=0; i<(signed)TFF_virtual_ret_list.size();i++) bar_FT_s_RE.push_back( TFF_virtual_ret_list[i].Get_FF(1));
+  for(int i=0; i<(signed)TFF_virtual_ret_list.size();i++) bar_FT_s_IM.push_back( TFF_virtual_ret_list[i].Get_FF(2));
+
+  for(int ixg=0;ixg<(signed)Bs_xg_t_list.size();ixg++) {
+    for(int i=0; i<(signed)TFF_virtual_ret_list.size();i++) {
+      bar_FT_s_RE_xg[ixg].distr_list.push_back( TFF_virtual_ret_list[i].Get_FF(1).distr_list[ixg]);
+      bar_FT_s_IM_xg[ixg].distr_list.push_back( TFF_virtual_ret_list[i].Get_FF(2).distr_list[ixg]);
+    }
+  }
+
+  vector<double> M_07({ masses.ave(0), masses.ave(1), masses.ave(3)});
+
+   for(int ixg=0;ixg<(signed)Bs_xg_t_list.size();ixg++) {
+     Print_To_File({}, {M_07, bar_FT_s_RE_xg[ixg].ave(), bar_FT_s_RE_xg[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_s_RE_ixg_"+to_string(ixg)+".dat", "" , "");
+     Print_To_File({}, {M_07, bar_FT_s_IM_xg[ixg].ave(), bar_FT_s_IM_xg[ixg].err()}, "../data/ph_emission/"+ph_type+"/Bs_extr/pretty_s_IM_ixg_"+to_string(ixg)+".dat", "" , "");
+   }
   
   /*
  
@@ -2441,8 +2462,7 @@ void Compute_Bs_mumu_gamma() {
   };
 
 
-  vector<distr_t_list> bar_FT_s_RE;
-  vector<distr_t_list> bar_FT_s_IM;
+  
 
   vector<distr_t_list> bar_FT_s_RE_xg(4);
   vector<distr_t_list> bar_FT_s_IM_xg(4);
@@ -2661,6 +2681,8 @@ void Compute_Bs_mumu_gamma() {
 
 
   */
+
+ 
 
   }
 	

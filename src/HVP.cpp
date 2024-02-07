@@ -385,6 +385,7 @@ void HVP() {
   //create directories
   boost::filesystem::create_directory("../data/HVP");
   boost::filesystem::create_directory("../data/HVP/Bounding");
+  boost::filesystem::create_directory("../data/HVP/eff_mass");
   boost::filesystem::create_directory("../data/HVP/Corr");
 
   auto Sort_light_confs = [](string A, string B) {
@@ -1033,18 +1034,59 @@ void HVP() {
     Bounding_HVP(amu_HVP_OS, Tcut_opt_OS, Vk_OS_distr, a_distr, "../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_OS" , p2_mot);
 
     distr_t amu_HVP_defl_tm(UseJack), amu_HVP_defl_OS(UseJack);
+    distr_t amu_HVP_defl_tm_Blind(UseJack), amu_HVP_defl_OS_Blind(UseJack);
     int Tcut_opt_defl_tm, Tcut_opt_defl_OS;
 
     Vfloat thetas;
     for(int i=0;i<100;i++) thetas.push_back( 2*M_PI*i/(99.0));
     distr_t_list amu_HVP_theta(UseJack);
     vector<int> Tcut_opt_theta;
+
+    double M1 = 0.750*a_distr.ave(); double M2= 0.850*a_distr.ave(); double M3=0.95*a_distr.ave();
+    double M4=1.2*a_distr.ave(), M5 = 1.5*a_distr.ave(), M6 = 2.0*a_distr.ave();
+
+    double M1p = 0.775*a_distr.ave(); double M2p= 0.875*a_distr.ave(); double M3p=0.975*a_distr.ave();
+    double M4p=1.4*a_distr.ave(), M5p = 1.7*a_distr.ave(), M6p = 2.2*a_distr.ave();
+
+    auto C1 = [&M1, &a_distr, T=Corr.Nt](double t) { return 0.5*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M1*t) + exp(-M1*(T-t))); };
+    auto C2 = [&M2, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M2*t) + exp(-M2*(T-t))); };
+    auto C3 = [&M3, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M3*t) + exp(-M3*(T-t))); };
+
+    auto C4 = [&M4, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M4*t) + exp(-M4*(T-t))); };
+    auto C5 = [&M5, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M5*t) + exp(-M5*(T-t))); };
+    auto C6 = [&M6, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M6*t) + exp(-M6*(T-t))); };
+
+    auto C1p = [&M1p, &a_distr, T=Corr.Nt](double t) { return 0.5*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M1p*t) + exp(-M1p*(T-t))); };
+    auto C2p = [&M2p, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M2p*t) + exp(-M2p*(T-t))); };
+    auto C3p = [&M3p, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M3p*t) + exp(-M3p*(T-t))); };
+
+    auto C4p = [&M4p, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M4p*t) + exp(-M4p*(T-t))); };
+    auto C5p = [&M5p, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M5p*t) + exp(-M5p*(T-t))); };
+    auto C6p = [&M6p, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M6p*t) + exp(-M6p*(T-t))); };
+
+
+    distr_t_list Vk_DEFL_bound_tm= Vk_DEFL_tm_distr;
+    distr_t_list Vk_DEFL_bound_OS= Vk_DEFL_OS_distr;
+
+    for(int t=0; t<Vk_DEFL_tm_distr.size();t++ ) {
+      Vk_DEFL_bound_tm.distr_list[t] = Vk_DEFL_bound_tm.distr_list[t] + C1(t) + C2(t) + C3(t) + C4(t) + C5(t) + C6(t) +  C1p(t) + C2p(t) + C3p(t) + C4p(t) + C5p(t) + C6p(t);
+      Vk_DEFL_bound_OS.distr_list[t] = Vk_DEFL_bound_OS.distr_list[t] + C1(t) + C2(t) + C3(t) + C4(t) + C5(t) + C6(t)  + C1p(t) + C2p(t) + C3p(t) + C4p(t) + C5p(t) + C6p(t);
+    }
     
     if(Vk_data_tm.Tag[iens].substr(1,12) == "B211b.072.64") {
 
       
       Bounding_HVP(amu_HVP_defl_tm, Tcut_opt_defl_tm, Vk_DEFL_tm_distr, a_distr,"../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_DEFL_tm" , p2_mot);
       Bounding_HVP(amu_HVP_defl_OS, Tcut_opt_defl_OS, Vk_DEFL_OS_distr, a_distr, "../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_DEFL_OS" , p2_mot);
+
+      Bounding_HVP(amu_HVP_defl_tm_Blind, Tcut_opt_defl_tm, Vk_DEFL_bound_tm, a_distr,"../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_DEFL_BLIND_tm" , p2_mot);
+      Bounding_HVP(amu_HVP_defl_OS_Blind, Tcut_opt_defl_OS, Vk_DEFL_bound_OS, a_distr, "../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+"_DEFL_BLIND_OS" , p2_mot);
+
+      //plot effective mass
+      distr_t_list eff_mass_tm = Corr.effective_mass_t(Vk_DEFL_tm_distr, "../data/HVP/eff_mass/"+Vk_data_tm.Tag[iens]+"_tm");
+      distr_t_list eff_mass_OS = Corr.effective_mass_t(Vk_DEFL_OS_distr, "../data/HVP/eff_mass/"+Vk_data_tm.Tag[iens]+"_OS");
+      distr_t_list eff_mass_BOUND_tm = Corr.effective_mass_t(Vk_DEFL_bound_tm, "../data/HVP/eff_mass/"+Vk_data_tm.Tag[iens]+"_BLIND_tm");
+      distr_t_list eff_mass_BOUND_OS = Corr.effective_mass_t(Vk_DEFL_bound_OS, "../data/HVP/eff_mass/"+Vk_data_tm.Tag[iens]+"_BLIND_OS");
 
 
     
@@ -1060,11 +1102,7 @@ void HVP() {
     }
 
 
-    double M1 = 0.750*a_distr.ave(); double M2= 0.850*a_distr.ave(); double M3=0.95;
-
-    auto C1 = [&M1, &a_distr, T=Corr.Nt](double t) { return 0.5*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M1*t) + exp(-M1*(T-t))); };
-    auto C2 = [&M2, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M2*t) + exp(-M2*(T-t))); };
-    auto C3 = [&M3, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M3*t) + exp(-M3*(T-t))); };
+   
 
    
     vector<string> Tags({"tm", "OS"});
@@ -1077,6 +1115,268 @@ void HVP() {
   
 
     Print_To_File(Tags, { amu_HVP.ave(), amu_HVP.err(), Tmins, Tmaxs}, "../data/HVP/Bounding/"+Vk_data_tm.Tag[iens]+".res", "", "");
+
+
+    
+
+    
+    distr_t_list Ker = distr_t_list::f_of_distr(K, a_distr , Corr.Nt/2);
+
+    distr_t HVP_B_1(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_2(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_3(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_4(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_5(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_6(UseJack,UseJack?Njacks:800);
+
+    distr_t HVP_B_1p(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_2p(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_3p(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_4p(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_5p(UseJack,UseJack?Njacks:800);
+    distr_t HVP_B_6p(UseJack,UseJack?Njacks:800);
+    
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_1 = HVP_B_1 + 4.0*w(t,2)*pow(alpha,2)*C1(t)*Ker.distr_list[t];
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_2 = HVP_B_2 + 4.0*w(t,2)*pow(alpha,2)*C2(t)*Ker.distr_list[t];
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_3 = HVP_B_3 + 4.0*w(t,2)*pow(alpha,2)*C3(t)*Ker.distr_list[t];
+
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_4 = HVP_B_4 + 4.0*w(t,2)*pow(alpha,2)*C4(t)*Ker.distr_list[t];
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_5 = HVP_B_5 + 4.0*w(t,2)*pow(alpha,2)*C5(t)*Ker.distr_list[t];
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_6 = HVP_B_6 + 4.0*w(t,2)*pow(alpha,2)*C6(t)*Ker.distr_list[t];
+
+
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_1p = HVP_B_1p + 4.0*w(t,2)*pow(alpha,2)*C1p(t)*Ker.distr_list[t];
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_2p = HVP_B_2p + 4.0*w(t,2)*pow(alpha,2)*C2p(t)*Ker.distr_list[t];
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_3p = HVP_B_3p + 4.0*w(t,2)*pow(alpha,2)*C3p(t)*Ker.distr_list[t];
+
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_4p = HVP_B_4p + 4.0*w(t,2)*pow(alpha,2)*C4p(t)*Ker.distr_list[t];
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_5p = HVP_B_5p + 4.0*w(t,2)*pow(alpha,2)*C5p(t)*Ker.distr_list[t];
+    for(int t=1;t<Corr.Nt/2;t++) HVP_B_6p = HVP_B_6p + 4.0*w(t,2)*pow(alpha,2)*C6p(t)*Ker.distr_list[t];
+
+
+    
+    cout<<"########BOUNDING ENS: "<<Vk_data_tm.Tag[iens]<<"########"<<endl;
+    cout<<"HVP(1): "<<HVP_B_1.ave()<<" +- "<<HVP_B_1.err()<<endl;
+    cout<<"HVP(2): "<<HVP_B_2.ave()<<" +- "<<HVP_B_2.err()<<endl;
+    cout<<"HVP(3): "<<HVP_B_3.ave()<<" +- "<<HVP_B_3.err()<<endl;
+    cout<<"HVP(4): "<<HVP_B_4.ave()<<" +- "<<HVP_B_4.err()<<endl;
+    cout<<"HVP(5): "<<HVP_B_5.ave()<<" +- "<<HVP_B_5.err()<<endl;
+    cout<<"HVP(6): "<<HVP_B_6.ave()<<" +- "<<HVP_B_6.err()<<endl;
+
+    cout<<"HVP(1p): "<<HVP_B_1p.ave()<<" +- "<<HVP_B_1p.err()<<endl;
+    cout<<"HVP(2p): "<<HVP_B_2p.ave()<<" +- "<<HVP_B_2p.err()<<endl;
+    cout<<"HVP(3p): "<<HVP_B_3p.ave()<<" +- "<<HVP_B_3p.err()<<endl;
+    cout<<"HVP(4p): "<<HVP_B_4p.ave()<<" +- "<<HVP_B_4p.err()<<endl;
+    cout<<"HVP(5p): "<<HVP_B_5p.ave()<<" +- "<<HVP_B_5p.err()<<endl;
+    cout<<"HVP(6p): "<<HVP_B_6p.ave()<<" +- "<<HVP_B_6p.err()<<endl;
+
+    if(Vk_data_tm.Tag[iens].substr(1,12) == "B211b.072.64") {
+      //fit difference between new and old data to infer blinding parameters
+
+       class ipar_BL {
+	
+       public:
+	 ipar_BL()  {}
+	 
+	 double dC, dC_err;
+	 double t;
+       };
+      
+      
+      class fpar_BL {
+
+      public:
+	fpar_BL() {}
+	fpar_BL(const Vfloat &par) {
+	  if((signed)par.size() != 24) crash("In class fpar_BL, class constructor Vfloat par has size != 24");
+	  M1=par[0];
+	  M2=par[1];
+	  M3=par[2];
+	  M4=par[3];
+	  M5=par[4];
+	  M6=par[5];
+
+	  M1p=par[6];
+	  M2p=par[7];
+	  M3p=par[8];
+	  M4p=par[9];
+	  M5p=par[10];
+	  M6p=par[11];
+
+
+
+	  A1=par[12];
+	  A2=par[13];
+	  A3=par[14];
+	  A4=par[15];
+	  A5=par[16];
+	  A6=par[17];
+
+	  A1p=par[18];
+	  A2p=par[19];
+	  A3p=par[20];
+	  A4p=par[21];
+	  A5p=par[22];
+	  A6p=par[23];
+	}
+
+	double M1, M2, M3, M4, M5, M6 , M1p, M2p, M3p, M4p, M5p, M6p;
+	double A1, A2, A3, A4, A5, A6 , A1p, A2p, A3p, A4p, A5p, A6p;
+      };
+
+
+
+      bootstrap_fit<fpar_BL,ipar_BL> bf_BL(Njacks);
+      bootstrap_fit<fpar_BL,ipar_BL> bf_BL_ch2(1);
+      bf_BL.Set_number_of_measurements(24);
+      bf_BL.Set_verbosity(1);
+      //add fit parameters
+      bf_BL.Add_par("M1", 0.8, 0.1);
+      bf_BL.Add_par("M2", 0.8, 0.1);
+      bf_BL.Add_par("M3", 0.8, 0.1);
+      bf_BL.Add_par("M4", 1.5, 0.1);
+      bf_BL.Add_par("M5", 1.5, 0.1);
+      bf_BL.Add_par("M6", 1.5, 0.1);
+
+      bf_BL.Add_par("M1p", 0.8, 0.1);
+      bf_BL.Add_par("M2p", 0.8, 0.1);
+      bf_BL.Add_par("M3p", 0.8, 0.1);
+      bf_BL.Add_par("M4p", 1.5, 0.1);
+      bf_BL.Add_par("M5p", 1.5, 0.1);
+      bf_BL.Add_par("M6p", 1.5, 0.1);
+
+
+      bf_BL.Add_par("A1", 0.25, 0.01);
+      bf_BL.Add_par("A2", 0.5, 0.01);
+      bf_BL.Add_par("A3", 0.5, 0.01);
+      bf_BL.Add_par("A4", 0.5, 0.01);
+      bf_BL.Add_par("A5", 0.5, 0.01);
+      bf_BL.Add_par("A6", 0.5, 0.01);
+
+      bf_BL.Add_par("A1p", 0.25, 0.01);
+      bf_BL.Add_par("A2p", 0.5, 0.01);
+      bf_BL.Add_par("A3p", 0.5, 0.01);
+      bf_BL.Add_par("A4p", 0.5, 0.01);
+      bf_BL.Add_par("A5p", 0.5, 0.01);
+      bf_BL.Add_par("A6p", 0.5, 0.01);
+      
+      //ansatz
+      bf_BL.ansatz=  [&a_distr , T=Corr.Nt ](const fpar_BL &p, const ipar_BL &ip) {
+
+	Vfloat Ms= {p.M1, p.M2, p.M3, p.M4, p.M5, p.M6, p.M1p, p.M2p, p.M3p, p.M4p, p.M5p, p.M6p};
+	Vfloat As= {p.A1, p.A2, p.A3, p.A4, p.A5, p.A6, p.A1p, p.A2p, p.A3p, p.A4p, p.A5p, p.A6p};
+
+	double an=0;
+	for (int i=0;i<(signed)Ms.size();i++) an += As[i]*( 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-Ms[i]*a_distr.ave()*ip.t) + exp(-Ms[i]*a_distr.ave()*(T-ip.t))));
+
+	return an;
+	
+      };
+      //meas
+      bf_BL.measurement=  [ ](const fpar_BL&p, const ipar_BL &ip) {
+	return ip.dC;
+      };
+      //err
+      bf_BL.error=  [ ](const fpar_BL &p, const ipar_BL &ip) {
+	return ip.dC_err;
+      };
+
+      //fill the data
+      vector<vector<ipar_BL>> data(Njacks);
+      //allocate space for output result
+      boot_fit_data<fpar_BL> Bt_fit;
+      for(auto &data_iboot: data) data_iboot.resize(24);
+
+      for(int ijack=0;ijack<Njacks;ijack++) {
+
+	for(int t=0; t <24;t++) {
+
+	  data[ijack][t].t = t;
+	  data[ijack][t].dC =  0.5*(Vk_DEFL_bound_tm.distr_list[t].distr[ijack] -  Vk_tm_distr.distr_list[t].distr[ijack]); // + Vk_DEFL_bound_OS.distr_list[t].distr[ijack] - Vk_OS_distr.distr_list[t].distr[ijack]);
+	  data[ijack][t].dC_err= 0.5*(Vk_DEFL_bound_tm.distr_list[t] -  Vk_tm_distr.distr_list[t]).err() ; // + Vk_DEFL_bound_OS.distr_list[t] - Vk_OS_distr.distr_list[t]).err(); 
+	
+
+	}
+      }
+
+
+      bf_BL.Append_to_input_par(data);
+      
+      //fit
+      cout<<"Fitting...."<<endl;
+      Bt_fit= bf_BL.Perform_bootstrap_fit();
+
+
+      //determine fit parameters
+      distr_t m1(UseJack), m2(UseJack), m3(UseJack), m4(UseJack), m5(UseJack), m6(UseJack);
+      distr_t m1p(UseJack), m2p(UseJack), m3p(UseJack), m4p(UseJack), m5p(UseJack), m6p(UseJack);
+      
+      distr_t a1(UseJack), a2(UseJack), a3(UseJack), a4(UseJack), a5(UseJack), a6(UseJack);
+      distr_t a1p(UseJack), a2p(UseJack), a3p(UseJack), a4p(UseJack), a5p(UseJack), a6p(UseJack);
+
+     
+      
+      for(int ijack=0;ijack<Njacks;ijack++) {
+	
+	m1.distr.push_back( Bt_fit.par[ijack].M1);
+	m2.distr.push_back( Bt_fit.par[ijack].M2);
+	m3.distr.push_back( Bt_fit.par[ijack].M3);
+	m4.distr.push_back( Bt_fit.par[ijack].M4);
+	m5.distr.push_back( Bt_fit.par[ijack].M5);
+	m6.distr.push_back( Bt_fit.par[ijack].M6);
+
+	m1p.distr.push_back( Bt_fit.par[ijack].M1p);
+	m2p.distr.push_back( Bt_fit.par[ijack].M2p);
+	m3p.distr.push_back( Bt_fit.par[ijack].M3p);
+	m4p.distr.push_back( Bt_fit.par[ijack].M4p);
+	m5p.distr.push_back( Bt_fit.par[ijack].M5p);
+	m6p.distr.push_back( Bt_fit.par[ijack].M6p);
+
+
+	a1.distr.push_back( Bt_fit.par[ijack].A1);
+	a2.distr.push_back( Bt_fit.par[ijack].A2);
+	a3.distr.push_back( Bt_fit.par[ijack].A3);
+	a4.distr.push_back( Bt_fit.par[ijack].A4);
+	a5.distr.push_back( Bt_fit.par[ijack].A5);
+	a6.distr.push_back( Bt_fit.par[ijack].A6);
+
+	a1p.distr.push_back( Bt_fit.par[ijack].A1p);
+	a2p.distr.push_back( Bt_fit.par[ijack].A2p);
+	a3p.distr.push_back( Bt_fit.par[ijack].A3p);
+	a4p.distr.push_back( Bt_fit.par[ijack].A4p);
+	a5p.distr.push_back( Bt_fit.par[ijack].A5p);
+	a6p.distr.push_back( Bt_fit.par[ijack].A6p);
+
+	
+      }
+
+
+      distr_t_list Corr_Blind_RECO(UseJack);
+
+      for(int t=0;t<Corr.Nt/2;t++) {
+	ipar_BL iBL;
+	iBL.t = t;
+	distr_t A(UseJack);
+	for(int ijack=0;ijack<Njacks;ijack++) {
+	  A.distr.push_back( bf_BL.ansatz( Bt_fit.par[ijack], iBL));
+	  
+	}
+	Corr_Blind_RECO.distr_list.push_back( A);
+      }
+      
+      distr_t HVP_Blind_RECO(UseJack,UseJack?Njacks:800);
+      
+
+      for(int t=1;t<Corr.Nt/2;t++) HVP_Blind_RECO = HVP_Blind_RECO + 4.0*w(t,2)*pow(alpha,2)*Corr_Blind_RECO.distr_list[t]*Ker.distr_list[t];
+      
+
+      cout<<"HVP FROM BLINDING: "<<HVP_Blind_RECO.ave()<<" +- "<<HVP_Blind_RECO.err()<<endl;
+      
+      
+     
+    }
+
+    
 
     if(Vk_data_tm.Tag[iens].substr(1,12) == "B211b.072.64") {
       distr_t_list amu_defl_HVP;
@@ -1091,10 +1391,15 @@ void HVP() {
     cout<<"HVP tm: "<<amu_HVP_tm.ave()<<" +- "<<amu_HVP_tm.err()<<" stat. "<< (amu_HVP_tm.err()*100/amu_HVP_tm.ave())<<"%"<<endl;
     cout<<"HVP OS: "<<amu_HVP_OS.ave()<<" +- "<<amu_HVP_OS.err()<<" stat. "<< (amu_HVP_OS.err()*100/amu_HVP_OS.ave())<<"%"<<endl;
     if(Vk_data_tm.Tag[iens].substr(1,12) == "B211b.072.64") {
-       cout<<"HVP(defl) tm: "<<amu_HVP_defl_tm.ave()<<" +- "<<amu_HVP_defl_tm.err()<<" stat. "<< (amu_HVP_defl_tm.err()*100/amu_HVP_defl_tm.ave())<<"%"<<endl;
-       cout<<"HVP(defl) OS: "<<amu_HVP_defl_OS.ave()<<" +- "<<amu_HVP_defl_OS.err()<<" stat. "<< (amu_HVP_defl_OS.err()*100/amu_HVP_defl_OS.ave())<<"%"<<endl;
-       cout<<"#######THETA#######"<<endl;
-       //for(int i=0;i<(signed)thetas.size();i++) {
+
+      distr_t HVP_Blind_tot= HVP_B_1+HVP_B_2+HVP_B_3+HVP_B_4+HVP_B_5+HVP_B_6 + HVP_B_1p+HVP_B_2p+HVP_B_3p+HVP_B_4p+HVP_B_5p+HVP_B_6p;
+      cout<<"HVP(defl) tm: "<<(amu_HVP_defl_tm_Blind -HVP_Blind_tot).ave()<<" +- "<<(amu_HVP_defl_tm_Blind - HVP_Blind_tot).err()<<" stat. "<< ((amu_HVP_defl_tm_Blind -HVP_Blind_tot).err()*100/(amu_HVP_defl_tm_Blind - HVP_Blind_tot).ave())<<"%"<<endl;
+      cout<<"HVP(defl) OS: "<<(amu_HVP_defl_OS_Blind - HVP_Blind_tot).ave()<<" +- "<<(amu_HVP_defl_OS_Blind - HVP_Blind_tot).err()<<" stat. "<< ((amu_HVP_defl_OS_Blind - HVP_Blind_tot).err()*100/(amu_HVP_defl_OS_Blind - HVP_Blind_tot).ave())<<"%"<<endl;
+      cout<<"###### FROM BLIND ANALYSIS ##########: "<<endl;
+      cout<<"HVP(defl,BLIND) tm: "<<amu_HVP_defl_tm.ave()<<" +- "<<amu_HVP_defl_tm.err()<<" stat. "<< (amu_HVP_defl_tm.err()*100/amu_HVP_defl_tm.ave())<<"%"<<endl;
+      cout<<"HVP(defl,BLIND) OS: "<<amu_HVP_defl_OS.ave()<<" +- "<<amu_HVP_defl_OS.err()<<" stat. "<< (amu_HVP_defl_OS.err()*100/amu_HVP_defl_OS.ave())<<"%"<<endl;
+      cout<<"#######THETA#######"<<endl;
+      //for(int i=0;i<(signed)thetas.size();i++) {
        //cout<<"HVP(defl, th: "<<thetas[i]<<" ) :"<<amu_HVP_theta.ave(i)<<" +- "<<amu_HVP_theta.err(i)<<" stat. "<< (amu_HVP_theta.err(i)*100/amu_HVP_theta.ave(i))<<"%"<<endl;
        //}
     }
@@ -1102,21 +1407,8 @@ void HVP() {
 
     auto K = [&](double Mv, double t, double size) -> double { return kernel_K(t, Mv);};
 
-    distr_t_list Ker = distr_t_list::f_of_distr(K, a_distr , Corr.Nt/2);
-
-    distr_t HVP_B_1(UseJack,UseJack?Njacks:800);
-    distr_t HVP_B_2(UseJack,UseJack?Njacks:800);
-    distr_t HVP_B_3(UseJack,UseJack?Njacks:800);
+   
     
-    for(int t=1;t<Corr.Nt/2;t++) HVP_B_1 = HVP_B_1 + 4.0*w(t,2)*pow(alpha,2)*C1(t)*Ker.distr_list[t];
-    for(int t=1;t<Corr.Nt/2;t++) HVP_B_2 = HVP_B_2 + 4.0*w(t,2)*pow(alpha,2)*C2(t)*Ker.distr_list[t];
-    for(int t=1;t<Corr.Nt/2;t++) HVP_B_2 = HVP_B_2 + 4.0*w(t,2)*pow(alpha,2)*C2(t)*Ker.distr_list[t];
-
-
-    
-    cout<<"########BOUNDING ENS: "<<Vk_data_tm.Tag[iens]<<"########"<<endl;
-    cout<<"HVP(1): "<<HVP_B_1.ave()<<" +- "<<HVP_B_1.err()<<endl;
-    cout<<"HVP(2): "<<HVP_B_2.ave()<<" +- "<<HVP_B_2.err()<<endl;
     
     //distr_t_list Ker_el = 4*pow(alpha,2)*distr_t_list::f_of_distr(K, a_distr*(0.0005/0.10565837) , Corr.Nt);
     //distr_t_list Ker_mu = 4*pow(alpha,2)*distr_t_list::f_of_distr(K, a_distr*(1.77/0.1056837) , Corr.Nt);
