@@ -1337,7 +1337,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 
 }
 
-distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact,const double &offset,  string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW,  bool GENERALIZED_NORM,  const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> F_NORM, const function<PrecFloat( PrecFloat )> Atr_gen_NORM) {
+distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& pull, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact,const double &offset,  string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW,  bool GENERALIZED_NORM,  const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> F_NORM, const function<PrecFloat( PrecFloat )> Atr_gen_NORM) {
 
 
   cout<<"precision used: "<<prec<<endl;
@@ -1678,12 +1678,13 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
     
         
     syst = erf(fabs( (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave()/(sqrt(2)*Spec_dens_at_E_star_10.err())))*fabs( (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave());
+    pull= (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave()/(Spec_dens_at_E_star_10.err());
   }
     
 
-  //set lambda_ret to lambda_optimal
+  //set lambda to lambda_optimal
 
-  lambda_ret= lambda_opt;
+
   
   return Spec_dens_at_E_star;  
   
@@ -1693,7 +1694,7 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
 
 
 
-distr_t Get_Laplace_transfo_tmin( double mean, double sigma, double Estart, int T,int tmin,  int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& lambda_ret, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact,const distr_t &offset,  string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW,  bool GENERALIZED_NORM,  const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> F_NORM, const function<PrecFloat( PrecFloat )> Atr_gen_NORM) {
+distr_t Get_Laplace_transfo_tmin( double mean, double sigma, double Estart, int T,int tmin,  int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& pull, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact,const distr_t &offset,  string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW,  bool GENERALIZED_NORM,  const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> F_NORM, const function<PrecFloat( PrecFloat )> Atr_gen_NORM) {
 
 
   cout<<"precision used: "<<prec<<endl;
@@ -2032,12 +2033,14 @@ distr_t Get_Laplace_transfo_tmin( double mean, double sigma, double Estart, int 
     
         
     syst = erf(fabs( (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave()/(sqrt(2)*Spec_dens_at_E_star_10.err())))*fabs( (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave());
+
+    pull =  (Spec_dens_at_E_star - Spec_dens_at_E_star_10).ave()/(Spec_dens_at_E_star_10.err());
   }
     
 
-  //set lambda_ret to lambda_optimal
+  //set lambda to lambda_optimal
 
-  lambda_ret= lambda_opt;
+  //lambda= lambda_opt;
   
   return Spec_dens_at_E_star;  
   
