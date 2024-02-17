@@ -489,9 +489,9 @@ void tau_decay_analysis_strange() {
   //Vfloat Emax_list({4.0, 4.0 , 4.0, 4.0, 5.0});
   //vector<bool> Is_Emax_Finite({1,1,1,1,1});
   
-  Vfloat betas({ 3.99 , 4.99 , 3.99 });
-  Vfloat Emax_list({4.0, 4.0 , 5.0});
-  vector<bool> Is_Emax_Finite({1,1,1});
+  Vfloat betas({ 3.99 , 4.99 , 3.99, 2.99 });
+  Vfloat Emax_list({4.0, 4.0 , 5.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,1,1, 1});
 
 
  
@@ -536,8 +536,11 @@ void tau_decay_analysis_strange() {
 
     if(betas[i] != 3.99 || Emax_list[i] != 4.0) {
 
-      double ss= fabs( FIN_RES[i].ave() - FAVE.ave())*erf(  fabs( FIN_RES[i].ave() - FAVE.ave())/(sqrt(2.0)*FIN_RES[i].err()));
-      if ( ss > syst) syst=ss;
+      if(FIN_RES[i].err() > 0) {
+
+	double ss= fabs( FIN_RES[i].ave() - FAVE.ave())*erf(  fabs( FIN_RES[i].ave() - FAVE.ave())/(sqrt(2.0)*FIN_RES[i].err()));
+	if ( ss > syst) syst=ss;
+      }
     }
   }
 
@@ -556,18 +559,19 @@ void tau_decay_analysis_strange() {
   double sqrt_R_exp_err= 0.5*R_exp_err/sqrt_R_exp_ave;
 
 
+  if(FAVE.err() > 0) {
   
 
-  distr_t FF= FAVE.ave() + (FAVE-FAVE.ave())*sqrt( pow(FAVE.err(),2) + syst*syst)/FAVE.err();
+    distr_t FF= FAVE.ave() + (FAVE-FAVE.ave())*sqrt( pow(FAVE.err(),2) + syst*syst)/FAVE.err();
 	
 	
-  distr_t sqrt_Rinv_lat= SQRT_D(1.0/(FF));
+    distr_t sqrt_Rinv_lat= SQRT_D(1.0/(FF));
 
-  double sqrt_Rinv_lat_bis_err= (0.5/pow(FF.ave(), 3.0/2.0))*0.022;
+    double sqrt_Rinv_lat_bis_err= (0.5/pow(FF.ave(), 3.0/2.0))*0.022;
   
-  cout<<"Vus: "<<sqrt_Rinv_lat.ave()*sqrt_R_exp_ave<<"("<<sqrt_Rinv_lat.err()*sqrt_R_exp_ave<<")_lat ("<<sqrt_Rinv_lat.ave()*sqrt_R_exp_err<<")_exp"<<" ("<<sqrt( pow( sqrt_Rinv_lat.err()*sqrt_R_exp_ave,2) + pow(sqrt_Rinv_lat.ave()*sqrt_R_exp_err,2))<<")"<<endl;
-  cout<<"Vus_bis"<<sqrt_Rinv_lat.ave()*sqrt_R_exp_ave<<"("<<sqrt_Rinv_lat_bis_err*sqrt_R_exp_ave<<")_lat ("<<sqrt_Rinv_lat.ave()*sqrt_R_exp_err<<")_exp"<<" ("<<sqrt( pow( sqrt_Rinv_lat.err()*sqrt_R_exp_ave,2) + pow(sqrt_Rinv_lat.ave()*sqrt_R_exp_err,2))<<")"<<endl;
-
+    cout<<"Vus: "<<sqrt_Rinv_lat.ave()*sqrt_R_exp_ave<<"("<<sqrt_Rinv_lat.err()*sqrt_R_exp_ave<<")_lat ("<<sqrt_Rinv_lat.ave()*sqrt_R_exp_err<<")_exp"<<" ("<<sqrt( pow( sqrt_Rinv_lat.err()*sqrt_R_exp_ave,2) + pow(sqrt_Rinv_lat.ave()*sqrt_R_exp_err,2))<<")"<<endl;
+    cout<<"Vus_bis"<<sqrt_Rinv_lat.ave()*sqrt_R_exp_ave<<"("<<sqrt_Rinv_lat_bis_err*sqrt_R_exp_ave<<")_lat ("<<sqrt_Rinv_lat.ave()*sqrt_R_exp_err<<")_exp"<<" ("<<sqrt( pow( sqrt_Rinv_lat.err()*sqrt_R_exp_ave,2) + pow(sqrt_Rinv_lat.ave()*sqrt_R_exp_err,2))<<")"<<endl;
+  }
 }
 
 
@@ -575,6 +579,7 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
 
 
   distr_t RET(UseJack);
+  RET= Get_id_jack_distr(Njacks);
 
   PrecFloat::setDefaultPrecision(prec);
   cout<<"max possible exponent: "<<PrecFloat::getEmax_max()<<endl;
