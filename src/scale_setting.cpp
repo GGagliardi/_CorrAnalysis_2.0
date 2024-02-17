@@ -1901,6 +1901,8 @@ void Determine_scale_from_fp_FLAG(const distr_t_list &Mpi_phys_point, const dist
     cout<<"E ensemble: "<< a_distr_E.ave()<<" +- "<<a_distr_E.err()<<" [GeV-1]    "<<(a_distr_E/fm_to_iGev).ave()<<" +- "<<(a_distr_E/fm_to_iGev).err()<<" [fm] "<<endl;
 
 
+ 
+
     
 
   return;

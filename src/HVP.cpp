@@ -205,8 +205,7 @@ void HVP() {
   double fm_to_inv_Gev= 1.0/0.197327;
 
 
-
-  int NB=2000;
+  int NB=20000;
 
   double GF=  1.1663787*1e-5;
   double hbar= 6.582119569*1e-25;
@@ -370,8 +369,15 @@ void HVP() {
   Vud= SQRT_D(Vud);
 
 
+  distr_t FK_T_Vus_2 =  (1.0/( GF*GF*(1.0/(16*M_PI*hbar))*LT_tau*pow(mt,3)*pow( 1 - pow(mk/mt,2),2)*SEW*dR_TK/B_TK));
+
+  cout<<"|f_k * Vus |^2_tau : "<<FK_T_Vus_2.ave()<<" +- "<<FK_T_Vus_2.err()<<endl;
+
+
   cout<<"Vus: "<<Vus.ave()<<" +- "<<Vus.err()<<endl;
   cout<<"Vud: "<<Vud.ave()<<" +- "<<Vud.err()<<endl;
+
+  //exit(-1);
    
 
   
@@ -633,7 +639,7 @@ void HVP() {
     }
 
 
-    bool Get_ASCII_charm= true;
+    bool Get_ASCII_charm= false;
 
     if(Get_ASCII_charm) {
     //read binary files
@@ -711,7 +717,7 @@ void HVP() {
     };
    
 
-  
+    
 
     data_t V_strange_L, V_strange_OS_L, V_strange_M, V_strange_OS_M;
     data_t corr_P5P5_strange, corr_P5P5_OS_strange, corr_P5P5_strange_heavy, corr_P5P5_OS_strange_heavy;
@@ -831,12 +837,24 @@ void HVP() {
   distr_t_list RA_L = 2*ams1*corr_s_P_L_OS/(distr_t_list::derivative(corr_s_AP_L_OS, 0)); 
   distr_t_list RA_M = 2*ams2*corr_s_P_M_OS/(distr_t_list::derivative(corr_s_AP_M_OS, 0));
 
+  D(1);
+
 
   RA_L = RA_L*(Meta_OS_L/Meta_tm_L)*(SINH_D(Meta_OS_L)/SINH_D(Meta_tm_L))*Corr.matrix_element_t(corr_s_P_L_tm, "")/Corr.matrix_element_t(corr_s_P_L_OS, "");
   RA_M = RA_M*(Meta_OS_M/Meta_tm_M)*(SINH_D(Meta_OS_M)/SINH_D(Meta_tm_M))*Corr.matrix_element_t(corr_s_P_M_tm, "")/Corr.matrix_element_t(corr_s_P_M_OS, "");
 
+
+  distr_t_list Zp_ov_Zs_L_distr = 1.0/(Corr.matrix_element_t(corr_s_P_L_tm, "")/Corr.matrix_element_t(corr_s_P_L_OS, "") );
+  distr_t_list Zp_ov_Zs_M_distr = 1.0/(Corr.matrix_element_t(corr_s_P_M_tm, "")/Corr.matrix_element_t(corr_s_P_M_OS, "") );
+
+  D(2);
+
   Print_To_File({}, {RV_L.ave(), RV_L.err(), RV_M.ave(), RV_M.err()} , "../data/RC_analysis_E/RV.dat", "", "");
   Print_To_File({}, {RA_L.ave(), RA_L.err(), RA_M.ave(), RA_M.err()} , "../data/RC_analysis_E/RA.dat", "", "");
+
+  Print_To_File({}, {Zp_ov_Zs_L_distr.ave(), Zp_ov_Zs_L_distr.err(), Zp_ov_Zs_M_distr.ave(), Zp_ov_Zs_M_distr.err()} , "../data/RC_analysis_E/Zp_ov_Zs.dat", "", "");
+
+  D(3);
 
   Corr.Tmin=47;
   Corr.Tmax=100;
@@ -845,6 +863,10 @@ void HVP() {
   distr_t Zv_M = Corr.Fit_distr(RV_M);
   distr_t Za_L = Corr.Fit_distr(RA_L);
   distr_t Za_M = Corr.Fit_distr(RA_M);
+
+
+  distr_t Zp_ov_Zs_L = Corr.Fit_distr(Zp_ov_Zs_L_distr);
+  distr_t Zp_ov_Zs_M = Corr.Fit_distr(Zp_ov_Zs_M_distr);
 
 
    
@@ -869,12 +891,15 @@ void HVP() {
   vector<distr_t> ms_list( {ms_light_distr, ms_heavy_distr});
   distr_t ms_phys_extr = Obs_extrapolation_meson_mass(ms_list, M2etas_fit, m_etas_phys_distr*m_etas_phys_distr,  "../data/RC_analysis_E", "ms_extrapolation_etas", UseJack, "SPLINE");
 
-  vector<distr_t> Za_hadr_list, Zv_hadr_list;
+  vector<distr_t> Za_hadr_list, Zv_hadr_list, Zp_ov_Zs_hadr_list;
   Za_hadr_list = {Za_L, Za_M};
   Zv_hadr_list = {Zv_L, Zv_M};
+  Zp_ov_Zs_hadr_list ={ Zp_ov_Zs_L, Zp_ov_Zs_M};
+  
 
   distr_t Za = Obs_extrapolation_meson_mass( Za_hadr_list, ms_list, ms_phys_extr, "../data/RC_analysis_E", "Za_extr_quark_mass", UseJack, "SPLINE");
   distr_t Zv = Obs_extrapolation_meson_mass( Zv_hadr_list, ms_list, ms_phys_extr, "../data/RC_analysis_E", "Zv_extr_quark_mass", UseJack, "SPLINE");
+  distr_t Zp_ov_Zs = Obs_extrapolation_meson_mass( Zp_ov_Zs_hadr_list, ms_list, ms_phys_extr, "../data/RC_analysis_E", "Zp_ov_Zs_extr_quark_mass", UseJack, "SPLINE");
 
   //evaluate correlator
 
@@ -921,6 +946,7 @@ void HVP() {
 
   cout<<"Za: "<<Za.ave()<<" "<<Za.err()<<endl;
   cout<<"Zv: "<<Zv.ave()<<" "<<Zv.err()<<endl;
+  cout<<"Zp/Zs: "<<Zp_ov_Zs.ave()<<" "<<Zp_ov_Zs.err()<<endl;
   
   
   cout<<"tm: "<<agm2_SD_tm.ave()<<" "<<agm2_SD_tm.err()<<endl;
@@ -1042,27 +1068,27 @@ void HVP() {
     distr_t_list amu_HVP_theta(UseJack);
     vector<int> Tcut_opt_theta;
 
-    double M1 = 0.750*a_distr.ave(); double M2= 0.850*a_distr.ave(); double M3=0.95*a_distr.ave();
-    double M4=1.2*a_distr.ave(), M5 = 1.5*a_distr.ave(), M6 = 2.0*a_distr.ave();
+    double M1 = 0.750*a_distr.ave(); double M2= 0.850*a_distr.ave(); double M3=0.925*a_distr.ave();
+    double M4=1.2*a_distr.ave(), M5 = 1.5*a_distr.ave(), M6 = 1.75*a_distr.ave();
 
     double M1p = 0.775*a_distr.ave(); double M2p= 0.875*a_distr.ave(); double M3p=0.975*a_distr.ave();
     double M4p=1.4*a_distr.ave(), M5p = 1.7*a_distr.ave(), M6p = 2.2*a_distr.ave();
 
-    auto C1 = [&M1, &a_distr, T=Corr.Nt](double t) { return 0.5*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M1*t) + exp(-M1*(T-t))); };
-    auto C2 = [&M2, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M2*t) + exp(-M2*(T-t))); };
-    auto C3 = [&M3, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M3*t) + exp(-M3*(T-t))); };
+    auto C1 = [&M1, &a_distr, T=Corr.Nt](double t) { return 0.6*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M1*t) + exp(-M1*(T-t))); };
+    auto C2 = [&M2, &a_distr, T=Corr.Nt](double t) { return 1.4e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M2*t) + exp(-M2*(T-t))); };
+    auto C3 = [&M3, &a_distr, T=Corr.Nt](double t) { return 2e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M3*t) + exp(-M3*(T-t))); };
 
-    auto C4 = [&M4, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M4*t) + exp(-M4*(T-t))); };
-    auto C5 = [&M5, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M5*t) + exp(-M5*(T-t))); };
-    auto C6 = [&M6, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M6*t) + exp(-M6*(T-t))); };
+    auto C4 = [&M4, &a_distr, T=Corr.Nt](double t) { return 1.4e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M4*t) + exp(-M4*(T-t))); };
+    auto C5 = [&M5, &a_distr, T=Corr.Nt](double t) { return 1.5e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M5*t) + exp(-M5*(T-t))); };
+    auto C6 = [&M6, &a_distr, T=Corr.Nt](double t) { return 3e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M6*t) + exp(-M6*(T-t))); };
 
-    auto C1p = [&M1p, &a_distr, T=Corr.Nt](double t) { return 0.5*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M1p*t) + exp(-M1p*(T-t))); };
-    auto C2p = [&M2p, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M2p*t) + exp(-M2p*(T-t))); };
-    auto C3p = [&M3p, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M3p*t) + exp(-M3p*(T-t))); };
+    auto C1p = [&M1p, &a_distr, T=Corr.Nt](double t) { return 0*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M1p*t) + exp(-M1p*(T-t))); };
+    auto C2p = [&M2p, &a_distr, T=Corr.Nt](double t) { return 0*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M2p*t) + exp(-M2p*(T-t))); };
+    auto C3p = [&M3p, &a_distr, T=Corr.Nt](double t) { return 0*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M3p*t) + exp(-M3p*(T-t))); };
 
-    auto C4p = [&M4p, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M4p*t) + exp(-M4p*(T-t))); };
-    auto C5p = [&M5p, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M5p*t) + exp(-M5p*(T-t))); };
-    auto C6p = [&M6p, &a_distr, T=Corr.Nt](double t) { return 1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M6p*t) + exp(-M6p*(T-t))); };
+    auto C4p = [&M4p, &a_distr, T=Corr.Nt](double t) { return 0*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M4p*t) + exp(-M4p*(T-t))); };
+    auto C5p = [&M5p, &a_distr, T=Corr.Nt](double t) { return 0*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M5p*t) + exp(-M5p*(T-t))); };
+    auto C6p = [&M6p, &a_distr, T=Corr.Nt](double t) { return 0*1e10*pow(a_distr.ave(),3)*(1e-3)*(exp(-M6p*t) + exp(-M6p*(T-t))); };
 
 
     distr_t_list Vk_DEFL_bound_tm= Vk_DEFL_tm_distr;

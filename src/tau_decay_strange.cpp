@@ -57,6 +57,8 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   //if(Ens=="cE211a.044.112") Ens="cD211a.054.96";
   //if(Ens=="cB211b.072.96") Ens="cB211b.072.64";
 
+  if(alpha_m > 3) {
+
   
   if( reg=="tm") {
     if(channel=="Aii") {
@@ -121,7 +123,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
     if(channel=="Aii") {
       if(Ens == "cB211b.072.64") { Ra0=1.7e6;   }
       else if(Ens == "cB211b.072.96") { Ra0=1.5e7;   }
-      else if(Ens == "cC211a.06.80") { Ra0=1.2e7;   }  //increase E_th
+      else if(Ens == "cC211a.06.80") { Ra0=1.2e7;   } 
       else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
       else if(Ens == "cD211a.054.96") {  Ra0=5.5e7;  }
       else if(Ens == "cE211a.044.112") {  Ra0=8e6;  }
@@ -177,6 +179,136 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
   }
   
   else crash("In Customized_plateaux_tau_spectre, reg: "+reg+" not yet implemented");
+
+
+  }
+  else {  // alpha=3
+
+
+     if( reg=="tm") {
+       if(channel=="Aii") {
+	 if(Ens == "cB211b.072.64") {  Ra0 =3e6;  }
+	 else if(Ens == "cB211b.072.96") { Ra0= 4e8;   }
+	 else if(Ens == "cC211a.06.80") { Ra0= 6e6;   } 
+	 else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
+	 else if(Ens == "cD211a.054.96") {  Ra0=8e6;  }
+	 else if(Ens == "cE211a.044.112") {  Ra0=4e6;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+       }
+       else if(channel=="Vii") {
+	 if(Ens == "cB211b.072.64") { Ra0=8e5;   }
+	 else if(Ens == "cB211b.072.96") { Ra0= 2.5e7;    } 
+	 else if(Ens == "cC211a.06.80") {  Ra0=3e7;  } 
+	 else if(Ens == "cC211a.06.112") { Ra0= 2e6;   }
+	 else if(Ens == "cD211a.054.96") {  Ra0= 2e7;   }
+	 else if(Ens == "cE211a.044.112") {  Ra0=3e7;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+       }
+       else if(channel=="A0") {
+	 if(Ens == "cB211b.072.64") { Ra0=1e7;   }
+	 else if(Ens == "cB211b.072.96") { Ra0=1e7;   }
+	 else if(Ens == "cC211a.06.80") {  Ra0=1e6;  }
+	 else if(Ens == "cC211a.06.112") { Ra0= 1e6;   }
+	 else if(Ens == "cD211a.054.96") { Ra0=5e7;   }
+	 else if(Ens == "cE211a.044.112") {  Ra0=3.5e8;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+       }
+       else if(channel=="V0") {
+	 if(Ens == "cB211b.072.64") { Ra0=1e6;   }
+	 else if(Ens == "cB211b.072.96") { Ra0=1e6;   }
+	 else if(Ens == "cC211a.06.80") {  Ra0=3e6;  }
+	 else if(Ens == "cC211a.06.112") { Ra0= 4e7;   }
+	 else if(Ens == "cD211a.054.96") { Ra0=2.5e7;   }
+	 else if(Ens == "cE211a.044.112") {  Ra0=1e7;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+       }
+       else if(channel=="T") {
+	 if(Ens == "cB211b.072.64") { Ra0=8e3;   }
+	 else if(Ens == "cB211b.072.96") { Ra0=2e5;   }
+	 else if(Ens == "cC211a.06.80") { Ra0=2e4;   }
+	 else if(Ens == "cC211a.06.112") { Ra0= 2e4;   }
+	 else if(Ens == "cD211a.054.96") { Ra0=4e4;  }
+	 else if(Ens == "cE211a.044.112") {  Ra0=1.5e5;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+       }
+       else if(channel=="L") {
+	 if(Ens == "cB211b.072.64") { Ra0=8e5;   }
+	 else if(Ens == "cB211b.072.96") { Ra0=8e5;   }
+	 else if(Ens == "cC211a.06.80") { Ra0=2.5e5;   }
+	 else if(Ens == "cC211a.06.112") { Ra0= 2.5e5;   }
+	 else if(Ens == "cD211a.054.96") { Ra0=2e6;  }
+	 else if(Ens == "cE211a.044.112") {  Ra0=6e5;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+       }
+       else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
+       
+     }
+     else if(reg=="OS") {
+       
+       if(channel=="Aii") {
+	 if(Ens == "cB211b.072.64") { Ra0=1.7e6;   }
+	 else if(Ens == "cB211b.072.96") { Ra0=1.5e7;   }
+	 else if(Ens == "cC211a.06.80") { Ra0=1.2e7;   }  //increase E_th
+	 else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
+	 else if(Ens == "cD211a.054.96") {  Ra0=5.5e7;  }
+	 else if(Ens == "cE211a.044.112") {  Ra0=8e6;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+       }
+       else if(channel=="Vii") {
+	 if(Ens == "cB211b.072.64") { Ra0=2.5e6; } // Ra0= 6e5;   }
+	 else if(Ens == "cB211b.072.96") {  Ra0= 9e7;    }
+	 else if(Ens == "cC211a.06.80") {   Ra0= 2e7;   }
+	 else if(Ens == "cC211a.06.112") { Ra0= 2e7;   }
+	 else if(Ens == "cD211a.054.96") {  Ra0=2e7;  }
+	 else if(Ens == "cE211a.044.112") {  Ra0=2e7;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+       }
+       else if(channel=="A0") {
+	 if(Ens == "cB211b.072.64") { Ra0=2e5;   }
+	 else if(Ens == "cB211b.072.96") { Ra0=1.6e6;   }
+	 else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
+	 else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
+	 else if(Ens == "cD211a.054.96") { Ra0=3e6;   }
+	 else if(Ens == "cE211a.044.112") {  Ra0=1e8;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+    }
+       else if(channel=="V0") {
+	 if(Ens == "cB211b.072.64") { Ra0=5e7;   }
+	 else if(Ens == "cB211b.072.96") { Ra0=2e8;   }
+	 else if(Ens == "cC211a.06.80") { Ra0=1e9;   }
+	 else if(Ens == "cC211a.06.112") { Ra0= 7e8;   }
+	 else if(Ens == "cD211a.054.96") { Ra0=5e9;  }
+	 else if(Ens == "cE211a.044.112") {  Ra0=5e3;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+    }
+       else if(channel=="T") {
+	 if(Ens == "cB211b.072.64") { Ra0=4.5e3;   }
+	 else if(Ens == "cB211b.072.96") { Ra0=2e5;   }
+	 else if(Ens == "cC211a.06.80") { Ra0=2e4;   }
+	 else if(Ens == "cC211a.06.112") { Ra0= 2e4;   }
+	 else if(Ens == "cD211a.054.96") { Ra0=3.5e4;  }
+	 else if(Ens == "cE211a.044.112") {  Ra0=4e4;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+       }
+       else if(channel=="L") {
+	 if(Ens == "cB211b.072.64") { Ra0=1e5;   }
+	 else if(Ens == "cB211b.072.96") { Ra0=3e5;   }
+	 else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
+	 else if(Ens == "cC211a.06.112") { Ra0= 1.5e6;   }
+	 else if(Ens == "cD211a.054.96") { Ra0=3e6;  }
+	 else if(Ens == "cE211a.044.112") {  Ra0=2e7;  }
+	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+       }
+       else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
+       
+     }
+     
+     else crash("In Customized_plateaux_tau_spectre, reg: "+reg+" not yet implemented");
+     
+     
+     
+     
+  }
   
 
 
@@ -199,7 +331,7 @@ void get_sigma_list_strange() {
   double s_min= 0.004420;
 
   //sigma_list_strange= { 0.004, 0.02, 0.04, 0.08, 0.12, 0.16};
-  sigma_list_strange= { 0.02, 0.04, 0.08, 0.12, 0.16};
+  sigma_list_strange= { 0.01, 0.02, 0.04, 0.08, 0.12, 0.14, 0.16};
   return;
 
  
@@ -357,9 +489,9 @@ void tau_decay_analysis_strange() {
   //Vfloat Emax_list({4.0, 4.0 , 4.0, 4.0, 5.0});
   //vector<bool> Is_Emax_Finite({1,1,1,1,1});
   
-  Vfloat betas({ 3.99 , 4.99 });
-  Vfloat Emax_list({4.0, 4.0});
-  vector<bool> Is_Emax_Finite({1,1});
+  Vfloat betas({ 3.99 , 4.99 , 3.99 });
+  Vfloat Emax_list({4.0, 4.0 , 5.0});
+  vector<bool> Is_Emax_Finite({1,1,1});
 
 
  
@@ -389,14 +521,60 @@ void tau_decay_analysis_strange() {
   }
   cout<<"##########################################"<<endl;
 
+  vector<distr_t> FIN_RES(betas.size());;
+  
+  for(int i=rank*N/size; i<(rank+1)*N/size;i++) {FIN_RES[i] = Compute_tau_decay_width_strange(Is_Emax_Finite[i], Emax_list[i], betas[i]);}
+
+
+  double syst=0;
+  distr_t FAVE(UseJack);
+  for(int i=0;i<(signed)betas.size();i++) {
+    if(betas[i] == 3.99 && Emax_list[i] == 4.0) FAVE=FIN_RES[i];
+  }
+  
+  for(int i=0;i<(signed)betas.size();i++) {
+
+    if(betas[i] != 3.99 || Emax_list[i] != 4.0) {
+
+      double ss= fabs( FIN_RES[i].ave() - FAVE.ave())*erf(  fabs( FIN_RES[i].ave() - FAVE.ave())/(sqrt(2.0)*FIN_RES[i].err()));
+      if ( ss > syst) syst=ss;
+    }
+  }
+
+
+  cout<<"FINAL RESULT: "<<endl;
+  cout<<FAVE.ave()<<" +- "<<FAVE.err()<<" +- "<<syst<<endl;
+
+
+  cout<<"Final determination of Vus"<<endl;
+
+  	
+  distr_t R_exp(UseJack);
+  double R_exp_ave= 0.1633;
+  double R_exp_err=0.0027;
+  double sqrt_R_exp_ave= sqrt(R_exp_ave);
+  double sqrt_R_exp_err= 0.5*R_exp_err/sqrt_R_exp_ave;
+
 
   
-  for(int i=rank*N/size; i<(rank+1)*N/size;i++) {Compute_tau_decay_width_strange(Is_Emax_Finite[i], Emax_list[i], betas[i]);}
+
+  distr_t FF= FAVE.ave() + (FAVE-FAVE.ave())*sqrt( pow(FAVE.err(),2) + syst*syst)/FAVE.err();
+	
+	
+  distr_t sqrt_Rinv_lat= SQRT_D(1.0/(FF));
+
+  double sqrt_Rinv_lat_bis_err= (0.5/pow(FF.ave(), 3.0/2.0))*0.022;
+  
+  cout<<"Vus: "<<sqrt_Rinv_lat.ave()*sqrt_R_exp_ave<<"("<<sqrt_Rinv_lat.err()*sqrt_R_exp_ave<<")_lat ("<<sqrt_Rinv_lat.ave()*sqrt_R_exp_err<<")_exp"<<" ("<<sqrt( pow( sqrt_Rinv_lat.err()*sqrt_R_exp_ave,2) + pow(sqrt_Rinv_lat.ave()*sqrt_R_exp_err,2))<<")"<<endl;
+  cout<<"Vus_bis"<<sqrt_Rinv_lat.ave()*sqrt_R_exp_ave<<"("<<sqrt_Rinv_lat_bis_err*sqrt_R_exp_ave<<")_lat ("<<sqrt_Rinv_lat.ave()*sqrt_R_exp_err<<")_exp"<<" ("<<sqrt( pow( sqrt_Rinv_lat.err()*sqrt_R_exp_ave,2) + pow(sqrt_Rinv_lat.ave()*sqrt_R_exp_err,2))<<")"<<endl;
 
 }
 
 
-void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double beta) {
+distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double beta) {
+
+
+  distr_t RET(UseJack);
 
   PrecFloat::setDefaultPrecision(prec);
   cout<<"max possible exponent: "<<PrecFloat::getEmax_max()<<endl;
@@ -494,6 +672,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/FSE/OS");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/summary");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/pull");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/FK");
   
 
   cout<<"done!"<<endl;
@@ -694,6 +873,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
   data_t ls_ph_data_tm_VKVK, ls_ph_data_tm_V0V0, ls_ph_data_tm_AKAK, ls_ph_data_tm_A0A0;
   data_t ls_ph_data_OS_VKVK, ls_ph_data_OS_V0V0, ls_ph_data_OS_AKAK, ls_ph_data_OS_A0A0;
+  data_t ls_ph_data_tm_P5P5;
 
 
   //light 
@@ -702,6 +882,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   ls_ph_data_tm_V0V0.Read("../tau_decay_strange/light_mass_correction/mix_l2_s", "mes_contr_mix_l2_s_TM_V0V0", "V0V0", Sort_easy);
   ls_ph_data_tm_AKAK.Read("../tau_decay_strange/light_mass_correction/mix_l2_s", "mes_contr_mix_l2_s_TM_AKAK", "AKAK", Sort_easy);
   ls_ph_data_tm_A0A0.Read("../tau_decay_strange/light_mass_correction/mix_l2_s", "mes_contr_mix_l2_s_TM_A0A0", "A0A0", Sort_easy);
+  ls_ph_data_tm_P5P5.Read("../tau_decay_strange/light_mass_correction/mix_l2_s", "mes_contr_mix_l2_s_TM_P5P5", "P5P5", Sort_easy);
   //OS
   ls_ph_data_OS_VKVK.Read("../tau_decay_strange/light_mass_correction/mix_l2_s", "mes_contr_mix_l2_s_OS_VKVK", "VKVK", Sort_easy);
   ls_ph_data_OS_V0V0.Read("../tau_decay_strange/light_mass_correction/mix_l2_s", "mes_contr_mix_l2_s_OS_V0V0", "V0V0", Sort_easy);
@@ -713,6 +894,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
   data_t ls_uni_data_tm_VKVK, ls_uni_data_tm_V0V0, ls_uni_data_tm_AKAK, ls_uni_data_tm_A0A0;
   data_t ls_uni_data_OS_VKVK, ls_uni_data_OS_V0V0, ls_uni_data_OS_AKAK, ls_uni_data_OS_A0A0;
+  data_t ls_uni_data_tm_P5P5;
 
 
 
@@ -723,6 +905,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   ls_uni_data_tm_V0V0.Read("../tau_decay_strange/light_mass_correction/mix_l1_s", "mes_contr_mix_l1_s_TM_V0V0", "V0V0", Sort_easy);
   ls_uni_data_tm_AKAK.Read("../tau_decay_strange/light_mass_correction/mix_l1_s", "mes_contr_mix_l1_s_TM_AKAK", "AKAK", Sort_easy);
   ls_uni_data_tm_A0A0.Read("../tau_decay_strange/light_mass_correction/mix_l1_s", "mes_contr_mix_l1_s_TM_A0A0", "A0A0", Sort_easy);
+  ls_uni_data_tm_P5P5.Read("../tau_decay_strange/light_mass_correction/mix_l1_s", "mes_contr_mix_l1_s_TM_P5P5", "P5P5", Sort_easy);
   //OS
   ls_uni_data_OS_VKVK.Read("../tau_decay_strange/light_mass_correction/mix_l1_s", "mes_contr_mix_l1_s_OS_VKVK", "VKVK", Sort_easy);
   ls_uni_data_OS_V0V0.Read("../tau_decay_strange/light_mass_correction/mix_l1_s", "mes_contr_mix_l1_s_OS_V0V0", "V0V0", Sort_easy);
@@ -978,11 +1161,29 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
  
   distr_t Mk_iso(UseJack);
-  for(int ijack=0;ijack<Njacks;ijack++) { Mk_iso.distr.push_back( m_kappa + GM()*m_kappa_err/sqrt(Njacks-1.0));} 
+  for(int ijack=0;ijack<Njacks;ijack++) { Mk_iso.distr.push_back( m_kappa + GM()*m_kappa_err/sqrt(Njacks-1.0));}
+
+
+  //pion masses in lattice units
+  double amp_B_ave= 0.0565313; double amp_B_err= 1.438e-05;
+  double amp_C_ave= 0.0472193; double amp_C_err= 3.45183e-05;
+  double amp_D_ave= 0.0406214; double amp_D_err= 2.94047e-05;
+  double amp_E_ave= 0.0338185; double amp_E_err= 3.18799e-05;
+
+  distr_t aMp_B(UseJack), aMp_C(UseJack), aMp_D(UseJack), aMp_E(UseJack);
+
+  for(int ijack=0;ijack<Njacks;ijack++ ) {
+
+    aMp_B.distr.push_back( amp_B_ave + GM()*amp_B_err/sqrt(Njacks-1.0));
+    aMp_C.distr.push_back( amp_C_ave + GM()*amp_C_err/sqrt(Njacks-1.0));
+    aMp_D.distr.push_back( amp_D_ave + GM()*amp_D_err/sqrt(Njacks-1.0));
+    aMp_E.distr.push_back( amp_E_ave + GM()*amp_E_err/sqrt(Njacks-1.0));
+
+  }
   
  
   
-
+  distr_t_list FK_list(UseJack); distr_t_list a_distr_list(UseJack);
 
   //loop over the ensembles
   for(int iens=0; iens<Nens;iens++) {
@@ -1084,7 +1285,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
      else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; Zv_BOOT= ZV_D_boot; Za_BOOT=ZA_D_boot; }
      else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="E") {a_distr=a_E; Zv = ZV_E; Za = ZA_E; Zv_BOOT= ZV_E_boot; Za_BOOT=ZA_E_boot; }
      else crash("lattice spacing distribution for Ens: "+ls_data_tm_VKVK.Tag[iens]+" not found");
-     
+
+
+     a_distr_list.distr_list.push_back( a_distr/fm_to_inv_Gev);
   
 
    
@@ -1223,6 +1426,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
      distr_t_list V0V0_OS_dm_distr(UseJack), VKVK_OS_dm_distr(UseJack),  A0A0_OS_dm_distr(UseJack), AKAK_OS_dm_distr(UseJack);
 
+     distr_t_list P5P5_tm_L1(UseJack), P5P5_tm_L2(UseJack);
+
 
      //light- quark mass corrections bootstrap
 
@@ -1237,9 +1442,16 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
        if( ls_ph_data_OS_A0A0.Tag[j] == ll_data_OS_P5P5.Tag[iens]) { read_dm=true; iens_dm=j;}
      }
 
+     P5P5_tm_L1 = Corr.corr_t( ls_ph_data_tm_P5P5.col(0)[iens_dm], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/P5P5_L1_tm_"+ls_H_data_tm_V0V0.Tag[iens]+".dat");
+     P5P5_tm_L2 = Corr.corr_t( ls_uni_data_tm_P5P5.col(0)[iens_dm], "../data/tau_decay/"+Tag_reco_type+"/strange/corr/P5P5_L2_tm_"+ls_H_data_tm_V0V0.Tag[iens]+".dat");
+
+     
+
      if(!read_dm) crash("Cannot find dm-corrections for ensemble: "+ll_data_OS_P5P5.Tag[iens]);
 
      if(read_dm) {
+
+      
        
        V0V0_tm_dm_distr = Corr.corr_t( summ_master( ls_ph_data_tm_V0V0.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_tm_V0V0.col(0)[iens_dm], -1.0))  , "../data/tau_decay/"+Tag_reco_type+"/strange/corr/V0_dm_tm_"+ls_H_data_tm_V0V0.Tag[iens]+".dat");
        VKVK_tm_dm_distr = Corr.corr_t( summ_master( ls_ph_data_tm_VKVK.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_tm_VKVK.col(0)[iens_dm], -1.0))  , "../data/tau_decay/"+Tag_reco_type+"/strange/corr/VK_dm_tm_"+ls_H_data_tm_VKVK.Tag[iens]+".dat");
@@ -1264,6 +1476,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
        A0A0_OS_block_1_dm_distr = Corr_block_1.corr_t( summ_master( ls_ph_data_OS_A0A0.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_OS_A0A0.col(0)[iens_dm], -1.0)), "");
        AKAK_OS_block_1_dm_distr = Corr_block_1.corr_t( summ_master( ls_ph_data_OS_AKAK.col(0)[iens_dm],  Multiply_Vvector_by_scalar(ls_uni_data_OS_AKAK.col(0)[iens_dm], -1.0)), "");
 
+
+    
+       
        V0_tm_distr = V0_tm_distr + V0V0_tm_dm_distr;
        Vk_tm_distr = Vk_tm_distr + VKVK_tm_dm_distr;
        A0_tm_distr = A0_tm_distr + A0A0_tm_dm_distr;
@@ -1412,31 +1627,40 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
     int Tmin_P5=0;
     int Tmax_P5=0;
-    if( ls_data_tm_VKVK.Tag[iens] =="cB211b.072.96")     { Tmin_P5=33; Tmax_P5=57;}
-    else if(ls_data_tm_VKVK.Tag[iens] =="cB211b.072.64") { Tmin_P5=45; Tmax_P5=59;}
-    else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C")  { Tmin_P5=35; Tmax_P5=63;}
-    else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D")  { Tmin_P5=37; Tmax_P5=72;}
-    else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="E")  { Tmin_P5=60; Tmax_P5=85;}
-    else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="Z")  { Tmin_P5=26; Tmax_P5=45;}
+    double amL1=0;
+    double amSS1=0;
+    distr_t aMP(UseJack);
+    if( ls_data_tm_VKVK.Tag[iens] =="cB211b.072.96")     { Tmin_P5=38; Tmax_P5=59; amL1= 0.0006675; amSS1=0.018254 ; aMP=aMp_B;}
+    else if(ls_data_tm_VKVK.Tag[iens] =="cB211b.072.64") { Tmin_P5=45; Tmax_P5=59; amL1= 0.0006675; amSS1=0.018254 ; aMP=aMp_B;}
+    else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C")  { Tmin_P5=36; Tmax_P5=63; amL1= 0.000585; amSS1=0.016067; aMP=aMp_C;}
+    else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D")  { Tmin_P5=37; Tmax_P5=69; amL1= 0.0004964; amSS1=0.013557; aMP=aMp_D;}
+    else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="E")  { Tmin_P5=60; Tmax_P5=85; amL1= 0.000431; amSS1=0.011759; aMP=aMp_E;}
     else crash("Cannot recognize the ensemble: "+ls_data_tm_VKVK.Tag[iens]+" in assigning Tmin_P5,Tmax_P5 for ensemble: ");
 
     Corr.Tmin = Tmin_P5; Corr.Tmax= Tmax_P5;
 
     distr_t MK1= Corr.Fit_distr( M_K_tm )/a_distr;
-    distr_t FK1= Corr.Fit_distr( Corr.decay_constant_t( pow(2*ams1, 2)*P5_tm_distr, ""))/a_distr;
+    distr_t FK1= Corr.Fit_distr( Corr.decay_constant_t( pow(ams1+aml, 2)*P5_tm_distr, "../data/tau_decay/"+Tag_reco_type+"/strange/FK/FK1_"+ls_data_tm_VKVK.Tag[iens]))/a_distr;
 
     distr_t MK2= Corr.Fit_distr( M_K_H_tm )/a_distr;
-    distr_t FK2= Corr.Fit_distr( Corr.decay_constant_t( pow(2*ams2, 2)*P5_H_tm_distr, ""))/a_distr;
+    distr_t FK2= Corr.Fit_distr( Corr.decay_constant_t( pow(ams2+aml, 2)*P5_H_tm_distr,  "../data/tau_decay/"+Tag_reco_type+"/strange/FK/FK2_"+ls_data_tm_VKVK.Tag[iens]))/a_distr;
 
+    distr_t FK_L1 = Corr.Fit_distr( Corr.decay_constant_t( pow(amSS1+amL1,2)*P5P5_tm_L1,  "../data/tau_decay/"+Tag_reco_type+"/strange/FK/FKL1_"+ls_data_tm_VKVK.Tag[iens]))/a_distr;
+    distr_t FK_L2 = Corr.Fit_distr( Corr.decay_constant_t( pow(amSS1+aml,2)*P5P5_tm_L2,  "../data/tau_decay/"+Tag_reco_type+"/strange/FK/FKL2_"+ls_data_tm_VKVK.Tag[iens]))/a_distr;
 
     //determine physical strange quark mass
 
     vector<distr_t> MMK2({MK1*MK1, MK2*MK2});
+    vector<distr_t> FFK({ FK1, FK2});
     vector<distr_t> MMS({ Get_id_jack_distr(Njacks)*ams1, Get_id_jack_distr(Njacks)*ams2});
+
+    distr_t Mk_iso_corr= SQRT_D(  Mk_iso*Mk_iso + 0.5*( POW_D(aMP/a_distr,2)    - pow(0.135,2)));
 
     distr_t ams_phys = Obs_extrapolation_meson_mass(MMS, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "ams_extrapolation_"+ls_data_tm_VKVK.Tag[iens]+".dat",  UseJack, "SPLINE" );
     
+    distr_t FK =  Obs_extrapolation_meson_mass(FFK, MMK2, Mk_iso_corr*Mk_iso_corr ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "FK_extrapolation_"+ls_data_tm_VKVK.Tag[iens]+".dat",  UseJack, "SPLINE" ) + FK_L1 - FK_L2;
 
+    FK_list.distr_list.push_back(FK);
     
        
     if(!Skip_spectral_density_analysis_strange) {
@@ -2798,8 +3022,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
    
     
   
-    
-   
+  
+  //print FK
+  Print_To_File( {}, {a_distr_list.ave(), FK_list.ave(), FK_list.err() }, "../data/tau_decay/"+Tag_reco_type+"/strange/FK/FK.list", "", "");  
   
   if(!Skip_spectral_density_analysis_strange) {
 
@@ -2852,6 +3077,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   }
 
   cout<<"output per sigma printed!"<<endl;
+
+ 
 
 
 
@@ -2964,11 +3191,12 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
 
     
-    vector<string> Contribs({"A0A0", "V0V0", "AkAk", "VkVk", "tot", "VA", "VMA", "AX", "T", "L", "tot_TL"});
+    //vector<string> Contribs({"A0A0", "V0V0", "AkAk", "VkVk", "tot", "VA", "VMA", "AX", "T", "L", "tot_TL"});
+    vector<string> Contribs({"T", "L", "tot_TL"});
     //vector<string> Fit_types({"tm", "OS", "comb"});
     vector<string> Fit_types({"comb"});
     //vector<string> poly_types({"const", "linear"});
-    vector<string> poly_types({"const", "linear", "tm_linear", "OS_linear"});
+    vector<string> poly_types({"const", "linear", "tm_linear", "OS_linear", "quad", "tm_quad", "OS_quad"});
     
     distr_t_list test(UseJack);
     map< tuple<string,string,string> , distr_t_list> res_map;
@@ -3016,6 +3244,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     vector<distr_t_list> T_OS_all_s(sigma_list_strange.size());
     vector<distr_t_list> L_OS_all_s(sigma_list_strange.size());
 
+    distr_t_list tot_TL_Ens_E_tm(UseJack), tot_TL_Ens_E_OS(UseJack);
+
     //load systematic errors
 
      
@@ -3059,6 +3289,10 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     Vfloat FSE_C_A0A0_OS, FSE_C_V0V0_OS, FSE_C_AkAk_OS, FSE_C_VkVk_OS, FSE_C_T_OS, FSE_C_L_OS;
 
     Vfloat FSE_C_A0A0, FSE_C_V0V0, FSE_C_AkAk, FSE_C_VkVk, FSE_C_T, FSE_C_L;
+
+
+    Vfloat pl_T_tm_distr, pl_T_OS_distr, pl_L_tm_distr, pl_L_OS_distr;
+    Vfloat pl_BIS_T_tm_distr, pl_BIS_T_OS_distr, pl_BIS_L_tm_distr, pl_BIS_L_OS_distr;
 
    
   
@@ -3208,6 +3442,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       double corr_fact_err_VkVk_FSE, corr_fact_err_VkVk_FSE_tm, corr_fact_err_VkVk_FSE_OS;
       double corr_fact_err_T_FSE, corr_fact_err_T_FSE_tm, corr_fact_err_T_FSE_OS;
       double corr_fact_err_L_FSE, corr_fact_err_L_FSE_tm, corr_fact_err_L_FSE_OS;
+
+      double pl_T_tm, pl_T_OS, pl_L_tm, pl_L_OS;
       
       int id_C80=-1;
       int id_C112=-1;
@@ -3225,6 +3461,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       double corr_fact_BIS_err_VkVk_FSE, corr_fact_BIS_err_VkVk_FSE_tm, corr_fact_BIS_err_VkVk_FSE_OS;
       double corr_fact_BIS_err_T_FSE, corr_fact_BIS_err_T_FSE_tm, corr_fact_BIS_err_T_FSE_OS;
       double corr_fact_BIS_err_L_FSE, corr_fact_BIS_err_L_FSE_tm, corr_fact_BIS_err_L_FSE_OS;
+
+      double pl_BIS_T_tm, pl_BIS_T_OS, pl_BIS_L_tm, pl_BIS_L_OS;
       
       int id_B64=-1;
       int id_B96=-1;
@@ -3251,62 +3489,68 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       
 
       //A0A0
-      corr_fact_A0A0_FSE_tm = fabs(((A0A0_tm.ave(id_C112) - A0A0_tm.ave(id_C80))/(A0A0_tm.ave(id_C80)))*erf( (A0A0_tm.ave(id_C112)-A0A0_tm.ave(id_C80))/(sqrt(2.0*( pow( A0A0_tm.err(id_C112)  ,2)  + pow( A0A0_tm.err(id_C80) ,2)   )))));
-      corr_fact_A0A0_FSE_OS = fabs(((A0A0_OS.ave(id_C112) - A0A0_OS.ave(id_C80))/(A0A0_OS.ave(id_C80)))*erf( (A0A0_OS.ave(id_C112)-A0A0_OS.ave(id_C80))/(sqrt(2.0*( pow( A0A0_OS.err(id_C112)  ,2)  + pow( A0A0_OS.err(id_C80) ,2)   )))));
+      corr_fact_A0A0_FSE_tm = ((A0A0_tm.ave(id_C112) - A0A0_tm.ave(id_C80))/(A0A0_tm.ave(id_C80)))*fabs(erf( (A0A0_tm.ave(id_C112)-A0A0_tm.ave(id_C80))/(sqrt(2.0*( pow( A0A0_tm.err(id_C112)  ,2)  + pow( A0A0_tm.err(id_C80) ,2)   )))));
+      corr_fact_A0A0_FSE_OS = ((A0A0_OS.ave(id_C112) - A0A0_OS.ave(id_C80))/(A0A0_OS.ave(id_C80)))*fabs(erf( (A0A0_OS.ave(id_C112)-A0A0_OS.ave(id_C80))/(sqrt(2.0*( pow( A0A0_OS.err(id_C112)  ,2)  + pow( A0A0_OS.err(id_C80) ,2)   )))));
 
-      corr_fact_err_A0A0_FSE_tm = fabs((( (A0A0_tm.distr_list[id_C112] - A0A0_tm.distr_list[id_C80]).err()  )/(A0A0_tm.ave(id_C80)))*erf( (A0A0_tm.ave(id_C112)-A0A0_tm.ave(id_C80))/(sqrt(2.0*( pow( A0A0_tm.err(id_C112)  ,2)  + pow( A0A0_tm.err(id_C80) ,2)   )))));
-      corr_fact_err_A0A0_FSE_OS = fabs((( (A0A0_OS.distr_list[id_C112] - A0A0_OS.distr_list[id_C80]).err() )/(A0A0_OS.ave(id_C80)))*erf( (A0A0_OS.ave(id_C112)-A0A0_OS.ave(id_C80))/(sqrt(2.0*( pow( A0A0_OS.err(id_C112)  ,2)  + pow( A0A0_OS.err(id_C80) ,2)   )))));
+      corr_fact_err_A0A0_FSE_tm = fabs((( (A0A0_tm.distr_list[id_C112] - A0A0_tm.distr_list[id_C80]).err()  )/(A0A0_tm.ave(id_C80))))*fabs(erf( (A0A0_tm.ave(id_C112)-A0A0_tm.ave(id_C80))/(sqrt(2.0*( pow( A0A0_tm.err(id_C112)  ,2)  + pow( A0A0_tm.err(id_C80) ,2)   )))));
+      corr_fact_err_A0A0_FSE_OS = fabs((( (A0A0_OS.distr_list[id_C112] - A0A0_OS.distr_list[id_C80]).err() )/(A0A0_OS.ave(id_C80))))*fabs(erf( (A0A0_OS.ave(id_C112)-A0A0_OS.ave(id_C80))/(sqrt(2.0*( pow( A0A0_OS.err(id_C112)  ,2)  + pow( A0A0_OS.err(id_C80) ,2)   )))));
       
-      corr_fact_A0A0_FSE = max(corr_fact_A0A0_FSE_tm, corr_fact_A0A0_FSE_OS);
+      corr_fact_A0A0_FSE = max(fabs(corr_fact_A0A0_FSE_tm), fabs(corr_fact_A0A0_FSE_OS));
     
       //V0V0
-      corr_fact_V0V0_FSE_tm = fabs(((V0V0_tm.ave(id_C112) - V0V0_tm.ave(id_C80))/(V0V0_tm.ave(id_C80)))*erf( (V0V0_tm.ave(id_C112)-V0V0_tm.ave(id_C80))/(sqrt(2.0*( pow( V0V0_tm.err(id_C112)  ,2)  + pow( V0V0_tm.err(id_C80) ,2)   )))));
-      corr_fact_V0V0_FSE_OS = fabs(((V0V0_OS.ave(id_C112) - V0V0_OS.ave(id_C80))/(V0V0_OS.ave(id_C80)))*erf( (V0V0_OS.ave(id_C112)-V0V0_OS.ave(id_C80))/(sqrt(2.0*( pow( V0V0_OS.err(id_C112)  ,2)  + pow( V0V0_OS.err(id_C80) ,2)   )))));
+      corr_fact_V0V0_FSE_tm = ((V0V0_tm.ave(id_C112) - V0V0_tm.ave(id_C80))/(V0V0_tm.ave(id_C80)))*fabs(erf( (V0V0_tm.ave(id_C112)-V0V0_tm.ave(id_C80))/(sqrt(2.0*( pow( V0V0_tm.err(id_C112)  ,2)  + pow( V0V0_tm.err(id_C80) ,2)   )))));
+      corr_fact_V0V0_FSE_OS = ((V0V0_OS.ave(id_C112) - V0V0_OS.ave(id_C80))/(V0V0_OS.ave(id_C80)))*fabs(erf( (V0V0_OS.ave(id_C112)-V0V0_OS.ave(id_C80))/(sqrt(2.0*( pow( V0V0_OS.err(id_C112)  ,2)  + pow( V0V0_OS.err(id_C80) ,2)   )))));
 
-      corr_fact_err_V0V0_FSE_tm = fabs((( (V0V0_tm.distr_list[id_C112] - V0V0_tm.distr_list[id_C80]).err()  )/(V0V0_tm.ave(id_C80)))*erf( (V0V0_tm.ave(id_C112)-V0V0_tm.ave(id_C80))/(sqrt(2.0*( pow( V0V0_tm.err(id_C112)  ,2)  + pow( V0V0_tm.err(id_C80) ,2)   )))));
-      corr_fact_err_V0V0_FSE_OS = fabs((( (V0V0_OS.distr_list[id_C112] - V0V0_OS.distr_list[id_C80]).err() )/(V0V0_OS.ave(id_C80)))*erf( (V0V0_OS.ave(id_C112)-V0V0_OS.ave(id_C80))/(sqrt(2.0*( pow( V0V0_OS.err(id_C112)  ,2)  + pow( V0V0_OS.err(id_C80) ,2)   )))));
+      corr_fact_err_V0V0_FSE_tm = fabs((( (V0V0_tm.distr_list[id_C112] - V0V0_tm.distr_list[id_C80]).err()  )/(V0V0_tm.ave(id_C80))))*fabs(erf( (V0V0_tm.ave(id_C112)-V0V0_tm.ave(id_C80))/(sqrt(2.0*( pow( V0V0_tm.err(id_C112)  ,2)  + pow( V0V0_tm.err(id_C80) ,2)   )))));
+      corr_fact_err_V0V0_FSE_OS = fabs(( (V0V0_OS.distr_list[id_C112] - V0V0_OS.distr_list[id_C80]).err() )/(V0V0_OS.ave(id_C80)))*fabs(erf( (V0V0_OS.ave(id_C112)-V0V0_OS.ave(id_C80))/(sqrt(2.0*( pow( V0V0_OS.err(id_C112)  ,2)  + pow( V0V0_OS.err(id_C80) ,2)   )))));
       
-      corr_fact_V0V0_FSE = max(corr_fact_V0V0_FSE_tm, corr_fact_V0V0_FSE_OS);
+      corr_fact_V0V0_FSE = max( fabs(corr_fact_V0V0_FSE_tm), fabs(corr_fact_V0V0_FSE_OS));
            
       
 
       //AkAk
-      corr_fact_AkAk_FSE_tm = fabs(((AkAk_tm.ave(id_C112) - AkAk_tm.ave(id_C80))/(AkAk_tm.ave(id_C80)))*erf( (AkAk_tm.ave(id_C112)-AkAk_tm.ave(id_C80))/(sqrt(2.0*( pow( AkAk_tm.err(id_C112)  ,2)  + pow( AkAk_tm.err(id_C80) ,2)   )))));
-      corr_fact_AkAk_FSE_OS = fabs(((AkAk_OS.ave(id_C112) - AkAk_OS.ave(id_C80))/(AkAk_OS.ave(id_C80)))*erf( (AkAk_OS.ave(id_C112)-AkAk_OS.ave(id_C80))/(sqrt(2.0*( pow( AkAk_OS.err(id_C112)  ,2)  + pow( AkAk_OS.err(id_C80) ,2)   )))));
+      corr_fact_AkAk_FSE_tm = ((AkAk_tm.ave(id_C112) - AkAk_tm.ave(id_C80))/(AkAk_tm.ave(id_C80)))*fabs(erf( (AkAk_tm.ave(id_C112)-AkAk_tm.ave(id_C80))/(sqrt(2.0*( pow( AkAk_tm.err(id_C112)  ,2)  + pow( AkAk_tm.err(id_C80) ,2)   )))));
+      corr_fact_AkAk_FSE_OS = ((AkAk_OS.ave(id_C112) - AkAk_OS.ave(id_C80))/(AkAk_OS.ave(id_C80)))*fabs(erf( (AkAk_OS.ave(id_C112)-AkAk_OS.ave(id_C80))/(sqrt(2.0*( pow( AkAk_OS.err(id_C112)  ,2)  + pow( AkAk_OS.err(id_C80) ,2)   )))));
 
-      corr_fact_err_AkAk_FSE_tm = fabs((( (AkAk_tm.distr_list[id_C112] - AkAk_tm.distr_list[id_C80]).err()  )/(AkAk_tm.ave(id_C80)))*erf( (AkAk_tm.ave(id_C112)-AkAk_tm.ave(id_C80))/(sqrt(2.0*( pow( AkAk_tm.err(id_C112)  ,2)  + pow( AkAk_tm.err(id_C80) ,2)   )))));
-      corr_fact_err_AkAk_FSE_OS = fabs((( (AkAk_OS.distr_list[id_C112] - AkAk_OS.distr_list[id_C80]).err() )/(AkAk_OS.ave(id_C80)))*erf( (AkAk_OS.ave(id_C112)-AkAk_OS.ave(id_C80))/(sqrt(2.0*( pow( AkAk_OS.err(id_C112)  ,2)  + pow( AkAk_OS.err(id_C80) ,2)   )))));
+      corr_fact_err_AkAk_FSE_tm = fabs(( (AkAk_tm.distr_list[id_C112] - AkAk_tm.distr_list[id_C80]).err()  )/(AkAk_tm.ave(id_C80)))*fabs(erf( (AkAk_tm.ave(id_C112)-AkAk_tm.ave(id_C80))/(sqrt(2.0*( pow( AkAk_tm.err(id_C112)  ,2)  + pow( AkAk_tm.err(id_C80) ,2)   )))));
+      corr_fact_err_AkAk_FSE_OS = fabs(( (AkAk_OS.distr_list[id_C112] - AkAk_OS.distr_list[id_C80]).err()  )/(AkAk_OS.ave(id_C80)))*fabs(erf( (AkAk_OS.ave(id_C112)-AkAk_OS.ave(id_C80))/(sqrt(2.0*( pow( AkAk_OS.err(id_C112)  ,2)  + pow( AkAk_OS.err(id_C80) ,2)   )))));
       
-      corr_fact_AkAk_FSE = max(corr_fact_AkAk_FSE_tm, corr_fact_AkAk_FSE_OS);
+      corr_fact_AkAk_FSE = max(fabs(corr_fact_AkAk_FSE_tm), fabs(corr_fact_AkAk_FSE_OS));
    
       
 
       //VkVk
-      corr_fact_VkVk_FSE_tm = fabs(((VkVk_tm.ave(id_C112) - VkVk_tm.ave(id_C80))/(VkVk_tm.ave(id_C80)))*erf( (VkVk_tm.ave(id_C112)-VkVk_tm.ave(id_C80))/(sqrt(2.0*( pow( VkVk_tm.err(id_C112)  ,2)  + pow( VkVk_tm.err(id_C80) ,2)   )))));
-      corr_fact_VkVk_FSE_OS = fabs(((VkVk_OS.ave(id_C112) - VkVk_OS.ave(id_C80))/(VkVk_OS.ave(id_C80)))*erf( (VkVk_OS.ave(id_C112)-VkVk_OS.ave(id_C80))/(sqrt(2.0*( pow( VkVk_OS.err(id_C112)  ,2)  + pow( VkVk_OS.err(id_C80) ,2)   )))));
+      corr_fact_VkVk_FSE_tm = ((VkVk_tm.ave(id_C112) - VkVk_tm.ave(id_C80))/(VkVk_tm.ave(id_C80)))*fabs(erf( (VkVk_tm.ave(id_C112)-VkVk_tm.ave(id_C80))/(sqrt(2.0*( pow( VkVk_tm.err(id_C112)  ,2)  + pow( VkVk_tm.err(id_C80) ,2)   )))));
+      corr_fact_VkVk_FSE_OS = ((VkVk_OS.ave(id_C112) - VkVk_OS.ave(id_C80))/(VkVk_OS.ave(id_C80)))*fabs(erf( (VkVk_OS.ave(id_C112)-VkVk_OS.ave(id_C80))/(sqrt(2.0*( pow( VkVk_OS.err(id_C112)  ,2)  + pow( VkVk_OS.err(id_C80) ,2)   )))));
 
-      corr_fact_err_VkVk_FSE_tm = fabs((( (VkVk_tm.distr_list[id_C112] - VkVk_tm.distr_list[id_C80]).err()  )/(VkVk_tm.ave(id_C80)))*erf( (VkVk_tm.ave(id_C112)-VkVk_tm.ave(id_C80))/(sqrt(2.0*( pow( VkVk_tm.err(id_C112)  ,2)  + pow( VkVk_tm.err(id_C80) ,2)   )))));
-      corr_fact_err_VkVk_FSE_OS = fabs((( (VkVk_OS.distr_list[id_C112] - VkVk_OS.distr_list[id_C80]).err() )/(VkVk_OS.ave(id_C80)))*erf( (VkVk_OS.ave(id_C112)-VkVk_OS.ave(id_C80))/(sqrt(2.0*( pow( VkVk_OS.err(id_C112)  ,2)  + pow( VkVk_OS.err(id_C80) ,2)   )))));
+      corr_fact_err_VkVk_FSE_tm = fabs(( (VkVk_tm.distr_list[id_C112] - VkVk_tm.distr_list[id_C80]).err()  )/(VkVk_tm.ave(id_C80)))*fabs(erf( (VkVk_tm.ave(id_C112)-VkVk_tm.ave(id_C80))/(sqrt(2.0*( pow( VkVk_tm.err(id_C112)  ,2)  + pow( VkVk_tm.err(id_C80) ,2)   )))));
+      corr_fact_err_VkVk_FSE_OS = fabs(( (VkVk_OS.distr_list[id_C112] - VkVk_OS.distr_list[id_C80]).err() )/(VkVk_OS.ave(id_C80)))*fabs(erf( (VkVk_OS.ave(id_C112)-VkVk_OS.ave(id_C80))/(sqrt(2.0*( pow( VkVk_OS.err(id_C112)  ,2)  + pow( VkVk_OS.err(id_C80) ,2)   )))));
       
-      corr_fact_VkVk_FSE = max(corr_fact_VkVk_FSE_tm, corr_fact_VkVk_FSE_OS);
+      corr_fact_VkVk_FSE = max( fabs(corr_fact_VkVk_FSE_tm), fabs(corr_fact_VkVk_FSE_OS));
 
       //T
-      corr_fact_T_FSE_tm = fabs(((T_tm.ave(id_C112) - T_tm.ave(id_C80))/(T_tm.ave(id_C80)))*erf( (T_tm.ave(id_C112)-T_tm.ave(id_C80))/(sqrt(2.0*( pow( T_tm.err(id_C112)  ,2)  + pow( T_tm.err(id_C80) ,2)   )))));
-      corr_fact_T_FSE_OS = fabs(((T_OS.ave(id_C112) - T_OS.ave(id_C80))/(T_OS.ave(id_C80)))*erf( (T_OS.ave(id_C112)-T_OS.ave(id_C80))/(sqrt(2.0*( pow( T_OS.err(id_C112)  ,2)  + pow( T_OS.err(id_C80) ,2)   )))));
+      corr_fact_T_FSE_tm = ((T_tm.ave(id_C112) - T_tm.ave(id_C80))/(T_tm.ave(id_C80)))*fabs(erf( (T_tm.ave(id_C112)-T_tm.ave(id_C80))/(sqrt(2.0*( pow( T_tm.err(id_C112)  ,2)  + pow( T_tm.err(id_C80) ,2)   )))));
+      corr_fact_T_FSE_OS = ((T_OS.ave(id_C112) - T_OS.ave(id_C80))/(T_OS.ave(id_C80)))*fabs(erf( (T_OS.ave(id_C112)-T_OS.ave(id_C80))/(sqrt(2.0*( pow( T_OS.err(id_C112)  ,2)  + pow( T_OS.err(id_C80) ,2)   )))));
 
-      corr_fact_err_T_FSE_tm = fabs((( (T_tm.distr_list[id_C112] - T_tm.distr_list[id_C80]).err()  )/(T_tm.ave(id_C80)))*erf( (T_tm.ave(id_C112)-T_tm.ave(id_C80))/(sqrt(2.0*( pow( T_tm.err(id_C112)  ,2)  + pow( T_tm.err(id_C80) ,2)   )))));
-      corr_fact_err_T_FSE_OS = fabs((( (T_OS.distr_list[id_C112] - T_OS.distr_list[id_C80]).err() )/(T_OS.ave(id_C80)))*erf( (T_OS.ave(id_C112)-T_OS.ave(id_C80))/(sqrt(2.0*( pow( T_OS.err(id_C112)  ,2)  + pow( T_OS.err(id_C80) ,2)   )))));
+      corr_fact_err_T_FSE_tm = fabs(( (T_tm.distr_list[id_C112] - T_tm.distr_list[id_C80]).err()  )/(T_tm.ave(id_C80)))*fabs(erf( (T_tm.ave(id_C112)-T_tm.ave(id_C80))/(sqrt(2.0*( pow( T_tm.err(id_C112)  ,2)  + pow( T_tm.err(id_C80) ,2)   )))));
+      corr_fact_err_T_FSE_OS = fabs(( (T_OS.distr_list[id_C112] - T_OS.distr_list[id_C80]).err() )/(T_OS.ave(id_C80)))*fabs(erf( (T_OS.ave(id_C112)-T_OS.ave(id_C80))/(sqrt(2.0*( pow( T_OS.err(id_C112)  ,2)  + pow( T_OS.err(id_C80) ,2)   )))));
+
+      pl_T_tm=  (T_tm.ave(id_C112)-T_tm.ave(id_C80))/(sqrt(( pow( T_tm.err(id_C112)  ,2)  + pow( T_tm.err(id_C80) ,2)   )));
+      pl_T_OS=  (T_OS.ave(id_C112)-T_OS.ave(id_C80))/(sqrt(( pow( T_OS.err(id_C112)  ,2)  + pow( T_OS.err(id_C80) ,2)   )));
       
-      corr_fact_T_FSE = max(corr_fact_T_FSE_tm, corr_fact_T_FSE_OS);
+      corr_fact_T_FSE = max( fabs(corr_fact_T_FSE_tm), fabs(corr_fact_T_FSE_OS));
 
       //L
-      corr_fact_L_FSE_tm = fabs(((L_tm.ave(id_C112) - L_tm.ave(id_C80))/(L_tm.ave(id_C80)))*erf( (L_tm.ave(id_C112)-L_tm.ave(id_C80))/(sqrt(2.0*( pow( L_tm.err(id_C112)  ,2)  + pow( L_tm.err(id_C80) ,2)   )))));
-      corr_fact_L_FSE_OS = fabs(((L_OS.ave(id_C112) - L_OS.ave(id_C80))/(L_OS.ave(id_C80)))*erf( (L_OS.ave(id_C112)-L_OS.ave(id_C80))/(sqrt(2.0*( pow( L_OS.err(id_C112)  ,2)  + pow( L_OS.err(id_C80) ,2)   )))));
+      corr_fact_L_FSE_tm = ((L_tm.ave(id_C112) - L_tm.ave(id_C80))/(L_tm.ave(id_C80)))*fabs(erf( (L_tm.ave(id_C112)-L_tm.ave(id_C80))/(sqrt(2.0*( pow( L_tm.err(id_C112)  ,2)  + pow( L_tm.err(id_C80) ,2)   )))));
+      corr_fact_L_FSE_OS = ((L_OS.ave(id_C112) - L_OS.ave(id_C80))/(L_OS.ave(id_C80)))*fabs(erf( (L_OS.ave(id_C112)-L_OS.ave(id_C80))/(sqrt(2.0*( pow( L_OS.err(id_C112)  ,2)  + pow( L_OS.err(id_C80) ,2)   )))));
 
+      pl_L_tm = (L_tm.ave(id_C112)-L_tm.ave(id_C80))/(sqrt(( pow( L_tm.err(id_C112)  ,2)  + pow( L_tm.err(id_C80) ,2))));
+      pl_L_OS = (L_OS.ave(id_C112)-L_OS.ave(id_C80))/(sqrt(( pow( L_OS.err(id_C112)  ,2)  + pow( L_OS.err(id_C80) ,2))));
+      
       corr_fact_err_L_FSE_tm = fabs((( (L_tm.distr_list[id_C112] - L_tm.distr_list[id_C80]).err()  )/(L_tm.ave(id_C80)))*erf( (L_tm.ave(id_C112)-L_tm.ave(id_C80))/(sqrt(2.0*( pow( L_tm.err(id_C112)  ,2)  + pow( L_tm.err(id_C80) ,2)   )))));
       corr_fact_err_L_FSE_OS = fabs((( (L_OS.distr_list[id_C112] - L_OS.distr_list[id_C80]).err() )/(L_OS.ave(id_C80)))*erf( (L_OS.ave(id_C112)-L_OS.ave(id_C80))/(sqrt(2.0*( pow( L_OS.err(id_C112)  ,2)  + pow( L_OS.err(id_C80) ,2)   )))));
       
-      corr_fact_L_FSE = max(corr_fact_L_FSE_tm, corr_fact_L_FSE_OS);
+      corr_fact_L_FSE = max(fabs(corr_fact_L_FSE_tm), fabs(corr_fact_L_FSE_OS));
 
 
       //generate jackknife distribution for FSE corrections
@@ -3334,63 +3578,69 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       //################### COMPUTATION OF FSEs CORRECTION FROM B64-B96 SPREAD##########################
 
       //A0A0
-      corr_fact_BIS_A0A0_FSE_tm = fabs(((A0A0_tm.ave(id_B96) - A0A0_tm.ave(id_B64))/(A0A0_tm.ave(id_B64)))*erf( (A0A0_tm.ave(id_B96)-A0A0_tm.ave(id_B64))/(sqrt(2.0*( pow( A0A0_tm.err(id_B96)  ,2)  + pow( A0A0_tm.err(id_B64) ,2)   )))));
-      corr_fact_BIS_A0A0_FSE_OS = fabs(((A0A0_OS.ave(id_B96) - A0A0_OS.ave(id_B64))/(A0A0_OS.ave(id_B64)))*erf( (A0A0_OS.ave(id_B96)-A0A0_OS.ave(id_B64))/(sqrt(2.0*( pow( A0A0_OS.err(id_B96)  ,2)  + pow( A0A0_OS.err(id_B64) ,2)   )))));
+      corr_fact_BIS_A0A0_FSE_tm = ((A0A0_tm.ave(id_B96) - A0A0_tm.ave(id_B64))/(A0A0_tm.ave(id_B64)))*fabs(erf( (A0A0_tm.ave(id_B96)-A0A0_tm.ave(id_B64))/(sqrt(2.0*( pow( A0A0_tm.err(id_B96)  ,2)  + pow( A0A0_tm.err(id_B64) ,2)   )))));
+      corr_fact_BIS_A0A0_FSE_OS = ((A0A0_OS.ave(id_B96) - A0A0_OS.ave(id_B64))/(A0A0_OS.ave(id_B64)))*fabs(erf( (A0A0_OS.ave(id_B96)-A0A0_OS.ave(id_B64))/(sqrt(2.0*( pow( A0A0_OS.err(id_B96)  ,2)  + pow( A0A0_OS.err(id_B64) ,2)   )))));
 
       corr_fact_BIS_err_A0A0_FSE_tm = fabs((( (A0A0_tm.distr_list[id_B96] - A0A0_tm.distr_list[id_B64]).err())/(A0A0_tm.ave(id_B64)))*erf( (A0A0_tm.ave(id_B96)-A0A0_tm.ave(id_B64))/(sqrt(2.0*( pow( A0A0_tm.err(id_B96)  ,2)  + pow( A0A0_tm.err(id_B64) ,2)   )))));
       corr_fact_BIS_err_A0A0_FSE_OS = fabs((( (A0A0_OS.distr_list[id_B96] - A0A0_OS.distr_list[id_B64]).err())/(A0A0_OS.ave(id_B64)))*erf( (A0A0_OS.ave(id_B96)-A0A0_OS.ave(id_B64))/(sqrt(2.0*( pow( A0A0_OS.err(id_B96)  ,2)  + pow( A0A0_OS.err(id_B64) ,2)   )))));
       
-      corr_fact_BIS_A0A0_FSE = max(corr_fact_BIS_A0A0_FSE_tm, corr_fact_BIS_A0A0_FSE_OS);
+      corr_fact_BIS_A0A0_FSE = max( fabs(corr_fact_BIS_A0A0_FSE_tm), fabs(corr_fact_BIS_A0A0_FSE_OS));
     
       //V0V0
-      corr_fact_BIS_V0V0_FSE_tm = fabs(((V0V0_tm.ave(id_B96) - V0V0_tm.ave(id_B64))/(V0V0_tm.ave(id_B64)))*erf( (V0V0_tm.ave(id_B96)-V0V0_tm.ave(id_B64))/(sqrt(2.0*( pow( V0V0_tm.err(id_B96)  ,2)  + pow( V0V0_tm.err(id_B64) ,2)   )))));
-      corr_fact_BIS_V0V0_FSE_OS = fabs(((V0V0_OS.ave(id_B96) - V0V0_OS.ave(id_B64))/(V0V0_OS.ave(id_B64)))*erf( (V0V0_OS.ave(id_B96)-V0V0_OS.ave(id_B64))/(sqrt(2.0*( pow( V0V0_OS.err(id_B96)  ,2)  + pow( V0V0_OS.err(id_B64) ,2)   )))));
+      corr_fact_BIS_V0V0_FSE_tm = ((V0V0_tm.ave(id_B96) - V0V0_tm.ave(id_B64))/(V0V0_tm.ave(id_B64)))*fabs(erf( (V0V0_tm.ave(id_B96)-V0V0_tm.ave(id_B64))/(sqrt(2.0*( pow( V0V0_tm.err(id_B96)  ,2)  + pow( V0V0_tm.err(id_B64) ,2)   )))));
+      corr_fact_BIS_V0V0_FSE_OS = ((V0V0_OS.ave(id_B96) - V0V0_OS.ave(id_B64))/(V0V0_OS.ave(id_B64)))*fabs(erf( (V0V0_OS.ave(id_B96)-V0V0_OS.ave(id_B64))/(sqrt(2.0*( pow( V0V0_OS.err(id_B96)  ,2)  + pow( V0V0_OS.err(id_B64) ,2)   )))));
 
       corr_fact_BIS_err_V0V0_FSE_tm = fabs((( (V0V0_tm.distr_list[id_B96] - V0V0_tm.distr_list[id_B64]).err())/(V0V0_tm.ave(id_B64)))*erf( (V0V0_tm.ave(id_B96)-V0V0_tm.ave(id_B64))/(sqrt(2.0*( pow( V0V0_tm.err(id_B96)  ,2)  + pow( V0V0_tm.err(id_B64) ,2)   )))));
       corr_fact_BIS_err_V0V0_FSE_OS = fabs((( (V0V0_OS.distr_list[id_B96] - V0V0_OS.distr_list[id_B64]).err())/(V0V0_OS.ave(id_B64)))*erf( (V0V0_OS.ave(id_B96)-V0V0_OS.ave(id_B64))/(sqrt(2.0*( pow( V0V0_OS.err(id_B96)  ,2)  + pow( V0V0_OS.err(id_B64) ,2)   )))));
       
-      corr_fact_BIS_V0V0_FSE = max(corr_fact_BIS_V0V0_FSE_tm, corr_fact_BIS_V0V0_FSE_OS);
+      corr_fact_BIS_V0V0_FSE = max(fabs(corr_fact_BIS_V0V0_FSE_tm), fabs(corr_fact_BIS_V0V0_FSE_OS));
            
       
 
       //AkAk
-      corr_fact_BIS_AkAk_FSE_tm = fabs(((AkAk_tm.ave(id_B96) - AkAk_tm.ave(id_B64))/(AkAk_tm.ave(id_B64)))*erf( (AkAk_tm.ave(id_B96)-AkAk_tm.ave(id_B64))/(sqrt(2.0*( pow( AkAk_tm.err(id_B96)  ,2)  + pow( AkAk_tm.err(id_B64) ,2)   )))));
-      corr_fact_BIS_AkAk_FSE_OS = fabs(((AkAk_OS.ave(id_B96) - AkAk_OS.ave(id_B64))/(AkAk_OS.ave(id_B64)))*erf( (AkAk_OS.ave(id_B96)-AkAk_OS.ave(id_B64))/(sqrt(2.0*( pow( AkAk_OS.err(id_B96)  ,2)  + pow( AkAk_OS.err(id_B64) ,2)   )))));
+      corr_fact_BIS_AkAk_FSE_tm = ((AkAk_tm.ave(id_B96) - AkAk_tm.ave(id_B64))/(AkAk_tm.ave(id_B64)))*fabs(erf( (AkAk_tm.ave(id_B96)-AkAk_tm.ave(id_B64))/(sqrt(2.0*( pow( AkAk_tm.err(id_B96)  ,2)  + pow( AkAk_tm.err(id_B64) ,2)   )))));
+      corr_fact_BIS_AkAk_FSE_OS = ((AkAk_OS.ave(id_B96) - AkAk_OS.ave(id_B64))/(AkAk_OS.ave(id_B64)))*fabs(erf( (AkAk_OS.ave(id_B96)-AkAk_OS.ave(id_B64))/(sqrt(2.0*( pow( AkAk_OS.err(id_B96)  ,2)  + pow( AkAk_OS.err(id_B64) ,2)   )))));
 
       corr_fact_BIS_err_AkAk_FSE_tm = fabs((( (AkAk_tm.distr_list[id_B96] - AkAk_tm.distr_list[id_B64]).err())/(AkAk_tm.ave(id_B64)))*erf( (AkAk_tm.ave(id_B96)-AkAk_tm.ave(id_B64))/(sqrt(2.0*( pow( AkAk_tm.err(id_B96)  ,2)  + pow( AkAk_tm.err(id_B64) ,2)   )))));
       corr_fact_BIS_err_AkAk_FSE_OS = fabs((( (AkAk_OS.distr_list[id_B96] - AkAk_OS.distr_list[id_B64]).err())/(AkAk_OS.ave(id_B64)))*erf( (AkAk_OS.ave(id_B96)-AkAk_OS.ave(id_B64))/(sqrt(2.0*( pow( AkAk_OS.err(id_B96)  ,2)  + pow( AkAk_OS.err(id_B64) ,2)   )))));
 
       
-      corr_fact_BIS_AkAk_FSE = max(corr_fact_BIS_AkAk_FSE_tm, corr_fact_BIS_AkAk_FSE_OS);
+      corr_fact_BIS_AkAk_FSE = max(fabs(corr_fact_BIS_AkAk_FSE_tm), fabs(corr_fact_BIS_AkAk_FSE_OS));
    
       
 
       //VkVk
-      corr_fact_BIS_VkVk_FSE_tm = fabs(((VkVk_tm.ave(id_B96) - VkVk_tm.ave(id_B64))/(VkVk_tm.ave(id_B64)))*erf( (VkVk_tm.ave(id_B96)-VkVk_tm.ave(id_B64))/(sqrt(2.0*( pow( VkVk_tm.err(id_B96)  ,2)  + pow( VkVk_tm.err(id_B64) ,2)   )))));
-      corr_fact_BIS_VkVk_FSE_OS = fabs(((VkVk_OS.ave(id_B96) - VkVk_OS.ave(id_B64))/(VkVk_OS.ave(id_B64)))*erf( (VkVk_OS.ave(id_B96)-VkVk_OS.ave(id_B64))/(sqrt(2.0*( pow( VkVk_OS.err(id_B96)  ,2)  + pow( VkVk_OS.err(id_B64) ,2)   )))));
+      corr_fact_BIS_VkVk_FSE_tm = ((VkVk_tm.ave(id_B96) - VkVk_tm.ave(id_B64))/(VkVk_tm.ave(id_B64)))*fabs(erf( (VkVk_tm.ave(id_B96)-VkVk_tm.ave(id_B64))/(sqrt(2.0*( pow( VkVk_tm.err(id_B96)  ,2)  + pow( VkVk_tm.err(id_B64) ,2)   )))));
+      corr_fact_BIS_VkVk_FSE_OS = ((VkVk_OS.ave(id_B96) - VkVk_OS.ave(id_B64))/(VkVk_OS.ave(id_B64)))*fabs(erf( (VkVk_OS.ave(id_B96)-VkVk_OS.ave(id_B64))/(sqrt(2.0*( pow( VkVk_OS.err(id_B96)  ,2)  + pow( VkVk_OS.err(id_B64) ,2)   )))));
 
       corr_fact_BIS_err_VkVk_FSE_tm = fabs((( (VkVk_tm.distr_list[id_B96] - VkVk_tm.distr_list[id_B64]).err())/(VkVk_tm.ave(id_B64)))*erf( (VkVk_tm.ave(id_B96)-VkVk_tm.ave(id_B64))/(sqrt(2.0*( pow( VkVk_tm.err(id_B96)  ,2)  + pow( VkVk_tm.err(id_B64) ,2)   )))));
       corr_fact_BIS_err_VkVk_FSE_OS = fabs((( (VkVk_OS.distr_list[id_B96] - VkVk_OS.distr_list[id_B64]).err())/(VkVk_OS.ave(id_B64)))*erf( (VkVk_OS.ave(id_B96)-VkVk_OS.ave(id_B64))/(sqrt(2.0*( pow( VkVk_OS.err(id_B96)  ,2)  + pow( VkVk_OS.err(id_B64) ,2)   )))));
       
-      corr_fact_BIS_VkVk_FSE = max(corr_fact_BIS_VkVk_FSE_tm, corr_fact_BIS_VkVk_FSE_OS);
+      corr_fact_BIS_VkVk_FSE = max(fabs(corr_fact_BIS_VkVk_FSE_tm),fabs(corr_fact_BIS_VkVk_FSE_OS));
 
       //T
-      corr_fact_BIS_T_FSE_tm = fabs(((T_tm.ave(id_B96) - T_tm.ave(id_B64))/(T_tm.ave(id_B64)))*erf( (T_tm.ave(id_B96)-T_tm.ave(id_B64))/(sqrt(2.0*( pow( T_tm.err(id_B96)  ,2)  + pow( T_tm.err(id_B64) ,2)   )))));
-      corr_fact_BIS_T_FSE_OS = fabs(((T_OS.ave(id_B96) - T_OS.ave(id_B64))/(T_OS.ave(id_B64)))*erf( (T_OS.ave(id_B96)-T_OS.ave(id_B64))/(sqrt(2.0*( pow( T_OS.err(id_B96)  ,2)  + pow( T_OS.err(id_B64) ,2)   )))));
+      corr_fact_BIS_T_FSE_tm = ((T_tm.ave(id_B96) - T_tm.ave(id_B64))/(T_tm.ave(id_B64)))*fabs(erf( (T_tm.ave(id_B96)-T_tm.ave(id_B64))/(sqrt(2.0*( pow( T_tm.err(id_B96)  ,2)  + pow( T_tm.err(id_B64) ,2)   )))));
+      corr_fact_BIS_T_FSE_OS = ((T_OS.ave(id_B96) - T_OS.ave(id_B64))/(T_OS.ave(id_B64)))*fabs(erf( (T_OS.ave(id_B96)-T_OS.ave(id_B64))/(sqrt(2.0*( pow( T_OS.err(id_B96)  ,2)  + pow( T_OS.err(id_B64) ,2)   )))));
+
+      pl_BIS_T_tm =  (T_tm.ave(id_B96)-T_tm.ave(id_B64))/(sqrt(( pow( T_tm.err(id_B96)  ,2)  + pow( T_tm.err(id_B64) ,2)   )));
+      pl_BIS_T_OS=   (T_OS.ave(id_B96)-T_OS.ave(id_B64))/(sqrt(( pow( T_OS.err(id_B96)  ,2)  + pow( T_OS.err(id_B64) ,2)   )));
 
       corr_fact_BIS_err_T_FSE_tm = fabs((( (T_tm.distr_list[id_B96] - T_tm.distr_list[id_B64]).err())/(T_tm.ave(id_B64)))*erf( (T_tm.ave(id_B96)-T_tm.ave(id_B64))/(sqrt(2.0*( pow( T_tm.err(id_B96)  ,2)  + pow( T_tm.err(id_B64) ,2)   )))));
       corr_fact_BIS_err_T_FSE_OS = fabs((( (T_OS.distr_list[id_B96] - T_OS.distr_list[id_B64]).err())/(T_OS.ave(id_B64)))*erf( (T_OS.ave(id_B96)-T_OS.ave(id_B64))/(sqrt(2.0*( pow( T_OS.err(id_B96)  ,2)  + pow( T_OS.err(id_B64) ,2)   )))));
       
-      corr_fact_BIS_T_FSE = max(corr_fact_BIS_T_FSE_tm, corr_fact_BIS_T_FSE_OS);
+      corr_fact_BIS_T_FSE = max(fabs(corr_fact_BIS_T_FSE_tm), fabs(corr_fact_BIS_T_FSE_OS));
 
       //L
-      corr_fact_BIS_L_FSE_tm = fabs(((L_tm.ave(id_B96) - L_tm.ave(id_B64))/(L_tm.ave(id_B64)))*erf( (L_tm.ave(id_B96)-L_tm.ave(id_B64))/(sqrt(2.0*( pow( L_tm.err(id_B96)  ,2)  + pow( L_tm.err(id_B64) ,2)   )))));
-      corr_fact_BIS_L_FSE_OS = fabs(((L_OS.ave(id_B96) - L_OS.ave(id_B64))/(L_OS.ave(id_B64)))*erf( (L_OS.ave(id_B96)-L_OS.ave(id_B64))/(sqrt(2.0*( pow( L_OS.err(id_B96)  ,2)  + pow( L_OS.err(id_B64) ,2)   )))));
+      corr_fact_BIS_L_FSE_tm = ((L_tm.ave(id_B96) - L_tm.ave(id_B64))/(L_tm.ave(id_B64)))*fabs(erf( (L_tm.ave(id_B96)-L_tm.ave(id_B64))/(sqrt(2.0*( pow( L_tm.err(id_B96)  ,2)  + pow( L_tm.err(id_B64) ,2)   )))));
+      corr_fact_BIS_L_FSE_OS = ((L_OS.ave(id_B96) - L_OS.ave(id_B64))/(L_OS.ave(id_B64)))*fabs(erf( (L_OS.ave(id_B96)-L_OS.ave(id_B64))/(sqrt(2.0*( pow( L_OS.err(id_B96)  ,2)  + pow( L_OS.err(id_B64) ,2)   )))));
+
+      pl_BIS_L_tm= (L_tm.ave(id_B96)-L_tm.ave(id_B64))/(sqrt(( pow( L_tm.err(id_B96)  ,2)  + pow( L_tm.err(id_B64) ,2)   )));
+      pl_BIS_L_OS= (L_OS.ave(id_B96)-L_OS.ave(id_B64))/(sqrt(( pow( L_OS.err(id_B96)  ,2)  + pow( L_OS.err(id_B64) ,2)   )));
 
       corr_fact_BIS_err_L_FSE_tm = fabs((( (L_tm.distr_list[id_B96] - L_tm.distr_list[id_B64]).err())/(L_tm.ave(id_B64)))*erf( (L_tm.ave(id_B96)-L_tm.ave(id_B64))/(sqrt(2.0*( pow( L_tm.err(id_B96)  ,2)  + pow( L_tm.err(id_B64) ,2)   )))));
       corr_fact_BIS_err_L_FSE_OS = fabs((( (L_OS.distr_list[id_B96] - L_OS.distr_list[id_B64]).err())/(L_OS.ave(id_B64)))*erf( (L_OS.ave(id_B96)-L_OS.ave(id_B64))/(sqrt(2.0*( pow( L_OS.err(id_B96)  ,2)  + pow( L_OS.err(id_B64) ,2)   )))));
       
-      corr_fact_BIS_L_FSE = max(corr_fact_BIS_L_FSE_tm, corr_fact_BIS_L_FSE_OS);
+      corr_fact_BIS_L_FSE = max(fabs(corr_fact_BIS_L_FSE_tm), fabs(corr_fact_BIS_L_FSE_OS));
 
 
       //#################################################################################################
@@ -3464,6 +3714,18 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       FSE_C_VkVk.push_back(  corr_fact_VkVk_FSE);
       FSE_C_T.push_back(  corr_fact_T_FSE);
       FSE_C_L.push_back(  corr_fact_L_FSE);
+
+
+
+      pl_T_tm_distr.push_back( pl_T_tm);
+      pl_T_OS_distr.push_back ( pl_T_OS);
+      pl_L_tm_distr.push_back( pl_L_tm);
+      pl_L_OS_distr.push_back( pl_L_OS);
+
+      pl_BIS_T_tm_distr.push_back( pl_BIS_T_tm);
+      pl_BIS_T_OS_distr.push_back ( pl_BIS_T_OS);
+      pl_BIS_L_tm_distr.push_back( pl_BIS_L_tm);
+      pl_BIS_L_OS_distr.push_back( pl_BIS_L_OS);
       
       
 
@@ -3569,7 +3831,9 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	else if(ls_data_tm_VKVK.Tag[iens].substr(1,1) == "D") a_distr_list.distr_list.push_back( a_D/fm_to_inv_Gev); //lattice spacing is in fm
 	else if(ls_data_tm_VKVK.Tag[iens].substr(1,1) == "E") a_distr_list.distr_list.push_back( a_E/fm_to_inv_Gev); //lattice spacing is in fm
 	else crash("When building a_distr_list cannot recognize ensemble: "+ls_data_tm_VKVK.Tag[iens]);
-	
+
+
+	if(ls_data_tm_VKVK.Tag[iens].substr(1,1) == "E") { tot_TL_Ens_E_tm.distr_list.push_back( (T_tm+L_tm).distr_list[iens]); tot_TL_Ens_E_OS.distr_list.push_back( (T_OS+L_OS).distr_list[iens]); }
       }
       //###################################################
 
@@ -3600,19 +3864,24 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       public:
 	fpar_TAU() {}
 	fpar_TAU(const Vfloat &par) {
-	  if((signed)par.size() != 3) crash("In class fpar_TAU, class constructor Vfloat par has size != 3");
+	  if((signed)par.size() != 5) crash("In class fpar_TAU, class constructor Vfloat par has size != 3");
 	  D=par[0];
 	  D2_tm=par[1];
-	  D2_OS=par[2];
+	  D4_tm=par[2];
+	  D2_OS=par[3];
+	  D4_OS=par[4];
 	}
 
-	double D,D2_tm, D2_OS;
+	double D,D2_tm, D4_tm, D2_OS, D4_OS;
       };
 
        for( auto &contr: Contribs) {
 	for( auto &fit_type: Fit_types) {
 	  for( auto &poly_type: poly_types) {
 
+
+	    if( (poly_type != "quad" && poly_type.substr(3,4) != "quad") || sigma_list_strange[is] > 0.13 ) {
+	    
 	    if( (fit_type != "comb") && (poly_type.substr(0,2)=="tm" || poly_type.substr(0,2) == "OS")) crash("Cannot use tm/OS_linear with fit type: "+fit_type);
 	    cout<<"###########################################################"<<endl;
 	    cout<<"Performing continuum limit extrapolation for sigma: "<<sigma_list_strange[is]<<endl;
@@ -3620,16 +3889,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	    cout<<"Fit type: "<<fit_type<<endl;
 	    cout<<"polynomial: "<<poly_type<<endl;
 
-	    //Depending on fit considered, determine Nmeas, Npars and Ndof
 	    int Nmeas= ((fit_type=="comb")?(2*Nens_eff):Nens_eff);
-	    int deg_pars= ((fit_type=="comb")?2:1);
-	    int Npars= 1 + (poly_type=="linear")*deg_pars +(poly_type.substr(0,2)=="tm") + (poly_type.substr(0,2)=="OS");
-	    int Ndof= Nmeas-Npars;
-
-	    cout<<"Nmeas: "<<Nmeas<<endl;
-	    cout<<"Npars: "<<Npars<<endl;
-	    cout<<"Ndof: "<<Ndof<<endl;
-	    cout<<"Nens: "<<Nens_eff<<endl;
+	  
 	    
 	    bootstrap_fit<fpar_TAU,ipar_TAU> bf_TAU(Njacks);
 	    bootstrap_fit<fpar_TAU,ipar_TAU> bf_TAU_ch2(1);
@@ -3647,11 +3908,15 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	    //add fit parameters
 	    bf_TAU.Add_par("D", 3.0, 0.1);
 	    bf_TAU.Add_par("D2_tm", 2, 0.1);
+	    bf_TAU.Add_par("D4_tm", 1, 0.1);
 	    bf_TAU.Add_par("D2_OS", 2, 0.1);
+	    bf_TAU.Add_par("D4_OS", 1, 0.1);
 	    //ch2
 	    bf_TAU_ch2.Add_par("D", 3.0, 0.1);
 	    bf_TAU_ch2.Add_par("D2_tm", 2, 0.1);
+	    bf_TAU_ch2.Add_par("D4_tm", 1, 0.1);
 	    bf_TAU_ch2.Add_par("D2_OS", 2, 0.1);
+	    bf_TAU_ch2.Add_par("D4_OS", 1, 0.1);
 
 	    //fix parameters depending on fit type
 	    if(poly_type=="const") {
@@ -3660,27 +3925,61 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	      //ch2
 	      bf_TAU_ch2.Fix_par("D2_tm", 0);
 	      bf_TAU_ch2.Fix_par("D2_OS", 0);
+
+	      bf_TAU.Fix_par("D4_tm",0); bf_TAU_ch2.Fix_par("D4_tm",0);
+	      bf_TAU.Fix_par("D4_OS",0); bf_TAU_ch2.Fix_par("D4_OS",0);
 	    }
 	    else if(poly_type=="linear") {
+	      bf_TAU.Fix_par("D4_tm",0); bf_TAU_ch2.Fix_par("D4_tm",0);
+	      bf_TAU.Fix_par("D4_OS",0); bf_TAU_ch2.Fix_par("D4_OS",0);
+	      
 	      if(fit_type=="OS") { bf_TAU.Fix_par("D2_tm", 0); bf_TAU_ch2.Fix_par("D2_tm", 0); }
 	      else if(fit_type=="tm") { bf_TAU.Fix_par("D2_OS",0); bf_TAU_ch2.Fix_par("D2_OS",0); }
 	    }
 	    else if(poly_type=="tm_linear") {
 	      bf_TAU.Fix_par("D2_OS",0); bf_TAU_ch2.Fix_par("D2_OS",0);
+
+	      bf_TAU.Fix_par("D4_tm",0); bf_TAU_ch2.Fix_par("D4_tm",0);
+	      bf_TAU.Fix_par("D4_OS",0); bf_TAU_ch2.Fix_par("D4_OS",0);
 	    }
 	    else if(poly_type=="OS_linear") {
 	       bf_TAU.Fix_par("D2_tm",0); bf_TAU_ch2.Fix_par("D2_tm",0);
+
+	       bf_TAU.Fix_par("D4_tm",0); bf_TAU_ch2.Fix_par("D4_tm",0);
+	       bf_TAU.Fix_par("D4_OS",0); bf_TAU_ch2.Fix_par("D4_OS",0);
+	    }
+	    else if(poly_type=="tm_quad") {
+	      bf_TAU.Fix_par("D4_OS",0); bf_TAU_ch2.Fix_par("D4_OS",0);
+	    }
+	    else if(poly_type=="OS_quad") {
+	      bf_TAU.Fix_par("D4_tm",0); bf_TAU_ch2.Fix_par("D4_tm",0);
+	    }
+	    else if(poly_type=="quad") {
+	      //fix nothing
 	    }
 	    else crash("poly_type: "+poly_type+" not yet implemented");
+
+
+
+	    //Depending on fit considered, determine Nmeas, Npars and Ndof
+	   
+	    int Npars= bf_TAU.Get_number_of_fit_pars();
+	    int Ndof= Nmeas-Npars;
+	    cout<<"poly type: "<<poly_type<<endl;
+	    cout<<"Nmeas: "<<Nmeas<<endl;
+	    cout<<"Npars: "<<Npars<<endl;
+	    cout<<"Ndof: "<<Ndof<<endl;
+	    cout<<"Nens: "<<Nens_eff<<endl;
 
 
 	    //ansatz
 	    bf_TAU.ansatz=  [ ](const fpar_TAU &p, const ipar_TAU &ip) {
 	      double D2=0.0;
-	      if( ip.Is_tm==true ) D2=p.D2_tm;
-	      else D2=p.D2_OS;
+	      double D4=0.0;
+	      if( ip.Is_tm==true ) { D2=p.D2_tm; D4=p.D4_tm;}
+	      else {D2=p.D2_OS; D4=p.D4_OS;}
 	      
-	      return p.D + D2*pow(ip.a*QCD_scale,2);
+	      return p.D + D2*pow(ip.a*QCD_scale,2) + D4*pow(ip.a*QCD_scale,4);
 	    };
 	    //meas
 	    bf_TAU.measurement=  [ ](const fpar_TAU &p, const ipar_TAU &ip) {
@@ -4223,8 +4522,14 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
 	   
 	    //retrieve parameters
-	    distr_t D(UseJack), D2_tm(UseJack), D2_OS(UseJack);
-	    for(int ijack=0;ijack<Njacks;ijack++) { D.distr.push_back( Bt_fit.par[ijack].D); D2_tm.distr.push_back( Bt_fit.par[ijack].D2_tm); D2_OS.distr.push_back( Bt_fit.par[ijack].D2_OS);}
+	    distr_t D(UseJack), D2_tm(UseJack), D2_OS(UseJack), D4_tm(UseJack), D4_OS(UseJack);
+	    for(int ijack=0;ijack<Njacks;ijack++) {
+	      D.distr.push_back( Bt_fit.par[ijack].D);
+	      D2_tm.distr.push_back( Bt_fit.par[ijack].D2_tm);
+	      D2_OS.distr.push_back( Bt_fit.par[ijack].D2_OS);
+	      D4_tm.distr.push_back( Bt_fit.par[ijack].D4_tm);
+	      D4_OS.distr.push_back( Bt_fit.par[ijack].D4_OS);
+	    }
 	    //reduced ch2
 	    double ch2= Bt_fit_ch2.get_ch2_ave()/Ndof;
 
@@ -4234,8 +4539,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 
 	    
 	    for(auto &a: a_to_print) {
-	      FF_tm_to_print.distr_list.push_back( D + D2_tm*pow(a*QCD_scale,2));
-	      FF_OS_to_print.distr_list.push_back( D + D2_OS*pow(a*QCD_scale,2));
+	      FF_tm_to_print.distr_list.push_back( D + D2_tm*pow(a*QCD_scale,2) + D4_tm*pow(a*QCD_scale,4));
+	      FF_OS_to_print.distr_list.push_back( D + D2_OS*pow(a*QCD_scale,2) + D4_OS*pow(a*QCD_scale,4));
 	    }
 	    string Fit_tag= "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_func/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+"_contr_"+contr+"_ftype_"+fit_type+"_"+poly_type+".dat";
 	    Print_To_File({}, {a_to_print, FF_tm_to_print.ave(), FF_tm_to_print.err(), FF_OS_to_print.ave(), FF_OS_to_print.err()},Fit_tag, "", "#a[fm] tm OS, ch2/dof: "+to_string_with_precision(ch2,4));
@@ -4250,7 +4555,16 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	    
 
 
+	    }
+	    else {
 
+	      //push back fictitious value for a fit that has not been performed
+
+	      res_map.find({contr, fit_type, poly_type})->second.distr_list.push_back(Get_id_jack_distr(Njacks)*0.0);
+	      ch2_map.find({contr, fit_type, poly_type})->second.push_back(-1.0);
+	      Nmeas_map.find({contr, fit_type, poly_type})->second.push_back(-1.0);
+	      Ndof_map.find({contr, fit_type, poly_type})->second.push_back(-1.0);
+	    }
 	    
 	  }
 	}
@@ -4344,6 +4658,8 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     //###############################################
     //###############################################
 
+    Vfloat s_extr_away_TL;
+
     vector<distr_t_list> Br_finals;
     VVfloat Br_final_systs(Contribs.size());
     for(int c=0; c<(signed)Contribs.size(); c++)  { Br_finals.emplace_back(UseJack, sigma_list_strange.size()); Br_final_systs[c].resize(sigma_list_strange.size(), 0);}
@@ -4367,6 +4683,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	for(auto &ftype: Fit_types)
 	  for(auto &ptype: poly_types) {
 
+	    if( ch2_map.find({contr,ftype,ptype})->second[is]  >= 0) {
 	    
 	    double ch2_i = ch2_map.find({contr,ftype,ptype})->second[is];
 	    double Nmeas_i = Nmeas_map.find({contr, ftype,ptype})->second[is];
@@ -4382,6 +4699,7 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	    
 	    AIC_map.insert( { {ftype, ptype}, w });
 	    w_tot += w;
+	    }
 		
 	  }
 	
@@ -4402,6 +4720,11 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
 	
 	Br_finals[c].distr_list[is]= Br;
 	Br_final_systs[c][is] = sqrt(syst);
+
+	if(Contribs[c] == "tot_TL") {
+	s_extr_away_TL.push_back( min( fabs(Br.ave() - tot_TL_Ens_E_tm.distr_list[is].ave() )/sqrt( pow(Br.err(),2) + syst), fabs( Br.ave() -tot_TL_Ens_E_OS.distr_list[is].ave())/sqrt( pow(Br.err(),2) + syst)));
+	}
+	
 	
 	  
 
@@ -4446,12 +4769,18 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       }
     }
 
+ 
     
 
     //print results
     for(int c=0;c<(signed)Contribs.size();c++) {
       string contr= Contribs[c];
+      if(contr != "tot_TL") {
       Print_To_File({}, { sigma_list_strange, Br_finals[c].ave(), Br_finals[c].err(), Br_final_systs[c]}, "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/Extr_AIC_"+contr+".dat", "", "#sigma ave err_stat  err_syst ");
+      }
+      else {
+	Print_To_File({}, { sigma_list_strange, Br_finals[c].ave(), Br_finals[c].err(), Br_final_systs[c], s_extr_away_TL}, "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/Extr_AIC_"+contr+".dat", "", "#sigma ave err_stat  err_syst s_extr_away_TL ");
+      }
       
     }
 
@@ -4470,6 +4799,13 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     Print_To_File({}, {sigma_list_strange, FSE_C_VkVk_OS, FSE_err_C_VkVk_OS,  FSE_B_VkVk_OS, FSE_err_B_VkVk_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/FSE/OS/VkVk.dat", "", "#sigma C   B ");
     Print_To_File({}, {sigma_list_strange, FSE_C_T_OS, FSE_err_C_T_OS,  FSE_B_T_OS, FSE_err_B_T_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/FSE/OS/T.dat", "", "#sigma C   B ");
     Print_To_File({}, {sigma_list_strange, FSE_C_L_OS, FSE_err_C_L_OS, FSE_B_L_OS, FSE_err_B_L_OS}, "../data/tau_decay/"+Tag_reco_type+"/strange/FSE/OS/L.dat", "", "#sigma C   B ");
+
+
+    Print_To_File({}, {sigma_list_strange, pl_T_tm_distr, pl_BIS_T_tm_distr}, "../data/tau_decay/"+Tag_reco_type+"/strange/FSE/tm/pl_T.dat", "", "#sigma C   B ");
+    Print_To_File({}, {sigma_list_strange, pl_L_tm_distr, pl_BIS_L_tm_distr}, "../data/tau_decay/"+Tag_reco_type+"/strange/FSE/tm/pl_L.dat", "", "#sigma C   B ");
+    Print_To_File({}, {sigma_list_strange, pl_T_OS_distr, pl_BIS_T_OS_distr}, "../data/tau_decay/"+Tag_reco_type+"/strange/FSE/OS/pl_T.dat", "", "#sigma C   B ");
+    Print_To_File({}, {sigma_list_strange, pl_L_OS_distr, pl_BIS_L_OS_distr}, "../data/tau_decay/"+Tag_reco_type+"/strange/FSE/OS/pl_L.dat", "", "#sigma C   B ");
+    
 
 
     //print summary plots
@@ -4514,9 +4850,11 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
     //perform sigma to zero extrapolation of the various contributions
     boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/sigma_extr");
 
-    vector<distr_t> Final_extr_data;
+    vector<bool> Fix_D6_list({true, false});
+    vector<int> sigma_to_exclude_list({2,0});
+    vector<vector<distr_t>> Final_extr_data(Fix_D6_list.size());
 
-    int sigma_to_exclude=0;
+  
     for(int c=0; c<(signed)Contribs.size();c++) {
 
       
@@ -4546,154 +4884,159 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
       };
 
 
-      bootstrap_fit<fpar_SIGMA,ipar_SIGMA> bf_SIGMA(Njacks);
-      bootstrap_fit<fpar_SIGMA,ipar_SIGMA> bf_SIGMA_ch2(1);
-      bf_SIGMA.Set_number_of_measurements(sigma_list_strange.size() - sigma_to_exclude);
-      bf_SIGMA.Set_verbosity(1);
-      //ch2
-      bf_SIGMA_ch2.Set_number_of_measurements(sigma_list_strange.size() - sigma_to_exclude);
-      bf_SIGMA_ch2.Set_verbosity(1);
+     
 
-      //add fit parameters
-      bf_SIGMA.Add_par("D", 2.0, 0.1);
-      bf_SIGMA.Add_par("D4", 2, 0.1);
-      bf_SIGMA.Add_par("D6", 2, 0.1);
-      //ch2
-      bf_SIGMA_ch2.Add_par("D", 2.0, 0.1);
-      bf_SIGMA_ch2.Add_par("D4", 2, 0.1);
-      bf_SIGMA_ch2.Add_par("D6", 2, 0.1);
+      for(int dd=0;dd<(signed)Fix_D6_list.size() ; dd++ ) {
+	
+	bool Fix_D6= Fix_D6_list[dd];
+	int sigma_to_exclude= sigma_to_exclude_list[dd];
+	
+	bootstrap_fit<fpar_SIGMA,ipar_SIGMA> bf_SIGMA(Njacks);
+	bootstrap_fit<fpar_SIGMA,ipar_SIGMA> bf_SIGMA_ch2(1);
+	bf_SIGMA.Set_number_of_measurements(sigma_list_strange.size() - sigma_to_exclude);
+	bf_SIGMA.Set_verbosity(1);
+	//ch2
+	bf_SIGMA_ch2.Set_number_of_measurements(sigma_list_strange.size() - sigma_to_exclude);
+	bf_SIGMA_ch2.Set_verbosity(1);
 
-      bool Fix_D6=true;
-      if(Fix_D6) {
-	bf_SIGMA.Fix_par("D6",0.0);
-	bf_SIGMA_ch2.Fix_par("D6",0.0);
-      }
+	//add fit parameters
+	bf_SIGMA.Add_par("D", 2.0, 0.1);
+	bf_SIGMA.Add_par("D4", 2, 0.1);
+	bf_SIGMA.Add_par("D6", 2, 0.1);
+	//ch2
+	bf_SIGMA_ch2.Add_par("D", 2.0, 0.1);
+	bf_SIGMA_ch2.Add_par("D4", 2, 0.1);
+	bf_SIGMA_ch2.Add_par("D6", 2, 0.1);
+	
+	
+	if(Fix_D6) {
+	  bf_SIGMA.Fix_par("D6",0.0);
+	  bf_SIGMA_ch2.Fix_par("D6",0.0);
+	}
 
-      //ansatz
-      bf_SIGMA.ansatz=  [ ](const fpar_SIGMA &p, const ipar_SIGMA &ip) {
+	//ansatz
+	bf_SIGMA.ansatz=  [ ](const fpar_SIGMA &p, const ipar_SIGMA &ip) {
        
-	return p.D + p.D4*pow(ip.sigma,4) + p.D6*pow(ip.sigma,6);
-      };
-      //meas
-      bf_SIGMA.measurement=  [ ](const fpar_SIGMA &p, const ipar_SIGMA &ip) {
-	return ip.Br;
-      };
-      //err
-      bf_SIGMA.error=  [ ](const fpar_SIGMA &p, const ipar_SIGMA &ip) {
-	return ip.Br_err;
-      };
-      //ch2
-      bf_SIGMA_ch2.ansatz= bf_SIGMA.ansatz;
-      bf_SIGMA_ch2.measurement= bf_SIGMA.measurement;
-      bf_SIGMA_ch2.error= bf_SIGMA.error;
-
-
-      //fill the data
-      vector<vector<ipar_SIGMA>> data(Njacks);
-      vector<vector<ipar_SIGMA>> data_ch2(1);
-      //allocate space for output result
-      boot_fit_data<fpar_SIGMA> Bt_fit;
-      boot_fit_data<fpar_SIGMA> Bt_fit_ch2;
-      for(auto &data_iboot: data) data_iboot.resize(sigma_list_strange.size() - sigma_to_exclude);
-      for(auto &data_iboot: data_ch2) data_iboot.resize(sigma_list_strange.size() - sigma_to_exclude);
-
-      GaussianMersenne GS(224223); //GS(15431); //;
-         
-      for(int ijack=0;ijack<Njacks;ijack++) {
-
-
-	for(int is=0;is<(signed)sigma_list_strange.size() - sigma_to_exclude;is++) {
-
-	 
-
-	  data[ijack][is].Br = Br_finals[c].ave(is) + (Br_finals[c].distr_list[is].distr[ijack] - Br_finals[c].ave(is))*sqrt( pow(Br_finals[c].err(is),2) + pow(Br_final_systs[c][is],2))/Br_finals[c].err(is);
-	  data[ijack][is].Br_err = sqrt( pow(Br_finals[c].err(is),2) + pow(Br_final_systs[c][is],2));
-	  data[ijack][is].sigma= sigma_list_strange[is];
+	  return p.D + p.D4*pow(ip.sigma,4) + p.D6*pow(ip.sigma,6);
+	};
+	//meas
+	bf_SIGMA.measurement=  [ ](const fpar_SIGMA &p, const ipar_SIGMA &ip) {
+	  return ip.Br;
+	};
+	//err
+	bf_SIGMA.error=  [ ](const fpar_SIGMA &p, const ipar_SIGMA &ip) {
+	  return ip.Br_err;
+	};
+	//ch2
+	bf_SIGMA_ch2.ansatz= bf_SIGMA.ansatz;
+	bf_SIGMA_ch2.measurement= bf_SIGMA.measurement;
+	bf_SIGMA_ch2.error= bf_SIGMA.error;
+	
+	
+	//fill the data
+	vector<vector<ipar_SIGMA>> data(Njacks);
+	vector<vector<ipar_SIGMA>> data_ch2(1);
+	//allocate space for output result
+	boot_fit_data<fpar_SIGMA> Bt_fit;
+	boot_fit_data<fpar_SIGMA> Bt_fit_ch2;
+	for(auto &data_iboot: data) data_iboot.resize(sigma_list_strange.size() - sigma_to_exclude);
+	for(auto &data_iboot: data_ch2) data_iboot.resize(sigma_list_strange.size() - sigma_to_exclude);
+	
+	GaussianMersenne GS(224223); //GS(15431); //;
+	
+	for(int ijack=0;ijack<Njacks;ijack++) {
 	  
-
-	  if(ijack==0) {
-
+	  
+	  for(int is=0;is<(signed)sigma_list_strange.size() - sigma_to_exclude;is++) {
+	    
+	    
+	    
+	    data[ijack][is].Br = Br_finals[c].ave(is) + (Br_finals[c].distr_list[is].distr[ijack] - Br_finals[c].ave(is))*sqrt( pow(Br_finals[c].err(is),2) + pow(Br_final_systs[c][is],2))/Br_finals[c].err(is);
+	    data[ijack][is].Br_err = sqrt( pow(Br_finals[c].err(is),2) + pow(Br_final_systs[c][is],2));
+	    data[ijack][is].sigma= sigma_list_strange[is];
+	    
+	    
+	    if(ijack==0) {
+	      
 	    data_ch2[ijack][is].Br= Br_finals[c].ave(is);
 	    data_ch2[ijack][is].Br_err = sqrt( pow(Br_finals[c].err(is),2) + pow(Br_final_systs[c][is],2));
 	    data_ch2[ijack][is].sigma = sigma_list_strange[is];
-
+	    
+	    }
+	    
 	  }
-	  
 	}
-      }
-
-
+	
+	
       
 	
-      //append
-      bf_SIGMA.Append_to_input_par(data);
-      
-      bf_SIGMA_ch2.Append_to_input_par(data_ch2);
-      //fit
-      cout<<"Fitting...."<<endl;
-      Bt_fit= bf_SIGMA.Perform_bootstrap_fit();
-      Bt_fit_ch2= bf_SIGMA_ch2.Perform_bootstrap_fit();
-      
-      
-      //retrieve parameters
-      distr_t D(UseJack), D4(UseJack), D6(UseJack);
-      for(int ijack=0;ijack<Njacks;ijack++) { D.distr.push_back( Bt_fit.par[ijack].D); D4.distr.push_back( Bt_fit.par[ijack].D4); D6.distr.push_back( Bt_fit.par[ijack].D6);}
-      //reduced ch2
-      int Ndof= sigma_list_strange.size() - sigma_to_exclude - ( (Fix_D6==true)?2:3 );
-      double ch2= Bt_fit_ch2.get_ch2_ave()/Ndof;
+	//append
+	bf_SIGMA.Append_to_input_par(data);
+	
+	bf_SIGMA_ch2.Append_to_input_par(data_ch2);
+	//fit
+	cout<<"Fitting...."<<endl;
+	Bt_fit= bf_SIGMA.Perform_bootstrap_fit();
+	Bt_fit_ch2= bf_SIGMA_ch2.Perform_bootstrap_fit();
+	
+	
+	//retrieve parameters
+	distr_t D(UseJack), D4(UseJack), D6(UseJack);
+	for(int ijack=0;ijack<Njacks;ijack++) { D.distr.push_back( Bt_fit.par[ijack].D); D4.distr.push_back( Bt_fit.par[ijack].D4); D6.distr.push_back( Bt_fit.par[ijack].D6);}
+	//reduced ch2
+	int Ndof= sigma_list_strange.size() - sigma_to_exclude - ( (Fix_D6==true)?2:3 );
+	double ch2= Bt_fit_ch2.get_ch2_ave()/Ndof;
 
-      Final_extr_data.push_back(D);
+	Final_extr_data[dd].push_back(D);
+	
       
-      
-      //print fit function
-      distr_t_list R_at_sigma_to_print(UseJack);
-
-      Vfloat sigma_to_print;
-      for(int iss=0;iss<1000;iss++) { sigma_to_print.push_back( iss*0.0002);}
-      
-      for(auto &ss: sigma_to_print) {
-	R_at_sigma_to_print.distr_list.push_back( D + D4*pow(ss,4) + D6*pow(ss,6));
+	//print fit function
+	distr_t_list R_at_sigma_to_print(UseJack);
+	
+	Vfloat sigma_to_print;
+	for(int iss=0;iss<1000;iss++) { sigma_to_print.push_back( iss*0.0002);}
+	
+	for(auto &ss: sigma_to_print) {
+	  R_at_sigma_to_print.distr_list.push_back( D + D4*pow(ss,4) + D6*pow(ss,6));
+	}
+	string Fit_tag= "../data/tau_decay/"+Tag_reco_type+"/strange/sigma_extr/contr_"+Contribs[c]+"_ifit_"+to_string(dd);
+	Print_To_File({}, {sigma_to_print, R_at_sigma_to_print.ave(), R_at_sigma_to_print.err()},Fit_tag, "", "#sigma Br Br_err "+to_string_with_precision(ch2,4));
+	
+	
+	
       }
-      string Fit_tag= "../data/tau_decay/"+Tag_reco_type+"/strange/sigma_extr/contr_"+Contribs[c];
-      Print_To_File({}, {sigma_to_print, R_at_sigma_to_print.ave(), R_at_sigma_to_print.err()},Fit_tag, "", "#sigma Br Br_err "+to_string_with_precision(ch2,4));
-      
-      
-      
     }
+      
     
-    if( Tag_reco_type == "Beta_3.99_Emax_4.0" ) {
-      double Sew= 1.0201;
-      
-      distr_t R_exp(UseJack);
-      double R_exp_ave= 0.1633;
-      double R_exp_err=0.0027;
-      double sqrt_R_exp_ave= sqrt(R_exp_ave);
-      double sqrt_R_exp_err= 0.5*R_exp_err/sqrt_R_exp_ave;
-      
-      cout<<"A0 V0  TA    TV   T   A   tot"<<endl;
-      cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[0].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[0].err(),0)<<")$ ~ &";
-      cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[1].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[1].err(),0)<<")$ ~ &";
-      cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[2].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[2].err(),0)<<")$ ~ &";
-      cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[3].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[3].err(),0)<<")$ ~ &";
-      cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[8].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[8].err(),0)<<")$ ~ &";
-      cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[7].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[7].err(),0)<<")$ ~ &";
-      cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[4].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[4].err(),0)<<")$ ~ \\"<<endl;
-
-
-      distr_t sqrt_Rinv_lat= SQRT_D(1.0/(Sew*Final_extr_data[4]));
-      cout<<"Final determination of Vus"<<endl;
-      
-      cout<<"Vus: "<<sqrt_Rinv_lat.ave()*sqrt_R_exp_ave<<"("<<sqrt_Rinv_lat.err()*sqrt_R_exp_ave<<")_lat ("<<sqrt_Rinv_lat.ave()*sqrt_R_exp_err<<")_exp"<<" ("<<sqrt( pow( sqrt_Rinv_lat.err()*sqrt_R_exp_ave,2) + pow(sqrt_Rinv_lat.ave()*sqrt_R_exp_err,2))<<")"<<endl; 
-      
-
-      
-    }
-
-  }
-
+	double Sew= 1.0201;
 
 	
+	/*
       
+	cout<<"A0 V0  TA    TV   T   A   tot"<<endl;
+	cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[0].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[0].err(),0)<<")$ ~ &";
+	cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[1].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[1].err(),0)<<")$ ~ &";
+	cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[2].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[2].err(),0)<<")$ ~ &";
+	cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[3].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[3].err(),0)<<")$ ~ &";
+	cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[8].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[8].err(),0)<<")$ ~ &";
+	cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[7].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[7].err(),0)<<")$ ~ &";
+	cout<<" ~ $"<<to_string_with_precision(Sew*Final_extr_data[4].ave(),3)<<"~("<<to_string_with_precision(1000*Sew*Final_extr_data[4].err(),0)<<")$ ~ \\"<<endl;
+      
+	*/
+	
+	distr_t FF= Final_extr_data[0][2].ave() + (Final_extr_data[0][2] - Final_extr_data[0][2].ave())*sqrt( pow(Final_extr_data[0][2].err(),2) + pow( Final_extr_data[0][2].ave()-Final_extr_data[1][2].ave(),2))/Final_extr_data[0][2].err();
+	cout<<"R(a,r): "<<Tag_reco_type<<" : "<<Final_extr_data[0][2].ave()<<" +- "<<Final_extr_data[0][2].err()<<" +- "<< Final_extr_data[0][2].ave()-Final_extr_data[1][2].ave()<<endl;
+
+	
+
+	
+         RET=Sew*FF;
+      
+  }
+    
+    
+    
+    
 
       
 
@@ -4715,6 +5058,6 @@ void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double be
   
 
 
-  return;
+  return RET;
 
 }

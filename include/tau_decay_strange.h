@@ -20,7 +20,7 @@ using namespace std;
 
 double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, string channel, string reg, double s, string Ens );
 void tau_decay_analysis_strange();
-void Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double beta);
+distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double beta);
 void get_sigma_list_strange();
 
 

@@ -291,6 +291,26 @@ void Get_scale_setting() {
   
   
     Determine_scale_from_fp_FLAG(Mpi_scale_setting_phys_point_ens, fpi_scale_setting_phys_point_ens, Mpi_scale_setting_Bens, fpi_scale_setting_Bens, Mpi_scale_setting_Aens, fpi_scale_setting_Aens, L_phys_point, L_B_ens, L_A_ens, Ensemble_phys_point_tag_list, Ensemble_B_tag_list, Ensemble_A_tag_list, a_from_fp_A, a_from_fp_B, a_from_fp_C, a_from_fp_D, a_from_fp_E,  UseJack, Use_three_finest_in_scale_setting_fp);
+
+
+    //print pion masses
+    cout<<"###############  PRINTING PION MASSES: "<<endl;
+    for(int i=0;i<(signed)Ensemble_phys_point_tag_list.size();i++) {
+
+      string T= Ensemble_phys_point_tag_list[i];
+      distr_t M= Mpi_scale_setting_phys_point_ens.distr_list[i];
+      distr_t a(UseJack);
+      if(T.substr(1,1) == "B") { a= a_from_fp_B;}
+      else if(T.substr(1,1) == "C" ) { a= a_from_fp_C;}
+      else if(T.substr(1,1) == "D" ) { a= a_from_fp_D;}
+      else if(T.substr(1,1) == "E" ) { a= a_from_fp_E;}
+      cout<<"Mpi("<<T<<") : "<<(M/a).ave()<<" +- "<<(M/a).err()<<" [lu]: "<<M.ave()<<" +- "<<M.err()<<endl;
+      
+    }
+
+
+
+    
   
   
   //###################################################################################
