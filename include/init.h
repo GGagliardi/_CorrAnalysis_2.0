@@ -24,6 +24,7 @@
 #include "l7_Weinberg.h"
 #include "tests.h"
 #include "weak_annihilation_inclusive.h"
+#include "RC_WI_analysis.h"
 
 using namespace std;
 

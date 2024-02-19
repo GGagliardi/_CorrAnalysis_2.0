@@ -1,4 +1,5 @@
 #include "../include/init.h"
+#include "RC_WI_analysis.h"
 #include "RC_analysis.h"
 #include "chi_mag.h"
 
@@ -213,6 +214,12 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
     //do nothing
   }
 
+  
+  else if(Analysis_Mode=="RC_WI_analysis") {
+
+    //do nothing
+  }
+
   else if(Analysis_Mode=="test") {
 
     //do nothing
@@ -331,6 +338,11 @@ void MasterClass_analysis::Analysis_manager() {
   if(Analysis_Mode=="weak_annihilation_inclusive") {
 
     compute_weak_annihilation();
+  }
+
+  if(Analysis_Mode=="RC_WI_analysis") {
+
+    RC_WI_analysis();
   }
 
   
