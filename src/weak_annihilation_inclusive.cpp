@@ -9,6 +9,8 @@ void compute_weak_annihilation() {
   bool UseJack=1;
   double fm_to_inv_Gev= 1.0/0.197327;
 
+  boost::filesystem::create_directory("../data/WA_inclusive");
+
   auto Sort_confs = [](string A, string B) {
 
 			   
@@ -53,6 +55,27 @@ void compute_weak_annihilation() {
     vector<data_t> V_sink(4), A_sink(4);
 
     data_t P5_sou, P5_sink;
+
+    data_t P5_test;
+
+
+    P5_test.Read("../test_weak_ann_mass", "mes_contr_H_B_H_H_S0_H", "P5P5", Sort_confs);
+
+    int Nu= P5_test.Tag.size() ;
+
+    for(int i=0;i<Nu;i++) {
+
+      cout<<"Analyzing ensemble: "<<P5_test.Tag[i]<<endl; 
+
+      CorrAnalysis Corr(UseJack, Njacks,800);
+      Corr.Nt = P5_test.nrows[i];
+
+      distr_t_list eff_mass = Corr.effective_mass_t( P5_test.col(0)[i], "../data/WA_inclusive/P5_test_"+P5_test.Tag[i] );
+
+
+    }
+
+    exit(-1);
 
     for(int i=0;i<4; i++) {
     

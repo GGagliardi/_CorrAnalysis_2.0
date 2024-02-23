@@ -522,9 +522,9 @@ rt_07_Bs Get_virtual_tensor_FF(int n_xg, bool UseJack, int Njacks, string MESON,
 
     //mass and decay constants
     distr_t_list pt2_distr_SM= Corr.corr_t(data_2pts_SM.col(0)[iens], path_out+"/corr_2pts/"+data_2pts_SM.Tag[iens]+"/corr_2pt_SM.dat");
-    distr_t_list eff_mass_SM = Corr.effective_mass_t(pt2_distr_SM, path_out+"/masses/"+data_2pts_SM.Tag[iens]+"/eff_mass_SM.dat");
+    distr_t_list eff_mass_SM = Corr.effective_mass_t(pt2_distr_SM, path_out+"/mass/"+data_2pts_SM.Tag[iens]+"/eff_mass_SM.dat");
     distr_t_list pt2_distr_SMSM= Corr.corr_t(data_2pts_SMSM.col(0)[iens], path_out+"/corr_2pts/"+data_2pts_SM.Tag[iens]+"/corr_2pt_SMSM.dat");
-    distr_t_list eff_mass_SMSM = Corr.effective_mass_t(pt2_distr_SMSM, path_out+"/masses/"+data_2pts_SM.Tag[iens]+"/eff_mass_SMSM.dat");
+    distr_t_list eff_mass_SMSM = Corr.effective_mass_t(pt2_distr_SMSM, path_out+"/mass/"+data_2pts_SM.Tag[iens]+"/eff_mass_SMSM.dat");
     distr_t mel_SMSM= Corr.Fit_distr(Corr.mel_ov_mass_t(pt2_distr_SMSM, ""))/2.0;
 
     distr_t_list pt2_distr_SM_boot= Corr_boot.corr_t(data_2pts_SM.col(0)[iens], "");

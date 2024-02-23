@@ -35,8 +35,8 @@ const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
-bool Skip_spectral_density_analysis_strange=true;
-const bool Perform_continuum_extrapolation=true;
+bool Skip_spectral_density_analysis_strange=false;
+const bool Perform_continuum_extrapolation=false;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
 
@@ -59,128 +59,254 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
 
   if(alpha_m > 3) {
 
+    if(s< 0.125) {
   
-  if( reg=="tm") {
-    if(channel=="Aii") {
-      if(Ens == "cB211b.072.64") {  Ra0 =3e6;  }
-      else if(Ens == "cB211b.072.96") { Ra0= 4e8;   }
-      else if(Ens == "cC211a.06.80") { Ra0= 6e6;   } 
-      else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
-      else if(Ens == "cD211a.054.96") {  Ra0=8e6;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=4e6;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+      if( reg=="tm") {
+	if(channel=="Aii") {
+	  if(Ens == "cB211b.072.64") {  Ra0 =3e6;  }
+	  else if(Ens == "cB211b.072.96") { Ra0= 4e8;   }
+	  else if(Ens == "cC211a.06.80") { Ra0= 6e6;   } 
+	  else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
+	  else if(Ens == "cD211a.054.96") {  Ra0=8e6;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=4e6;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="Vii") {
+	  if(Ens == "cB211b.072.64") { Ra0=8e5;   }
+	  else if(Ens == "cB211b.072.96") { Ra0= 2.5e7;    } 
+	  else if(Ens == "cC211a.06.80") {  Ra0=3e7;  } 
+	  else if(Ens == "cC211a.06.112") { Ra0= 2e6;   }
+	  else if(Ens == "cD211a.054.96") {  Ra0= 2e7;   }
+	  else if(Ens == "cE211a.044.112") {  Ra0=3e7;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="A0") {
+	  if(Ens == "cB211b.072.64") { Ra0=1e7;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=1e7;   }
+	  else if(Ens == "cC211a.06.80") {  Ra0=1e6;  }
+	  else if(Ens == "cC211a.06.112") { Ra0= 1e6;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=5e7;   }
+	  else if(Ens == "cE211a.044.112") {  Ra0=3.5e8;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="V0") {
+	  if(Ens == "cB211b.072.64") { Ra0=1e6;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=1e6;   }
+	  else if(Ens == "cC211a.06.80") {  Ra0=3e6;  }
+	  else if(Ens == "cC211a.06.112") { Ra0= 4e7;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=2.5e7;   }
+	  else if(Ens == "cE211a.044.112") {  Ra0=1e7;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="T") {
+	  if(Ens == "cB211b.072.64") { Ra0=2e4;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=2e5;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=6e5; if (s > 0.11) Ra0 = 3e4;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 4e5;  if(s > 0.11) Ra0=1e5;  }
+	  else if(Ens == "cD211a.054.96") { Ra0=7.5e4;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=9e5; if( s > 0.11) Ra0=1e5;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="L") {
+	  if(Ens == "cB211b.072.64") { Ra0=2e6;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=5e5;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 5e5;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=5e6;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=6e5;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
+	
+      }
+      else if(reg=="OS") {
+	
+	if(channel=="Aii") {
+	  if(Ens == "cB211b.072.64") { Ra0=1.7e6;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=1.5e7;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=1.2e7;   } 
+	  else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
+	  else if(Ens == "cD211a.054.96") {  Ra0=5.5e7;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=8e6;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="Vii") {
+	  if(Ens == "cB211b.072.64") { Ra0=2.5e6; } // Ra0= 6e5;   }
+	  else if(Ens == "cB211b.072.96") {  Ra0= 9e7;    }
+	  else if(Ens == "cC211a.06.80") {   Ra0= 2e7;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 2e7;   }
+	  else if(Ens == "cD211a.054.96") {  Ra0=2e7;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=2e7;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="A0") {
+	  if(Ens == "cB211b.072.64") { Ra0=2e5;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=1.6e6;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=3e6;   }
+	  else if(Ens == "cE211a.044.112") {  Ra0=1e8;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="V0") {
+	  if(Ens == "cB211b.072.64") { Ra0=5e7;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=2e8;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=1e9;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 7e8;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=5e9;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=5e3;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="T") {
+	  if(Ens == "cB211b.072.64") { Ra0=1.3e4;  if(s > 0.11) Ra0= 4e3; }
+	  else if(Ens == "cB211b.072.96") { Ra0=4e5;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=2e5;  if(s > 0.11) Ra0=2e4; }
+	  else if(Ens == "cC211a.06.112") { Ra0= 2e5; if(s > 0.11) Ra0=3e4;  }
+	  else if(Ens == "cD211a.054.96") { Ra0=3.5e4;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=2e5; if( s > 0.11) Ra0=1e5;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="L") {
+	  if(Ens == "cB211b.072.64") { Ra0=1e5;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=3e5;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 5e6;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=3e6;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=2e7;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
+	
+      }
+      
+      else crash("In Customized_plateaux_tau_spectre, reg: "+reg+" not yet implemented");
     }
-    else if(channel=="Vii") {
-      if(Ens == "cB211b.072.64") { Ra0=8e5;   }
-      else if(Ens == "cB211b.072.96") { Ra0= 2.5e7;    } 
-      else if(Ens == "cC211a.06.80") {  Ra0=3e7;  } 
-      else if(Ens == "cC211a.06.112") { Ra0= 2e6;   }
-      else if(Ens == "cD211a.054.96") {  Ra0= 2e7;   }
-      else if(Ens == "cE211a.044.112") {  Ra0=3e7;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else if(channel=="A0") {
-      if(Ens == "cB211b.072.64") { Ra0=1e7;   }
-      else if(Ens == "cB211b.072.96") { Ra0=1e7;   }
-      else if(Ens == "cC211a.06.80") {  Ra0=1e6;  }
-      else if(Ens == "cC211a.06.112") { Ra0= 1e6;   }
-      else if(Ens == "cD211a.054.96") { Ra0=5e7;   }
-      else if(Ens == "cE211a.044.112") {  Ra0=3.5e8;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else if(channel=="V0") {
-      if(Ens == "cB211b.072.64") { Ra0=1e6;   }
-      else if(Ens == "cB211b.072.96") { Ra0=1e6;   }
-      else if(Ens == "cC211a.06.80") {  Ra0=3e6;  }
-      else if(Ens == "cC211a.06.112") { Ra0= 4e7;   }
-      else if(Ens == "cD211a.054.96") { Ra0=2.5e7;   }
-      else if(Ens == "cE211a.044.112") {  Ra0=1e7;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else if(channel=="T") {
-      if(Ens == "cB211b.072.64") { Ra0=2e4;   }
-      else if(Ens == "cB211b.072.96") { Ra0=2e5;   }
-      else if(Ens == "cC211a.06.80") { Ra0=6e5;   }
-      else if(Ens == "cC211a.06.112") { Ra0= 4e5;   }
-      else if(Ens == "cD211a.054.96") { Ra0=7.5e4;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=9e5;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else if(channel=="L") {
-      if(Ens == "cB211b.072.64") { Ra0=2e6;   }
-      else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
-      else if(Ens == "cC211a.06.80") { Ra0=5e5;   }
-      else if(Ens == "cC211a.06.112") { Ra0= 5e5;   }
-      else if(Ens == "cD211a.054.96") { Ra0=5e6;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=6e5;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
-    
-  }
-  else if(reg=="OS") {
-    
-    if(channel=="Aii") {
-      if(Ens == "cB211b.072.64") { Ra0=1.7e6;   }
-      else if(Ens == "cB211b.072.96") { Ra0=1.5e7;   }
-      else if(Ens == "cC211a.06.80") { Ra0=1.2e7;   } 
-      else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
-      else if(Ens == "cD211a.054.96") {  Ra0=5.5e7;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=8e6;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else if(channel=="Vii") {
-      if(Ens == "cB211b.072.64") { Ra0=2.5e6; } // Ra0= 6e5;   }
-      else if(Ens == "cB211b.072.96") {  Ra0= 9e7;    }
-      else if(Ens == "cC211a.06.80") {   Ra0= 2e7;   }
-      else if(Ens == "cC211a.06.112") { Ra0= 2e7;   }
-      else if(Ens == "cD211a.054.96") {  Ra0=2e7;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=2e7;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else if(channel=="A0") {
-      if(Ens == "cB211b.072.64") { Ra0=2e5;   }
-      else if(Ens == "cB211b.072.96") { Ra0=1.6e6;   }
-      else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
-      else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
-      else if(Ens == "cD211a.054.96") { Ra0=3e6;   }
-      else if(Ens == "cE211a.044.112") {  Ra0=1e8;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else if(channel=="V0") {
-      if(Ens == "cB211b.072.64") { Ra0=5e7;   }
-      else if(Ens == "cB211b.072.96") { Ra0=2e8;   }
-      else if(Ens == "cC211a.06.80") { Ra0=1e9;   }
-      else if(Ens == "cC211a.06.112") { Ra0= 7e8;   }
-      else if(Ens == "cD211a.054.96") { Ra0=5e9;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=5e3;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else if(channel=="T") {
-      if(Ens == "cB211b.072.64") { Ra0=1.3e4;   }
-      else if(Ens == "cB211b.072.96") { Ra0=4e5;   }
-      else if(Ens == "cC211a.06.80") { Ra0=2e5;   }
-      else if(Ens == "cC211a.06.112") { Ra0= 2e5;   }
-      else if(Ens == "cD211a.054.96") { Ra0=3.5e4;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=2e5;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else if(channel=="L") {
-      if(Ens == "cB211b.072.64") { Ra0=1e5;   }
-      else if(Ens == "cB211b.072.96") { Ra0=3e5;   }
-      else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
-      else if(Ens == "cC211a.06.112") { Ra0= 5e6;   }
-      else if(Ens == "cD211a.054.96") { Ra0=3e6;  }
-      else if(Ens == "cE211a.044.112") {  Ra0=2e7;  }
-      else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
-    }
-    else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
-    
-  }
-  
-  else crash("In Customized_plateaux_tau_spectre, reg: "+reg+" not yet implemented");
+    else { // s > 0.12
 
 
+      if( reg=="tm") {
+	if(channel=="Aii") {
+	  if(Ens == "cB211b.072.64") {  Ra0 =3e6;  }
+	  else if(Ens == "cB211b.072.96") { Ra0= 4e8;   }
+	  else if(Ens == "cC211a.06.80") { Ra0= 6e6;   } 
+	  else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
+	  else if(Ens == "cD211a.054.96") {  Ra0=8e6;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=4e6;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="Vii") {
+	  if(Ens == "cB211b.072.64") { Ra0=8e5;   }
+	  else if(Ens == "cB211b.072.96") { Ra0= 2.5e7;    } 
+	  else if(Ens == "cC211a.06.80") {  Ra0=3e7;  } 
+	  else if(Ens == "cC211a.06.112") { Ra0= 2e6;   }
+	  else if(Ens == "cD211a.054.96") {  Ra0= 2e7;   }
+	  else if(Ens == "cE211a.044.112") {  Ra0=3e7;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="A0") {
+	  if(Ens == "cB211b.072.64") { Ra0=1e7;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=1e7;   }
+	  else if(Ens == "cC211a.06.80") {  Ra0=1e6;  }
+	  else if(Ens == "cC211a.06.112") { Ra0= 1e6;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=5e7;   }
+	  else if(Ens == "cE211a.044.112") {  Ra0=3.5e8;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="V0") {
+	  if(Ens == "cB211b.072.64") { Ra0=1e6;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=1e6;   }
+	  else if(Ens == "cC211a.06.80") {  Ra0=3e6;  }
+	  else if(Ens == "cC211a.06.112") { Ra0= 4e7;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=2.5e7;   }
+	  else if(Ens == "cE211a.044.112") {  Ra0=1e7;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="T") {
+	  if(Ens == "cB211b.072.64") { Ra0=2e4;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=2e5;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=3e4;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 2e4;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=3e4;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=2e5;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="L") {
+	  if(Ens == "cB211b.072.64") { Ra0=2e6;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=2e6;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=5e5;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 5e5;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=5e6;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=6e5;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
+	
+      }
+      else if(reg=="OS") {
+	
+	if(channel=="Aii") {
+	  if(Ens == "cB211b.072.64") { Ra0=1.7e6;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=1.5e7;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=1.2e7;   } 
+	  else if(Ens == "cC211a.06.112") { Ra0= 6e6;   }
+	  else if(Ens == "cD211a.054.96") {  Ra0=5.5e7;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=8e6;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="Vii") {
+	  if(Ens == "cB211b.072.64") { Ra0=2.5e6; } // Ra0= 6e5;   }
+	  else if(Ens == "cB211b.072.96") {  Ra0= 9e7;    }
+	  else if(Ens == "cC211a.06.80") {   Ra0= 2e7;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 2e7;   }
+	  else if(Ens == "cD211a.054.96") {  Ra0=2e7;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=2e7;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="A0") {
+	  if(Ens == "cB211b.072.64") { Ra0=2e5;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=1.6e6;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 1e7;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=3e6;   }
+	  else if(Ens == "cE211a.044.112") {  Ra0=1e8;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="V0") {
+	  if(Ens == "cB211b.072.64") { Ra0=5e7;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=2e8;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=1e9;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 7e8;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=5e9;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=5e3;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="T") {
+	  if(Ens == "cB211b.072.64") { Ra0=2e3;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=2e5;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=2e4;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 2e4;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=3.5e4;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=2e5;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else if(channel=="L") {
+	  if(Ens == "cB211b.072.64") { Ra0=1e5;   }
+	  else if(Ens == "cB211b.072.96") { Ra0=3e5;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=1e6;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 5e6;   }
+	  else if(Ens == "cD211a.054.96") { Ra0=3e6;  }
+	  else if(Ens == "cE211a.044.112") {  Ra0=2e7;  }
+	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
+	}
+	else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
+	
+      }
+      
+      else crash("In Customized_plateaux_tau_spectre, reg: "+reg+" not yet implemented");
+      
+      
+    }
+    
   }
   else {  // alpha=3
 
@@ -224,7 +350,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
 	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
        }
        else if(channel=="T") {
-	 if(Ens == "cB211b.072.64") { Ra0=8e3;   }
+	 if(Ens == "cB211b.072.64") { Ra0=8e3; if(s>0.11) Ra0=3e3;   }
 	 else if(Ens == "cB211b.072.96") { Ra0=2e5;   }
 	 else if(Ens == "cC211a.06.80") { Ra0=2e4; if(s>0.11) Ra0=1e4;  }
 	 else if(Ens == "cC211a.06.112") { Ra0= 2e4; if(s>0.11) Ra0=1e4;  }
@@ -351,8 +477,8 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
        else if(channel=="T") {
 	 if(Ens == "cB211b.072.64") { Ra0=1e3;   }
 	 else if(Ens == "cB211b.072.96") { Ra0=4e4;   }
-	 else if(Ens == "cC211a.06.80") { Ra0=8e3;   }
-	 else if(Ens == "cC211a.06.112") { Ra0= 8e3;   }
+	 else if(Ens == "cC211a.06.80") { Ra0=2e3;   }
+	 else if(Ens == "cC211a.06.112") { Ra0= 2e3;   }
 	 else if(Ens == "cD211a.054.96") { Ra0=9e3;  }
 	 else if(Ens == "cE211a.044.112") {  Ra0=1.5e4;  }
 	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
@@ -363,7 +489,7 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
 	 else if(Ens == "cC211a.06.80") { Ra0=1e5;   }
 	 else if(Ens == "cC211a.06.112") { Ra0= 1e5;   }
 	 else if(Ens == "cD211a.054.96") { Ra0=2e6;  }
-	 else if(Ens == "cE211a.044.112") {  Ra0=6e5;  }
+	 else if(Ens == "cE211a.044.112") {  Ra0=1.5e5;  }
 	 else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");
        }
        else crash("In Customized_plateaux_tau_spectre, channel: "+channel+" not yet implemented");
@@ -410,8 +536,8 @@ double Customized_plateaux_tau_spectre_strange( double alpha, double Emax, strin
 	else if(channel=="T") {
 	  if(Ens == "cB211b.072.64") { Ra0=1e3;   }
 	  else if(Ens == "cB211b.072.96") { Ra0=4e4;   }
-	  else if(Ens == "cC211a.06.80") { Ra0=1e4;   }
-	  else if(Ens == "cC211a.06.112") { Ra0= 1e4;   }
+	  else if(Ens == "cC211a.06.80") { Ra0=3e3;   }
+	  else if(Ens == "cC211a.06.112") { Ra0= 3e3;   }
 	  else if(Ens == "cD211a.054.96") { Ra0=5e3;  }
 	  else if(Ens == "cE211a.044.112") {  Ra0=1e4;  }
 	  else crash("In Customized_plateaux_spectre, ensemble: "+Ens+" not recognized");

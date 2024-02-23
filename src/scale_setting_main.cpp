@@ -262,6 +262,7 @@ void Get_scale_setting() {
       //Lattice info
       LatticeInfo L_info;
       L_info.LatInfo_new_ens(pt2_pion_A.Tag[iens]);
+      double aml_A= L_info.ml;
       CorrAnalysis Corr(UseJack, Njacks,Nboots);
       Corr.Nt = pt2_pion_A.nrows[iens];
       if(pt2_pion_A.Tag[iens] == "cA211a.40.24") {Corr.Tmin=15; Corr.Tmax=21;}
@@ -281,10 +282,13 @@ void Get_scale_setting() {
       Ensemble_A_tag_list.push_back( pt2_pion_A.Tag[iens]);
       L_scale_setting_list.push_back( L_info.L);
       L_A_ens.push_back( L_info.L);
+      cout<<pt2_pion_A.Tag[iens]<<" am_ud: "<<aml_A<<" aMpi: "<<Mpi_fit.ave()<<" +- "<<Mpi_fit.err()<<endl;
       }
       if(pt2_pion_A.Tag[iens].substr(1,1) == "A") {
 	Ensemble_scale_setting_tag_list.push_back(pt2_pion_A.Tag[iens]);
       }
+
+     
     }
   
  
