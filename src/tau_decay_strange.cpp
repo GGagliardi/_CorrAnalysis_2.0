@@ -35,8 +35,8 @@ const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
-bool Skip_spectral_density_analysis_strange=false;
-const bool Perform_continuum_extrapolation=false;
+bool Skip_spectral_density_analysis_strange=true;
+const bool Perform_continuum_extrapolation=true;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
 
@@ -801,7 +801,7 @@ void tau_decay_analysis_strange() {
     }
   }
 
-
+  cout.precision(4);
   cout<<"FINAL RESULT: "<<endl;
   cout<<FAVE.ave()<<" +- "<<FAVE.err()<<" +- "<<syst<<endl;
 
@@ -1195,10 +1195,15 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
   LatticeInfo a_info;
   distr_t a_A(UseJack), a_B(UseJack), a_C(UseJack), a_D(UseJack), a_Z(UseJack), a_E(UseJack);
   distr_t ZV_A(UseJack), ZV_B(UseJack), ZV_C(UseJack), ZV_D(UseJack), ZV_Z(UseJack), ZV_E(UseJack);
-  distr_t ZA_A(UseJack), ZA_B(UseJack), ZA_C(UseJack), ZA_D(UseJack), ZA_Z(UseJack) , ZA_E(UseJack);;
+  distr_t ZA_A(UseJack), ZA_B(UseJack), ZA_C(UseJack), ZA_D(UseJack), ZA_Z(UseJack) , ZA_E(UseJack);
+  distr_t ZV_C112(UseJack), ZA_C112(UseJack), ZV_B96(UseJack), ZA_B96(UseJack);
+  
   double a_A_ave, a_A_err, a_B_ave, a_B_err, a_C_ave, a_C_err, a_D_ave, a_D_err, a_Z_ave, a_Z_err, a_E_ave, a_E_err;
   double ZV_A_ave, ZV_A_err, ZV_B_ave, ZV_B_err, ZV_C_ave, ZV_C_err, ZV_D_ave, ZV_D_err, ZV_Z_ave, ZV_Z_err, ZV_E_ave, ZV_E_err ;
   double ZA_A_ave, ZA_A_err, ZA_B_ave, ZA_B_err, ZA_C_ave, ZA_C_err, ZA_D_ave, ZA_D_err, ZA_Z_ave, ZA_Z_err, ZA_E_ave, ZA_E_err;
+
+  double ZA_C112_ave, ZA_C112_err, ZV_C112_ave, ZV_C112_err;
+  double ZA_B96_ave, ZA_B96_err, ZV_B96_ave, ZV_B96_err;
 
   distr_t ZV_A_boot(false), ZV_B_boot(false), ZV_C_boot(false), ZV_D_boot(false), ZV_E_boot(false);
   distr_t ZA_A_boot(false), ZA_B_boot(false), ZA_C_boot(false), ZA_D_boot(false), ZA_E_boot(false);
@@ -1206,46 +1211,56 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
   a_info.LatInfo_new_ens("cA211a.53.24");
   a_A_ave= a_info.a_from_afp_FLAG;
   a_A_err= a_info.a_from_afp_FLAG_err;
-  ZA_A_ave = a_info.Za_WI_strange;
-  ZA_A_err = a_info.Za_WI_strange_err;
-  ZV_A_ave = a_info.Zv_WI_strange;
-  ZV_A_err = a_info.Zv_WI_strange_err;
+  ZA_A_ave = a_info.Za_WI_FLAG;
+  ZA_A_err = a_info.Za_WI_FLAG_err;
+  ZV_A_ave = a_info.Zv_WI_FLAG;
+  ZV_A_err = a_info.Zv_WI_FLAG_err;
   a_info.LatInfo_new_ens("cB211b.072.64");
   a_B_ave= a_info.a_from_afp_FLAG;
   a_B_err= a_info.a_from_afp_FLAG_err;
-  ZA_B_ave = a_info.Za_WI_strange;
-  ZA_B_err = a_info.Za_WI_strange_err;
-  ZV_B_ave = a_info.Zv_WI_strange;
-  ZV_B_err = a_info.Zv_WI_strange_err;
+  ZA_B_ave = a_info.Za_WI_FLAG;
+  ZA_B_err = a_info.Za_WI_FLAG_err;
+  ZV_B_ave = a_info.Zv_WI_FLAG;
+  ZV_B_err = a_info.Zv_WI_FLAG_err;
+  a_info.LatInfo_new_ens("cB211b.072.96");
+  ZA_B96_ave = a_info.Za_WI_FLAG;
+  ZA_B96_err = a_info.Za_WI_FLAG_err;
+  ZV_B96_ave = a_info.Zv_WI_FLAG;
+  ZV_B96_err = a_info.Zv_WI_FLAG_err;
   a_info.LatInfo_new_ens("cC211a.06.80");
   a_C_ave= a_info.a_from_afp_FLAG;
   a_C_err= a_info.a_from_afp_FLAG_err;
-  ZA_C_ave = a_info.Za_WI_strange;
-  ZA_C_err = a_info.Za_WI_strange_err;
-  ZV_C_ave = a_info.Zv_WI_strange;
-  ZV_C_err = a_info.Zv_WI_strange_err;
+  ZA_C_ave = a_info.Za_WI_FLAG;
+  ZA_C_err = a_info.Za_WI_FLAG_err;
+  ZV_C_ave = a_info.Zv_WI_FLAG;
+  ZV_C_err = a_info.Zv_WI_FLAG_err;
+  a_info.LatInfo_new_ens("cC211a.06.112");
+  ZA_C112_ave = a_info.Za_WI_FLAG;
+  ZA_C112_err = a_info.Za_WI_FLAG_err;
+  ZV_C112_ave = a_info.Zv_WI_FLAG;
+  ZV_C112_err = a_info.Zv_WI_FLAG_err;
   a_info.LatInfo_new_ens("cD211a.054.96");
   a_D_ave= a_info.a_from_afp_FLAG;
   a_D_err= a_info.a_from_afp_FLAG_err;
-  ZA_D_ave = a_info.Za_WI_strange;
-  ZA_D_err = a_info.Za_WI_strange_err;
-  ZV_D_ave = a_info.Zv_WI_strange;
-  ZV_D_err = a_info.Zv_WI_strange_err;
+  ZA_D_ave = a_info.Za_WI_FLAG;
+  ZA_D_err = a_info.Za_WI_FLAG_err;
+  ZV_D_ave = a_info.Zv_WI_FLAG;
+  ZV_D_err = a_info.Zv_WI_FLAG_err;
   a_info.LatInfo_new_ens("cZ211a.077.64");
   a_Z_ave= a_info.a_from_afp_FLAG;
   a_Z_err= a_info.a_from_afp_FLAG_err;
-  ZA_Z_ave = a_info.Za_WI_strange;
-  ZA_Z_err = a_info.Za_WI_strange_err;
-  ZV_Z_ave = a_info.Zv_WI_strange;
-  ZV_Z_err = a_info.Zv_WI_strange_err;
+  ZA_Z_ave = a_info.Za_WI_FLAG;
+  ZA_Z_err = a_info.Za_WI_FLAG_err;
+  ZV_Z_ave = a_info.Zv_WI_FLAG;
+  ZV_Z_err = a_info.Zv_WI_FLAG_err;
 
   a_info.LatInfo_new_ens("cE211a.044.112");
   a_E_ave= a_info.a_from_afp_FLAG;
   a_E_err= a_info.a_from_afp_FLAG_err;
-  ZA_E_ave = a_info.Za_WI_strange;
-  ZA_E_err = a_info.Za_WI_strange_err;
-  ZV_E_ave = a_info.Zv_WI_strange;
-  ZV_E_err = a_info.Zv_WI_strange_err;
+  ZA_E_ave = a_info.Za_WI_FLAG;
+  ZA_E_err = a_info.Za_WI_FLAG_err;
+  ZV_E_ave = a_info.Zv_WI_FLAG;
+  ZV_E_err = a_info.Zv_WI_FLAG_err;
   
   
   if(UseJack)  { for(int ijack=0;ijack<Njacks;ijack++) {
@@ -1269,6 +1284,11 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
       ZV_Z.distr.push_back(  ZV_Z_ave + GM()*ZV_Z_err*(1.0/sqrt(Njacks -1.0)));
       ZA_E.distr.push_back(  ZA_E_ave + GM()*ZA_E_err*(1.0/sqrt(Njacks -1.0)));
       ZV_E.distr.push_back(  ZV_E_ave + GM()*ZV_E_err*(1.0/sqrt(Njacks -1.0)));
+
+      ZA_B96.distr.push_back(  ZA_B96_ave + GM()*ZA_B96_err*(1.0/sqrt(Njacks -1.0)));
+      ZV_B96.distr.push_back(  ZV_B96_ave + GM()*ZV_B96_err*(1.0/sqrt(Njacks -1.0)));
+      ZA_C112.distr.push_back(  ZA_C112_ave + GM()*ZA_C112_err*(1.0/sqrt(Njacks -1.0)));
+      ZV_C112.distr.push_back(  ZV_C112_ave + GM()*ZV_C112_err*(1.0/sqrt(Njacks -1.0)));
       
     }
   }
@@ -1541,15 +1561,27 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
      //get lattice spacing
      distr_t a_distr(UseJack);
      distr_t Zv(UseJack), Za(UseJack);
-     distr_t Zv_BOOT(false), Za_BOOT(false);
-     if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; Zv_BOOT= ZV_B_boot; Za_BOOT=ZA_B_boot; }
-     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C; Zv_BOOT= ZV_C_boot; Za_BOOT=ZA_C_boot;   }
-     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; Zv_BOOT= ZV_D_boot; Za_BOOT=ZA_D_boot; }
-     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="E") {a_distr=a_E; Zv = ZV_E; Za = ZA_E; Zv_BOOT= ZV_E_boot; Za_BOOT=ZA_E_boot; }
+     if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="B") {a_distr=a_B;
+       if(ls_data_tm_VKVK.Tag[iens] == "cB211b.072.64") {  Zv = ZV_B; Za = ZA_B; }
+       else if( ls_data_tm_VKVK.Tag[iens] == "cB211b.072.96")  { Zv= ZV_B96; Za =ZA_B96; }
+       else crash("Ens: "+ls_data_tm_VKVK.Tag[iens]+" not found");
+     }
+     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="C") {a_distr=a_C;
+       if(ls_data_tm_VKVK.Tag[iens] == "cC211a.06.80") {  Zv = ZV_C; Za = ZA_C; }
+       else if ( ls_data_tm_VKVK.Tag[iens] == "cC211a.06.112")  { Zv= ZV_C112; Za =ZA_C112; }
+       else crash("Ens: "+ls_data_tm_VKVK.Tag[iens]+" not found");
+     }
+     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D; }
+     else if(ls_data_tm_VKVK.Tag[iens].substr(1,1)=="E") {a_distr=a_E; Zv = ZV_E; Za = ZA_E; }
      else crash("lattice spacing distribution for Ens: "+ls_data_tm_VKVK.Tag[iens]+" not found");
 
 
      a_distr_list.distr_list.push_back( a_distr/fm_to_inv_Gev);
+
+
+     cout<<"Analyzing Ensemble: "<<ls_data_tm_VKVK.Tag[iens]<<endl;
+     cout<<"Zv: "<<Zv.ave()<<" +- "<<Zv.err()<<endl;
+     cout<<"Za: "<<Za.ave()<<" +- "<<Za.err()<<endl;
   
 
    

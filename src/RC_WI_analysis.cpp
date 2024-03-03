@@ -171,7 +171,7 @@ void RC_WI_analysis() {
       }
       else { // Ens_Tag = cB211b.072.96
 	Corr.Tmin=40;
-	Corr.Tmax=80;
+	Corr.Tmax=87;
       }
 
     }
@@ -181,10 +181,10 @@ void RC_WI_analysis() {
 	Corr.Tmax=70;
       }
       else { // Ens_Tag = cC211a.06.112
-	Corr.Tmin=44; Corr.Tmax=73;
+	Corr.Tmin=40; Corr.Tmax=80;
       }
     }
-    else if(Ens_Tag.substr(1,1)=="D") {a_distr=a_D; Corr.Tmin=45; Corr.Tmax=75; }
+    else if(Ens_Tag.substr(1,1)=="D") {a_distr=a_D; Corr.Tmin=48; Corr.Tmax=80; }
     else if(Ens_Tag.substr(1,1)=="E") {a_distr=a_E; Corr.Tmin=62; Corr.Tmax=100;}
     else crash("Ensemble not found");
 
@@ -240,11 +240,11 @@ void RC_WI_analysis() {
 
     //set time interval for Z factors
     if(Ens_Tag=="cB211b.072.64") {  Corr.Tmin= 40; Corr.Tmax= 55 ; }
-    else if(Ens_Tag=="cB211b.072.96") {  Corr.Tmin= 41; Corr.Tmax= 70 ; }
-    else if(Ens_Tag=="cC211a.06.80") {  Corr.Tmin= 40; Corr.Tmax= 65 ; }
-    else if(Ens_Tag=="cC211a.06.112") {  Corr.Tmin= 40; Corr.Tmax= 90 ; }
-    else if(Ens_Tag=="cD211a.054.96") {  Corr.Tmin= 46; Corr.Tmax= 80 ; }
-    else if(Ens_Tag=="cE211a.044.112") {  Corr.Tmin= 47; Corr.Tmax= 100 ; }
+    else if(Ens_Tag=="cB211b.072.96") {  Corr.Tmin= 41; Corr.Tmax= 78 ; }
+    else if(Ens_Tag=="cC211a.06.80") {  Corr.Tmin= 40; Corr.Tmax= 70 ; }
+    else if(Ens_Tag=="cC211a.06.112") {  Corr.Tmin= 45; Corr.Tmax= 90 ; }
+    else if(Ens_Tag=="cD211a.054.96") {  Corr.Tmin= 48; Corr.Tmax= 80 ; }
+    else if(Ens_Tag=="cE211a.044.112") {  Corr.Tmin= 55; Corr.Tmax= 100 ; }
     else crash(" Ensemble: "+Ens_Tag+" not found!");
 
 
@@ -277,7 +277,7 @@ void RC_WI_analysis() {
   
     //estrapolate ms phys
     vector<distr_t> ms_list( {ms_light_distr, ms_heavy_distr});
-    distr_t ms_phys_extr = Obs_extrapolation_meson_mass(ms_list, M2etas_fit, m_etas_phys_distr*m_etas_phys_distr,  "../data/RC_WI", "ms_extrapolation_etas", UseJack, "SPLINE");
+    distr_t ms_phys_extr = Obs_extrapolation_meson_mass(ms_list, M2etas_fit, m_etas_phys_distr*m_etas_phys_distr,  "../data/RC_WI", "ms_extrapolation_etas_"+Ens_Tag, UseJack, "SPLINE");
 
     vector<distr_t> Za_hadr_list, Zv_hadr_list, Zp_ov_Zs_hadr_list;
     Za_hadr_list = {Za_L, Za_M};
@@ -291,6 +291,7 @@ void RC_WI_analysis() {
 
 
     cout<<"#### RCs ["<<Ens_Tag<<"] ####"<<endl;
+    cout.precision(8);
     cout<<"Za: "<<Za.ave()<<" "<<Za.err()<<endl;
     cout<<"Zv: "<<Zv.ave()<<" "<<Zv.err()<<endl;
     cout<<"Zp/Zs: "<<Zp_ov_Zs.ave()<<" "<<Zp_ov_Zs.err()<<endl;

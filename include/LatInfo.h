@@ -32,6 +32,8 @@ class LatticeInfo {
   double Zv_WI, Zv_WI_err;
   double Za_WI_strange, Za_WI_strange_err;
   double Zv_WI_strange, Zv_WI_strange_err;
+  double Za_WI_FLAG, Za_WI_FLAG_err;
+  double Zv_WI_FLAG, Zv_WI_FLAG_err;
   double Za_WI_charm_extr, Za_WI_charm_extr_err;
   double Zv_WI_charm_extr, Zv_WI_charm_extr_err;
   double ZT_RI2, ZT_RI2_err;
