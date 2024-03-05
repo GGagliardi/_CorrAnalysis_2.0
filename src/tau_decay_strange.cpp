@@ -35,8 +35,8 @@ const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
-bool Skip_spectral_density_analysis_strange=true;
-const bool Perform_continuum_extrapolation=true;
+bool Skip_spectral_density_analysis_strange=false;
+const bool Perform_continuum_extrapolation=false;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
 
@@ -1579,7 +1579,7 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
      a_distr_list.distr_list.push_back( a_distr/fm_to_inv_Gev);
 
 
-     cout<<"Analyzing Ensemble: "<<ls_data_tm_VKVK.Tag[iens]<<endl;
+     cout<<"RC-used Analyzing Ensemble: "<<ls_data_tm_VKVK.Tag[iens]<<endl;
      cout<<"Zv: "<<Zv.ave()<<" +- "<<Zv.err()<<endl;
      cout<<"Za: "<<Za.ave()<<" +- "<<Za.err()<<endl;
   
@@ -5018,7 +5018,7 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
 	Br_final_systs[c][is] = sqrt(syst);
 
 	if(Contribs[c] == "tot_TL") {
-	s_extr_away_TL.push_back( min( fabs(Br.ave() - tot_TL_Ens_E_tm.distr_list[is].ave() )/sqrt( pow(Br.err(),2) + syst), fabs( Br.ave() -tot_TL_Ens_E_OS.distr_list[is].ave())/sqrt( pow(Br.err(),2) + syst)));
+	  s_extr_away_TL.push_back( min( fabs(Br.ave() - tot_TL_Ens_E_tm.distr_list[is].ave() )/sqrt( pow(Br.err(),2) + syst), fabs( Br.ave() -tot_TL_Ens_E_OS.distr_list[is].ave())/sqrt( pow(Br.err(),2) + syst)));
 	}
 	
 	

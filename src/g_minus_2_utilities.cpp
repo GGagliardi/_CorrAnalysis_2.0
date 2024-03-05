@@ -650,7 +650,15 @@ void Generate_free_corr_data() {
 
   vector<pair<double, int>> amu_Tmax;
 
-  amu_Tmax.push_back( make_pair( 0.00044, 112));
+  //amu_Tmax.push_back( make_pair( 0.00060, 112));
+
+  amu_Tmax.push_back( make_pair( 0.011, 112));
+  amu_Tmax.push_back( make_pair( 0.012, 112));
+  amu_Tmax.push_back( make_pair( 0.016, 112));
+  amu_Tmax.push_back( make_pair( 0.018, 112));
+  
+  
+  //amu_Tmax.push_back( make_pair( 0.00044, 112));
 
   //amu_Tmax.push_back( make_pair( 0.00077, 64));
 

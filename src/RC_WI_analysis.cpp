@@ -2,7 +2,7 @@
 
 using namespace std;
 
-const double Njacks = 100;
+const double Njacks = 50;
 const bool UseJack=true;
 const double fm_to_inv_Gev = 1.0 / 0.197327;
 const double m_etas = 0.68989;
@@ -166,8 +166,8 @@ void RC_WI_analysis() {
     distr_t a_distr;
     if(Ens_Tag.substr(1,1)=="B") {  a_distr=a_B;
       if(Ens_Tag=="cB211b.072.64") {
-	Corr.Tmin=40;
-	Corr.Tmax=57;
+	Corr.Tmin= 40; //40;
+	Corr.Tmax= 57; //57;
       }
       else { // Ens_Tag = cB211b.072.96
 	Corr.Tmin=40;
@@ -214,6 +214,13 @@ void RC_WI_analysis() {
     distr_t Meta_tm_M = Corr.Fit_distr( Corr.effective_mass_t(corr_s_P_M_tm, "../data/RC_WI/masses/eta_M_tm_"+Ens_Tag));
     distr_t Meta_OS_L = Corr.Fit_distr( Corr.effective_mass_t(corr_s_P_L_OS, "../data/RC_WI/masses//eta_L_OS_"+Ens_Tag));
     distr_t Meta_OS_M = Corr.Fit_distr( Corr.effective_mass_t(corr_s_P_M_OS, "../data/RC_WI/masses/eta_M_OS_"+Ens_Tag));
+
+
+    cout<<"Meta(tm,L): "<<Meta_tm_L.ave()<<" "<<Meta_tm_L.err()<<endl;
+    cout<<"Meta(tm,M): "<<Meta_tm_M.ave()<<" "<<Meta_tm_M.err()<<endl;
+
+    cout<<"Meta(OS,L): "<<Meta_OS_L.ave()<<" "<<Meta_OS_L.err()<<endl;
+    cout<<"Meta(OS,M): "<<Meta_OS_M.ave()<<" "<<Meta_OS_M.err()<<endl;
     
 
   

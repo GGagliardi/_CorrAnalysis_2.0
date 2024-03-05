@@ -197,6 +197,9 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
 
 void HVP() {
 
+  Generate_free_corr_data();
+  exit(-1);
+
 
   int Njacks=158;
   bool UseJack=true;
@@ -554,25 +557,94 @@ void HVP() {
 
 
 
+  
+  VVfloat C_tm, C_OS;
 
 
+  //###################################################
+  //###########    READING  BINARY FILE ################
 
+  
+  //read binary
+  vector<string> Corr_tags({"VkVk_OS.bin", "VkVk_tm.bin"});
+  
+  
+  for(int id=0; id<(signed)Corr_tags.size(); id++) {
 
+    
+    string ch= Corr_tags[id];
+	
+    FILE *stream = fopen(("../blinding_test/cB211b.072.64/"+ch).c_str(), "rb");
+    size_t Nconfs, TT, Nhits, Nsubs;
+    bin_read(Nconfs, stream);
+    bin_read(Nhits, stream);
+    bin_read(TT, stream);
+    bin_read(Nsubs, stream);
 
+    if(id==0) {
+      C_OS.resize(TT);
+      for(auto & cc: C_OS) cc.resize(Nconfs,0);
+    }
+    else {
+      C_tm.resize(TT);
+      for(auto & cc: C_tm) cc.resize(Nconfs,0);
+    }
+   
+     
+    
+   
+     cout<<"Nconfs: "<<Nconfs<<endl;
+     cout<<"TT: "<<TT<<" "<<TT/2+1<<endl;
+     cout<<"Nhits: "<<Nhits<<endl;
+     cout<<"Nsubs: "<<Nsubs<<endl;
+    
+  
+    
+    
+    for(size_t iconf=0;iconf<Nconfs;iconf++) {
+      for(size_t t=0;t<TT/2+1;t++) {
+	for(size_t is=0;is<Nsubs;is++) {
+	  
+	  double c;
+	  bin_read(c, stream);
+	  if(id==0) {
+	    C_OS[t][iconf] += c/Nsubs;
+	  }
+	  else {
+	    C_tm[t][iconf] += c/Nsubs;
+	  }
+	}
+	//symmetrize
+	if( t != 0) {
+	  if(id==0) {
+	    C_OS[TT-t][iconf] = C_OS[t][iconf];
+	  }
+	  else {
+	    C_tm[TT-t][iconf] = C_tm[t][iconf];
+	  }
+	}
+      }
+    }
+    
+   
+    
+    fclose(stream);
+    
+  }
+  
+  
+  CorrAnalysis Corr_BL(UseJack, Njacks,100);
+  Corr_BL.Nt = 128;
+  
+  boost::filesystem::create_directory("../data/test_blinding");
+  
+  distr_t_list C_tm_BLIND= Corr_BL.corr_t( C_tm, "../data/test_blinding/C_tm");
+  distr_t_list C_OS_BLIND= Corr_BL.corr_t( C_OS, "../data/test_blinding/C_OS");
+  
+  
+  
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  exit(-1);
 
 
 
