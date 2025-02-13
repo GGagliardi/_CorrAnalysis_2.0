@@ -1340,7 +1340,7 @@ void Get_optimal_lambda(const PrecMatr &Atr, const PrecMatr &Atr_std_norm, const
 distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, int tmax, int prec, string SMEARING_FUNC, const function<PrecFloat(const PrecFloat&, const PrecFloat&,const PrecFloat&,const PrecFloat&, int)> &f, const distr_t_list &corr, double &syst,const double mult, double& pull, string MODE, string reg_type, string CORR_NAME, double Ag_ov_A0_target, bool JackOnKer, const distr_t &Prefact,const double &offset,  string analysis_name, Vfloat &covariance, const function<double(const function<double(double)>&)> &syst_func, bool Use_guess_density, const function<double(double)> &guess_density, bool Int_up_to_Max, double Max_Erg, double b, bool ONLY_FW,  bool GENERALIZED_NORM,  const function<PrecFloat(const PrecFloat &, const PrecFloat &, const PrecFloat &, const PrecFloat &, int)> F_NORM, const function<PrecFloat( PrecFloat )> Atr_gen_NORM) {
 
 
-  cout<<"precision used: "<<prec<<endl;
+  cout<<"precision used: "<<prec<<" ONLY_FW: "<<ONLY_FW<<endl;
 
   Integrate_up_to_max_energy= Int_up_to_Max;
   Emax_int=Max_Erg;

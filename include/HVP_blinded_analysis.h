@@ -1,5 +1,5 @@
-#ifndef __HVP_strange__
-#define __HVP_strange__
+#ifndef __HVP_blinded_analysis__
+#define __HVP_blinded_analysis__
 
 
 #include "g_minus_2_utilities.h"
@@ -10,10 +10,10 @@
 #include "gm2.h"
 #include "stat.h"
 #include "binary_io.h"
-#include "RC_WI_analysis.h"
+#include "HVP.h"
 
 
-void HVP_strange();
-
+void HVP_blinded_analysis();
+void mcorr_HVP();
 
 #endif

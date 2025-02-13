@@ -6293,7 +6293,7 @@ rt_FF_Bs Get_Bs_mumu_gamma_form_factors(int num_xg, int Perform_continuum_extrap
 	  distr_t_list vec_B_u = Qu*Corr.corr_t(C_V_Bu_data[mu][nu][ixg].col(Im_Re)[iens],"");
 	  distr_t_list vec_F_d = Qd*Corr.corr_t(C_V_Fd_data[mu][nu][ixg].col(Im_Re)[iens],"");
 	  distr_t_list vec_B_d = Qd*Corr.corr_t(C_V_Bd_data[mu][nu][ixg].col(Im_Re)[iens],"");
-	
+       
 	  distr_t_list vec_u = th_FF*vec_F_u + th_BB*vec_B_u;
 	  distr_t_list vec_d = th_FF*vec_F_d + th_BB*vec_B_d;
 	  distr_t_list vec = vec_u + vec_d;

@@ -5,11 +5,13 @@ using namespace std;
 
 void compute_weak_annihilation() {
 
-  int Njacks=59;
+  int Njacks=50;
   bool UseJack=1;
   double fm_to_inv_Gev= 1.0/0.197327;
+  int Nhits=1;
+  int tsink=48;
 
-  boost::filesystem::create_directory("../data/WA_inclusive");
+  boost::filesystem::create_directory("../data/WA_inclusive_test");
 
   auto Sort_confs = [](string A, string B) {
 
@@ -49,53 +51,55 @@ void compute_weak_annihilation() {
 			    return A_bis<B_bis;
   };
   
+
+  vector<vector<data_t>> V_sou(Nhits), A_sou(Nhits);
+  vector<vector<data_t>> V_sink(Nhits), A_sink(Nhits);
+  vector<vector<data_t>> V_sou_opp(Nhits);
+  vector<vector<data_t>> V_sink_opp(Nhits);
   
-
-    vector<data_t> V_sou(4), A_sou(4);
-    vector<data_t> V_sink(4), A_sink(4);
-
-    data_t P5_sou, P5_sink;
-
-    data_t P5_test;
-
-
-    P5_test.Read("../test_weak_ann_mass", "mes_contr_H_B_H_H_S0_H", "P5P5", Sort_confs);
-
-    int Nu= P5_test.Tag.size() ;
-
-    for(int i=0;i<Nu;i++) {
-
-      cout<<"Analyzing ensemble: "<<P5_test.Tag[i]<<endl; 
-
-      CorrAnalysis Corr(UseJack, Njacks,800);
-      Corr.Nt = P5_test.nrows[i];
-
-      distr_t_list eff_mass = Corr.effective_mass_t( P5_test.col(0)[i], "../data/WA_inclusive/P5_test_"+P5_test.Tag[i] );
+  for(int ihit=0;ihit<Nhits;ihit++) {
+    V_sou[ihit].resize(4);
+    A_sou[ihit].resize(4);
+    V_sink[ihit].resize(4);
+    A_sink[ihit].resize(4);
+    V_sou_opp[ihit].resize(4);
+    V_sink_opp[ihit].resize(4);
+  }
 
 
-    }
+  vector<data_t> P5_sou(Nhits), P5_sink(Nhits);
+  
+  for(int ihit=0;ihit<Nhits;ihit++) {
 
-    exit(-1);
+    cout<<"ihit: "<<ihit<<endl;
 
+  
     for(int i=0;i<4; i++) {
-    
-      V_sou[i].Read("../weak_annihilation_data", "mes_contr_H_B_PH_S0_H", "V"+to_string(i)+"P5", Sort_confs);
-      A_sou[i].Read("../weak_annihilation_data", "mes_contr_H_B_PH_S0_H", "A"+to_string(i)+"P5", Sort_confs);
 
-      V_sink[i].Read("../weak_annihilation_data", "mes_contr_H_B_PH_S0_H", "V"+to_string(i)+"P5", Sort_confs);
-      A_sink[i].Read("../weak_annihilation_data", "mes_contr_H_B_PH_S0_H", "A"+to_string(i)+"P5", Sort_confs);
+      
+      V_sou[ihit][i].Read("../weak_annihilation_test/out_disconnected_copy"+to_string(ihit), "mes_contr_H_S_PH_S0_H_th2Zp", "V"+to_string(i)+"P5", Sort_confs);
+      A_sou[ihit][i].Read("../weak_annihilation_test/out_disconnected_copy"+to_string(ihit), "mes_contr_H_S_PH_S0_H_th2Zp", "A"+to_string(i)+"P5", Sort_confs);
+      V_sou_opp[ihit][i].Read("../weak_annihilation_test/out_disconnected_copy"+to_string(ihit), "mes_contr_H_S_PH_S0_H_th2Zm", "V"+to_string(i)+"P5", Sort_confs);
+
+        
+      V_sink[ihit][i].Read("../weak_annihilation_test/out_disconnected_copy"+to_string(ihit), "mes_contr_PH_S48_H_th2Zp_H_S", "V"+to_string(i)+"P5", Sort_confs);
+      A_sink[ihit][i].Read("../weak_annihilation_test/out_disconnected_copy"+to_string(ihit), "mes_contr_PH_S48_H_th2Zp_H_S", "A"+to_string(i)+"P5", Sort_confs);
+      V_sink_opp[ihit][i].Read("../weak_annihilation_test/out_disconnected_copy"+to_string(ihit), "mes_contr_PH_S48_H_th2Zm_H_S", "V"+to_string(i)+"P5", Sort_confs);
+        
+      P5_sou[ihit].Read("../weak_annihilation_test/out_disconnected_copy"+to_string(ihit), "mes_contr_H_S_H_H_S0_H" , "P5P5", Sort_confs);
+      P5_sink[ihit].Read("../weak_annihilation_test/out_disconnected_copy"+to_string(ihit), "mes_contr_H_S_H_H_S0_H", "P5P5", Sort_confs);
 
     }
+  }
 
-    P5_sou.Read("../weak_annihilation_data", "mes_contr_H_B_H_H_S0_H" , "P5P5", Sort_confs);
-    P5_sink.Read("../weak_annihilation_data", "mes_contr_H_B_H_H_S64_H", "P5P5", Sort_confs);
-
-
-    int Nens=V_sou[0].Tag.size();
+   
 
 
+    int Nens=V_sou[0][0].Tag.size();
 
-      //############################################################################################
+
+
+    //############################################################################################
     //generate fake jack_distr for lattice spacing a_A a_B, a_C, a_D and RENORMALIZATION CONSTANT
     GaussianMersenne GM(36551294);
     LatticeInfo a_info;
@@ -167,104 +171,142 @@ void compute_weak_annihilation() {
 
 
 
-    boost::filesystem::create_directory("../data/WA_inclusive");
+    boost::filesystem::create_directory("../data/WA_inclusive_test");
 
     
 
     for(int iens=0;iens<Nens;iens++) {
 
-      cout<<"Analyzing ensemble: "<<P5_sou.Tag[iens]<<endl; 
+      cout<<"Analyzing ensemble: "<<P5_sou[0].Tag[iens]<<endl; 
 
       CorrAnalysis Corr(UseJack, Njacks,800);
-      Corr.Nt = P5_sou.nrows[iens];
+      Corr.Nt = P5_sou[0].nrows[iens];
+      int T=Corr.Nt;
+      double V = (double)pow(T/2,3.0);
+      double V4 = V*((double)T);
+
+      Corr.Perform_Nt_t_average =0;
      
       distr_t a_distr(UseJack);
       distr_t Zv(UseJack), Za(UseJack);
       
-      if(P5_sou.Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; }
-      else if(P5_sou.Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C;}
-      else if(P5_sou.Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D;}
+      if(P5_sou[0].Tag[iens].substr(1,1)=="B") {a_distr=a_B; Zv = ZV_B; Za = ZA_B; }
+      else if(P5_sou[0].Tag[iens].substr(1,1)=="C") {a_distr=a_C; Zv = ZV_C; Za = ZA_C;}
+      else if(P5_sou[0].Tag[iens].substr(1,1)=="D") {a_distr=a_D; Zv = ZV_D; Za = ZA_D;}
       else crash("Ensemble not found");
 
       LatticeInfo L_info;
-      L_info.LatInfo_new_ens(P5_sou.Tag[iens]);
       
-      //i
-      VVfloat C_A1_sou = A_sink[1].col(0)[iens];
-      VVfloat C_V1_sou = V_sink[1].col(0)[iens];
-      VVfloat C_A1_sink = A_sink[1].col(0)[iens];
-      VVfloat C_V1_sink = V_sink[1].col(0)[iens];
-      VVfloat C_A2_sou = A_sink[2].col(0)[iens];
-      VVfloat C_V2_sou = V_sink[2].col(0)[iens];
-      VVfloat C_A2_sink = A_sink[2].col(0)[iens];
-      VVfloat C_V2_sink = V_sink[2].col(0)[iens];
-
-      //0
-      VVfloat C_A0_sou = A_sink[0].col(0)[iens];
-      VVfloat C_V0_sou = V_sink[0].col(0)[iens];
-      VVfloat C_A0_sink = A_sink[0].col(0)[iens];
-      VVfloat C_V0_sink = V_sink[0].col(0)[iens];
-      //3
-      VVfloat C_A3_sou = A_sink[3].col(0)[iens];
-      VVfloat C_V3_sou = V_sink[3].col(0)[iens];
-      VVfloat C_A3_sink = A_sink[3].col(0)[iens];
-      VVfloat C_V3_sink = V_sink[3].col(0)[iens];
+      L_info.LatInfo_new_ens(P5_sou[0].Tag[iens]);
       
 
-      //Y
-      VVVfloat Y0_VV(Corr.Nt), Y1_VV(Corr.Nt), Y2_VV(Corr.Nt), Y3_VV(Corr.Nt);
-      VVVfloat Y0_AA(Corr.Nt), Y1_AA(Corr.Nt), Y2_AA(Corr.Nt), Y3_AA(Corr.Nt);
+      int Nconfs=V_sou[0][1].col(0)[iens][0].size();
+      
+      complex_distr_t_list V1V1(0, T*T, Nconfs);
+      complex_distr_t_list V1V1_opp(0, T*T, Nconfs);
+      complex_distr_t_list V1V1_a1(0, T*T, Nconfs);
+      complex_distr_t_list V1V1_s1(0, T*T, Nconfs);
+      complex_distr_t_list V1V1_a0(0, T*T, Nconfs);
+      complex_distr_t_list V1V1_s0(0, T*T, Nconfs);
 
-      for(int i=0;i<Corr.Nt;i++) {
-	Y0_VV[i].resize(Corr.Nt);
-	Y1_VV[i].resize(Corr.Nt);
-	Y2_VV[i].resize(Corr.Nt);
-	Y3_VV[i].resize(Corr.Nt);
+      Vfloat t1_s, t2_s;
 
-	Y0_AA[i].resize(Corr.Nt);
-	Y1_AA[i].resize(Corr.Nt);
-	Y2_AA[i].resize(Corr.Nt);
-	Y3_AA[i].resize(Corr.Nt);
-      }
+      cout<<"V1V1(size after init.): "<<V1V1.size()<<endl;
+    
+      for(int ihit=0;ihit<Nhits;ihit++) {
 
-      for(int i=0;i<Corr.Nt;i++) {
-	for(int j=0;j<Corr.Nt;j++) {
+	cout<<"Nconfs(ihit: "<<ihit<<"): "<<V_sou[ihit][1].col(0)[iens][0].size()<<endl;
 
-	  Y0_VV[i][j] = summ_master( multiply_master( C_V1_sou[i], C_V1_sink[j] ), multiply_master( C_V2_sou[i], C_V2_sink[j])) ;
-	  Y1_VV[i][j] = multiply_master( C_V0_sou[i], C_V0_sink[j] );
-	  Y2_VV[i][j] = multiply_master( C_V3_sou[i], C_V3_sink[j] );
-	  Y3_VV[i][j] = summ_master( multiply_master( C_V3_sou[i], C_V0_sink[j] ), multiply_master( C_V0_sou[i], C_V3_sink[j]));
 
-	  Y0_AA[i][j] = summ_master( multiply_master( C_A1_sou[i], C_A1_sink[j] ), multiply_master( C_A2_sou[i], C_A2_sink[j])) ;
-	  Y1_AA[i][j] = multiply_master( C_A0_sou[i], C_A0_sink[j] );
-	  Y2_AA[i][j] = multiply_master( C_A3_sou[i], C_A3_sink[j] );
-	  Y3_AA[i][j] = summ_master( multiply_master( C_A3_sou[i], C_A0_sink[j] ), multiply_master( C_A0_sou[i], C_A3_sink[j]));
-	  
+	complex_distr_t_list A(0, V_sou[ihit][1].col(0)[iens], V_sou[ihit][1].col(1)[iens]);
+	complex_distr_t_list A_opp(0, V_sou_opp[ihit][1].col(0)[iens], V_sou_opp[ihit][1].col(1)[iens]);
+	complex_distr_t_list B(0, V_sink[ihit][1].col(0)[iens], V_sink[ihit][1].col(1)[iens]);
+	complex_distr_t_list B_opp(0, V_sink_opp[ihit][1].col(0)[iens], V_sink_opp[ihit][1].col(1)[iens]);
+	complex_distr_t_list B_dag=  B.dagger();
+	complex_distr_t_list B_opp_dag = B_opp.dagger();
+
+	int count=0;
+	
+	for(int t1=0;t1<Corr.Nt;t1++) {
+	  for(int t2=0;t2<Corr.Nt;t2++) {
+	    
+	    if(ihit==0) { t1_s.push_back(t1); t2_s.push_back(t2); }
+	    
+	    complex_distr_t TT= pow(64,3.0)*A.distr_list[t1]*B_dag.distr_list[t2];
+	    complex_distr_t TT_opp= pow(64,3.0)*A_opp.distr_list[t1]*B_opp_dag.distr_list[t2];
+	    complex_distr_t TT_a1= TT + pow(64,3.0)*A.distr_list[t1]*B_opp_dag.distr_list[t2];
+	    complex_distr_t TT_s1= TT - pow(64,3.0)*A.distr_list[t1]*B_opp_dag.distr_list[t2];
+	    complex_distr_t TT_a0=  TT + pow(64,3.0)*A_opp.distr_list[t1]*B_dag.distr_list[t2];
+	    complex_distr_t TT_s0=  TT - pow(64,3.0)*A_opp.distr_list[t1]*B_dag.distr_list[t2];
+
+	    if(ihit==0) {
+	      V1V1.distr_list[ count] = TT/Nhits;
+	      V1V1_opp.distr_list[ count] = TT_opp/Nhits;
+
+	      V1V1_a1.distr_list[ count] = TT_a1/Nhits;
+	      V1V1_s1.distr_list[ count] = TT_s1/Nhits;
+	      V1V1_a0.distr_list[ count] = TT_a0/Nhits;
+	      V1V1_s0.distr_list[ count] = TT_s0/Nhits;
+	    }
+	    else {
+	      V1V1.distr_list[ count] = V1V1.distr_list[count] + TT/Nhits;
+	      V1V1_opp.distr_list[ count] = V1V1_opp.distr_list[count] + TT_opp/Nhits;
+	      V1V1_a1.distr_list[ count] = V1V1_a1.distr_list[count] + TT_a1/Nhits;
+	      V1V1_s1.distr_list[ count] = V1V1_s1.distr_list[count] + TT_s1/Nhits;
+	      V1V1_a0.distr_list[ count] = V1V1_a0.distr_list[count] + TT_a0/Nhits;
+	      V1V1_s0.distr_list[ count] = V1V1_s0.distr_list[count] + TT_s0/Nhits;
+	    }
+
+	    count++;
+	  }
 
 	}
+
       }
+
+
+      //jackknife analysis of V1V1
+
+      Corr.Nt= T*T;
+
+      complex_distr_t_list V1V1_jack( Corr.corr_t( V1V1.Get_vvector(0) , ""), Corr.corr_t(V1V1.Get_vvector(1), ""));
+      complex_distr_t_list V1V1_opp_jack( Corr.corr_t( V1V1_opp.Get_vvector(0) , ""), Corr.corr_t(V1V1_opp.Get_vvector(1), ""));
+
+      complex_distr_t_list V1V1_a1_jack( Corr.corr_t( V1V1_a1.Get_vvector(0) , ""), Corr.corr_t(V1V1_a1.Get_vvector(1), ""));
+      complex_distr_t_list V1V1_s1_jack( Corr.corr_t( V1V1_s1.Get_vvector(0) , ""), Corr.corr_t(V1V1_s1.Get_vvector(1), ""));
+      complex_distr_t_list V1V1_a0_jack( Corr.corr_t( V1V1_a0.Get_vvector(0) , ""), Corr.corr_t(V1V1_a0.Get_vvector(1), ""));
+      complex_distr_t_list V1V1_s0_jack( Corr.corr_t( V1V1_s0.Get_vvector(0) , ""), Corr.corr_t(V1V1_s0.Get_vvector(1), ""));
+
+      complex_distr_t_list V1V1_a1a0_jack = V1V1_a1_jack + V1V1_s0_jack;
+      complex_distr_t_list V1V1_s1s0_jack = V1V1_s1_jack + V1V1_a1_jack;
+
+      complex_distr_t_list V1V1_ave_jack = 0.5*(V1V1_jack+ V1V1_opp_jack);
+
+      //print
+
+      Print_To_File( {} , { t1_s, t2_s, V1V1_jack.RE_ave(), V1V1_jack.RE_err(), V1V1_jack.IM_ave(), V1V1_jack.IM_err() }, "../data/WA_inclusive_test/V1V1_tsink_"+to_string(tsink), "" , "");
+
+      Print_To_File( {} , { t1_s, t2_s, V1V1_opp_jack.RE_ave(), V1V1_opp_jack.RE_err(), V1V1_opp_jack.IM_ave(), V1V1_opp_jack.IM_err() }, "../data/WA_inclusive_test/V1V1_opp_tsink_"+to_string(tsink), "" , "");
+
+      Print_To_File( {} , { t1_s, t2_s, V1V1_ave_jack.RE_ave(), V1V1_ave_jack.RE_err(), V1V1_ave_jack.IM_ave(), V1V1_ave_jack.IM_err() }, "../data/WA_inclusive_test/V1V1_ave_tsink_"+to_string(tsink), "" , "");
       
+      Print_To_File( {} , { t1_s, t2_s, V1V1_a1_jack.RE_ave(), V1V1_a1_jack.RE_err(), V1V1_a1_jack.IM_ave(), V1V1_a1_jack.IM_err() }, "../data/WA_inclusive_test/V1V1_a1_tsink_"+to_string(tsink), "" , "");
       
-  
-      distr_t_list P5_distr_sou(UseJack), P5_distr_sink(UseJack);
+      Print_To_File( {} , { t1_s, t2_s, V1V1_s1_jack.RE_ave(), V1V1_s1_jack.RE_err(), V1V1_s1_jack.IM_ave(), V1V1_s1_jack.IM_err() }, "../data/WA_inclusive_test/V1V1_s1_tsink_"+to_string(tsink), "" , "");
 
-      P5_distr_sou = Corr.corr_t( P5_sou.col(0)[iens], "../data/WA_inclusive/P5_sou_"+P5_sou.Tag[iens] );
-      P5_distr_sink = Corr.corr_t( P5_sink.col(0)[iens], "../data/WA_inclusive/P5_sink_"+P5_sou.Tag[iens] );
+      Print_To_File( {} , { t1_s, t2_s, V1V1_a0_jack.RE_ave(), V1V1_a0_jack.RE_err(), V1V1_a0_jack.IM_ave(), V1V1_a0_jack.IM_err() }, "../data/WA_inclusive_test/V1V1_a0_tsink_"+to_string(tsink), "" , "");
 
-
-
+      Print_To_File( {} , { t1_s, t2_s, V1V1_s0_jack.RE_ave(), V1V1_s0_jack.RE_err(), V1V1_s0_jack.IM_ave(), V1V1_s0_jack.IM_err() }, "../data/WA_inclusive_test/V1V1_s0_tsink_"+to_string(tsink), "" , "");
       
-
+      Print_To_File( {} , { t1_s, t2_s, V1V1_a1a0_jack.RE_ave(), V1V1_a1a0_jack.RE_err(), V1V1_a1a0_jack.IM_ave(), V1V1_a1a0_jack.IM_err() }, "../data/WA_inclusive_test/V1V1_a1a0_tsink_"+to_string(tsink), "" , "");
       
-				  
-      
-
-
+      Print_To_File( {} , { t1_s, t2_s, V1V1_s1s0_jack.RE_ave(), V1V1_s1s0_jack.RE_err(), V1V1_s1s0_jack.IM_ave(), V1V1_s1s0_jack.IM_err() }, "../data/WA_inclusive_test/V1V1_s1s0_tsink_"+to_string(tsink), "" , "");
     }
 
 
+    return;
+    
+    
+
+} 
   
-
-
-
-}

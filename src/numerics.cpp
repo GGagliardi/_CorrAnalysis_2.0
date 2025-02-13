@@ -152,6 +152,8 @@ double FTAN_SYMM(double x1,  int t, int NT) {
 
 double Root_Brent(double R, int nt, int NT) {
 
+
+  
   
    
   //cout<<"R: "<<R<<" t:"<<nt<<" T: "<<NT<<endl;
@@ -221,14 +223,17 @@ double Root_Brent(double R, int nt, int NT) {
 
 double Root_Brent_sinh(double R, int nt, int NT) {
 
-
+  if(nt==NT/2 -1 || nt==NT/2) return 0.0;
  
-  
+  if( R < 1 && nt < NT/2) return log(fabs(R)) ;
+  if( R > 1 && nt >= NT/2) return log(1.0/R);
    
   if(NT%2 != 0) crash("Temporal lattice extent is not divisible by two!");
   NT= NT/2; //it is what enter the expression of the effective mass
   int alpha = nt-NT;
-  if(alpha==-1) return 0.0;
+  
+ 
+  
 
   auto F=[&](double x) {return R- sinh(x*alpha)/sinh(x*(alpha+1)); };
   double Precision = 1e-9;
@@ -498,6 +503,7 @@ double w(int t, int Simps_ord) {
 
   if(Simps_ord == 1) return 1.0;
 
+  
   else if(Simps_ord == 2) {
 
     if(t == 0) return 0.5;
@@ -1139,4 +1145,411 @@ double Get_Lambda_MS_bar(int Nf) {
   
 
 
+
+C_MATRIX Get_nissa_gamma(int k) {
+
+  vector<vector<complex<double>>> G(4);
+  for(int m=0;m<4;m++) G[m].resize(4, 0.0 +1i*0.0);
+  
+  if(k==0) { // G0
+    G[0][2] = G[1][3] = G[2][0]= G[3][1] = -1;
+  }
+  else if(k==1) { //G1
+    G[0][3] = G[1][2] = -1i; G[2][1] = G[3][0] = 1i;   
+  }
+  else if(k==2) { //G2
+    G[0][3] = G[3][0]= -1.0; G[1][2] = G[2][1] = 1.0;
+  }
+  else if(k==3) { //G3
+    G[0][2] = G[3][1] = -1i; G[1][3] = G[2][0] = 1i;
+  }
+  else if(k==4) { //G5
+    G[0][0] = G[1][1] = 1.0; G[2][2] = G[3][3] = -1.0;
+  }
+  
+  return G;
+};
+
+C_MATRIX complex_prod_matr(const C_MATRIX& A, const C_MATRIX &B) {
+
+  int N= A.size();
+  if(N != (signed)B.size()) crash("complex_prod_matr called with A and B having different dimensions");
+  for(int i=0;i<N;i++)
+    if(A[i].size() != N || B[i].size() != N) crash("complex_prod_matr called with A and B not being square matrix");
+
+  C_MATRIX C(A.size());
+  for(int i=0;i<N;i++) C[i].resize( N, 0.0);
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      for(int m=0;m<N;m++)
+	C[i][j] = C[i][j]+ A[i][m]*B[m][j];
+
+  return C;
+};
+
+
+C_MATRIX complex_sum_matr(const C_MATRIX& A, const C_MATRIX &B) {
+
+  int N= A.size();
+  if(N != (signed)B.size()) crash("complex_diff_matr called with A and B having different dimensions");
+  for(int i=0;i<N;i++)
+    if(A[i].size() != N || B[i].size() != N) crash("complex_diff_matr called with A and B not being square matrix");
+
+  C_MATRIX C(A.size());
+  for(int i=0;i<N;i++) C[i].resize( N, 0.0);
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+	C[i][j] = A[i][j] + B[i][j];
+
+  return C;
+};
+
+
+C_MATRIX complex_diff_matr(const C_MATRIX& A, const C_MATRIX &B) {
+
+  int N= A.size();
+  if(N != (signed)B.size()) crash("complex_diff_matr called with A and B having different dimensions");
+  for(int i=0;i<N;i++)
+    if(A[i].size() != N || B[i].size() != N) crash("complex_diff_matr called with A and B not being square matrix");
+
+  C_MATRIX C(A.size());
+  for(int i=0;i<N;i++) C[i].resize( N, 0.0);
+
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+	C[i][j] = A[i][j] - B[i][j];
+
+  return C;
+
+};
+
+
+
+
+C_MATRIX TRANSPOSE(const C_MATRIX &A) {
+
+  int N=A.size();
+  C_MATRIX C(N);
+  for(int i=0;i<N;i++) {
+    if( (signed)A[i].size() != N) crash("TRANSPOSE called with a rectangular matrix");
+    C[i].resize(N);
+    for(int j=0;j<N;j++) C[i][j] = A[j][i];
+  }
+
+  return C;
+}
+
+complex<double> TRACE(const C_MATRIX &A) {
+
+  int N=A.size();
+  complex<double> res = 0.0 + 1i*0.0;
+  for(int i=0;i<N;i++) {
+    if( (signed)A[i].size() != N) crash("TRANSPOSE called with a rectangular matrix");
+    res = res + A[i][i];
+  }
+
+  return res;
+}
+
+C_MATRIX DAGGER(const C_MATRIX &A) {
+
+  int N=A.size();
+  C_MATRIX C(N);
+  for(int i=0;i<N;i++) {
+    if( (signed)A[i].size() != N) crash("TRANSPOSE called with a rectangular matrix");
+    C[i].resize(N);
+    for(int j=0;j<N;j++) C[i][j] = conj(A[j][i]);
+  }
+
+  return C;
+}
+
+C_MATRIX IDENTITY(int N) {
+
+  C_MATRIX C(N);
+  for(int i=0;i<N;i++) C[i].resize(N, 0.0);
+
+  for(int i=0;i<N;i++ ) C[i][i] = 1.0 + 0.0*1i;
+  
+  return C;
+
+
+}
+
+
+VVfloat convolute(const VVfloat &A, const VVfloat &B, int symm) {
+
+  assert( (symm==1)  || (symm==-1) || (symm==0) );
+
+  double symm_fact=1.0;
+  if(symm==-1 || symm==1) symm_fact /= 2;
+  
+  int T= A.size();
+  assert( A.size() == B.size());
+  VVfloat ret(T);
+  int Nconfs= A[0].size();
+  for(int t=0;t<T;t++) {
+    assert(A[t].size() == B[t].size());
+    assert(A[t].size() == Nconfs);
+  }
+
+  
+  for(int dt=0;dt<T;dt++) {
+
+    for(int iconf=0;iconf<Nconfs;iconf++) {
+
+      double x=0.0;
+
+    
+	  for(int t=0;t<T;t++) {
+	
+	    x += symm_fact*(A[t][iconf]*B[(t+dt+T)%T][iconf] + symm*B[t][iconf]*A[(t+dt+T)%T][iconf])/(T);
+
+
+	  }
+    
+
+      ret[dt].push_back(x);
+      
+    }
+  }
+
+
+  return ret;
+
+
+}
+
+
+
+VVfloat convolute(const VVVfloat &A, const VVVfloat &B, int symm) {
+
+  assert( (symm==1)  || (symm==-1) || (symm==0) );
+
+  double symm_fact=1.0;
+  if(symm==-1 || symm==1) symm_fact /= 2;
+  
+  int T= A[0][0].size();
+  assert( A.size() == B.size());
+  VVfloat ret(T);
+  int Nconfs= A.size();
+  int Nhits= A[0].size();
+
+  //sanity checks
+  for(int iconf=0;iconf<Nconfs;iconf++) {
+    assert(A[iconf].size() == B[iconf].size());
+    assert(A[iconf].size() == Nhits);
+
+    for(int ihit=0;ihit<Nhits;ihit++) {
+      assert( A[iconf][ihit].size() == T);
+      assert( B[iconf][ihit].size() == T);
+    }
+  }
+
+
+  for(int iconf=0;iconf<Nconfs;iconf++) {
+
+    VVfloat A_bis(Nhits), B_bis(Nhits);
+
+    Vfloat summ_A(T,0.0), summ_B(T,0.0);
+
+    for(int ihit=0;ihit<Nhits;ihit++) { summ_A = summ_master(summ_A, A[iconf][ihit]); summ_B = summ_master(summ_B, B[iconf][ihit]);}
+
+    for(int ihit=0;ihit<Nhits;ihit++) {
+
+
+      A_bis[ihit] = summ_master(summ_A, Multiply_vector_by_scalar(A[iconf][ihit], -1.0));
+      B_bis[ihit] = summ_master(summ_B, Multiply_vector_by_scalar(B[iconf][ihit], -1.0));
+      
+    }
+
+    //now convolute
+
+    for(int dt=0;dt<T;dt++) {
+
+      double x=0;
+
+      for(int ihit=0;ihit<Nhits;ihit++) {
+
+	for(int t=0;t<T;t++) {
+	
+	  x += symm_fact*(A[iconf][ihit][t]*B_bis[ihit][(t+dt+T)%T] + symm*B[iconf][ihit][t]*A_bis[ihit][(t+dt+T)%T])/(T*Nhits*(Nhits-1));
+
+	}
+      }
+
+      ret[dt].push_back(x);
+
+    }
+      
+    
+  }
+  
+
+
+
+  return ret;
+
+
+}
+
+
+
+
+
+
+VVfloat convolute(const VVVfloat &A, const VVVfloat &B, int symm, VVint t_sou) {
+
+  assert( (symm==1)  || (symm==-1) || (symm==0) );
+
+  double symm_fact=1.0;
+  if(symm==-1 || symm==1) symm_fact /= 2;
+  
+  int T= A[0][0].size();
+  assert( A.size() == B.size());
+  VVfloat ret(T);
+  int Nconfs= A.size();
+  
+  //sanity checks
+  for(int iconf=0;iconf<Nconfs;iconf++) {
+    assert(A[iconf].size() == B[iconf].size());
+    int Nhits=A[iconf].size();  
+    for(int ihit=0;ihit<Nhits;ihit++) {
+      assert( A[iconf][ihit].size() == T);
+      assert( B[iconf][ihit].size() == T);
+    }
+  }
+
+
+  for(int iconf=0;iconf<Nconfs;iconf++) {
+
+    int Nhits= A[iconf].size(); 
+
+    VVfloat A_bis(Nhits), B_bis(Nhits);
+
+    Vfloat summ_A(T,0.0), summ_B(T,0.0);
+
+    //shift every time w.r.t. common origin
+
+    for(int ihit=0;ihit<Nhits;ihit++) {
+      for(int t=0;t<T;t++) {
+	summ_A[t] = summ_A[t] + A[iconf][ihit][(t-t_sou[iconf][ihit]+T)%T];
+	summ_B[t] = summ_B[t] + B[iconf][ihit][(t-t_sou[iconf][ihit]+T)%T];
+      }
+    }
+
+      
+    for(int ihit=0;ihit<Nhits;ihit++) {
+      for(int t=0;t<T;t++) {
+
+	A_bis[ihit].push_back( summ_A[t] - A[iconf][ihit][(t-t_sou[iconf][ihit]+T)%T] );
+	B_bis[ihit].push_back( summ_B[t] - B[iconf][ihit][(t-t_sou[iconf][ihit]+T)%T] );
+
+      }
+    }
+     
+    //now convolute
+
+    for(int dt=0;dt<T;dt++) {
+
+      double x=0;
+
+      for(int ihit=0;ihit<Nhits;ihit++) {
+
+	for(int t=0;t<T;t++) {
+	
+	  x += symm_fact*(A[iconf][ihit][(t-t_sou[iconf][ihit]+T)%T]*B_bis[ihit][(t+dt+T)%T] + symm*B[iconf][ihit][(t-t_sou[iconf][ihit]+T)%T]*A_bis[ihit][(t+dt+T)%T])/(T*Nhits*(Nhits-1));
+
+	}
+      }
+
+      ret[dt].push_back(x);
+
+    }
+      
+    
+  }
+  
+
+
+
+  return ret;
+  
+
+}
+
+
+
+
+
+VVfloat convolute_reduced(const VVVfloat &A, const VVVfloat &B, int symm, VVint t_sou_A, VVint t_sou_B) {
+
+  assert( (symm==1)  || (symm==-1) || (symm==0) );
+
+  double symm_fact=1.0;
+  if(symm==-1 || symm==1) symm_fact /= 2;
+  
+  int T= A[0][0].size();
+  assert( A.size() == B.size());
+  VVfloat ret(T);
+  int Nconfs= A.size();
+  
+  //sanity checks
+  for(int iconf=0;iconf<Nconfs;iconf++) {
+    int Nhits_B= B[iconf].size();
+    int tsou_B=t_sou_B[iconf][0];  
+    for(int ihit=0;ihit<Nhits_B;ihit++) {
+      assert( B[iconf][ihit].size() == T);
+      assert( t_sou_B[iconf][ihit] == tsou_B);
+    }
+  }
+
+
+  for(int iconf=0;iconf<Nconfs;iconf++) {
+
+    int tsou_B=t_sou_B[iconf][0];
+
+    int Nhits_A= A[iconf].size();
+    int Nhits_B= B[iconf].size();
+
+   
+    Vfloat summ_B(T,0);
+
+    for(int ihit=0;ihit<Nhits_B;ihit++)
+      for(int t=0;t<T;t++) {
+	summ_B[t] += B[iconf][ihit][t]/Nhits_B;
+      }
+ 
+    
+    //now convolute
+
+    for(int dt=0;dt<T;dt++) {
+      
+      double x=0;
+
+      for(int ihit=0;ihit<Nhits_B;ihit++) {
+
+	for(int t=0;t<T;t++) {
+	
+	  x += symm_fact*(A[iconf][ihit][(t-t_sou_A[iconf][ihit]+T)%T]*summ_B[(t-tsou_B+dt+T)%T] + symm*summ_B[(t-tsou_B+T)%T]*A[iconf][ihit][(t-t_sou_A[iconf][ihit]+dt+T)%T])/(T*Nhits_A);
+
+	}
+      }
+
+      ret[dt].push_back(x);
+
+    }
+      
+    
+  }
+  
+
+
+
+  return ret;
+  
+
+}
 

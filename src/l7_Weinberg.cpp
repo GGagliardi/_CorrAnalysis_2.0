@@ -266,6 +266,10 @@ bool Get_ASCII= true;
 
     Print_To_File({}, {P5_full.ave(), P5_full.err()}, "../data/l7_Weinberg/P5P5_"+P5P5.Tag[iens]+".dat.t", "", "");
 
+
+    distr_t_list P5_full_eff_mass = Corr.effective_mass_t(P5_full, "../data/l7_Weinberg/P5P5_eff_mass_"+P5P5.Tag[iens]+".dat");
+    distr_t_list S0_eff_mass = Corr.effective_mass_t(S0S0_distr, "../data/l7_Weinberg/S0S0_eff_mass_"+P5P5.Tag[iens]+".dat");
+
     Print_To_File({}, {C.ave(), C.err()}, "../data/l7_Weinberg/diff_c_"+P5P5.Tag[iens]+".dat.t", "", "");
 
 

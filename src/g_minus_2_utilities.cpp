@@ -4,12 +4,11 @@
 using namespace std;
 
 const double m_muon= 0.10565837;  //1.7768 ;
-const double relerr= 1e-12;
+const double relerr=  1e-12;
 
 
 
 #pragma omp declare reduction(+: Vfloat : omp_out= Sum_vectors(omp_out,omp_in)) initializer(omp_priv=Vfloat(omp_orig.size(),0))
-
 
 
 
@@ -652,10 +651,20 @@ void Generate_free_corr_data() {
 
   //amu_Tmax.push_back( make_pair( 0.00060, 112));
 
-  amu_Tmax.push_back( make_pair( 0.011, 112));
-  amu_Tmax.push_back( make_pair( 0.012, 112));
-  amu_Tmax.push_back( make_pair( 0.016, 112));
-  amu_Tmax.push_back( make_pair( 0.018, 112));
+  amu_Tmax.push_back( make_pair( 0.13, 112));
+  amu_Tmax.push_back( make_pair( 0.14, 112));
+  amu_Tmax.push_back( make_pair( 0.15, 112));
+  //amu_Tmax.push_back( make_pair( 0.018, 112));
+
+  //amu_Tmax.push_back( make_pair( 0.15, 96));
+  //amu_Tmax.push_back( make_pair( 0.16, 96));
+  //amu_Tmax.push_back( make_pair( 0.17, 96));
+  //amu_Tmax.push_back( make_pair( 0.0175, 64));
+  //amu_Tmax.push_back( make_pair( 0.0185, 64));
+  
+  //amu_Tmax.push_back( make_pair( 0.18, 112));
+  //amu_Tmax.push_back( make_pair( 0.19, 112));
+  //amu_Tmax.push_back( make_pair( 0.20, 112));
   
   
   //amu_Tmax.push_back( make_pair( 0.00044, 112));

@@ -1,4 +1,7 @@
 #include "../include/scale_setting_main.h"
+#include "Corr_analysis.h"
+#include "Meson_mass_extrapolation.h"
+#include "numerics.h"
 
 
 
@@ -10,18 +13,30 @@ const bool UseJack=1;
 const int Njacks=50; //50
 const int Nboots=200;
 const double fm_to_inv_Gev = 1.0 / 0.197327;
-const bool Use_three_finest_in_scale_setting_fp=false;
+const bool Use_three_finest_in_scale_setting_fp = false;
 
-
+// FLAG VALUES FOR INPUT
+const double MP_FLAG= 0.135;
+const double MK_FLAG = 0.494600000;
+const double MDs_FLAG = 1.967;
+const double Metac_FLAG=2.980;
 
 void Get_scale_setting() {
 
+  scale_setting_info SC_INFO= Get_scale_setting_info();
+
+  return;
+
+}
+
+scale_setting_info Get_scale_setting_info() {
+
   omp_set_num_threads(1);
 
+  scale_setting_info SCALE_INFO;
 
 
-
-   bool Get_ASCII= true;
+   bool Get_ASCII= false;
 
     if(Get_ASCII) {
     //read binary files
@@ -83,8 +98,7 @@ void Get_scale_setting() {
     }
     }
 
-    D(1);
-
+ 
 
 
   
@@ -110,7 +124,7 @@ void Get_scale_setting() {
 
  
   
-  data_t  pt2_pion, pt2_pion_B25, pt2_pion_A;
+  data_t  pt2_pion, pt2_pion_B25, pt2_pion_A, pt2_pion_Z56;
     
 
 
@@ -157,13 +171,33 @@ void Get_scale_setting() {
 			  };
 
 
+
+  auto Sort_easy = [](string A, string B) {
+
+      int conf_length_A= A.length();
+      int conf_length_B= B.length();
+      
+      int pos_a_slash=-1;
+      int pos_b_slash=-1;
+      for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+      for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+      
+      string A_bis= A.substr(pos_a_slash+1);
+      string B_bis= B.substr(pos_b_slash+1);
+
+      return atoi( A_bis.c_str()) < atoi( B_bis.c_str());
+      
+  };
+
+
  
    
   pt2_pion.Read("../corr_scale_setting/light", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
   pt2_pion_B25.Read("../corr_scale_setting/B25_light_ens", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
   pt2_pion_A.Read("../corr_scale_setting/A_light_ens", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
+  pt2_pion_Z56.Read("../Aprime/mix_l2_l2", "mes_contr_mix_l2_l2_TM_P5P5", "P5P5", Sort_light_confs);
 
-
+  
  
 
   //##################################################################################
@@ -171,7 +205,7 @@ void Get_scale_setting() {
 
 
  
-  distr_t a_from_fp_A(UseJack), a_from_fp_B(UseJack), a_from_fp_C(UseJack), a_from_fp_D(UseJack), a_from_fp_E(UseJack);
+  distr_t a_from_fp_A(UseJack), a_from_fp_B(UseJack), a_from_fp_C(UseJack), a_from_fp_D(UseJack), a_from_fp_E(UseJack), a_from_fp_Z(UseJack);
 
 
   distr_t_list Mpi_scale_setting(UseJack), fpi_scale_setting(UseJack);
@@ -290,11 +324,34 @@ void Get_scale_setting() {
 
      
     }
+
+    //Z56
+    distr_t Mpi_Z56(UseJack), fpi_Z56(UseJack);
+
+    for(int iens=0;iens< pt2_pion_Z56.size;iens++) {
+
+      assert(iens==0);
+      LatticeInfo L_info;
+      L_info.LatInfo_new_ens(pt2_pion_Z56.Tag[iens]);
+      cout<<pt2_pion_Z56.Tag[iens]<<endl;
+      double am= L_info.ml;
+      cout<<"ml: "<<am<<endl;
+      CorrAnalysis Corr(UseJack, Njacks, Nboots);
+      Corr.Nt= pt2_pion_Z56.nrows[iens];
+      cout<<"T:"<<Corr.Nt<<endl;
+      Corr.Tmin=18; Corr.Tmax=30;
+      distr_t_list pion_corr = Corr.corr_t(pt2_pion_Z56.col(0)[iens], "");
+      distr_t_list Mpi_eff_distr =  Corr.effective_mass_t(pt2_pion_Z56.col(0)[iens], "../data/scale_setting/Mp/Mpi_"+pt2_pion_Z56.Tag[iens]+".dat");
+      distr_t_list fpi_eff_distr = Corr.decay_constant_t(pow(2.0*am,2)*pion_corr, "../data/scale_setting/fp/fpi_"+pt2_pion_Z56.Tag[iens]+".dat");
+      Mpi_Z56 = Corr.Fit_distr(Mpi_eff_distr);
+      fpi_Z56 = Corr.Fit_distr(fpi_eff_distr);
+      
+    }
   
  
   
   
-    Determine_scale_from_fp_FLAG(Mpi_scale_setting_phys_point_ens, fpi_scale_setting_phys_point_ens, Mpi_scale_setting_Bens, fpi_scale_setting_Bens, Mpi_scale_setting_Aens, fpi_scale_setting_Aens, L_phys_point, L_B_ens, L_A_ens, Ensemble_phys_point_tag_list, Ensemble_B_tag_list, Ensemble_A_tag_list, a_from_fp_A, a_from_fp_B, a_from_fp_C, a_from_fp_D, a_from_fp_E,  UseJack, Use_three_finest_in_scale_setting_fp);
+    Determine_scale_from_fp_FLAG(Mpi_scale_setting_phys_point_ens, fpi_scale_setting_phys_point_ens, Mpi_scale_setting_Bens, fpi_scale_setting_Bens, Mpi_scale_setting_Aens, fpi_scale_setting_Aens, L_phys_point, L_B_ens, L_A_ens, Ensemble_phys_point_tag_list, Ensemble_B_tag_list, Ensemble_A_tag_list, Mpi_Z56, fpi_Z56,  a_from_fp_A, a_from_fp_B, a_from_fp_C, a_from_fp_D, a_from_fp_E, a_from_fp_Z, UseJack, Use_three_finest_in_scale_setting_fp);
 
 
     //print pion masses
@@ -303,6 +360,8 @@ void Get_scale_setting() {
 
       string T= Ensemble_phys_point_tag_list[i];
       distr_t M= Mpi_scale_setting_phys_point_ens.distr_list[i];
+      distr_t F = fpi_scale_setting_phys_point_ens.distr_list[i];
+      SCALE_INFO.Ens_l.push_back(T);
       distr_t a(UseJack);
       if(T.substr(1,1) == "B") { a= a_from_fp_B;}
       else if(T.substr(1,1) == "C" ) { a= a_from_fp_C;}
@@ -312,14 +371,689 @@ void Get_scale_setting() {
       
     }
 
+    //push_back FPI and MPI
+    SCALE_INFO.Mpi = Mpi_scale_setting_phys_point_ens;
+    SCALE_INFO.fpi = fpi_scale_setting_phys_point_ens;
+
+
+    // get lattice spacings [ Gev^-1 ]
+
+    distr_t a_A = a_from_fp_A*1.00;
+    distr_t a_B = a_from_fp_B*1.00;
+    distr_t a_C = a_from_fp_C*1.00;
+    distr_t a_D = a_from_fp_D*1.00;
+    distr_t a_E = a_from_fp_E*1.00;
+    
+
+    //push-lattice spacing
+    SCALE_INFO.a_A= a_A;
+    SCALE_INFO.a_B= a_B;
+    SCALE_INFO.a_C= a_C;
+    SCALE_INFO.a_D= a_D;
+    SCALE_INFO.a_E= a_E;
+    
+    
+    //determine strange and charm quark masses
+
+
+    //convert data for ls correlators
+
+    bool Get_ASCII_s= false;
+
+    if(Get_ASCII_s) {
+    //read binary files
+    boost::filesystem::create_directory("../ls_correlator");
+
+    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.72.64", "B.72.96" , "D.54.96", "E.44.112"});
+    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64", "cB211b.072.96" , "cD211a.054.96", "cE211a.044.112"});
+    
+
+    
+
+    for( int it=0; it<(signed)Ens_T1.size(); it++) {
+
+      vector<string> channels({"mix_l_l", "mix_l_s1", "mix_l_s2"});
+
+      for(auto &channel : channels) {
+	boost::filesystem::create_directory("../ls_correlator/"+channel);
+	boost::filesystem::create_directory("../ls_correlator/"+channel+"/"+Ens_TT1[it]);
+      }
+      //read binary
+      vector<string> Corr_tags({"TM_P5P5", "OS_P5P5"});
+
+          
+      for(int id=0; id<(signed)Corr_tags.size(); id++) {
+	for( auto &channel: channels) {
+
+	FILE *stream = fopen( ("../gm2_tau_rep_bin/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
+        size_t Nconfs, T, Nhits;
+	bin_read(Nconfs, stream);
+	bin_read(Nhits, stream);
+	bin_read(T, stream);
+	cout<<"Nconfs: "<<Nconfs<<endl;
+	cout<<"T: "<<T<<" "<<T/2+1<<endl;
+	cout<<"Nhits: "<<Nhits<<endl;
+	for(size_t iconf=0;iconf<Nconfs;iconf++) {
+	  vector<double> C(T/2+1);
+	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
+	  boost::filesystem::create_directory("../ls_correlator/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf));
+	  ofstream PrintCorr("../ls_correlator/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf)+"/mes_contr_"+channel+"_"+Corr_tags[id]);
+	  PrintCorr.precision(16);
+	  PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
+	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
+	  for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;
+	  PrintCorr.close();
+
+	}
+
+	fclose(stream);
+
+	}
+	
+      }
+    }
+    }
+
+
+
+    bool Get_ASCII_s_dm= false;
+
+    if(Get_ASCII_s_dm) {
+    //read binary files
+    boost::filesystem::create_directory("../ls_correlator");
+
+    vector<string> Ens_T1({"C.06.80", "C.06.112", "B.72.64", "B.72.96" , "D.54.96", "E.44.112"});
+    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cB211b.072.64", "cB211b.072.96" , "cD211a.054.96", "cE211a.044.112"});
+    
+
+    
+
+    for( int it=0; it<(signed)Ens_T1.size(); it++) {
+
+      vector<string> channels({"mix_l1_s", "mix_l2_s"});
+
+      for(auto &channel : channels) {
+	boost::filesystem::create_directory("../ls_correlator/"+channel);
+	boost::filesystem::create_directory("../ls_correlator/"+channel+"/"+Ens_TT1[it]);
+      }
+      //read binary
+      vector<string> Corr_tags({"TM_P5P5", "OS_P5P5"});
+
+          
+      for(int id=0; id<(signed)Corr_tags.size(); id++) {
+	for( auto &channel: channels) {
+
+	FILE *stream = fopen( ("../tau_decay_strange_bin_mu_corr/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
+        size_t Nconfs, T, Nhits;
+	bin_read(Nconfs, stream);
+	bin_read(Nhits, stream);
+	bin_read(T, stream);
+	cout<<"Nconfs: "<<Nconfs<<endl;
+	cout<<"T: "<<T<<" "<<T/2+1<<endl;
+	cout<<"Nhits: "<<Nhits<<endl;
+	for(size_t iconf=0;iconf<Nconfs;iconf++) {
+	  vector<double> C(T/2+1);
+	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
+	  boost::filesystem::create_directory("../ls_correlator/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf));
+	  ofstream PrintCorr("../ls_correlator/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf)+"/mes_contr_"+channel+"_"+Corr_tags[id]);
+	  PrintCorr.precision(16);
+	  PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
+	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
+	  for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;
+	  PrintCorr.close();
+
+	}
+
+
+        fclose(stream);
+
+	}
+	
+      }
+    }
+    }
+
+
+
+
+    //convert data for sc correlators
+
+    bool Get_ASCII_c= true;
+
+    if(Get_ASCII_c) {
+    //read binary files
+    boost::filesystem::create_directory("../sc_correlator");
+    
+
+    vector<string> Ens_T1({"C.06.80", "C.06.112",  "D.54.96", "E.44.112", "B.72.64"});
+    vector<string> Ens_TT1({"cC211a.06.80", "cC211a.06.112", "cD211a.054.96", "cE211a.044.112", "cB211b.072.64"});
+
+    for( int it=0; it<(signed)Ens_T1.size(); it++) {
+
+      vector<string> channels({"mix_s_c1", "mix_s_c2", "mix_s_c3", "mix_c1_c1", "mix_c2_c2", "mix_c3_c3"});
+      if(Ens_T1[it] == "C.06.80" || Ens_T1[it] =="B.72.64") channels = {"mix_s1_c1", "mix_s1_c2", "mix_s2_c1", "mix_s2_c2"};
+
+      
+      
+      for(auto &channel : channels) {
+	boost::filesystem::create_directory("../sc_correlator/"+channel);
+	boost::filesystem::create_directory("../sc_correlator/"+channel+"/"+Ens_TT1[it]);
+      }
+      //read binary
+      vector<string> Corr_tags({"TM_P5P5", "TM_V0V0", "OS_V0V0", "OS_P5P5", "TM_VKVK", "OS_VKVK"});
+
+          
+      for(int id=0; id<(signed)Corr_tags.size(); id++) {
+	for( auto &channel: channels) {
+
+	FILE *stream = fopen( ("../charm_E_bin/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
+        size_t Nconfs, T, Nhits;
+	bin_read(Nconfs, stream);
+	bin_read(Nhits, stream);
+	bin_read(T, stream);
+	cout<<"Nconfs: "<<Nconfs<<endl;
+	cout<<"T: "<<T<<" "<<T/2+1<<endl;
+	cout<<"Nhits: "<<Nhits<<endl;
+	for(size_t iconf=0;iconf<Nconfs;iconf++) {
+	  vector<double> C(T/2+1);
+	  for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
+	  boost::filesystem::create_directory("../sc_correlator/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf));
+	  ofstream PrintCorr("../sc_correlator/"+channel+"/"+Ens_TT1[it]+"/"+to_string(iconf)+"/mes_contr_"+channel+"_"+Corr_tags[id]);
+	  PrintCorr.precision(16);
+	  PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
+	  for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
+	  for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;
+	  PrintCorr.close();
+
+	}
+
+	fclose(stream);
+
+	}
+	
+      }
+    }
+    }
+
+
+
+
+    //determine strange quark masses on all the ensembles
+
+    data_t ls_data_tm_P5P5, ls_H_data_tm_P5P5;
+    data_t ls_data_OS_P5P5, ls_H_data_OS_P5P5;
+   
+    
+    ls_data_tm_P5P5.Read("../ls_correlator/mix_l_s1", "mes_contr_mix_l_s1_TM_P5P5", "P5P5", Sort_easy);
+    ls_H_data_tm_P5P5.Read("../ls_correlator/mix_l_s2", "mes_contr_mix_l_s2_TM_P5P5", "P5P5", Sort_easy);
+
+    ls_data_OS_P5P5.Read("../ls_correlator/mix_l_s1", "mes_contr_mix_l_s1_OS_P5P5", "P5P5", Sort_easy);
+    ls_H_data_OS_P5P5.Read("../ls_correlator/mix_l_s2", "mes_contr_mix_l_s2_OS_P5P5", "P5P5", Sort_easy);
+
+    data_t l1s_data_tm_P5P5, l2s_data_tm_P5P5;
+    
+    l1s_data_tm_P5P5.Read("../ls_correlator/mix_l1_s", "mes_contr_mix_l1_s_TM_P5P5", "P5P5", Sort_easy);
+    l2s_data_tm_P5P5.Read("../ls_correlator/mix_l2_s", "mes_contr_mix_l2_s_TM_P5P5", "P5P5", Sort_easy);
+
+    data_t l1s_data_OS_P5P5, l2s_data_OS_P5P5;
+    
+    l1s_data_OS_P5P5.Read("../ls_correlator/mix_l1_s", "mes_contr_mix_l1_s_OS_P5P5", "P5P5", Sort_easy);
+    l2s_data_OS_P5P5.Read("../ls_correlator/mix_l2_s", "mes_contr_mix_l2_s_OS_P5P5", "P5P5", Sort_easy);
+
+    
+    //pion masses in lattice units
+    double amp_B_ave= 0.0565313; double amp_B_err= 1.438e-05;
+    double amp_C_ave= 0.0472193; double amp_C_err= 3.45183e-05;
+    double amp_D_ave= 0.0406214; double amp_D_err= 2.94047e-05;
+    double amp_E_ave= 0.0338185; double amp_E_err= 3.18799e-05;
+    
+    distr_t aMp_B(UseJack), aMp_C(UseJack), aMp_D(UseJack), aMp_E(UseJack);
+    
+    for(int ijack=0;ijack<Njacks;ijack++ ) {
+      aMp_B.distr.push_back( amp_B_ave + GM()*amp_B_err/sqrt(Njacks-1.0));
+      aMp_C.distr.push_back( amp_C_ave + GM()*amp_C_err/sqrt(Njacks-1.0));
+      aMp_D.distr.push_back( amp_D_ave + GM()*amp_D_err/sqrt(Njacks-1.0));
+      aMp_E.distr.push_back( amp_E_ave + GM()*amp_E_err/sqrt(Njacks-1.0));
+    }
+
+
+    distr_t_list ams_list(UseJack), ams_corr_list(UseJack);
+    distr_t_list ams_OS_list(UseJack);
+
+    vector<string> Ens;
+
+
+    int Nens = ls_data_tm_P5P5.size;
+
+    for(int iens=0; iens<Nens;iens++) {
+
+
+      Ens.push_back(ls_data_tm_P5P5.Tag[iens]);
+      boost::filesystem::create_directory("../data/scale_setting/MK");
+      boost::filesystem::create_directory("../data/scale_setting/MK/"+ls_data_tm_P5P5.Tag[iens]);
+    
+      CorrAnalysis Corr(UseJack, Njacks,Nboots);
+      Corr.Nt = ls_data_tm_P5P5.nrows[iens];
+
+      //get effective masses
+
+      distr_t_list M_K = Corr.effective_mass_t( ls_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MK/"+ls_data_tm_P5P5.Tag[iens]+"/eff_mass_K");
+      distr_t_list M_K_H = Corr.effective_mass_t( ls_H_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MK/"+ls_data_tm_P5P5.Tag[iens]+"/eff_mass_K_H");
+
+      
+      distr_t_list M_K_OS = Corr.effective_mass_t( ls_data_OS_P5P5.col(0)[iens], "../data/scale_setting/MK/"+ls_data_OS_P5P5.Tag[iens]+"/eff_mass_K_OS");
+      distr_t_list M_K_H_OS = Corr.effective_mass_t( ls_H_data_OS_P5P5.col(0)[iens], "../data/scale_setting/MK/"+ls_data_OS_P5P5.Tag[iens]+"/eff_mass_K_H_OS");
+
+      //distr_t_list dmK = Corr.effective_mass_t( summ_master( l1s_data_tm_P5P5.col(0)[iens], Multiply_Vvector_by_scalar(l2s_data_tm_P5P5.col(0)[iens], -1.0), ls_data_tm_P5P5.col(0)[iens]), "") - M_K;
+
+      distr_t_list dmK = Corr.effective_mass_t(l1s_data_tm_P5P5.col(0)[iens],"") - Corr.effective_mass_t(l2s_data_tm_P5P5.col(0)[iens],"");
+     
+      distr_t_list dmK2 = POW_DL(Corr.effective_mass_t( l1s_data_tm_P5P5.col(0)[iens],""),2) - POW_DL(Corr.effective_mass_t(l2s_data_tm_P5P5.col(0)[iens],""),2);
+      distr_t_list dmK2_OS = POW_DL(Corr.effective_mass_t( l1s_data_OS_P5P5.col(0)[iens],""),2) - POW_DL(Corr.effective_mass_t(l2s_data_OS_P5P5.col(0)[iens],""),2); 
+
+      LatticeInfo L_info;
+     
+      L_info.LatInfo_new_ens(ls_data_tm_P5P5.Tag[iens]);
+     
+      double aml= L_info.ml;
+      double ams1= L_info.ms_L_new;
+      double ams2= L_info.ms_M_new;
+
+      //get lattice spacing
+     distr_t a_distr(UseJack);
+     
+     if(ls_data_tm_P5P5.Tag[iens].substr(1,1)=="B") {a_distr=a_B;  }
+     else if(ls_data_tm_P5P5.Tag[iens].substr(1,1)=="C") {a_distr=a_C; }
+     else if(ls_data_tm_P5P5.Tag[iens].substr(1,1)=="D") {a_distr=a_D; }
+     else if(ls_data_tm_P5P5.Tag[iens].substr(1,1)=="E") {a_distr=a_E; }
+     else crash("lattice spacing distribution for Ens: "+ls_data_tm_P5P5.Tag[iens]+" not found");
+
+  
+    
+     distr_t aMP;
+
+     int Tmin_P5, Tmax_P5;
+
+     if( ls_data_tm_P5P5.Tag[iens] =="cB211b.072.96")     { Tmin_P5=38; Tmax_P5=59; aMP=aMp_B;}
+     else if(ls_data_tm_P5P5.Tag[iens] =="cB211b.072.64") { Tmin_P5=45; Tmax_P5=59; aMP=aMp_B;}
+     else if(ls_data_tm_P5P5.Tag[iens].substr(1,1)=="C")  { Tmin_P5=36; Tmax_P5=63; aMP=aMp_C;}
+     else if(ls_data_tm_P5P5.Tag[iens].substr(1,1)=="D")  { Tmin_P5=37; Tmax_P5=69; aMP=aMp_D;}
+     else if(ls_data_tm_P5P5.Tag[iens].substr(1,1)=="E")  { Tmin_P5=60; Tmax_P5=85; aMP=aMp_E;}
+     else crash("Cannot recognize the ensemble: "+ls_data_tm_P5P5.Tag[iens]+" in assigning Tmin_P5,Tmax_P5 for ensemble: ");
+
+     Corr.Tmin= Tmin_P5;
+     Corr.Tmax= Tmax_P5;
+
+     distr_t dmK2_fit = Corr.Fit_distr(dmK2)/(a_distr*a_distr);
+     distr_t dmK2_fit_OS = Corr.Fit_distr(dmK2_OS)/(a_distr*a_distr);
+    
+
+     distr_t MK1= Corr.Fit_distr( M_K)/a_distr;
+     distr_t MK2= Corr.Fit_distr( M_K_H )/a_distr;
+
+     
+     distr_t MK1_OS= Corr.Fit_distr( M_K_OS)/a_distr;
+     distr_t MK2_OS= Corr.Fit_distr( M_K_H_OS )/a_distr;
+
+
+     distr_t MK1_bis= Corr.Fit_distr( M_K)/a_distr;
+     distr_t MK2_bis= Corr.Fit_distr( M_K_H)/a_distr;
+
+
+     cout<<"lattice MK^2 mass for Ensemble: "<<ls_data_tm_P5P5.Tag[iens]<<endl;    
+     cout<<"ams: "<<ams1<<" (aMK)^2: "<< (MK1*MK1*a_distr*a_distr).ave() <<"  "<<(MK1*MK1*a_distr*a_distr).err()<<endl;
+     cout<<"ams: "<<ams2<<" (aMK)^2: "<< (MK2*MK2*a_distr*a_distr).ave()<<" " << (MK2*MK2*a_distr*a_distr).err()<<endl;
+     cout<<"After correcting ml mistuning: "<<endl;
+     cout<<"ams: "<<ams1<<" (aMK)^2: "<< (MK1_bis*MK1_bis*a_distr*a_distr).ave() <<"  "<<(MK1_bis*MK1_bis*a_distr*a_distr).err()<<endl;
+     cout<<"ams: "<<ams2<<" (aMK)^2: "<< (MK2_bis*MK2_bis*a_distr*a_distr).ave()<<" " << (MK2_bis*MK2_bis*a_distr*a_distr).err()<<endl;
+     cout<<"###############################"<<endl;
+     
+     //determine physical strange quark mass
+
+     vector<distr_t> MMK2({MK1*MK1, MK2*MK2});
+     vector<distr_t> MMK2_bis({MK1*MK1+ dmK2_fit, MK2*MK2 + dmK2_fit});
+     vector<distr_t> MMK2_OS_bis({MK1_OS*MK1_OS+ dmK2_fit, MK2*MK2 + dmK2_fit});
+     vector<distr_t> MMS({ Get_id_jack_distr(Njacks)*ams1, Get_id_jack_distr(Njacks)*ams2});
+
+     distr_t MK_FLAG_corr= SQRT_D(  MK_FLAG*MK_FLAG + 0.5*( POW_D(aMP/a_distr,2)    - pow(MP_FLAG,2)));
+
+     distr_t ams_phys = Obs_extrapolation_meson_mass(MMS, MMK2, MK_FLAG*MK_FLAG*Get_id_jack_distr(Njacks) ,  "../data/scale_setting/MK"  , "ams_extrapolation_"+ls_data_tm_P5P5.Tag[iens]+".dat",  UseJack, "SPLINE" );
+     distr_t ams_phys_corr = Obs_extrapolation_meson_mass(MMS, MMK2, MK_FLAG_corr*MK_FLAG_corr ,  "../data/scale_setting/MK"  , "ams_corr_extrapolation_"+ls_data_tm_P5P5.Tag[iens]+".dat",  UseJack, "SPLINE" );
+     distr_t ams_phys_bis = Obs_extrapolation_meson_mass(MMS, MMK2_bis, MK_FLAG*MK_FLAG*Get_id_jack_distr(Njacks) ,  "../data/scale_setting/MK"  , "ams_bis_extrapolation_"+ls_data_tm_P5P5.Tag[iens]+".dat",  UseJack, "SPLINE" );
+     distr_t ams_phys_bis_OS = Obs_extrapolation_meson_mass(MMS, MMK2_OS_bis, MK_FLAG*MK_FLAG*Get_id_jack_distr(Njacks) ,  "../data/scale_setting/MK"  , "ams_bis_OS_extrapolation_"+ls_data_tm_P5P5.Tag[iens]+".dat",  UseJack, "SPLINE" );
+     
+     ams_list.distr_list.push_back(ams_phys_bis);
+     ams_OS_list.distr_list.push_back(ams_phys_bis_OS);
+     ams_corr_list.distr_list.push_back(ams_phys_corr);
+
+     SCALE_INFO.MK1.distr_list.push_back( SQRT_D(MK1*MK1+dmK2_fit));
+     SCALE_INFO.MK2.distr_list.push_back( SQRT_D(MK2*MK2+dmK2_fit));
+     
+     cout<<"#### ENSEMBLE: "<<ls_data_tm_P5P5.Tag[iens]<<" ####"<<endl;
+     cout<<"ams(lattice): "<<ams_phys_bis.ave()<<" +- "<<ams_phys_bis.err()<<endl;
+     cout<<"ams(ChPT): "<<ams_phys_corr.ave()<<" +- "<<ams_phys_corr.err()<<endl;
+     cout<<"ams(no-mistuning-corrections): "<<ams_phys.ave()<<" +- "<<ams_phys.err()<<endl;
+     
+    }
+
+
+    //determine charm quark mass
+
+
+    //start from C80 and B64 ensemble [ 2 strange quark masses and 2 charm quark masses ]
+
+
+    data_t s1c1_data_tm_P5P5, s1c2_data_tm_P5P5, s2c1_data_tm_P5P5, s2c2_data_tm_P5P5;
+
+     
+    s1c1_data_tm_P5P5.Read("../sc_correlator/mix_s1_c1", "mes_contr_mix_s1_c1_TM_P5P5", "P5P5", Sort_easy);
+    s1c2_data_tm_P5P5.Read("../sc_correlator/mix_s1_c2", "mes_contr_mix_s1_c2_TM_P5P5", "P5P5", Sort_easy);
+    s2c1_data_tm_P5P5.Read("../sc_correlator/mix_s2_c1", "mes_contr_mix_s2_c1_TM_P5P5", "P5P5", Sort_easy);
+    s2c2_data_tm_P5P5.Read("../sc_correlator/mix_s2_c2", "mes_contr_mix_s2_c2_TM_P5P5", "P5P5", Sort_easy);
+    
+    int Nens_STRAT_1=s1c1_data_tm_P5P5.size;
+
+    distr_t_list amc_phys_STRAT_1(UseJack);
+
+
+    distr_t_list MDs1_list(UseJack);
+    
+    
+
+    for(int iens=0; iens<Nens_STRAT_1; iens++) {
+
+      boost::filesystem::create_directory("../data/scale_setting/MDs");
+      boost::filesystem::create_directory("../data/scale_setting/MDs/"+s1c1_data_tm_P5P5.Tag[iens]);
+
+      CorrAnalysis Corr(UseJack, Njacks,Nboots);
+      Corr.Nt = s1c1_data_tm_P5P5.nrows[iens];
+
+      //get effective masses
+
+      distr_t_list M_Ds_11 = Corr.effective_mass_t( s1c1_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+s1c1_data_tm_P5P5.Tag[iens]+"/eff_mass_Ds_11");
+      distr_t_list M_Ds_12 = Corr.effective_mass_t( s1c2_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+s1c1_data_tm_P5P5.Tag[iens]+"/eff_mass_Ds_12");
+      distr_t_list M_Ds_21 = Corr.effective_mass_t( s2c1_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+s1c1_data_tm_P5P5.Tag[iens]+"/eff_mass_Ds_21");
+      distr_t_list M_Ds_22 = Corr.effective_mass_t( s2c2_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+s1c1_data_tm_P5P5.Tag[iens]+"/eff_mass_Ds_22");
+
+      double ams1, ams2, amc1, amc2;
+      string Ens=s1c1_data_tm_P5P5.Tag[iens];
+
+      
+      if(Ens == "cC211a.06.80") {
+	ams1= 1.6000e-02;
+	ams2= 1.7000e-02;
+	amc1 = 1.8000e-01;
+	amc2 = 1.9000e-01;
+      }
+      else if(Ens == "cB211b.072.64") {
+	ams1= 1.7500e-02;
+	ams2= 1.8500e-02;
+	amc1 = 2.3000e-01;
+	amc2 = 2.4000e-01;
+      }
+      else crash("Ensemble: "+Ens+" should not be analyzed with STRAT 1");
+
+      int Tmin_P5, Tmax_P5;
+
+     
+      if(s1c1_data_tm_P5P5.Tag[iens].substr(1,1)=="C")  { Tmin_P5=32; Tmax_P5=43;}
+      else if(s1c1_data_tm_P5P5.Tag[iens].substr(1,1)=="B")  { Tmin_P5=29; Tmax_P5=45;}
+      else crash("Cannot recognize the ensemble: "+s1c1_data_tm_P5P5.Tag[iens]+" in assigning Tmin_P5,Tmax_P5 for ensemble: ");
+      
+      Corr.Tmin= Tmin_P5;
+      Corr.Tmax= Tmax_P5;
+
+
+
+      distr_t a_distr = (Ens=="cC211a.06.80")?a_C:a_B;
+      //get ams
+      distr_t ams(UseJack);
+      for(int bens=0; bens<(signed)ls_data_tm_P5P5.Tag.size(); bens++) {
+	if(s1c1_data_tm_P5P5.Tag[iens] == ls_data_tm_P5P5.Tag[bens]) ams= ams_list[bens] ;
+      }
+
+
+      distr_t MDs_s1c1= Corr.Fit_distr( M_Ds_11)/a_distr;
+      distr_t MDs_s1c2= Corr.Fit_distr( M_Ds_12 )/a_distr;
+      distr_t MDs_s2c1= Corr.Fit_distr( M_Ds_21)/a_distr;
+      distr_t MDs_s2c2= Corr.Fit_distr( M_Ds_22 )/a_distr;
+
+
+      //determine physical strange quark mass
+
+     vector<distr_t> MMDS1({MDs_s1c1, MDs_s2c1});
+     vector<distr_t> MMDS2({MDs_s1c2, MDs_s2c2});
+     vector<distr_t> MMS({ Get_id_jack_distr(Njacks)*ams1, Get_id_jack_distr(Njacks)*ams2});
+     vector<distr_t> MMC({ Get_id_jack_distr(Njacks)*amc1, Get_id_jack_distr(Njacks)*amc2});
+
+     SCALE_INFO.Ens_c.push_back(s1c1_data_tm_P5P5.Tag[iens]);
+     MDs1_list.distr_list.push_back(Corr.Fit_distr(M_Ds_11));
+
+     //interpolate MDs to the physical ms point
+     distr_t MDs_1 = Obs_extrapolation_meson_mass(MMDS1, MMS, ams ,  "../data/scale_setting/MDs"  , "MDs_1_extrapolation_"+s1c1_data_tm_P5P5.Tag[iens]+".dat",  UseJack, "SPLINE" );
+     distr_t MDs_2 = Obs_extrapolation_meson_mass(MMDS2, MMS, ams ,  "../data/scale_setting/MDs"  , "MDs_2_extrapolation_"+s1c1_data_tm_P5P5.Tag[iens]+".dat",  UseJack, "SPLINE" );
+
+     //find amc
+
+     vector<distr_t> MMDS({MDs_1, MDs_2});
+
+     distr_t amc_phys=  Obs_extrapolation_meson_mass(MMC, MMDS, MDs_FLAG*Get_id_jack_distr(Njacks) ,  "../data/scale_setting/MDs"  , "amc_extrapolation_"+s1c1_data_tm_P5P5.Tag[iens]+".dat",  UseJack, "SPLINE" );
+     
+      
+
+     cout<<"#### ENSEMBLE: "<<s1c1_data_tm_P5P5.Tag[iens]<<" ####"<<endl;
+     cout<<"amc: "<<amc_phys.ave()<<" +- "<<amc_phys.err()<<endl;
+      
+     amc_phys_STRAT_1.distr_list.push_back(amc_phys);
+
+    }
+
+
+    //##############################################################################################################################
+
 
 
     
-  
-  
-  //###################################################################################
 
 
-  return ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //###############################################################################################################################
+
+    
+
+
+    //determine the charm quark mass on the other ensembles
+
+    data_t sc1_data_tm_P5P5, sc2_data_tm_P5P5, sc3_data_tm_P5P5;
+
+   
+
+    data_t cc1_data_tm_P5P5, cc2_data_tm_P5P5, cc3_data_tm_P5P5;
+
+    data_t cc1_data_OS_P5P5, cc2_data_OS_P5P5, cc3_data_OS_P5P5;
+
+    data_t cc1_data_tm_V0V0, cc1_data_OS_V0V0;
+
+
+    data_t cc1_data_tm_VKVK, cc1_data_OS_VKVK;
+
+     
+    sc1_data_tm_P5P5.Read("../sc_correlator/mix_s_c1", "mes_contr_mix_s_c1_TM_P5P5", "P5P5", Sort_easy);
+    sc2_data_tm_P5P5.Read("../sc_correlator/mix_s_c2", "mes_contr_mix_s_c2_TM_P5P5", "P5P5", Sort_easy);
+    sc3_data_tm_P5P5.Read("../sc_correlator/mix_s_c3", "mes_contr_mix_s_c3_TM_P5P5", "P5P5", Sort_easy);
+    cc1_data_tm_P5P5.Read("../sc_correlator/mix_c1_c1", "mes_contr_mix_c1_c1_TM_P5P5", "P5P5", Sort_easy);
+    cc2_data_tm_P5P5.Read("../sc_correlator/mix_c2_c2", "mes_contr_mix_c2_c2_TM_P5P5", "P5P5", Sort_easy);
+    cc3_data_tm_P5P5.Read("../sc_correlator/mix_c3_c3", "mes_contr_mix_c3_c3_TM_P5P5", "P5P5", Sort_easy);
+    cc1_data_tm_V0V0.Read("../sc_correlator/mix_c1_c1", "mes_contr_mix_c1_c1_TM_V0V0", "V0V0", Sort_easy);
+    cc1_data_OS_V0V0.Read("../sc_correlator/mix_c1_c1", "mes_contr_mix_c1_c1_OS_V0V0", "V0V0", Sort_easy);
+
+    cc1_data_OS_P5P5.Read("../sc_correlator/mix_c1_c1", "mes_contr_mix_c1_c1_OS_P5P5", "P5P5", Sort_easy);
+    cc2_data_OS_P5P5.Read("../sc_correlator/mix_c2_c2", "mes_contr_mix_c2_c2_OS_P5P5", "P5P5", Sort_easy);
+    cc3_data_OS_P5P5.Read("../sc_correlator/mix_c3_c3", "mes_contr_mix_c3_c3_OS_P5P5", "P5P5", Sort_easy);
+
+
+    cc1_data_tm_VKVK.Read("../sc_correlator/mix_c1_c1", "mes_contr_mix_c1_c1_TM_VKVK", "VKVK", Sort_easy);
+    cc1_data_OS_VKVK.Read("../sc_correlator/mix_c1_c1", "mes_contr_mix_c1_c1_OS_VKVK", "VKVK", Sort_easy);
+    
+    int Nens_c=sc1_data_tm_P5P5.size;
+
+   
+
+    distr_t_list amc_phys_list(UseJack);
+
+    for(int iens=0; iens<Nens_c; iens++) {
+
+      boost::filesystem::create_directory("../data/scale_setting/MDs");
+      boost::filesystem::create_directory("../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]);
+
+      CorrAnalysis Corr(UseJack, Njacks,Nboots);
+      Corr.Nt = sc1_data_tm_P5P5.nrows[iens];
+
+      //get effective masses
+
+      distr_t_list M_Ds_1 = Corr.effective_mass_t( sc1_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_Ds_1");
+      distr_t_list M_Ds_2 = Corr.effective_mass_t( sc2_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_Ds_2");
+      distr_t_list M_Ds_3 = Corr.effective_mass_t( sc3_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_Ds_3");
+
+
+      distr_t_list M_etac_2 =  Corr.effective_mass_t( cc2_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_etac_2");
+      distr_t_list M_etac_1 =  Corr.effective_mass_t( cc1_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_etac_1");
+      distr_t_list M_etac_3 =  Corr.effective_mass_t( cc3_data_tm_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_etac_3");
+
+      distr_t_list M_etac_OS_2 =  Corr.effective_mass_t( cc2_data_OS_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_etac_OS_2");
+      distr_t_list M_etac_OS_1 =  Corr.effective_mass_t( cc1_data_OS_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_etac_OS_1");
+      distr_t_list M_etac_OS_3 =  Corr.effective_mass_t( cc3_data_OS_P5P5.col(0)[iens], "../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_etac_OS_3");
+
+      distr_t_list M_V0_TM= Corr.effective_mass_t( cc1_data_tm_V0V0.col(0)[iens],"../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_V0_TM_1");
+      distr_t_list M_V0_OS= Corr.effective_mass_t( cc1_data_OS_V0V0.col(0)[iens],"../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_V0_OS_1");
+
+
+      distr_t_list M_Jpsi_TM_1 =  Corr.effective_mass_t( cc1_data_tm_VKVK.col(0)[iens],"../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_Jpsi_TM_1");
+      distr_t_list M_Jpsi_OS_1 =  Corr.effective_mass_t( cc1_data_tm_VKVK.col(0)[iens],"../data/scale_setting/MDs/"+sc1_data_tm_P5P5.Tag[iens]+"/eff_mass_Jpsi_OS_1");
+
+      double ams, amc1, amc2, amc3;
+      distr_t a_distr(UseJack);
+
+      if( sc1_data_tm_P5P5.Tag[iens].substr(1,1)=="C")     { ams= 0.016067; amc1= 0.18; amc2=0.19; amc3=0.20; a_distr= a_C;}
+      else if(sc1_data_tm_P5P5.Tag[iens].substr(1,1)=="D") { ams= 1.3557e-02; amc1= 0.15; amc2=0.16; amc3=0.17; a_distr= a_D;} 
+      else if(sc1_data_tm_P5P5.Tag[iens].substr(1,1)=="E")  { ams= 1.1759e-02; amc1= 0.13; amc2=0.14; amc3=0.15; a_distr = a_E;} 
+      else crash("Cannot recognize the ensemble: "+s1c1_data_tm_P5P5.Tag[iens]+" in assigning Tmin_P5,Tmax_P5 for ensemble: ");
+
+
+      int Tmin_P5, Tmax_P5;
+
+      
+      if(sc1_data_tm_P5P5.Tag[iens].substr(1,1)=="C")  { Tmin_P5=40; Tmax_P5=48;}
+      else if(sc1_data_tm_P5P5.Tag[iens].substr(1,1)=="D")  { Tmin_P5=50; Tmax_P5=63;}
+      else if(sc1_data_tm_P5P5.Tag[iens].substr(1,1)=="E")  { Tmin_P5=50; Tmax_P5=60;}
+      else crash("Cannot recognize the ensemble: "+s1c1_data_tm_P5P5.Tag[iens]+" in assigning Tmin_P5,Tmax_P5 for ensemble: ");
+      
+      Corr.Tmin= Tmin_P5;
+      Corr.Tmax= Tmax_P5;
+
+
+
+   
+      //get ams
+      distr_t ams_phys(UseJack);
+      for(int bens=0; bens<(signed)ls_data_tm_P5P5.Tag.size(); bens++) {
+	if(sc1_data_tm_P5P5.Tag[iens] == ls_data_tm_P5P5.Tag[bens]) ams_phys= ams_corr_list[bens] ;
+      }
+  
+      cout<<"####ENSEMBLE: "<<sc1_data_tm_P5P5.Tag[iens]<<" ####"<<endl;
+      cout<<"ams(phys): "<<ams_phys.ave()<<" +- "<<ams_phys.err()<<endl;
+      cout<<"ams(simulated): "<<ams<<endl;
+
+
+      distr_t MDs_c1= Corr.Fit_distr( M_Ds_1)/a_distr;
+      distr_t MDs_c2= Corr.Fit_distr( M_Ds_2 )/a_distr;
+      distr_t MDs_c3= Corr.Fit_distr( M_Ds_3)/a_distr;
+
+      SCALE_INFO.Ens_c.push_back(sc1_data_tm_P5P5.Tag[iens]);
+      MDs1_list.distr_list.push_back(Corr.Fit_distr(M_Ds_1));
+
+
+      Corr.Tmin = 46;
+      Corr.Tmax = 55;
+
+      distr_t Metac1= Corr.Fit_distr(M_etac_1)/a_distr;
+      distr_t Metac2= Corr.Fit_distr(M_etac_2)/a_distr;
+      distr_t Metac3= Corr.Fit_distr(M_etac_3)/a_distr;
+
+      vector<distr_t> MMETAC({Metac1, Metac2, Metac3});
+
+      //determine physical strange quark mass
+
+      vector<distr_t> MMDS({MDs_c1, MDs_c2, MDs_c3});
+      
+      vector<distr_t> MMC({ Get_id_jack_distr(Njacks)*amc1, Get_id_jack_distr(Njacks)*amc2, Get_id_jack_distr(Njacks)*amc3});
+
+      
+
+
+     
+      
+      distr_t amc_phys=  Obs_extrapolation_meson_mass(MMC, MMDS, MDs_FLAG*Get_id_jack_distr(Njacks) ,  "../data/scale_setting/MDs"  , "amc_extrapolation_"+sc1_data_tm_P5P5.Tag[iens]+".dat",  UseJack, "SPLINE" );
+
+      distr_t amc_phys_ETAC=  Obs_extrapolation_meson_mass(MMC, MMETAC, Metac_FLAG*Get_id_jack_distr(Njacks) ,  "../data/scale_setting/MDs"  , "amc_extrapolation_etac_"+sc1_data_tm_P5P5.Tag[iens]+".dat",  UseJack, "SPLINE" );
+
+      distr_t etac_phys= Obs_extrapolation_meson_mass(MMETAC, MMC, amc_phys, "../data/scale_setting/MDs", "ametac_extrapolation_"+sc1_data_tm_P5P5.Tag[iens]+".dat", UseJack, "SPLINE");
+
+
+      
+     
+      
+
+      
+      
+      amc_phys_list.distr_list.push_back(amc_phys);
+
+      cout<<"#### ENSEMBLE: "<<sc1_data_tm_P5P5.Tag[iens]<<" ####"<<endl;
+      cout<<"amc: "<<amc_phys.ave()<<" +- "<<amc_phys.err()<<endl;
+      cout<<"amc(from etac): "<<amc_phys_ETAC.ave()<<" +- "<<amc_phys_ETAC.err()<<endl;
+      cout<<"am_etac: "<<etac_phys.ave()<<" +- "<<etac_phys.err()<<endl;
+
+    }
+    
+
+    
+
+
+    SCALE_INFO.ms = ams_list;
+    SCALE_INFO.ms_OS = ams_OS_list;
+    SCALE_INFO.Ens = Ens;
+    SCALE_INFO.MDs1 = MDs1_list;
+  
+      
+    //###################################################################################
+      
+      
+    return SCALE_INFO ;
 
 }

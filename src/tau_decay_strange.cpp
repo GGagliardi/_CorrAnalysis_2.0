@@ -23,8 +23,8 @@ const double m_etas_err= 0.00050;
 const double E0_l = 0.9*m_kappa;
 const double E0_sp = 0.9*m_kappa; // 0.9*(m_kappa+MPiPhys); //0.9 * (m_kappa + MPiPhys); //E0_l
 double E0_A_sp = 0.9*m_kappa; //0.9*(m_kappa+ 2*MPiPhys); // 0.9*(m_kappa+2*MPiPhys);
-const double Rs_HFLAV = 0.163260;
-const double D_Rs_HFLAV= 0.0027;
+const double Rs_HFLAV = 0.163211; // 0.163260;
+const double D_Rs_HFLAV= 0.002685 ; //0.0027;
 Vfloat sigma_list_strange;
 const double C_V = 2*M_PI/(pow(m_tau,3));
 const double GAMMA_FACT= 12*M_PI; //12*M_PI*pow(Vud*GF,2);
@@ -35,7 +35,7 @@ const string SM_TYPE_0= "KL_"+to_string(sm_func_mode);
 const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
-bool Skip_spectral_density_analysis_strange=false;
+bool Skip_spectral_density_analysis_strange=true;
 const bool Perform_continuum_extrapolation=false;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
@@ -745,10 +745,18 @@ void tau_decay_analysis_strange() {
   //Vfloat betas({ 3.99, 2.99, 4.99, 5.99, 2.99});
   //Vfloat Emax_list({4.0, 4.0 , 4.0, 4.0, 5.0});
   //vector<bool> Is_Emax_Finite({1,1,1,1,1});
+
+  //TO BE USED FOR FINAL ANALYSIS
+  //Vfloat betas({ 3.99 , 4.99 , 3.99, 2.99 });
+  //Vfloat Emax_list({4.0, 4.0 , 5.0, 4.0});
+  //vector<bool> Is_Emax_Finite({1,1,1, 1});
+
+
+  Vfloat betas({ 3.99});
+  Vfloat Emax_list({4.0});
+  vector<bool> Is_Emax_Finite({1});
+
   
-  Vfloat betas({ 3.99 , 4.99 , 3.99, 2.99 });
-  Vfloat Emax_list({4.0, 4.0 , 5.0, 4.0});
-  vector<bool> Is_Emax_Finite({1,1,1, 1});
 
 
  
@@ -778,11 +786,18 @@ void tau_decay_analysis_strange() {
   }
   cout<<"##########################################"<<endl;
 
+
+
+
+
   vector<distr_t> FIN_RES(betas.size());;
   
   for(int i=rank*N/size; i<(rank+1)*N/size;i++) {FIN_RES[i] = Compute_tau_decay_width_strange(Is_Emax_Finite[i], Emax_list[i], betas[i]);}
 
+  //########################   FINAL  ANALYSIS  #############################
 
+  /*
+  
   double syst=0;
   distr_t FAVE(UseJack);
   for(int i=0;i<(signed)betas.size();i++) {
@@ -810,8 +825,8 @@ void tau_decay_analysis_strange() {
 
   	
   distr_t R_exp(UseJack);
-  double R_exp_ave= 0.1633;
-  double R_exp_err=0.0027;
+  double R_exp_ave=  0.163211; //0.1633;
+  double R_exp_err= 0.002685; //0.0027;
   double sqrt_R_exp_ave= sqrt(R_exp_ave);
   double sqrt_R_exp_err= 0.5*R_exp_err/sqrt_R_exp_ave;
 
@@ -828,7 +843,8 @@ void tau_decay_analysis_strange() {
   
     cout<<"Vus: "<<sqrt_Rinv_lat.ave()*sqrt_R_exp_ave<<"("<<sqrt_Rinv_lat.err()*sqrt_R_exp_ave<<")_lat ("<<sqrt_Rinv_lat.ave()*sqrt_R_exp_err<<")_exp"<<" ("<<sqrt( pow( sqrt_Rinv_lat.err()*sqrt_R_exp_ave,2) + pow(sqrt_Rinv_lat.ave()*sqrt_R_exp_err,2))<<")"<<endl;
     cout<<"Vus_bis"<<sqrt_Rinv_lat.ave()*sqrt_R_exp_ave<<"("<<sqrt_Rinv_lat_bis_err*sqrt_R_exp_ave<<")_lat ("<<sqrt_Rinv_lat.ave()*sqrt_R_exp_err<<")_exp"<<" ("<<sqrt( pow( sqrt_Rinv_lat.err()*sqrt_R_exp_ave,2) + pow(sqrt_Rinv_lat.ave()*sqrt_R_exp_err,2))<<")"<<endl;
-  }
+    } 
+  */
 }
 
 
@@ -1535,7 +1551,13 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
 
 
    
-    
+   
+
+     
+     
+
+     
+     
 
      
    
@@ -1582,6 +1604,52 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
      cout<<"RC-used Analyzing Ensemble: "<<ls_data_tm_VKVK.Tag[iens]<<endl;
      cout<<"Zv: "<<Zv.ave()<<" +- "<<Zv.err()<<endl;
      cout<<"Za: "<<Za.ave()<<" +- "<<Za.err()<<endl;
+
+
+
+     //determine Mpi and Mpi^OS
+
+     int Tmin_pion_tm=-1; int Tmin_pion_OS=-1;
+     int Tmax_pion_tm=-1; int Tmax_pion_OS=-1;
+
+     if(ll_data_OS_P5P5.Tag[iens] == "cB211b.072.64" || ll_data_OS_P5P5.Tag[iens] == "cB211b.072.96" ) {
+       Tmin_pion_tm=40;   Tmax_pion_tm=55;
+       Tmin_pion_OS=28;   Tmax_pion_OS=49;
+     }
+     else if(ll_data_OS_P5P5.Tag[iens] == "cC211a.06.80") {
+       Tmin_pion_tm=43;   Tmax_pion_tm=65;
+       Tmin_pion_OS=36;   Tmax_pion_OS=65;
+     }
+     else if(ll_data_OS_P5P5.Tag[iens] == "cC211a.06.112") {
+       Tmin_pion_tm=43;   Tmax_pion_tm=65;
+       Tmin_pion_OS=36;   Tmax_pion_OS=65;
+     }
+     else if(ll_data_OS_P5P5.Tag[iens] == "cD211a.054.96") {
+       Tmin_pion_tm=45;   Tmax_pion_tm=80;
+       Tmin_pion_OS=36;   Tmax_pion_OS=61;
+     }
+     else if(ll_data_OS_P5P5.Tag[iens] == "cE211a.044.112") {
+       Tmin_pion_tm=60;   Tmax_pion_tm=90;
+       Tmin_pion_OS=56;   Tmax_pion_OS=90;
+     }
+
+
+     Corr.Tmin= Tmin_pion_tm; Corr.Tmax= Tmax_pion_tm;
+     
+     distr_t MPI_tm = Corr.Fit_distr( M_pi_tm)/a_distr;
+
+     Corr.Tmin= Tmin_pion_OS; Corr.Tmax= Tmax_pion_OS;
+
+     distr_t MPI_OS = Corr.Fit_distr( M_pi_OS)/a_distr;
+
+
+     cout<<"MPI_tm("<<ls_data_tm_VKVK.Tag[iens]<<") : "<<MPI_tm.ave()<<" +- "<<MPI_tm.err()<<endl;
+     cout<<"MPI_OS("<<ls_data_tm_VKVK.Tag[iens]<<") : "<<MPI_OS.ave()<<" +- "<<MPI_OS.err()<<endl;
+
+
+
+
+     
   
 
    
@@ -1936,9 +2004,11 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
     Corr.Tmin = Tmin_P5; Corr.Tmax= Tmax_P5;
 
     distr_t MK1= Corr.Fit_distr( M_K_tm )/a_distr;
+    distr_t MKOS_1 = Corr.Fit_distr(M_K_OS)/a_distr;
     distr_t FK1= Corr.Fit_distr( Corr.decay_constant_t( pow(ams1+aml, 2)*P5_tm_distr, "../data/tau_decay/"+Tag_reco_type+"/strange/FK/FK1_"+ls_data_tm_VKVK.Tag[iens]))/a_distr;
 
     distr_t MK2= Corr.Fit_distr( M_K_H_tm )/a_distr;
+    distr_t MKOS_2 = Corr.Fit_distr(M_K_H_OS)/a_distr;
     distr_t FK2= Corr.Fit_distr( Corr.decay_constant_t( pow(ams2+aml, 2)*P5_H_tm_distr,  "../data/tau_decay/"+Tag_reco_type+"/strange/FK/FK2_"+ls_data_tm_VKVK.Tag[iens]))/a_distr;
 
     distr_t FK_L1 = Corr.Fit_distr( Corr.decay_constant_t( pow(amSS1+amL1,2)*P5P5_tm_L1,  "../data/tau_decay/"+Tag_reco_type+"/strange/FK/FKL1_"+ls_data_tm_VKVK.Tag[iens]))/a_distr;
@@ -1953,6 +2023,11 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
     distr_t Mk_iso_corr= SQRT_D(  Mk_iso*Mk_iso + 0.5*( POW_D(aMP/a_distr,2)    - pow(0.135,2)));
 
     distr_t ams_phys = Obs_extrapolation_meson_mass(MMS, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "ams_extrapolation_"+ls_data_tm_VKVK.Tag[iens]+".dat",  UseJack, "SPLINE" );
+
+    vector<distr_t> MMKOS_2({MKOS_1*MKOS_1, MKOS_2*MKOS_2});
+    distr_t MK_OS_phys =  SQRT_D(Obs_extrapolation_meson_mass(MMKOS_2, MMK2, Mk_iso*Mk_iso ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "MK2_OS_extrapolation_"+ls_data_tm_VKVK.Tag[iens]+".dat",  UseJack, "SPLINE" ));
+
+    cout<<"MK_OS_PHYS("<<ls_data_tm_VKVK.Tag[iens]<<") : "<<MK_OS_phys.ave()<<" +- "<<MK_OS_phys.err()<<endl;
     
     distr_t FK =  Obs_extrapolation_meson_mass(FFK, MMK2, Mk_iso_corr*Mk_iso_corr ,  "../data/tau_decay/"+Tag_reco_type+"/strange"  , "FK_extrapolation_"+ls_data_tm_VKVK.Tag[iens]+".dat",  UseJack, "SPLINE" ) + FK_L1 - FK_L2;
 

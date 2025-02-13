@@ -1,7 +1,9 @@
 #include "../include/init.h"
+#include "Bs_phi_gamma.h"
 #include "RC_WI_analysis.h"
 #include "RC_analysis.h"
 #include "chi_mag.h"
+#include "sphaleron.h"
 
 
 using namespace std;
@@ -185,6 +187,12 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
 
   }
 
+  else if(Analysis_Mode=="HVP_blinded_analysis") {
+
+    //do nothing
+
+  }
+
   else if(Analysis_Mode=="HVP_strange") {
 
     //do nothing
@@ -219,6 +227,88 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
 
     //do nothing
   }
+
+  else if(Analysis_Mode=="Bs_phi_gamma") {
+
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode=="Kl4_HLT") {
+
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode=="Ds_phi_lnu") {
+
+    //do nothing
+  }
+
+  else if(Analysis_Mode=="LIBE") {
+
+    //do nothing
+
+  }
+
+
+  else if(Analysis_Mode=="RC_fits") {
+
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode=="sea_quark_effects") {
+
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode=="heavy_radiative") {
+
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode=="multishift_HLT") {
+
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode=="K3lnu") {
+
+    //do nothing
+
+  }
+  
+  else if(Analysis_Mode=="PINGU") {
+
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode=="axial_WI_disco") {
+
+    //do nothing
+
+  }
+
+  else if(Analysis_Mode=="I0_gm2") {
+
+    //do nothing
+  }
+
+  else if(Analysis_Mode=="sphaleron") {
+
+    //do nothing    
+  }
+
+  else if(Analysis_Mode=="mcorr_HVP") {
+
+    //do nothing    
+  }
+  
 
   else if(Analysis_Mode=="test") {
 
@@ -319,6 +409,10 @@ void MasterClass_analysis::Analysis_manager() {
     HVP();
   }
 
+  if(Analysis_Mode=="HVP_blinded_analysis") {
+    HVP_blinded_analysis();
+  }
+
   if(Analysis_Mode=="HVP_strange") {
     HVP_strange();
   }
@@ -345,10 +439,81 @@ void MasterClass_analysis::Analysis_manager() {
     RC_WI_analysis();
   }
 
+  if(Analysis_Mode=="Bs_phi_gamma") {
+
+    Compute_Bs_phi_gamma();
+  }
+
+
+  if(Analysis_Mode=="Kl4_HLT") {
+
+    Kl4_HLT();
+  }
+
+  if(Analysis_Mode=="Ds_phi_lnu") {
+
+    Compute_Ds_phi_lnu();
+  }
+
+  if(Analysis_Mode=="LIBE") {
+
+    Compute_LIBE();
+  }
+
+  if(Analysis_Mode=="RC_fits") {
+
+    Perform_RC_fits();
+  }
+
+  if(Analysis_Mode=="sea_quark_effects") {
+
+    valence_n_sea_quark_effects();
+  }
+
+  if(Analysis_Mode=="heavy_radiative") {
+
+    heavy_radiative();
+  }
+
+  if(Analysis_Mode=="multishift_HLT") {
+
+    multi_shift_solver_HLT();
+  }
+
+  if(Analysis_Mode=="K3lnu") {
+
+    K3lnu();
+  }
+
+  if(Analysis_Mode=="PINGU") {
+
+    Get_PINGU();
+  }
+
+  if(Analysis_Mode=="axial_WI_disco") {
+
+    axial_WI_disco();
+  }
+  if(Analysis_Mode=="I0_gm2") {
+
+    I0_gm2();
+  }
+
+  if(Analysis_Mode=="sphaleron") {
+
+    get_axion_therm_rate();
+  }
+
+  if(Analysis_Mode=="mcorr_HVP") {
+     
+    mcorr_HVP();
+  }
   
   if(Analysis_Mode=="test") {
     test();
   }
+
+  
   
   return;
 

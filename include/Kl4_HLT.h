@@ -1,5 +1,5 @@
-#ifndef __weak_annihilation_inclusive__
-#define __weak_annihilation_inclusive__
+#ifndef __Kl4_HLT__
+#define __Kl4_HLT __
 
 
 #include "numerics.h"
@@ -9,22 +9,13 @@
 #include "Bootstrap_fit.h"
 #include "LatInfo.h"
 #include "pt3_momenta.h"
-#include "T_min.h"
 #include "input.h"
+#include "highPrec.h"
 #include "Spectral.h"
-#include "complex_stat.h"
-
-using namespace std;
+#include "kernel.h"
 
 
-void compute_weak_annihilation();
+void Kl4_HLT();
 
 
-
-
-
-
-
-
-
-#endif 
+#endif

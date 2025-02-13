@@ -5,7 +5,7 @@
 
 const double alpha = 1.0/137.04;
 const bool UseJack=1;
-const int Njacks=30;
+const int Njacks=50;
 const int Nboots=800;
 const double fm_to_inv_Gev = 1.0 / 0.197327;
 const int Nconfs=30;

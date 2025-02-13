@@ -174,7 +174,8 @@ distr_t_list CorrAnalysis::effective_slope_t(const VVfloat &corr_A, const VVfloa
    
     for(int ijack=0; ijack<Njacks;ijack++) {
 
-      double M_j = Root_Brent(M_Jack_t.distr_list[(t-1+Nt)%Nt].distr[ijack]/M_Jack_t.distr_list[t].distr[ijack], t-1, Nt);
+      //double M_j = Root_Brent(M_Jack_t.distr_list[(t-1+Nt)%Nt].distr[ijack]/M_Jack_t.distr_list[t].distr[ijack], t-1, Nt);
+      double M_j = Root_Brent(M_Jack_t.distr_list[t].distr[ijack]/M_Jack_t.distr_list[(t+1+Nt)%Nt].distr[ijack], t, Nt);
       double der_back = DM_Jack_t[t].distr[ijack]/M_Jack_t[t].distr[ijack] - DM_Jack_t[(t-1+Nt)%Nt].distr[ijack]/M_Jack_t[(t-1+Nt)%Nt].distr[ijack];
       
       effective_slope_t.distr_list[t].distr.push_back(der_back/(FTAN(M_j, t,Nt)));
@@ -194,8 +195,8 @@ distr_t_list CorrAnalysis::effective_slope_t(const VVfloat &corr_A, const VVfloa
     for(int t=0; t<Nt;t++) {
       effective_slope_t.distr_list.emplace_back(UseJack);
       for(int iboot=0;iboot<Nboots;iboot++) {
-	double M_j = Root_Brent(M_Boot_t.distr_list[(t-1+Nt)%Nt].distr[iboot]/M_Boot_t.distr_list[t].distr[iboot],t-1,Nt);
-	
+	//double M_j = Root_Brent(M_Boot_t.distr_list[(t-1+Nt)%Nt].distr[iboot]/M_Boot_t.distr_list[t].distr[iboot],t-1,Nt);
+	double M_j = Root_Brent(M_Boot_t.distr_list[t].distr[iboot]/M_Boot_t.distr_list[(t+1)%Nt].distr[iboot],t,Nt);
 	double der_back = DM_Boot_t[t].distr[iboot]/M_Boot_t[t].distr[iboot] - DM_Boot_t[(t-1+Nt)%Nt].distr[iboot]/M_Boot_t[(t-1+Nt)%Nt].distr[iboot];
 	effective_slope_t.distr_list[t].distr.push_back( der_back/(FTAN(M_j,t,Nt)));
       }
@@ -219,6 +220,19 @@ distr_t_list CorrAnalysis::effective_slope_t(const VVfloat &corr_A, const VVfloa
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 //overloading function effective_slope_t
 
 
@@ -237,7 +251,8 @@ distr_t_list CorrAnalysis::effective_slope_t(const distr_t_list &corr_A_distr, c
     
     for(int is=0; is<corr_A_distr.distr_list[t].size();is++) {
 
-      double M_j = Root_Brent(corr_B_distr.distr_list[(t-1+corr_B_distr.size())%corr_B_distr.size()].distr[is]/corr_B_distr.distr_list[t].distr[is], t-1, corr_B_distr.size());
+      //double M_j = Root_Brent(corr_B_distr.distr_list[(t-1+corr_B_distr.size())%corr_B_distr.size()].distr[is]/corr_B_distr.distr_list[t].distr[is], t-1, corr_B_distr.size());
+      double M_j = Root_Brent(corr_B_distr.distr_list[t].distr[is]/corr_B_distr.distr_list[(t+1+Nt)%Nt].distr[is], t, Nt);
       double der_back = corr_A_distr.distr_list[t].distr[is]/corr_B_distr.distr_list[t].distr[is] - corr_A_distr.distr_list[(t-1+Nt)%Nt].distr[is]/corr_B_distr.distr_list[(t-1+Nt)%Nt].distr[is];
       effective_slope_t.distr_list[t].distr.push_back( der_back/(FTAN(M_j, t, Nt)));
       
@@ -257,6 +272,98 @@ distr_t_list CorrAnalysis::effective_slope_t(const distr_t_list &corr_A_distr, c
    
   return effective_slope_t;
 }
+
+
+
+
+distr_t_list CorrAnalysis::effective_ampl_rel_slope_t(const distr_t_list &corr_A_distr, const distr_t_list &corr_B_distr, string Obs) {
+
+ distr_t_list effective_ampl_rel_slope_t(corr_A_distr.UseJack, corr_A_distr.size());
+
+  VPfloat result;
+ 
+  if(corr_A_distr.size() != corr_B_distr.size()) crash("Call to  distr_t_list effective_ampl_rel_slope_t(distr_t_list&, distr_t_list&) is invalid, the two distributions list do not have same size");
+
+  for(int t=0; t<corr_A_distr.size();t++) {
+
+
+    if(corr_A_distr.distr_list[t].size() != corr_B_distr.distr_list[t].size()) crash("Call to  distr_t_list effective_ampl_rel_slope_t(distr_t_list&, distr_t_list&) is invalid, distributions in distr_t_list do not have same size");
+    
+    for(int is=0; is<corr_A_distr.distr_list[t].size();is++) {
+
+      double M_j = Root_Brent(corr_B_distr.distr_list[(t-1+corr_B_distr.size())%corr_B_distr.size()].distr[is]/corr_B_distr.distr_list[t].distr[is], t-1, corr_B_distr.size());
+      double der_back = corr_A_distr.distr_list[t].distr[is]/corr_B_distr.distr_list[t].distr[is] - corr_A_distr.distr_list[(t-1+Nt)%Nt].distr[is]/corr_B_distr.distr_list[(t-1+Nt)%Nt].distr[is];
+      double dm =  -der_back/(FTAN(M_j, t, Nt));
+      double dA_ov_A = corr_A_distr.distr_list[t].distr[is]/corr_B_distr.distr_list[t].distr[is] -dm*(Nt/2.0 - t)*tanh( M_j*(Nt/2.0-t));
+      
+      effective_ampl_rel_slope_t.distr_list[t].distr.push_back(0.5*(dA_ov_A +dm*Nt/2.0 +dm/M_j  ));
+      
+    }
+
+    
+  }
+
+  result = effective_ampl_rel_slope_t.ave_err();
+
+    if(Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for(int t=0; t<corr_A_distr.size(); t++) Print<<t<<setw(20)<<result[t].first<<setw(20)<<result[t].second<<endl;
+    Print.close();
+  }
+   
+  return effective_ampl_rel_slope_t;
+}
+
+
+
+distr_t_list CorrAnalysis::decay_constant_rel_slope_t(const distr_t_list &corr_A_distr, const distr_t_list &corr_B_distr, string Obs) {
+
+ distr_t_list decay_constant_rel_slope_t(corr_A_distr.UseJack, corr_A_distr.size());
+
+
+ VPfloat result;
+ 
+ if(corr_A_distr.size() != corr_B_distr.size()) crash("Call to  distr_t_list decay_constant_rel_slope_t(distr_t_list&, distr_t_list&) is invalid, the two distributions list do not have same size");
+ 
+  for(int t=0; t<corr_A_distr.size();t++) {
+    
+    
+    if(corr_A_distr.distr_list[t].size() != corr_B_distr.distr_list[t].size()) crash("Call to  distr_t_list decay_constant_rel_slope_t(distr_t_list&, distr_t_list&) is invalid, distributions in distr_t_list do not have same size");
+
+    
+    
+    for(int is=0; is<corr_A_distr.distr_list[t].size();is++) {
+      
+      //double M_j = Root_Brent(corr_B_distr.distr_list[(t-1+corr_B_distr.size())%corr_B_distr.size()].distr[is]/corr_B_distr.distr_list[t].distr[is], t-1, corr_B_distr.size());
+      double M_j = Root_Brent(corr_B_distr.distr_list[t].distr[is]/corr_B_distr.distr_list[(t+1+Nt)%Nt].distr[is], t, Nt);
+      double der_back = corr_A_distr.distr_list[t].distr[is]/corr_B_distr.distr_list[t].distr[is] - corr_A_distr.distr_list[(t-1+Nt)%Nt].distr[is]/corr_B_distr.distr_list[(t-1+Nt)%Nt].distr[is];
+      double dm =  -der_back/(FTAN(M_j, t, Nt));
+      double dA_ov_A = corr_A_distr.distr_list[t].distr[is]/corr_B_distr.distr_list[t].distr[is] -dm*(Nt/2.0 - t)*tanh( M_j*(Nt/2.0-t));
+      
+      decay_constant_rel_slope_t.distr_list[t].distr.push_back(0.5*( dA_ov_A -2*dm/tanh(M_j) -dm/M_j + dm*Nt/2.0  ));
+      
+    }
+    
+    
+  }
+
+  result = decay_constant_rel_slope_t.ave_err();
+  
+  if(Obs != "") {
+    ofstream Print(Obs+".t", ofstream::out);
+    Print.precision(10);
+    for(int t=0; t<corr_A_distr.size(); t++) Print<<t<<setw(20)<<result[t].first<<setw(20)<<result[t].second<<endl;
+    Print.close();
+  }
+   
+  return decay_constant_rel_slope_t;
+
+  
+  
+}
+
+
 
 
 

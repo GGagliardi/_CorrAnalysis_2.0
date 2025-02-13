@@ -91,35 +91,108 @@ void Compute_autocorrelation_time(const Vfloat &data, string Path, string Tag) {
 
   //compute empirical autocorrelation function
 
-  int N = (signed)data.size();
 
-  Vfloat rho_E(N, 0.0);
-  Vfloat log_rho_E(N,0.0);
-  Vfloat t_int(N,0.0);
-  double t_accumulated = -1.0;
+  auto GT = [](const Vfloat & data,Vfloat &rho, Vfloat  &tau_int, int tmax)  {
 
-  for(int t=0; t< N;t++) {
+    int N= data.size();
 
-    double bar_x_t=0;
-    double bar_y_t=0;
-    double num=0;
-    double den=0;
-    double den1=0;
-    double den2=0;
-    for(int i=0;i< N-t;i++) bar_x_t += (1.0/(double)(N-t))*data[i];
-    for(int i=0;i< N-t;i++) bar_y_t += (1.0/(double)(N-t))*data[t+i];
-    for(int i=0;i< N-t;i++) num += (data[i] - bar_x_t)*(data[t+i]-bar_y_t);
-    for(int i=0;i< N-t;i++) {den1 += pow( data[i] - bar_x_t, 2); den2 += pow( data[t+i]-bar_y_t,2);}
-    den = sqrt( den1*den2);
-    rho_E[t] = num/den;
-    log_rho_E[t] = log(fabs(num/den));
-    t_accumulated += 2.0*num/den;
-    t_int[t] = t_accumulated;
+    rho.clear();
+    tau_int.clear();
 
+    double t_accumulated = -1.0;
+    
+    for(int t=0; t< tmax;t++) {
+
+      double bar_x_t=0;
+      double bar_y_t=0;
+      double num=0;
+      double den=0;
+      double den1=0;
+      double den2=0;
+      for(int i=0;i< N-t;i++) bar_x_t += (1.0/((double)(N-t)))*data[i];
+      for(int i=0;i< N-t;i++) bar_y_t += (1.0/((double)(N-t)))*data[t+i];
+      for(int i=0;i< N-t;i++) num += (data[i] - bar_x_t)*(data[t+i]-bar_y_t);
+      for(int i=0;i< N-t;i++) {den1 += pow( data[i] - bar_x_t, 2); den2 += pow( data[t+i]-bar_y_t,2);}
+      den = sqrt( den1*den2);
+      rho.push_back(num/den);
+      t_accumulated += 2.0*num/den;
+      tau_int.push_back(t_accumulated);
+      
+    }
+
+    return;
+    
+
+  };
+
+  int tmax= data.size()/8 - 20;
+
+  Vfloat rho, tau_int;
+  GT(data, rho, tau_int, tmax);
+
+  int N=data.size();
+  int N4= N/4;
+  int N8= N/8;
+
+  //divide sample in 4 parts and compute autocorr on each part
+  VVfloat data4;
+  VVfloat rho4(4), tau_int4(4);
+  for(int i=0;i<4;i++) {
+    data4.emplace_back( data.begin() + i*N4, data.begin() + (i+1)*N4);
+    assert((signed)data4[i].size() == N4);
+    GT(data4[i], rho4[i], tau_int4[i], tmax);
+  }
+
+
+
+  //divide sample in 8 parts and compute autocorr on each part
+  VVfloat data8;
+  VVfloat rho8(8), tau_int8(8);
+  for(int i=0;i<8;i++) {
+    data8.emplace_back( data.begin() + i*N8, data.begin() + (i+1)*N8);
+    assert((signed)data8[i].size() == N8);
+    GT(data8[i], rho8[i], tau_int8[i], tmax);
+  }
+
+ 
+  //get errors
+
+  Vfloat rho_err_4, tau_err_4;
+  Vfloat rho_err_8, tau_err_8;
+
+  for(int t=0;t<tmax;t++) {
+
+    double err_rho=0; double err_tau=0;
+
+    for(int i=0;i<4;i++) err_rho += pow(rho4[i][t] - rho[t],2)/3.0;
+    err_rho = sqrt(err_rho);
+    for(int i=0;i<4;i++) err_tau += pow(tau_int4[i][t] - tau_int[t],2)/3.0;
+    err_tau = sqrt(err_tau);
+    
+    rho_err_4.push_back( err_rho);
+    tau_err_4.push_back( err_tau);
+
+
+    err_rho=0; err_tau=0;
+
+    for(int i=0;i<8;i++) err_rho += pow(rho8[i][t] - rho[t],2)/7.0;
+    err_rho = sqrt(err_rho);
+    for(int i=0;i<8;i++) err_tau += pow(tau_int8[i][t] - tau_int[t],2)/7.0;
+    err_tau = sqrt(err_tau);
+    
+    rho_err_8.push_back( err_rho);
+    tau_err_8.push_back( err_tau);
 
   }
 
-  Print_To_File({}, {rho_E, log_rho_E, t_int}, Path+"/autocorr_"+Tag+".dat", "", "");
+  
+ 
+  
+  
+
+  
+  
+  Print_To_File({}, {rho,rho_err_4, rho_err_8, tau_int, tau_err_4, tau_err_8}, Path+"/autocorr_"+Tag+".dat", "", "");
 
 
 
@@ -562,7 +635,9 @@ distr_t operator*(const distr_t& A, const distr_t& B) {
 
   if(A.size() != B.size()) crash("In distr_t, call to A*B is invalid. A and B have different sizes");
    distr_t res(A.UseJack,A.size());
+         
    for(int i=0; i < A.size(); i++) res.distr[i] = A.distr[i]*B.distr[i];
+	 
    return res;
  }
  
@@ -1104,6 +1179,34 @@ distr_t SINH_D (const distr_t &A) {
   return B;
 }
 
+distr_t SINHM_D (const distr_t &A) {
+  distr_t B = A;
+  for (int i = 0; i < A.size(); i++)
+    B.distr[i] = asinh(A.distr[i]);
+  return B;
+}
+
+distr_t ASIN_D (const distr_t &A) {
+  distr_t B = A;
+  for (int i = 0; i < A.size(); i++)
+    B.distr[i] = asin(A.distr[i]);
+  return B;
+}
+
+distr_t SIN_D (const distr_t &A) {
+  distr_t B = A;
+  for (int i = 0; i < A.size(); i++)
+    B.distr[i] = sin(A.distr[i]);
+  return B;
+}
+
+distr_t TANH_D (const distr_t &A) {
+  distr_t B = A;
+  for (int i = 0; i < A.size(); i++)
+    B.distr[i] = tanh(A.distr[i]);
+  return B;
+}
+
 distr_t LOG_D (const distr_t &A) {
   distr_t B = A;
   for (int i = 0; i < A.size(); i++)
@@ -1123,6 +1226,54 @@ distr_t POW_D (const distr_t  &A,int n) {
   for (int i = 0; i < A.size(); i++)
     B.distr[i] = pow(A.distr[i],n);
   return B;
+}
+
+
+
+
+distr_t_list convolute(const distr_t_list &A, const distr_t_list &B, int symm) {
+
+  assert( (symm==1)  || (symm==-1) || (symm==0) );
+
+  double symm_fact=1.0;
+  if(symm==-1 || symm==1) symm_fact /= 2;
+  
+  int T= A.size();
+  assert( A.size() == B.size());
+  
+  int Nconfs= A.distr_list[0].size();
+
+  distr_t_list ret(A.UseJack, T, Nconfs);
+
+
+  for(int t=0;t<T;t++) {
+    assert(A.distr_list[t].size() == B.distr_list[t].size());
+    assert(A.distr_list[t].size() == Nconfs);
+  }
+
+  
+  for(int dt=0;dt<T;dt++) {
+
+    for(int iconf=0;iconf<Nconfs;iconf++) {
+
+      double x=0.0;
+
+      
+      for(int t=0;t<T;t++) {
+
+	x += symm_fact*(A.distr_list[t].distr[iconf]*B.distr_list[(t+dt+T)%T].distr[iconf] + symm*B.distr_list[t].distr[iconf]*A.distr_list[(t+dt+T)%T].distr[iconf])/T;
+	
+      }
+
+      ret.distr_list[dt].distr[iconf] = x;
+      
+    }
+  }
+
+
+  return ret;
+
+
 }
 
 

@@ -173,7 +173,7 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Za_WI_charm_extr_err = 0.0014;
 
     ZT_RI2 =  0.817432;  //0.8173;
-    ZT_RI2_err = 2*0.00329; // sqrt(pow(0.0013,2) + pow(0.0008,2));
+    ZT_RI2_err = 0.00329; // sqrt(pow(0.0013,2) + pow(0.0008,2));
 
     ZT_RI2_M3= 0.8100;
     ZT_RI2_M3_err= sqrt( pow(0.0015,2) + pow(0.0008,2));
@@ -269,20 +269,22 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00030;
     a_from_afp= 0.0795739; //0.079616;
     a_from_afp_err = 0.000132632; // 0.000127363;
-    a_from_afp_FLAG= 0.0795131;
-    a_from_afp_FLAG_err=3.52596e-05;
+    //a_from_afp_FLAG= 0.0795131;
+    //a_from_afp_FLAG_err=3.52596e-05;
+    a_from_afp_FLAG= 0.07948;
+    a_from_afp_FLAG_err=0.00011;
     a_nucleon=0.07975;
     a_nucleon_err=0.00032;
     Za=0.746;
     Za_err=0.008;
 
     ZT_RI2 = 0.835279; //0.8403;
-    ZT_RI2_err = 2*0.00309962; //sqrt(pow(0.0017,2) + pow(0.0008,2));
+    ZT_RI2_err = 0.00309962; //sqrt(pow(0.0017,2) + pow(0.0008,2));
 
-    ZT_RI2_M3= 0.8261;
-    ZT_RI2_M3_err= sqrt( pow(0.0023,2) + pow(0.0008,2));
+    ZT_RI2_M3= 0.847;
+    ZT_RI2_M3_err= sqrt( pow(0.001,2) + pow(0.001,2));
     
-    if(Tag == "cB211b.072.64") {
+    if(Tag == "cB211b.072.64" || Tag=="cB211b.072.48") {
       Za_WI = 0.71403 ;
       Za_WI_err = 0.00077 ;
       Zv_WI = 0.709932 ;
@@ -340,8 +342,12 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err= 0.00026;
     a_from_afp = 0.0682083;// 0.0682068;
     a_from_afp_err  = 0.000134938;// 0.000117345;
-    a_from_afp_FLAG=0.0681569;
-    a_from_afp_FLAG_err=8.2454e-05;
+    //a_from_afp_FLAG=0.0681569;
+    //a_from_afp_FLAG_err=8.2454e-05;
+    a_from_afp_FLAG=  0.06819;
+    a_from_afp_FLAG_err=0.00014;
+
+    
     a_nucleon=0.06860;
     a_nucleon_err=0.00020;
     Za=0.761;
@@ -379,10 +385,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
 
 
     ZT_RI2 = 0.85619; // 0.8623;
-    ZT_RI2_err = 2*0.0028443 ; // sqrt(pow(0.0019,2) + pow(0.0008,2));
+    ZT_RI2_err = 0.0028443 ; // sqrt(pow(0.0019,2) + pow(0.0008,2));
 
-    ZT_RI2_M3= 0.8545;
-    ZT_RI2_M3_err = sqrt( pow(0.0019,2) + pow(0.0008,2));
+    ZT_RI2_M3= 0.863;
+    ZT_RI2_M3_err = sqrt( pow(0.001,2) + pow(0.002,2));
 
    
     
@@ -396,8 +402,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err=  0.0002;
     a_from_afp = 0.0569183;// 0.0569252;
     a_from_afp_err = 0.000115387;// 0.000103587;
-    a_from_afp_FLAG=0.0568756;
-    a_from_afp_FLAG_err=5.89089e-05;
+    //a_from_afp_FLAG=0.0568756;
+    //a_from_afp_FLAG_err=5.89089e-05;
+    a_from_afp_FLAG=0.056850;
+    a_from_afp_FLAG_err=9e-05;
     a_nucleon= 0.05777; //fake
     a_nucleon_err= 0.0002; //fake
     Za= 0.76217;
@@ -423,10 +431,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     Zv_WI_FLAG_err= 6.9770149e-06;
 
     ZT_RI2 =  0.879164; //0.8872;
-    ZT_RI2_err = 2*0.00246186; //sqrt(pow(0.0008,2) + pow(0.0008,2));
+    ZT_RI2_err = 0.00246186; //sqrt(pow(0.0008,2) + pow(0.0008,2));
 
-    ZT_RI2_M3= 0.8785;
-    ZT_RI2_M3_err= sqrt( pow(0.0008,2) + pow(0.0008,2));
+    ZT_RI2_M3= 0.887;
+    ZT_RI2_M3_err= sqrt( pow(0.001,2) + pow(0.002,2));
 
       
     ms_L= 0.014; ms_M= 0.015;
@@ -442,8 +450,10 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
     a_err=  0.0;
     a_from_afp = 0.0488471;
     a_from_afp_err = 5.34768e-05;
-    a_from_afp_FLAG= 0.0489061;
-    a_from_afp_FLAG_err = 5.99147e-05;
+    //a_from_afp_FLAG= 0.0489061;
+    //a_from_afp_FLAG_err = 5.99147e-05;
+    a_from_afp_FLAG= 0.04892;
+    a_from_afp_FLAG_err = 0.00011;
     a_nucleon= 0.0; //fake
     a_nucleon_err= 0.0; //fake
     Za= 0.0;
@@ -506,6 +516,9 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   else if(Tag=="cZ211a.077.64") {
     L=64; T=2*64; ml=0.00077;
   }
+  else if(Tag=="cZ211a.085.56") {
+    L=56; T=2*56; ml=0.00085;
+  }
   else if(Tag=="cB211a.25.24") {
     L=24; T=48; ml=0.00250;
   }
@@ -517,6 +530,9 @@ void LatticeInfo::LatInfo_new_ens(string Tag) {
   }
   else if(Tag=="cB211a.14.64") {
     L=64; T=128; ml=0.00140; 
+  }
+  else if(Tag=="cB211b.072.48") {
+    L=48; T=96; ml=0.00072;
   }
   else if(Tag=="cB211b.072.64") {
     L=64; T=128; ml=0.00072;

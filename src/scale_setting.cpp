@@ -1261,7 +1261,7 @@ void Determine_scale_from_fp(const distr_t_list &Mpi_phys_point, const distr_t_l
 
 
 
-void Determine_scale_from_fp_FLAG(const distr_t_list &Mpi_phys_point, const distr_t_list &fpi_phys_point, const distr_t_list &Mpi_Bens, const distr_t_list &fpi_Bens, const distr_t_list &Mpi_Aens, const distr_t_list &fpi_Aens,  const vector<double> &L_phys_point, const vector<double> &L_B_ens, const vector<double> &L_A_ens, const vector<string>  &Ensemble_phys_point_tag_list, const vector<string>  &Ensemble_B_tag_list, const vector<string>  &Ensemble_A_tag_list, distr_t &a_distr_A, distr_t &a_distr_B, distr_t &a_distr_C, distr_t &a_distr_D, distr_t &a_distr_E, bool UseJack,bool Use_three_finest_in_scale_setting_fp) {
+void Determine_scale_from_fp_FLAG(const distr_t_list &Mpi_phys_point, const distr_t_list &fpi_phys_point, const distr_t_list &Mpi_Bens, const distr_t_list &fpi_Bens, const distr_t_list &Mpi_Aens, const distr_t_list &fpi_Aens,  const vector<double> &L_phys_point, const vector<double> &L_B_ens, const vector<double> &L_A_ens, const vector<string>  &Ensemble_phys_point_tag_list, const vector<string>  &Ensemble_B_tag_list, const vector<string>  &Ensemble_A_tag_list, const distr_t &Mpi_Z56, const distr_t &fpi_Z56,  distr_t &a_distr_A, distr_t &a_distr_B, distr_t &a_distr_C, distr_t &a_distr_D, distr_t &a_distr_E, distr_t &a_distr_Z,  bool UseJack,bool Use_three_finest_in_scale_setting_fp) {
 
 
   cout<<"Starting scale setting analysis using afp"<<endl;
@@ -1341,6 +1341,20 @@ void Determine_scale_from_fp_FLAG(const distr_t_list &Mpi_phys_point, const dist
     Mpi_CDH_phys_point.distr_list.push_back(Mpi_phys_point.distr_list[iens]/(1.0 + 0.5*csi_L*g1 - csi_L*csi_L*( (Cm1(l1ph,l2ph,l3ph,l4ph) + Sm1(s0,s1,s2,s3) + Cm1_log()*log_l)*g1 + (Cm2(l1ph,l2ph,l3ph,l4ph) + Sm2(s0,s1,s2,s3) + Cm2_log()*log_l)*g2)));
     Csi_CDH_phys_point.distr_list.push_back( Mpi_CDH_phys_point.distr_list[iens]*Mpi_CDH_phys_point.distr_list[iens]/(16.0*M_PI*M_PI*fp_CDH_phys_point.distr_list[iens]*fp_CDH_phys_point.distr_list[iens]));
     Xpi_phys_point.distr_list.push_back( distr_t::f_of_distr(pow_1_5, fp_CDH_phys_point.distr_list[iens]*distr_t::f_of_distr(pow_4, Mpi_CDH_phys_point.distr_list[iens])));
+  }
+
+  //determine CDH corrections to Z56
+  distr_t fp_CDH_Z56(UseJack), Mpi_CDH_Z56(UseJack), Csi_CDH_Z56;
+  for(int a=0;a<1;a++) {
+
+    distr_t csi_L = Mpi_Z56*Mpi_Z56/(pow(4.0*M_PI,2)*fpi_Z56*fpi_Z56);
+    distr_t g1 = distr_t::f_of_distr(g1_l, Mpi_Z56*56);
+    distr_t g2 = distr_t::f_of_distr(g2_l, Mpi_Z56*56);
+    distr_t log_l = log(csi_phys) - distr_t::f_of_distr(LOG, csi_L);
+    fp_CDH_Z56 = fpi_Z56/(1.0 -2.0*csi_L*g1 +2.0*csi_L*csi_L*( (Cf1(l1ph,l2ph,l3ph,l4ph) + Sf1(s0,s1,s2,s3) + Cf1_log()*log_l)*g1 + (Cf2(l1ph,l2ph,l3ph,l4ph) + Sf2(s0,s1,s2,s3) + Cf2_log()*log_l)*g2));
+    Mpi_CDH_Z56 = Mpi_Z56/(1.0 + 0.5*csi_L*g1 - csi_L*csi_L*( (Cm1(l1ph,l2ph,l3ph,l4ph) + Sm1(s0,s1,s2,s3) + Cm1_log()*log_l)*g1 + (Cm2(l1ph,l2ph,l3ph,l4ph) + Sm2(s0,s1,s2,s3) + Cm2_log()*log_l)*g2));
+    Csi_CDH_Z56 = Mpi_CDH_Z56*Mpi_CDH_Z56/(16.0*M_PI*M_PI*fp_CDH_Z56*fp_CDH_Z56);
+
   }
 
 
@@ -1805,18 +1819,22 @@ void Determine_scale_from_fp_FLAG(const distr_t_list &Mpi_phys_point, const dist
     //get lattice spacings
 
     //get id of C and D ensemble
-    int C_id, D_id, E_id;
+    int C_id, D_id, E_id, B64_id, B96_id;
     bool find_C_id=false;
     bool find_D_id=false;
     bool find_E_id=false;
+    bool find_B64_id=false;
+    bool find_B96_id=false;
     for(int iens=0;iens<Nens_phys;iens++) {
+      if(Ensemble_phys_point_tag_list[iens] == "cB211b.072.64") { find_B64_id = true; B64_id =iens;}
+      if(Ensemble_phys_point_tag_list[iens] == "cB211b.072.96") { find_B96_id = true; B96_id =iens;}
       if(Ensemble_phys_point_tag_list[iens].substr(1,1) == "C") { find_C_id = true; C_id =iens;}
       if(Ensemble_phys_point_tag_list[iens].substr(1,1) == "D") { find_D_id = true; D_id =iens;}
       if(Ensemble_phys_point_tag_list[iens].substr(1,1) == "E") { find_E_id = true; E_id =iens;}
     }
 
     if(!find_C_id || !find_D_id || !find_E_id) crash("Cannot find phyisical point ensemble C,D,E in Ensemble_phys_point_tag_list");
-      
+    if(!find_B64_id || !find_B96_id) crash("Cannot find phyisical point ensemble B64-B96 in Ensemble_phys_point_tag_list");
 
  
     //compute Am and Am_art coefficients
@@ -1834,7 +1852,7 @@ void Determine_scale_from_fp_FLAG(const distr_t_list &Mpi_phys_point, const dist
 
     //correct for xi_p mistuning on C and D ensembles
 
-    distr_t corr_C_mass, corr_D_mass, corr_E_mass;
+    distr_t corr_C_mass, corr_D_mass, corr_E_mass, corr_Z56_mass;
 
     corr_C_mass = 1.0  -2.0*Csi_CDH_phys_point[C_id]*distr_t::f_of_distr(LOG, Csi_CDH_phys_point[C_id]/csi_phys_distr)  + (Am_cont+ Am_art*fp_CDH_phys_point[C_id]*fp_CDH_phys_point[C_id])*(Csi_CDH_phys_point[C_id] - csi_phys_distr) +  (A2m_cont + A2m_art*fp_CDH_phys_point[C_id]*fp_CDH_phys_point[C_id])*(Csi_CDH_phys_point[C_id]*Csi_CDH_phys_point[C_id] - csi_phys_distr*csi_phys_distr);
 
@@ -1842,21 +1860,29 @@ void Determine_scale_from_fp_FLAG(const distr_t_list &Mpi_phys_point, const dist
 
     corr_E_mass = 1.0  -2.0*Csi_CDH_phys_point[E_id]*distr_t::f_of_distr(LOG, Csi_CDH_phys_point[E_id]/csi_phys_distr)  + (Am_cont  + Am_art*fp_CDH_phys_point[E_id]*fp_CDH_phys_point[E_id])*(Csi_CDH_phys_point[E_id] - csi_phys_distr) +  (A2m_cont + A2m_art*fp_CDH_phys_point[E_id]*fp_CDH_phys_point[E_id])*(Csi_CDH_phys_point[E_id]*Csi_CDH_phys_point[E_id] - csi_phys_distr*csi_phys_distr);
 
+    corr_Z56_mass = 1.0  -2.0*Csi_CDH_Z56*distr_t::f_of_distr(LOG, Csi_CDH_Z56/csi_phys_distr)  + (Am_cont+ Am_art*fp_CDH_Z56*fp_CDH_Z56)*(Csi_CDH_Z56 - csi_phys_distr) +  (A2m_cont + A2m_art*fp_CDH_Z56*fp_CDH_Z56)*(Csi_CDH_Z56*Csi_CDH_Z56 - csi_phys_distr*csi_phys_distr);
 
     //correct for FSEs on C and D ensembles
     
     //get MpiL for C and D ensembles
 
+    distr_t MpL_distr_B64 = L_phys_point[B64_id]*Mpi_CDH_phys_point[B64_id];
+    distr_t MpL_distr_B96 = L_phys_point[B96_id]*Mpi_CDH_phys_point[B96_id];
     distr_t MpL_distr_C = L_phys_point[C_id]*Mpi_CDH_phys_point[C_id];
     distr_t MpL_distr_D = L_phys_point[D_id]*Mpi_CDH_phys_point[D_id];
     distr_t MpL_distr_E = L_phys_point[E_id]*Mpi_CDH_phys_point[E_id];
+    distr_t MpL_distr_Z56 = 56*Mpi_CDH_Z56;
 
     
     distr_t corr_C_FSEs, corr_D_FSEs, corr_E_FSEs;
+    distr_t corr_B64_FSEs, corr_B96_FSEs, corr_Z56_FSEs;
 
+    corr_B64_FSEs = (1.0 + (Al+ Al_B)*distr_t::f_of_distr(pow_2,Csi_CDH_phys_point.distr_list[B64_id])*distr_t::f_of_distr(FVE, MpL_distr_B64));
+    corr_B96_FSEs = (1.0 + (Al+ Al_B)*distr_t::f_of_distr(pow_2,Csi_CDH_phys_point.distr_list[B96_id])*distr_t::f_of_distr(FVE, MpL_distr_B96));
     corr_C_FSEs = (1.0 + (Al+ Al_B)*distr_t::f_of_distr(pow_2,Csi_CDH_phys_point.distr_list[C_id])*distr_t::f_of_distr(FVE, MpL_distr_C));
     corr_D_FSEs = (1.0 + (Al+ Al_B)*distr_t::f_of_distr(pow_2,Csi_CDH_phys_point.distr_list[D_id])*distr_t::f_of_distr(FVE, MpL_distr_D));
     corr_E_FSEs = (1.0 + (Al+ Al_B)*distr_t::f_of_distr(pow_2,Csi_CDH_phys_point.distr_list[E_id])*distr_t::f_of_distr(FVE, MpL_distr_E));
+    corr_Z56_FSEs=(1.0 + (Al+ Al_B)*distr_t::f_of_distr(pow_2,Csi_CDH_Z56)*distr_t::f_of_distr(FVE, MpL_distr_Z56)); 
     
 
     
@@ -1872,22 +1898,40 @@ void Determine_scale_from_fp_FLAG(const distr_t_list &Mpi_phys_point, const dist
 
     a_distr_E = fp_CDH_phys_point[E_id]/(corr_E_FSEs*corr_E_mass)/fpi_phys_distr;
 
+    a_distr_Z = fp_CDH_Z56/(corr_Z56_FSEs*corr_Z56_mass)/fpi_phys_distr;
 
+    //prediction for afpi on Z56:
+
+    //distr_t fp_Z56_pred= a_distr_C*fpi_phys_distr*(corr_Z56_FSEs*corr_Z56_mass);
 
     //print on screen
-    //print afC and afD before and after corrections:
-    cout<<"C ensemble"<<endl;
+    //print afC and afD afE before and after corrections:
+    //cout<<"C48 ensemble:"<<endl;
+    //cout<<"afpi(lattice, after CDH): "<<fp_CDH_C48.ave()<<" +- "<<fp_CDH_C48.err()<<endl;
+    //cout<<"afpi(prediction): "<<fp_C48_pred.ave()<<" +- "<<fp_C48_pred.err()<<endl;
+
+    cout<<"B64 ensemble"<<endl;
+    cout<<"af_B64: "<<fpi_phys_point.distr_list[B64_id].ave()<<" +- "<<fpi_phys_point.distr_list[B64_id].err()<<endl;
+    cout<<"af_B64 (CDH-corrected): "<<fp_CDH_phys_point[B64_id].ave()<<" +- "<<fp_CDH_phys_point[B64_id].err()<<endl;
+    cout<<"af_B64 (infL): "<<(fp_CDH_phys_point[B64_id]/(corr_B64_FSEs)).ave()<<" +- "<<(fp_CDH_phys_point[B64_id]/corr_B64_FSEs).err()<<endl;
+    cout<<"af_B64 (infL-mass corrected): "<<afp_B.ave()<<" +- "<<afp_B.err()<<endl;
+    cout<<"B96 ensemble"<<endl;
+    cout<<"af_B96: "<<fpi_phys_point.distr_list[B96_id].ave()<<" +- "<<fpi_phys_point.distr_list[B96_id].err()<<endl;
+    cout<<"af_B96 (CDH-corrected): "<<fp_CDH_phys_point[B96_id].ave()<<" +- "<<fp_CDH_phys_point[B96_id].err()<<endl;
+    cout<<"af_B96 (infL): "<<(fp_CDH_phys_point[B96_id]/(corr_B96_FSEs)).ave()<<" +- "<<(fp_CDH_phys_point[B96_id]/corr_B96_FSEs).err()<<endl;
+    cout<<"af_B96 (infL-mass corrected): "<<afp_B.ave()<<" +- "<<afp_B.err()<<endl;
+    
+    cout<<"C80 ensemble"<<endl;
     cout<<"af_C: "<<fpi_phys_point.distr_list[C_id].ave()<<" +- "<<fpi_phys_point.distr_list[C_id].err()<<endl;
     cout<<"af_C (CDH-corrected): "<<fp_CDH_phys_point[C_id].ave()<<" +- "<<fp_CDH_phys_point[C_id].err()<<endl;
     cout<<"af_C (infL): "<<(fp_CDH_phys_point[C_id]/(corr_C_FSEs)).ave()<<" +- "<<(fp_CDH_phys_point[C_id]/corr_C_FSEs).err()<<endl;
     cout<<"af_C (infL-mass corrected): "<<(fp_CDH_phys_point[C_id]/(corr_C_FSEs*corr_C_mass)).ave()<<" +- "<<(fp_CDH_phys_point[C_id]/(corr_C_FSEs*corr_C_mass)).err()<<endl;
-    cout<<"D ensemble"<<endl;
+    cout<<"D96 ensemble"<<endl;
     cout<<"af_D: "<<fpi_phys_point.distr_list[D_id].ave()<<" +- "<<fpi_phys_point.distr_list[D_id].err()<<endl;
     cout<<"af_D (CDH-corrected): "<<fp_CDH_phys_point[D_id].ave()<<" +- "<<fp_CDH_phys_point[D_id].err()<<endl;
     cout<<"af_D (infL): "<<(fp_CDH_phys_point[D_id]/(corr_D_FSEs)).ave()<<" +- "<<(fp_CDH_phys_point[D_id]/corr_D_FSEs).err()<<endl;
     cout<<"af_D (infL-mass corrected): "<<(fp_CDH_phys_point[D_id]/(corr_D_FSEs*corr_D_mass)).ave()<<" +- "<<(fp_CDH_phys_point[D_id]/(corr_D_FSEs*corr_D_mass)).err()<<endl;
-
-    cout<<"E ensemble"<<endl;
+    cout<<"E112 ensemble"<<endl;
     cout<<"af_E: "<<fpi_phys_point.distr_list[E_id].ave()<<" +- "<<fpi_phys_point.distr_list[E_id].err()<<endl;
     cout<<"af_E (CDH-corrected): "<<fp_CDH_phys_point[E_id].ave()<<" +- "<<fp_CDH_phys_point[E_id].err()<<endl;
     cout<<"af_E (infL): "<<(fp_CDH_phys_point[E_id]/(corr_E_FSEs)).ave()<<" +- "<<(fp_CDH_phys_point[E_id]/corr_E_FSEs).err()<<endl;
@@ -1899,11 +1943,10 @@ void Determine_scale_from_fp_FLAG(const distr_t_list &Mpi_phys_point, const dist
     cout<<"C ensemble: "<< a_distr_C.ave()<<" +- "<<a_distr_C.err()<<" [GeV-1]    "<<(a_distr_C/fm_to_iGev).ave()<<" +- "<<(a_distr_C/fm_to_iGev).err()<<" [fm] "<<endl;
     cout<<"D ensemble: "<< a_distr_D.ave()<<" +- "<<a_distr_D.err()<<" [GeV-1]    "<<(a_distr_D/fm_to_iGev).ave()<<" +- "<<(a_distr_D/fm_to_iGev).err()<<" [fm] "<<endl;
     cout<<"E ensemble: "<< a_distr_E.ave()<<" +- "<<a_distr_E.err()<<" [GeV-1]    "<<(a_distr_E/fm_to_iGev).ave()<<" +- "<<(a_distr_E/fm_to_iGev).err()<<" [fm] "<<endl;
-
+    cout<<"Z ensemble: "<< a_distr_Z.ave()<<" +- "<<a_distr_Z.err()<<" [GeV-1]    "<<(a_distr_Z/fm_to_iGev).ave()<<" +- "<<(a_distr_Z/fm_to_iGev).err()<<" [fm] "<<endl;
 
  
-
-    
+        
 
   return;
 }

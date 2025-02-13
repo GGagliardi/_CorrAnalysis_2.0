@@ -89,7 +89,9 @@ typedef vector<vector<pair<int,int>>> VVPint;
 typedef vector<vector<vector<vector<double>>>> VVVVfloat;
 typedef vector<vector<vector<double>>> VVVfloat;
 typedef vector<vector<vector<pair<double,double>>>> VVVPfloat;
-typedef vector<vector<vector<vector<pair<double,double>>>>> VVVVPfloat;
+typedef vector<vector<vector<vector<pair<double, double>>>>> VVVVPfloat;
+typedef vector<vector<complex<double>>> C_MATRIX;
+
 
 
 
@@ -187,13 +189,25 @@ pair<double, double> MS_bar_to_mm_and_MRS_mass(double mu, double Nf, double Lamb
 double J_MRS(double Nf, double mm) ;
 double evolutor_ZT_MS_bar( double mu1, double mu2, int nloops);
 double Get_Lambda_MS_bar(int Nf);
+VVfloat convolute(const VVfloat &A, const VVfloat &B, int symm);
+VVfloat convolute(const VVVfloat &A, const VVVfloat &B, int symm);
+VVfloat convolute(const VVVfloat &A, const VVVfloat &B, int symm, VVint t_sou);
+VVfloat convolute_reduced(const VVVfloat &A, const VVVfloat &B, int symm, VVint t_sou_A, VVint t_sou_B);
+
 
 double w(int t, int Simps_ord);
 
 
 
 
-
+C_MATRIX Get_nissa_gamma(int k);
+C_MATRIX complex_prod_matr(const C_MATRIX &A, const C_MATRIX &B);
+C_MATRIX complex_sum_matr(const C_MATRIX &A, const C_MATRIX &B);
+C_MATRIX complex_diff_matr(const C_MATRIX &A, const C_MATRIX &B);
+C_MATRIX TRANSPOSE(const C_MATRIX &A);
+C_MATRIX DAGGER(const C_MATRIX &A);
+C_MATRIX IDENTITY(int N);
+complex<double> TRACE(const C_MATRIX &A);
 
 
 template <typename T>
@@ -562,6 +576,35 @@ const auto Cm2_log = []() { return -8.0/3.0 -32.0/3.0;};
 
 //debug
 void debug_loop();
+
+
+
+struct BaseDataInfo
+{
+  /// Time of the creation
+  time_t time{};
+  
+  /// Hash of the git commit used
+  char _gitHash[40]{};
+  
+  /// Version of the data
+  size_t version{};
+  
+  /// Time
+  size_t T{};
+  
+  /// Number of configurations
+  size_t nConfs{};
+  
+  /// Number of sources
+  size_t nSources{};
+  
+  /// Binary format, 1 if not-source-averaged, 2 if averaged
+  size_t binaryFormat{};
+  
+  /// Binary format
+  enum BinaryFormat{NOT_SOURCE_AVERAGED=1,SOURCE_AVERAGED=2};
+};
 
 #endif
 

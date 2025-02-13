@@ -23,6 +23,7 @@ class CorrAnalysis {
   distr_t_list effective_mass_t(const distr_t_list& corr_A_distr, string Obs); //returns jackknife or bootstrap distribution of the effective mass m(t) "acts on distribution"
   distr_t_list effective_slope_t(const VVfloat &corr_A,const VVfloat &corr_B, string Obs); //returns jackknife or bootstrap distribution of the effective slope dm(t) "acts on  data"
   distr_t_list effective_slope_t(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr, string Obs);
+  distr_t_list effective_ampl_rel_slope_t(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr, string Obs);
   distr_t_list effective_slope2_t(const VVfloat &corr_A,const VVfloat &corr_B, string Obs); //returns jackknife or bootstrap distribution of the effective slope squared dm2(t) "acts on  data"
   //distr_t_list effective_slope2_t(const distr_t_list& corr_A_distr, const distr_t_list& corr_B_distr, string Obs); //function overload 
   distr_t_list corr_t(const VVfloat &corr, string Obs); //returns jackknife or bootstrap distribution of a correlator
@@ -32,6 +33,7 @@ class CorrAnalysis {
   distr_t_list residue_t_wo_m_fit(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of the residue of the pole wo fitting the effective mass "acts on distributions"
   distr_t_list decay_constant_t(const VVfloat &corr, string Obs); //returns jackknife or boostrap distribution of a decay constant "acts on data"
   distr_t_list decay_constant_t(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of a decay constant "acts on distribution"
+  distr_t_list decay_constant_rel_slope_t(const distr_t_list& corr_A_distr,const distr_t_list& corr_B_distr, string Obs);
 
   distr_t_list matrix_element_t(const VVfloat &corr_A, string Obs); //returns jackknife or boostrap distribution of the matrix element "acts on data"
   distr_t_list matrix_element_t(const distr_t_list &corr_A, string Obs); //returns jackknife or boostrap distribution of the matrix element "acts on distributions"

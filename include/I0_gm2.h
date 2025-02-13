@@ -1,5 +1,5 @@
-#ifndef __HVP_strange__
-#define __HVP_strange__
+#ifndef __I0_gm2__
+#define __I0_gm2__
 
 
 #include "g_minus_2_utilities.h"
@@ -10,10 +10,11 @@
 #include "gm2.h"
 #include "stat.h"
 #include "binary_io.h"
-#include "RC_WI_analysis.h"
+#include "HVP.h"
 
 
-void HVP_strange();
+void I0_gm2();
+void Bounding_HVP_isoscalar(distr_t &HVP, int &Tcut_opt, const distr_t_list &V, const distr_t &a, string path,  distr_t lowest_mass);
 
 
 #endif

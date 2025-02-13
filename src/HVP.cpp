@@ -1,4 +1,5 @@
 #include "../include/HVP.h"
+#include "numerics.h"
 
 
 const double DTT = 0.5;
@@ -9,10 +10,10 @@ using namespace std;
 void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const distr_t &a, string path,distr_t lowest_mass) {
 
 
-  int Njacks=158;
+  int Njacks=100;
   bool UseJack=true;
  
-  int Simps_ord=2;
+  int Simps_ord=1;
   double fm_to_inv_Gev= 1.0/0.197327;
 
 
@@ -79,7 +80,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
       
     bool eff_mass_is_nan= isnan( eff_mass_V.ave(tcut));
     bool update_min_Tdata=true;
-    if(eff_mass_is_nan || (eff_mass_V.err(tcut)/eff_mass_V.ave(tcut) > 0.10) || (eff_mass_V.ave(tcut) < 0 )) update_min_Tdata=false;
+    if(eff_mass_is_nan || (eff_mass_V.err(tcut)/eff_mass_V.ave(tcut) > 0.05) || (eff_mass_V.ave(tcut) < 0 )) update_min_Tdata=false;
 
     if(update_min_Tdata) slice_to_use_for_eff_mass=tcut;
       
@@ -115,7 +116,7 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
   while(!Found_Tdata_opt && tdata_opt < T/2) {
 
     distr_t diff_max_min = amu_HVP_max_Tdata.distr_list[tdata_opt-1] - amu_HVP_min_Tdata.distr_list[tdata_opt-1];
-    if( fabs(diff_max_min.ave())/min( amu_HVP_max_Tdata.err(tdata_opt-1) , amu_HVP_min_Tdata.err(tdata_opt-1)) < 0.5) Found_Tdata_opt=true;
+    if( fabs(diff_max_min.ave())/min( amu_HVP_max_Tdata.err(tdata_opt-1) , amu_HVP_min_Tdata.err(tdata_opt-1)) < 1) Found_Tdata_opt=true;
     else tdata_opt++;
   }
 
@@ -194,21 +195,20 @@ void Bounding_HVP(distr_t &amu_HVP, int &Tcut_opt,  const distr_t_list &V, const
 
 
 
-
 void HVP() {
 
-  Generate_free_corr_data();
-  exit(-1);
+  //Generate_free_corr_data();
+  //exit(-1);
 
 
-  int Njacks=158;
+  int Njacks=100;
   bool UseJack=true;
   double qu= 2.0/3.0;
   double qd= -1.0/3.0;
   double fm_to_inv_Gev= 1.0/0.197327;
 
 
-  int NB=20000;
+  int NB=200;
 
   double GF=  1.1663787*1e-5;
   double hbar= 6.582119569*1e-25;
@@ -228,13 +228,14 @@ void HVP() {
   distr_t Vus(false);
   distr_t Vud(false);
 
+  
 
-  /*
+  
   //Gounaris Sakurai model
 
-  int npts_spline= 400;
-  int Luscher_num_zeroes= 22;
-  int Nresonances=20;
+  int npts_spline= 20;
+  int Luscher_num_zeroes= 4;
+  int Nresonances=2;
   //Init LL_functions;
   //find first  zeros of the Lusher functions
   Vfloat Luscher_zeroes;
@@ -242,12 +243,13 @@ void HVP() {
 
   //############################################INTERPOLATE PHI FUNCTION AND DERIVATIVES#############################
 
-  
+
   VVfloat phi_data, phi_der_data;
   Vfloat sx_int;
   Vfloat sx_der, dx_der;
   Vfloat Dz;
 
+  
   for(int L_zero=0;L_zero<Nresonances+1;L_zero++) {
     cout<<"Computing n(Lusch): "<<L_zero<<endl;
     double sx, dx;
@@ -263,7 +265,8 @@ void HVP() {
     Dz.push_back(dz);
 
 
-    for(int istep=1;istep<=npts_spline-1;istep++) { double pt= sx+dz*istep; phi_data[L_zero].push_back( phi(sqrt(pt)));}
+    for(int istep=1;istep<=npts_spline-1;istep++) { double pt= sx+dz*istep;
+      phi_data[L_zero].push_back( phi(sqrt(pt)));}
 
     phi_data[L_zero].push_back(M_PI/2.0);
     double sx_der_loc =  phi_der_for_back(sqrt(sx)+1e-14, 1);
@@ -272,66 +275,37 @@ void HVP() {
     dx_der.push_back(dx_der_loc);
 
     phi_der_data[L_zero].push_back(sx_der_loc);
-    for(int istep=1;istep<=npts_spline-1;istep++) { double pt= sx+dz*istep; phi_der_data[L_zero].push_back( phi_der(sqrt(pt)));}
+    for(int istep=1;istep<=npts_spline-1;istep++) { double pt= sx+dz*istep;
+      phi_der_data[L_zero].push_back( phi_der(sqrt(pt)));}
     phi_der_data[L_zero].push_back(dx_der_loc);
-    
+
   }
 
 
 
- 
-   
+
+
 
   LL_functions LL(phi_data,phi_der_data,sx_der, dx_der, sx_int, Dz, Nresonances, Luscher_zeroes);
-    
+
   //###########################################END INTERPOLATION PHI FUNCTION AND DERIVATIVES################################
   cout<<"####Spline for phi(x) and phi'(x) successfully generated!"<<endl;
 
   double vol1= 5.1*fm_to_inv_Gev;
-  double vol2= 9*fm_to_inv_Gev;
+  double vol2= 5.46*fm_to_inv_Gev;
 
   Vfloat En1;
-  LL.Find_pipi_energy_lev(vol1, 0.770, 5.5, 0.140, 0.0, En1);
-
+  LL.Find_pipi_energy_lev(vol1, 0.770, 5.5, 0.135, 0.0, En1);
   Vfloat En2;
-  LL.Find_pipi_energy_lev(vol2, 0.770, 5.5, 0.140, 0.0, En2);
-  ofstream PGS("../data/GS_Humb.dat");
-  for(int i=0; i<Nresonances;i++) PGS<<2.0*sqrt( pow(En1[i],2) + pow(0.139,2))<<" "<<LL.Amplitude(En1[i],vol1 , 0.770, 5.5, 0.140, 0.0)<<" "<<2.0*sqrt( pow(En2[i],2) + pow(0.140,2))<<" "<<LL.Amplitude(En2[i],vol2 , 0.770, 5.5, 0.140, 0.0)<<endl;
+  LL.Find_pipi_energy_lev(vol2, 0.770, 5.5, 0.135, 0.0, En2);
+  Vfloat En3;
+  LL.Find_pipi_energy_lev(vol2, 0.770, 5.5, 0.1367, 0.0, En3);
+  Vfloat En4;
+  LL.Find_pipi_energy_lev(vol2, 0.770, 5.5, 0.1402, 0.0, En4);
+  Vfloat En5;
+  LL.Find_pipi_energy_lev(vol1, 0.770, 5.5, 0.1402, 0.0, En5);
 
-  PGS.close();
-
-  Vfloat epsilons({0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.05});
-
-  int Num_ergs=400;
-  Vfloat Ergs;
-  for(int i=0;i<Num_ergs;i++) Ergs.push_back( i*2.0/(Num_ergs-1.0));
-
-  VVfloat  IM_H1(epsilons.size()), IM_H2(epsilons.size());
-
-  for(int i=0; i<(signed)epsilons.size(); i++) {
-    double eps = epsilons[i];
-
-    for(int j=0;j<Num_ergs;j++) {
-      double res1=0;
-      double res2=0;
-      for(int ires=0;ires<Nresonances;ires++) {
-
-	double E1= 2.0*sqrt( pow(En1[ires],2) + pow(0.139,2));
-	double E2= 2.0*sqrt( pow(En2[ires],2) + pow(0.139,2)); 
-	
-	res1 += LL.Amplitude(En1[ires],vol1 , 0.770, 5.5, 0.140, 0.0)*(eps/2.0)*(1.0/( pow((Ergs[j] - E1),2) + eps*eps));
-	res2 += LL.Amplitude(En2[ires],vol2 , 0.770, 5.5, 0.140, 0.0)*(eps/2.0)*(1.0/( pow((Ergs[j] - E2),2) + eps*eps));
-      }
-
-      IM_H1[i].push_back(res1);
-      IM_H2[i].push_back(res2);
-    }
-    
-    Print_To_File({}, {Ergs, IM_H1[i], IM_H2[i]}, "../data/eps_"+to_string(i)+".dat", "", "");
-
-  }
-
-
+  
   //print correlator
   Vfloat ts;
   for(int t=0;t<101;t++) ts.push_back( 2.0 + 2.0*t/100.0);
@@ -342,11 +316,54 @@ void HVP() {
   for (int t=0;t<101;t++) {
     cout<<ts[t]<<" "<<corr[t]<<endl;
   }
+  
 
-  exit(-1);
+  auto C1 = [&](double t) { return (10.0/9.0)*4.0*pow(alpha,2)*(1e10)*LL.V_pipi(t, vol1, 0.770, 5.5, 0.135, 0.0,  En1)*kernel_K(t,1);}; //t is in GeV^-1
+  auto C2 = [&](double t) { return (10.0/9.0)*4.0*pow(alpha,2)*(1e10)*LL.V_pipi(t, vol2, 0.770, 5.5, 0.135, 0.0,  En2)*kernel_K(t,1);}; //t is in GeV^-1
+  auto C3 = [&](double t) { return (10.0/9.0)*4.0*pow(alpha,2)*(1e10)*LL.V_pipi(t, vol2, 0.770, 5.5, 0.1367, 0.0,  En3)*kernel_K(t,1);}; //t is in GeV^-1
+  auto C4 = [&](double t) { return (10.0/9.0)*4.0*pow(alpha,2)*(1e10)*LL.V_pipi(t, vol2, 0.770, 5.5, 0.1402, 0.0,  En4)*kernel_K(t,1);}; //t is in GeV^-1
+  auto C5 = [&](double t) { return (10.0/9.0)*4.0*pow(alpha,2)*(1e10)*LL.V_pipi(t, vol1, 0.770, 5.5, 0.1402, 0.0,  En5)*kernel_K(t,1);}; //t is in GeV^-1
+  
+  //get HVP
+  gsl_function_pp<decltype(C1)> F1(C1);
+  gsl_integration_workspace * w1 = gsl_integration_workspace_alloc (10000);
+  gsl_function *G1 = static_cast<gsl_function*>(&F1);
+  double amu1, amu1_err;
+  gsl_integration_qagiu(G1, 0.0, 0.0, 1e-6, 10000, w1, &amu1, &amu1_err);
+  gsl_function_pp<decltype(C2)> F2(C2);
+  gsl_integration_workspace * w2 = gsl_integration_workspace_alloc (10000);
+  gsl_function *G2 = static_cast<gsl_function*>(&F2);
+  double amu2, amu2_err;
+  gsl_integration_qagiu(G2, 0.0, 0.0, 1e-6, 10000, w2, &amu2, &amu2_err);
+
+  gsl_function_pp<decltype(C3)> F3(C3);
+  gsl_integration_workspace * w3 = gsl_integration_workspace_alloc (10000);
+  gsl_function *G3 = static_cast<gsl_function*>(&F3);
+  double amu3, amu3_err;
+  gsl_integration_qagiu(G3, 0.0, 0.0, 1e-6, 10000, w3, &amu3, &amu3_err);
+
+  gsl_function_pp<decltype(C4)> F4(C4);
+  gsl_integration_workspace * w4 = gsl_integration_workspace_alloc (10000);
+  gsl_function *G4 = static_cast<gsl_function*>(&F4);
+  double amu4, amu4_err;
+  gsl_integration_qagiu(G4, 0.0, 0.0, 1e-6, 10000, w4, &amu4, &amu4_err);
+
+  gsl_function_pp<decltype(C5)> F5(C5);
+  gsl_integration_workspace * w5 = gsl_integration_workspace_alloc (10000);
+  gsl_function *G5 = static_cast<gsl_function*>(&F5);
+  double amu5, amu5_err;
+  gsl_integration_qagiu(G5, 0.0, 0.0, 1e-6, 10000, w5, &amu5, &amu5_err);
+
+  cout<<"Mpi=135 MeV, L=5.1fm: "<<amu1<<endl;
+  cout<<"Mpi=135 MeV, L=5.46fm: "<<amu2<<endl;
+  cout<<"Mpi=136.7 MeV, L=5.46fm: "<<amu3<<endl;
+  cout<<"Mpi=140.2 MeV, L=5.46fm: "<<amu4<<endl;
+  cout<<"Mpi=140.2 MeV, L=5.1fm: "<<amu5<<endl;
 
   
-  */
+  //exit(-1);
+   
+  
   
 
   for(int iboot=0;iboot<NB;iboot++) {
@@ -360,6 +377,8 @@ void HVP() {
     dR_TP.distr.push_back(  1 + (-0.24 + GV()*0.56)*1e-2);
 
   }
+
+  //exit(-1);
   
   Vus = GF*GF*(1.0/(16*M_PI*hbar))*FK*FK*LT_tau*pow(mt,3)*pow( 1 - pow(mk/mt,2),2)*SEW*dR_TK/B_TK;
 
@@ -479,6 +498,18 @@ void HVP() {
   Vk_data_tm.Read("../R_ratio_data/light", "mes_contr_2pts_ll_1", "VKVK", Sort_light_confs);
   P5P5_data_tm.Read("../R_ratio_data/light", "mes_contr_2pts_ll_1", "P5P5", Sort_light_confs);
   Vk_data_OS.Read("../R_ratio_data/light", "mes_contr_2pts_ll_2", "VKVK", Sort_light_confs);
+
+
+  //for mass corrections
+  data_t Vk_data_phys_tm, Vk_data_uni_tm;
+  data_t Vk_data_phys_OS, Vk_data_uni_OS;
+
+  Vk_data_phys_tm.Read("../tau_decay_data/light_mass_correction/phys", "mes_contr_2pts_ll_1", "VKVK", Sort_old_light_confs);
+  Vk_data_uni_tm.Read("../tau_decay_data/light_mass_correction/unitary", "mes_contr_2pts_ll_1", "VKVK", Sort_old_light_confs);
+
+  Vk_data_phys_OS.Read("../tau_decay_data/light_mass_correction/phys", "mes_contr_2pts_ll_2", "VKVK", Sort_old_light_confs);
+  Vk_data_uni_OS.Read("../tau_decay_data/light_mass_correction/unitary", "mes_contr_2pts_ll_2", "VKVK", Sort_old_light_confs);
+  
 
   data_t Vk_data_defl_tm, Vk_data_defl_OS;
 
@@ -644,7 +675,7 @@ void HVP() {
   
   
 
-  exit(-1);
+  //exit(-1);
 
 
 
@@ -723,14 +754,14 @@ void HVP() {
 
     for( int it=0; it<(signed)Ens_T1.size(); it++) {
 
-      vector<string> channels({"mix_s_c1",  "mix_s_c2", "mix_s_c3"});
+      vector<string> channels({"mix_s_c1",  "mix_s_c2", "mix_s_c3", "mix_c1_c1",  "mix_c2_c2", "mix_c3_c3"});
 
       for(auto &channel : channels) {
 	boost::filesystem::create_directory("../charm_E/"+channel);
 	boost::filesystem::create_directory("../charm_E/"+channel+"/"+Ens_TT1[it]);
       }
       //read binary
-      vector<string> Corr_tags({"TM_P5P5", "OS_P5P5"});
+      vector<string> Corr_tags({"TM_P5P5", "OS_P5P5", "TM_VKVK", "OS_VKVK"});
 
           
       for(int id=0; id<(signed)Corr_tags.size(); id++) {
@@ -823,7 +854,9 @@ void HVP() {
     boost::filesystem::create_directory("../data/RC_analysis_E");
 
     
-    data_t c1_s, c2_s, c3_s  ;
+    data_t c1_s, c2_s, c3_s;
+    data_t c1, c2, c3;
+    data_t c1_V, c2_V, c3_V;
 
 
     distr_t aE(UseJack);
@@ -835,13 +868,33 @@ void HVP() {
     c2_s.Read("../charm_E/mix_s_c2", "mes_contr_mix_s_c2_TM_P5P5", "P5P5", Sort_easy);
     c3_s.Read("../charm_E/mix_s_c3", "mes_contr_mix_s_c3_TM_P5P5", "P5P5", Sort_easy);
 
+    c1.Read("../charm_E/mix_c1_c1", "mes_contr_mix_c1_c1_TM_P5P5", "P5P5", Sort_easy);
+    c2.Read("../charm_E/mix_c2_c2", "mes_contr_mix_c2_c2_TM_P5P5", "P5P5", Sort_easy);
+    c3.Read("../charm_E/mix_c3_c3", "mes_contr_mix_c3_c3_TM_P5P5", "P5P5", Sort_easy);
+
+
+    c1_V.Read("../charm_E/mix_c1_c1", "mes_contr_mix_c1_c1_TM_VKVK", "VKVK", Sort_easy);
+    c2_V.Read("../charm_E/mix_c2_c2", "mes_contr_mix_c2_c2_TM_VKVK", "VKVK", Sort_easy);
+    c3_V.Read("../charm_E/mix_c3_c3", "mes_contr_mix_c3_c3_TM_VKVK", "VKVK", Sort_easy);
+
     distr_t_list corr_s_c1 = Corr.corr_t( c1_s.col(0)[id_E], "");
     distr_t_list corr_s_c2 = Corr.corr_t( c2_s.col(0)[id_E], "");
     distr_t_list corr_s_c3 = Corr.corr_t( c3_s.col(0)[id_E], "");
 
+
+    distr_t_list corr_c1 = Corr.corr_t( c1.col(0)[id_E], "../data/charmed_new_ens/corr_c1");
+    distr_t_list corr_c2 = Corr.corr_t( c2.col(0)[id_E], "../data/charmed_new_ens/corr_c2");
+    distr_t_list corr_c3 = Corr.corr_t( c3.col(0)[id_E], "../data/charmed_new_ens/corr_c3");
+
+
+    distr_t_list corr_c1_V = Corr.corr_t( c1_V.col(0)[id_E], "../data/charmed_new_ens/corr_c1_V");
+    distr_t_list corr_c2_V = Corr.corr_t( c2_V.col(0)[id_E], "../data/charmed_new_ens/corr_c2_V");
+    distr_t_list corr_c3_V = Corr.corr_t( c3_V.col(0)[id_E], "../data/charmed_new_ens/corr_c3_V");
+
     Corr.Tmin=49;
     Corr.Tmax=85;
 
+    cout<<"Nt: "<<Corr.Nt<<endl;
 
     boost::filesystem::create_directory("../data/charmed_new_ens");
     
@@ -850,14 +903,50 @@ void HVP() {
     distr_t eff_mass_Ds_2 = Corr.Fit_distr( Corr.effective_mass_t( corr_s_c2, "../data/charmed_new_ens/Ds_2"));
     distr_t eff_mass_Ds_3 = Corr.Fit_distr( Corr.effective_mass_t( corr_s_c3, "../data/charmed_new_ens/Ds_3"));
 
+
+    distr_t eff_mass_etac_1 = Corr.Fit_distr( Corr.effective_mass_t( corr_c1, "../data/charmed_new_ens/etac_1"));
+    distr_t eff_mass_etac_2 = Corr.Fit_distr( Corr.effective_mass_t( corr_c2, "../data/charmed_new_ens/etac_2"));
+    distr_t eff_mass_etac_3 = Corr.Fit_distr( Corr.effective_mass_t( corr_c3, "../data/charmed_new_ens/etac_3"));
+
+    
+    distr_t eff_mass_Jpsi_1 = Corr.Fit_distr( Corr.effective_mass_t( corr_c1_V, "../data/charmed_new_ens/Jpsi_1"));
+    distr_t eff_mass_Jpsi_2 = Corr.Fit_distr( Corr.effective_mass_t( corr_c2_V, "../data/charmed_new_ens/Jpsi_2"));
+    distr_t eff_mass_Jpsi_3 = Corr.Fit_distr( Corr.effective_mass_t( corr_c3_V, "../data/charmed_new_ens/Jpsi_3"));
+
     cout<<" Ds1: "<<( eff_mass_Ds_1/aE).ave()<<" +- "<<( eff_mass_Ds_1/aE).err()<<endl;
 
-    cout<<" Ds2: "<<( eff_mass_Ds_2/aE).ave()<<" +- "<<( eff_mass_Ds_3/aE).err()<<endl;
+    cout<<" Ds2: "<<( eff_mass_Ds_2/aE).ave()<<" +- "<<( eff_mass_Ds_2/aE).err()<<endl;
 
     cout<<" Ds3: "<<( eff_mass_Ds_3/aE).ave()<<" +- "<<( eff_mass_Ds_3/aE).err()<<endl;
 
-    
+
+    vector<distr_t> MDs_fit({eff_mass_Ds_1/(a_E), eff_mass_Ds_2/(a_E), eff_mass_Ds_3/(a_E) });
+    vector<distr_t> Metac_fit({eff_mass_etac_1/(a_E), eff_mass_etac_2/(a_E), eff_mass_etac_3/(a_E) });
+    vector<distr_t> MJpsi_fit({eff_mass_Jpsi_1/(a_E), eff_mass_Jpsi_2/(a_E), eff_mass_Jpsi_3/(a_E) });
+
+    distr_t mc_L_distr(UseJack), mc_M_distr(UseJack), mc_H_distr(UseJack);
+    for(int ijack=0;ijack<Njacks;ijack++) mc_L_distr.distr.push_back( 0.13 );
+    for(int ijack=0;ijack<Njacks;ijack++) mc_M_distr.distr.push_back( 0.14 );
+    for(int ijack=0;ijack<Njacks;ijack++) mc_H_distr.distr.push_back( 0.15 );
+
+    distr_t metac_phys_distr(UseJack), mDs_phys_distr(UseJack), mJpsi_phys_distr(UseJack);
+
+    for(int ijack=0;ijack<Njacks;ijack++) { metac_phys_distr.distr.push_back( 2.9839 + GM()*0.004/sqrt(Njacks-1.0));}
+    for(int ijack=0;ijack<Njacks;ijack++) { mDs_phys_distr.distr.push_back( 1.967 + GM()*0.0000001/sqrt(Njacks-1.0));}
+    for(int ijack=0;ijack<Njacks;ijack++) { mJpsi_phys_distr.distr.push_back( 3.0969 + GM()*0.001/sqrt(Njacks-1.0));}
   
+    //estrapolate ms phys
+    vector<distr_t> mc_list( {mc_L_distr, mc_M_distr, mc_H_distr});
+    distr_t mc_Ds_extr = Obs_extrapolation_meson_mass(mc_list, MDs_fit, mDs_phys_distr,  "../data/RC_analysis_E", "mc_extrapolation_Ds", UseJack, "SPLINE");
+    distr_t mc_etac_extr = Obs_extrapolation_meson_mass(mc_list, Metac_fit, metac_phys_distr,  "../data/RC_analysis_E", "mc_extrapolation_etac", UseJack, "SPLINE");
+    distr_t mc_Jpsi_extr = Obs_extrapolation_meson_mass(mc_list, MJpsi_fit, mJpsi_phys_distr,  "../data/RC_analysis_E", "mc_extrapolation_Jpsi", UseJack, "SPLINE");
+
+
+    cout<<"amc(Ds): "<<mc_Ds_extr.ave()<<" +- "<<mc_Ds_extr.err()<<endl;
+    cout<<"amc(etac): "<<mc_etac_extr.ave()<<" +- "<<mc_etac_extr.err()<<endl;
+    cout<<"amc(Jpsi): "<<mc_Jpsi_extr.ave()<<" +- "<<mc_Jpsi_extr.err()<<endl;
+    
+    //exit(-1);
 
     
     
@@ -909,9 +998,7 @@ void HVP() {
   distr_t_list RA_L = 2*ams1*corr_s_P_L_OS/(distr_t_list::derivative(corr_s_AP_L_OS, 0)); 
   distr_t_list RA_M = 2*ams2*corr_s_P_M_OS/(distr_t_list::derivative(corr_s_AP_M_OS, 0));
 
-  D(1);
-
-
+ 
   RA_L = RA_L*(Meta_OS_L/Meta_tm_L)*(SINH_D(Meta_OS_L)/SINH_D(Meta_tm_L))*Corr.matrix_element_t(corr_s_P_L_tm, "")/Corr.matrix_element_t(corr_s_P_L_OS, "");
   RA_M = RA_M*(Meta_OS_M/Meta_tm_M)*(SINH_D(Meta_OS_M)/SINH_D(Meta_tm_M))*Corr.matrix_element_t(corr_s_P_M_tm, "")/Corr.matrix_element_t(corr_s_P_M_OS, "");
 
@@ -980,17 +1067,24 @@ void HVP() {
   distr_t agm2_SD_tm(UseJack, UseJack?Njacks:1000);
   distr_t agm2_SD_OS(UseJack, UseJack?Njacks:1000);
 
+  distr_t agm2_W_tm(UseJack, UseJack?Njacks:1000);
+  distr_t agm2_W_OS(UseJack, UseJack?Njacks:1000);
+
+
   double t0=  0.4*fm_to_inv_Gev;
+  double t1 = 1.0*fm_to_inv_Gev;
   double Delta= 0.15*fm_to_inv_Gev;
 
   auto K = [&](double Mv, double t, double size) -> double { return kernel_K(t, Mv);};
   auto th0 = [&t0, &Delta](double ta) ->double { return 1.0/(1.0 + exp(-2.0*(ta-t0)/Delta));};
+  auto th1 = [&t1, &Delta](double ta) ->double { return 1.0/(1.0 + exp(-2.0*(ta-t1)/Delta));};
 
   distr_t_list Ker = distr_t_list::f_of_distr(K, a_E , T/2);
 
 
   //free correlator
   //Generate_free_corr_data();
+  cout<<"E112: T: "<<Corr.Nt<<" m: "<<L_info.ml<<endl;
 
   
   string Pt_free_oppor= "../Vkvk_cont/"+to_string(Corr.Nt/2)+"_m"+to_string_with_precision(L_info.ml,5)+"/OPPOR";
@@ -1004,6 +1098,9 @@ void HVP() {
   for( auto & OP:VV_free_oppor) OP *= 5.0/9.0;
   for( auto & SA:VV_free_samer) SA *= 5.0/9.0;
 
+  distr_t_list corr_V_tm_unp= corr_V_tm;
+  distr_t_list corr_V_OS_unp= corr_V_OS;
+
    corr_V_tm = (1.0/(Za*Za))*(Za*Za*corr_V_tm + VV_free_oppor); //free_corr_log_art
    corr_V_OS = (1.0/(Zv*Zv))*(Zv*Zv*corr_V_OS + VV_free_samer); //free_corr_log_art
 
@@ -1011,8 +1108,12 @@ void HVP() {
 
   for(int t=1; t <Corr.Nt/2; t++) {
 
-    agm2_SD_tm = agm2_SD_tm + 4.0*pow(alpha,2)*w(t,3)*Za*Za*corr_V_tm[t]*Ker[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_E));
-    agm2_SD_OS = agm2_SD_OS + 4.0*pow(alpha,2)*w(t,3)*Zv*Zv*corr_V_OS[t]*Ker[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_E));
+    agm2_SD_tm = agm2_SD_tm + 4.0*pow(alpha,2)*w(t,1)*Za*Za*corr_V_tm[t]*Ker[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_E));
+    agm2_SD_OS = agm2_SD_OS + 4.0*pow(alpha,2)*w(t,1)*Zv*Zv*corr_V_OS[t]*Ker[t]*( 1.0 - distr_t::f_of_distr(th0, t*a_E));
+
+    agm2_W_tm = agm2_W_tm + 4.0*pow(alpha,2)*w(t,1)*Za*Za*corr_V_tm_unp[t]*Ker[t]*( distr_t::f_of_distr(th0, t*a_E)  - distr_t::f_of_distr(th1, t*a_E) );
+    agm2_W_OS = agm2_W_OS + 4.0*pow(alpha,2)*w(t,1)*Zv*Zv*corr_V_OS_unp[t]*Ker[t]*( distr_t::f_of_distr(th0, t*a_E)  - distr_t::f_of_distr(th1, t*a_E));
+    
   }
 
 
@@ -1021,8 +1122,13 @@ void HVP() {
   cout<<"Zp/Zs: "<<Zp_ov_Zs.ave()<<" "<<Zp_ov_Zs.err()<<endl;
   
   
-  cout<<"tm: "<<agm2_SD_tm.ave()<<" "<<agm2_SD_tm.err()<<endl;
-  cout<<"OS: "<<agm2_SD_OS.ave()<<" "<<agm2_SD_OS.err()<<endl;
+  cout<<"SD tm: "<<agm2_SD_tm.ave()<<" "<<agm2_SD_tm.err()<<endl;
+  cout<<"SD OS: "<<agm2_SD_OS.ave()<<" "<<agm2_SD_OS.err()<<endl;
+
+  cout<<"W tm: "<<agm2_W_tm.ave()<<" "<<agm2_W_tm.err()<<endl;
+  cout<<"W OS: "<<agm2_W_OS.ave()<<" "<<agm2_W_OS.err()<<endl;
+
+  //exit(-1);
 
   cout<<"a: "<<(a_E/fm_to_inv_Gev).ave()<<" "<<(a_E/fm_to_inv_Gev).err()<<endl;
 
@@ -1080,6 +1186,15 @@ void HVP() {
        
     distr_t_list Vk_tm_distr = 1e10*Za*Za*(pow(qu,2)+pow(qd,2))*Corr.corr_t( Vk_data_tm.col(0)[iens] , "../data/HVP/Corr/Vk_tm_"+Vk_data_tm.Tag[iens]+".dat");
     distr_t_list Vk_OS_distr = 1e10*Zv*Zv*(pow(qu,2)+pow(qd,2))*Corr.corr_t( Vk_data_OS.col(0)[iens] , "../data/HVP/Corr/Vk_OS_"+Vk_data_OS.Tag[iens]+".dat");
+
+
+    if( Vk_data_tm.Tag[iens] != Vk_data_phys_tm.Tag[iens]) crash("unitary and physical point ensembles do not coincide") ;
+
+
+    distr_t_list Vk_dm_tm_distr = 1e10*Za*Za*(pow(qu,2)+pow(qd,2))*( Corr.corr_t( summ_master(Vk_data_phys_tm.col(0)[iens], Multiply_Vvector_by_scalar( Vk_data_uni_tm.col(0)[iens],-1.0)) , "../data/HVP/Corr/Vk_tm_dm_"+Vk_data_tm.Tag[iens]+".dat"));
+    distr_t_list Vk_dm_OS_distr = 1e10*Zv*Zv*(pow(qu,2)+pow(qd,2))*( Corr.corr_t( summ_master(Vk_data_phys_OS.col(0)[iens], Multiply_Vvector_by_scalar( Vk_data_uni_OS.col(0)[iens],-1.0)) , "../data/HVP/Corr/Vk_OS_dm_"+Vk_data_tm.Tag[iens]+".dat"));
+
+    
     distr_t_list P5_distr= Corr.corr_t( P5P5_data_tm.col(0)[iens] , "");
 
     if(Vk_data_tm.Tag[iens].substr(1,12) == "B211b.072.64") {
@@ -1474,6 +1589,42 @@ void HVP() {
      
     }
 
+
+    //check dm corrections
+    int tmax_25 = 2.5/(a_distr.ave()/fm_to_inv_Gev);
+    int tmax_30 = 3.0/(a_distr.ave()/fm_to_inv_Gev);
+    int tmax_35 = 3.5/(a_distr.ave()/fm_to_inv_Gev);
+    int tmax_45 = 4.5/(a_distr.ave()/fm_to_inv_Gev);
+
+    distr_t HVP_dm_tm_25(UseJack, UseJack?Njacks:800);   distr_t HVP_dm_tm_30(UseJack, UseJack?Njacks:800); distr_t HVP_dm_tm_35(UseJack, UseJack?Njacks:800); distr_t HVP_dm_tm_45(UseJack, UseJack?Njacks:800);
+    distr_t HVP_dm_OS_25(UseJack, UseJack?Njacks:800);   distr_t HVP_dm_OS_30(UseJack, UseJack?Njacks:800); distr_t HVP_dm_OS_35(UseJack, UseJack?Njacks:800); distr_t HVP_dm_OS_45(UseJack, UseJack?Njacks:800);
+
+    for(int t=1; t<tmax_25;t++) {
+      HVP_dm_tm_25 = HVP_dm_tm_25 + 4.0*w(t,1)*pow(alpha,2)*Vk_dm_tm_distr.distr_list[t]*Ker.distr_list[t];
+      HVP_dm_OS_25 = HVP_dm_OS_25 + 4.0*w(t,1)*pow(alpha,2)*Vk_dm_OS_distr.distr_list[t]*Ker.distr_list[t];
+    }
+
+    for(int t=1; t<tmax_30;t++) {
+      HVP_dm_tm_30 = HVP_dm_tm_30 + 4.0*w(t,1)*pow(alpha,2)*Vk_dm_tm_distr.distr_list[t]*Ker.distr_list[t];
+      HVP_dm_OS_30 = HVP_dm_OS_30 + 4.0*w(t,1)*pow(alpha,2)*Vk_dm_OS_distr.distr_list[t]*Ker.distr_list[t];
+    }
+
+    for(int t=1; t<tmax_35;t++) {
+      HVP_dm_tm_35 = HVP_dm_tm_35 + 4.0*w(t,1)*pow(alpha,2)*Vk_dm_tm_distr.distr_list[t]*Ker.distr_list[t];
+      HVP_dm_OS_35 = HVP_dm_OS_35 + 4.0*w(t,1)*pow(alpha,2)*Vk_dm_OS_distr.distr_list[t]*Ker.distr_list[t];
+    }
+
+    for(int t=1; t<tmax_45;t++) {
+      HVP_dm_tm_45 = HVP_dm_tm_45 + 4.0*w(t,1)*pow(alpha,2)*Vk_dm_tm_distr.distr_list[t]*Ker.distr_list[t];
+      HVP_dm_OS_45 = HVP_dm_OS_45 + 4.0*w(t,1)*pow(alpha,2)*Vk_dm_OS_distr.distr_list[t]*Ker.distr_list[t];
+    }
+
+    cout<<"####  EVALUATING DM CORRECTION FOR HVP ENSEMBLE: "<<Vk_data_tm.Tag[iens]<<" #######"<<endl;
+    cout<<"tcut 2.5fm: "<<HVP_dm_tm_25.ave()<<" +- "<<HVP_dm_tm_25.err()<<" [TM] , "<<HVP_dm_OS_25.ave()<<" +- "<<HVP_dm_OS_25.err()<<" [OS] "<<endl;
+    cout<<"tcut 3.0fm: "<<HVP_dm_tm_30.ave()<<" +- "<<HVP_dm_tm_30.err()<<" [TM] , "<<HVP_dm_OS_30.ave()<<" +- "<<HVP_dm_OS_30.err()<<" [OS] "<<endl;
+    cout<<"tcut 3.5fm: "<<HVP_dm_tm_35.ave()<<" +- "<<HVP_dm_tm_35.err()<<" [TM] , "<<HVP_dm_OS_35.ave()<<" +- "<<HVP_dm_OS_35.err()<<" [OS] "<<endl;
+    cout<<"tcut 4.5fm: "<<HVP_dm_tm_45.ave()<<" +- "<<HVP_dm_tm_45.err()<<" [TM] , "<<HVP_dm_OS_45.ave()<<" +- "<<HVP_dm_OS_45.err()<<" [OS] "<<endl;
+    cout<<"####    DONE! ####"<<endl;
     
 
     if(Vk_data_tm.Tag[iens].substr(1,12) == "B211b.072.64") {
@@ -1511,7 +1662,8 @@ void HVP() {
     //distr_t_list Ker_el = 4*pow(alpha,2)*distr_t_list::f_of_distr(K, a_distr*(0.0005/0.10565837) , Corr.Nt);
     //distr_t_list Ker_mu = 4*pow(alpha,2)*distr_t_list::f_of_distr(K, a_distr*(1.77/0.1056837) , Corr.Nt);
 
-
+   
+    
 
     
 
