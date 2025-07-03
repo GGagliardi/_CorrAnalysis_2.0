@@ -42,7 +42,8 @@ public:
 
 scale_setting_info Get_scale_setting_info();
 
-
+void Get_ms_A_ens(const distr_t &a_A);
+void Get_mc_A_ens(const distr_t &a_A);
 void Get_scale_setting() ;
 
 

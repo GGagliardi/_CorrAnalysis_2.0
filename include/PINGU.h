@@ -92,9 +92,8 @@ class NISSA_GAMMA {
 
 
 void Get_PINGU();
-void PINGU_TEST();
 void penguin_spectral_reco();
-
+void TEST_PI_Q2();
 
 
 

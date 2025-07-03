@@ -22,6 +22,7 @@ using namespace std;
 
 void mcorr_HVP() {
 
+ 
   double fm_to_inv_Gev= 1.0/0.197327;
   double qu= 2.0/3.0;
   double qd= -1.0/3.0;
@@ -93,36 +94,32 @@ void mcorr_HVP() {
    }
 
 
-   /* vector<string> Corr_tags({
-       "VkVk_OS_mu6.6750e-04_eexIR.bin",
-       "VkVk_OS_mu6.6750e-04_stoch.bin",
-       "VkVk_OS_mu7.2000e-04_eexIR.bin",
-       "VkVk_OS_mu7.2000e-04_stoch.bin",
-       "VkVk_tm_mu6.6750e-04_eexIR.bin",
-       "VkVk_tm_mu6.6750e-04_stoch.bin",
-       "VkVk_tm_mu7.2000e-04_eexIR.bin",
-       "VkVk_tm_mu7.2000e-04_stoch.bin",
+    vector<string> Corr_tags({
+       "VkVk_OS_mu6.6750e-04_IR.bin",
+       "VkVk_OS_mu6.6750e-04_ss.bin",
+       "VkVk_OS_mu7.2000e-04_IR.bin",
+       "VkVk_OS_mu7.2000e-04_ss.bin",
+       "VkVk_tm_mu6.6750e-04_IR.bin",
+       "VkVk_tm_mu6.6750e-04_ss.bin",
+       "VkVk_tm_mu7.2000e-04_IR.bin",
+       "VkVk_tm_mu7.2000e-04_ss.bin",
      });
-   */
-
    
-     vector<string> Corr_tags({
+   
+    /*  vector<string> Corr_tags({
        "VkVk_OS_mu6.6750e-04.bin",
        "VkVk_OS_mu7.2000e-04.bin",
        "VkVk_tm_mu6.6750e-04.bin",
        "VkVk_tm_mu7.2000e-04.bin",
        });
 
-
-   VVVfloat Corrs(Corr_tags.size());
+    */
+    
+   VVVfloat Corrs(Corr_tags.size()/2);
 
    cout<<"Number of correlators: "<<Corr_tags.size()<<endl;
 
-   int Nconfs=770;
-   int Nhits=128;
-   int Nsubs=1;
-   int TT=128;
-
+ 
 
    for(int id=0; id<(signed)Corr_tags.size(); id++) {
 
@@ -130,13 +127,14 @@ void mcorr_HVP() {
      
      string ch= Corr_tags[id];
      
-  	
+
+     cout<<"Reading correlator: "<<ch<<endl;
+     
      FILE *stream = fopen(("../mass_corr_LMA/B64/"+ch).c_str(), "rb");
 
-     /*
-     double Nconfs, TT, Nhits, Nsubs;
+     
+     size_t Nconfs, TT, Nhits, Nsubs;
      bin_read(Nconfs, stream);
-     D(3);
      cout<<"Nconfs: "<<Nconfs<<endl;
 
      bin_read(Nhits, stream);
@@ -145,17 +143,12 @@ void mcorr_HVP() {
      cout<<"TT: "<<TT<<endl;
      bin_read(Nsubs, stream);
      cout<<"Nsubs: "<<Nsubs<<endl;
-     */
 
-     Corrs[id].resize(TT);
-     for(auto & cc: Corrs[id]) cc.resize(Nconfs,0.0);
-      
-     cout<<"Nconfs: "<<Nconfs<<endl;
-     cout<<"TT: "<<TT<<" "<<TT/2+1<<endl;
-     cout<<"Nhits: "<<Nhits<<endl;
-     cout<<"Nsubs: "<<Nsubs<<endl;
-     
-     
+     if(id%2== 0) {
+       Corrs[id/2].resize(TT);
+       for(auto & cc: Corrs[id/2]) cc.resize(Nconfs,0.0);
+     }
+         
      
      for(size_t iconf=0;iconf<Nconfs;iconf++) {
        for(size_t t=0;t<TT/2+1;t++) {
@@ -163,11 +156,11 @@ void mcorr_HVP() {
 	   
 	  double c;
 	  bin_read(c, stream);
-	  Corrs[id][t][iconf] += c/Nsubs;
+	  Corrs[id/2][t][iconf] += c/Nsubs;
 	 }
 	 //symmetrize
 	 if( t != 0) {
-	  Corrs[id][TT-t][iconf] = Corrs[id][t][iconf];
+	   Corrs[id/2][TT-t][iconf] = Corrs[id/2][t][iconf];
 	 }
        }
     }
@@ -179,6 +172,8 @@ void mcorr_HVP() {
    
    
    //analyze correlators
+
+   cout<<"Correlators read!"<<endl;
 
    
    VVfloat C_dm_OS_raw= summ_master( Corrs[0], Multiply_Vvector_by_scalar( Corrs[1], -1.0));
@@ -192,7 +187,7 @@ void mcorr_HVP() {
 
    distr_t a_distr= a_B;
    distr_t Zv= ZV_B;
-   distr_t Za= ZA_A;
+   distr_t Za= ZA_B;
 
    boost::filesystem::create_directory("../data/dm_corr");
    boost::filesystem::create_directory("../data/dm_corr/B64");
@@ -444,7 +439,7 @@ void HVP_blinded_analysis() {
     
     string ch= Corr_tags[id];
 	
-    FILE *stream = fopen(("../../PEAKY_BLINDER/blinded_confs_RM3/B64/"+ch).c_str(), "rb");
+    FILE *stream = fopen(("../../PEAKY_BLINDER/confs_to_blind/B64/"+ch).c_str(), "rb");
     size_t Nconfs, TT, Nhits, Nsubs;
     bin_read(Nconfs, stream);
     bin_read(Nhits, stream);
@@ -501,6 +496,18 @@ void HVP_blinded_analysis() {
     fclose(stream);
     
   }
+
+  ofstream print_corr("../data/data_B64_silvano_unblinded/B64.txt");
+
+  for(int iconf=0;iconf<(signed)C_tm[0].size();iconf++) {
+    print_corr<<"#"<<iconf+1<<endl;
+    print_corr.precision(12);
+    for(int t=0;t<(signed)C_tm.size();t++) { print_corr<<C_tm[t][iconf]<<" "<<C_OS[t][iconf]<<endl;
+    }
+  }
+  cout<<"data_printed"<<endl;
+  print_corr.close();
+  exit(-1);
 
 
   for(int id=0; id<(signed)Corr_tags.size(); id++) {
@@ -1563,3 +1570,99 @@ void HVP_blinded_analysis() {
   return;
 
 }
+
+
+
+
+void GEVP_analysis() {
+
+  //load 2pt LOCAL g-2
+  string ENS="B64";
+
+  CorrAnalysis Corr(UseJack,Njacks,100);
+  Corr.Nt=128;
+  Corr.Perform_Nt_t_average=1;
+
+   //do bounding
+
+  //load amus and amu_l correlators
+  VVfloat C_TM;
+  vector<string> Corr_tags({"VkVk_tm.bin"});
+  for(int id=0; id<(signed)Corr_tags.size(); id++) {
+    string ch= Corr_tags[id];
+    FILE *stream = fopen(("../../PEAKY_BLINDER/confs_to_blind/B64/"+ch).c_str(), "rb");
+    size_t Nconfs_C, TT, Nhits, Nsubs;
+    bin_read(Nconfs_C, stream);
+    bin_read(Nhits, stream);
+    bin_read(TT, stream);
+    bin_read(Nsubs, stream);
+
+    C_TM.resize(TT);
+    for(auto & cc: C_TM) cc.resize(Nconfs_C,0);
+   
+    cout<<"Nconfs_C: "<<Nconfs_C<<endl;
+    cout<<"TT: "<<TT<<" "<<TT/2+1<<endl;
+    cout<<"Nhits: "<<Nhits<<endl;
+    cout<<"Nsubs: "<<Nsubs<<endl;
+      
+    for(size_t iconf=0;iconf<Nconfs_C;iconf++) {
+      for(size_t t=0;t<TT/2+1;t++) {
+	for(size_t is=0;is<Nsubs;is++) {
+	  double c;
+	  bin_read(c, stream);
+	  C_TM[t][iconf] += c/Nsubs;
+	}
+	//symmetrize
+	if( t != 0) {
+	  C_TM[TT-t][iconf] = C_TM[t][iconf];
+	  
+	}
+      }
+    }
+    
+    
+    
+    
+    fclose(stream);
+    
+  }
+
+  D(1);
+
+  boost::filesystem::create_directory("../data/GEVP");
+  
+  distr_t_list C_LOC= Corr.effective_mass_t( C_TM, "../data/GEVP/C_TM_LOC_B64");
+
+  D(2);
+
+
+  //load two pt smeared and smeared local
+
+
+  data_t C_SM_LOC_V1_data, C_SM_SM_V1_data;
+  data_t C_SM_LOC_V2_data, C_SM_SM_V2_data;
+  data_t C_SM_LOC_V3_data, C_SM_SM_V3_data;
+
+
+  C_SM_LOC_V1_data.Read("../GEVP", "mes_contr_MES_2PT_pi_loc", "V1V1");
+  C_SM_LOC_V2_data.Read("../GEVP", "mes_contr_MES_2PT_pi_loc", "V2V2");
+  C_SM_LOC_V3_data.Read("../GEVP", "mes_contr_MES_2PT_pi_loc", "V3V3");
+
+
+  C_SM_SM_V1_data.Read("../GEVP", "mes_contr_MES_2PT_pi", "V1V1");
+  C_SM_SM_V2_data.Read("../GEVP", "mes_contr_MES_2PT_pi", "V2V2");
+  C_SM_SM_V3_data.Read("../GEVP", "mes_contr_MES_2PT_pi", "V3V3");
+
+
+  distr_t_list C_SM= Corr.effective_mass_t( summ_master( C_SM_SM_V1_data.col(0)[0], C_SM_SM_V2_data.col(0)[0], C_SM_SM_V3_data.col(0)[0]), "../data/GEVP/C_TM_SM_B64");
+  distr_t_list C_SM_LOC= Corr.effective_mass_t( summ_master( C_SM_LOC_V1_data.col(0)[0], C_SM_LOC_V2_data.col(0)[0], C_SM_LOC_V3_data.col(0)[0]), "../data/GEVP/C_TM_SM_LOC_B64");
+
+
+
+
+
+}
+
+
+
+

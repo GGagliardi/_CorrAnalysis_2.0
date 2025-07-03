@@ -2,6 +2,7 @@
 #include "Corr_analysis.h"
 #include "Meson_mass_extrapolation.h"
 #include "numerics.h"
+#include "stat.h"
 
 
 
@@ -391,6 +392,12 @@ scale_setting_info Get_scale_setting_info() {
     SCALE_INFO.a_C= a_C;
     SCALE_INFO.a_D= a_D;
     SCALE_INFO.a_E= a_E;
+
+
+    //tune s quark mass on A ensemble
+
+    Get_ms_A_ens(a_A);
+    
     
     
     //determine strange and charm quark masses
@@ -739,6 +746,7 @@ scale_setting_info Get_scale_setting_info() {
 
     //determine charm quark mass
 
+    Get_mc_A_ens(a_A);
 
     //start from C80 and B64 ensemble [ 2 strange quark masses and 2 charm quark masses ]
 
@@ -1055,5 +1063,234 @@ scale_setting_info Get_scale_setting_info() {
       
       
     return SCALE_INFO ;
+
+}
+
+
+void Get_ms_A_ens(const distr_t &a_A) {
+
+   auto Sort_light_confs = [](string A, string B) {
+
+			   
+
+			    int conf_length_A= A.length();
+			    int conf_length_B= B.length();
+
+			    int pos_a_slash=-1;
+			    int pos_b_slash=-1;
+			    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+			    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+
+			    string A_bis= A.substr(pos_a_slash+1);
+			    string B_bis= B.substr(pos_b_slash+1);
+
+			     
+			    string conf_num_A = A_bis.substr(0,4);
+			    string conf_num_B = B_bis.substr(0,4);
+							       
+		      
+			    string rA = A_bis.substr(A_bis.length()-2);
+			    string rB = B_bis.substr(B_bis.length()-2);
+			    if(rA.substr(0,1) == "r") { 
+			      int n1 = stoi(A_bis.substr(A_bis.length()-1));
+			      int n2 = stoi(B_bis.substr(B_bis.length()-1));
+			      if(rA == rB) {
+			      if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+			      else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+			      else crash("stream not recognized");
+			      }
+			      else return n1<n2;
+			    }
+			    return A_bis<B_bis;
+  };
+
+
+
+  //read data
+
+  data_t l, s1, s2;
+
+
+  l.Read("../A_ensembles_tuning/l", "mes_contr_l", "P5P5", Sort_light_confs);
+  s1.Read("../A_ensembles_tuning/s1", "mes_contr_s1", "P5P5", Sort_light_confs);
+  s2.Read("../A_ensembles_tuning/s2", "mes_contr_s2", "P5P5", Sort_light_confs); 
+
+
+  boost::filesystem::create_directory("../data/scale_setting/MK");
+
+  int Nens= l.size;
+
+  cout<<"Number of ensembles: "<<Nens<<endl;
+
+  for(int iens=0;iens<Nens;iens++) {
+
+
+    
+
+    string Ens= l.Tag[iens];
+
+    double ams1, ams2;
+
+   
+    
+    
+    //set up statistical analysis
+    CorrAnalysis Corr(UseJack,Njacks,100);
+    Corr.Nt= l.nrows[iens];
+    Corr.Reflection_sign=1;
+    Corr.Perform_Nt_t_average=1;
+
+    cout<<"Analyzing ensemble: "<<Ens<<" T: "<<Corr.Nt<<endl;
+
+    if(Ens=="cA211a.12.48") { ams1= 0.01760; ams2=0.02200; Corr.Tmin= 15; Corr.Tmax=30;}
+    else if(Ens=="cA211a.30.32") { ams1=0.01760; ams2=0.02200; Corr.Tmin=15; Corr.Tmax=24;}
+    else if(Ens=="cA211a.40.24") { ams1=0.01760; ams2=0.02200; Corr.Tmin=17; Corr.Tmax=22;}
+    else crash("in Get_ms_A_ens() Ens: "+Ens+" not found");
+
+    boost::filesystem::create_directory("../data/scale_setting/MK/"+Ens);
+
+   
+    distr_t_list Mpi_distr = Corr.effective_mass_t( l.col(0)[iens], "../data/scale_setting/MK/"+Ens+"/eff_mass_PI_unitary");
+    distr_t_list MK_distr = Corr.effective_mass_t(s1.col(0)[iens], "../data/scale_setting/MK/"+Ens+"/eff_mass_K");
+    distr_t_list MK_H_distr = Corr.effective_mass_t(s2.col(0)[iens], "../data/scale_setting/MK/"+Ens+"/eff_mass_K_H");
+
+
+    distr_t Mpi = Corr.Fit_distr(Mpi_distr)/a_A;
+    distr_t MK = Corr.Fit_distr(MK_distr)/a_A;
+    distr_t MK_H = Corr.Fit_distr(MK_H_distr)/a_A;
+
+    vector<distr_t> MMK2({ MK*MK , MK_H*MK_H });
+    vector<distr_t> MMS({ Get_id_jack_distr(Njacks)*ams1, Get_id_jack_distr(Njacks)*ams2});
+
+
+    distr_t MK_FLAG_corr= SQRT_D(  MK_FLAG*MK_FLAG + 0.5*( POW_D(Mpi,2)    - pow(MP_FLAG,2)));
+
+    
+    distr_t ams_phys_corr = Obs_extrapolation_meson_mass(MMS, MMK2, MK_FLAG_corr*MK_FLAG_corr ,  "../data/scale_setting/MK"  , "ams_corr_extrapolation_"+Ens+".dat",  UseJack, "SPLINE" );
+
+    cout<<"Ens: "<<Ens<<" ams: "<<ams_phys_corr.ave()<<" +- "<<ams_phys_corr.err()<<endl;
+    
+
+  }
+
+
+
+ 
+  return;
+
+}
+
+
+
+void Get_mc_A_ens(const distr_t &a_A) {
+
+   auto Sort_light_confs = [](string A, string B) {
+
+			   
+
+			    int conf_length_A= A.length();
+			    int conf_length_B= B.length();
+
+			    int pos_a_slash=-1;
+			    int pos_b_slash=-1;
+			    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+			    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+
+			    string A_bis= A.substr(pos_a_slash+1);
+			    string B_bis= B.substr(pos_b_slash+1);
+
+			     
+			    string conf_num_A = A_bis.substr(0,4);
+			    string conf_num_B = B_bis.substr(0,4);
+							       
+		      
+			    string rA = A_bis.substr(A_bis.length()-2);
+			    string rB = B_bis.substr(B_bis.length()-2);
+			    if(rA.substr(0,1) == "r") { 
+			      int n1 = stoi(A_bis.substr(A_bis.length()-1));
+			      int n2 = stoi(B_bis.substr(B_bis.length()-1));
+			      if(rA == rB) {
+			      if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+			      else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+			      else crash("stream not recognized");
+			      }
+			      else return n1<n2;
+			    }
+			    return A_bis<B_bis;
+  };
+
+
+
+  //read data
+
+  data_t c1, c2, c3;
+
+
+  c1.Read("../A_ensembles_mc_tuning", "mes_contr_PT2_Ds1", "P5P5", Sort_light_confs);
+  c2.Read("../A_ensembles_mc_tuning", "mes_contr_PT2_Ds2", "P5P5", Sort_light_confs);
+  c3.Read("../A_ensembles_mc_tuning", "mes_contr_PT2_Ds3", "P5P5", Sort_light_confs); 
+
+
+  boost::filesystem::create_directory("../data/scale_setting/MK");
+
+  int Nens= 1;
+
+  cout<<"Number of ensembles: "<<Nens<<endl;
+
+  for(int iens=0;iens<Nens;iens++) {
+
+
+    
+
+    string Ens= c1.Tag[iens];
+
+    double amc1= 0.255;
+    double amc2= 0.265;
+    double amc3= 0.275;
+
+   
+    
+    
+    //set up statistical analysis
+    CorrAnalysis Corr(UseJack,Njacks,100);
+    Corr.Nt= c1.nrows[iens];
+    Corr.Reflection_sign=1;
+    Corr.Perform_Nt_t_average=1;
+
+    cout<<"Analyzing ensemble: "<<Ens<<" T: "<<Corr.Nt<<endl;
+
+    if(Ens=="cA211a.12.48") { Corr.Tmin= 15; Corr.Tmax=27;}
+    else crash("in Get_mc_A_ens() Ens: "+Ens+" not found");
+
+    boost::filesystem::create_directory("../data/scale_setting/MDs/"+Ens);
+
+   
+    distr_t_list MDs1_distr = Corr.effective_mass_t( c1.col(0)[iens], "../data/scale_setting/MDs/"+Ens+"/eff_mass_Ds_1.t");
+    distr_t_list MDs2_distr = Corr.effective_mass_t( c2.col(0)[iens], "../data/scale_setting/MDs/"+Ens+"/eff_mass_Ds_2.t");
+    distr_t_list MDs3_distr = Corr.effective_mass_t( c3.col(0)[iens], "../data/scale_setting/MDs/"+Ens+"/eff_mass_Ds_3.t");
+
+
+   
+    distr_t MDs1 = Corr.Fit_distr(MDs1_distr)/a_A;
+    distr_t MDs2 = Corr.Fit_distr(MDs2_distr)/a_A;
+    distr_t MDs3 = Corr.Fit_distr(MDs3_distr)/a_A;
+
+    vector<distr_t> MMDs({ MDs1 , MDs2,MDs3 });
+    vector<distr_t> MMS({ Get_id_jack_distr(Njacks)*amc1, Get_id_jack_distr(Njacks)*amc2, Get_id_jack_distr(Njacks)*amc3});
+
+    distr_t MDs_FLAG_corr = Get_id_jack_distr(Njacks)*MDs_FLAG;
+    
+        
+    distr_t amc_phys = Obs_extrapolation_meson_mass(MMS, MMDs, MDs_FLAG_corr ,  "../data/scale_setting/MDs"  , "amc_corr_extrapolation_"+Ens+".dat",  UseJack, "SPLINE" );
+
+    cout<<"Ens: "<<Ens<<" amc: "<<amc_phys.ave()<<" +- "<<amc_phys.err()<<endl;
+    
+
+  }
+
+
+  exit(-1);
+ 
+  return;
 
 }

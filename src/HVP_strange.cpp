@@ -173,8 +173,8 @@ void HVP_strange() {
     boost::filesystem::create_directory("../HVP_strange");
     
 
-    vector<string> Ens_T1({"B.72.64", "C.06.80", "C.06.112", "D.54.96", "E.44.112"});
-    vector<string> Ens_TT1({"cB211b.072.64", "cC211a.06.80", "cC211a.06.112", "cD211a.054.96", "cE211a.044.112"});
+    vector<string> Ens_T1({"B.72.96", "B.72.64", "C.06.80", "C.06.112", "D.54.96", "E.44.112"});
+    vector<string> Ens_TT1({"cB211b.072.96", "cB211b.072.64", "cC211a.06.80", "cC211a.06.112", "cD211a.054.96", "cE211a.044.112"});
 
     for( int it=0; it<(signed)Ens_T1.size(); it++) {
 
@@ -226,6 +226,7 @@ void HVP_strange() {
     }
     }
 
+    exit(-1);
 
     bool Get_ASCII_3rd_strange= true;
 

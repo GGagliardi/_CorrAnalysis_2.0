@@ -725,6 +725,9 @@ void valence_n_sea_quark_effects() {
 
 void sea_quark_effects() {
 
+  
+ 
+
   ofstream FAKE_L("../data/sea_quark_effects_NOVAL/table_Mpi.tex");
   FAKE_L.close();
 
@@ -2999,3 +3002,163 @@ void sea_quark_effects() {
 
 
 
+void Get_derivative_scaling() {
+
+
+  bool UseJack = true;
+  int Njacks = 50;
+  int Nboots=1000;
+
+   
+
+  auto Sort_light_confs = [](string A, string B) {
+
+			   
+
+			    int conf_length_A= A.length();
+			    int conf_length_B= B.length();
+
+			    int pos_a_slash=-1;
+			    int pos_b_slash=-1;
+			    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+			    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+
+			    string A_bis= A.substr(pos_a_slash+1);
+			    string B_bis= B.substr(pos_b_slash+1);
+
+			    //A_bis=A;
+			    //B_bis=B;
+
+			     
+			    string conf_num_A = A_bis.substr(0,4);
+			    string conf_num_B = B_bis.substr(0,4);
+							       
+		      
+			    string rA = A_bis.substr(A_bis.length()-2);
+			    string rB = B_bis.substr(B_bis.length()-2);
+			    if(rA.substr(0,1) == "r") { 
+			      int n1 = stoi(A_bis.substr(A_bis.length()-1));
+			      int n2 = stoi(B_bis.substr(B_bis.length()-1));
+			      if(rA == rB) {
+			      if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+			      else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+			      else crash("stream not recognized");
+			      }
+			      else return n1<n2;
+			    }
+			    return A_bis<B_bis;
+  };
+  
+
+
+  data_t P5P5_TM_ll, S_m1, S_m2, S_m3, S_m4, S_m5, S_m6;
+
+  P5P5_TM_ll.Read("../derivative_scaling/ll", "mes_contr_ll_TM_P5P5",  "P5P5", Sort_light_confs);
+
+  S_m1.Read("../derivative_scaling/loops", "S_m1.txt", "S0S0", Sort_light_confs);
+  S_m2.Read("../derivative_scaling/loops", "S_m2.txt", "S0S0", Sort_light_confs);
+  S_m3.Read("../derivative_scaling/loops", "S_m3.txt", "S0S0", Sort_light_confs);
+  S_m4.Read("../derivative_scaling/loops", "S_m4.txt", "S0S0", Sort_light_confs);
+  S_m5.Read("../derivative_scaling/loops", "S_m5.txt", "S0S0", Sort_light_confs);
+  S_m6.Read("../derivative_scaling/loops", "S_m6.txt", "S0S0", Sort_light_confs);
+
+
+  int Nens= P5P5_TM_ll.size;
+
+
+  for(int iens=0;iens<Nens;iens++) {
+
+    cout<<"Analyzing ensemble: "<<P5P5_TM_ll.Tag[iens]<<endl;
+
+    int Nconfs=  S_m1.col(1)[iens][0].size();
+
+    CorrAnalysis Corr(UseJack, Njacks,Nboots);
+    Corr.Nt = P5P5_TM_ll.nrows[iens];
+    int L= Corr.Nt/2;
+    int T= Corr.Nt;
+    
+    
+    Vfloat Sm1(Nconfs,0.0), Sm2(Nconfs,0.0), Sm3(Nconfs,0.0), Sm4(Nconfs,0.0), Sm5(Nconfs,0.0), Sm6(Nconfs,0.0);
+
+      
+    for(int iconf=0; iconf<Nconfs;iconf++)  {
+      for(int t=0;t<T;t++) {
+	Sm1[iconf] += S_m1.col(1)[iens][t][iconf];
+	Sm2[iconf] += S_m2.col(1)[iens][t][iconf];
+	Sm3[iconf] += S_m3.col(1)[iens][t][iconf];
+	Sm4[iconf] += S_m4.col(1)[iens][t][iconf];
+	Sm5[iconf] += S_m5.col(1)[iens][t][iconf];
+	Sm6[iconf] += S_m6.col(1)[iens][t][iconf];
+      }
+
+    }
+
+ 
+    VVfloat P5P5_TM_ll_m1(T),  P5P5_TM_ll_m2(T), P5P5_TM_ll_m3(T),  P5P5_TM_ll_m4(T),  P5P5_TM_ll_m5(T), P5P5_TM_ll_m6(T);
+
+
+    auto SEA_FUNC_OR= [&](const Vfloat& par) { if((signed)par.size() != 3) crash("Lambda function SEA_FUNC expects par[3], but par["+to_string((signed)par.size())+"] provided"); return par[0] -par[1]*par[2];};
+
+         
+    for(int t=0; t<T;t++) {
+      for(int iconf=0;iconf<Nconfs;iconf++) {
+
+	P5P5_TM_ll_m1[t].push_back( Sm1[iconf]*P5P5_TM_ll.col(0)[iens][t][iconf]);
+	P5P5_TM_ll_m2[t].push_back( Sm2[iconf]*P5P5_TM_ll.col(0)[iens][t][iconf]);
+	P5P5_TM_ll_m3[t].push_back( Sm3[iconf]*P5P5_TM_ll.col(0)[iens][t][iconf]);
+	P5P5_TM_ll_m4[t].push_back( Sm4[iconf]*P5P5_TM_ll.col(0)[iens][t][iconf]);
+	P5P5_TM_ll_m5[t].push_back( Sm5[iconf]*P5P5_TM_ll.col(0)[iens][t][iconf]);
+	P5P5_TM_ll_m6[t].push_back( Sm6[iconf]*P5P5_TM_ll.col(0)[iens][t][iconf]);
+	
+      }
+    }
+  
+    cout<<"Condensate correlated to Obs!"<<endl;
+
+  
+  
+    Jackknife J(10000,Njacks);
+
+    distr_t_list P5P5_TM_ll_m1_distr(UseJack);
+    distr_t_list P5P5_TM_ll_m2_distr(UseJack);
+    distr_t_list P5P5_TM_ll_m3_distr(UseJack);
+    distr_t_list P5P5_TM_ll_m4_distr(UseJack);
+    distr_t_list P5P5_TM_ll_m5_distr(UseJack);
+    distr_t_list P5P5_TM_ll_m6_distr(UseJack);
+    
+  
+    
+    for(int t=0;t<T;t++) {
+      
+      P5P5_TM_ll_m1_distr.distr_list.push_back(  J.DoJack( SEA_FUNC_OR, 3, P5P5_TM_ll_m1[t], P5P5_TM_ll.col(0)[iens][t], Sm1 ));
+      P5P5_TM_ll_m2_distr.distr_list.push_back(  J.DoJack( SEA_FUNC_OR, 3, P5P5_TM_ll_m2[t], P5P5_TM_ll.col(0)[iens][t], Sm2 ));
+      P5P5_TM_ll_m3_distr.distr_list.push_back(  J.DoJack( SEA_FUNC_OR, 3, P5P5_TM_ll_m3[t], P5P5_TM_ll.col(0)[iens][t], Sm3 ));
+      P5P5_TM_ll_m4_distr.distr_list.push_back(  J.DoJack( SEA_FUNC_OR, 3, P5P5_TM_ll_m4[t], P5P5_TM_ll.col(0)[iens][t], Sm4 ));
+      P5P5_TM_ll_m5_distr.distr_list.push_back(  J.DoJack( SEA_FUNC_OR, 3, P5P5_TM_ll_m5[t], P5P5_TM_ll.col(0)[iens][t], Sm5 ));
+      P5P5_TM_ll_m6_distr.distr_list.push_back(  J.DoJack( SEA_FUNC_OR, 3, P5P5_TM_ll_m6[t], P5P5_TM_ll.col(0)[iens][t], Sm6 ));
+    
+    }
+  
+
+    boost::filesystem::create_directory("../data/derivative_scaling");
+    boost::filesystem::create_directory("../data/derivative_scaling/"+P5P5_TM_ll.Tag[iens]);
+
+    Print_To_File({} , { P5P5_TM_ll_m1_distr.ave(), P5P5_TM_ll_m1_distr.err() } , "../data/derivative_scaling/"+P5P5_TM_ll.Tag[iens]+"/dP5P5_M1", "", "");
+    Print_To_File({} , { P5P5_TM_ll_m2_distr.ave(), P5P5_TM_ll_m2_distr.err() } , "../data/derivative_scaling/"+P5P5_TM_ll.Tag[iens]+"/dP5P5_M2", "", "");
+    Print_To_File({} , { P5P5_TM_ll_m3_distr.ave(), P5P5_TM_ll_m3_distr.err() } , "../data/derivative_scaling/"+P5P5_TM_ll.Tag[iens]+"/dP5P5_M3", "", "");
+    Print_To_File({} , { P5P5_TM_ll_m4_distr.ave(), P5P5_TM_ll_m4_distr.err() } , "../data/derivative_scaling/"+P5P5_TM_ll.Tag[iens]+"/dP5P5_M4", "", "");
+    Print_To_File({} , { P5P5_TM_ll_m5_distr.ave(), P5P5_TM_ll_m5_distr.err() } , "../data/derivative_scaling/"+P5P5_TM_ll.Tag[iens]+"/dP5P5_M5", "", "");
+    Print_To_File({} , { P5P5_TM_ll_m6_distr.ave(), P5P5_TM_ll_m6_distr.err() } , "../data/derivative_scaling/"+P5P5_TM_ll.Tag[iens]+"/dP5P5_M6", "", "");
+
+    
+    
+
+
+    
+    
+  }
+  
+
+
+  return;
+}

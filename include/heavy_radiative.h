@@ -17,10 +17,9 @@ void Get_plateaux_int_2pt_H_sm(string Ens, CorrAnalysis &Corr);
 void Get_plateaux_int_2pt_dH_loc(string Ens, string M, CorrAnalysis &Corr);
 void Get_plateaux_int_2pt_dH_sm(string Ens, string M, CorrAnalysis &Corr);
 void Get_plateaux_VEV_ratio(string Ens, string M, CorrAnalysis &Corr);
-void Get_plateaux_dmc(string Ens, string M, CorrAnalysis &Corr) ;
 
 void heavy_radiative();
-void heavy_radiative_test();
+void Get_chi_c1_decay();
 
 
 #endif

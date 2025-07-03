@@ -8,8 +8,7 @@ using namespace std;
 
 const double alpha = 1.0/137.035999;
 const bool UseJack = 1;
-const int Njacks = 347;
-const int Njacks_JJ=100;
+const int Njacks_JJ=150;
 const double qu = 2.0/3.0;
 const double qd = -qu/2.0;
 const double qc = qu;
@@ -30,7 +29,14 @@ const string Tg=(Use_V3) ? "V3P5": "V0P5";
 const string HS = (Is_Bs) ? "HSS" : "HSL";
 const string PA = (Is_Bs) ? "Ds" : "D";
 const string DT = (Is_Bs) ? "phi": "K";
-const bool Perform_spectral_reco=false;    
+const bool Perform_spectral_reco = true;
+const bool Use_conserved_current=true;
+const bool Skip_HLT = true;
+const double mom = 0.244;
+const double mhL = 2.81;
+const double mhS = 2.91;
+const double mk =0.4946;
+const double meta=0.6872;
 
 enum { COL1, COL2, DIR1, DIR2 };
 enum {
@@ -282,11 +288,10 @@ complex_distr_t_list glb_red_FERM4_T( const FERM4_T &A,  const vector<pair<int,i
 
 void Get_PINGU() {
 
+  //TEST_PI_Q2();
+
 
   omp_set_num_threads(4);
-
-
-  //PINGU_TEST();
 
   if(Perform_spectral_reco) {
     penguin_spectral_reco();
@@ -310,10 +315,7 @@ void Get_PINGU() {
     string A_bis= A.substr(pos_a_slash+1);
     string B_bis= B.substr(pos_b_slash+1);
 
-    //A_bis=A;
-    //B_bis=B;
-
-			     
+    			     
     string conf_num_A = A_bis.substr(0,4);
     string conf_num_B = B_bis.substr(0,4);
 							       
@@ -366,11 +368,23 @@ void Get_PINGU() {
     cout<<endl;
   }
 
+  //read confs list
+  vector<string> Confs;
+  ifstream read_conf("../PINGU/cB211b.072.64/confs_list_conserved");
+  while(! read_conf.eof()) {
+    string a;
+    read_conf >> a;
+    if(!read_conf.eof()) Confs.push_back(a);
+    
+  }
+  read_conf.close();
+  int Nconfs=Confs.size();
+  cout<<"Nconfs: "<<Nconfs<<endl;
 
   
   
   //load data
-  CorrAnalysis Corr(UseJack, Njacks,100);
+  CorrAnalysis Corr(UseJack, Nconfs,100);
   CorrAnalysis Corr_JJ(UseJack, Njacks_JJ,100);
   Corr.Nt=128; //B64
   Corr_JJ.Nt=128;
@@ -381,32 +395,19 @@ void Get_PINGU() {
   Corr_JJ.Perform_Nt_t_average=0; 
   
 
-  //read confs list
-  vector<string> Confs;
-  ifstream read_conf("../PINGU/cB211b.072.64/confs_list");
-  while(! read_conf.eof()) {
-    string a;
-    read_conf >> a;
-    if(!read_conf.eof()) Confs.push_back(a);
-    
-  }
-  read_conf.close();
+ 
 
   
-  int Nconfs=Confs.size();
-  cout<<"Nconfs: "<<Nconfs<<endl;
+  
     
   vector<vector<double>> NULL_VECTOR(T*T);
-  vector<vector<double>> NULL_VECTOR_JACK(T*T);
   vector<vector<double>> SNULL_VECTOR(T);
   for(int t=0;t<T*T;t++)
     for(int ic=0;ic<Nconfs;ic++) NULL_VECTOR[t].push_back(0.0);
   for(int t=0;t<T;t++)
     for(int ic=0;ic<Nconfs;ic++) SNULL_VECTOR[t].push_back(0.0);
 
-  for(int t=0;t<T*T;t++)
-    for(int ic=0;ic<Njacks;ic++) NULL_VECTOR_JACK[t].push_back(0.0);
-
+  
   complex_distr_t_list C_O1(0, NULL_VECTOR, NULL_VECTOR);
   complex_distr_t_list C_O2(0, NULL_VECTOR, NULL_VECTOR);
   complex_distr_t_list C_O1_odd(0, NULL_VECTOR, NULL_VECTOR);
@@ -424,11 +425,6 @@ void Get_PINGU() {
   complex_distr_t_list C_O2_not_ave_VV(0, NULL_VECTOR, NULL_VECTOR);
   complex_distr_t_list C_O2_not_ave_AA(0, NULL_VECTOR, NULL_VECTOR);
  
-
-  complex_distr_t_list C_O1_vacuum_VV(0, NULL_VECTOR_JACK, NULL_VECTOR_JACK);
-  complex_distr_t_list C_O1_vacuum_AA(0, NULL_VECTOR_JACK, NULL_VECTOR_JACK);
-  complex_distr_t_list C_O1_vacuum_VA(0, NULL_VECTOR_JACK, NULL_VECTOR_JACK);
-  complex_distr_t_list C_O1_vacuum_AV(0, NULL_VECTOR_JACK, NULL_VECTOR_JACK);
   
   complex_distr_t_list C_O2_odd(0, NULL_VECTOR, NULL_VECTOR);
   complex_distr_t_list C_O1_even(0, NULL_VECTOR, NULL_VECTOR);
@@ -437,7 +433,11 @@ void Get_PINGU() {
   complex_distr_t_list C_O1_AA_FIERZ(0, NULL_VECTOR, NULL_VECTOR);
   complex_distr_t_list C_O2_VV_FIERZ(0, NULL_VECTOR, NULL_VECTOR);
   complex_distr_t_list C_O2_AA_FIERZ(0, NULL_VECTOR, NULL_VECTOR);
-  complex_distr_t_list C_semlep(0, SNULL_VECTOR, SNULL_VECTOR);
+  complex_distr_t_list C_semlep_S0(0, SNULL_VECTOR, SNULL_VECTOR);
+  complex_distr_t_list C_semlep_V0(0, SNULL_VECTOR, SNULL_VECTOR);
+  complex_distr_t_list C_semlep_V3(0, SNULL_VECTOR, SNULL_VECTOR);
+  complex_distr_t_list C_semlep_A3(0, SNULL_VECTOR, SNULL_VECTOR);
+  complex_distr_t_list C_semlep_A3_ave(0, SNULL_VECTOR, SNULL_VECTOR);
   complex_distr_t_list C_etacc(0, SNULL_VECTOR, SNULL_VECTOR);
 
   
@@ -492,8 +492,10 @@ void Get_PINGU() {
 		string conf= Confs[iconf];
 		string File_T = "../PINGU/cB211b.072.64/"+conf+"/TT_"+coldir_str+"."+to_string(ihit+1);
 		string File_T_RP = "../PINGU/cB211b.072.64/"+conf+"/TT_"+coldir_str_RP+"."+to_string(ihit+1);
+		string File_T_CONS = "../PINGU_CONSERVED/cB211b.072.64/"+conf+"/TT_CONS_"+coldir_str+"."+to_string(ihit+1);
+		string File_T_CONS_RP = "../PINGU_CONSERVED/cB211b.072.64/"+conf+"/TT_CONS_"+coldir_str_RP+"."+to_string(ihit+1);
 
-		
+		VVfloat T_CONS_RE(4), T_CONS_IM(4), T_RP_CONS_RE(4), T_RP_CONS_IM(4);
 		VVfloat T_P5P5_RE(6), T_P5P5_IM(6), T_VKP5_RE(6), T_VKP5_IM(6);
 		VVfloat T_RP_P5P5_RE(6), T_RP_P5P5_IM(6), T_RP_VKP5_RE(6), T_RP_VKP5_IM(6); 
 		string dummy="";
@@ -543,23 +545,50 @@ void Get_PINGU() {
 		  }
 		}
 		read.close();
+
+		file=File_T_CONS;
+		read.open(file);
+		getline(read,dummy);
+		getline(read,dummy);
+		for(int t=0;t<T;t++) {
+		  for(int ic=0;ic<(signed)T_CONS_RE.size();ic++) {
+		    double re, im;
+		    read>>re>>im;
+		    T_CONS_RE[ic].push_back(re);
+		    T_CONS_IM[ic].push_back(im);
+		  }
+		}
+		read.close();
+		file=File_T_CONS_RP;
+		read.open(file);
+		getline(read,dummy);
+		getline(read,dummy);
+		for(int t=0;t<T;t++) {
+		  for(int ic=0;ic<(signed)T_RP_CONS_RE.size();ic++) {
+		    double re, im;
+		    read>>re>>im;
+		    T_RP_CONS_RE[ic].push_back(re);
+		    T_RP_CONS_IM[ic].push_back(im);
+		  }
+		}
+		
 	
 		//push_back
 		//CC
 		for(int t=0;t< T;t++) {
 		  READ_CC_P5P5_RE[t].push_back( T_P5P5_RE[4][t]);
 		  READ_CC_P5P5_IM[t].push_back( T_P5P5_IM[4][t]);
-		  READ_CC_VK_RE[t].push_back( T_VKP5_RE[4][t]);
-		  READ_CC_VK_IM[t].push_back( T_VKP5_IM[4][t]);
+		  READ_CC_VK_RE[t].push_back( (Use_conserved_current)?T_CONS_RE[2][t]:T_VKP5_RE[4][t]);  //cons or RE
+		  READ_CC_VK_IM[t].push_back( (Use_conserved_current)?T_CONS_IM[2][t]:T_VKP5_IM[4][t]);  //cons or RE
 		  //CC REV
-		  READ_CC_VK_REV_RE[t].push_back( T_VKP5_RE[5][t]);
-		  READ_CC_VK_REV_IM[t].push_back( T_VKP5_IM[5][t]);
+		  READ_CC_VK_REV_RE[t].push_back( (Use_conserved_current)?T_CONS_RE[3][t]:T_VKP5_RE[5][t]); //cons or RE
+		  READ_CC_VK_REV_IM[t].push_back( (Use_conserved_current)?T_CONS_IM[3][t]:T_VKP5_IM[5][t]); //cons or RE
 		  //CC RP
-		  READ_CC_VK_RP_RE[t].push_back( T_RP_VKP5_RE[4][t]);
-		  READ_CC_VK_RP_IM[t].push_back( T_RP_VKP5_IM[4][t]);
+		  READ_CC_VK_RP_RE[t].push_back( (Use_conserved_current)?T_RP_CONS_RE[2][t]:T_RP_VKP5_RE[4][t]); //cons or RE
+		  READ_CC_VK_RP_IM[t].push_back( (Use_conserved_current)?T_RP_CONS_IM[2][t]:T_RP_VKP5_IM[4][t]); //cons or RE
 		  //CC RP REV
-		  READ_CC_VK_RP_REV_RE[t].push_back( T_RP_VKP5_RE[5][t]);
-		  READ_CC_VK_RP_REV_IM[t].push_back( T_RP_VKP5_IM[5][t]);
+		  READ_CC_VK_RP_REV_RE[t].push_back( (Use_conserved_current)?T_RP_CONS_RE[3][t]:T_RP_VKP5_RE[5][t]); //cons or RE
+		  READ_CC_VK_RP_REV_IM[t].push_back( (Use_conserved_current)?T_RP_CONS_IM[3][t]:T_RP_VKP5_IM[5][t]); //cons or RE
 		  //HH
 		  int offset= (Is_Bs)?2:0;
 		  READ_S_RE[t].push_back( T_P5P5_RE[0+offset][t]);
@@ -567,24 +596,24 @@ void Get_PINGU() {
 		  //HH REV
 		  READ_S_REV_RE[t].push_back( T_P5P5_RE[1+offset][t]);
 		  READ_S_REV_IM[t].push_back( T_P5P5_IM[1+offset][t]);
-		
+		  
 		}
 	      }
-
+	      
 	      T_cc_P.T_list[pos] = complex_distr_t_list(0, READ_CC_P5P5_RE, READ_CC_P5P5_IM );
 	      T_cc_VK.T_list[pos] = complex_distr_t_list( 0 , summ_master(READ_CC_VK_RE, Multiply_Vvector_by_scalar(READ_CC_VK_RP_REV_RE,-1.0*r_average_charm)), summ_master(READ_CC_VK_IM, Multiply_Vvector_by_scalar(READ_CC_VK_RP_REV_IM, 1.0*r_average_charm)));
 	      S_cc.T_list[pos] = complex_distr_t_list( 0,  READ_S_RE , READ_S_IM ) ;
 	      T_cc_VK_REV.T_list[pos] = complex_distr_t_list( 0 , summ_master(READ_CC_VK_REV_RE, Multiply_Vvector_by_scalar(READ_CC_VK_RP_RE,-1.0*r_average_charm)), summ_master(READ_CC_VK_REV_IM,Multiply_Vvector_by_scalar(READ_CC_VK_RP_IM, 1.0*r_average_charm) ) );
 	      S_cc_REV.T_list[pos] = complex_distr_t_list( 0,  READ_S_REV_RE , READ_S_REV_IM ) ;
 	      
-
-	  
+	      
+	      
 	      
 
-	     
-	     
-
-	    
+	      
+	      
+	      
+	      
 	    }
 
     
@@ -601,8 +630,17 @@ void Get_PINGU() {
       FERM4_T T_cc_GAMMA_VV_REV;
       FERM4_T T_cc_GAMMA_AV_REV;
       FERM4_T T_cc_GAMMA_VA_REV;
-    
-      FERM4_T S_cc_TEST;
+
+      FERM4_T S_cc_S0;
+      FERM4_T S_cc_V0;
+      FERM4_T S_cc_V3;
+      FERM4_T S_cc_A3;
+
+      FERM4_T S_cc_S0_REV;
+      FERM4_T S_cc_V0_REV;
+      FERM4_T S_cc_V3_REV;
+      FERM4_T S_cc_A3_REV;
+      
       FERM4_T T_cc_TEST;
       FERM4_T T_cc_VKV3, T_cc_VKA3, T_cc_VKA0, T_cc_VKV0;
      
@@ -717,6 +755,9 @@ void Get_PINGU() {
 	FERM4_T_gprod(out_V, out_VA, complex_prod_matr( NG.G5PROD(D), NG.G[4]), DIR2);
 	out_V.free_mem();
 
+
+	
+
 	//ADDITIONAL CONTRACTION FOR FIERZING
        
 	FERM4_T_gprod(T_cc_VK, T_cc_GMU, complex_prod_matr( NG.G[D], NG.G[4]), DIR2);
@@ -794,8 +835,17 @@ void Get_PINGU() {
 
       }
 
+      FERM4_T_gprod(S_cc, S_cc_S0, NG.G[4], DIR1);
+      FERM4_T_gprod(S_cc, S_cc_V0, complex_prod_matr(NG.G[0],NG.G[4]), DIR2);
+      FERM4_T_gprod(S_cc, S_cc_V3, complex_prod_matr(NG.G[3],NG.G[4]), DIR2);
+      FERM4_T_gprod(S_cc, S_cc_A3, NG.G[3], DIR2);
+
+      FERM4_T_gprod(S_cc_REV, S_cc_S0_REV, NG.G[4], DIR1);
+      FERM4_T_gprod(S_cc_REV, S_cc_V0_REV, complex_prod_matr(NG.G[0],NG.G[4]), DIR2);
+      FERM4_T_gprod(S_cc_REV, S_cc_V3_REV, complex_prod_matr(NG.G[3],NG.G[4]), DIR2);
+      FERM4_T_gprod(S_cc_REV, S_cc_A3_REV, NG.G[3], DIR2);
+
       
-      FERM4_T_gprod(S_cc, S_cc_TEST, NG.G[4], DIR1);
       FERM4_T_gprod(T_cc_VK, T_cc_VKV3, NG.G5PROD(3), DIR1);
       FERM4_T_gprod(T_cc_VK, T_cc_VKV0, NG.G5PROD(0), DIR1);
       FERM4_T_gprod(T_cc_VK, T_cc_VKA3, NG.G[3], DIR1);
@@ -848,8 +898,15 @@ void Get_PINGU() {
       complex_distr_t_list RES_O1_VA_REV = glb_red_FERM4_T( T_cc_GAMMA_VA_REV, S_cc, RULE_O1 );
       complex_distr_t_list RES_O2_VA_REV = glb_red_FERM4_T( T_cc_GAMMA_VA_REV, S_cc, RULE_O2 );
 
- 
-      complex_distr_t_list RES_V0S = glb_red_FERM4_T(S_cc_TEST, RULE_SINGLE);
+      complex_distr_t_list RES_S0S = glb_red_FERM4_T(S_cc_S0, RULE_SINGLE);
+      complex_distr_t_list RES_V0S = glb_red_FERM4_T(S_cc_V0, RULE_SINGLE);
+      complex_distr_t_list RES_V3S = glb_red_FERM4_T(S_cc_V3, RULE_SINGLE);
+      complex_distr_t_list RES_A3S = glb_red_FERM4_T(S_cc_A3, RULE_SINGLE);
+
+      complex_distr_t_list RES_S0S_REV = glb_red_FERM4_T(S_cc_S0_REV, RULE_SINGLE);
+      complex_distr_t_list RES_V0S_REV = glb_red_FERM4_T(S_cc_V0_REV, RULE_SINGLE);
+      complex_distr_t_list RES_V3S_REV = glb_red_FERM4_T(S_cc_V3_REV, RULE_SINGLE);
+      complex_distr_t_list RES_A3S_REV = glb_red_FERM4_T(S_cc_A3_REV, RULE_SINGLE);
     
       complex_distr_t_list RES_P5P5_cc = glb_red_FERM4_T(T_cc_P, RULE_SINGLE);
 
@@ -872,15 +929,16 @@ void Get_PINGU() {
      
       C_O1 = C_O1 +  0.5*(RES_O1 +GLB_SIGN_REV*RES_O1_REV)/Nhits;
       C_O2 = C_O2 +  0.5*(RES_O2 +GLB_SIGN_REV*RES_O2_REV)/Nhits;
-    
-      
+
+              
+      C_O1_even = C_O1_even + 0.5*(RES_O1_AA +RES_O1_VV + GLB_SIGN_REV*RES_O1_AA_REV+ GLB_SIGN_REV*RES_O1_VV_REV)/Nhits;
+      C_O2_even = C_O2_even + 0.5*(RES_O2_AA +RES_O2_VV + GLB_SIGN_REV*RES_O2_AA_REV+ GLB_SIGN_REV*RES_O2_VV_REV)/Nhits;
+
+  
       C_O1_odd = C_O1_odd -0.5*(RES_O1_AV +RES_O1_VA + GLB_SIGN_REV*RES_O1_AV_REV + GLB_SIGN_REV*RES_O1_VA_REV)/Nhits;
       C_O2_odd = C_O2_odd -0.5*(RES_O2_AV + RES_O2_VA + GLB_SIGN_REV*RES_O2_AV_REV + GLB_SIGN_REV*RES_O2_VA_REV)/Nhits;
 
-          
-      C_O1_even = C_O1_even + 0.5*(RES_O1_AA +RES_O1_VV + GLB_SIGN_REV*RES_O1_AA_REV+ GLB_SIGN_REV*RES_O1_VV_REV)/Nhits;
-      C_O2_even = C_O2_even + 0.5*(RES_O2_AA +RES_O2_VV + GLB_SIGN_REV*RES_O2_AA_REV+ GLB_SIGN_REV*RES_O2_VV_REV)/Nhits;
-      
+        
       C_O1_VV = C_O1_VV + 0.5*(RES_O1_VV+ GLB_SIGN_REV*RES_O1_VV_REV)/Nhits;
       C_O1_AA = C_O1_AA + 0.5*(RES_O1_AA+ GLB_SIGN_REV*RES_O1_AA_REV)/Nhits;
       C_O1_VA = C_O1_VA + 0.5*(RES_O1_VA+ GLB_SIGN_REV*RES_O1_VA_REV)/Nhits;
@@ -889,7 +947,7 @@ void Get_PINGU() {
       C_O1_not_ave_VV = C_O1_not_ave_VV + RES_O1_VV/Nhits;
       C_O1_not_ave_AA = C_O1_not_ave_AA + RES_O1_AA/Nhits;
 
-          
+            
       C_O2_VV = C_O2_VV + 0.5*(RES_O2_VV+ GLB_SIGN_REV*RES_O2_VV_REV)/Nhits;
       C_O2_AA = C_O2_AA + 0.5*(RES_O2_AA+ GLB_SIGN_REV*RES_O2_AA_REV)/Nhits;
       C_O2_VA = C_O2_VA + 0.5*(RES_O2_VA+ GLB_SIGN_REV*RES_O2_VA_REV)/Nhits;
@@ -899,17 +957,20 @@ void Get_PINGU() {
       C_O2_not_ave_AA = C_O2_not_ave_AA + RES_O2_AA/Nhits;
 
           
-
+      C_semlep_S0 = C_semlep_S0 + 0.5*( RES_S0S + RES_S0S_REV)/Nhits;
+      C_semlep_V0 = C_semlep_V0 + 0.5*( RES_V0S + RES_V0S_REV)/Nhits;
+      C_semlep_V3 = C_semlep_V3 + 0.5*( RES_V3S - RES_V3S_REV)/Nhits;
+      C_semlep_A3 = C_semlep_A3 + RES_A3S/Nhits;
+      C_semlep_A3_ave = C_semlep_A3_ave + 0.5*( RES_A3S - RES_A3S_REV)/Nhits;
       
-          
-      C_semlep = C_semlep + RES_V0S/Nhits;
       C_etacc = C_etacc + RES_P5P5_cc/Nhits;
       
       C_cc_VKV3 = C_cc_VKV3 + RES_VKV3_cc/Nhits;
       C_cc_VKV0 = C_cc_VKV0 + RES_VKV0_cc/Nhits;
       C_cc_VKA3 = C_cc_VKA3 + RES_VKA3_cc/Nhits;
       C_cc_VKA0 = C_cc_VKA0 + RES_VKA0_cc/Nhits;
-            
+
+              
       C_O1_VV_FIERZ = C_O1_VV_FIERZ + 0.5*(RES_O1_VV_FIERZ + GLB_SIGN_REV*RES_O1_VV_FIERZ_REV)/Nhits;
       C_O1_AA_FIERZ = C_O1_AA_FIERZ + 0.5*(RES_O1_AA_FIERZ + GLB_SIGN_REV*RES_O1_AA_FIERZ_REV)/Nhits;
 
@@ -934,15 +995,7 @@ void Get_PINGU() {
   cout<<"Contractions computed!"<<flush<<endl;
    
 
-  // cout<<"TEST: iconf: "<<Nconfs<<endl;
-  //for(int t=0;t<10;t++) {
-  //cout<<t<<" "<<C_semlep.distr_list[t].RE.distr[Nconfs-1]<<" "<<C_semlep.distr_list[t].IM.distr[Nconfs-1]<<endl;
-  //}
-  //cout<<"#####"<<endl;
-
-
    
-  
   //load 2pt function
 
   data_t pt2_B, pt2_K;
@@ -965,12 +1018,12 @@ void Get_PINGU() {
   //amputate
 
   if(Is_Bs) {
-    Corr.Tmin=12;
+    Corr.Tmin=15;
     Corr.Tmax=20; 
   }
   else {
-    Corr.Tmin=8;
-    Corr.Tmax=12;
+    Corr.Tmin=15;
+    Corr.Tmax=20;
   }
 
   Corr_JJ.Tmin=Corr.Tmin;
@@ -989,11 +1042,11 @@ void Get_PINGU() {
   distr_t MB_JJ = Corr_JJ.Fit_distr(MB_distr_JJ);
 
   if(Is_Bs) {
-    Corr.Tmin=13;
+    Corr.Tmin=15;
     Corr.Tmax=45;
   }
   else {
-    Corr.Tmin=11;
+    Corr.Tmin=15;
     Corr.Tmax=21;
   }
 
@@ -1013,10 +1066,12 @@ void Get_PINGU() {
 
   distr_t amp_B = (ZB/(2.0*MB))*EXP_D(-t_O4*MB);
   distr_t amp_B_JJ = (ZB_JJ/(2.0*MB_JJ))*EXP_D(-t_O4*MB_JJ);
+  distr_t_list amp_Ksem = (ZK/(2.0*MK))*EXPT_D(-1.0*MK,Corr.Nt)*EXP_D(MK*t_O4);
 
 
   double a= 0.0795*fm_to_inv_Gev;
 
+  
  
 
   Corr.Perform_Nt_t_average=0;
@@ -1050,7 +1105,7 @@ void Get_PINGU() {
   C_O1_AA= complex_distr_t_list(Corr.corr_t( C_O1_AA.Get_vvector(0),""), Corr.corr_t( C_O1_AA.Get_vvector(1), ""));
 
   C_O1_not_ave_VV= complex_distr_t_list(Corr.corr_t( C_O1_not_ave_VV.Get_vvector(0),""), Corr.corr_t( C_O1_not_ave_VV.Get_vvector(1), ""));
-  C_O1_not_ave_AA= complex_distr_t_list(Corr.corr_t( C_O1_not_ave_AA.Get_vvector(0),""), Corr.corr_t( C_O1_not_ave_AA.Get_vvector(1), ""));
+   C_O1_not_ave_AA= complex_distr_t_list(Corr.corr_t( C_O1_not_ave_AA.Get_vvector(0),""), Corr.corr_t( C_O1_not_ave_AA.Get_vvector(1), ""));
 
   C_O2_VV= complex_distr_t_list(Corr.corr_t( C_O2_VV.Get_vvector(0),""), Corr.corr_t( C_O2_VV.Get_vvector(1), ""));
   C_O2_AV= complex_distr_t_list(Corr.corr_t( C_O2_AV.Get_vvector(0),""), Corr.corr_t( C_O2_AV.Get_vvector(1), ""));
@@ -1066,14 +1121,28 @@ void Get_PINGU() {
   C_O1_vacuum_VA= complex_distr_t_list(Corr.corr_t( C_O1_vacuum_VA.Get_vvector(0),""), Corr.corr_t( C_O1_vacuum_VA.Get_vvector(1), ""));
   C_O1_vacuum_AA= complex_distr_t_list(Corr.corr_t( C_O1_vacuum_AA.Get_vvector(0),""), Corr.corr_t( C_O1_vacuum_AA.Get_vvector(1), ""));
   */
-  Corr.Nt= C_semlep.size();
-  C_semlep= complex_distr_t_list(Corr.corr_t( C_semlep.Get_vvector(0),""), Corr.corr_t( C_semlep.Get_vvector(1), ""));
+
+  
+  Corr.Nt= C_semlep_S0.size();
+  
+  C_semlep_S0= V4*complex_distr_t_list(Corr.corr_t( C_semlep_S0.Get_vvector(0),""), Corr.corr_t( C_semlep_S0.Get_vvector(1), ""))/(amp_B*amp_Ksem);
+  C_semlep_V0= V4*complex_distr_t_list(Corr.corr_t( C_semlep_V0.Get_vvector(0),""), Corr.corr_t( C_semlep_V0.Get_vvector(1), ""))/(amp_B*amp_Ksem);
+  C_semlep_V3= V4*complex_distr_t_list(Corr.corr_t( C_semlep_V3.Get_vvector(0),""), Corr.corr_t( C_semlep_V3.Get_vvector(1), ""))/(amp_B*amp_Ksem);
+  C_semlep_A3= V4*complex_distr_t_list(Corr.corr_t( C_semlep_A3.Get_vvector(0),""), Corr.corr_t( C_semlep_A3.Get_vvector(1), ""))/(amp_B*amp_Ksem);
+  C_semlep_A3_ave= V4*complex_distr_t_list(Corr.corr_t( C_semlep_A3_ave.Get_vvector(0),""), Corr.corr_t( C_semlep_A3_ave.Get_vvector(1), ""))/(amp_B*amp_Ksem);
+    
   C_etacc= complex_distr_t_list(Corr.corr_t( C_etacc.Get_vvector(0),""), Corr.corr_t( C_etacc.Get_vvector(1), ""));
 
   C_cc_VKV3 = complex_distr_t_list( Corr.corr_t( C_cc_VKV3.Get_vvector(0), ""), Corr.corr_t( C_cc_VKV3.Get_vvector(1), ""));
   C_cc_VKV0 = complex_distr_t_list( Corr.corr_t( C_cc_VKV0.Get_vvector(0), ""), Corr.corr_t( C_cc_VKV0.Get_vvector(1), ""));
   C_cc_VKA3 = complex_distr_t_list( Corr.corr_t( C_cc_VKA3.Get_vvector(0), ""), Corr.corr_t( C_cc_VKA3.Get_vvector(1), ""));
   C_cc_VKA0 = complex_distr_t_list( Corr.corr_t( C_cc_VKA0.Get_vvector(0), ""), Corr.corr_t( C_cc_VKA0.Get_vvector(1), ""));
+
+
+
+  Print_To_File({}, { C_semlep_A3.RE_ave(), C_semlep_A3.RE_err(), C_semlep_A3.IM_ave(), C_semlep_A3.IM_err() }, "../data/PINGU/C_sem_A3","","");
+  Print_To_File({}, { C_semlep_A3_ave.RE_ave(), C_semlep_A3_ave.RE_err(), C_semlep_A3_ave.IM_ave(), C_semlep_A3_ave.IM_err() }, "../data/PINGU/C_sem_A3_ave","","");
+  Print_To_File({}, { C_semlep_V3.RE_ave(), C_semlep_V3.RE_err(), C_semlep_V3.IM_ave(), C_semlep_V3.IM_err() }, "../data/PINGU/C_sem_V3","","");
 
   
    
@@ -1100,9 +1169,7 @@ void Get_PINGU() {
   vector<complex_distr_t_list> C_O1_not_ave_VV_ord, C_O1_not_ave_AA_ord;
   vector<complex_distr_t_list> C_O2_not_ave_VV_ord, C_O2_not_ave_AA_ord;
 
-  vector<complex_distr_t_list> C_O1_vacuum_VV_ord, C_O1_vacuum_AA_ord, C_O1_vacuum_AV_ord, C_O1_vacuum_VA_ord;
-  
-  
+   
   for(int t=0;t<T;t++) {
     C_O2_ord.emplace_back(UseJack); C_O1_ord.emplace_back(UseJack);
     C_O1_AA_FIERZ_ord.emplace_back(UseJack); C_O1_VV_FIERZ_ord.emplace_back(UseJack);
@@ -1116,11 +1183,9 @@ void Get_PINGU() {
     C_O2_VV_ord.emplace_back(UseJack); C_O2_AA_ord.emplace_back(UseJack); C_O2_AV_ord.emplace_back(UseJack); C_O2_VA_ord.emplace_back(UseJack);
 
     C_O1_not_ave_VV_ord.emplace_back(UseJack); C_O1_not_ave_AA_ord.emplace_back(UseJack); 
-    C_O2_not_ave_VV_ord.emplace_back(UseJack); C_O2_not_ave_AA_ord.emplace_back(UseJack); 
-    
+    C_O2_not_ave_VV_ord.emplace_back(UseJack); C_O2_not_ave_AA_ord.emplace_back(UseJack);
 
-    C_O1_vacuum_VV_ord.emplace_back(UseJack); C_O1_vacuum_AA_ord.emplace_back(UseJack); C_O1_vacuum_AV_ord.emplace_back(UseJack); C_O1_vacuum_VA_ord.emplace_back(UseJack);
-    
+        
   }
 
   for(int ts=0;ts<T;ts++) {
@@ -1132,6 +1197,8 @@ void Get_PINGU() {
       int tt = tem + ts*T;
 
       distr_t amp_K = (ZK/(2.0*MK))*EXP_D(-1.0*MK*(ts-tem));
+     
+      
       distr_t amp_K_JJ = (ZK_JJ/(2.0*MK_JJ))*EXP_D(-1.0*MK_JJ*(ts-tem));
 
       C_O1_ord[ts].distr_list.push_back( V4*V4*C_O1.distr_list[tt]/(amp_B*amp_K) );
@@ -1173,27 +1240,16 @@ void Get_PINGU() {
       C_O2_not_ave_VV_ord[ts].distr_list.push_back( V4*V4*C_O2_not_ave_VV.distr_list[tt]/(amp_B*amp_K));
       C_O2_not_ave_AA_ord[ts].distr_list.push_back( V4*V4*C_O2_not_ave_AA.distr_list[tt]/(amp_B*amp_K));
 
-   
-	   
 
-      /*
-      C_O1_vacuum_VV_ord[ts].distr_list.push_back( V4*V4*C_O1_vacuum_VV.distr_list[tt]/(amp_B*amp_K));
-      C_O1_vacuum_AV_ord[ts].distr_list.push_back( V4*V4*C_O1_vacuum_AV.distr_list[tt]/(amp_B*amp_K));
-      C_O1_vacuum_AA_ord[ts].distr_list.push_back( V4*V4*C_O1_vacuum_AA.distr_list[tt]/(amp_B*amp_K));
-      C_O1_vacuum_VA_ord[ts].distr_list.push_back( V4*V4*C_O1_vacuum_VA.distr_list[tt]/(amp_B*amp_K));
-      
-      */
     }
   }
 
  
-
-  
  
   cout<<"MB: "<<MB.ave()/a<<" "<<MB.err()/a<<endl;
   cout<<"MK: "<<MK.ave()/a<<" "<<MK.err()/a<<endl;
 
-  cout<<"ampB: "<<amp_B.ave()<<" "<<amp_B.err()<<endl;
+  //cout<<"ampB: "<<amp_B.ave()<<" "<<amp_B.err()<<endl;
 
 
   C_etacc = C_etacc*V4;
@@ -1250,13 +1306,36 @@ void Get_PINGU() {
   distr_t_list metac = Corr.effective_mass_t( C_etac_NEW, "../data/PINGU/m_etac");
   distr_t_list metac_IM = Corr.effective_mass_t( C_etac_NEW_IM, "../data/PINGU/m_etac_IM");
 
-  distr_t_list m_V3V3 = Corr.effective_mass_t( C_cc_VKV3_NEW, "../data/PINGU/m_V3V3"); distr_t_list m_V3V3_IM = Corr.effective_mass_t( C_cc_VKV3_NEW_IM, "../data/PINGU/m_VKV3_IM");
-  distr_t_list m_V3V0 = Corr.effective_mass_t( C_cc_VKV0_NEW, "../data/PINGU/m_V3V0"); distr_t_list m_V3V0_IM = Corr.effective_mass_t( C_cc_VKV0_NEW_IM, "../data/PINGU/m_VKV0_IM");
-  distr_t_list m_V3A3 = Corr.effective_mass_t( C_cc_VKA3_NEW, "../data/PINGU/m_V3A3"); distr_t_list m_V3A3_IM = Corr.effective_mass_t( C_cc_VKA3_NEW_IM, "../data/PINGU/m_VKA3_IM");
-  distr_t_list m_V3A0 = Corr.effective_mass_t( C_cc_VKA0_NEW, "../data/PINGU/m_V3A0"); distr_t_list m_V3A0_IM = Corr.effective_mass_t( C_cc_VKA0_NEW_IM, "../data/PINGU/m_VKA0_IM");
+  distr_t_list m_V3V3 = Corr.effective_mass_t( C_cc_VKV3_NEW, "../data/PINGU/m_V3V3"); distr_t_list m_V3V3_IM = Corr.effective_mass_t( C_cc_VKV3_NEW_IM, "../data/PINGU/m_V3V3_IM");
+  distr_t_list m_V3V0 = Corr.effective_mass_t( C_cc_VKV0_NEW, "../data/PINGU/m_V3V0"); distr_t_list m_V3V0_IM = Corr.effective_mass_t( C_cc_VKV0_NEW_IM, "../data/PINGU/m_V3V0_IM");
+  distr_t_list m_V3A3 = Corr.effective_mass_t( C_cc_VKA3_NEW, "../data/PINGU/m_V3A3"); distr_t_list m_V3A3_IM = Corr.effective_mass_t( C_cc_VKA3_NEW_IM, "../data/PINGU/m_V3A3_IM");
+  distr_t_list m_V3A0 = Corr.effective_mass_t( C_cc_VKA0_NEW, "../data/PINGU/m_V3A0"); distr_t_list m_V3A0_IM = Corr.effective_mass_t( C_cc_VKA0_NEW_IM, "../data/PINGU/m_V3A0_IM");
 
+  Print_To_File({} , { C_cc_VKV3_NEW.ave(), C_cc_VKV3_NEW.err(), C_cc_VKV3_NEW_IM.ave(), C_cc_VKV3_NEW_IM.err() }, "../data/PINGU/C_cc_V3V3","","");
+  Print_To_File({} , { C_cc_VKV0_NEW.ave(), C_cc_VKV0_NEW.err(), C_cc_VKV0_NEW_IM.ave(), C_cc_VKV3_NEW_IM.err() }, "../data/PINGU/C_cc_V3V0","","");
+  Print_To_File({} , { C_cc_VKA3_NEW.ave(), C_cc_VKA3_NEW.err(), C_cc_VKA3_NEW_IM.ave(), C_cc_VKA3_NEW_IM.err() }, "../data/PINGU/C_cc_V3A3","","");
+  Print_To_File({} , { C_cc_VKA0_NEW.ave(), C_cc_VKA0_NEW.err(), C_cc_VKA0_NEW_IM.ave(), C_cc_VKA0_NEW_IM.err() }, "../data/PINGU/C_cc_V3A0","","");
   
-  
+
+
+  //construct semileptonic form factors
+  double aml=0.00072;
+  double amh=0.463134;
+  double ams=0.0182782;
+  double ak= 2.0*M_PI/64;
+  distr_t MK0 = SQRT_D( MK*MK - ak*ak);
+
+  distr_t_list f0_WI = C_semlep_S0.RE()*(amh - ams)/(MB*MB -MK0*MK0);
+  distr_t_list f_par = -1.0*C_semlep_V0.RE();
+  distr_t_list f_perp = (1.0/ak)*C_semlep_V3.IM();
+  distr_t_list f0 = (MB-MK)*f_par/(MB*MB - MK0*MK0) + (ak*ak)*f_perp/(MB*MB - MK0*MK0);
+  distr_t_list f_plus = (0.5/MB)*f_par + (0.5/MB)*(MB-MK)*f_perp;
+
+  Print_To_File({}, { f0_WI.ave(), f0_WI.err()}, "../data/PINGU/f0_WI", "", "");
+  Print_To_File({}, { f_par.ave(), f_par.err()}, "../data/PINGU/f_par", "", "");
+  Print_To_File({}, { f_perp.ave(), f_perp.err()}, "../data/PINGU/f_perp", "", "");
+  Print_To_File({}, { f0.ave(), f0.err()}, "../data/PINGU/f0", "", "");
+  Print_To_File({}, { f_plus.ave(), f_plus.err()}, "../data/PINGU/f_plus", "", "");
 
   Corr.Perform_Nt_t_average=1;
 
@@ -1306,14 +1385,7 @@ void Get_PINGU() {
     Print_To_File({}, {C_O2_not_ave_VV_ord[ts].RE_ave(), C_O2_not_ave_VV_ord[ts].RE_err(), C_O2_not_ave_VV_ord[ts].IM_ave(), C_O2_not_ave_VV_ord[ts].IM_err() },    "../data/PINGU/C_O2_not_ave_VV_ts_"+to_string(ts) , "", "");
     Print_To_File({}, {C_O2_not_ave_AA_ord[ts].RE_ave(), C_O2_not_ave_AA_ord[ts].RE_err(), C_O2_not_ave_AA_ord[ts].IM_ave(), C_O2_not_ave_AA_ord[ts].IM_err() },    "../data/PINGU/C_O2_not_ave_AA_ts_"+to_string(ts) , "", "");
 
-    //distr_t_list NORM= C_O1_vacuum_VV_ord[ts].RE();
-    /*
-    Print_To_File({}, {C_O1_vacuum_VV_ord[ts].RE_ave(), C_O1_vacuum_VV_ord[ts].RE_err(), (C_O1_vacuum_VV_ord[ts]/NORM).IM_ave(), (C_O1_vacuum_VV_ord[ts]/NORM).IM_err() },    "../data/PINGU/C_O1_vacuum_VV_ts_"+to_string(ts) , "", "");
-    Print_To_File({}, { (C_O1_vacuum_AA_ord[ts]/NORM).RE_ave(), (C_O1_vacuum_AA_ord[ts]/NORM).RE_err(), (C_O1_vacuum_AA_ord[ts]/NORM).IM_ave(), (C_O1_vacuum_AA_ord[ts]/NORM).IM_err() },    "../data/PINGU/C_O1_vacuum_AA_ts_"+to_string(ts) , "", "");
-    Print_To_File({}, { (C_O1_vacuum_AV_ord[ts]/NORM).RE_ave(), (C_O1_vacuum_AV_ord[ts]/NORM).RE_err(), (C_O1_vacuum_AV_ord[ts]/NORM).IM_ave(), (C_O1_vacuum_AV_ord[ts]/NORM).IM_err() },    "../data/PINGU/C_O1_vacuum_AV_ts_"+to_string(ts) , "", "");
-    Print_To_File({}, { (C_O1_vacuum_VA_ord[ts]/NORM).RE_ave(), (C_O1_vacuum_VA_ord[ts]/NORM).RE_err(), (C_O1_vacuum_VA_ord[ts]/NORM).IM_ave(), (C_O1_vacuum_VA_ord[ts]/NORM).IM_err() },    "../data/PINGU/C_O1_vacuum_VA_ts_"+to_string(ts) , "", "");
-    */
-    
+       
     Print_To_File({}, {C_Oplus_ord.RE_ave(), C_Oplus_ord.RE_err(), C_Oplus_ord.IM_ave(), C_Oplus_ord.IM_err() },    "../data/PINGU/C_Oplus_ts_"+to_string(ts) , "", "");
     Print_To_File({}, {C_Ominus_ord.RE_ave(), C_Ominus_ord.RE_err(), C_Ominus_ord.IM_ave(), C_Ominus_ord.IM_err() },    "../data/PINGU/C_Ominus_ts_"+to_string(ts) , "", "");
 
@@ -1379,13 +1451,13 @@ void Get_PINGU() {
      
       ofstream print_O1("../data/PINGU/jackknife/"+HS+"/C_O1_ts_"+to_string(ts)+"_t_"+to_string(t)+".dat");
       print_O1.precision(10);  
-      for(int ijack=0;ijack<Njacks;ijack++) print_O1 << C_O1_AA_FIERZ_ord[ts].distr_list[t].RE.distr[ijack]<<" "<<C_O1_AA_FIERZ_ord[ts].distr_list[t].IM.distr[ijack]<<" "<<C_O1_VV_FIERZ_ord[ts].distr_list[t].RE.distr[ijack]<<" "<<C_O1_VV_FIERZ_ord[ts].distr_list[t].IM.distr[ijack]<<endl;
+      for(int ijack=0;ijack<Nconfs;ijack++) print_O1 << C_O1_AA_FIERZ_ord[ts].distr_list[t].RE.distr[ijack]<<" "<<C_O1_AA_FIERZ_ord[ts].distr_list[t].IM.distr[ijack]<<" "<<C_O1_VV_FIERZ_ord[ts].distr_list[t].RE.distr[ijack]<<" "<<C_O1_VV_FIERZ_ord[ts].distr_list[t].IM.distr[ijack]<<endl;
       print_O1.close();
 
     
       ofstream print_O2("../data/PINGU/jackknife/"+HS+"/C_O2_ts_"+to_string(ts)+"_t_"+to_string(t)+".dat");
       print_O2.precision(10);
-      for(int ijack=0;ijack<Njacks;ijack++) print_O2 << C_O2_AA_FIERZ_ord[ts].distr_list[t].RE.distr[ijack]<<" "<<C_O2_AA_FIERZ_ord[ts].distr_list[t].IM.distr[ijack]<<" "<<C_O2_VV_FIERZ_ord[ts].distr_list[t].RE.distr[ijack]<<" "<<C_O2_VV_FIERZ_ord[ts].distr_list[t].IM.distr[ijack]<<endl;
+      for(int ijack=0;ijack<Nconfs;ijack++) print_O2 << C_O2_AA_FIERZ_ord[ts].distr_list[t].RE.distr[ijack]<<" "<<C_O2_AA_FIERZ_ord[ts].distr_list[t].IM.distr[ijack]<<" "<<C_O2_VV_FIERZ_ord[ts].distr_list[t].RE.distr[ijack]<<" "<<C_O2_VV_FIERZ_ord[ts].distr_list[t].IM.distr[ijack]<<endl;
       print_O2.close();
 
 
@@ -1411,80 +1483,1672 @@ void Get_PINGU() {
 
 
 
-void PINGU_TEST() {
-
-  
-  
-  //init gamma
-  NISSA_GAMMA NG;
-
-  FERM4_T S_cc_v1({Nc,Nc,Ndirac,Ndirac});
-  FERM4_T S_cc_v2({Nc,Nc,Ndirac,Ndirac});
-  FERM4_T S_cc_v3({Nc,Nc,Ndirac,Ndirac});
-
-  FERM4_T S_cc_v1_M({Nc,Nc,Ndirac,Ndirac});
-  FERM4_T S_cc_v2_M({Nc,Nc,Ndirac,Ndirac});
-  FERM4_T S_cc_v3_M({Nc,Nc,Ndirac,Ndirac});
-
-
-  for(int alpha=0;alpha<Ndirac;alpha++)
-    for(int beta=0;beta<Ndirac;beta++) 
-      for(int a=0;a<Nc;a++)
-	for(int b=0;b<Nc;b++) {
-
-	  string coldir_str_v2 = to_string(beta)+"_"+to_string(b)+"_"+to_string(alpha)+"_"+to_string(a);
-
-	  string coldir_str_v1 =  to_string(alpha)+"_"+to_string(a)+"_"+to_string(beta)+"_"+to_string(b);
-
-	  data_t READ_s_v1, READ_s_v2, READ_s_v3;
-	    
-	    
-	  READ_s_v1.Read("../PINGU_TEST/v1" ,  "mes_contr_HSL_"+coldir_str_v1+"."+to_string(1), "P5P5");
-
-	  READ_s_v2.Read("../PINGU_TEST/v2" ,  "mes_contr_HSL_"+coldir_str_v2+"."+to_string(1), "P5P5");
-
-	  READ_s_v3.Read("../PINGU_TEST/v3" ,  "mes_contr_HSL_"+coldir_str_v1+"."+to_string(1), "P5P5");
-
-	  S_cc_v1.T_list.emplace_back( 0,  READ_s_v1.col(0)[0] , READ_s_v1.col(1)[0] ) ;
-	  S_cc_v2.T_list.emplace_back( 0,  READ_s_v2.col(0)[0] , READ_s_v2.col(1)[0] ) ;
-	  S_cc_v3.T_list.emplace_back( 0,  READ_s_v3.col(0)[0] , READ_s_v3.col(1)[0] ) ;
-
-	}
-
-
-   
-
-  FERM4_T_gprod(S_cc_v1, S_cc_v1_M, NG.G[4], DIR2);
-  FERM4_T_gprod(S_cc_v2, S_cc_v2_M, NG.G[4], DIR1);
-  FERM4_T_gprod(S_cc_v3, S_cc_v3_M, NG.G[4], DIR2);
-    
-
-
-  for(int alpha=0;alpha<Ndirac;alpha++)
-    for(int beta=0;beta<Ndirac;beta++) 
-      for(int a=0;a<Nc;a++)
-	for(int b=0;b<Nc;b++) {
-	  int pos=b + a*Nc+ beta*Nc*Nc + alpha*Nc*Nc*Ndirac;
-
-	  cout<<"("<<b<<","<<a<<","<<beta<<","<<alpha<<"): "<<S_cc_v1_M.T_list[pos].distr_list[2].RE.ave()<<" "<<S_cc_v3_M.T_list[pos].distr_list[2].RE.ave()<<" "<<S_cc_v1_M.T_list[pos].distr_list[2].IM.ave()<<" "<<S_cc_v3_M.T_list[pos].distr_list[2].IM.ave()<<endl;
-	    
-	}
-
-    
-     
-
-   
-
-  exit(-1);
-
-  return;
-}
-
-
-
-
 
 void penguin_spectral_reco() {
+
+
+  //define model for charming penguin
+
+  auto model_PENGUIN = [](double E, double eps, string mode, int reim) {
+
+    //Vfloat Masses({3.0969, 3.68610,  3.7737, 4.039}); //GeV
+    //Vfloat Gammas({ 0.0926e-3, 2.94e-4, 2.72e-2, 8e-2}); //GeV
+    //Vfloat Bs({0.05961, 8e-3, 9.6e-6, 10.7e-6 });
+
+    Vfloat Bs({0.05961, 8e-3, 9.6e-6, 10.7e-6, 6.9e-6 });
+    Vfloat Gammas({ 0.0926e-3, 2.94e-4, 2.72e-2, 8e-2, 7e-2}); //GeV
+    Vfloat Masses({3.05, 3.68610,  3.7737, 4.039, 4.191}); //GeV
+
+    double mh= (mode=="HSS")?mhS:mhL;
+    double mp= (mode=="HSS")?meta:mk;
+    
+    double F_plus= 1.44;   //extracted from data at mh~3 GeV  k =0.244 MeV and a ~ 0.0795 fm
+    double F_zero = 0.87;  //extracted from data at mh~3 GeV  k =0.244 MeV and a ~ 0.0795 fm
+
+    double Zv= 0.70637654;
+
+    double sum=0.0;
+
+    double Ep = sqrt( pow(mp,2) + pow(mom,2));
+    Vfloat pbmu({ mh, 0.0});
+    Vfloat pkmu({ sqrt( pow(mp,2) + pow(mom,2)), -mom});
+    Vfloat qmu({ pbmu[0]-pkmu[0], pbmu[1]-pkmu[1]});
+    double q2= qmu[0]*qmu[0] - qmu[1]*qmu[1];
+    double ad=  0.07948*fm_to_inv_Gev;  //lattice spacing in GeV^-1
+
+    //cout<<"mode: "<<mode<<" mh: "<<mh<<" mp: "<<mp<<endl;
+
+    for(int im=0; im< (signed)Masses.size();im++) {
+
+      double mv= Masses[im];
+      double Ev= sqrt( mv*mv + mom*mom);
+      double G= Gammas[im];
+      double fV= (3.0/2.0)*sqrt((3.0/(4.0*M_PI*alpha*alpha))*Gammas[im]*Bs[im]*mv);
+
+      //cout<<"fV["<<Masses[im]<<"]: "<<fV<<endl;
+   
+      
+      Vfloat kmu({sqrt( pow(mv,2)+ pow(mom,2)), mom});
+      double kq= kmu[0]*qmu[0] - kmu[1]*qmu[1];
+      double kpb= kmu[0]*pbmu[0] -kmu[1]*pbmu[1];
+      double kpk= kmu[0]*pkmu[0] -kmu[1]*pkmu[1];
+    
+      
+      double A1 = (kq*(mh*mh -mp*mp)/(mv*mv*q2)) - (kpb+kpk)/(mv*mv) - 1 -(mh*mh - mp*mp)/q2;
+      double A2 = (mh*mh- mp*mp)/(q2) - (kq*(mh*mh -mp*mp)/(q2*mv*mv));
+
+  
+      double x= (Ev+Ep-E)*ad;
+      double x0 = (Ev+Ep)*ad;
+      double xrev=(Ev+Ep+E)*ad;
+      double xrev2=(Ev+Ep+2*E)*ad;
+
+      auto func_re = [&ad, &eps, &G](double x) {
+	double eps_p = eps + G/2.0;
+	//double m= (exp(x) + exp(-3*x))/(1-exp(-2*x));
+	//return 2*ad*cos(eps*ad)/(m - cos(2*eps*ad)/sinh(x));
+	return (x/ad)/((x/ad)*(x/ad) + eps_p*eps_p);
+      };
+
+      auto func_im = [&ad, &eps, &G](double x) {
+	double eps_p = eps + G/2.0;
+	//double m= (exp(x) + exp(-3*x))/(1+exp(-2*x));
+	//return 2*ad*sin(eps*ad)/(m - cos(2*eps*ad)/cosh(x));
+
+	return eps_p/( (x/ad)*(x/ad) + eps_p*eps_p);
+      };
+       
+          
+      double im_fact = func_im(x) + 3.0*func_im(xrev) -3.0*func_im(x0) -func_im(xrev2); //   3.0*im_fact_REV - 3.0*im_fact0 -im_fact_REV2 ;
+      double re_fact = func_re(x) + 3.0*func_re(xrev) -3.0*func_re(x0) -func_re(xrev2); // re_fact += 3.0*re_fact_REV - 3.0*re_fact0 -re_fact_REV2;
+
+
+     
+      
+    
+      if(Use_conserved_current) sum +=  -1.0*(pow(ad,3)/pow(Zv,2))*(2.0)*(pow(fV*mv,2)/(2*Ev))*mom*(A1*F_plus+A2*F_zero)*((reim==1)?re_fact:im_fact);
+      
+      else sum += -1.0*(2.0*pow(ad,3)/pow(Zv,3))*(pow(fV*mv,2)/(2*Ev))*mom*(A1*F_plus+A2*F_zero)*((reim==1)?re_fact:im_fact);
+      
+    }
+
+   
+
+    //perturbative part
+
+    double th=3.8;
+
+    int which_kernel=1;
+
+     auto pert = [&](double x) { // x should be energy in physical units
+
+	Vfloat Qs({x,mom});
+
+	double Qq= Qs[0]*qmu[0] - Qs[1]*qmu[1];
+	double Qpb= Qs[0]*pbmu[0] -Qs[1]*pbmu[1];
+	double Qpk= Qs[0]*pkmu[0] -Qs[1]*pkmu[1];
+
+	double s=x*x -mom*mom;
+
+	double th2_r = th*th - mom*mom;
+
+	if(s < th2_r) return 0.0;
+
+	double PI_scal= (3.0/(12.0*M_PI*M_PI))*sqrt( 1 - th2_r/s)*( 1 + 0.5*th2_r/s) ;
+	
+
+	double F1= s*( pkmu[1] - (mh*mh - mp*mp)*qmu[1]/(q2)) -mom*( Qpb + Qpk - (mh*mh-mp*mp)*Qq/q2 );
+	double F2= s*(  (mh*mh -mp*mp)*qmu[1]/q2) - mom*( (mh*mh-mp*mp)*Qq/q2 );
+
+	auto kk = [&](double y) {
+
+	  //double RE_A= (exp(y) + exp(-3*y))/(1-exp(-2*y));
+	  //double RE_B = 2*ad*cos(eps*ad)/(RE_A - cos(2*eps*ad)/sinh(y));
+
+	  //double IM_A= (exp(y) + exp(-3*y))/(1+exp(-2*y));
+	  //double IM_B= 2*ad*sin(eps*ad)/(IM_A - cos(2*eps*ad)/cosh(y));
+
+	  double RE_B= (y/ad)/((y/ad)*(y/ad) + (eps*eps));
+	  double IM_B = eps/( (y/ad)*(y/ad) + (eps*eps));
+
+	  return (reim==1)?RE_B:IM_B;
+	};
+
+	
+
+	double ker= kk( (x+Ep-E)*ad )  + 3.0*kk( (x+Ep+E)*ad) - 3.0*kk( (x+Ep)*ad) -kk( (x+Ep+2*E)*ad);
+
+	if(which_kernel==0) ker= 1.0;
+	if(which_kernel==-1) ker = 3.0*kk( (x+Ep+E)*ad) - 3.0*kk( (x+Ep)*ad) -kk( (x+Ep+2*E)*ad);
+
+	return -(F1*F_plus + F2*F_zero)*PI_scal*ker*(pow(ad,3)/pow(Zv,2))*2.0;
+
+      };
+
+
+     if( fabs(eps) < 1e-10) {
+
+       if(reim==0) {
+	 which_kernel=0;
+	 cout<<"IM eps=0: "<<M_PI*pert(E-Ep)<<endl;
+	 return sum + M_PI*pert(E-Ep);
+       }
+       else {
+	 which_kernel=0;
+	 gsl_function_pp<decltype(pert)> Fp(pert);
+	 gsl_integration_workspace * w = gsl_integration_workspace_alloc (30000);
+	 gsl_function *G = static_cast<gsl_function*>(&Fp);
+	 double pert_res, err_pert_res;
+	 //perturbative tail starts at 4 GeV in \bar{c}c
+	 gsl_integration_qawc(G, th, 100/ad, E-Ep, 0.0, 5e-5, 30000, w, &pert_res, &err_pert_res);
+	 gsl_integration_workspace_free (w);
+	 if(err_pert_res/fabs(pert_res) > 1e-4) cout<<"Warning precision achieved  > 1e-3, prec: "<<err_pert_res/fabs(pert_res)<<endl;
+	 which_kernel=-1;
+	 gsl_function_pp<decltype(pert)> Fp_m1(pert);
+	 gsl_integration_workspace * w_m1 = gsl_integration_workspace_alloc (30000);
+	 gsl_function *G_m1 = static_cast<gsl_function*>(&Fp_m1);
+	 double pert_res_m1, err_pert_res_m1;
+	 gsl_integration_qags(G_m1, th, 100/ad, 0.0, 5e-5, 30000, w_m1, &pert_res_m1, &err_pert_res_m1);
+	 gsl_integration_workspace_free (w_m1);
+	 if(err_pert_res_m1/fabs(pert_res_m1) > 1e-4) cout<<"Warning precision achieved  > 1e-3, prec: "<<err_pert_res_m1/fabs(pert_res_m1)<<endl;
+
+	 return sum + (pert_res + pert_res_m1);
+
+       }
+
+       which_kernel=1;
+
+     }
+    
+     gsl_function_pp<decltype(pert)> Fp(pert);
+     gsl_integration_workspace * w = gsl_integration_workspace_alloc (30000);
+     gsl_function *G = static_cast<gsl_function*>(&Fp);
+     double pert_res, err_pert_res;
+     //perturbative tail starts at 4 GeV in \bar{c}c
+     gsl_integration_qags(G, th, 100/ad, 0.0, 5e-5, 30000, w, &pert_res, &err_pert_res);
+     gsl_integration_workspace_free (w);
+     if(err_pert_res/fabs(pert_res) > 1e-4) cout<<"Warning precision achieved  > 1e-3, prec: "<<err_pert_res/fabs(pert_res)<<endl; 
+     return sum + pert_res;
+  };
+  
+  bool L= true;
+  //if(!Use_conserved_current) L= true;
+
+  
+   auto mult_func_IM = [&L](double erg, double s, double E0) {
+
+     double z= s/fabs((fabs(erg) - E0));
+     if(erg <0 ) erg = 0.0;
+
+    assert(L==true);
+
+    if( (erg < 1e-10 )  ) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return L?0.005:0.1;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.005:0.01;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.005:0.01;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.005:0.005;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.005:0.0005;
+      else crash("z not found");
+    }
+    else if( (erg < 3.55 +eps(5) )  && ( erg > 3.55 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return L?10.0:0.1;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:0.01;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:0.01;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.5:0.005;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.05:0.0005;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.05:0.0005;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.05:0.0005;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.05:0.0005;
+      else crash("z not found");
+    }
+    else if( (erg < 3.6 +eps(5) )  && ( erg > 3.6 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?2.5:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.4:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.4:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.64 +eps(5) )  && ( erg > 3.64 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?4.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?2.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?1.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.66 +eps(5) )  && ( erg > 3.66 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?10.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.75 +eps(5) )  && ( erg > 3.75 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?70.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?5.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?5.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?7.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?7.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?7.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?5.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?1.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.8 +eps(5) )  && ( erg > 3.8 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?3.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?5.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?5.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?6.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?6.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?6.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.9 +eps(5) )  && ( erg > 3.9 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?5.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?6.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.0 +eps(5) )  && ( erg > 4.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?7.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?7.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?7.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?7.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?7.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.2 +eps(5) )  && ( erg > 4.2 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?15.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?25.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?20.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?20.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?20.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?7.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.1:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.4 +eps(5) )  && ( erg > 4.4 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?100.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?100.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?100.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?7.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?3.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.15:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.5 +eps(5) )  && ( erg > 4.5 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?20.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?5.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?2.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.07:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.75 +eps(5) )  && ( erg > 4.75 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?33.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.7:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.03:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.0 +eps(5) )  && ( erg > 5.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?23.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?3.6:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.08:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.09:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.02:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.007:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.28 +eps(5) )  && ( erg > 5.28 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.2:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.6:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?2.4:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.08:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.07:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.02:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:0.0001;
+      else crash("z not found");
+    }
+    else crash("Plateaux not found");
+    
+    return 1e3;
+  };
+
+
+
+   auto mult_func_RE = [&L](double erg, double s, double E0) {
+
+     
+    double z= s/fabs((fabs(erg) - E0));
+    if(erg <0 ) erg = 0.0;
+
+    assert(L==true);
+
+    if( erg  < 1e-10 ) {
+
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.00001:-100;
+      else crash("z not found");
+
+    }
+    else if( (erg < 3.55 +eps(5) )  && ( erg > 3.55 -eps(5))) {  //here
+      
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.6 +eps(5) )  && ( erg > 3.6 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.0003:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.0005:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0005:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0005:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0002:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0004:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0003:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.64 +eps(5) )  && ( erg > 3.64 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.01:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.006:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.002:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.007:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.005:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.66 +eps(5) )  && ( erg > 3.66 -eps(5))) { 
+      
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.02:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.06:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.03:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.02:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.05:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.05:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.04:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.75 +eps(5) )  && ( erg > 3.75 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.2:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.5:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.5:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.7:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.9:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.6:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.1:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.80 +eps(5) )  && ( erg > 3.80 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.01:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?1.5:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.02:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.01:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.04:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.9 +eps(5) )  && ( erg > 3.9 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.4:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.09:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.7:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.5:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.4:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.2:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.2:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.0 +eps(5) )  && ( erg > 4.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.2:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.5:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?1.5:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.2:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.07:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.03:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.2 +eps(5) )  && ( erg > 4.2 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.12:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.4:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.05:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.4 +eps(5) )  && ( erg > 4.4 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.8:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.2:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.2:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.1:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.02:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.5 +eps(5) )  && ( erg > 4.5 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?3.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.5:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.07:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.06:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.75 +eps(5) )  && ( erg > 4.75 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?4.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.02:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.15:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.2:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.05:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.0 +eps(5) )  && ( erg > 5.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?4.0:-100; 
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.24:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.125:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.8:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?1.5:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?1.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.28 +eps(5) )  && ( erg > 5.28 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.01:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.8:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.2:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.4:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.5:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?5.0:-100;
+      else crash("z not found");
+    }
+    else crash("Plateaux not found");
+    
+    return 1e3;
+  };
+
+
+
+   //################################   O2   B_s -> eta_ss' ell+ ell- ###################################
+
+   auto mult_func_IM_O2 = [&L](double erg, double s, double E0) {
+
+     double z= s/fabs((fabs(erg) - E0));
+     if(erg <0 ) erg = 0.0;
+     
+     assert(L==true);
+     
+     if( (erg < 1e-10 )  ) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return L?0.0005:0.1;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.0005:0.01;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0005:0.01;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0005:0.005;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0005:0.0005;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0005:0.0005;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0005:0.0005;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0005:0.0005;
+       else crash("z not found");
+     }
+     else if( (erg < 3.55 +eps(5) )  && ( erg > 3.55 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return L?10.0:0.1;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:0.01;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.001:0.01;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.001:0.005;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.001:0.0005;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:0.0005;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.001:0.0005;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:0.0005;
+       else crash("z not found");
+     }
+     else if( (erg < 3.6 +eps(5) )  && ( erg > 3.6 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.01:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.64 +eps(5) )  && ( erg > 3.64 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.006:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.66 +eps(5) )  && ( erg > 3.66 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?50.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.01:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.03:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.01:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.75 +eps(5) )  && ( erg > 3.75 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?70.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?70.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.01:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.01:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.8 +eps(5) )  && ( erg > 3.8 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0005:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.005:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0005:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0135:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0037:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.9 +eps(5) )  && ( erg > 3.9 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?50.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0046:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 4.0 +eps(5) )  && ( erg > 4.0 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.05:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.05:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.05:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.05:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.003:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 4.2 +eps(5) )  && ( erg > 4.2 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?15.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?25.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 4.4 +eps(5) )  && ( erg > 4.4 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?100.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.01:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.005:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.003:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 4.5 +eps(5) )  && ( erg > 4.5 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?20.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.02:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.003:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0003:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.00001:-100;
+      else crash("z not found");
+     }
+     else if( (erg < 4.75 +eps(5) )  && ( erg > 4.75 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?33.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?7.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.00004:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.00004:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.00004:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0001:-100;
+      else crash("z not found");
+     }
+     else if( (erg < 5.0 +eps(5) )  && ( erg > 5.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?23.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0003:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0003:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.00001:-100;
+      else crash("z not found");
+     }
+     else if( (erg < 5.28 +eps(5) )  && ( erg > 5.28 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.2:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.004:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0001:0.0001;
+       else crash("z not found");
+     }
+     else crash("Plateaux not found");
+     
+    return 1e3;
+   };
+   
+   
+   
+   auto mult_func_RE_O2 = [&L](double erg, double s, double E0) {
+     
+     
+     double z= s/fabs((fabs(erg) - E0));
+     if(erg <0 ) erg = 0.0;
+     
+     assert(L==true);
+     
+     if( erg  < 1e-10 ) {
+       
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.000001:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.000001:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.000001:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.000001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.000001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.000001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.000001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.000001:-100;
+       else crash("z not found");
+       
+     }
+     else if( (erg < 3.55 +eps(5) )  && ( erg > 3.55 -eps(5))) {  //here
+       
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.00001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.6 +eps(5) )  && ( erg > 3.6 -eps(5))) { 
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.0003:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.0005:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.00001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.64 +eps(5) )  && ( erg > 3.64 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.001:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.001:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.00001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.00001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.66 +eps(5) )  && ( erg > 3.66 -eps(5))) { 
+       
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.02:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.06:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.00033:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.00033:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.00033:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.00033:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.00033:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.00033:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.75 +eps(5) )  && ( erg > 3.75 -eps(5))) { 
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.01:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.006:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.8 +eps(5) )  && ( erg > 3.8 -eps(5))) { 
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.001:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0007:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0004:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.00027:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 3.9 +eps(5) )  && ( erg > 3.9 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.4:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.9:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.004:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0007:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.00047:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0003:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0003:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0001:-100;
+      else crash("z not found");
+     }
+     else if( (erg < 4.0 +eps(5) )  && ( erg > 4.0 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0008:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0003:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.00004:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.00005:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.00001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 4.2 +eps(5) )  && ( erg > 4.2 -eps(5))) { 
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.001:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.001:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 4.4 +eps(5) )  && ( erg > 4.4 -eps(5))) { 
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.000008:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.000008:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.000008:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0004:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 4.5 +eps(5) )  && ( erg > 4.5 -eps(5))) { 
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?3.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.00015:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0003:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 4.75 +eps(5) )  && ( erg > 4.75 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?4.0:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0006:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0005:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 5.0 +eps(5) )  && ( erg > 5.0 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?4.0:-100; 
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.4:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+       else crash("z not found");
+     }
+     else if( (erg < 5.28 +eps(5) )  && ( erg > 5.28 -eps(5))) {
+       if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.1:-100;
+       else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+       else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0001:-100;
+       else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0003:-100;
+       else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+       else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.001:-100;
+       else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+       else crash("z not found");
+     }
+     else crash("Plateaux not found");
+     
+     return 1e3;
+   };
+   
+   
+   //#####################################################################################################
+
+
+
+   //################################   O1   B -> K ell+ ell- ###################################
+
+    
+   auto mult_func_IM_O1_HSL = [&L](double erg, double s, double E0) {
+
+     double z= s/fabs((fabs(erg) - E0));
+     if(erg <0 ) erg = 0.0;
+
+    assert(L==true);
+
+    if( (erg < 1e-10 )  ) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return L?0.005:0.1;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.005:0.01;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.005:0.01;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.005:0.005;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.005:0.0005;
+      else crash("z not found");
+    }
+    else if( (erg < 3.55 +eps(5) )  && ( erg > 3.55 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return L?10.0:0.1;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:0.01;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:0.01;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.5:0.005;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.05:0.0005;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.05:0.0005;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.05:0.0005;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.05:0.0005;
+      else crash("z not found");
+    }
+    else if( (erg < 3.6 +eps(5) )  && ( erg > 3.6 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?2.5:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.4:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.4:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.64 +eps(5) )  && ( erg > 3.64 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?1.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.66 +eps(5) )  && ( erg > 3.66 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?3.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?3.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?1.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.75 +eps(5) )  && ( erg > 3.75 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?70.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?70.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?70.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?7.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?7.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?3.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?1.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.8 +eps(5) )  && ( erg > 3.8 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.6:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.6:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.9 +eps(5) )  && ( erg > 3.9 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?3.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.6:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.0 +eps(5) )  && ( erg > 4.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.8:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.7:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.2:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.7:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.35:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.2 +eps(5) )  && ( erg > 4.2 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?15.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?25.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?20.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?10.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.7:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.1:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.4 +eps(5) )  && ( erg > 4.4 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?100.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?100.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.7:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.03:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.05:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.015:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.5 +eps(5) )  && ( erg > 4.5 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?20.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?5.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.7:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?4.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.07:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.75 +eps(5) )  && ( erg > 4.75 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?33.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?7.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?5.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.03:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.0 +eps(5) )  && ( erg > 5.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?23.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?3.6:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.08:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.09:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.02:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.007:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.28 +eps(5) )  && ( erg > 5.28 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?20.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?6.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?2.4:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.08:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.07:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.02:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:0.0001;
+      else crash("z not found");
+    }
+    else crash("Plateaux not found");
+    
+    return 1e3;
+  };
+
+
+
+   auto mult_func_RE_O1_HSL = [&L](double erg, double s, double E0) {
+
+     
+    double z= s/fabs((fabs(erg) - E0));
+    if(erg <0 ) erg = 0.0;
+
+    assert(L==true);
+
+    if( erg  < 1e-10 ) {
+
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.00001:-100;
+      else crash("z not found");
+
+    }
+    else if( (erg < 3.55 +eps(5) )  && ( erg > 3.55 -eps(5))) {  //here
+      
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.6 +eps(5) )  && ( erg > 3.6 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.0003:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.0005:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0005:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0005:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0002:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.0004:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0003:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.64 +eps(5) )  && ( erg > 3.64 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.01:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.006:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?2.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.7:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.3:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.66 +eps(5) )  && ( erg > 3.66 -eps(5))) { 
+      
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.02:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.06:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.2:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.05:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.05:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.04:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.75 +eps(5) )  && ( erg > 3.75 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.8:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.09:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.06:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.1:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.8 +eps(5) )  && ( erg > 3.8 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.15:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.11:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.08:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.1:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.04:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.9 +eps(5) )  && ( erg > 3.9 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.4:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.9:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.7:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.5:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.4:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.2:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.05:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.0 +eps(5) )  && ( erg > 4.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.5:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?1.5:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.6:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.05:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.2 +eps(5) )  && ( erg > 4.2 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.2:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.005:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.05:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.4 +eps(5) )  && ( erg > 4.4 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.8:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.1:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.02:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.5 +eps(5) )  && ( erg > 4.5 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?3.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.2:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.07:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.006:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.75 +eps(5) )  && ( erg > 4.75 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?4.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.5:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.03:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.002:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.05:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.0 +eps(5) )  && ( erg > 5.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?4.0:-100; 
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.4:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.25:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.008:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.015:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?1.0:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.28 +eps(5) )  && ( erg > 5.28 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?6.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?2.4:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.03:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.005:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.04:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.5:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?5.0:-100;
+      else crash("z not found");
+    }
+    else crash("Plateaux not found");
+    
+    return 1e3;
+   };
+   
+   //#####################################################################################################
+
+
+
+   //################################   O2   B -> K ell+ ell- ###################################
+
+    
+   auto mult_func_IM_O2_HSL = [&L](double erg, double s, double E0) {
+
+     double z= s/fabs((fabs(erg) - E0));
+     if(erg <0 ) erg = 0.0;
+
+    assert(L==true);
+
+    if( (erg < 1e-10 )  ) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return L?0.005:0.1;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.005:0.01;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.005:0.01;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.005:0.005;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.005:0.0005;
+      else crash("z not found");
+    }
+    else if( (erg < 3.55 +eps(5) )  && ( erg > 3.55 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return L?10.0:0.1;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:0.01;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:0.01;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.05:0.005;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.005:0.0005;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.005:0.0005;
+      else crash("z not found");
+    }
+    else if( (erg < 3.6 +eps(5) )  && ( erg > 3.6 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.25:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.04:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.04:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.64 +eps(5) )  && ( erg > 3.64 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.1:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.1:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.66 +eps(5) )  && ( erg > 3.66 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?3.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.1:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.1:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.75 +eps(5) )  && ( erg > 3.75 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?7.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?7.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?7.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?.7:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.7:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.7:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.3:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.1:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.8 +eps(5) )  && ( erg > 3.8 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.7:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.06:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.06:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.9 +eps(5) )  && ( erg > 3.9 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.3:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.1:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.06:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.0 +eps(5) )  && ( erg > 4.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.08:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.07:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.02:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.07:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.035:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.2 +eps(5) )  && ( erg > 4.2 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?15.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?25.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?20.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?1.0:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.07:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.01:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.4 +eps(5) )  && ( erg > 4.4 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?50.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?100.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?100.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.07:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.003:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.005:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0015:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.5 +eps(5) )  && ( erg > 4.5 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?20.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?5.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.07:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.4:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.007:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.75 +eps(5) )  && ( erg > 4.75 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?33.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?7.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?5.0:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.003:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.0 +eps(5) )  && ( erg > 5.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?23.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?3.6:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.008:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.03:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.009:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.002:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0007:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.28 +eps(5) )  && ( erg > 5.28 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?20.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?6.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?2.4:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.08:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.007:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.002:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:0.0001;
+      else crash("z not found");
+    }
+    else crash("Plateaux not found");
+    
+    return 1e3;
+  };
+
+
+
+   auto mult_func_RE_O2_HSL = [&L](double erg, double s, double E0) {
+
+     
+    double z= s/fabs((fabs(erg) - E0));
+    if(erg <0 ) erg = 0.0;
+
+    assert(L==true);
+
+    if( erg  < 1e-10 ) {
+
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.00001:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.00001:-100;
+      else crash("z not found");
+
+    }
+    else if( (erg < 3.55 +eps(5) )  && ( erg > 3.55 -eps(5))) {  //here
+      
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.0001:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.001:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.001:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.001:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.001:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.001:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.6 +eps(5) )  && ( erg > 3.6 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.0003:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.005:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.005:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.005:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.002:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.004:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.003:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.64 +eps(5) )  && ( erg > 3.64 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.01:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.006:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.2:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.1:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.07:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.03:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.66 +eps(5) )  && ( erg > 3.66 -eps(5))) { 
+      
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?0.02:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.06:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.03:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.02:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.005:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.005:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.004:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.75 +eps(5) )  && ( erg > 3.75 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.2:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.8:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.03:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.009:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.006:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.01:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.8 +eps(5) )  && ( erg > 3.8 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.1:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.015:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.011:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.008:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.01:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.004:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 3.9 +eps(5) )  && ( erg > 3.9 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.4:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?0.9:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.007:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.05:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.03:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.04:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.02:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.005:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.0 +eps(5) )  && ( erg > 4.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.015:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.15:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.06:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.005:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.2 +eps(5) )  && ( erg > 4.2 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.2:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.01:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0005:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.005:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.001:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.4 +eps(5) )  && ( erg > 4.4 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.008:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.01:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.002:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.5 +eps(5) )  && ( erg > 4.5 -eps(5))) { 
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?3.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?1.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.01:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.02:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.03:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.01:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.007:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.0006:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 4.75 +eps(5) )  && ( erg > 4.75 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?4.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.015:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.10:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.003:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0002:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.005:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.0 +eps(5) )  && ( erg > 5.0 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?4.0:-100; 
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?2.4:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0125:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.0008:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.001:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.001:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.0015:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.1:-100;
+      else crash("z not found");
+    }
+    else if( (erg < 5.28 +eps(5) )  && ( erg > 5.28 -eps(5))) {
+      if( (z < 0.3 + eps(5)) && (z > 0.3 - eps(5))) return  L?10.0:-100;
+      else if( (z < 0.5 + eps(5)) && (z > 0.5 - eps(5))) return  L?6.0:-100;
+      else if( (z < 0.6 + eps(5)) && (z > 0.6 - eps(5))) return  L?0.0024:-100;
+      else if( (z < 0.8 + eps(5)) && (z > 0.8 - eps(5))) return  L?0.003:-100;
+      else if( (z < 1.0 + eps(5)) && (z > 1.0 - eps(5))) return  L?0.0005:-100;
+      else if( (z < 1.25 + eps(5)) && (z > 1.25 - eps(5))) return  L?0.004:-100;
+      else if( (z < 1.5 + eps(5)) && (z > 1.5 - eps(5))) return  L?0.05:-100;
+      else if( (z < 2.0 + eps(5)) && (z > 2.0 - eps(5))) return  L?0.50:-100;
+      else crash("z not found");
+    }
+    else crash("Plateaux not found");
+    
+    return 1e3;
+   };
+   
+   //#####################################################################################################
+
+
+
+
+
+
+   
+   
+
+  
 
   omp_set_num_threads(4);
 
@@ -1494,6 +3158,15 @@ void penguin_spectral_reco() {
 
   string pingu_dir="../data/PINGU";
 
+  if(!Use_conserved_current) pingu_dir="../data/PINGU_local";
+
+  string out_dir= "PINGU";
+  if(!Use_conserved_current) out_dir = "PINGU_local";
+
+
+ 
+  
+  
   //load correlators for B -> K ll
 
   vector<distr_t_list> C1_A, C1_V, C2_A, C2_V;
@@ -1543,6 +3216,7 @@ void penguin_spectral_reco() {
   distr_t_list C1_A_FIN(UseJack), C1_V_FIN(UseJack), C2_A_FIN(UseJack), C2_V_FIN(UseJack);
 
   distr_t_list CS1_A_FIN(UseJack), CS1_V_FIN(UseJack), CS2_A_FIN(UseJack), CS2_V_FIN(UseJack);
+
 
   distr_t_list C1_A_FIN_cov(UseJack), C1_V_FIN_cov(UseJack), C2_A_FIN_cov(UseJack), C2_V_FIN_cov(UseJack);
 
@@ -1612,7 +3286,10 @@ void penguin_spectral_reco() {
   Print_To_File({}, {CS2_A_FIN.ave(), CS2_A_FIN.err(), CS2_V_FIN.ave(), CS2_V_FIN.err(),  (CS2_A_FIN+CS2_V_FIN).ave(), (CS2_A_FIN+CS2_V_FIN).err() }, pingu_dir+"/HSS/C2_final", "", "");
 
 
+  //define first time-ordering contribution
 
+
+  
   //do HLT analysis
 
   //build HLT correlator 
@@ -1633,7 +3310,6 @@ void penguin_spectral_reco() {
     
     CS1_HLT_cov.distr_list.push_back( CS1_A_FIN_cov.distr_list[t+int_t_O4 ]+  CS1_V_FIN_cov.distr_list[t+int_t_O4 ] );
     CS2_HLT_cov.distr_list.push_back( CS2_A_FIN_cov.distr_list[t+int_t_O4 ]+  CS2_V_FIN_cov.distr_list[t+int_t_O4 ] );
-        
   }
 
   int T_HLT=C1_HLT.size();
@@ -1643,11 +3319,6 @@ void penguin_spectral_reco() {
 
   distr_t_list C1_eff_mass(UseJack), CS1_eff_mass(UseJack);
   distr_t_list C2_eff_mass(UseJack), CS2_eff_mass(UseJack);
-
-
-  
-
- 
  
   
   for(int t=0; t < T_HLT-1; t++) {
@@ -1670,33 +3341,14 @@ void penguin_spectral_reco() {
   cout<<"mass(HSS): "<<(mass/a_GeV).ave()<<" "<<(mass/a_GeV).err()<<endl;
 
 
-  auto K_IM_distr = [&mass, &res](double E, double s) -> distr_t {
-
-    distr_t ret(UseJack);
-
-    for(int ijack=0;ijack<mass.size();ijack++) {
-      double x= (E-mass.distr[ijack]);
-    
-      double cosh_ov_cosh_half= (exp(x) + exp(-3*x))/(1+exp(-2*x)); 
-    
-      ret.distr.push_back( 2*res.distr[ijack]*sin(s)/(cosh_ov_cosh_half - cos(2*s)/cosh(x)));
-    }
-    return ret;
-  };
-
 
   
 
-  
+  Print_To_File({}, {C1_eff_mass.ave(), C1_eff_mass.err()}, "../data/"+out_dir+"/HSL/meff_C1_final", "", "");
+  Print_To_File({}, {CS1_eff_mass.ave(), CS1_eff_mass.err()}, "../data/"+out_dir+"/HSS/meff_C1_final", "", "");
 
-  
-
-
-  Print_To_File({}, {C1_eff_mass.ave(), C1_eff_mass.err()}, "../data/PINGU/HSL/meff_C1_final", "", "");
-  Print_To_File({}, {CS1_eff_mass.ave(), CS1_eff_mass.err()}, "../data/PINGU/HSS/meff_C1_final", "", "");
-
-  Print_To_File({}, {C2_eff_mass.ave(), C2_eff_mass.err()}, "../data/PINGU/HSL/meff_C2_final", "", "");
-  Print_To_File({}, {CS2_eff_mass.ave(), CS2_eff_mass.err()}, "../data/PINGU/HSS/meff_C2_final", "", "");
+  Print_To_File({}, {C2_eff_mass.ave(), C2_eff_mass.err()}, "../data/"+out_dir+"/HSL/meff_C2_final", "", "");
+  Print_To_File({}, {CS2_eff_mass.ave(), CS2_eff_mass.err()}, "../data/"+out_dir+"/HSS/meff_C2_final", "", "");
 
  
   //compute covariance matrix
@@ -1730,81 +3382,108 @@ void penguin_spectral_reco() {
       
       Cov_S1[rr+ T_HLT*tt] = Corr_S1[rr +T_HLT*tt]*CS1_HLT.err(tt)*CS1_HLT.err(rr);
       Cov_S2[rr+ T_HLT*tt] = Corr_S2[rr +T_HLT*tt]*CS2_HLT.err(tt)*CS2_HLT.err(rr);
-            
-      
     }
 
 
   cout<<"covariance matrix computed"<<endl;
 
   //printing covariance matrix
-  boost::filesystem::create_directory("../data/PINGU/spectral_reconstruction");
-  boost::filesystem::create_directory("../data/PINGU/spectral_reconstruction/HSL");
-  boost::filesystem::create_directory("../data/PINGU/spectral_reconstruction/HSS");
+  boost::filesystem::create_directory("../data/"+out_dir+"/spectral_reconstruction");
+  boost::filesystem::create_directory("../data/"+out_dir+"/spectral_reconstruction/HSL");
+  boost::filesystem::create_directory("../data/"+out_dir+"/spectral_reconstruction/HSS");
   
-  boost::filesystem::create_directory("../data/PINGU/spectral_reconstruction/HSL/Erg");
-  boost::filesystem::create_directory("../data/PINGU/spectral_reconstruction/HSS/Erg");
+  boost::filesystem::create_directory("../data/"+out_dir+"/spectral_reconstruction/HSL/Erg");
+  boost::filesystem::create_directory("../data/"+out_dir+"/spectral_reconstruction/HSS/Erg");
   
-  boost::filesystem::create_directory("../data/PINGU/spectral_reconstruction/HSL/eps");
-  boost::filesystem::create_directory("../data/PINGU/spectral_reconstruction/HSS/eps");
+  boost::filesystem::create_directory("../data/"+out_dir+"/spectral_reconstruction/HSL/eps");
+  boost::filesystem::create_directory("../data/"+out_dir+"/spectral_reconstruction/HSS/eps");
   
-  boost::filesystem::create_directory("../data/PINGU/spectral_reconstruction/HSL/covariance");
-  boost::filesystem::create_directory("../data/PINGU/spectral_reconstruction/HSS/covariance");
+  boost::filesystem::create_directory("../data/"+out_dir+"/spectral_reconstruction/HSL/covariance");
+  boost::filesystem::create_directory("../data/"+out_dir+"/spectral_reconstruction/HSS/covariance");
   
 
-  Print_To_File({},{TT, RR, Cov_1, Corr_1 }, "../data/PINGU/spectral_reconstruction/HSL/covariance/Corr_1", "", "");
-  Print_To_File({},{TT, RR, Cov_2, Corr_2 }, "../data/PINGU/spectral_reconstruction/HSL/covariance/Corr_2", "", "");
-  Print_To_File({},{TT, RR, Cov_S1, Corr_S1 }, "../data/PINGU/spectral_reconstruction/HSS/covariance/Corr_1", "", "");
-  Print_To_File({},{TT, RR, Cov_S2, Corr_S2 }, "../data/PINGU/spectral_reconstruction/HSS/covariance/Corr_2", "", "");
+  Print_To_File({},{TT, RR, Cov_1, Corr_1 }, "../data/"+out_dir+"/spectral_reconstruction/HSL/covariance/Corr_1", "", "");
+  Print_To_File({},{TT, RR, Cov_2, Corr_2 }, "../data/"+out_dir+"/spectral_reconstruction/HSL/covariance/Corr_2", "", "");
+  Print_To_File({},{TT, RR, Cov_S1, Corr_S1 }, "../data/"+out_dir+"/spectral_reconstruction/HSS/covariance/Corr_1", "", "");
+  Print_To_File({},{TT, RR, Cov_S2, Corr_S2 }, "../data/"+out_dir+"/spectral_reconstruction/HSS/covariance/Corr_2", "", "");
 
 
   //perform HLT analysis
 
   Vfloat Ergs({3.55,3.6,3.64,3.66,3.75,3.8,3.9,4.0, 4.2, 4.40, 4.50, 4.75, 5.0, 5.28});
+  Vfloat Ergs_HSL({3.35,3.42,3.57,3.66,3.75,3.8,3.9,4.0, 4.2, 4.40, 4.50, 4.75, 5.0, 5.28    });
+  Vfloat Ergs_NZ({3.55,3.6,3.64,3.66,3.75,3.8,3.9,4.0, 4.2, 4.40, 4.50, 4.75, 5.0, 5.28});
   Vfloat Zetas({0.3,0.5,0.6, 0.8, 1.0, 1.25, 1.5,2});
-  //Vfloat Sigmas({ 2.0, 1.5, 1.25, 1.0, 0.75, 0.5, 0.4,0.3 });
 
 
-  //Vfloat Ergs({3.8});
-  //Vfloat Zetas({2.0});
+  int id_475= Ergs.size()-1;
   
-  Vfloat Ergs_GSD({3.5,3.55,3.6,3.65,3.69, 3.75,3.8, 3.9,4.0, 4.1,4.15 ,4.2 , 4.3, 4.4});
-  Vfloat Sigmas_GSD({ 2.0, 1.5, 1.25, 1.0, 0.75, 0.5, 0.4,0.3,0.2,0.1,0.05,0.025 });
+  //Print model penguin
+  Vfloat Zetas_mod({0.0});
+  for(auto & z:Zetas) Zetas_mod.push_back(z);
 
 
-  vector<distr_t_list> GSD_CS1(Sigmas_GSD.size());
+  
+  Vfloat Emod;
+  int Nsteps=1500;
 
- 
-  for(int is=0; is < (signed)Sigmas_GSD.size();is++) {
-    for(int ie=0;ie<Ergs_GSD.size();ie++) {
-      GSD_CS1[is].distr_list.push_back( K_IM_distr( Ergs_GSD[ie]*a_GeV, Sigmas_GSD[is]*a_GeV));
+
+  VVfloat MOD_HSS_RE(Zetas_mod.size()), MOD_HSS_IM(Zetas_mod.size()), MOD_HSL_RE(Zetas_mod.size()), MOD_HSL_IM(Zetas_mod.size());
+
+
+  Vfloat alphas_mod;
+  for(int i=0;i<200;i++) alphas_mod.push_back( i*0.1) ;
+
+  Vfloat MOD_HSS_528_RE, MOD_HSS_528_IM;
+
+  for(int a=0;a<(signed)alphas_mod.size();a++) {
+
+    double alps=alphas_mod[a];
+
+    double s= fabs(alps*(5.28-3.7+0.150));
+    MOD_HSS_528_RE.push_back( model_PENGUIN(5.28,s,"HSS",1));
+    MOD_HSS_528_IM.push_back( model_PENGUIN(5.28,s,"HSS",0));
+
+  }
+
+  Print_To_File({}, {alphas_mod, MOD_HSS_528_RE, MOD_HSS_528_IM }, "../data/PINGU/spectral_reconstruction/fit/mod_528","","");
+  
+  
+  for(int istep=0;istep<Nsteps;istep++) Emod.push_back( 3.4 + (5.28-3.4)*(1.0*istep)/(Nsteps-1.0));
+  for(int is=0;is<Nsteps;is++) {
+    //loop over Zetas
+
+    double Erg= Emod[is];
+
+    cout<<"Computing model n/N= "<<(is+1)*1.0/(1.0*Nsteps)<<endl;
+
+    for(int iz=0;iz<(signed)Zetas_mod.size();iz++) {
+      
+    
+      double s_HSS = fabs(Zetas_mod[iz]*(fabs(Erg-3.7)+0.150));
+      double s_HSL = fabs(Zetas_mod[iz]*(fabs(Erg-3.5)+0.150));
+      //cout<<"NOW HSS"<<endl;
+      MOD_HSS_RE[iz].push_back( model_PENGUIN(Erg,s_HSS,"HSS",1 ));
+      MOD_HSS_IM[iz].push_back( model_PENGUIN(Erg,s_HSS,"HSS",0 ));
+      //cout<<"NOW HSL"<<endl;
+      MOD_HSL_RE[iz].push_back( model_PENGUIN(Erg,s_HSL,"HSL",1 ));
+      MOD_HSL_IM[iz].push_back( model_PENGUIN(Erg,s_HSL,"HSL",0 ));
+
+      
+      
+
+      
     }
   }
-
-  //print
-  for(int is=0;is< (signed)Sigmas_GSD.size();is++) {
-    Print_To_File({}, {Ergs_GSD, GSD_CS1[is].ave(), GSD_CS1[is].err() }, "../data/PINGU/spectral_reconstruction/HSS/Erg/H1_GSD_sigma_"+to_string_with_precision(Sigmas_GSD[is],2), "", "");
-  }
   
-  auto mult_func = [](double erg, double s, double E0) {
+  
 
-    if (erg < E0) return 0.05; 
-
-    if( (erg-E0)/s <= 1) return 0.07;
-    else if( (erg-E0)/s < 2) return 0.8;
-    else if( (erg-E0)/s < 3)  return 15.0;
-    else if( (erg-E0)/s < 4) return 10.0;
-    else if( (erg -E0)/s < 5) return 100.0;
-   
-
-    return 1e3;
-  };
-
+  
   auto Ag_func = [](double erg, double s, double E0) {
 
-    if(erg < E0) return 5e-5;
+    if(erg < E0) return 1e-4;
 
-    if( (erg-E0)/s < 1) return 1e-4;
+    if( (erg-E0)/s < 1) return 1e-3;
     else if( (erg-E0)/s < 2) return 1e-2;
     else if( (erg-E0)/s < 3)  return 3e-2;
     else if( (erg-E0)/s < 4) return 6e-2;
@@ -1812,10 +3491,7 @@ void penguin_spectral_reco() {
 
   };
 
-  //Vfloat Ergs({3.75, 4.25, 4.75, 5.25});
-  //Vfloat Ergs({3.75});
-  //Vfloat Sigmas({ 0.6, 0.4 });
-
+  
   //define lambda functions
 
    auto K_RE= [](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
@@ -1839,6 +3515,36 @@ void penguin_spectral_reco() {
    };
 
 
+   auto K_RE_0= [](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
+    
+     PrecFloat x= (E+m);
+     PrecFloat x0= E;
+     PrecFloat x2= (E+2*m);
+     
+	       
+     PrecFloat cosh_ov_sinh_half= (exp(x) + exp(-3*x))/(1-exp(-2*x));
+     PrecFloat cosh_ov_sinh_half_0= (exp(x0) + exp(-3*x0))/(1-exp(-2*x0));
+     PrecFloat cosh_ov_sinh_half_2= (exp(x2) + exp(-3*x2))/(1-exp(-2*x2));
+	       
+     return  2*3*cos(s)/(cosh_ov_sinh_half - cos(2*s)/sinh(x)) +  -2.0*3*cos(s)/(cosh_ov_sinh_half_0 - cos(2*s)/sinh(x0))  -  2*cos(s)/(cosh_ov_sinh_half_2 - cos(2*s)/sinh(x2)) ;
+	       
+   };
+   
+   auto K_IM_0 = [](const PrecFloat &E, const PrecFloat &m, const PrecFloat &s, const PrecFloat &E0, int ijack) -> PrecFloat {
+     
+     PrecFloat x= (E+m);
+     PrecFloat x0= E;
+     PrecFloat x2= (E+2*m);
+     
+     PrecFloat cosh_ov_cosh_half= (exp(x) + exp(-3*x))/(1+exp(-2*x));
+     PrecFloat cosh_ov_cosh_half_0= (exp(x0) + exp(-3*x0))/(1+exp(-2*x0));
+     PrecFloat cosh_ov_cosh_half_2= (exp(x2) + exp(-3*x2))/(1+exp(-2*x2));
+     
+     return 2*3*sin(s)/(cosh_ov_cosh_half - cos(2*s)/cosh(x)) -  2.0*3*sin(s)/(cosh_ov_cosh_half_0 - cos(2*s)/cosh(x0))   - 2.0*sin(s)/(cosh_ov_cosh_half_2 - cos(2*s)/cosh(x2))  ;
+     
+   };
+
+   
   
 
 
@@ -1853,9 +3559,10 @@ void penguin_spectral_reco() {
      HS2.emplace_back( UseJack, Ergs.size());
    }
 
+   if(! Skip_HLT) {
 
 #pragma omp parallel for schedule(dynamic)
-   for(int is=0;is < (signed)Zetas.size(); is++ ) {
+     for(int is=0;is < (signed)Zetas.size(); is++ ) {
 
     
     
@@ -1864,19 +3571,27 @@ void penguin_spectral_reco() {
         
      for(int eg=0; eg < (signed)Ergs.size(); eg++) {
 
-
+       
        double Emin=3.5; //GeV
+       double smin= 0.150*a_GeV;
        double aE0 = Emin*a_GeV;
-       double erg= Ergs[eg]*a_GeV; 
-       double sigma= Zetas[is]*fabs((erg - aE0));
+       double erg= Ergs[eg]*a_GeV;
+       double erg_HSL= Ergs_HSL[eg]*a_GeV;
+       double sigma= Zetas[is]*fabs(( fabs(erg_HSL - aE0)+smin));
        double sigma_GeV= sigma/a_GeV;
-
+       
        
 
        double syst, l;
-
+       
        //######### HLT PARS ##########
-       double mult = mult_func(erg,sigma,aE0);
+       double mult_IM = mult_func_IM_O1_HSL(Ergs[eg],Zetas[is]*fabs((Ergs[eg]-Emin)),Emin);
+       double mult_RE = mult_func_RE_O1_HSL(Ergs[eg],Zetas[is]*fabs((Ergs[eg]-Emin)),Emin);
+       if(Use_conserved_current) { mult_RE /=100; mult_IM /=100;}
+
+       double mult_IM_0 = mult_func_IM(-Ergs[eg], Zetas[is]*fabs((Ergs[eg]-Emin)),Emin);
+       double mult_RE_0 = mult_func_RE(-Ergs[eg], Zetas[is]*fabs((Ergs[eg]-Emin)),Emin);
+       
        double Ag_target= Ag_func(erg,sigma, aE0);
        int tmax= 34;
        double Emax=0.0;
@@ -1887,71 +3602,135 @@ void penguin_spectral_reco() {
        
 
        //HSL
-       H1[is].distr_list[eg].RE =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C1_HLT, syst, mult, l, "TANT", "HSL", "1_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_1, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
-       H1[is].distr_list[eg].RE = H1[is].distr_list[eg].RE.ave() + ( H1[is].distr_list[eg].RE - H1[is].distr_list[eg].RE.ave())*sqrt( 1.0 + pow( syst/H1[is].distr_list[eg].RE.err(),2)); 
+       H1[is].distr_list[eg].RE =  Get_Laplace_transfo(  erg_HSL,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C1_HLT, syst, mult_RE, l, "TANT", "HSL", "1_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_1, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
+       H1[is].distr_list[eg].RE = H1[is].distr_list[eg].RE.ave() + ( H1[is].distr_list[eg].RE - H1[is].distr_list[eg].RE.ave())*sqrt( 1.0 + pow( syst/H1[is].distr_list[eg].RE.err(),2));
+       H1[is].distr_list[eg].RE = H1[is].distr_list[eg].RE +  Get_Laplace_transfo(  erg_HSL,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE_0, C1_HLT, syst, mult_RE_0, l, "TANT", "HSL", "1_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin_zero", Cov_1, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
 
-       H1[is].distr_list[eg].IM =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C1_HLT, syst, mult, l, "TANT", "HSL", "1_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_1, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
+       H1[is].distr_list[eg].IM =  Get_Laplace_transfo(  erg_HSL,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C1_HLT, syst, mult_IM, l, "TANT", "HSL", "1_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_1, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
        H1[is].distr_list[eg].IM = H1[is].distr_list[eg].IM.ave() + ( H1[is].distr_list[eg].IM - H1[is].distr_list[eg].IM.ave())*sqrt( 1.0 + pow( syst/H1[is].distr_list[eg].IM.err(),2));
+       H1[is].distr_list[eg].IM = H1[is].distr_list[eg].IM +  Get_Laplace_transfo(  erg_HSL,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM_0, C1_HLT, syst, mult_IM_0, l, "TANT", "HSL", "1_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin_zero", Cov_1, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
 
-       H2[is].distr_list[eg].RE =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C2_HLT, syst, mult, l, "TANT", "HSL", "2_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
-       H2[is].distr_list[eg].RE = H2[is].distr_list[eg].RE.ave() + ( H2[is].distr_list[eg].RE - H2[is].distr_list[eg].RE.ave())*sqrt( 1.0 + pow( syst/H2[is].distr_list[eg].RE.err(),2)); 
+
+       //update multiplicities for O2
+       mult_IM = mult_func_IM_O2_HSL(Ergs[eg],Zetas[is]*fabs((Ergs[eg]-Emin)),Emin);
+       mult_RE = mult_func_RE_O2_HSL(Ergs[eg],Zetas[is]*fabs((Ergs[eg]-Emin)),Emin);
+
+       H2[is].distr_list[eg].RE =  Get_Laplace_transfo(  erg_HSL,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C2_HLT, syst, mult_RE, l, "TANT", "HSL", "2_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
+       H2[is].distr_list[eg].RE = H2[is].distr_list[eg].RE.ave() + ( H2[is].distr_list[eg].RE - H2[is].distr_list[eg].RE.ave())*sqrt( 1.0 + pow( syst/H2[is].distr_list[eg].RE.err(),2));
+       H2[is].distr_list[eg].RE = H2[is].distr_list[eg].RE + Get_Laplace_transfo(  erg_HSL,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE_0, C2_HLT, syst, mult_RE_0, l, "TANT", "HSL", "2_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin_zero", Cov_2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
        
-       H2[is].distr_list[eg].IM =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C2_HLT, syst, mult, l, "TANT", "HSL", "2_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
+       H2[is].distr_list[eg].IM =  Get_Laplace_transfo(  erg_HSL,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C2_HLT, syst, mult_IM, l, "TANT", "HSL", "2_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
        H2[is].distr_list[eg].IM = H2[is].distr_list[eg].IM.ave() + ( H2[is].distr_list[eg].IM - H2[is].distr_list[eg].IM.ave())*sqrt( 1.0 + pow( syst/H2[is].distr_list[eg].IM.err(),2));
+       H2[is].distr_list[eg].IM = H2[is].distr_list[eg].IM +  Get_Laplace_transfo(  erg_HSL,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM_0, C2_HLT, syst, mult_IM_0, l, "TANT", "HSL", "2_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin_zero", Cov_2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
 
 
        //######### HLT PARS FOR HSS ###################
        Emin=3.70; //GeV
        aE0 = Emin*a_GeV;
-       sigma= Zetas[is]*fabs((erg - aE0));
+       sigma= Zetas[is]*fabs(( fabs(erg - aE0)+smin));
        sigma_GeV= sigma/a_GeV;
-       mult = mult_func(erg,sigma,aE0);
+       mult_RE = mult_func_RE(Ergs[eg],Zetas[is]*fabs(Ergs[eg]-Emin),Emin);
+       mult_IM = mult_func_IM(Ergs[eg],Zetas[is]*fabs(Ergs[eg]-Emin),Emin);
+       mult_RE_0 = mult_func_RE(-Ergs[eg],Zetas[is]*fabs(Ergs[eg]-Emin),Emin);
+       mult_IM_0 = mult_func_IM(-Ergs[eg],Zetas[is]*fabs(Ergs[eg]-Emin),Emin);
+       if(Use_conserved_current) { mult_RE /=100; mult_IM /=100; mult_RE_0 /=100; mult_IM_0 /= 100;}
        Ag_target= Ag_func(erg,sigma, aE0);
        //##############################################
-
+       
        
        //HSS
-       HS1[is].distr_list[eg].RE =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, CS1_HLT, syst, mult, l, "TANT", "HSS", "1_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_S1, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, alpha, 1);
+       HS1[is].distr_list[eg].RE =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, CS1_HLT, syst, mult_RE, l, "TANT", "HSS", "1_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_S1, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, alpha, 1);
        HS1[is].distr_list[eg].RE = HS1[is].distr_list[eg].RE.ave() + ( HS1[is].distr_list[eg].RE - HS1[is].distr_list[eg].RE.ave())*sqrt( 1.0 + pow( syst/HS1[is].distr_list[eg].RE.err(),2));
+       HS1[is].distr_list[eg].RE = HS1[is].distr_list[eg].RE + Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE_0, CS1_HLT, syst, mult_RE_0, l, "TANT", "HSS", "1_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin_zero", Cov_S1, fake_func,0, fake_func_d ,  Is_Emax_Finite, Emax, alpha, 1); 
 
              
-       HS1[is].distr_list[eg].IM =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, CS1_HLT, syst, mult, l, "TANT", "HSS", "1_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_S1, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
+       HS1[is].distr_list[eg].IM =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, CS1_HLT, syst, mult_IM, l, "TANT", "HSS", "1_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_S1, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
        HS1[is].distr_list[eg].IM = HS1[is].distr_list[eg].IM.ave() + ( HS1[is].distr_list[eg].IM - HS1[is].distr_list[eg].IM.ave())*sqrt( 1.0 + pow( syst/HS1[is].distr_list[eg].IM.err(),2));
+       HS1[is].distr_list[eg].IM = HS1[is].distr_list[eg].IM +  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM_0, CS1_HLT, syst, mult_IM_0, l, "TANT", "HSS", "1_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin_zero", Cov_S1, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
+
+
+
+       //update multiplicites for O2 Bs-> eta_ss' + ll
+       mult_RE = mult_func_RE_O2(Ergs[eg],Zetas[is]*fabs(Ergs[eg]-Emin),Emin);
+       mult_IM = mult_func_IM_O2(Ergs[eg],Zetas[is]*fabs(Ergs[eg]-Emin),Emin);
+       mult_RE_0 = mult_func_RE_O2(-Ergs[eg],Zetas[is]*fabs(Ergs[eg]-Emin),Emin);
+       mult_IM_0 = mult_func_IM_O2(-Ergs[eg],Zetas[is]*fabs(Ergs[eg]-Emin),Emin);
+       Ag_target= Ag_func(erg,sigma, aE0);
+       
        
              
-       HS2[is].distr_list[eg].RE =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, CS2_HLT, syst, mult, l, "TANT", "HSS", "2_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_S2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
+       HS2[is].distr_list[eg].RE =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, CS2_HLT, syst, mult_RE, l, "TANT", "HSS", "2_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_S2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
        HS2[is].distr_list[eg].RE = HS2[is].distr_list[eg].RE.ave() + ( HS2[is].distr_list[eg].RE - HS2[is].distr_list[eg].RE.ave())*sqrt( 1.0 + pow( syst/HS2[is].distr_list[eg].RE.err(),2));
+       HS2[is].distr_list[eg].RE = HS2[is].distr_list[eg].RE +  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE_0, CS2_HLT, syst, mult_RE_0, l, "TANT", "HSS", "2_RE", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin_zero", Cov_S2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
        
-       HS2[is].distr_list[eg].IM =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, CS2_HLT, syst, mult, l, "TANT", "HSS", "2_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_S2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
+       HS2[is].distr_list[eg].IM =  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, CS2_HLT, syst, mult_IM, l, "TANT", "HSS", "2_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin", Cov_S2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
        HS2[is].distr_list[eg].IM = HS2[is].distr_list[eg].IM.ave() + ( HS2[is].distr_list[eg].IM - HS2[is].distr_list[eg].IM.ave())*sqrt( 1.0 + pow( syst/HS2[is].distr_list[eg].IM.err(),2));
+       HS2[is].distr_list[eg].IM = HS2[is].distr_list[eg].IM +  Get_Laplace_transfo(  erg,  sigma, aE0,  T_HLT, tmax , prec, "Erg_"+to_string_with_precision(Ergs[eg],3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM_0, CS2_HLT, syst, mult_IM_0, l, "TANT", "HSS", "2_IM", Ag_target,0, -1.0*Get_id_distr(Njacks_JJ,UseJack) , 0.0 , "penguin_zero", Cov_S2, fake_func,0, fake_func_d ,  Is_Emax_Finite,  Emax, alpha, 1);
 
 
               
      }
 
+
+     
+
+     
+
      cout<<"Zeta: "<<Zetas[is]<<" computed!"<<endl<<flush;
    }
 
-
+     
 
    //print the results
 
    //print as a function of E for fixed sigma
 
-  
-
-   
-   
+     /*
+     vector<complex_distr_t_list> FIN_H1, FIN_H2, FIN_HS1, FIN_HS2;
+     
+     for(auto & s: Zetas) {
+       FIN_H1.emplace_back( UseJack, Ergs_NZ.size());
+       FIN_H2.emplace_back( UseJack, Ergs_NZ.size());
+       
+       FIN_HS1.emplace_back( UseJack, Ergs_NZ.size());
+       FIN_HS2.emplace_back( UseJack, Ergs_NZ.size());
+     }
+     
+     
+     for(int s=0;s<(signed)Zetas.size();s++) {
+       for(int e=0;e<Ergs_NZ.size();e++) {
+	 
+	 FIN_H1[s].distr_list[e] = H1[s].distr_list[e+1] - H1[s].distr_list[0];
+	 FIN_H2[s].distr_list[e] = H2[s].distr_list[e+1] - H2[s].distr_list[0];
+	 
+	 FIN_HS1[s].distr_list[e] = HS1[s].distr_list[e+1] - HS1[s].distr_list[0];
+	 FIN_HS2[s].distr_list[e] = HS2[s].distr_list[e+1] - HS2[s].distr_list[0];
+	 
+       }
+     }
+     
+     
+     */
 
    for(int is=0; is < (signed)Zetas.size(); is++) {
 
-     Print_To_File({}, {Ergs, H1[is].RE_ave(), H1[is].RE_err(), H1[is].IM_ave(), H1[is].IM_err() }, "../data/PINGU/spectral_reconstruction/HSL/Erg/H1_z_"+to_string_with_precision(Zetas[is],2), "", "");
-     Print_To_File({}, {Ergs, H2[is].RE_ave(), H2[is].RE_err(), H2[is].IM_ave(), H2[is].IM_err() }, "../data/PINGU/spectral_reconstruction/HSL/Erg/H2_z_"+to_string_with_precision(Zetas[is],2), "", "");
+     /*
+     Print_To_File({}, {Ergs_NZ, FIN_H1[is].RE_ave(), FIN_H1[is].RE_err(), FIN_H1[is].IM_ave(), FIN_H1[is].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSL/Erg/H1_sub_z_"+to_string_with_precision(Zetas[is],2), "", "");
+     Print_To_File({}, {Ergs_NZ, FIN_H2[is].RE_ave(), FIN_H2[is].RE_err(), FIN_H2[is].IM_ave(), FIN_H2[is].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSL/Erg/H2_sub_z_"+to_string_with_precision(Zetas[is],2), "", "");
      
-     Print_To_File({}, {Ergs, HS1[is].RE_ave(), HS1[is].RE_err(), HS1[is].IM_ave(), HS1[is].IM_err() }, "../data/PINGU/spectral_reconstruction/HSS/Erg/H1_z_"+to_string_with_precision(Zetas[is],2), "", "");
-     Print_To_File({}, {Ergs, HS2[is].RE_ave(), HS2[is].RE_err(), HS2[is].IM_ave(), HS2[is].IM_err() }, "../data/PINGU/spectral_reconstruction/HSS/Erg/H2_z_"+to_string_with_precision(Zetas[is],2), "", "");
+     Print_To_File({}, {Ergs_NZ, FIN_HS1[is].RE_ave(), FIN_HS1[is].RE_err(), FIN_HS1[is].IM_ave(), FIN_HS1[is].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSS/Erg/H1_sub_z_"+to_string_with_precision(Zetas[is],2), "", "");
+     Print_To_File({}, {Ergs_NZ, FIN_HS2[is].RE_ave(), FIN_HS2[is].RE_err(), FIN_HS2[is].IM_ave(), FIN_HS2[is].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSS/Erg/H2_sub_z_"+to_string_with_precision(Zetas[is],2), "", "");
+     */
+
+     Print_To_File({}, {Ergs_HSL, H1[is].RE_ave(), H1[is].RE_err(), H1[is].IM_ave(), H1[is].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSL/Erg/H1_z_"+to_string_with_precision(Zetas[is],2), "", "");
+     Print_To_File({}, {Ergs_HSL, H2[is].RE_ave(), H2[is].RE_err(), H2[is].IM_ave(), H2[is].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSL/Erg/H2_z_"+to_string_with_precision(Zetas[is],2), "", "");
+     
+     Print_To_File({}, {Ergs, HS1[is].RE_ave(), HS1[is].RE_err(), HS1[is].IM_ave(), HS1[is].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSS/Erg/H1_z_"+to_string_with_precision(Zetas[is],2), "", "");
+     Print_To_File({}, {Ergs, HS2[is].RE_ave(), HS2[is].RE_err(), HS2[is].IM_ave(), HS2[is].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSS/Erg/H2_z_"+to_string_with_precision(Zetas[is],2), "", "");
+     
      
    }
+   
 
 
    //print as a function of sigma at fixed energy
@@ -1980,18 +3759,233 @@ void penguin_spectral_reco() {
 
    for(int ie=0; ie < (signed)Ergs.size(); ie++) {
 
-     Print_To_File({}, {Zetas, H1_ERG[ie].RE_ave(), H1_ERG[ie].RE_err(), H1_ERG[ie].IM_ave(), H1_ERG[ie].IM_err() }, "../data/PINGU/spectral_reconstruction/HSL/eps/H1_erg_"+to_string_with_precision(Ergs[ie],2), "", "");
-     Print_To_File({}, {Zetas, H2_ERG[ie].RE_ave(), H2_ERG[ie].RE_err(), H2_ERG[ie].IM_ave(), H2_ERG[ie].IM_err() }, "../data/PINGU/spectral_reconstruction/HSL/eps/H2_erg_"+to_string_with_precision(Ergs[ie],2), "", "");
+     Print_To_File({}, {Zetas, H1_ERG[ie].RE_ave(), H1_ERG[ie].RE_err(), H1_ERG[ie].IM_ave(), H1_ERG[ie].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSL/eps/H1_erg_"+to_string_with_precision(Ergs_HSL[ie],2), "", "");
+     Print_To_File({}, {Zetas, H2_ERG[ie].RE_ave(), H2_ERG[ie].RE_err(), H2_ERG[ie].IM_ave(), H2_ERG[ie].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSL/eps/H2_erg_"+to_string_with_precision(Ergs_HSL[ie],2), "", "");
      
-     Print_To_File({}, {Zetas, HS1_ERG[ie].RE_ave(), HS1_ERG[ie].RE_err(), HS1_ERG[ie].IM_ave(), HS1_ERG[ie].IM_err() }, "../data/PINGU/spectral_reconstruction/HSS/eps/H1_erg_"+to_string_with_precision(Ergs[ie],2), "", "");
-     Print_To_File({}, {Zetas, HS2_ERG[ie].RE_ave(), HS2_ERG[ie].RE_err(), HS2_ERG[ie].IM_ave(), HS2_ERG[ie].IM_err() }, "../data/PINGU/spectral_reconstruction/HSS/eps/H2_erg_"+to_string_with_precision(Ergs[ie],2), "", "");
+     Print_To_File({}, {Zetas, HS1_ERG[ie].RE_ave(), HS1_ERG[ie].RE_err(), HS1_ERG[ie].IM_ave(), HS1_ERG[ie].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSS/eps/H1_erg_"+to_string_with_precision(Ergs[ie],2), "", "");
+     Print_To_File({}, {Zetas, HS2_ERG[ie].RE_ave(), HS2_ERG[ie].RE_err(), HS2_ERG[ie].IM_ave(), HS2_ERG[ie].IM_err() }, "../data/"+out_dir+"/spectral_reconstruction/HSS/eps/H2_erg_"+to_string_with_precision(Ergs[ie],2), "", "");
      
 
    }
 
+
+
+   //print eps->0 extrapolation at 4.75 GeV
+
+
+   
+     
+   class ipar {
+   public:
+     ipar() : val_RE(0.0), err_RE(0.0), val_IM(0.0), err_IM(0.0), eps(0.0) {}
+     double val_RE,err_RE,val_IM, err_IM, eps;
+   };
+   
+     class fpar {
+     public:
+       fpar() {}
+       fpar(const Vfloat &par) {
+	 if((signed)par.size() != 3) crash("In class fpar  class constructor Vfloat par has size != 2");
+	 R=par[0];
+	 A=par[1];
+	 A2=par[2];
+       }
+       double R,A,A2;
+     };
+
+
+     int Nmeas= Zetas.size() -1;
+     
+     //fit on mean values to get ch2
+     bootstrap_fit<fpar,ipar> bf(Njacks_JJ);
+     bf.set_warmup_lev(1); //sets warmup
+     bf.Set_number_of_measurements(Nmeas);
+     bf.Set_verbosity(1);
+     bf.Add_par("R", 1.0, 0.1);
+     bf.Add_par("A", 1.0, 0.1);
+     bf.Add_par("A2", 1.0, 0.1);
+     //for mean values
+     bootstrap_fit<fpar,ipar> bf_ch2(1);
+     bf_ch2.set_warmup_lev(1); //sets warmup
+     bf_ch2.Set_number_of_measurements(Nmeas);
+     bf_ch2.Set_verbosity(1);
+     bf_ch2.Add_par("R", 1.0, 0.1);
+     bf_ch2.Add_par("A", 1.0, 0.1);
+     bf_ch2.Add_par("A2", 1.0, 0.1);
+     bf.Fix_par("A2", 0.0);
+     bf_ch2.Fix_par("A2",0.0);
+     
+     //##############################//
+
+          
+     int only_four_finest=true;
+     int RE_IM=1;
+     
+     //ansatz
+     bf.ansatz=  [&only_four_finest](const fpar &p, const ipar &ip) {
+       if(only_four_finest && ip.eps > 1.1) { return 0.0 ; }
+       return p.R + p.A*pow(ip.eps,1) + p.A2*pow(ip.eps,2);
+       
+     };
+
+
+     
+     bf.measurement=  [&RE_IM, &only_four_finest ](const fpar &p, const ipar &ip) {
+       if(only_four_finest && ip.eps > 1.1) { return 0.0 ;}
+       if(RE_IM==0) return ip.val_IM;
+       return ip.val_RE;       
+     };
+     bf.error=  [&RE_IM, &only_four_finest ](const fpar &p, const ipar &ip) {
+      
+       if(RE_IM==0) return ip.err_IM;
+       return ip.err_RE;       
+     };
+
+     bf_ch2.ansatz= bf.ansatz;
+     bf_ch2.measurement = bf.measurement;
+     bf_ch2.error = bf.error;
+
+         
+  
+     //fill the data
+     vector<vector<ipar>> data(Njacks_JJ);
+     vector<vector<ipar>> data_ch2(1);
+     //allocate space for output result
+
+     cout<<"Nmeas: "<<Nmeas<<endl;
+     
+     for(auto &data_iboot: data) data_iboot.resize(Nmeas);
+     for(auto &data_iboot: data_ch2) data_iboot.resize(Nmeas);
+     for(int ijack=0;ijack<Njacks_JJ;ijack++) {
+       for(int imeas=0;imeas<Nmeas;imeas++) {
+
+	 data[ijack][imeas].val_RE= HS1_ERG[id_475].distr_list[imeas+1].RE.distr[ijack];
+	 data[ijack][imeas].err_RE = HS1_ERG[id_475].RE_err(imeas+1);
+	 data[ijack][imeas].val_IM= HS1_ERG[id_475].distr_list[imeas+1].IM.distr[ijack];
+	 data[ijack][imeas].err_IM = HS1_ERG[id_475].IM_err(imeas+1);
+	 data[ijack][imeas].eps = Zetas[imeas+1];
+	 //mean values
+	 if(ijack==0) {
+	   data_ch2[ijack][imeas].val_RE = HS1_ERG[id_475].RE_ave(imeas+1);
+	   data_ch2[ijack][imeas].val_IM = HS1_ERG[id_475].IM_ave(imeas+1);
+	   data_ch2[ijack][imeas].err_RE = HS1_ERG[id_475].RE_err(imeas+1);
+	   data_ch2[ijack][imeas].err_IM = HS1_ERG[id_475].IM_err(imeas+1);
+	   data_ch2[ijack][imeas].eps=Zetas[imeas+1];
+	 }
+       }
+     }
+     
+         
+     //append
+     bf.Append_to_input_par(data);
+     bf_ch2.Append_to_input_par(data_ch2);
+     //fit
+     boot_fit_data<fpar> Bt_fit_RE;
+     boot_fit_data<fpar> Bt_fit_RE_ch2;
+     only_four_finest=true;
+     Bt_fit_RE= bf.Perform_bootstrap_fit();
+     Bt_fit_RE_ch2= bf_ch2.Perform_bootstrap_fit();
+     bf.Release_par("A2");
+     bf_ch2.Release_par("A2");
+     only_four_finest=false;
+     boot_fit_data<fpar> Bt_fit_RE_eps2;
+     boot_fit_data<fpar> Bt_fit_RE_eps2_ch2;
+     Bt_fit_RE_eps2= bf.Perform_bootstrap_fit();
+     Bt_fit_RE_eps2_ch2= bf_ch2.Perform_bootstrap_fit();
+     
+     bf.Fix_par("A2",0.0);
+     bf_ch2.Fix_par("A2",0.0);
+     only_four_finest=true;
+     RE_IM=0;
+     boot_fit_data<fpar> Bt_fit_IM;
+     boot_fit_data<fpar> Bt_fit_IM_ch2;
+     Bt_fit_IM= bf.Perform_bootstrap_fit();
+     Bt_fit_IM_ch2= bf_ch2.Perform_bootstrap_fit();
+     bf.Release_par("A2");
+     bf_ch2.Release_par("A2");
+     only_four_finest=false;
+     boot_fit_data<fpar> Bt_fit_IM_eps2;
+     boot_fit_data<fpar> Bt_fit_IM_eps2_ch2;
+     Bt_fit_IM_eps2= bf.Perform_bootstrap_fit();
+     Bt_fit_IM_eps2_ch2= bf.Perform_bootstrap_fit();
+
+     //print ch2/dof
+
+     cout<<"ch2(RE,linear): "<<Bt_fit_RE_ch2.get_ch2_ave()/(Nmeas - 2)<<endl;
+     cout<<"ch2(RE,quad): "<<Bt_fit_RE_eps2_ch2.get_ch2_ave()/(Nmeas-3)<<endl;
+     cout<<"ch2(IM,linear): "<<Bt_fit_IM_ch2.get_ch2_ave()/(Nmeas - 2)<<endl;
+     cout<<"ch2(IM,quad): "<<Bt_fit_IM_eps2_ch2.get_ch2_ave()/(Nmeas-3)<<endl;
+
+
+     //retrieve parameters
+
+     distr_t H_RE(UseJack), H_IM(UseJack), H_RE_Q(UseJack), H_IM_Q(UseJack);
+     distr_t A1_RE(UseJack), A1_IM(UseJack), A1_RE_Q(UseJack), A1_IM_Q(UseJack);
+     distr_t A2_RE(UseJack), A2_IM(UseJack), A2_RE_Q(UseJack), A2_IM_Q(UseJack);
+
+
+     for(int ijack=0;ijack<Njacks_JJ;ijack++) {
+
+       H_RE.distr.push_back( Bt_fit_RE.par[ijack].R);
+       H_IM.distr.push_back( Bt_fit_IM.par[ijack].R);
+       H_RE_Q.distr.push_back( Bt_fit_RE_eps2.par[ijack].R);
+       H_IM_Q.distr.push_back( Bt_fit_IM_eps2.par[ijack].R);
+
+       A1_RE.distr.push_back( Bt_fit_RE.par[ijack].A);
+       A1_IM.distr.push_back( Bt_fit_IM.par[ijack].A);
+       A1_RE_Q.distr.push_back( Bt_fit_RE_eps2.par[ijack].A);
+       A1_IM_Q.distr.push_back( Bt_fit_IM_eps2.par[ijack].A);
+
+       
+       A2_RE.distr.push_back( Bt_fit_RE.par[ijack].A2);
+       A2_IM.distr.push_back( Bt_fit_IM.par[ijack].A2);
+       A2_RE_Q.distr.push_back( Bt_fit_RE_eps2.par[ijack].A2);
+       A2_IM_Q.distr.push_back( Bt_fit_IM_eps2.par[ijack].A2);
+  
+     }
+
+
+     //fit func
+
+     Vfloat alpha_to_print;
+     distr_t_list func_RE(UseJack), func_IM(UseJack), func_RE_Q(UseJack), func_IM_Q(UseJack);
+     int Nsteps=200;
+     for(int istep=0;istep<Nsteps;istep++) { alpha_to_print.push_back( istep*3.0/(Nsteps-1.0) );}
+     for(int a=0;a<(signed)alpha_to_print.size(); a++) {
+       double alpha=alpha_to_print[a];
+       func_RE.distr_list.push_back( H_RE + A1_RE*alpha + A2_RE*pow(alpha,2)) ;
+       func_IM.distr_list.push_back( H_IM + A1_IM*alpha + A2_IM*pow(alpha,2)) ;
+       func_RE_Q.distr_list.push_back( H_RE_Q + A1_RE_Q*alpha + A2_RE_Q*pow(alpha,2));
+       func_IM_Q.distr_list.push_back( H_IM_Q + A1_IM_Q*alpha + A2_IM_Q*pow(alpha,2));
+     }
+
+
+     //print
+     boost::filesystem::create_directory("../data/PINGU/spectral_reconstruction/fit");
+     
+     Print_To_File({}, { alpha_to_print, func_RE.ave(), func_RE.err(), func_RE_Q.ave(), func_RE_Q.err() }, "../data/PINGU/spectral_reconstruction/fit/H1_RE_5.28","","");
+     Print_To_File({}, { alpha_to_print, func_IM.ave(), func_IM.err(), func_IM_Q.ave(), func_IM_Q.err() }, "../data/PINGU/spectral_reconstruction/fit/H1_IM_5.28","","");
+     
+
+     
+   
    
 
+   }
 
+
+
+   //print model_to_file
+
+     
+   
+
+   for(int is=0; is < (signed)Zetas_mod.size(); is++) {
+
+     Print_To_File({}, {Emod, MOD_HSL_RE[is], MOD_HSL_IM[is] }, "../data/"+out_dir+"/spectral_reconstruction/HSL/Erg/H1_mod_z_"+to_string_with_precision(Zetas_mod[is],2), "", "");
+     Print_To_File({}, {Emod, MOD_HSS_RE[is], MOD_HSS_IM[is] }, "../data/"+out_dir+"/spectral_reconstruction/HSS/Erg/H1_mod_z_"+to_string_with_precision(Zetas_mod[is],2), "", "");
+     
+   }
    
 
    
@@ -2002,8 +3996,116 @@ void penguin_spectral_reco() {
 
    return ;
 }
-  
 
+
+
+void TEST_PI_Q2() {
+
+
+    auto Sort_light_confs = [](string A, string B) {
+
+			   
+
+			    int conf_length_A= A.length();
+			    int conf_length_B= B.length();
+
+			    int pos_a_slash=-1;
+			    int pos_b_slash=-1;
+			    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+			    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+
+			    string A_bis= A.substr(pos_a_slash+1);
+			    string B_bis= B.substr(pos_b_slash+1);
+
+			     
+			    string conf_num_A = A_bis.substr(0,4);
+			    string conf_num_B = B_bis.substr(0,4);
+							       
+		      
+			    string rA = A_bis.substr(A_bis.length()-2);
+			    string rB = B_bis.substr(B_bis.length()-2);
+			    if(rA.substr(0,1) == "r") { 
+			      int n1 = stoi(A_bis.substr(A_bis.length()-1));
+			      int n2 = stoi(B_bis.substr(B_bis.length()-1));
+			      if(rA == rB) {
+			      if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+			      else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+			      else crash("stream not recognized");
+			      }
+			      else return n1<n2;
+			    }
+			    return A_bis<B_bis;
+  };
+
+
+
+
+
+    data_t C_1, C_2, C_3;
+
+
+    C_1.Read("../PI_Q2", "mes_contr_PT2_CONS_1", "S0V1", Sort_light_confs);
+    C_2.Read("../PI_Q2", "mes_contr_PT2_CONS_2", "S0V2", Sort_light_confs);
+    C_3.Read("../PI_Q2", "mes_contr_PT2_CONS_3", "S0V3", Sort_light_confs);
+
+    int Njacks=50;
+
+    //set up statistical analysis
+    CorrAnalysis Corr(UseJack,Njacks,100);
+    Corr.Nt=128;
+    int T=128;
+    Corr.Reflection_sign=1;
+    Corr.Perform_Nt_t_average=1;
+
+    boost::filesystem::create_directory("../data/PI_Q2_TEST");
+    distr_t_list V= (1.0/3.0)*Corr.corr_t( summ_master( C_1.col(0)[0], C_2.col(0)[0], C_3.col(0)[0] ), "../data/PI_Q2_TEST/V");
+
+
+    double a_B= 0.0795/0.197327;
+    int Nqs=100;
+    Vfloat Qs;
+    for(int i=0;i<Nqs;i++) { Qs.push_back( 0.100 + i*0.02); }
+
+    distr_t_list PI_NAIVE(UseJack,Nqs,Njacks), PI_SUB(UseJack,Nqs,Njacks);
+
+    for(int iq=0;iq<Nqs;iq++) {
+      distr_t p_sum_naive(UseJack,Njacks);
+      distr_t p_sum_sub(UseJack, Njacks);
+      for(int t=0;t<44;t++) {
+	p_sum_naive = p_sum_naive + -(( cos(Qs[iq]*a_B*t))/(a_B*a_B*Qs[iq]*Qs[iq]))*(V.distr_list[t]+ (t==0?(0.0*Get_id_jack_distr(Njacks)):V.distr_list[T-t]));
+	p_sum_sub = p_sum_sub + (1/(a_B*a_B*Qs[iq]*Qs[iq]))*( 1- cos(Qs[iq]*a_B*t) )*(V.distr_list[t]+ (t==0?(0.0*Get_id_jack_distr(Njacks)):V.distr_list[T-t]));
+      }
+
+      PI_NAIVE.distr_list[iq] = p_sum_naive;
+      PI_SUB.distr_list[iq] = p_sum_sub;
+
+    }
+
+
+    //print
+
+    Print_To_File({}, { Qs, PI_NAIVE.ave(), PI_NAIVE.err(), PI_SUB.ave(), PI_SUB.err() } , "../data/PI_Q2_TEST/PI_Q2", "", "");
+    
+    
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+  exit(-1);
+  return;
+}
+
+  
 
 
   

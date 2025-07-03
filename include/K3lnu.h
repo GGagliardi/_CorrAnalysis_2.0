@@ -11,6 +11,7 @@
 #include "stat.h"
 #include "binary_io.h"
 #include "RC_WI_analysis.h"
+#include "Spectral.h"
 
 using namespace std;
 
@@ -56,6 +57,7 @@ An_cont_ret Analytic_continuation(const distr_t_list& C_in, const distr_t& E, co
 void K3lnu();
 void Get_electrounquenching();
 void Analyze_Aprime();
+void Do_HLT_virtual();
 
 
 

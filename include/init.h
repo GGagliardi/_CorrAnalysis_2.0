@@ -39,6 +39,9 @@
 #include "axial_WI_disco.h"
 #include "I0_gm2.h"
 #include "sphaleron.h"
+#include "tau_LIBE.h"
+#include "inclusive_Ds_CKM_analysis.h"
+#include "hc_ee.h"
 
 using namespace std;
 

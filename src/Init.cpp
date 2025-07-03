@@ -3,6 +3,7 @@
 #include "RC_WI_analysis.h"
 #include "RC_analysis.h"
 #include "chi_mag.h"
+#include "inclusive_Ds_CKM_analysis.h"
 #include "sphaleron.h"
 
 
@@ -308,6 +309,24 @@ MasterClass_analysis::MasterClass_analysis(string Path) {  //default constructor
 
     //do nothing    
   }
+
+  else if(Analysis_Mode=="tau_LIBE") {
+
+    //do nothing
+  }
+
+  else if(Analysis_Mode=="Inclusive_Ds_CKM") {
+
+    //do nothing
+  }
+
+  else if(Analysis_Mode=="derivative_scaling") {
+    //do nothing
+  }
+
+  else if(Analysis_Mode=="hc_ee") {
+    //do nothing
+  }
   
 
   else if(Analysis_Mode=="test") {
@@ -507,6 +526,26 @@ void MasterClass_analysis::Analysis_manager() {
   if(Analysis_Mode=="mcorr_HVP") {
      
     mcorr_HVP();
+  }
+
+  if(Analysis_Mode=="tau_LIBE") {
+
+    Compute_tau_LIBE();
+  }
+
+  if(Analysis_Mode=="Inclusive_Ds_CKM") {
+
+    Get_inclusive_Ds_CKM_analysis();
+  }
+
+  if(Analysis_Mode=="derivative_scaling") {
+
+    Get_derivative_scaling();
+  }
+
+  if(Analysis_Mode=="hc_ee") {
+
+     hc_ee();
   }
   
   if(Analysis_Mode=="test") {

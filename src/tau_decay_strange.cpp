@@ -36,7 +36,7 @@ const string SM_TYPE_1= "KT_"+to_string(sm_func_mode);
 VVfloat covariance_fake_strange;
 const double QCD_scale= 0.3*fm_to_inv_Gev;
 bool Skip_spectral_density_analysis_strange=true;
-const bool Perform_continuum_extrapolation=false;
+const bool Perform_continuum_extrapolation=true;
 bool Use_Customized_plateaux_strange=true;
 using namespace std;
 
@@ -747,14 +747,14 @@ void tau_decay_analysis_strange() {
   //vector<bool> Is_Emax_Finite({1,1,1,1,1});
 
   //TO BE USED FOR FINAL ANALYSIS
-  //Vfloat betas({ 3.99 , 4.99 , 3.99, 2.99 });
-  //Vfloat Emax_list({4.0, 4.0 , 5.0, 4.0});
-  //vector<bool> Is_Emax_Finite({1,1,1, 1});
+  Vfloat betas({ 3.99 , 4.99 , 3.99, 2.99 });
+  Vfloat Emax_list({4.0, 4.0 , 5.0, 4.0});
+  vector<bool> Is_Emax_Finite({1,1,1, 1});
 
 
-  Vfloat betas({ 3.99});
-  Vfloat Emax_list({4.0});
-  vector<bool> Is_Emax_Finite({1});
+  //Vfloat betas({ 3.99});
+  //Vfloat Emax_list({4.0});
+  //vector<bool> Is_Emax_Finite({1});
 
   
 
@@ -920,6 +920,11 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AX");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AX/tm");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AX/OS");
+
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/VX");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/VX/tm");
+  boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/VX/OS");
+  
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/T");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/T/tm");
   boost::filesystem::create_directory("../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/T/OS");
@@ -3563,7 +3568,7 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
 
     
     //vector<string> Contribs({"A0A0", "V0V0", "AkAk", "VkVk", "tot", "VA", "VMA", "AX", "T", "L", "tot_TL"});
-    vector<string> Contribs({"T", "L", "tot_TL"});
+    vector<string> Contribs({"VX", "AX", "T", "L", "tot_TL"});
     //vector<string> Fit_types({"tm", "OS", "comb"});
     vector<string> Fit_types({"comb"});
     //vector<string> poly_types({"const", "linear"});
@@ -3790,6 +3795,7 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
       distr_t_list A0A0_tm_red(UseJack), A0A0_OS_red(UseJack);
       distr_t_list AkAk_tm_red(UseJack), AkAk_OS_red(UseJack);
       distr_t_list VkVk_tm_red(UseJack), VkVk_OS_red(UseJack);
+      distr_t_list AX_tm_red(UseJack), AX_OS_red(UseJack);
       distr_t_list T_tm_red(UseJack), T_OS_red(UseJack);
       distr_t_list L_tm_red(UseJack), L_OS_red(UseJack);
 
@@ -3806,6 +3812,7 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
       double corr_fact_VkVk_FSE, corr_fact_VkVk_FSE_tm, corr_fact_VkVk_FSE_OS;
       double corr_fact_T_FSE, corr_fact_T_FSE_tm, corr_fact_T_FSE_OS;
       double corr_fact_L_FSE, corr_fact_L_FSE_tm, corr_fact_L_FSE_OS;
+      double corr_fact_AX_FSE, corr_fact_AX_FSE_tm, corr_fact_AX_FSE_OS;
 
       double corr_fact_err_A0A0_FSE, corr_fact_err_A0A0_FSE_tm, corr_fact_err_A0A0_FSE_OS;
       double corr_fact_err_V0V0_FSE, corr_fact_err_V0V0_FSE_tm, corr_fact_err_V0V0_FSE_OS;
@@ -3915,6 +3922,15 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
       corr_fact_L_FSE_tm = ((L_tm.ave(id_C112) - L_tm.ave(id_C80))/(L_tm.ave(id_C80)))*fabs(erf( (L_tm.ave(id_C112)-L_tm.ave(id_C80))/(sqrt(2.0*( pow( L_tm.err(id_C112)  ,2)  + pow( L_tm.err(id_C80) ,2)   )))));
       corr_fact_L_FSE_OS = ((L_OS.ave(id_C112) - L_OS.ave(id_C80))/(L_OS.ave(id_C80)))*fabs(erf( (L_OS.ave(id_C112)-L_OS.ave(id_C80))/(sqrt(2.0*( pow( L_OS.err(id_C112)  ,2)  + pow( L_OS.err(id_C80) ,2)   )))));
 
+
+
+      corr_fact_AX_FSE_tm = (( (A0A0_tm+AkAk_tm).ave(id_C112) - (A0A0_tm+AkAk_tm).ave(id_C80))/( (A0A0_tm+AkAk_tm).ave(id_C80)))*fabs(erf( ( (A0A0_tm+AkAk_tm).ave(id_C112) -(A0A0_tm+AkAk_tm).ave(id_C80))/(sqrt( 2.0*(   pow( (A0A0_tm+AkAk_tm).err(id_C112),2) + pow( (A0A0_tm+AkAk_tm).err(id_C80),2)  )))));
+      
+      corr_fact_AX_FSE_OS = (( (A0A0_OS+AkAk_OS).ave(id_C112) - (A0A0_OS+AkAk_OS).ave(id_C80))/( (A0A0_OS+AkAk_OS).ave(id_C80)))*fabs(erf( ( (A0A0_OS+AkAk_OS).ave(id_C112) -(A0A0_OS+AkAk_OS).ave(id_C80))/(sqrt( 2.0*(   pow( (A0A0_OS+AkAk_OS).err(id_C112),2) + pow( (A0A0_OS+AkAk_OS).err(id_C80),2)  )))));
+
+      corr_fact_AX_FSE = max( fabs(corr_fact_AX_FSE_tm), fabs(corr_fact_AX_FSE_OS));
+      
+
       pl_L_tm = (L_tm.ave(id_C112)-L_tm.ave(id_C80))/(sqrt(( pow( L_tm.err(id_C112)  ,2)  + pow( L_tm.err(id_C80) ,2))));
       pl_L_OS = (L_OS.ave(id_C112)-L_OS.ave(id_C80))/(sqrt(( pow( L_OS.err(id_C112)  ,2)  + pow( L_OS.err(id_C80) ,2))));
       
@@ -3932,6 +3948,7 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
       distr_t distr_syst_FSE_V0V0(UseJack);
       distr_t distr_syst_FSE_T(UseJack);
       distr_t distr_syst_FSE_L(UseJack);
+      distr_t distr_syst_FSE_AX(UseJack);
 
       for(int ijack=0; ijack<Njacks;ijack++) {
 
@@ -3941,6 +3958,7 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
 	distr_syst_FSE_V0V0.distr.push_back( 1.0 + GM_sigma()*corr_fact_V0V0_FSE/sqrt(Njacks-1.0));
 	distr_syst_FSE_T.distr.push_back( 1.0 + GM_sigma()*corr_fact_T_FSE/sqrt(Njacks-1.0));
 	distr_syst_FSE_L.distr.push_back( 1.0 + GM_sigma()*corr_fact_L_FSE/sqrt(Njacks-1.0));
+	distr_syst_FSE_AX.distr.push_back( 1.0 + GM_sigma()*corr_fact_AX_FSE/sqrt(Njacks-1.0));
 	
 
       }
@@ -4158,6 +4176,11 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
 	    L_tm_red.distr_list.push_back( L_tm.distr_list[iens]*distr_syst_FSE_L);
 	    L_OS_red.distr_list.push_back( L_OS.distr_list[iens]*distr_syst_FSE_L);
 
+	    //AX
+
+	    AX_tm_red.distr_list.push_back(  (A0A0_tm+AkAk_tm).distr_list[iens]*distr_syst_FSE_AX);
+	    AX_OS_red.distr_list.push_back(  (A0A0_OS+AkAk_OS).distr_list[iens]*distr_syst_FSE_AX);
+
 	    
 	  }
 	  else {
@@ -4178,6 +4201,9 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
 
 	    L_tm_red.distr_list.push_back( L_tm.distr_list[iens]);
 	    L_OS_red.distr_list.push_back( L_OS.distr_list[iens]);
+
+	    AX_tm_red.distr_list.push_back( (A0A0_tm+AkAk_tm).distr_list[iens]);
+	    AX_OS_red.distr_list.push_back( (A0A0_OS+AkAk_OS).distr_list[iens]);
 	    
 	    
 	  }
@@ -4422,8 +4448,13 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
 		}
 
 		else if(contr=="AX") {
-		  Cov_Matrix(iens,iens) = pow( (AkAk_tm_red+A0A0_tm_red).err(iens),2); Cov_Matrix(iens+off_OS,iens+off_OS) = pow( (AkAk_OS_red+ A0A0_OS_red).err(iens),2); 
-		  Cov_Matrix(iens, off_OS+iens) = ( (AkAk_tm_red+A0A0_tm_red).distr_list[iens]% (AkAk_OS_red+A0A0_OS_red).distr_list[iens]);
+		  Cov_Matrix(iens,iens) = pow( (AX_tm_red).err(iens),2); Cov_Matrix(iens+off_OS,iens+off_OS) = pow( (AX_OS_red).err(iens),2); 
+		  Cov_Matrix(iens, off_OS+iens) = ( (AX_tm_red).distr_list[iens]% (AX_OS_red).distr_list[iens]);
+		}
+
+		else if(contr=="VX") {
+		  Cov_Matrix(iens,iens) = pow( (VkVk_tm_red+V0V0_tm_red).err(iens),2); Cov_Matrix(iens+off_OS,iens+off_OS) = pow( (VkVk_OS_red+ V0V0_OS_red).err(iens),2); 
+		  Cov_Matrix(iens, off_OS+iens) = ( (VkVk_tm_red+V0V0_tm_red).distr_list[iens]% (VkVk_OS_red+V0V0_OS_red).distr_list[iens]);
 		}
 
 		else if(contr=="T") {
@@ -4536,20 +4567,38 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
 
 		else if(contr=="AX") {
 		   if((fit_type=="tm") || (fit_type=="comb")) {
-		     data[ijack][iens].Br = (AkAk_tm_red+A0A0_tm_red).distr_list[iens].distr[ijack];
-		     data[ijack][iens].Br_err= (AkAk_tm_red+A0A0_tm_red).err(iens);
+		     data[ijack][iens].Br = (AX_tm_red).distr_list[iens].distr[ijack];
+		     data[ijack][iens].Br_err= (AX_tm_red).err(iens);
 		     data[ijack][iens].Is_tm = true;
 		     data[ijack][iens].a = a_distr_list_red.distr_list[iens].distr[ijack];
 		   }
 
 		   if((fit_type=="OS") || (fit_type=="comb")) {
-		    data[ijack][iens+off_OS].Br = (AkAk_OS_red+A0A0_OS_red).distr_list[iens].distr[ijack];
-		    data[ijack][iens+off_OS].Br_err= (AkAk_OS_red+A0A0_OS_red).err(iens);
+		    data[ijack][iens+off_OS].Br = (AX_OS_red).distr_list[iens].distr[ijack];
+		    data[ijack][iens+off_OS].Br_err= (AX_OS_red).err(iens);
 		    data[ijack][iens+off_OS].Is_tm = false;
 		    data[ijack][iens+off_OS].a = a_distr_list_red.distr_list[iens].distr[ijack];
 		   }
 		   
 		}
+
+		else if(contr=="VX") {
+		   if((fit_type=="tm") || (fit_type=="comb")) {
+		     data[ijack][iens].Br = (VkVk_tm_red+V0V0_tm_red).distr_list[iens].distr[ijack];
+		     data[ijack][iens].Br_err= (VkVk_tm_red+V0V0_tm_red).err(iens);
+		     data[ijack][iens].Is_tm = true;
+		     data[ijack][iens].a = a_distr_list_red.distr_list[iens].distr[ijack];
+		   }
+
+		   if((fit_type=="OS") || (fit_type=="comb")) {
+		    data[ijack][iens+off_OS].Br = (VkVk_OS_red+V0V0_OS_red).distr_list[iens].distr[ijack];
+		    data[ijack][iens+off_OS].Br_err= (VkVk_OS_red+V0V0_OS_red).err(iens);
+		    data[ijack][iens+off_OS].Is_tm = false;
+		    data[ijack][iens+off_OS].a = a_distr_list_red.distr_list[iens].distr[ijack];
+		   }
+		   
+		}
+		
 
 		else if(contr=="VkVk") {
 		   if((fit_type=="tm") || (fit_type=="comb")) {
@@ -4739,20 +4788,39 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
 
 		  else if(contr=="AX") {
 		    if((fit_type=="tm") || (fit_type=="comb")) {
-		      data_ch2[ijack][iens].Br = (AkAk_tm_red+A0A0_tm_red).ave(iens);
-		      data_ch2[ijack][iens].Br_err= (AkAk_tm_red+A0A0_tm_red).err(iens);
+		      data_ch2[ijack][iens].Br = (AX_tm_red).ave(iens);
+		      data_ch2[ijack][iens].Br_err= (AX_tm_red).err(iens);
 		      data_ch2[ijack][iens].Is_tm = true;
 		      data_ch2[ijack][iens].a = a_distr_list_red.ave(iens);
 		    }
 
 		    if((fit_type=="OS") || (fit_type=="comb")) {
-		      data_ch2[ijack][iens+off_OS].Br = (AkAk_OS_red+A0A0_OS_red).ave(iens);
-		      data_ch2[ijack][iens+off_OS].Br_err= (AkAk_OS_red+A0A0_OS_red).err(iens);
+		      data_ch2[ijack][iens+off_OS].Br = (AX_OS_red).ave(iens);
+		      data_ch2[ijack][iens+off_OS].Br_err= (AX_OS_red).err(iens);
 		      data_ch2[ijack][iens+off_OS].Is_tm = false;
 		      data_ch2[ijack][iens+off_OS].a = a_distr_list_red.ave(iens);
 		    }
 		    
 		  }
+
+		  else if(contr=="VX") {
+		    if((fit_type=="tm") || (fit_type=="comb")) {
+		      data_ch2[ijack][iens].Br = (VkVk_tm_red+V0V0_tm_red).ave(iens);
+		      data_ch2[ijack][iens].Br_err= (VkVk_tm_red+V0V0_tm_red).err(iens);
+		      data_ch2[ijack][iens].Is_tm = true;
+		      data_ch2[ijack][iens].a = a_distr_list_red.ave(iens);
+		    }
+
+		    if((fit_type=="OS") || (fit_type=="comb")) {
+		      data_ch2[ijack][iens+off_OS].Br = (VkVk_OS_red+V0V0_OS_red).ave(iens);
+		      data_ch2[ijack][iens+off_OS].Br_err= (VkVk_OS_red+V0V0_OS_red).err(iens);
+		      data_ch2[ijack][iens+off_OS].Is_tm = false;
+		      data_ch2[ijack][iens+off_OS].a = a_distr_list_red.ave(iens);
+		    }
+		    
+		  }
+
+		  
 
 		  else if(contr=="VkVk") {
 		    if((fit_type=="tm") || (fit_type=="comb")) {
@@ -4948,6 +5016,8 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
        Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), V0V0_tm.ave(), V0V0_tm.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/V0V0/tm/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), AkAk_tm.ave(), AkAk_tm.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AkAk/tm/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), (AkAk_tm+A0A0_tm).ave(), (AkAk_tm+A0A0_tm).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AX/tm/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
+       Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), (VkVk_tm+V0V0_tm).ave(), (VkVk_tm+V0V0_tm).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/VX/tm/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
+       
        Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), (T_tm).ave(), (T_tm).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/T/tm/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), (L_tm).ave(), (L_tm).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/L/tm/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        
@@ -4964,6 +5034,8 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
        Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), V0V0_OS.ave(), V0V0_OS.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/V0V0/OS/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), AkAk_OS.ave(), AkAk_OS.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AkAk/OS/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), (AkAk_OS+A0A0_OS).ave(), (AkAk_OS+A0A0_OS).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AX/OS/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
+       Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), (VkVk_OS+V0V0_OS).ave(), (VkVk_OS+V0V0_OS).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/VX/OS/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
+       
        Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), (T_OS).ave(), (T_OS).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/T/OS/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({ls_data_tm_VKVK.Tag}, { a_distr_list.ave(), (L_OS).ave(), (L_OS).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/L/OS/sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        
@@ -4979,7 +5051,10 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), A0A0_tm_red.ave(), A0A0_tm_red.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/A0A0/tm/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), V0V0_tm_red.ave(), V0V0_tm_red.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/V0V0/tm/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), AkAk_tm_red.ave(), AkAk_tm_red.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AkAk/tm/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
-       Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (AkAk_tm_red+A0A0_tm_red).ave(), (AkAk_tm_red+A0A0_tm_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AX/tm/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
+       Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (AX_tm_red).ave(), (AX_tm_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AX/tm/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
+
+       Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (VkVk_tm_red+V0V0_tm_red).ave(), (VkVk_tm_red+V0V0_tm_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/VX/tm/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
+       
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (T_tm_red).ave(), (T_tm_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/T/tm/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
         Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (L_tm_red).ave(), (L_tm_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/L/tm/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), VkVk_tm_red.ave(), VkVk_tm_red.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/VkVk/tm/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
@@ -4992,7 +5067,10 @@ distr_t Compute_tau_decay_width_strange(bool Is_Emax_Finite, double Emax, double
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), A0A0_OS_red.ave(), A0A0_OS_red.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/A0A0/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), V0V0_OS_red.ave(), V0V0_OS_red.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/V0V0/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), AkAk_OS_red.ave(), AkAk_OS_red.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AkAk/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
-       Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (AkAk_OS_red+A0A0_OS_red).ave(), (AkAk_OS_red+A0A0_OS_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AX/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
+       Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (AX_OS_red).ave(), (AX_OS_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/AX/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
+
+       Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (VkVk_OS_red+V0V0_OS_red).ave(), (VkVk_OS_red+V0V0_OS_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/VX/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
+       
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (T_OS_red).ave(), (T_OS_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/T/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), (L_OS_red).ave(), (L_OS_red).err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/L/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");
        Print_To_File({Tag_ens_red}, { a_distr_list_red.ave(), VkVk_OS_red.ave(), VkVk_OS_red.err() } ,  "../data/tau_decay/"+Tag_reco_type+"/strange/continuum/fit_data/VkVk/OS/FSE_corr_sigma_"+to_string_with_precision(sigma_list_strange[is],3)+".dat"  , "", "");

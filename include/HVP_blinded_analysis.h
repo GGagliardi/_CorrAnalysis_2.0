@@ -15,5 +15,6 @@
 
 void HVP_blinded_analysis();
 void mcorr_HVP();
+void GEVP_analysis();
 
 #endif

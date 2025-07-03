@@ -16,6 +16,7 @@
 
 void valence_n_sea_quark_effects();
 void sea_quark_effects();
+void Get_derivative_scaling();
 
 
 #endif
