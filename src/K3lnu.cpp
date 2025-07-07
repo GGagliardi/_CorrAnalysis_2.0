@@ -66,7 +66,6 @@ An_cont_ret Analytic_continuation(const distr_t_list& C_in, const distr_t& E, co
   return RET;
 }
 
-
 An_cont_ret operator+(const An_cont_ret &A, const An_cont_ret &B) {
 
   An_cont_ret ret;
