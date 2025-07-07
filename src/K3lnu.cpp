@@ -7,7 +7,6 @@
 using namespace std;
 
 
-
 const double alpha = 1.0/137.035999;
 const double MK_FLAG = 0.494600000;
 Vfloat xg_list({0.1, 0.3, 0.5, 0.7, 0.9});
@@ -16,7 +15,6 @@ const int Njacks = 100;
 const int Nboots=100;
 const double qu = 2.0/3.0;
 const double qd = -qu / 2.0;
-
 
 
 An_cont_ret Analytic_continuation(const distr_t_list& C_in, const distr_t& E, const exc_state_info& exc_info, int tw, int TO,  string out) {
@@ -107,94 +105,94 @@ An_cont_ret operator+(const An_cont_ret &A, const An_cont_ret &B) {
 An_cont_ret operator-(const An_cont_ret &A, const An_cont_ret &B) {
 
 
-    An_cont_ret ret;
-    An_cont_ret A1=A;
-    An_cont_ret A2=B;
+  An_cont_ret ret;
+  An_cont_ret A1=A;
+  An_cont_ret A2=B;
     
-    if(A.mGS_FF.size() != B.mGS_FF.size()) crash("operator A-B in An_cont_ret class called with A e B with different Njacks");
+  if(A.mGS_FF.size() != B.mGS_FF.size()) crash("operator A-B in An_cont_ret class called with A e B with different Njacks");
     
-    int dim_A1 = A1.unsub_FF_list.size();
-    int dim_A2 = A2.unsub_FF_list.size();
+  int dim_A1 = A1.unsub_FF_list.size();
+  int dim_A2 = A2.unsub_FF_list.size();
     
-    //check if they have same dimension
-    if(dim_A1 != dim_A2) {
-      int r= dim_A2-dim_A1;
-      for(int i= 0 ; i < abs(r); i++) {
-	if(r > 0) { A1.unsub_FF_list.distr_list.push_back( A1.unsub_FF_list[dim_A1-1] );  A1.meff_FF_list.distr_list.push_back( A1.meff_FF_list[dim_A1-1] );  A1.mGS_FF_list.distr_list.push_back( A1.mGS_FF_list[dim_A1-1] );  A1.mRES_FF_list.distr_list.push_back( A1.mRES_FF_list[dim_A1-1] ); }
-	else  { A2.unsub_FF_list.distr_list.push_back( A2.unsub_FF_list[dim_A2-1] );  A2.meff_FF_list.distr_list.push_back( A2.meff_FF_list[dim_A2-1] );  A2.mGS_FF_list.distr_list.push_back( A2.mGS_FF_list[dim_A2-1] );  A2.mRES_FF_list.distr_list.push_back( A2.mRES_FF_list[dim_A2-1] ); }
+  //check if they have same dimension
+  if(dim_A1 != dim_A2) {
+    int r= dim_A2-dim_A1;
+    for(int i= 0 ; i < abs(r); i++) {
+      if(r > 0) { A1.unsub_FF_list.distr_list.push_back( A1.unsub_FF_list[dim_A1-1] );  A1.meff_FF_list.distr_list.push_back( A1.meff_FF_list[dim_A1-1] );  A1.mGS_FF_list.distr_list.push_back( A1.mGS_FF_list[dim_A1-1] );  A1.mRES_FF_list.distr_list.push_back( A1.mRES_FF_list[dim_A1-1] ); }
+      else  { A2.unsub_FF_list.distr_list.push_back( A2.unsub_FF_list[dim_A2-1] );  A2.meff_FF_list.distr_list.push_back( A2.meff_FF_list[dim_A2-1] );  A2.mGS_FF_list.distr_list.push_back( A2.mGS_FF_list[dim_A2-1] );  A2.mRES_FF_list.distr_list.push_back( A2.mRES_FF_list[dim_A2-1] ); }
 
-      }
     }
+  }
     
-    ret.mGS_FF = A1.mGS_FF - A2.mGS_FF;
-    ret.meff_FF = A1.meff_FF - A2.meff_FF;
-    ret.mRES_FF = A1.mRES_FF - A2.mRES_FF;
-    ret.unsub_FF = A1.unsub_FF - A2.unsub_FF;
-    ret.mGS_FF_list = A1.mGS_FF_list - A2.mGS_FF_list;
-    ret.meff_FF_list = A1.meff_FF_list - A2.meff_FF_list;
-    ret.mRES_FF_list = A1.mRES_FF_list - A2.mRES_FF_list;
-    ret.unsub_FF_list = A1.unsub_FF_list - A2.unsub_FF_list;
+  ret.mGS_FF = A1.mGS_FF - A2.mGS_FF;
+  ret.meff_FF = A1.meff_FF - A2.meff_FF;
+  ret.mRES_FF = A1.mRES_FF - A2.mRES_FF;
+  ret.unsub_FF = A1.unsub_FF - A2.unsub_FF;
+  ret.mGS_FF_list = A1.mGS_FF_list - A2.mGS_FF_list;
+  ret.meff_FF_list = A1.meff_FF_list - A2.meff_FF_list;
+  ret.mRES_FF_list = A1.mRES_FF_list - A2.mRES_FF_list;
+  ret.unsub_FF_list = A1.unsub_FF_list - A2.unsub_FF_list;
     
-    return ret;
+  return ret;
 }
 
 An_cont_ret operator+(const An_cont_ret &A, const distr_t &B) {
 
 
-    An_cont_ret ret;
+  An_cont_ret ret;
         
-    if(A.mGS_FF.size() != B.size()) crash("operator A-B in An_cont_ret class called with A e B with different Njacks");
+  if(A.mGS_FF.size() != B.size()) crash("operator A-B in An_cont_ret class called with A e B with different Njacks");
       
-    ret.mGS_FF = A.mGS_FF +B;
-    ret.meff_FF = A.meff_FF+B;
-    ret.mRES_FF = A.mRES_FF +B;
-    ret.unsub_FF = A.unsub_FF +B;
-    ret.mGS_FF_list = A.mGS_FF_list +B;
-    ret.meff_FF_list = A.meff_FF_list+B;
-    ret.mRES_FF_list = A.mRES_FF_list+B;
-    ret.unsub_FF_list = A.unsub_FF_list+B;
+  ret.mGS_FF = A.mGS_FF +B;
+  ret.meff_FF = A.meff_FF+B;
+  ret.mRES_FF = A.mRES_FF +B;
+  ret.unsub_FF = A.unsub_FF +B;
+  ret.mGS_FF_list = A.mGS_FF_list +B;
+  ret.meff_FF_list = A.meff_FF_list+B;
+  ret.mRES_FF_list = A.mRES_FF_list+B;
+  ret.unsub_FF_list = A.unsub_FF_list+B;
     
-    return ret;
+  return ret;
     
 }
 
 An_cont_ret operator-(const An_cont_ret &A, const distr_t &B) {
 
 
-    An_cont_ret ret;
+  An_cont_ret ret;
         
-    if(A.mGS_FF.size() != B.size()) crash("operator A-B in An_cont_ret class called with A e B with different Njacks");
+  if(A.mGS_FF.size() != B.size()) crash("operator A-B in An_cont_ret class called with A e B with different Njacks");
       
-    ret.mGS_FF = A.mGS_FF - B;
-    ret.meff_FF = A.meff_FF- B;
-    ret.mRES_FF = A.mRES_FF - B;
-    ret.unsub_FF = A.unsub_FF - B;
-    ret.mGS_FF_list = A.mGS_FF_list - B;
-    ret.meff_FF_list = A.meff_FF_list- B;
-    ret.mRES_FF_list = A.mRES_FF_list- B;
-    ret.unsub_FF_list = A.unsub_FF_list- B;
+  ret.mGS_FF = A.mGS_FF - B;
+  ret.meff_FF = A.meff_FF- B;
+  ret.mRES_FF = A.mRES_FF - B;
+  ret.unsub_FF = A.unsub_FF - B;
+  ret.mGS_FF_list = A.mGS_FF_list - B;
+  ret.meff_FF_list = A.meff_FF_list- B;
+  ret.mRES_FF_list = A.mRES_FF_list- B;
+  ret.unsub_FF_list = A.unsub_FF_list- B;
     
-    return ret;
+  return ret;
 }
 
 
 An_cont_ret operator*(const double &a, const An_cont_ret &A) {
 
 
-    An_cont_ret ret;
+  An_cont_ret ret;
         
    
       
-    ret.mGS_FF = a*A.mGS_FF;
-    ret.meff_FF = a*A.meff_FF;
-    ret.mRES_FF = a*A.mRES_FF;
-    ret.unsub_FF = a*A.unsub_FF;
-    ret.mGS_FF_list = a*A.mGS_FF_list;
-    ret.meff_FF_list = a*A.meff_FF_list;
-    ret.mRES_FF_list = a*A.mRES_FF_list;
-    ret.unsub_FF_list = a*A.unsub_FF_list;
+  ret.mGS_FF = a*A.mGS_FF;
+  ret.meff_FF = a*A.meff_FF;
+  ret.mRES_FF = a*A.mRES_FF;
+  ret.unsub_FF = a*A.unsub_FF;
+  ret.mGS_FF_list = a*A.mGS_FF_list;
+  ret.meff_FF_list = a*A.meff_FF_list;
+  ret.mRES_FF_list = a*A.mRES_FF_list;
+  ret.unsub_FF_list = a*A.unsub_FF_list;
     
-    return ret;
+  return ret;
     
 }
 
@@ -239,30 +237,30 @@ void K3lnu() {
   scale_setting_info SCALE_SETTING_INFO= Get_scale_setting_info();
   RCs_info RCs_INFO= Get_RCs("ss");
 
-   auto Sort_light_confs = [](string A, string B) {
-			    int conf_length_A= A.length();
-			    int conf_length_B= B.length();
-			    int pos_a_slash=-1;
-			    int pos_b_slash=-1;
-			    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
-			    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
-			    string A_bis= A.substr(pos_a_slash+1);
-			    string B_bis= B.substr(pos_b_slash+1);
-			    string conf_num_A = A_bis.substr(0,4);
-			    string conf_num_B = B_bis.substr(0,4);
-			    string rA = A_bis.substr(A_bis.length()-2);
-			    string rB = B_bis.substr(B_bis.length()-2);
-			    if(rA.substr(0,1) == "r") { 
-			      int n1 = stoi(A_bis.substr(A_bis.length()-1));
-			      int n2 = stoi(B_bis.substr(B_bis.length()-1));
-			      if(rA == rB) {
-			      if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
-			      else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
-			      else crash("stream not recognized");
-			      }
-			      else return n1<n2;
-			    }
-			    return A_bis<B_bis;
+  auto Sort_light_confs = [](string A, string B) {
+    int conf_length_A= A.length();
+    int conf_length_B= B.length();
+    int pos_a_slash=-1;
+    int pos_b_slash=-1;
+    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+    string A_bis= A.substr(pos_a_slash+1);
+    string B_bis= B.substr(pos_b_slash+1);
+    string conf_num_A = A_bis.substr(0,4);
+    string conf_num_B = B_bis.substr(0,4);
+    string rA = A_bis.substr(A_bis.length()-2);
+    string rB = B_bis.substr(B_bis.length()-2);
+    if(rA.substr(0,1) == "r") { 
+      int n1 = stoi(A_bis.substr(A_bis.length()-1));
+      int n2 = stoi(B_bis.substr(B_bis.length()-1));
+      if(rA == rB) {
+	if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+	else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+	else crash("stream not recognized");
+      }
+      else return n1<n2;
+    }
+    return A_bis<B_bis;
   };
 
 
@@ -601,206 +599,206 @@ void Get_electrounquenching() {
 
   //only FV for the moment
 
-   auto Sort_light = [](string A, string B) {
-			    int conf_length_A= A.length();
-			    int conf_length_B= B.length();
-			    int pos_a_slash=-1;
-			    int pos_b_slash=-1;
-			    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
-			    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
-			    string A_bis= A.substr(pos_a_slash+1);
-			    string B_bis= B.substr(pos_b_slash+1);
-			    string conf_num_A = A_bis.substr(0,4);
-			    string conf_num_B = B_bis.substr(0,4);
-			    string rA = A_bis.substr(A_bis.length()-2);
-			    string rB = B_bis.substr(B_bis.length()-2);
-			    if(rA.substr(0,1) == "r") { 
-			      int n1 = stoi(A_bis.substr(A_bis.length()-1));
-			      int n2 = stoi(B_bis.substr(B_bis.length()-1));
-			      if(rA == rB) {
-			      if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
-			      else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
-			      else crash("stream not recognized");
-			      }
-			      else return n1<n2;
-			    }
-			    return A_bis<B_bis;
+  auto Sort_light = [](string A, string B) {
+    int conf_length_A= A.length();
+    int conf_length_B= B.length();
+    int pos_a_slash=-1;
+    int pos_b_slash=-1;
+    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+    string A_bis= A.substr(pos_a_slash+1);
+    string B_bis= B.substr(pos_b_slash+1);
+    string conf_num_A = A_bis.substr(0,4);
+    string conf_num_B = B_bis.substr(0,4);
+    string rA = A_bis.substr(A_bis.length()-2);
+    string rB = B_bis.substr(B_bis.length()-2);
+    if(rA.substr(0,1) == "r") { 
+      int n1 = stoi(A_bis.substr(A_bis.length()-1));
+      int n2 = stoi(B_bis.substr(B_bis.length()-1));
+      if(rA == rB) {
+	if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+	else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+	else crash("stream not recognized");
+      }
+      else return n1<n2;
+    }
+    return A_bis<B_bis;
   };
 
 
-   vector<data_t> PT2_P5(Nhits), PT2_V1(Nhits), PT2_V2(Nhits);
-   vector<data_t> PT2_P5_TH(Nhits), PT2_V1_TH(Nhits), PT2_V2_TH(Nhits);
-   vector<data_t> PT2_P5_MTH(Nhits), PT2_V1_MTH(Nhits), PT2_V2_MTH(Nhits);
-   vector<data_t> BUB_V1_R0(Nhits), BUB_V1_R1(Nhits), BUB_V2_R0(Nhits), BUB_V2_R1(Nhits);
-   vector<data_t> BUB_V1_R0_TH(Nhits), BUB_V1_R1_TH(Nhits), BUB_V2_R0_TH(Nhits), BUB_V2_R1_TH(Nhits);
+  vector<data_t> PT2_P5(Nhits), PT2_V1(Nhits), PT2_V2(Nhits);
+  vector<data_t> PT2_P5_TH(Nhits), PT2_V1_TH(Nhits), PT2_V2_TH(Nhits);
+  vector<data_t> PT2_P5_MTH(Nhits), PT2_V1_MTH(Nhits), PT2_V2_MTH(Nhits);
+  vector<data_t> BUB_V1_R0(Nhits), BUB_V1_R1(Nhits), BUB_V2_R0(Nhits), BUB_V2_R1(Nhits);
+  vector<data_t> BUB_V1_R0_TH(Nhits), BUB_V1_R1_TH(Nhits), BUB_V2_R0_TH(Nhits), BUB_V2_R1_TH(Nhits);
 
 
-   for(int ihit=0;ihit<Nhits;ihit++) {
+  for(int ihit=0;ihit<Nhits;ihit++) {
 
-     PT2_P5[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PTH_0_hit"+to_string(ihit), "P5P5", Sort_light);
-     PT2_P5_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_TH_hit"+to_string(ihit), "P5P5", Sort_light);
-     PT2_P5_MTH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_MTH_hit"+to_string(ihit), "P5P5", Sort_light);
-
-     
-     PT2_V1[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PTH_0_hit"+to_string(ihit), "V1P5", Sort_light);
-     PT2_V1_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_TH_hit"+to_string(ihit), "V1P5", Sort_light);
-     PT2_V1_MTH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_MTH_hit"+to_string(ihit), "V1P5", Sort_light);
+    PT2_P5[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PTH_0_hit"+to_string(ihit), "P5P5", Sort_light);
+    PT2_P5_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_TH_hit"+to_string(ihit), "P5P5", Sort_light);
+    PT2_P5_MTH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_MTH_hit"+to_string(ihit), "P5P5", Sort_light);
 
      
-     
-     PT2_V2[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PTH_0_hit"+to_string(ihit), "V2P5", Sort_light);
-     PT2_V2_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_TH_hit"+to_string(ihit), "V2P5", Sort_light);
-     PT2_V2_MTH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_MTH_hit"+to_string(ihit), "V2P5", Sort_light);
+    PT2_V1[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PTH_0_hit"+to_string(ihit), "V1P5", Sort_light);
+    PT2_V1_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_TH_hit"+to_string(ihit), "V1P5", Sort_light);
+    PT2_V1_MTH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_MTH_hit"+to_string(ihit), "V1P5", Sort_light);
 
      
      
-     BUB_V1_R0[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R0_hit"+to_string(ihit), "A1P5", Sort_light);
-     BUB_V1_R0_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R0_MPH_hit"+to_string(ihit), "A1P5", Sort_light);
-     BUB_V2_R0[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R0_hit"+to_string(ihit), "A2P5", Sort_light);
-     BUB_V2_R0_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R0_MPH_hit"+to_string(ihit), "A2P5", Sort_light);
+    PT2_V2[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PTH_0_hit"+to_string(ihit), "V2P5", Sort_light);
+    PT2_V2_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_TH_hit"+to_string(ihit), "V2P5", Sort_light);
+    PT2_V2_MTH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_2PT_MTH_hit"+to_string(ihit), "V2P5", Sort_light);
 
-     BUB_V1_R1[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R1_hit"+to_string(ihit), "A1P5", Sort_light);
-     BUB_V1_R1_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R1_PH_hit"+to_string(ihit), "A1P5", Sort_light);
-     BUB_V2_R1[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R1_hit"+to_string(ihit), "A2P5", Sort_light);
-     BUB_V2_R1_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R1_PH_hit"+to_string(ihit), "A2P5", Sort_light);
+     
+     
+    BUB_V1_R0[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R0_hit"+to_string(ihit), "A1P5", Sort_light);
+    BUB_V1_R0_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R0_MPH_hit"+to_string(ihit), "A1P5", Sort_light);
+    BUB_V2_R0[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R0_hit"+to_string(ihit), "A2P5", Sort_light);
+    BUB_V2_R0_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R0_MPH_hit"+to_string(ihit), "A2P5", Sort_light);
+
+    BUB_V1_R1[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R1_hit"+to_string(ihit), "A1P5", Sort_light);
+    BUB_V1_R1_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R1_PH_hit"+to_string(ihit), "A1P5", Sort_light);
+    BUB_V2_R1[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R1_hit"+to_string(ihit), "A2P5", Sort_light);
+    BUB_V2_R1_TH[ihit].Read("../electrounquenching_Klnugamma/ens", "mes_contr_OET_ls_R1_PH_hit"+to_string(ihit), "A2P5", Sort_light);
     
      
 
-   }
+  }
 
 
-   //analyze data
+  //analyze data
 
-   int iens=0;
+  int iens=0;
 
-   const double ms = 0.01827820;
-   const double ml = 0.00072;
-   const double fm_to_inv_Gev= 1.0/0.197327;
+  const double ms = 0.01827820;
+  const double ml = 0.00072;
+  const double fm_to_inv_Gev= 1.0/0.197327;
 
-   string Ens=BUB_V1_R0[0].Tag[iens];
-   cout<<"Analyzing ensemble: "<<Ens<<endl;
+  string Ens=BUB_V1_R0[0].Tag[iens];
+  cout<<"Analyzing ensemble: "<<Ens<<endl;
 
-   boost::filesystem::create_directory("../data/K3lnu/ELECTRO_UNQUENCHING");
-   boost::filesystem::create_directory("../data/K3lnu/ELECTRO_UNQUENCHING/"+Ens);
+  boost::filesystem::create_directory("../data/K3lnu/ELECTRO_UNQUENCHING");
+  boost::filesystem::create_directory("../data/K3lnu/ELECTRO_UNQUENCHING/"+Ens);
 
-   //read confs list
-   vector<string> confs_list;
-   ifstream READ_CONFS("../electrounquenching_Klnugamma/ens/cB211b.072.96/confs_list") ;
-   while(!READ_CONFS.eof()) {
-     string a;
-     READ_CONFS >> a;
-     if(!READ_CONFS.eof()) confs_list.push_back(a);
-   }
-   READ_CONFS.close();
-   //read source position list
-   vector<vector<int>> tt(confs_list.size());
-   vector<vector<int>> tz(confs_list.size());
+  //read confs list
+  vector<string> confs_list;
+  ifstream READ_CONFS("../electrounquenching_Klnugamma/ens/cB211b.072.96/confs_list") ;
+  while(!READ_CONFS.eof()) {
+    string a;
+    READ_CONFS >> a;
+    if(!READ_CONFS.eof()) confs_list.push_back(a);
+  }
+  READ_CONFS.close();
+  //read source position list
+  vector<vector<int>> tt(confs_list.size());
+  vector<vector<int>> tz(confs_list.size());
 
-   for(unsigned int i=0;i<confs_list.size();i++) {
-     ifstream READ_POS("../electrounquenching_Klnugamma/ens/cB211b.072.96/"+confs_list[i]+"/source_pos");
-     while(!READ_POS.eof()) {
+  for(unsigned int i=0;i<confs_list.size();i++) {
+    ifstream READ_POS("../electrounquenching_Klnugamma/ens/cB211b.072.96/"+confs_list[i]+"/source_pos");
+    while(!READ_POS.eof()) {
 
-       int t, z;
-       READ_POS >> t >> z;
-       if(!READ_POS.eof()) {
-       	 tt[i].push_back(t); tz[i].push_back(z);
-       }
-     }
-     READ_POS.close();
-   }
+      int t, z;
+      READ_POS >> t >> z;
+      if(!READ_POS.eof()) {
+	tt[i].push_back(t); tz[i].push_back(z);
+      }
+    }
+    READ_POS.close();
+  }
    
  
 
-   distr_t a_distr(UseJack);
+  distr_t a_distr(UseJack);
 
-   double Zv= 0.70637654;
-   double Za= 0.74278317;
-   int Nconfs = BUB_V1_R0[0].Nconfs[0];
+  double Zv= 0.70637654;
+  double Za= 0.74278317;
+  int Nconfs = BUB_V1_R0[0].Nconfs[0];
    
-   GaussianMersenne GM(43112);
+  GaussianMersenne GM(43112);
 
-   double aB_ave= 0.07948*fm_to_inv_Gev;
-   double aB_err =0.00011*fm_to_inv_Gev;
+  double aB_ave= 0.07948*fm_to_inv_Gev;
+  double aB_err =0.00011*fm_to_inv_Gev;
 
-   CorrAnalysis Corr(UseJack,Njacks,100);
-   Corr.Nt = BUB_V1_R0[0].nrows[iens];
-   int T= Corr.Nt;
-   int L= Corr.Nt/2;
-   double k= 2*M_PI/L;
+  CorrAnalysis Corr(UseJack,Njacks,100);
+  Corr.Nt = BUB_V1_R0[0].nrows[iens];
+  int T= Corr.Nt;
+  int L= Corr.Nt/2;
+  double k= 2*M_PI/L;
 
 
-   VVVfloat BUB_OET_V1(Nhits), BUB_OET_V2(Nhits);
-   VVVfloat BUB_OET_V1_MOM_RE(Nhits), BUB_OET_V2_MOM_RE(Nhits);
-   VVVfloat BUB_OET_V1_MOM_IM(Nhits), BUB_OET_V2_MOM_IM(Nhits);
+  VVVfloat BUB_OET_V1(Nhits), BUB_OET_V2(Nhits);
+  VVVfloat BUB_OET_V1_MOM_RE(Nhits), BUB_OET_V2_MOM_RE(Nhits);
+  VVVfloat BUB_OET_V1_MOM_IM(Nhits), BUB_OET_V2_MOM_IM(Nhits);
 
-   for(int ihit=0;ihit<Nhits;ihit++) {
+  for(int ihit=0;ihit<Nhits;ihit++) {
 
-     BUB_OET_V1[ihit] = Multiply_Vvector_by_scalar( summ_master( BUB_V1_R0[ihit].col(1)[0], BUB_V1_R1[ihit].col(1)[0]), ms+ml);
-     BUB_OET_V1_MOM_RE[ihit] = Multiply_Vvector_by_scalar( summ_master( Multiply_Vvector_by_scalar(BUB_V1_R0_TH[ihit].col(0)[0],-1.0), BUB_V1_R1_TH[ihit].col(0)[0]), ms+ml);
-     BUB_OET_V1_MOM_IM[ihit] = Multiply_Vvector_by_scalar( summ_master( BUB_V1_R0_TH[ihit].col(1)[0], BUB_V1_R1_TH[ihit].col(1)[0]), ms+ml);
+    BUB_OET_V1[ihit] = Multiply_Vvector_by_scalar( summ_master( BUB_V1_R0[ihit].col(1)[0], BUB_V1_R1[ihit].col(1)[0]), ms+ml);
+    BUB_OET_V1_MOM_RE[ihit] = Multiply_Vvector_by_scalar( summ_master( Multiply_Vvector_by_scalar(BUB_V1_R0_TH[ihit].col(0)[0],-1.0), BUB_V1_R1_TH[ihit].col(0)[0]), ms+ml);
+    BUB_OET_V1_MOM_IM[ihit] = Multiply_Vvector_by_scalar( summ_master( BUB_V1_R0_TH[ihit].col(1)[0], BUB_V1_R1_TH[ihit].col(1)[0]), ms+ml);
      
-   }
+  }
 
-   vector<vector<vector<complex<double>>>> BUB_OET_V1_MOM_Complex(Nhits), BUB_OET_V2_MOM_Complex(Nhits);
-   vector<vector<vector<complex<double>>>> PT2_V1_MOM_Complex(Nhits), PT2_V2_MOM_Complex(Nhits);
+  vector<vector<vector<complex<double>>>> BUB_OET_V1_MOM_Complex(Nhits), BUB_OET_V2_MOM_Complex(Nhits);
+  vector<vector<vector<complex<double>>>> PT2_V1_MOM_Complex(Nhits), PT2_V2_MOM_Complex(Nhits);
 
-   for(int ihit=0;ihit<Nhits;ihit++) {
-     BUB_OET_V1_MOM_Complex[ihit].resize(T); BUB_OET_V2_MOM_Complex[ihit].resize(T);
-     PT2_V1_MOM_Complex[ihit].resize(T); PT2_V2_MOM_Complex[ihit].resize(T);
-     for(int t=0;t<T;t++) {
-       for(int iconf=0;iconf<Nconfs;iconf++) {
-	 BUB_OET_V1_MOM_Complex[ihit][t].push_back( BUB_OET_V1_MOM_RE[ihit][t][iconf] + 1i*BUB_OET_V1_MOM_IM[ihit][t][iconf]);
-	 BUB_OET_V2_MOM_Complex[ihit][t].push_back( BUB_OET_V2_MOM_RE[ihit][t][iconf] + 1i*BUB_OET_V2_MOM_IM[ihit][t][iconf]);
+  for(int ihit=0;ihit<Nhits;ihit++) {
+    BUB_OET_V1_MOM_Complex[ihit].resize(T); BUB_OET_V2_MOM_Complex[ihit].resize(T);
+    PT2_V1_MOM_Complex[ihit].resize(T); PT2_V2_MOM_Complex[ihit].resize(T);
+    for(int t=0;t<T;t++) {
+      for(int iconf=0;iconf<Nconfs;iconf++) {
+	BUB_OET_V1_MOM_Complex[ihit][t].push_back( BUB_OET_V1_MOM_RE[ihit][t][iconf] + 1i*BUB_OET_V1_MOM_IM[ihit][t][iconf]);
+	BUB_OET_V2_MOM_Complex[ihit][t].push_back( BUB_OET_V2_MOM_RE[ihit][t][iconf] + 1i*BUB_OET_V2_MOM_IM[ihit][t][iconf]);
 
-	 PT2_V1_MOM_Complex[ihit][t].push_back( PT2_V1_TH[ihit].col(0)[0][t][iconf] + 1i*PT2_V1_TH[ihit].col(0)[0][t][iconf]);
-	 PT2_V2_MOM_Complex[ihit][t].push_back( PT2_V2_TH[ihit].col(0)[0][t][iconf] + 1i*PT2_V2_TH[ihit].col(0)[0][t][iconf]);
+	PT2_V1_MOM_Complex[ihit][t].push_back( PT2_V1_TH[ihit].col(0)[0][t][iconf] + 1i*PT2_V1_TH[ihit].col(0)[0][t][iconf]);
+	PT2_V2_MOM_Complex[ihit][t].push_back( PT2_V2_TH[ihit].col(0)[0][t][iconf] + 1i*PT2_V2_TH[ihit].col(0)[0][t][iconf]);
 	 
-       }
-     }
-   }
+      }
+    }
+  }
 
      
 
-   //convolute
+  //convolute
 
-   double FAC= pow(L,3)*T*Zv*Za*qd;
+  double FAC= pow(L,3)*T*Zv*Za*qd;
    
    
    
 
-   VVVfloat FV(Nhits);
+  VVVfloat FV(Nhits);
 
-   for(int ihit=0;ihit<Nhits;ihit++) {
-
-
-     for(int tw=0; tw < Corr.Nt/2; tw++) {
+  for(int ihit=0;ihit<Nhits;ihit++) {
 
 
-       vector<complex<double>> F(Nconfs,0.0);
-       for(int jhit=0;jhit<Nhits;jhit++) {
+    for(int tw=0; tw < Corr.Nt/2; tw++) {
+
+
+      vector<complex<double>> F(Nconfs,0.0);
+      for(int jhit=0;jhit<Nhits;jhit++) {
 
 	 
 	 
-	 for(int t=0;t<Corr.Nt/2;tw++) {
-	   for(int iconf=0;iconf<Nconfs;iconf++) {
+	for(int t=0;t<Corr.Nt/2;tw++) {
+	  for(int iconf=0;iconf<Nconfs;iconf++) {
 
-	     int tj= tt[iconf][jhit];
-	     int zj= tz[iconf][jhit];
-	     int ti= tt[iconf][ihit];
-	     int zi= tz[iconf][ihit];
+	    int tj= tt[iconf][jhit];
+	    int zj= tz[iconf][jhit];
+	    int ti= tt[iconf][ihit];
+	    int zi= tz[iconf][ihit];
 
-	     int off_t=(tj-ti+T);
+	    int off_t=(tj-ti+T);
 	    
-	     F[iconf] += (FAC/k)*(0.5/Nhits)*(BUB_OET_V1_MOM_Complex[jhit][(t+off_t)%T][iconf]*PT2_V2_MOM_Complex[ihit][tw][iconf] -BUB_OET_V2_MOM_Complex[jhit][(t+off_t)%T][iconf]*PT2_V1_MOM_Complex[ihit][tw][iconf] - (BUB_OET_V1[jhit][(t+off_t)%T][iconf]*PT2_V2[ihit].col(0)[0][tw][iconf] -BUB_OET_V2[jhit][(t+off_t)%T][iconf]*PT2_V1[ihit].col(0)[0][tw][iconf]))*exp(k*(t-tw))*exp(1i*(k*zj))*exp(1i*(-1.0*k*zi));
-	   }
-	 }
-       }
+	    F[iconf] += (FAC/k)*(0.5/Nhits)*(BUB_OET_V1_MOM_Complex[jhit][(t+off_t)%T][iconf]*PT2_V2_MOM_Complex[ihit][tw][iconf] -BUB_OET_V2_MOM_Complex[jhit][(t+off_t)%T][iconf]*PT2_V1_MOM_Complex[ihit][tw][iconf] - (BUB_OET_V1[jhit][(t+off_t)%T][iconf]*PT2_V2[ihit].col(0)[0][tw][iconf] -BUB_OET_V2[jhit][(t+off_t)%T][iconf]*PT2_V1[ihit].col(0)[0][tw][iconf]))*exp(k*(t-tw))*exp(1i*(k*zj))*exp(1i*(-1.0*k*zi));
+	  }
+	}
+      }
        
 
-     }
+    }
 
      
-   }
+  }
 
   
 
@@ -819,38 +817,38 @@ void Analyze_Aprime() {
 
 			   
 
-			    int conf_length_A= A.length();
-			    int conf_length_B= B.length();
+    int conf_length_A= A.length();
+    int conf_length_B= B.length();
 
-			    int pos_a_slash=-1;
-			    int pos_b_slash=-1;
-			    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
-			    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+    int pos_a_slash=-1;
+    int pos_b_slash=-1;
+    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
 
-			    string A_bis= A.substr(pos_a_slash+1);
-			    string B_bis= B.substr(pos_b_slash+1);
+    string A_bis= A.substr(pos_a_slash+1);
+    string B_bis= B.substr(pos_b_slash+1);
 
-			    //A_bis=A;
-			    //B_bis=B;
+    //A_bis=A;
+    //B_bis=B;
 
 			     
-			    string conf_num_A = A_bis.substr(0,4);
-			    string conf_num_B = B_bis.substr(0,4);
+    string conf_num_A = A_bis.substr(0,4);
+    string conf_num_B = B_bis.substr(0,4);
 							       
 		      
-			    string rA = A_bis.substr(A_bis.length()-2);
-			    string rB = B_bis.substr(B_bis.length()-2);
-			    if(rA.substr(0,1) == "r") { 
-			      int n1 = stoi(A_bis.substr(A_bis.length()-1));
-			      int n2 = stoi(B_bis.substr(B_bis.length()-1));
-			      if(rA == rB) {
-			      if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
-			      else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
-			      else crash("stream not recognized");
-			      }
-			      else return n1<n2;
-			    }
-			    return A_bis<B_bis;
+    string rA = A_bis.substr(A_bis.length()-2);
+    string rB = B_bis.substr(B_bis.length()-2);
+    if(rA.substr(0,1) == "r") { 
+      int n1 = stoi(A_bis.substr(A_bis.length()-1));
+      int n2 = stoi(B_bis.substr(B_bis.length()-1));
+      if(rA == rB) {
+	if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+	else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+	else crash("stream not recognized");
+      }
+      else return n1<n2;
+    }
+    return A_bis<B_bis;
   };
 
 
@@ -858,139 +856,139 @@ void Analyze_Aprime() {
 
   bool Get_ASCII_Mix= true;
   
-    if(Get_ASCII_Mix) {
-      //read binary files                                                                                                                                                                                                                                                          
-      boost::filesystem::create_directory("../Aprime");
+  if(Get_ASCII_Mix) {
+    //read binary files                                                                                                                                                                                                                                                          
+    boost::filesystem::create_directory("../Aprime");
     
 
-      vector<string> Ens_T1({"cZ.85.56"});
-      vector<string> Ens_TT1({ "cZ211a.085.56"});
+    vector<string> Ens_T1({"cZ.85.56"});
+    vector<string> Ens_TT1({ "cZ211a.085.56"});
       
     
       
-      for( int it=0; it<(signed)Ens_T1.size(); it++) {
+    for( int it=0; it<(signed)Ens_T1.size(); it++) {
 	
 	
 
-	vector<string> channels({"mix_l1_l1", "mix_l2_l2"});
+      vector<string> channels({"mix_l1_l1", "mix_l2_l2"});
 	
 	
 	
 	
-	for(auto &channel : channels) {
-	  boost::filesystem::create_directory("../Aprime/"+channel);
-	  boost::filesystem::create_directory("../Aprime/"+channel+"/"+Ens_TT1[it]);
-	}
-	//read binary                                                                                                                                                                                                                                                              
-	vector<string> Corr_tags({ "TM_P5P5"});
+      for(auto &channel : channels) {
+	boost::filesystem::create_directory("../Aprime/"+channel);
+	boost::filesystem::create_directory("../Aprime/"+channel+"/"+Ens_TT1[it]);
+      }
+      //read binary                                                                                                                                                                                                                                                              
+      vector<string> Corr_tags({ "TM_P5P5"});
 	
 	
-	for(int id=0; id<(signed)Corr_tags.size(); id++) {
+      for(int id=0; id<(signed)Corr_tags.size(); id++) {
 	  
 	  
 	  
-	  for( auto &channel: channels) {
+	for( auto &channel: channels) {
 	    
 	    
-	    vector<string> C_list;
-	    ifstream CONFS_LIST;
+	  vector<string> C_list;
+	  ifstream CONFS_LIST;
 	    
-	    CONFS_LIST.open("../Aprime_bin/"+Ens_T1[it]+"/confsListMix");
-	    while(!CONFS_LIST.eof()) {
-	      string a;
-	      CONFS_LIST>>a;
-	      if(!CONFS_LIST.eof()) C_list.push_back(a);
-	    }
-	    
-	    
-	    CONFS_LIST.close();
-	    
-	    FILE *stream = fopen( ("../Aprime_bin/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
-	    size_t Nconfs, T, Nhits;
-	    bin_read(Nconfs, stream);
-	    bin_read(Nhits, stream);
-	    bin_read(T, stream);
-	    cout<<"Nconfs: "<<Nconfs<<endl;
-	    if(Nconfs != C_list.size()) crash("number of configs different than expected: "+to_string(C_list.size()));
-	    cout<<"T: "<<T<<" "<<T/2+1<<endl;
-	    cout<<"Nhits: "<<Nhits<<endl;
-	    for(size_t iconf=0;iconf<Nconfs;iconf++) {
-	      vector<double> C(T/2+1);
-	      for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
-	      boost::filesystem::create_directory("../Aprime/"+channel+"/"+Ens_TT1[it]+"/"+C_list[iconf]);
-	      ofstream PrintCorr("../Aprime/"+channel+"/"+Ens_TT1[it]+"/"+C_list[iconf]+"/mes_contr_"+channel+"_"+Corr_tags[id]);
-	      PrintCorr.precision(16);
-	      PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
-	      for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
-	      if(Corr_tags[id].substr(3,4) == "V0P5" || Corr_tags[id].substr(3,4) == "TKVK") { for(size_t t=T/2+1; t<T;t++) PrintCorr<<-1*C[T-t]<<endl;   }
-	      else  {for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;}
-	      PrintCorr.close();
-	      
-	    }
-	    
-	    fclose(stream);
-	    
+	  CONFS_LIST.open("../Aprime_bin/"+Ens_T1[it]+"/confsListMix");
+	  while(!CONFS_LIST.eof()) {
+	    string a;
+	    CONFS_LIST>>a;
+	    if(!CONFS_LIST.eof()) C_list.push_back(a);
 	  }
-	  
+	    
+	    
+	  CONFS_LIST.close();
+	    
+	  FILE *stream = fopen( ("../Aprime_bin/"+Ens_T1[it]+"/"+channel+"_"+Corr_tags[id]).c_str(), "rb");
+	  size_t Nconfs, T, Nhits;
+	  bin_read(Nconfs, stream);
+	  bin_read(Nhits, stream);
+	  bin_read(T, stream);
+	  cout<<"Nconfs: "<<Nconfs<<endl;
+	  if(Nconfs != C_list.size()) crash("number of configs different than expected: "+to_string(C_list.size()));
+	  cout<<"T: "<<T<<" "<<T/2+1<<endl;
+	  cout<<"Nhits: "<<Nhits<<endl;
+	  for(size_t iconf=0;iconf<Nconfs;iconf++) {
+	    vector<double> C(T/2+1);
+	    for(size_t t=0;t<T/2+1;t++) bin_read(C[t], stream);
+	    boost::filesystem::create_directory("../Aprime/"+channel+"/"+Ens_TT1[it]+"/"+C_list[iconf]);
+	    ofstream PrintCorr("../Aprime/"+channel+"/"+Ens_TT1[it]+"/"+C_list[iconf]+"/mes_contr_"+channel+"_"+Corr_tags[id]);
+	    PrintCorr.precision(16);
+	    PrintCorr<<"# "<<Corr_tags[id].substr(3,4)<<endl;
+	    for(size_t t=0;t<(T/2+1);t++) PrintCorr<<C[t]<<endl;
+	    if(Corr_tags[id].substr(3,4) == "V0P5" || Corr_tags[id].substr(3,4) == "TKVK") { for(size_t t=T/2+1; t<T;t++) PrintCorr<<-1*C[T-t]<<endl;   }
+	    else  {for(size_t t=T/2+1; t<T;t++) PrintCorr<<C[T-t]<<endl;}
+	    PrintCorr.close();
+	      
+	  }
+	    
+	  fclose(stream);
+	    
 	}
+	  
       }
     }
+  }
 
 
-    data_t P5P5_l1, P5P5_l2;
+  data_t P5P5_l1, P5P5_l2;
 
 
-    P5P5_l1.Read("../Aprime/mix_l1_l1", "mes_contr_mix_l1_l1_TM_P5P5", "P5P5", Sort_light_confs);
-    P5P5_l2.Read("../Aprime/mix_l2_l2", "mes_contr_mix_l2_l2_TM_P5P5", "P5P5", Sort_light_confs);
+  P5P5_l1.Read("../Aprime/mix_l1_l1", "mes_contr_mix_l1_l1_TM_P5P5", "P5P5", Sort_light_confs);
+  P5P5_l2.Read("../Aprime/mix_l2_l2", "mes_contr_mix_l2_l2_TM_P5P5", "P5P5", Sort_light_confs);
 
 
 
-    int iens=0;
+  int iens=0;
 
 
-    CorrAnalysis Corr(UseJack, Njacks,Nboots);
-    Corr.Nt = P5P5_l1.nrows[iens];
-    int L= Corr.Nt/2;
-    int T= Corr.Nt;
+  CorrAnalysis Corr(UseJack, Njacks,Nboots);
+  Corr.Nt = P5P5_l1.nrows[iens];
+  int L= Corr.Nt/2;
+  int T= Corr.Nt;
 
-    Corr.Tmin=30;
-    Corr.Tmax=45;
+  Corr.Tmin=30;
+  Corr.Tmax=45;
 
 
-    boost::filesystem::create_directory("../data/Aprime");
+  boost::filesystem::create_directory("../data/Aprime");
 
-    distr_t_list P5P5_l1_distr = Corr.corr_t(P5P5_l1.col(0)[iens], "");
+  distr_t_list P5P5_l1_distr = Corr.corr_t(P5P5_l1.col(0)[iens], "");
     
-    distr_t_list P5P5_l2_distr = Corr.corr_t(P5P5_l2.col(0)[iens], "");
+  distr_t_list P5P5_l2_distr = Corr.corr_t(P5P5_l2.col(0)[iens], "");
 
 
-    distr_t_list Mpi_l1 = Corr.effective_mass_t(P5P5_l1_distr, "../data/Aprime/Mpi_l1");
-    distr_t_list Mpi_l2 = Corr.effective_mass_t(P5P5_l2_distr, "../data/Aprime/Mpi_l2");
+  distr_t_list Mpi_l1 = Corr.effective_mass_t(P5P5_l1_distr, "../data/Aprime/Mpi_l1");
+  distr_t_list Mpi_l2 = Corr.effective_mass_t(P5P5_l2_distr, "../data/Aprime/Mpi_l2");
 
-    distr_t_list fpi_l1 = Corr.decay_constant_t( P5P5_l1_distr*pow(2*0.00077,2), "../data/Aprime/fpi_l1");
-    distr_t_list fpi_l2 = Corr.decay_constant_t( P5P5_l2_distr*pow(2*0.00085,2), "../data/Aprime/fpi_l2");
-
-
-
-    distr_t Mpi_l1_fit= Corr.Fit_distr(Mpi_l1);
-    distr_t Mpi_l2_fit= Corr.Fit_distr(Mpi_l2);
-
-    distr_t fpi_l1_fit= Corr.Fit_distr(fpi_l1);
-    distr_t fpi_l2_fit= Corr.Fit_distr(fpi_l2);
+  distr_t_list fpi_l1 = Corr.decay_constant_t( P5P5_l1_distr*pow(2*0.00077,2), "../data/Aprime/fpi_l1");
+  distr_t_list fpi_l2 = Corr.decay_constant_t( P5P5_l2_distr*pow(2*0.00085,2), "../data/Aprime/fpi_l2");
 
 
-    cout<<"Mpi(0.00077): "<<Mpi_l1_fit.ave()<<" "<<Mpi_l1_fit.err()<<endl;
-    cout<<"Mpi(0.00085): "<<Mpi_l2_fit.ave()<<" "<<Mpi_l2_fit.err()<<endl;
-    cout<<"Mpi(expected from ChPT): "<<Mpi_l2_fit.ave()*sqrt(0.00077/0.00085)<<" "<<Mpi_l2_fit.err()*sqrt(0.00077/0.00085)<<endl;
 
-    cout<<"fpi(0.00077): "<<fpi_l1_fit.ave()<<" "<<fpi_l1_fit.err()<<endl;
-    cout<<"fpi(0.00085): "<<fpi_l2_fit.ave()<<" "<<fpi_l2_fit.err()<<endl;
+  distr_t Mpi_l1_fit= Corr.Fit_distr(Mpi_l1);
+  distr_t Mpi_l2_fit= Corr.Fit_distr(Mpi_l2);
+
+  distr_t fpi_l1_fit= Corr.Fit_distr(fpi_l1);
+  distr_t fpi_l2_fit= Corr.Fit_distr(fpi_l2);
+
+
+  cout<<"Mpi(0.00077): "<<Mpi_l1_fit.ave()<<" "<<Mpi_l1_fit.err()<<endl;
+  cout<<"Mpi(0.00085): "<<Mpi_l2_fit.ave()<<" "<<Mpi_l2_fit.err()<<endl;
+  cout<<"Mpi(expected from ChPT): "<<Mpi_l2_fit.ave()*sqrt(0.00077/0.00085)<<" "<<Mpi_l2_fit.err()*sqrt(0.00077/0.00085)<<endl;
+
+  cout<<"fpi(0.00077): "<<fpi_l1_fit.ave()<<" "<<fpi_l1_fit.err()<<endl;
+  cout<<"fpi(0.00085): "<<fpi_l2_fit.ave()<<" "<<fpi_l2_fit.err()<<endl;
     
     
 
 
 
-    exit(-1);
+  exit(-1);
 
 
   return;
@@ -1012,103 +1010,103 @@ void Do_HLT_virtual() {
 
 
   //generate lattice spacings and RCs
-   //############################################################################################
-   //generate fake jack_distr for lattice spacing a_A a_B, a_C, a_D and RENORMALIZATION CONSTANT
-   GaussianMersenne GM(36551294);
-   LatticeInfo a_info;
-   distr_t a_A(UseJack), a_B(UseJack), a_C(UseJack), a_D(UseJack), a_Z(UseJack), a_E(UseJack);
-   distr_t ZV_A(UseJack), ZV_B(UseJack), ZV_C(UseJack), ZV_D(UseJack), ZV_E(UseJack);
-   distr_t ZA_A(UseJack), ZA_B(UseJack), ZA_C(UseJack), ZA_D(UseJack), ZA_E(UseJack);
-   double a_A_ave, a_A_err, a_B_ave, a_B_err, a_C_ave, a_C_err, a_D_ave, a_D_err, a_Z_ave, a_Z_err, a_E_ave, a_E_err;
-   double ZV_A_ave, ZV_A_err, ZV_B_ave, ZV_B_err, ZV_C_ave, ZV_C_err, ZV_D_ave, ZV_D_err, ZV_E_ave, ZV_E_err;
-   double ZA_A_ave, ZA_A_err, ZA_B_ave, ZA_B_err, ZA_C_ave, ZA_C_err, ZA_D_ave, ZA_D_err, ZA_E_ave, ZA_E_err;
-   a_info.LatInfo_new_ens("cA211a.12.48");
-   a_A_ave= a_info.a_from_afp_FLAG;
-   a_A_err= a_info.a_from_afp_FLAG_err;
-   ZA_A_ave = a_info.Za_WI_strange;
-   ZA_A_err = a_info.Za_WI_strange_err;
-   ZV_A_ave = a_info.Zv_WI_strange;
-   ZV_A_err = a_info.Zv_WI_strange_err;
-   a_info.LatInfo_new_ens("cB211b.072.64");
-   a_B_ave= a_info.a_from_afp_FLAG;
-   a_B_err= a_info.a_from_afp_FLAG_err;
-   ZA_B_ave = a_info.Za_WI_FLAG;
-   ZA_B_err = a_info.Za_WI_FLAG_err;
-   ZV_B_ave = a_info.Zv_WI_FLAG;
-   ZV_B_err = a_info.Zv_WI_FLAG_err;
-   a_info.LatInfo_new_ens("cC211a.06.80");
-   a_C_ave= a_info.a_from_afp_FLAG;
-   a_C_err= a_info.a_from_afp_FLAG_err;
-   ZA_C_ave = a_info.Za_WI_FLAG;
-   ZA_C_err = a_info.Za_WI_FLAG_err;
-   ZV_C_ave = a_info.Zv_WI_FLAG;
-   ZV_C_err = a_info.Zv_WI_FLAG_err;
-   a_info.LatInfo_new_ens("cD211a.054.96");
-   a_D_ave= a_info.a_from_afp_FLAG;
-   a_D_err= a_info.a_from_afp_FLAG_err;
-   ZA_D_ave = a_info.Za_WI_FLAG;
-   ZA_D_err = a_info.Za_WI_FLAG_err;
-   ZV_D_ave = a_info.Zv_WI_FLAG;
-   ZV_D_err = a_info.Zv_WI_FLAG_err;
-   a_info.LatInfo_new_ens("cZ211a.077.64");
-   a_Z_ave= a_info.a_from_afp_FLAG;
-   a_Z_err= a_info.a_from_afp_FLAG_err;
-   a_info.LatInfo_new_ens("cE211a.044.112");
-   a_E_ave= a_info.a_from_afp_FLAG;
-   a_E_err= a_info.a_from_afp_FLAG_err;
-   ZA_E_ave = a_info.Za_WI_FLAG;
-   ZA_E_err = a_info.Za_WI_FLAG_err;
-   ZV_E_ave = a_info.Zv_WI_FLAG;
-   ZV_E_err = a_info.Zv_WI_FLAG_err;
+  //############################################################################################
+  //generate fake jack_distr for lattice spacing a_A a_B, a_C, a_D and RENORMALIZATION CONSTANT
+  GaussianMersenne GM(36551294);
+  LatticeInfo a_info;
+  distr_t a_A(UseJack), a_B(UseJack), a_C(UseJack), a_D(UseJack), a_Z(UseJack), a_E(UseJack);
+  distr_t ZV_A(UseJack), ZV_B(UseJack), ZV_C(UseJack), ZV_D(UseJack), ZV_E(UseJack);
+  distr_t ZA_A(UseJack), ZA_B(UseJack), ZA_C(UseJack), ZA_D(UseJack), ZA_E(UseJack);
+  double a_A_ave, a_A_err, a_B_ave, a_B_err, a_C_ave, a_C_err, a_D_ave, a_D_err, a_Z_ave, a_Z_err, a_E_ave, a_E_err;
+  double ZV_A_ave, ZV_A_err, ZV_B_ave, ZV_B_err, ZV_C_ave, ZV_C_err, ZV_D_ave, ZV_D_err, ZV_E_ave, ZV_E_err;
+  double ZA_A_ave, ZA_A_err, ZA_B_ave, ZA_B_err, ZA_C_ave, ZA_C_err, ZA_D_ave, ZA_D_err, ZA_E_ave, ZA_E_err;
+  a_info.LatInfo_new_ens("cA211a.12.48");
+  a_A_ave= a_info.a_from_afp_FLAG;
+  a_A_err= a_info.a_from_afp_FLAG_err;
+  ZA_A_ave = a_info.Za_WI_strange;
+  ZA_A_err = a_info.Za_WI_strange_err;
+  ZV_A_ave = a_info.Zv_WI_strange;
+  ZV_A_err = a_info.Zv_WI_strange_err;
+  a_info.LatInfo_new_ens("cB211b.072.64");
+  a_B_ave= a_info.a_from_afp_FLAG;
+  a_B_err= a_info.a_from_afp_FLAG_err;
+  ZA_B_ave = a_info.Za_WI_FLAG;
+  ZA_B_err = a_info.Za_WI_FLAG_err;
+  ZV_B_ave = a_info.Zv_WI_FLAG;
+  ZV_B_err = a_info.Zv_WI_FLAG_err;
+  a_info.LatInfo_new_ens("cC211a.06.80");
+  a_C_ave= a_info.a_from_afp_FLAG;
+  a_C_err= a_info.a_from_afp_FLAG_err;
+  ZA_C_ave = a_info.Za_WI_FLAG;
+  ZA_C_err = a_info.Za_WI_FLAG_err;
+  ZV_C_ave = a_info.Zv_WI_FLAG;
+  ZV_C_err = a_info.Zv_WI_FLAG_err;
+  a_info.LatInfo_new_ens("cD211a.054.96");
+  a_D_ave= a_info.a_from_afp_FLAG;
+  a_D_err= a_info.a_from_afp_FLAG_err;
+  ZA_D_ave = a_info.Za_WI_FLAG;
+  ZA_D_err = a_info.Za_WI_FLAG_err;
+  ZV_D_ave = a_info.Zv_WI_FLAG;
+  ZV_D_err = a_info.Zv_WI_FLAG_err;
+  a_info.LatInfo_new_ens("cZ211a.077.64");
+  a_Z_ave= a_info.a_from_afp_FLAG;
+  a_Z_err= a_info.a_from_afp_FLAG_err;
+  a_info.LatInfo_new_ens("cE211a.044.112");
+  a_E_ave= a_info.a_from_afp_FLAG;
+  a_E_err= a_info.a_from_afp_FLAG_err;
+  ZA_E_ave = a_info.Za_WI_FLAG;
+  ZA_E_err = a_info.Za_WI_FLAG_err;
+  ZV_E_ave = a_info.Zv_WI_FLAG;
+  ZV_E_err = a_info.Zv_WI_FLAG_err;
 
 
-   if(UseJack) {
+  if(UseJack) {
    
-     for(int ijack=0;ijack<Nj;ijack++) {
+    for(int ijack=0;ijack<Nj;ijack++) {
      
-       a_A.distr.push_back( fm_to_inv_Gev*( a_A_ave + GM()*a_A_err*(1.0/sqrt(Nj-1.0))));
-       a_B.distr.push_back( fm_to_inv_Gev*( a_B_ave + GM()*a_B_err*(1.0/sqrt(Nj-1.0))));
-       a_C.distr.push_back( fm_to_inv_Gev*( a_C_ave + GM()*a_C_err*(1.0/sqrt(Nj-1.0))));
-       a_D.distr.push_back( fm_to_inv_Gev*( a_D_ave + GM()*a_D_err*(1.0/sqrt(Nj-1.0))));
-       a_Z.distr.push_back( fm_to_inv_Gev*( a_Z_ave + GM()*a_Z_err*(1.0/sqrt(Nj-1.0))));
-       a_E.distr.push_back( fm_to_inv_Gev*( a_E_ave + GM()*a_E_err*(1.0/sqrt(Nj-1.0))));
-       ZA_A.distr.push_back(  ZA_A_ave + GM()*ZA_A_err*(1.0/sqrt(Nj -1.0)));
-       ZV_A.distr.push_back(  ZV_A_ave + GM()*ZV_A_err*(1.0/sqrt(Nj -1.0)));
-       ZA_B.distr.push_back(  ZA_B_ave + GM()*ZA_B_err*(1.0/sqrt(Nj -1.0)));
-       ZV_B.distr.push_back(  ZV_B_ave + GM()*ZV_B_err*(1.0/sqrt(Nj -1.0)));
-       ZA_C.distr.push_back(  ZA_C_ave + GM()*ZA_C_err*(1.0/sqrt(Nj -1.0)));
-       ZV_C.distr.push_back(  ZV_C_ave + GM()*ZV_C_err*(1.0/sqrt(Nj -1.0)));
-       ZA_D.distr.push_back(  ZA_D_ave + GM()*ZA_D_err*(1.0/sqrt(Nj -1.0)));
-       ZV_D.distr.push_back(  ZV_D_ave + GM()*ZV_D_err*(1.0/sqrt(Nj -1.0)));
-       ZA_E.distr.push_back(  ZA_E_ave + GM()*ZA_E_err*(1.0/sqrt(Nj -1.0)));
-       ZV_E.distr.push_back(  ZV_E_ave + GM()*ZV_E_err*(1.0/sqrt(Nj -1.0)));
+      a_A.distr.push_back( fm_to_inv_Gev*( a_A_ave + GM()*a_A_err*(1.0/sqrt(Nj-1.0))));
+      a_B.distr.push_back( fm_to_inv_Gev*( a_B_ave + GM()*a_B_err*(1.0/sqrt(Nj-1.0))));
+      a_C.distr.push_back( fm_to_inv_Gev*( a_C_ave + GM()*a_C_err*(1.0/sqrt(Nj-1.0))));
+      a_D.distr.push_back( fm_to_inv_Gev*( a_D_ave + GM()*a_D_err*(1.0/sqrt(Nj-1.0))));
+      a_Z.distr.push_back( fm_to_inv_Gev*( a_Z_ave + GM()*a_Z_err*(1.0/sqrt(Nj-1.0))));
+      a_E.distr.push_back( fm_to_inv_Gev*( a_E_ave + GM()*a_E_err*(1.0/sqrt(Nj-1.0))));
+      ZA_A.distr.push_back(  ZA_A_ave + GM()*ZA_A_err*(1.0/sqrt(Nj -1.0)));
+      ZV_A.distr.push_back(  ZV_A_ave + GM()*ZV_A_err*(1.0/sqrt(Nj -1.0)));
+      ZA_B.distr.push_back(  ZA_B_ave + GM()*ZA_B_err*(1.0/sqrt(Nj -1.0)));
+      ZV_B.distr.push_back(  ZV_B_ave + GM()*ZV_B_err*(1.0/sqrt(Nj -1.0)));
+      ZA_C.distr.push_back(  ZA_C_ave + GM()*ZA_C_err*(1.0/sqrt(Nj -1.0)));
+      ZV_C.distr.push_back(  ZV_C_ave + GM()*ZV_C_err*(1.0/sqrt(Nj -1.0)));
+      ZA_D.distr.push_back(  ZA_D_ave + GM()*ZA_D_err*(1.0/sqrt(Nj -1.0)));
+      ZV_D.distr.push_back(  ZV_D_ave + GM()*ZV_D_err*(1.0/sqrt(Nj -1.0)));
+      ZA_E.distr.push_back(  ZA_E_ave + GM()*ZA_E_err*(1.0/sqrt(Nj -1.0)));
+      ZV_E.distr.push_back(  ZV_E_ave + GM()*ZV_E_err*(1.0/sqrt(Nj -1.0)));
        
-     }
-   }
+    }
+  }
 
-   else {
+  else {
 
-      for(int ijack=0;ijack<Nj;ijack++) {
+    for(int ijack=0;ijack<Nj;ijack++) {
      
-	a_A.distr.push_back( fm_to_inv_Gev*( a_A_ave + GM()*a_A_err));
-	a_B.distr.push_back( fm_to_inv_Gev*( a_B_ave + GM()*a_B_err));
-	a_C.distr.push_back( fm_to_inv_Gev*( a_C_ave + GM()*a_C_err));
-	a_D.distr.push_back( fm_to_inv_Gev*( a_D_ave + GM()*a_D_err));
-	a_Z.distr.push_back( fm_to_inv_Gev*( a_Z_ave + GM()*a_Z_err));
-	a_E.distr.push_back( fm_to_inv_Gev*( a_E_ave + GM()*a_E_err));
-	ZA_A.distr.push_back(  ZA_A_ave + GM()*ZA_A_err);
-	ZV_A.distr.push_back(  ZV_A_ave + GM()*ZV_A_err);
-	ZA_B.distr.push_back(  ZA_B_ave + GM()*ZA_B_err);
-	ZV_B.distr.push_back(  ZV_B_ave + GM()*ZV_B_err);
-	ZA_C.distr.push_back(  ZA_C_ave + GM()*ZA_C_err);
-	ZV_C.distr.push_back(  ZV_C_ave + GM()*ZV_C_err);
-	ZA_D.distr.push_back(  ZA_D_ave + GM()*ZA_D_err);
-	ZV_D.distr.push_back(  ZV_D_ave + GM()*ZV_D_err);
-	ZA_E.distr.push_back(  ZA_E_ave + GM()*ZA_E_err);
-	ZV_E.distr.push_back(  ZV_E_ave + GM()*ZV_E_err);
+      a_A.distr.push_back( fm_to_inv_Gev*( a_A_ave + GM()*a_A_err));
+      a_B.distr.push_back( fm_to_inv_Gev*( a_B_ave + GM()*a_B_err));
+      a_C.distr.push_back( fm_to_inv_Gev*( a_C_ave + GM()*a_C_err));
+      a_D.distr.push_back( fm_to_inv_Gev*( a_D_ave + GM()*a_D_err));
+      a_Z.distr.push_back( fm_to_inv_Gev*( a_Z_ave + GM()*a_Z_err));
+      a_E.distr.push_back( fm_to_inv_Gev*( a_E_ave + GM()*a_E_err));
+      ZA_A.distr.push_back(  ZA_A_ave + GM()*ZA_A_err);
+      ZV_A.distr.push_back(  ZV_A_ave + GM()*ZV_A_err);
+      ZA_B.distr.push_back(  ZA_B_ave + GM()*ZA_B_err);
+      ZV_B.distr.push_back(  ZV_B_ave + GM()*ZV_B_err);
+      ZA_C.distr.push_back(  ZA_C_ave + GM()*ZA_C_err);
+      ZV_C.distr.push_back(  ZV_C_ave + GM()*ZV_C_err);
+      ZA_D.distr.push_back(  ZA_D_ave + GM()*ZA_D_err);
+      ZV_D.distr.push_back(  ZV_D_ave + GM()*ZV_D_err);
+      ZA_E.distr.push_back(  ZA_E_ave + GM()*ZA_E_err);
+      ZV_E.distr.push_back(  ZV_E_ave + GM()*ZV_E_err);
 	
-      }
-   }
+    }
+  }
 
     
 
@@ -1122,14 +1120,14 @@ void Do_HLT_virtual() {
 
   
 
-   vector<string> Ens_Tag{"B48", "B64", "B96", "C80", "D96"};
-   vector<int> L_list{48,64,96,80,96};
+  vector<string> Ens_Tag{"B48", "B64", "B96", "C80", "D96"};
+  vector<int> L_list{48,64,96,80,96};
   
-   vector<int> tw_list{25,25,28,33,39};
-   vector<string> xk_list{"60","65","70","75","80","85","90","95"};
-   vector<double> xk_list_double{0.6,0.65,0.70,0.75,0.80,0.85,0.9,0.95};
-   vector<string> xgamma_list{"0.1","0.3","0.5","0.7"};
-   //vector<string> xgamma_list{"0.5"};
+  vector<int> tw_list{25,25,28,33,39};
+  vector<string> xk_list{"60","65","70","75","80","85","90","95"};
+  vector<double> xk_list_double{0.6,0.65,0.70,0.75,0.80,0.85,0.9,0.95};
+  vector<string> xgamma_list{"0.1","0.3","0.5","0.7"};
+  //vector<string> xgamma_list{"0.5"};
 
   int Nens=Ens_Tag.size();
 
@@ -1548,6 +1546,7 @@ void Do_HLT_virtual() {
 	    double Ea = sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()) -k,2)) +  sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()),2));
 	    double Eb =  sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()) -k/2,2)) +  sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()) +k/2,2));
 	    Emin = 0.98*min(Ea,Eb);
+	    Emin = 2*sqrt( pow(0.135,2) + pow(k/2,2)); 
 	    
 	    cout<<"##### XGAMMA: "<<xgamma_list[xg]<<endl;
 	    
@@ -1894,11 +1893,11 @@ void Do_HLT_virtual() {
   double vol3= 7.63*fm_to_inv_Gev;
   
   Vfloat En1;
-  LL.Find_pipi_energy_lev(vol1, 0.775, 5.51, 0.135, 0.0, En1);
+  LL.Find_pipi_energy_lev(vol1, 0.775, 5.0, 0.135, 0.0, En1);
   Vfloat En2;
-  LL.Find_pipi_energy_lev(vol2, 0.775, 5.51, 0.135, 0.0, En2);
+  LL.Find_pipi_energy_lev(vol2, 0.775, 5.0, 0.135, 0.0, En2);
   Vfloat En3;
-  LL.Find_pipi_energy_lev(vol3, 0.775, 5.51, 0.135, 0.0, En3);
+  LL.Find_pipi_energy_lev(vol3, 0.775, 5.0, 0.135, 0.0, En3);
 
 
  
@@ -1909,247 +1908,220 @@ void Do_HLT_virtual() {
 
   // Kl4-enhanced Gounaris-Sakurai model
 
-  double xg=0.5;
-  double k= MK_FLAG*xg/2;
-  double t=1;
-  double m= MK_FLAG;
-  double th = 2*sqrt( pow(0.135,2) + pow(k/2,2));
-  double Emax= 2*MK_FLAG; //sqrt( pow(1.0,2) + pow(k,2));
-  double ek = MK_FLAG*sqrt( 1 + pow(xg/2,2) );
+
+  for(int ixg=0;ixg<(signed)xgamma_list.size() ; ixg++) {
+
+
+    bool no_R=false;
+
+    double xg= stod(xgamma_list[ixg]);
+    cout<<"Computing model for xg: "<<xg<<endl;
+    double k= MK_FLAG*xg/2;
+    double t=1;
+    double m= MK_FLAG;
+    double th = 2*sqrt( pow(0.135,2) + pow(k/2,2));
+    double Emax= 4*MK_FLAG; //sqrt( pow(1.0,2) + pow(k,2));
+    double ek = MK_FLAG*sqrt( 1 + pow(xg/2,2) );
+    
+    
+    auto C_rho_12_V = [&xg, &k, &LL, &t, &m](double E) {
+      double s= E*E - k*k;
+      double R=1; //LL.F_pi_GS_mod(2*0.135,0.775,5.0,0.135,0.0);
+      double LEC= -0.4587*5.0/R;
+      double Fem= pow(LL.F_pi_GS_mod(sqrt(s), 0.775, 5.0,0.135,0.0),2);
+      double std_f= pow(s- pow(2*0.135,2) ,3.0/2)/(12.0*pow(2*M_PI,2));
+      double res= k*std_f*Fem/(m*m*sqrt(s));
+      
+      
+      return LEC*res*exp(-E*t);
+    };
+    
+    auto C_rho_11_A = [&xg, &k, &LL, &t, &m](double E) {
+      double s= E*E - k*k;
+      double q2= s/pow(2*0.135,2) -1;
+      double R=1.0; //1.0/LL.F_pi_GS_mod(2*0.135,0.775,5.0,0.135,0.0);
+      double Gs= 5.0/R; //5.0;
+      double Fem= pow(LL.F_pi_GS_mod(sqrt(s), 0.775, 5.0,0.135,0.0),2);
+      double std_f= pow(s- pow(2*0.135,2) ,3.0/2)/(12.0*pow(2*M_PI,2));
+      double res= -std_f*Gs*Fem/(m*sqrt(s));
+      return -res*exp(-E*t);
+    };
+
+    
+    auto C_rho_33_A = [&xg, &k, &LL, &t, &m, &no_R](double E) {
+      double s= E*E - k*k;
+      double R=1.0; //LL.F_pi_GS_mod(2*0.135,0.775,5.0,0.135,0.0);
+      double X= m*k; 
+      double fovG= -0.055;
+      double hatfovG = fovG*m*m/(X);
+      double q2= s/pow(2*0.135,2) -1;
+      double Gs= 5.0/R;
+      double RovG =(no_R==true)?0.0:-1.4;
+      //RovG= (m*m/(s -2*m*sqrt( s + k*k)));
+      double Fem= pow(LL.F_pi_GS_mod(sqrt(s), 0.775, 5.0,0.135,0.0),2);
+      double std_f= pow(s- pow(2*0.135,2) ,3.0/2)/(12.0*pow(2*M_PI,2));
+      double std_ft= pow(s,3.0/2)*(1.0 -pow(2*0.135,2)/s)/(12.0*pow(2*M_PI,2));
+      double res_1= -Gs*std_f*Fem*E*E/(m*pow(s,3.0/2));
+      double res_2= -Gs*std_f*k*k*E*(RovG*Fem)/(m*m*pow(s,3.0/2));
+      double res_3= -Gs*std_ft*k*k*E*(hatfovG*Fem)/(m*m*pow(s,3.0/2));
+      return -(res_1 + res_2 + 0*res_3)*exp(-E*t);
+    };
+    
+    auto C_rho_03_A  = [&xg, &k, &LL, &t, &m, &no_R](double E) {
+      
+      double s= E*E - k*k;
+      double X=m*k;
+      double fovG= -0.055;
+      double hatfovG = fovG*m*m/(X);
+      double RovG =(no_R==true)?0.0:-1.4;
+      double q2= s/pow(2*0.135,2) -1;
+      double Gs= 5.0+ 0.0*q2;
+      //RovG= (m*m/(s -2*m*sqrt( s + k*k)));
+
+      double Fem= pow(LL.F_pi_GS_mod(sqrt(s), 0.775, 5.0,0.135,0.0),2);
+      double std_f= pow(s- pow(2*0.135,2) ,3.0/2)/(12.0*pow(2*M_PI,2));
+      double std_ft= pow(s,3.0/2)*(1.0 -pow(2*0.135,2)/s)/(12.0*pow(2*M_PI,2));
+      double res_1= -Gs*std_f*Fem*k*E/(m*pow(s,3.0/2));
+      double res_2= -Gs*std_f*k*k*k*(RovG*Fem)/(m*m*pow(s,3.0/2));
+      double res_3= -Gs*std_ft*k*k*k*(hatfovG*Fem)/(m*m*pow(s,3.0/2));
+      return -(res_1 + res_2 + 0*res_3)*exp(-E*t);
+    };
+    
+    
+    auto C_rho_30_A  = [&xg, &k, &LL, &t, &m, &no_R](double E) {
+      
+      double s= E*E - k*k;
+          
+      double X= m*k;
+      double fovG= -0.055;
+      double hatfovG = fovG*m*m/(X);
+      double RovG =(no_R==true)?0.0:-1.4;
+      //RovG= (m*m/(s -2*m*sqrt( s + k*k)));
+    
+      double Fem= pow(LL.F_pi_GS_mod(sqrt(s), 0.775, 5.0,0.135,0.0),2);
+      double q2= s/pow(2*0.135,2) -1;
+      double Gs= 5.0*(1.0+ 0.0*q2);
+
+      double std_f= pow(s- pow(2*0.135,2) ,3.0/2)/(12.0*pow(2*M_PI,2));
+      double std_ft= pow(s,3.0/2)*(1.0 -pow(2*0.135,2)/s)/(12.0*pow(2*M_PI,2));
+      double res_1= -Gs*std_f*Fem*k*E/(m*pow(s,3.0/2));
+      double res_2= -Gs*std_f*k*E*(RovG*Fem)*(E/m -1.0)/(m*pow(s,3.0/2));
+      double res_3= -Gs*std_ft*k*E*(hatfovG*Fem)/(m*pow(s,3.0/2));
+      return -(res_1 + res_2+ 0*res_3)*exp(-E*t);
+    };
+
+    double dt=0.01*fm_to_inv_Gev; //fm 
+    int N=400;
+
+    Vfloat times;
+    Vfloat rat_33_11;
+    Vfloat rat_30_03;
+    Vfloat rat_12_11;
+
+    Vfloat corr_30_A, corr_03_A, corr_33_A, corr_11_A, corr_12_V, corr_30_A_kaon, corr_33_A_kaon, corr_03_A_kaon;
+  
+    for(int n=1; n<N;n++) {
+
+      //cout<<"Computing time: "<<n*dt/fm_to_inv_Gev<<" fm"<<endl;
+    
+      t= n*dt;
+      double tolerance =1e-5;
+
+      times.push_back( t/fm_to_inv_Gev);
+
+      //##### V12 ######
+      double valV,errV;
+      gsl_function_pp<decltype(C_rho_12_V)> F_V(C_rho_12_V);
+      gsl_integration_workspace * wV = gsl_integration_workspace_alloc (30000);
+      gsl_function *GV = static_cast<gsl_function*>(&F_V);
+      gsl_integration_qags(GV, th, Emax,  0.0, tolerance, 30000, wV, &valV, &errV);
+      gsl_integration_workspace_free (wV);
+      if(fabs(errV)/valV > 1e-4) cout<<"Warning precision reached: "<<errV/fabs(valV)<<endl;
+      //##### A11 #####
+      double valA11,errA11;
+      gsl_function_pp<decltype(C_rho_11_A)> F_A11(C_rho_11_A);
+      gsl_integration_workspace * wA11 = gsl_integration_workspace_alloc (30000);
+      gsl_function *GA11 = static_cast<gsl_function*>(&F_A11);
+      gsl_integration_qags(GA11, th, Emax, 0.0, tolerance, 30000, wA11, &valA11, &errA11);
+      gsl_integration_workspace_free (wA11);
+      if(fabs(errA11)/valA11 > 1e-4) cout<<"Warning precision reached: "<<errA11/fabs(valA11)<<endl;
+      //##### A33 #####
+      double valA33,errA33;
+      gsl_function_pp<decltype(C_rho_33_A)> F_A33(C_rho_33_A);
+      gsl_integration_workspace * wA33 = gsl_integration_workspace_alloc (30000);
+      gsl_function *GA33 = static_cast<gsl_function*>(&F_A33);
+      gsl_integration_qags(GA33, th, Emax,0.0, tolerance, 30000, wA33, &valA33, &errA33);
+      gsl_integration_workspace_free (wA33);
+      if(fabs(errA33)/valA33 > 1e-4) cout<<"Warning precision reached: "<<errA33/fabs(valA33)<<endl;
+      //##### A30 #####
+      double valA30,errA30;
+      gsl_function_pp<decltype(C_rho_30_A)> F_A30(C_rho_30_A);
+      gsl_integration_workspace * wA30 = gsl_integration_workspace_alloc (30000);
+      gsl_function *GA30 = static_cast<gsl_function*>(&F_A30);
+      gsl_integration_qags(GA30, th, Emax, 0.0, tolerance, 30000, wA30, &valA30, &errA30);
+      gsl_integration_workspace_free (wA30);
+      if(fabs(errA30)/valA30 > 1e-4) cout<<"Warning precision reached: "<<errA30/fabs(valA30)<<endl;
+      //##### A03 #####
+      double valA03,errA03;
+      gsl_function_pp<decltype(C_rho_03_A)> F_A03(C_rho_03_A);
+      gsl_integration_workspace * wA03 = gsl_integration_workspace_alloc (30000);
+      gsl_function *GA03 = static_cast<gsl_function*>(&F_A03);
+      gsl_integration_qags(GA03, th, Emax,  0.0, tolerance, 30000, wA03, &valA03, &errA03); //qagiu
+      gsl_integration_workspace_free (wA03);
+      if(fabs(errA03)/valA03 > 1e-4) cout<<"Warning precision reached: "<<errA03/fabs(valA03)<<endl;
+
   
 
-  auto C_rho_12_V = [&xg, &k, &LL, &t, &m](double E) {
-    double s= E*E - k*k;
-    double R=1; //LL.F_pi_GS_mod(2*0.135,0.775,5.51,0.135,0.0);
-    double LEC= -0.4587*5.0/R;
-    double Fem= pow(LL.F_pi_GS_mod(sqrt(s), 0.775, 5.51,0.135,0.0),2);
-    double std_f= pow(s- pow(2*0.135,2) ,3.0/2)/(12.0*pow(2*M_PI,2));
-    double res= k*std_f*Fem/(m*m*sqrt(s));
-
-    //cout<<"H("<<sqrt(s)<<"): "<<Fem<<endl;
-    
-    return LEC*res*exp(-E*t);
-  };
-
-  auto C_rho_11_A = [&xg, &k, &LL, &t, &m](double E) {
-    double s= E*E - k*k;
-    double q2= s/pow(2*0.135,2) -1;
-    double R=1.0; //1.0/LL.F_pi_GS_mod(2*0.135,0.775,5.51,0.135,0.0);
-    double Gs= 5.0/R; //5.0;
-    double Fem= pow(LL.F_pi_GS_mod(sqrt(s), 0.775, 5.51,0.135,0.0),2);
-    double std_f= pow(s- pow(2*0.135,2) ,3.0/2)/(12.0*pow(2*M_PI,2));
-    double res= -std_f*Gs*Fem/(m*sqrt(s));
-    return -res*exp(-E*t);
-  };
+      double fk=0.156;
+      double Fem= 1.3;
 
 
-  auto C_rho_33_A = [&xg, &k, &LL, &t, &m](double E) {
-    double x= m*m;
-    double s= E*E - k*k;
-    double y= s;
-    double z= m*m -2*m*E +s;
-    double s_pi= pow(1- pow(2*0.135,2)/s,0.5);
-    double R=1.0; //LL.F_pi_GS_mod(2*0.135,0.775,5.51,0.135,0.0);
-    double lambda= x*x + y*y + z*z -2*x*y -2*x*z - 2*y*z;
-    double X= 0.5*sqrt(lambda);
-    double fovG= -0.055;
-    double hatfovG = fovG*m*m/(X*s_pi);
-    double q2= s/pow(2*0.135,2) -1;
-    double Gs= 5.0/R;
-    
+      double kaon_30 = Fem*exp( -(m +ek)*t)*k*ek*(fk/(2*ek));
+      double kaon_33 = Fem*exp( -(m +ek)*t)*k*k*(fk/(2*ek));
+      double kaon_03 = Fem*exp( -(m +ek)*t)*(ek-m)*k*(fk/(2*ek));
+
+      rat_30_03.push_back( (valA30+kaon_30)/(valA03+kaon_03));
+      rat_33_11.push_back( (valA33+kaon_33)/valA11);
+      rat_12_11.push_back( valV/valA11);
     
 
+      corr_30_A.push_back(valA30);
+      corr_03_A.push_back(valA03);
+      corr_11_A.push_back(valA11);
+      corr_33_A.push_back(valA33);
+      corr_12_V.push_back(valV);
+      corr_30_A_kaon.push_back(kaon_30);
+      corr_33_A_kaon.push_back(kaon_33);
+      corr_03_A_kaon.push_back(kaon_03);
     
-   
-    double RovG = -1.4;
-    //RovG= (m*m/(s -2*m*sqrt( s + k*k)));
-    //RovG= (m*m/( m*m + s -2*m*sqrt( s + k*k)));
     
-    double Fem= pow(LL.F_pi_GS_mod(sqrt(s), 0.775, 5.51,0.135,0.0),2);
-    double std_f= pow(s- pow(2*0.135,2) ,3.0/2)/(12.0*pow(2*M_PI,2));
-    double res_1= -Gs*std_f*Fem*E*E/(m*pow(s,3.0/2));
-    double res_2= -Gs*std_f*k*k*E*(RovG*Fem)/(m*m*pow(s,3.0/2));
-    double res_3= -Gs*std_f*k*k*E*(hatfovG*Fem)/(m*m*pow(s,3.0/2));
-    return -(res_1 + res_2 + res_3)*exp(-E*t);
-  };
-
-  auto C_rho_03_A  = [&xg, &k, &LL, &t, &m](double E) {
-
-    double x= m*m;
-    double s= E*E - k*k;
-    double y= s;
-    double z= m*m -2*m*E +s;
-    double s_pi= pow(1- pow(2*0.135,2)/s,0.5);
-    double lambda= x*x + y*y + z*z -2*x*y -2*x*z - 2*y*z;
-    double X= 0.5*sqrt(lambda);
-    double fovG= -0.055;
-    double hatfovG = fovG*m*m/(X*s_pi);
-    double RovG = -1.4; //0.0/( 0.0*s/(m*m)  - 2*E/m );
-    double q2= s/pow(2*0.135,2) -1;
-    double Gs= 5.0+ 0.0*q2;
-    //RovG= (m*m/(s -2*m*sqrt( s + k*k)));
-
     
-    //RovG= (m*m/( m*m + s -2*m*sqrt( s + k*k)));    // R = -1/q^2 * ( q*(p1-p2) )  q= mk^2 +s -2*mk*sqrt(s + k^2) 
-    
-    double Fem= pow(LL.F_pi_GS_mod(sqrt(s), 0.775, 5.51,0.135,0.0),2);
-    double std_f= pow(s- pow(2*0.135,2) ,3.0/2)/(12.0*pow(2*M_PI,2));
-    double res_1= -Gs*std_f*Fem*k*E/(m*pow(s,3.0/2));
-    double res_2= -Gs*std_f*k*k*k*(RovG*Fem)/(m*m*pow(s,3.0/2));
-    double res_3= -Gs*std_f*k*k*k*(hatfovG*Fem)/(m*m*pow(s,3.0/2));
-    return -(res_1 + res_2 + res_3)*exp(-E*t);
-  };
-
-
-  auto C_rho_30_A  = [&xg, &k, &LL, &t, &m](double E) {
-
-    double x= m*m;
-    double s= E*E - k*k;
-    double y= s;
-    double z= m*m -2*m*E +s;
-    double s_pi= pow(1- pow(2*0.135,2)/s,0.5);
-    double lambda= x*x + y*y + z*z -2*x*y -2*x*z - 2*y*z;
-    if(fabs(lambda) < 1e-12) {
-      cout<<"x: "<<x<<endl;
-      cout<<"y: "<<y<<endl;
-      cout<<"z: "<<z<<endl;
-      crash("lambda too small: "+to_string_with_precision(lambda,8));
     }
 
-    
-    double X= 0.5*sqrt(lambda);
-    double fovG= -0.055;
-    double hatfovG = fovG*m*m/(X*s_pi);
-    double RovG = -1.4; // -0.0*(1.75/0.5)*( 0.5/(E/m));
-    //RovG= (m*m/(s -2*m*sqrt( s + k*k)));
-    //RovG to cancel = -m/( E - m)   R= -m/(E-m) *  v/(2m*m)
-    
-    double Fem= pow(LL.F_pi_GS_mod(sqrt(s), 0.775, 5.51,0.135,0.0),2);
-    double q2= s/pow(2*0.135,2) -1;
-    double Gs= 5.0*(1.0+ 0.0*q2);
 
-    //cout<<"sqrt(s): "<<sqrt(s)<<" fs: "<<hatfovG<<endl;
-    
-    double std_f= pow(s- pow(2*0.135,2) ,3.0/2)/(12.0*pow(2*M_PI,2));
-    double res_1= -Gs*std_f*Fem*k*E/(m*pow(s,3.0/2));
-    double res_2= -Gs*std_f*k*E*(RovG*Fem)*(E/m -1.0)/(m*pow(s,3.0/2));
-    double res_3= -Gs*std_f*k*E*(hatfovG*Fem)/(m*pow(s,3.0/2));
-    return -(res_1 + res_2+ res_3)*exp(-E*t);
-  };
+    //print model prediction to file
 
-  double dt=0.01*fm_to_inv_Gev; //fm 
-  //double tmax= 4*fm_to_inv_Gev;
-  int N=400;
+    boost::filesystem::create_directory("../data/HLT_virtual/GS_Kl4");
 
-  Vfloat times;
-  Vfloat rat_33_11;
-  Vfloat rat_30_03;
-  Vfloat rat_12_11;
+    Print_To_File({ }, {times, rat_30_03, rat_33_11, rat_12_11} ,  "../data/HLT_virtual/GS_Kl4/xg_"+to_string_with_precision(xg,3),"","");
 
-  Vfloat corr_30_A, corr_03_A, corr_33_A, corr_11_A, corr_12_V, corr_30_A_kaon, corr_33_A_kaon, corr_03_A_kaon;
-  
-  for(int n=1; n<N;n++) {
-
-    cout<<"Computing time: "<<n*dt/fm_to_inv_Gev<<" fm"<<endl;
-    
-    t= n*dt;
-    double tolerance =1e-5;
-
-    times.push_back( t/fm_to_inv_Gev);
-
-    //##### V12 ######
-    double valV,errV;
-    gsl_function_pp<decltype(C_rho_12_V)> F_V(C_rho_12_V);
-    gsl_integration_workspace * wV = gsl_integration_workspace_alloc (30000);
-    gsl_function *GV = static_cast<gsl_function*>(&F_V);
-    gsl_integration_qags(GV, th, Emax,  0.0, tolerance, 30000, wV, &valV, &errV);
-    gsl_integration_workspace_free (wV);
-    if(valV/fabs(errV) > 1e-4) cout<<"Warning precision reached: "<<errV/fabs(valV)<<endl;
-    //##### A11 #####
-    double valA11,errA11;
-    gsl_function_pp<decltype(C_rho_11_A)> F_A11(C_rho_11_A);
-    gsl_integration_workspace * wA11 = gsl_integration_workspace_alloc (30000);
-    gsl_function *GA11 = static_cast<gsl_function*>(&F_A11);
-    gsl_integration_qags(GA11, th, Emax, 0.0, tolerance, 30000, wA11, &valA11, &errA11);
-    gsl_integration_workspace_free (wA11);
-    if(valA11/fabs(errA11) > 1e-4) cout<<"Warning precision reached: "<<errA11/fabs(valA11)<<endl;
-    //##### A33 #####
-    double valA33,errA33;
-    gsl_function_pp<decltype(C_rho_33_A)> F_A33(C_rho_33_A);
-    gsl_integration_workspace * wA33 = gsl_integration_workspace_alloc (30000);
-    gsl_function *GA33 = static_cast<gsl_function*>(&F_A33);
-    gsl_integration_qags(GA33, th, Emax,0.0, tolerance, 30000, wA33, &valA33, &errA33);
-    gsl_integration_workspace_free (wA33);
-    if(valA33/fabs(errA33) > 1e-4) cout<<"Warning precision reached: "<<errA33/fabs(valA33)<<endl;
-    //##### A30 #####
-    double valA30,errA30;
-    gsl_function_pp<decltype(C_rho_30_A)> F_A30(C_rho_30_A);
-    gsl_integration_workspace * wA30 = gsl_integration_workspace_alloc (30000);
-    gsl_function *GA30 = static_cast<gsl_function*>(&F_A30);
-    gsl_integration_qags(GA30, th, Emax, 0.0, tolerance, 30000, wA30, &valA30, &errA30);
-    gsl_integration_workspace_free (wA30);
-    if(valA30/fabs(errA30) > 1e-4) cout<<"Warning precision reached: "<<errA30/fabs(valA30)<<endl;
-    //##### A03 #####
-    double valA03,errA03;
-    gsl_function_pp<decltype(C_rho_03_A)> F_A03(C_rho_03_A);
-    gsl_integration_workspace * wA03 = gsl_integration_workspace_alloc (30000);
-    gsl_function *GA03 = static_cast<gsl_function*>(&F_A03);
-    gsl_integration_qags(GA03, th, Emax,  0.0, tolerance, 30000, wA03, &valA03, &errA03); //qagiu
-    gsl_integration_workspace_free (wA03);
-    if(valA03/fabs(errA03) > 1e-4) cout<<"Warning precision reached: "<<errA03/fabs(valA03)<<endl;
-
-  
-
-    double fk=0.156;
-    double Fem= 1.3;
+    Print_To_File({ }, {times, corr_12_V, corr_11_A, corr_33_A, corr_30_A, corr_03_A, corr_30_A_kaon, corr_33_A_kaon} ,  "../data/HLT_virtual/GS_Kl4/corr_xg_"+to_string_with_precision(xg,3),"","");
 
 
-    double kaon_30 = Fem*exp( -(m +ek)*t)*k*ek*(fk/(2*ek));
-    double kaon_33 = Fem*exp( -(m +ek)*t)*k*k*(fk/(2*ek));
-    double kaon_03 = Fem*exp( -(m +ek)*t)*(ek-m)*k*(fk/(2*ek));
+    corr_30_A = summ_master(corr_30_A, corr_30_A_kaon);
+    corr_33_A = summ_master(corr_33_A, corr_33_A_kaon);
+    corr_03_A = summ_master(corr_03_A, corr_03_A_kaon);
 
-    rat_30_03.push_back( (valA30+kaon_30)/(valA03+kaon_03));
-    rat_33_11.push_back( (valA33+kaon_33)/valA11);
-    rat_12_11.push_back( valV/valA11);
-    
+    for(int ixk=0;ixk<(signed)xk_list_double.size();ixk++) {
 
-    corr_30_A.push_back(valA30);
-    corr_03_A.push_back(valA03);
-    corr_11_A.push_back(valA11);
-    corr_33_A.push_back(valA33);
-    corr_12_V.push_back(valV);
-    corr_30_A_kaon.push_back(kaon_30);
-    corr_33_A_kaon.push_back(kaon_33);
-    corr_03_A_kaon.push_back(kaon_03);
-    
-    
-    
-  }
-
-
-  //print model prediction to file
-
-  boost::filesystem::create_directory("../data/HLT_virtual/GS_Kl4");
-
-  Print_To_File({ }, {times, rat_30_03, rat_33_11, rat_12_11} ,  "../data/HLT_virtual/GS_Kl4/xg_"+to_string_with_precision(xg,3),"","");
-
-  Print_To_File({ }, {times, corr_12_V, corr_11_A, corr_33_A, corr_30_A, corr_03_A, corr_30_A_kaon, corr_33_A_kaon} ,  "../data/HLT_virtual/GS_Kl4/corr_xg_"+to_string_with_precision(xg,3),"","");
-
-
-  corr_30_A = summ_master(corr_30_A, corr_30_A_kaon);
-  corr_33_A = summ_master(corr_33_A, corr_33_A_kaon);
-  corr_03_A = summ_master(corr_03_A, corr_03_A_kaon);
-
-  for(int ixk=0;ixk<(signed)xk_list_double.size();ixk++) {
-
-    double MP=MK_FLAG;
-    double kz= k;
-    double xk = xk_list_double[ixk];
-    double k2= pow(xk*MP,2);
-    double Eg_v = sqrt( k2 + k*k);
+      double MP=MK_FLAG;
+      double kz= k;
+      double xk = xk_list_double[ixk];
+      double k2= pow(xk*MP,2);
+      double Eg_v = sqrt( k2 + k*k);
       
     
-    Eigen::MatrixXd A(3,3); //coefficient matrix
+      Eigen::MatrixXd A(3,3); //coefficient matrix
 
       
       //   [   H1    ]     =    [           ]^-1       [       H30 -H03*(MP-Eg)/(2MP-Eg)          ]
@@ -2162,170 +2134,206 @@ void Do_HLT_virtual() {
       //                   [  -k^2/MP                             0                     -(MP*Eg -k^2)/MP                ]
 
 
-    int sign=1;
+      int sign=1;
+
+      A(0,0) = -sign*Eg_v*kz/MP ; A(0,1) = -sign*Eg_v*(MP-Eg_v)/(2*MP*Eg_v -k2); A(0,2) = sign*Eg_v*kz/MP; 
     
-    A(0,0) =  -sign*Eg_v*kz/(2*MP-Eg_v);     A(0,1) = -sign*kz*(MP-Eg_v)/(2*MP-Eg_v);         A(0,2) = sign*kz*MP/(2*MP-Eg_v);
+      //A(0,0) =  -sign*Eg_v*kz/(2*MP-Eg_v);     A(0,1) = -sign*kz*(MP-Eg_v)/(2*MP-Eg_v);         A(0,2) = sign*kz*MP/(2*MP-Eg_v);
     
-    A(1,0) = -Eg_v*Eg_v/MP;                  A(1,1) = Eg_v*kz*kz/(2*MP*Eg_v - k2);            A(1,2) = -Eg_v*(MP-Eg_v)/MP;
+      A(1,0) = -Eg_v*Eg_v/MP;                  A(1,1) = Eg_v*kz*kz/(2*MP*Eg_v - k2);            A(1,2) = -Eg_v*(MP-Eg_v)/MP;
     
-    A(2,0) = -k2/MP;                         A(2,1) = 0.0;                                    A(2,2) = -(MP*Eg_v - k2)/MP;
+      A(2,0) = -k2/MP;                         A(2,1) = 0.0;                                    A(2,2) = -(MP*Eg_v - k2)/MP;
 
-    Eigen::MatrixXd B = A.inverse();
+      Eigen::MatrixXd B = A.inverse();
 
-    //from the correlator to the form factors
+      //cout<<"B-matrix for xg: "<<xg<<", xk: "<<xk<<endl;
+      //cout<<B<<endl<<endl;
+
+      //from the correlator to the form factors
     
-    Vfloat H1_corr, H2_corr, FV_corr, FA_corr;
-    for(int t=0;t<(signed)times.size();t++) {
+      Vfloat H1_corr, H2_corr, FV_corr, FA_corr;
+      for(int t=0;t<(signed)times.size();t++) {
       
       
-      Eigen::VectorXd X(3);
+	Eigen::VectorXd X(3);
       
-      X(0) = corr_30_A[t] - corr_03_A[t]*(MP-Eg_v)/(2*MP-Eg_v);
-      X(1) = corr_33_A[t];
-      X(2) = corr_11_A[t];
+	X(0) = corr_30_A[t];  //corr_30_A[t] - corr_03_A[t]*(MP-Eg_v)/(2*MP-Eg_v);
+	X(1) = corr_33_A[t];
+	X(2) = corr_11_A[t];
       
-      Eigen::VectorXd Y = B*X;
+	Eigen::VectorXd Y = B*X;
       
-      H1_corr.push_back( Y(0));
-      H2_corr.push_back( Y(1));
-      FA_corr.push_back( Y(2));
-      FV_corr.push_back( corr_12_V[t]/k);
+	H1_corr.push_back( Y(0));
+	H2_corr.push_back( Y(1));
+	FA_corr.push_back( Y(2));
+	FV_corr.push_back( -corr_12_V[t]/k);
       
-    }
-    
-    
-    Print_To_File({ }, {times, H1_corr,FA_corr, H2_corr, FV_corr} ,  "../data/HLT_virtual/GS_Kl4/F_corr_xg_"+to_string_with_precision(xg,3)+"_xk_"+to_string_with_precision(xk,2),"","");
-
-    //compute the smeared amplitude
-
-    for(int iff=0;iff<4;iff++) {
-
-
-      //KK pole contribution
-
-      double fk=0.156;
-      double Fem= 1.3;
-      Eigen::VectorXd X_F_Kaon(3);	
-      X_F_Kaon(2) = 0.0;
-      X_F_Kaon(1) = Fem*k*k*(fk/(2*ek));
-      X_F_Kaon(0) = Fem*k*ek*(fk/(2*ek)) -  Fem*(ek-m)*k*(fk/(2*ek))*(MP-Eg_v)/(2*MP-Eg_v);
-
-
-      double amp= 0.0;
-      Eigen::VectorXd Y_F_Kaon= B*X_F_Kaon;
-      if(iff<3) amp = Y_F_Kaon(iff);
-      
-      Vfloat RE_F_mod, IM_F_mod;
-      
-      for(int ie=0; ie<(signed)eps_list_GS.size(); ie++) {
-
-      double eps= eps_list_GS[ie];
-      t=0;
-
-      bool is_eps_0 = false;
-      if(fabs(eps) < 1e-10) is_eps_0=true;
-
-      auto IM_rho_F = [&](double E) {
-
-	Eigen::VectorXd X_F(3);
-	
-	X_F(2)=  C_rho_11_A(E);
-	X_F(1)=  C_rho_33_A(E);
-	X_F(0) = C_rho_30_A(E) - C_rho_03_A(E)*(MP-Eg_v)/(2*MP-Eg_v);	
-	
-	double X_V= C_rho_12_V(E)/k;
-
-	Eigen::VectorXd Y_F = B*X_F;
-
-	double X= (iff==3)?X_V:Y_F(iff);
-
-	if(is_eps_0) return X*M_PI;
-	
-	return X*eps/( (E-Eg_v)*(E-Eg_v) + eps*eps);
-      };
-
-      auto RE_rho_F = [&](double E) {
-
-	Eigen::VectorXd X_F(3);
-	
-	X_F(2)=  C_rho_11_A(E);
-	X_F(1)=  C_rho_33_A(E);
-	X_F(0) = C_rho_30_A(E) - C_rho_03_A(E)*(MP-Eg_v)/(2*MP-Eg_v);
-
-	Eigen::VectorXd Y_F = B*X_F;
-
-	double X_V= C_rho_12_V(E)/k;
-	
-	double X= (iff==3)?X_V:Y_F(iff);
-
-	if(is_eps_0) { cout<<"rho("<<E<<"): "<< X*Eg_v/E<<endl;  return X*( Eg_v/E); }
-
-	if(is_eps_0) crash("you shold not be here");
-
-	return X*( (E-Eg_v)/( (E-Eg_v)*(E-Eg_v) + eps*eps)   - (1.0/(E)) );
-      };
-
-
-      //integrate
-
-      if(fabs(eps) > 1e-10) {
-
-      double val,err;
-      double tolerance = 1e-5;
-      gsl_function_pp<decltype(RE_rho_F)> F_RE_corr(RE_rho_F);
-      gsl_integration_workspace * w_RE = gsl_integration_workspace_alloc (30000);
-      gsl_function *G_RE = static_cast<gsl_function*>(&F_RE_corr);
-      gsl_integration_qags(G_RE, th, 20, 0.0, tolerance, 30000, w_RE, &val, &err);
-      gsl_integration_workspace_free (w_RE);
-      if( err/fabs(val) > 5*tolerance) crash("In RE-mod inf-vol, for ixk: "+to_string(xk)+" eps: "+to_string(eps)+", gls integration not able to achieve target precision. Precision reached: "+to_string_with_precision(err/fabs(val),7));
-      double val_kaon_RE= amp*( (m+ek-Eg_v)/( (m+ek-Eg_v)*(m+ek-Eg_v) + eps*eps)   - (1.0/(m+ek)) );
-      RE_F_mod.push_back(val+ val_kaon_RE);
-      gsl_function_pp<decltype(IM_rho_F)> F_IM_corr(IM_rho_F);
-      gsl_integration_workspace * w_IM = gsl_integration_workspace_alloc (30000);
-      gsl_function *G_IM = static_cast<gsl_function*>(&F_IM_corr);
-      gsl_integration_qags(G_IM, th, 20, 0.0, tolerance, 30000, w_IM, &val, &err);
-      gsl_integration_workspace_free (w_IM);
-      if( err/fabs(val) > 5*tolerance) crash("In IM-mod inf-vol, for ixk: "+to_string(xk)+" eps: "+to_string(eps)+", gls integration not able to achieve target precision. Precision reached: "+to_string_with_precision(err/fabs(val),7));
-      double val_kaon_IM= amp*eps/( (m+ek-Eg_v)*(m+ek-Eg_v) + eps*eps);
-      IM_F_mod.push_back(val+val_kaon_IM);
-
       }
-
-      else {
-
-	double val,err;
-	double tolerance = 1e-5;
-	is_eps_0=true;
-	gsl_function_pp<decltype(RE_rho_F)> F_RE_corr(RE_rho_F);
-	gsl_integration_workspace * w_RE = gsl_integration_workspace_alloc (30000);
-	gsl_function *G_RE = static_cast<gsl_function*>(&F_RE_corr);
-	gsl_integration_qawc(G_RE, th+0.005, 5.0, Eg_v, 0.0, tolerance, 30000, w_RE, &val, &err);
-	gsl_integration_workspace_free (w_RE);
-	if( err/fabs(val) > 5*tolerance) crash("In RE-mod inf-vol, for ixk: "+to_string(xk)+" eps: "+to_string(eps)+", gls integration not able to achieve target precision. Precision reached: "+to_string_with_precision(err/fabs(val),7));
-	double val_kaon_RE = amp*( 1.0/(m+ek-Eg_v)   - (1.0/(m+ek)) );
-	RE_F_mod.push_back(val+val_kaon_RE);
-	
-	IM_F_mod.push_back( IM_rho_F(Eg_v));
-
-      }
-      
-      
-
-
-
-    }
-
-    //print
-      string tag_FF="";
-      if(iff==0) tag_FF="H1";
-      else if(iff==1) tag_FF="H1";
-      else if(iff==2) tag_FF="FA";
-      else if(iff==3) tag_FF="FV";
-      else crash("tag not found");
-      
-      Print_To_File({ }, {eps_list_GS, RE_F_mod,IM_F_mod} ,  "../data/HLT_virtual/GS_Kl4/"+tag_FF+"_mod_xg_"+to_string_with_precision(xg,3)+"_xk_"+to_string_with_precision(xk,2),"","");
     
+    
+      Print_To_File({ }, {times, H1_corr,FA_corr, H2_corr, FV_corr} ,  "../data/HLT_virtual/GS_Kl4/F_corr_xg_"+to_string_with_precision(xg,3)+"_xk_"+to_string_with_precision(xk,2),"","");
+
+      //compute the smeared amplitude
+
+      for(int iff=0;iff<4;iff++) {
+
+
+	//KK pole contribution
+
+	double fk=0.156;
+	double Fem= 1.3;
+	Eigen::VectorXd X_F_Kaon(3);	
+	X_F_Kaon(2) = 0.0;
+	X_F_Kaon(1) = Fem*k*k*(fk/(2*ek));
+	X_F_Kaon(0) = Fem*k*ek*(fk/(2*ek));  //Fem*k*ek*(fk/(2*ek)) -  Fem*(ek-m)*k*(fk/(2*ek))*(MP-Eg_v)/(2*MP-Eg_v);
+
+
+	double amp= 0.0;
+	Eigen::VectorXd Y_F_Kaon= B*X_F_Kaon;
+	if(iff<3) amp = Y_F_Kaon(iff);
+      
+	Vfloat RE_F_mod, IM_F_mod, RE_F_mod_noK, RE_F_mod_noR, IM_F_mod_noR;
+      
+	for(int ie=0; ie<(signed)eps_list_GS.size(); ie++) {
+
+	  double eps= eps_list_GS[ie];
+	  t=0;
+
+	  bool is_eps_0 = false;
+	  if(fabs(eps) < 1e-10) is_eps_0=true;
+
+	  auto IM_rho_F = [&](double E) {
+
+	    Eigen::VectorXd X_F(3);
+	
+	    X_F(2)=  C_rho_11_A(E);
+	    X_F(1)=  C_rho_33_A(E);
+	    X_F(0) = C_rho_30_A(E); //C_rho_30_A(E) - C_rho_03_A(E)*(MP-Eg_v)/(2*MP-Eg_v);	
+	
+	    double X_V= -C_rho_12_V(E)/k;
+
+	    Eigen::VectorXd Y_F = B*X_F;
+
+	    double X= (iff==3)?X_V:Y_F(iff);
+
+	    if(is_eps_0) return X*M_PI;
+	
+	    return X*eps/( (E-Eg_v)*(E-Eg_v) + eps*eps);
+	  };
+
+	  auto RE_rho_F = [&](double E) {
+
+	    Eigen::VectorXd X_F(3);
+	
+	    X_F(2)=  C_rho_11_A(E);
+	    X_F(1)=  C_rho_33_A(E);
+	    X_F(0) = C_rho_30_A(E); //C_rho_30_A(E) - C_rho_03_A(E)*(MP-Eg_v)/(2*MP-Eg_v);
+
+	    Eigen::VectorXd Y_F = B*X_F;
+
+	    double X_V= -C_rho_12_V(E)/k;
+	
+	    double X= (iff==3)?X_V:Y_F(iff);
+
+	    if(is_eps_0) { return X*( Eg_v/E); }
+
+	    if(is_eps_0) crash("you shold not be here");
+
+	    return X*( (E-Eg_v)/( (E-Eg_v)*(E-Eg_v) + eps*eps)   - (1.0/(E)) );
+	  };
+
+
+	  //integrate
+
+	  
+
+	  if(fabs(eps) > 1e-10) {
+
+	    double val,err;
+	    double tolerance = 1e-5;
+	    gsl_function_pp<decltype(RE_rho_F)> F_RE_corr(RE_rho_F);
+	    gsl_integration_workspace * w_RE = gsl_integration_workspace_alloc (30000);
+	    gsl_function *G_RE = static_cast<gsl_function*>(&F_RE_corr);
+	    gsl_integration_qags(G_RE, th, Emax, 0.0, tolerance, 30000, w_RE, &val, &err);
+	    gsl_integration_workspace_free (w_RE);
+	    if( err/fabs(val) > 5*tolerance) crash("In RE-mod inf-vol, for ixk: "+to_string(xk)+" eps: "+to_string(eps)+", gls integration not able to achieve target precision. Precision reached: "+to_string_with_precision(err/fabs(val),7));
+	    double val_kaon_RE=amp*( (m+ek-Eg_v)/( (m+ek-Eg_v)*(m+ek-Eg_v) + eps*eps)   - (1.0/(m+ek)) );
+	    RE_F_mod.push_back(val+ val_kaon_RE);
+	    RE_F_mod_noK.push_back(val);	    
+	    gsl_function_pp<decltype(IM_rho_F)> F_IM_corr(IM_rho_F);
+	    gsl_integration_workspace * w_IM = gsl_integration_workspace_alloc (30000);
+	    gsl_function *G_IM = static_cast<gsl_function*>(&F_IM_corr);
+	    gsl_integration_qags(G_IM, th, Emax, 0.0, tolerance, 30000, w_IM, &val, &err);
+	    gsl_integration_workspace_free (w_IM);
+	    if( err/fabs(val) > 5*tolerance) crash("In IM-mod inf-vol, for ixk: "+to_string(xk)+" eps: "+to_string(eps)+", gls integration not able to achieve target precision. Precision reached: "+to_string_with_precision(err/fabs(val),7));
+	    double val_kaon_IM= amp*eps/( (m+ek-Eg_v)*(m+ek-Eg_v) + eps*eps);
+	    IM_F_mod.push_back(val+val_kaon_IM);
+
+	    no_R=true;
+	    gsl_function_pp<decltype(RE_rho_F)> F_noR_RE_corr(RE_rho_F);
+	    gsl_integration_workspace * w_RE_noR = gsl_integration_workspace_alloc (30000);
+	    gsl_function *G_RE_noR = static_cast<gsl_function*>(&F_noR_RE_corr);
+	    gsl_integration_qags(G_RE_noR, th, Emax, 0.0, tolerance, 30000, w_RE_noR, &val, &err);
+	    gsl_integration_workspace_free (w_RE_noR);
+	    if( err/fabs(val) > 5*tolerance) crash("In RE-mod inf-vol, for ixk: "+to_string(xk)+" eps: "+to_string(eps)+", gls integration not able to achieve target precision. Precision reached: "+to_string_with_precision(err/fabs(val),7));
+	    RE_F_mod_noR.push_back(val+ val_kaon_RE);
+	    gsl_function_pp<decltype(IM_rho_F)> F_noR_IM_corr(IM_rho_F);
+	    gsl_integration_workspace * w_IM_noR = gsl_integration_workspace_alloc (30000);
+	    gsl_function *G_IM_noR = static_cast<gsl_function*>(&F_noR_IM_corr);
+	    gsl_integration_qags(G_IM_noR, th, Emax, 0.0, tolerance, 30000, w_IM_noR, &val, &err);
+	    gsl_integration_workspace_free (w_IM_noR);
+	    if( err/fabs(val) > 5*tolerance) crash("In IM-mod inf-vol, for ixk: "+to_string(xk)+" eps: "+to_string(eps)+", gls integration not able to achieve target precision. Precision reached: "+to_string_with_precision(err/fabs(val),7));
+	    IM_F_mod_noR.push_back(val+ val_kaon_IM);
+
+	    no_R=false;
+
+	  }
+
+	  else {
+
+	    double val,err;
+	    double tolerance = 1e-5;
+	    is_eps_0=true;
+	    gsl_function_pp<decltype(RE_rho_F)> F_RE_corr(RE_rho_F);
+	    gsl_integration_workspace * w_RE = gsl_integration_workspace_alloc (30000);
+	    gsl_function *G_RE = static_cast<gsl_function*>(&F_RE_corr);
+	    gsl_integration_qawc(G_RE, th+1e-7, Emax, Eg_v, 0.0, tolerance, 30000, w_RE, &val, &err);
+	    gsl_integration_workspace_free (w_RE);
+	    if( err/fabs(val) > 5*tolerance) crash("In RE-mod inf-vol, for ixk: "+to_string(xk)+" eps: "+to_string(eps)+", gls integration not able to achieve target precision. Precision reached: "+to_string_with_precision(err/fabs(val),7));
+	    double val_kaon_RE = amp*( 1.0/(m+ek-Eg_v)   - (1.0/(m+ek)) );
+	    RE_F_mod.push_back(val+val_kaon_RE);
+	    RE_F_mod_noK.push_back(val);
+	
+	    IM_F_mod.push_back( IM_rho_F(Eg_v));
+
+	    no_R=true;
+	    gsl_function_pp<decltype(RE_rho_F)> F_noR_RE_corr(RE_rho_F);
+	    gsl_integration_workspace * w_RE_noR = gsl_integration_workspace_alloc (30000);
+	    gsl_function *G_RE_noR = static_cast<gsl_function*>(&F_noR_RE_corr);
+	    gsl_integration_qawc(G_RE_noR, th+1e-7, Emax, Eg_v, 0.0, tolerance, 30000, w_RE_noR, &val, &err);
+	    gsl_integration_workspace_free (w_RE_noR);
+	    if( err/fabs(val) > 5*tolerance) crash("In RE-mod inf-vol, for ixk: "+to_string(xk)+" eps: "+to_string(eps)+", gls integration not able to achieve target precision. Precision reached: "+to_string_with_precision(err/fabs(val),7));
+	    RE_F_mod_noR.push_back(val+val_kaon_RE);
+	    IM_F_mod_noR.push_back(IM_rho_F(Eg_v));
+	    no_R=false;
+
+	  }
+      
+	}
+
+	//print
+	string tag_FF="";
+	if(iff==0) tag_FF="H1";
+	else if(iff==1) tag_FF="H2";
+	else if(iff==2) tag_FF="FA";
+	else if(iff==3) tag_FF="FV";
+	else crash("tag not found");
+      
+	Print_To_File({ }, {eps_list_GS, RE_F_mod,IM_F_mod, RE_F_mod_noK, RE_F_mod_noR, IM_F_mod_noR} ,  "../data/HLT_virtual/GS_Kl4/"+tag_FF+"_mod_xg_"+to_string_with_precision(xg,3)+"_xk_"+to_string_with_precision(xk,2),"","");
+    
+      }
     }
+
   }
   
   
@@ -2334,7 +2342,7 @@ void Do_HLT_virtual() {
   exit(-1);
   
 
-  //make a model for the two pion contribution in finite volume
+  
 
   
 
