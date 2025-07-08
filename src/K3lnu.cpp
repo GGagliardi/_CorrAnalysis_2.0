@@ -1557,7 +1557,7 @@ void Do_HLT_virtual() {
 
 	   
 	    
-	    
+	   
 	    
 	    
 	    double syst, l;
@@ -1576,9 +1576,13 @@ void Do_HLT_virtual() {
 	    //############################
 	    PrecFloat::setDefaultPrecision(prec);
 	    int gamma=3;
-	    auto Atr = [&gamma, &Emin](PrecFloat t) -> PrecFloat {
+	    auto Atr = [&gamma, &aE0](PrecFloat t) -> PrecFloat {
 	      PrecFloat res = PrecFloat(0.0);
-	      for(int n=0;n<=gamma;n++) res += pow(-1,n)*(fact(gamma)/(fact(n)*fact(gamma-n)))*pow(PrecFloat(Emin),2*n)*pow(t,2*n-1)*gamma_inc(1-2*n, t*PrecFloat(Emin));
+	      for(int n=0;n<=gamma;n++) {
+		int f= (fact(gamma)/(fact(n)*fact(gamma-n)));
+		PrecFloat N= PrecFloat(1.0*f);
+		res += pow(PrecFloat(-1.0),n)*N*pow(PrecFloat(aE0),2*n)*pow(t,PrecFloat(2.0*n-1.0))*gamma_inc(1-2*n, t*PrecFloat(aE0));
+	      }
 	      return res;
 	    };
 	    auto w_gamma = [&gamma](PrecFloat x,PrecFloat m,PrecFloat s,PrecFloat E0,int jack_id) {
