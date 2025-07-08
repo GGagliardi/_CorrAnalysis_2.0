@@ -81,7 +81,7 @@ void Get_Atr(PrecMatr& Atr, const PrecFloat &E0, int T, int tmin, int tmax, cons
     for(int r=tmin; r<= tmax; r++)
       {
 	if(USE_GENERALIZED_NORM) {
-	  if(ONLY_FORWARD) Atr(t-tmin,r-tmin)= Atr_gen_NORM( -PrecFloat(Beta)+ t+r);
+	  if(ONLY_FORWARD) {cout<<"you should be here!"<<endl;  Atr(t-tmin,r-tmin)= Atr_gen_NORM( -PrecFloat(Beta)+ t+r); }
 	  else  Atr(t-tmin,r-tmin) = Atr_gen_NORM(-PrecFloat(Beta)+t+r) + Atr_gen_NORM(-PrecFloat(Beta)+ T-t+r) + Atr_gen_NORM(-PrecFloat(Beta)+T-r + t) + Atr_gen_NORM(-PrecFloat(Beta)+ 2*T -t -r);
 	}
 	else {

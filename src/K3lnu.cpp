@@ -1576,7 +1576,8 @@ void Do_HLT_virtual() {
 	    //############################
 	    PrecFloat::setDefaultPrecision(prec);
 	    int gamma=3;
-	    auto Atr = [&gamma, &aE0](PrecFloat t) -> PrecFloat {
+	    auto Atr = [&gamma, &aE0, &prec](PrecFloat t) -> PrecFloat { // tE = E'
+	      PrecFloat::setDefaultPrecision(prec);
 	      PrecFloat res = PrecFloat(0.0);
 	      for(int n=0;n<=gamma;n++) {
 		int f= (fact(gamma)/(fact(n)*fact(gamma-n)));
@@ -1585,8 +1586,8 @@ void Do_HLT_virtual() {
 	      }
 	      return res;
 	    };
-	    auto w_gamma = [&gamma](PrecFloat x,PrecFloat m,PrecFloat s,PrecFloat E0,int jack_id) {
-
+	    auto w_gamma = [&gamma, &prec](PrecFloat x,PrecFloat m,PrecFloat s,PrecFloat E0,int jack_id) {
+	      PrecFloat::setDefaultPrecision(prec);
 	      return  pow((PrecFloat(1.0) - pow(E0/x,PrecFloat(2.0))),PrecFloat(gamma));
 	    };
 	    
