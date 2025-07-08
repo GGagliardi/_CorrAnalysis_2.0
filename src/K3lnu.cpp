@@ -1581,9 +1581,9 @@ void Do_HLT_virtual() {
 	      for(int n=0;n<=gamma;n++) res += pow(-1,n)*(fact(gamma)/(fact(n)*fact(gamma-n)))*pow(PrecFloat(Emin),2*n)*pow(t,2*n-1)*gamma_inc(1-2*n, t*PrecFloat(Emin));
 	      return res;
 	    };
-	    auto w_gamma = [&gamma, &Emin](PrecFloat x,PrecFloat m,PrecFloat s,PrecFloat E0,int jack_id) {
+	    auto w_gamma = [&gamma](PrecFloat x,PrecFloat m,PrecFloat s,PrecFloat E0,int jack_id) {
 
-	      return pow((1.0 - pow(E0/x,2)),gamma);
+	      return 1.0; // pow((PrecFloat(1.0) - pow(E0/x,2)),gamma);
 	    };
 	    
 	    
