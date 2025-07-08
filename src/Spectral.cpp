@@ -182,6 +182,7 @@ void Get_ft(PrecVect& ft, const PrecFloat &E0, const PrecFloat &m, const PrecFlo
 	cout<<"f("<<t<<"): EXACT: "<<ft(t-tmin)<<", NUM: "<<test<<endl<<flush;
 	} */
       //else
+      //cout<<"you should be here: "<<t-tmin<<endl;
       ft(t-tmin) =   integrateUpToInfinite(ftT, E0.get(), (verbosity_lev > 1));
 
     }
@@ -289,8 +290,8 @@ PrecFloat Get_M2(PrecFloat &m, PrecFloat &s, PrecFloat &E0, int jack_id,  const 
     };
 
   if(USE_GENERALIZED_NORM) {
-    if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, 0.0, Emax_int, (verbosity_lev > 1));
-    else return integrateUpToInfinite(f2, 0.0, (verbosity_lev > 1));
+    if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, E0.get(), Emax_int, (verbosity_lev > 1));
+    else return integrateUpToInfinite(f2, E0.get(), (verbosity_lev > 1));
   }
   else{
     if(Integrate_up_to_max_energy) return integrateUpToXmax(f2, E0.get(), Emax_int, (verbosity_lev > 1));
@@ -1399,7 +1400,6 @@ distr_t Get_Laplace_transfo( double mean, double sigma, double Estart, int T, in
   
   Get_ft(ft, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f, F_NORM);
   M2=Get_M2(m,s,E0,-1,f, F_NORM);
-
   if(verbosity_lev) { cout<<"done!"<<endl<<flush;}
 
    

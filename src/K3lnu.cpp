@@ -1583,7 +1583,7 @@ void Do_HLT_virtual() {
 	    };
 	    auto w_gamma = [&gamma](PrecFloat x,PrecFloat m,PrecFloat s,PrecFloat E0,int jack_id) {
 
-	      return 1.0; // pow((PrecFloat(1.0) - pow(E0/x,2)),gamma);
+	      return  pow((PrecFloat(1.0) - pow(E0/x,PrecFloat(2.0))),PrecFloat(gamma));
 	    };
 	    
 	    
