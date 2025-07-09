@@ -1560,8 +1560,7 @@ void Do_HLT_virtual() {
 	    double E_p0 = 1.1*( 0.135 + sqrt( pow(0.135,2) + pow(k,2)))*a_distr.ave();
 	    double E_p1 = 0.98*min(Ea,Eb)*a_distr.ave();
 
-	    if(E_p0 < aE0) crash("E_p0 < aE0");
-	    if(E_p1 < E_p0) crash("E_p1 < Ep0");
+	  
 
 	    int gamma=3;
 	    
@@ -1570,7 +1569,8 @@ void Do_HLT_virtual() {
 	  
 	    cout<<"r: "<<r<<endl;
 	    
-	   
+	    if(E_p0 < aE0) crash("E_p0 < aE0");
+	    if(E_p1 < E_p0)  { aE0 = E_p1; r=-1.0;}
 	    
 	    
 	    double syst, l;

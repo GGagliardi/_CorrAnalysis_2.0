@@ -2086,6 +2086,8 @@ distr_t Get_Laplace_transfo_piecewise( double mean, double sigma, double Estart,
   USE_GENERALIZED_NORM= GENERALIZED_NORM;
   IS_PIECEWISE=true;
   assert(!USE_GENERALIZED_NORM);
+
+  
  
   if(MODE != "TANT" && MODE != "SANF") crash("MODE: "+MODE+" not recognized");
 
@@ -2115,6 +2117,9 @@ distr_t Get_Laplace_transfo_piecewise( double mean, double sigma, double Estart,
   E1 = E1_start;
   E2 = E2_start;
   RAT= rat;
+
+  if(RAT < 0) { IS_PIECEWISE=false; }
+
 
  
 
