@@ -2150,7 +2150,7 @@ distr_t Get_Laplace_transfo_piecewise( double mean, double sigma, double Estart,
    
 
   
-  if( (Beta != 0) || Integrate_up_to_max_energy || USE_GENERALIZED_NORM) {
+  if( (((Beta != 0) || Integrate_up_to_max_energy || USE_GENERALIZED_NORM)) && !IS_PIECEWISE) {
     if(verbosity_lev) cout<<"computing f(t)_std..."<<flush;
     Get_ft_std(ft_std, E0, m, s, -1, T, 1, tmax, SMEARING_FUNC, f);
     M2_std= Get_M2_std_norm(m,s,E0,-1,f);
@@ -2171,8 +2171,11 @@ distr_t Get_Laplace_transfo_piecewise( double mean, double sigma, double Estart,
   }
     
   Get_Atr(Atr, E0,  T, 1, tmax, Atr_gen_NORM);
-
-  Get_Atr_std(Atr_std, E0, T, 1, tmax);
+  
+  if(!IS_PIECEWISE) {
+    Get_Atr_std(Atr_std, E0, T, 1, tmax);
+  }
+  else {Atr_std= Atr;}
 
   Atr_std_Emax= Atr_std;
 
