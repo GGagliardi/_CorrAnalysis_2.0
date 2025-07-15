@@ -5,7 +5,7 @@
 
 const double alpha = 1.0 / 137.035999;
 const bool UseJack = true;
-const int Njacks =  200; //1000;// 93;
+const int Njacks =  50; //it was 200 //1000;// 93;
 const double fm_to_inv_Gev = 1.0 / 0.197327;
 const double lambda = 1.24283;
 const double Qb = -1.0 / 3.0;
@@ -192,6 +192,8 @@ void Get_plateaux_VEV_ratio(string Ens, string M, CorrAnalysis &Corr) {
 void heavy_radiative() {
 
 
+  Convert_2pt();
+  
   Get_chi_c1_decay();
 
 
@@ -3714,3 +3716,289 @@ void Get_chi_c1_decay() {
      return;
 
      }
+
+
+void Convert_2pt() {
+
+   auto Sort_light_confs = [](string A, string B) {
+
+			   
+
+			    int conf_length_A= A.length();
+			    int conf_length_B= B.length();
+
+			    int pos_a_slash=-1;
+			    int pos_b_slash=-1;
+			    for(int i=0;i<conf_length_A;i++) if(A.substr(i,1)=="/") pos_a_slash=i;
+			    for(int j=0;j<conf_length_B;j++) if(B.substr(j,1)=="/") pos_b_slash=j;
+
+			    string A_bis= A.substr(pos_a_slash+1);
+			    string B_bis= B.substr(pos_b_slash+1);
+
+			     
+			    string conf_num_A = A_bis.substr(0,4);
+			    string conf_num_B = B_bis.substr(0,4);
+							       
+		      
+			    string rA = A_bis.substr(A_bis.length()-2);
+			    string rB = B_bis.substr(B_bis.length()-2);
+			    if(rA.substr(0,1) == "r") { 
+			      int n1 = stoi(A_bis.substr(A_bis.length()-1));
+			      int n2 = stoi(B_bis.substr(B_bis.length()-1));
+			      if(rA == rB) {
+			      if(rA=="r0" || rA=="r2") return conf_num_A > conf_num_B;
+			      else if(rA=="r1" || rA=="r3") return conf_num_A < conf_num_B;
+			      else crash("stream not recognized");
+			      }
+			      else return n1<n2;
+			    }
+			    return A_bis<B_bis;
+  };
+
+
+
+  int Nmasses=6;
+  
+  vector<data_t> P5_TM(Nmasses), V1_TM(Nmasses), V2_TM(Nmasses), V3_TM(Nmasses), A1_TM(Nmasses), A2_TM(Nmasses), A3_TM(Nmasses), T1_TM(Nmasses), T2_TM(Nmasses), T3_TM(Nmasses), B1_TM(Nmasses), B2_TM(Nmasses), B3_TM(Nmasses);
+
+  vector<data_t> P5_OS(Nmasses), V1_OS(Nmasses), V2_OS(Nmasses), V3_OS(Nmasses), A1_OS(Nmasses), A2_OS(Nmasses), A3_OS(Nmasses), T1_OS(Nmasses), T2_OS(Nmasses), T3_OS(Nmasses), B1_OS(Nmasses), B2_OS(Nmasses), B3_OS(Nmasses);
+
+  vector<data_t> P5_TM_LOC(Nmasses), V1_TM_LOC(Nmasses), V2_TM_LOC(Nmasses), V3_TM_LOC(Nmasses), A1_TM_LOC(Nmasses), A2_TM_LOC(Nmasses), A3_TM_LOC(Nmasses), T1_TM_LOC(Nmasses), T2_TM_LOC(Nmasses), T3_TM_LOC(Nmasses), B1_TM_LOC(Nmasses), B2_TM_LOC(Nmasses), B3_TM_LOC(Nmasses);
+
+  vector<data_t> P5_OS_LOC(Nmasses), V1_OS_LOC(Nmasses), V2_OS_LOC(Nmasses), V3_OS_LOC(Nmasses), A1_OS_LOC(Nmasses), A2_OS_LOC(Nmasses), A3_OS_LOC(Nmasses), T1_OS_LOC(Nmasses), T2_OS_LOC(Nmasses), T3_OS_LOC(Nmasses), B1_OS_LOC(Nmasses), B2_OS_LOC(Nmasses), B3_OS_LOC(Nmasses);
+
+
+  for(int i=0;i<Nmasses;i++) {
+    int j=i+1;
+
+
+    P5_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "P5P5", Sort_light_confs);
+    V1_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "V1V1", Sort_light_confs);
+    V2_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "V2V2", Sort_light_confs);
+    V3_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "V3V3", Sort_light_confs);
+    A1_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "A1A1", Sort_light_confs);
+    A2_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "A2A2", Sort_light_confs);
+    A3_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "A3A3", Sort_light_confs);
+    T1_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "T1T1", Sort_light_confs);
+    T2_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "T2T2", Sort_light_confs);
+    T3_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "T3T3", Sort_light_confs);
+    B1_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "B1B1", Sort_light_confs);
+    B2_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "B2B2", Sort_light_confs);
+    B3_TM[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_TM", "B3B3", Sort_light_confs);
+		
+    
+    P5_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "P5P5", Sort_light_confs);
+    V1_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "V1V1", Sort_light_confs);
+    V2_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "V2V2", Sort_light_confs);
+    V3_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "V3V3", Sort_light_confs);
+    A1_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "A1A1", Sort_light_confs);
+    A2_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "A2A2", Sort_light_confs);
+    A3_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "A3A3", Sort_light_confs);
+    T1_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "T1T1", Sort_light_confs);
+    T2_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "T2T2", Sort_light_confs);
+    T3_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "T3T3", Sort_light_confs);
+    B1_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "B1B1", Sort_light_confs);
+    B2_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "B2B2", Sort_light_confs);
+    B3_OS[i].Read("../data_Damir_2pt", "mes_contr_2PT_M"+to_string(j)+"_R01", "B3B3", Sort_light_confs);
+
+
+
+    P5_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "P5P5", Sort_light_confs);
+    V1_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "V1V1", Sort_light_confs);
+    V2_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "V2V2", Sort_light_confs);
+    V3_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "V3V3", Sort_light_confs);
+    A1_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "A1A1", Sort_light_confs);
+    A2_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "A2A2", Sort_light_confs);
+    A3_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "A3A3", Sort_light_confs);
+    T1_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "T1T1", Sort_light_confs);
+    T2_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "T2T2", Sort_light_confs);
+    T3_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "T3T3", Sort_light_confs);
+    B1_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "B1B1", Sort_light_confs);
+    B2_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "B2B2", Sort_light_confs);
+    B3_TM_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_TM", "B3B3", Sort_light_confs);
+		
+    
+    P5_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "P5P5", Sort_light_confs);
+    V1_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "V1V1", Sort_light_confs);
+    V2_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "V2V2", Sort_light_confs);
+    V3_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "V3V3", Sort_light_confs);
+    A1_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "A1A1", Sort_light_confs);
+    A2_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "A2A2", Sort_light_confs);
+    A3_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "A3A3", Sort_light_confs);
+    T1_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "T1T1", Sort_light_confs);
+    T2_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "T2T2", Sort_light_confs);
+    T3_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "T3T3", Sort_light_confs);
+    B1_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "B1B1", Sort_light_confs);
+    B2_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "B2B2", Sort_light_confs);
+    B3_OS_LOC[i].Read("../data_Damir_2pt", "mes_contr_2PT_LOC_M"+to_string(j)+"_R01", "B3B3", Sort_light_confs);
+
+    
+		
+
+    
+  }
+
+  cout<<"Data read"<<endl;
+
+  boost::filesystem::create_directory("../data/decay_const_onium");
+
+  for(int im=0;im<Nmasses;im++) {
+
+    boost::filesystem::create_directory("../data/decay_const_onium/M"+to_string(im+1));
+
+    cout<<"Analyzing data for mass M"<<im+1<<endl;
+    
+    int Nens= P5_TM[im].size;
+
+    
+    for(int iens=0;iens<Nens;iens++) {
+
+      string Ens = P5_TM[im].Tag[iens];
+
+      boost::filesystem::create_directory("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens);
+
+       CorrAnalysis Corr(UseJack,Njacks,Njacks);
+       Corr.Nt= P5_TM[im].nrows[iens];
+       Corr.Reflection_sign=1;
+       Corr.Perform_Nt_t_average=1;
+
+       distr_t_list P5_TM_distr = Corr.corr_t(P5_TM[im].col(0)[iens],"");
+       distr_t_list VK_TM_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(V1_TM[im].col(0)[iens], V2_TM[im].col(0)[iens], V3_TM[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list AK_TM_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(A1_TM[im].col(0)[iens], A2_TM[im].col(0)[iens], A3_TM[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list TK_TM_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(T1_TM[im].col(0)[iens], T2_TM[im].col(0)[iens], T3_TM[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list BK_TM_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(B1_TM[im].col(0)[iens], B2_TM[im].col(0)[iens], B3_TM[im].col(0)[iens]),1.0/3.0)    ,"");
+
+       distr_t_list P5_OS_distr = Corr.corr_t(P5_OS[im].col(0)[iens],"");
+       distr_t_list VK_OS_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(V1_OS[im].col(0)[iens], V2_OS[im].col(0)[iens], V3_OS[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list AK_OS_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(A1_OS[im].col(0)[iens], A2_OS[im].col(0)[iens], A3_OS[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list TK_OS_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(T1_OS[im].col(0)[iens], T2_OS[im].col(0)[iens], T3_OS[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list BK_OS_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(B1_OS[im].col(0)[iens], B2_OS[im].col(0)[iens], B3_OS[im].col(0)[iens]),1.0/3.0)    ,"");
+
+       distr_t_list P5_TM_LOC_distr = Corr.corr_t(P5_TM_LOC[im].col(0)[iens],"");
+       distr_t_list VK_TM_LOC_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(V1_TM_LOC[im].col(0)[iens], V2_TM_LOC[im].col(0)[iens], V3_TM_LOC[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list AK_TM_LOC_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(A1_TM_LOC[im].col(0)[iens], A2_TM_LOC[im].col(0)[iens], A3_TM_LOC[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list TK_TM_LOC_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(T1_TM_LOC[im].col(0)[iens], T2_TM_LOC[im].col(0)[iens], T3_TM_LOC[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list BK_TM_LOC_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(B1_TM_LOC[im].col(0)[iens], B2_TM_LOC[im].col(0)[iens], B3_TM_LOC[im].col(0)[iens]),1.0/3.0)    ,"");
+
+       distr_t_list P5_OS_LOC_distr = Corr.corr_t(P5_OS_LOC[im].col(0)[iens],"");
+       distr_t_list VK_OS_LOC_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(V1_OS_LOC[im].col(0)[iens], V2_OS_LOC[im].col(0)[iens], V3_OS_LOC[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list AK_OS_LOC_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(A1_OS_LOC[im].col(0)[iens], A2_OS_LOC[im].col(0)[iens], A3_OS_LOC[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list TK_OS_LOC_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(T1_OS_LOC[im].col(0)[iens], T2_OS_LOC[im].col(0)[iens], T3_OS_LOC[im].col(0)[iens]),1.0/3.0)    ,"");
+       distr_t_list BK_OS_LOC_distr = Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(B1_OS_LOC[im].col(0)[iens], B2_OS_LOC[im].col(0)[iens], B3_OS_LOC[im].col(0)[iens]),1.0/3.0)    ,"");
+
+
+       //print
+
+       ofstream P5_TM_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/P5_TM");
+       ofstream VK_TM_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/VK_TM");
+       ofstream AK_TM_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/AK_TM");
+       ofstream TK_TM_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/TK_TM");
+       ofstream BK_TM_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/BK_TM");
+
+       ofstream P5_OS_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/P5_OS");
+       ofstream VK_OS_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/VK_OS");
+       ofstream AK_OS_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/AK_OS");
+       ofstream TK_OS_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/TK_OS");
+       ofstream BK_OS_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/BK_OS");
+
+       
+       ofstream P5_TM_LOC_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/P5_TM_LOC");
+       ofstream VK_TM_LOC_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/VK_TM_LOC");
+       ofstream AK_TM_LOC_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/AK_TM_LOC");
+       ofstream TK_TM_LOC_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/TK_TM_LOC");
+       ofstream BK_TM_LOC_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/BK_TM_LOC");
+
+       ofstream P5_OS_LOC_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/P5_OS_LOC");
+       ofstream VK_OS_LOC_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/VK_OS_LOC");
+       ofstream AK_OS_LOC_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/AK_OS_LOC");
+       ofstream TK_OS_LOC_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/TK_OS_LOC");
+       ofstream BK_OS_LOC_print("../data/decay_const_onium/M"+to_string(im+1)+"/"+Ens+"/BK_OS_LOC");
+
+       
+
+
+       P5_TM_print.precision(16); VK_TM_print.precision(16); AK_TM_print.precision(16), TK_TM_print.precision(16); BK_TM_print.precision(16);
+       P5_OS_print.precision(16); VK_OS_print.precision(16); AK_OS_print.precision(16), TK_OS_print.precision(16); BK_OS_print.precision(16);
+       
+       P5_TM_LOC_print.precision(16); VK_TM_LOC_print.precision(16); AK_TM_LOC_print.precision(16), TK_TM_LOC_print.precision(16); BK_TM_LOC_print.precision(16);
+       P5_OS_LOC_print.precision(16); VK_OS_LOC_print.precision(16); AK_OS_LOC_print.precision(16), TK_OS_LOC_print.precision(16); BK_OS_LOC_print.precision(16);
+	   
+       for(int ijack=0;ijack<Njacks;ijack++) {
+
+
+	 P5_TM_print<<"#jack: "<<ijack<<endl;
+	 VK_TM_print<<"#jack: "<<ijack<<endl;
+	 AK_TM_print<<"#jack: "<<ijack<<endl;
+	 TK_TM_print<<"#jack: "<<ijack<<endl;
+	 BK_TM_print<<"#jack: "<<ijack<<endl;
+
+	 P5_OS_print<<"#jack: "<<ijack<<endl;
+	 VK_OS_print<<"#jack: "<<ijack<<endl;
+	 AK_OS_print<<"#jack: "<<ijack<<endl;
+	 TK_OS_print<<"#jack: "<<ijack<<endl;
+	 BK_OS_print<<"#jack: "<<ijack<<endl;
+
+	 P5_TM_LOC_print<<"#jack: "<<ijack<<endl;
+	 VK_TM_LOC_print<<"#jack: "<<ijack<<endl;
+	 AK_TM_LOC_print<<"#jack: "<<ijack<<endl;
+	 TK_TM_LOC_print<<"#jack: "<<ijack<<endl;
+	 BK_TM_LOC_print<<"#jack: "<<ijack<<endl;
+
+	 P5_OS_LOC_print<<"#jack: "<<ijack<<endl;
+	 VK_OS_LOC_print<<"#jack: "<<ijack<<endl;
+	 AK_OS_LOC_print<<"#jack: "<<ijack<<endl;
+	 TK_OS_LOC_print<<"#jack: "<<ijack<<endl;
+	 BK_OS_LOC_print<<"#jack: "<<ijack<<endl;
+	 
+	 for(int t=0;t<Corr.Nt;t++) {
+
+	   P5_TM_print<<P5_TM_distr.distr_list[t].distr[ijack]<<endl;
+	   VK_TM_print<<VK_TM_distr.distr_list[t].distr[ijack]<<endl;
+	   AK_TM_print<<AK_TM_distr.distr_list[t].distr[ijack]<<endl;
+	   TK_TM_print<<TK_TM_distr.distr_list[t].distr[ijack]<<endl;
+	   BK_TM_print<<BK_TM_distr.distr_list[t].distr[ijack]<<endl;
+
+	   P5_OS_print<<P5_OS_distr.distr_list[t].distr[ijack]<<endl;
+	   VK_OS_print<<VK_OS_distr.distr_list[t].distr[ijack]<<endl;
+	   AK_OS_print<<AK_OS_distr.distr_list[t].distr[ijack]<<endl;
+	   TK_OS_print<<TK_OS_distr.distr_list[t].distr[ijack]<<endl;
+	   BK_OS_print<<BK_OS_distr.distr_list[t].distr[ijack]<<endl;
+
+	   P5_TM_LOC_print<<P5_TM_LOC_distr.distr_list[t].distr[ijack]<<endl;
+	   VK_TM_LOC_print<<VK_TM_LOC_distr.distr_list[t].distr[ijack]<<endl;
+	   AK_TM_LOC_print<<AK_TM_LOC_distr.distr_list[t].distr[ijack]<<endl;
+	   TK_TM_LOC_print<<TK_TM_LOC_distr.distr_list[t].distr[ijack]<<endl;
+	   BK_TM_LOC_print<<BK_TM_LOC_distr.distr_list[t].distr[ijack]<<endl;
+ 
+	   P5_OS_LOC_print<<P5_OS_LOC_distr.distr_list[t].distr[ijack]<<endl;
+	   VK_OS_LOC_print<<VK_OS_LOC_distr.distr_list[t].distr[ijack]<<endl;
+	   AK_OS_LOC_print<<AK_OS_LOC_distr.distr_list[t].distr[ijack]<<endl;
+	   TK_OS_LOC_print<<TK_OS_LOC_distr.distr_list[t].distr[ijack]<<endl;
+	   BK_OS_LOC_print<<BK_OS_LOC_distr.distr_list[t].distr[ijack]<<endl;
+
+	 }
+	 
+
+
+
+       }
+
+       P5_TM_print.close(); VK_TM_print.close(); AK_TM_print.close(), TK_TM_print.close(); BK_TM_print.close();
+       P5_OS_print.close(); VK_OS_print.close(); AK_OS_print.close(), TK_OS_print.close(); BK_OS_print.close();
+       
+       P5_TM_LOC_print.close(); VK_TM_LOC_print.close(); AK_TM_LOC_print.close(), TK_TM_LOC_print.close(); BK_TM_LOC_print.close();
+       P5_OS_LOC_print.close(); VK_OS_LOC_print.close(); AK_OS_LOC_print.close(), TK_OS_LOC_print.close(); BK_OS_LOC_print.close();
+	  
+       
+      
+    }
+  }
+
+
+  cout<<"Data generated, exiting!"<<endl;
+  exit(-1);
+
+
+  return;
+
+}

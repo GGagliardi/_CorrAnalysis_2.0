@@ -20,6 +20,7 @@ void Get_plateaux_VEV_ratio(string Ens, string M, CorrAnalysis &Corr);
 
 void heavy_radiative();
 void Get_chi_c1_decay();
+void Convert_2pt();
 
 
 #endif

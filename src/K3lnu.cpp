@@ -1005,7 +1005,7 @@ void Do_HLT_virtual() {
 
   int Nj=50;
   double fm_to_inv_Gev=1.0/0.197327;
-  bool Skip_HLT=false;
+  bool Skip_HLT=true;
 
 
   //generate lattice spacings and RCs
@@ -2178,9 +2178,9 @@ void Do_HLT_virtual() {
 
       int sign=1;
 
-      A(0,0) = -sign*Eg_v*kz/MP ; A(0,1) = -sign*Eg_v*(MP-Eg_v)/(2*MP*Eg_v -k2); A(0,2) = sign*Eg_v*kz/MP; 
+      //A(0,0) = -sign*Eg_v*kz/MP ; A(0,1) = -sign*Eg_v*(MP-Eg_v)/(2*MP*Eg_v -k2); A(0,2) = sign*Eg_v*kz/MP; 
     
-      //A(0,0) =  -sign*Eg_v*kz/(2*MP-Eg_v);     A(0,1) = -sign*kz*(MP-Eg_v)/(2*MP-Eg_v);         A(0,2) = sign*kz*MP/(2*MP-Eg_v);
+      A(0,0) =  -sign*Eg_v*kz/(2*MP-Eg_v);     A(0,1) = -sign*kz*(MP-Eg_v)/(2*MP-Eg_v);         A(0,2) = sign*kz*MP/(2*MP-Eg_v);
     
       A(1,0) = -Eg_v*Eg_v/MP;                  A(1,1) = Eg_v*kz*kz/(2*MP*Eg_v - k2);            A(1,2) = -Eg_v*(MP-Eg_v)/MP;
     
@@ -2199,7 +2199,7 @@ void Do_HLT_virtual() {
       
 	Eigen::VectorXd X(3);
       
-	X(0) = corr_30_A[t];  //corr_30_A[t] - corr_03_A[t]*(MP-Eg_v)/(2*MP-Eg_v);
+	X(0) = corr_30_A[t] - corr_03_A[t]*(MP-Eg_v)/(2*MP-Eg_v);
 	X(1) = corr_33_A[t];
 	X(2) = corr_11_A[t];
       
@@ -2227,7 +2227,7 @@ void Do_HLT_virtual() {
 	Eigen::VectorXd X_F_Kaon(3);	
 	X_F_Kaon(2) = 0.0;
 	X_F_Kaon(1) = Fem*k*k*(fk/(2*ek));
-	X_F_Kaon(0) = Fem*k*ek*(fk/(2*ek));  //Fem*k*ek*(fk/(2*ek)) -  Fem*(ek-m)*k*(fk/(2*ek))*(MP-Eg_v)/(2*MP-Eg_v);
+	X_F_Kaon(0) = Fem*k*ek*(fk/(2*ek)) -  Fem*(ek-m)*k*(fk/(2*ek))*(MP-Eg_v)/(2*MP-Eg_v);
 
 
 	double amp= 0.0;
@@ -2250,7 +2250,7 @@ void Do_HLT_virtual() {
 	
 	    X_F(2)=  C_rho_11_A(E);
 	    X_F(1)=  C_rho_33_A(E);
-	    X_F(0) = C_rho_30_A(E); //C_rho_30_A(E) - C_rho_03_A(E)*(MP-Eg_v)/(2*MP-Eg_v);	
+	    X_F(0) = C_rho_30_A(E) - C_rho_03_A(E)*(MP-Eg_v)/(2*MP-Eg_v);	
 	
 	    double X_V= -C_rho_12_V(E)/k;
 
@@ -2269,7 +2269,7 @@ void Do_HLT_virtual() {
 	
 	    X_F(2)=  C_rho_11_A(E);
 	    X_F(1)=  C_rho_33_A(E);
-	    X_F(0) = C_rho_30_A(E); //C_rho_30_A(E) - C_rho_03_A(E)*(MP-Eg_v)/(2*MP-Eg_v);
+	    X_F(0) = C_rho_30_A(E) - C_rho_03_A(E)*(MP-Eg_v)/(2*MP-Eg_v);
 
 	    Eigen::VectorXd Y_F = B*X_F;
 

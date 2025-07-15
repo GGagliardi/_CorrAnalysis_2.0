@@ -265,12 +265,10 @@ void hc_ee() {
   //READ DIFFERENT THETAS
 
   data_t P5P5_sm_th1, P5P5_sm_th2, P5P5_sm_th3, P5P5_sm_th4, P5P5_sm_th5;
-  data_t PT3_B3P5_G0_th1_tw1, PT3_B3P5_G0_th2_tw1, PT3_B3P5_G0_th3_tw1, PT3_B3P5_G0_th4_tw1, PT3_B3P5_G0_th5_tw1;
   data_t PT3_B1P5_G1_th1_tw1, PT3_B1P5_G1_th2_tw1, PT3_B1P5_G1_th3_tw1, PT3_B1P5_G1_th4_tw1, PT3_B1P5_G1_th5_tw1;
   data_t PT3_B3P5_G3_th1_tw1, PT3_B3P5_G3_th2_tw1, PT3_B3P5_G3_th3_tw1, PT3_B3P5_G3_th4_tw1, PT3_B3P5_G3_th5_tw1;
 
   //tw2
-  data_t PT3_B3P5_G0_th1_tw2, PT3_B3P5_G0_th2_tw2, PT3_B3P5_G0_th3_tw2, PT3_B3P5_G0_th4_tw2, PT3_B3P5_G0_th5_tw2;
   data_t PT3_B1P5_G1_th1_tw2, PT3_B1P5_G1_th2_tw2, PT3_B1P5_G1_th3_tw2, PT3_B1P5_G1_th4_tw2, PT3_B1P5_G1_th5_tw2;
   data_t PT3_B3P5_G3_th1_tw2, PT3_B3P5_G3_th2_tw2, PT3_B3P5_G3_th3_tw2, PT3_B3P5_G3_th4_tw2, PT3_B3P5_G3_th5_tw2;
 
@@ -280,11 +278,6 @@ void hc_ee() {
   P5P5_sm_th4.Read("../hc_ee", "mes_contr_2PT_MOT_Hc_TH4", "P5P5", Sort_light_confs);
   P5P5_sm_th5.Read("../hc_ee", "mes_contr_2PT_MOT_Hc_TH5", "P5P5", Sort_light_confs);
 
-  PT3_B3P5_G0_th1_tw1.Read("../hc_ee", "mes_contr_3PT_Hc_G0_TH1_tw1", "B3P5", Sort_light_confs);
-  PT3_B3P5_G0_th2_tw1.Read("../hc_ee", "mes_contr_3PT_Hc_G0_TH2_tw1", "B3P5", Sort_light_confs);
-  PT3_B3P5_G0_th3_tw1.Read("../hc_ee", "mes_contr_3PT_Hc_G0_TH3_tw1", "B3P5", Sort_light_confs);
-  PT3_B3P5_G0_th4_tw1.Read("../hc_ee", "mes_contr_3PT_Hc_G0_TH4_tw1", "B3P5", Sort_light_confs);
-  PT3_B3P5_G0_th5_tw1.Read("../hc_ee", "mes_contr_3PT_Hc_G0_TH5_tw1", "B3P5", Sort_light_confs);
   
   PT3_B1P5_G1_th1_tw1.Read("../hc_ee", "mes_contr_3PT_Hc_G1_TH1_tw1", "B1P5", Sort_light_confs);
   PT3_B1P5_G1_th2_tw1.Read("../hc_ee", "mes_contr_3PT_Hc_G1_TH2_tw1", "B1P5", Sort_light_confs);
@@ -298,12 +291,6 @@ void hc_ee() {
   PT3_B3P5_G3_th4_tw1.Read("../hc_ee", "mes_contr_3PT_Hc_G3_TH4_tw1", "B3P5", Sort_light_confs);
   PT3_B3P5_G3_th5_tw1.Read("../hc_ee", "mes_contr_3PT_Hc_G3_TH5_tw1", "B3P5", Sort_light_confs);
 
-
-  PT3_B3P5_G0_th1_tw2.Read("../hc_ee_tw2", "mes_contr_3PT_Hc_G0_TH1_tw2", "B3P5", Sort_light_confs);
-  PT3_B3P5_G0_th2_tw2.Read("../hc_ee_tw2", "mes_contr_3PT_Hc_G0_TH2_tw2", "B3P5", Sort_light_confs);
-  PT3_B3P5_G0_th3_tw2.Read("../hc_ee_tw2", "mes_contr_3PT_Hc_G0_TH3_tw2", "B3P5", Sort_light_confs);
-  PT3_B3P5_G0_th4_tw2.Read("../hc_ee_tw2", "mes_contr_3PT_Hc_G0_TH4_tw2", "B3P5", Sort_light_confs);
-  PT3_B3P5_G0_th5_tw2.Read("../hc_ee_tw2", "mes_contr_3PT_Hc_G0_TH5_tw2", "B3P5", Sort_light_confs);
   
   PT3_B1P5_G1_th1_tw2.Read("../hc_ee_tw2", "mes_contr_3PT_Hc_G1_TH1_tw2", "B1P5", Sort_light_confs);
   PT3_B1P5_G1_th2_tw2.Read("../hc_ee_tw2", "mes_contr_3PT_Hc_G1_TH2_tw2", "B1P5", Sort_light_confs);
@@ -320,6 +307,8 @@ void hc_ee() {
   
 
   //#################################################################################################à
+
+  
   
   
     
@@ -376,6 +365,7 @@ void hc_ee() {
 	ZV_had=ZV_C;
 	L=80;
 	syst_mc= syst_mc_C;
+	moms = {3.2999*M_PI/L, 2.199959*M_PI/L, 1.0999797*M_PI/L, (1e-5)*M_PI/L};
       }
       else if(Ens=="cE211a.044.112") {
 	tw1=35; //tw2=30;
@@ -433,17 +423,6 @@ void hc_ee() {
       distr_t_list PT3_G3_th4_tw1=Corr.corr_t(PT3_B3P5_G3_th4_tw1.col(0)[iens], "../data/hc_ee/"+Ens+"/PT3_G3_th4_tw1");
       distr_t_list PT3_G3_tw1=Corr.corr_t(PT3_B3P5_G3_th5_tw1.col(0)[iens], "../data/hc_ee/"+Ens+"/PT3_G3_tw1");
 
-      distr_t_list PT3_G0_th1_tw1=Corr.corr_t(PT3_B3P5_G0_th1_tw1.col(1)[iens], "../data/hc_ee/"+Ens+"/PT3_G0_th1_tw1");
-      distr_t_list PT3_G0_th2_tw1=Corr.corr_t(PT3_B3P5_G0_th2_tw1.col(1)[iens], "../data/hc_ee/"+Ens+"/PT3_G0_th2_tw1");
-      distr_t_list PT3_G0_th3_tw1=Corr.corr_t(PT3_B3P5_G0_th3_tw1.col(1)[iens], "../data/hc_ee/"+Ens+"/PT3_G0_th3_tw1");
-      distr_t_list PT3_G0_th4_tw1=Corr.corr_t(PT3_B3P5_G0_th4_tw1.col(1)[iens], "../data/hc_ee/"+Ens+"/PT3_G0_th4_tw1");
-      distr_t_list PT3_G0_tw1=Corr.corr_t(PT3_B3P5_G0_th5_tw1.col(1)[iens], "../data/hc_ee/"+Ens+"/PT3_G0_tw1");
-
-      distr_t_list PT3_G0_th1_sub_tw1=Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(PT3_B3P5_G0_th1_tw1.col(1)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G0_th5_tw1.col(1)[iens],-1.0)), 1.0/moms[0]), "../data/hc_ee/"+Ens+"/PT3_G0_th1_sub_tw1");
-      distr_t_list PT3_G0_th2_sub_tw1=Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(PT3_B3P5_G0_th2_tw1.col(1)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G0_th5_tw1.col(1)[iens],-1.0)), 1.0/moms[1]), "../data/hc_ee/"+Ens+"/PT3_G0_th2_sub_tw1");
-      distr_t_list PT3_G0_th3_sub_tw1=Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(PT3_B3P5_G0_th3_tw1.col(1)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G0_th5_tw1.col(1)[iens],-1.0)), 1.0/moms[2]), "../data/hc_ee/"+Ens+"/PT3_G0_th3_sub_tw1");
-      distr_t_list PT3_G0_th4_sub_tw1=Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(PT3_B3P5_G0_th4_tw1.col(1)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G0_th5_tw1.col(1)[iens],-1.0)), 1.0/moms[3]), "../data/hc_ee/"+Ens+"/PT3_G0_th4_sub_tw1");
-
       distr_t_list PT3_G3_th1_sub_tw1=Corr.corr_t(summ_master(PT3_B3P5_G3_th1_tw1.col(0)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G3_th5_tw1.col(0)[iens],-1.0), PT3_B1P5_G1_th5_tw1.col(0)[iens]), "../data/hc_ee/"+Ens+"/PT3_G3_th1_sub_tw1");
       distr_t_list PT3_G3_th2_sub_tw1=Corr.corr_t(summ_master(PT3_B3P5_G3_th2_tw1.col(0)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G3_th5_tw1.col(0)[iens],-1.0), PT3_B1P5_G1_th5_tw1.col(0)[iens]), "../data/hc_ee/"+Ens+"/PT3_G3_th2_sub_tw1");
       distr_t_list PT3_G3_th3_sub_tw1=Corr.corr_t(summ_master(PT3_B3P5_G3_th3_tw1.col(0)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G3_th5_tw1.col(0)[iens],-1.0), PT3_B1P5_G1_th5_tw1.col(0)[iens]), "../data/hc_ee/"+Ens+"/PT3_G3_th3_sub_tw1");
@@ -452,8 +431,6 @@ void hc_ee() {
       
       distr_t_list PT3_G1_th0_tw2(UseJack), PT3_G1_th1_tw2(UseJack), PT3_G1_th2_tw2(UseJack), PT3_G1_th3_tw2(UseJack), PT3_G1_th4_tw2(UseJack), PT3_G1_tw2(UseJack);
       distr_t_list PT3_G3_th0_tw2(UseJack), PT3_G3_th1_tw2(UseJack), PT3_G3_th2_tw2(UseJack), PT3_G3_th3_tw2(UseJack), PT3_G3_th4_tw2(UseJack), PT3_G3_tw2(UseJack);
-      distr_t_list PT3_G0_th0_tw2(UseJack), PT3_G0_th1_tw2(UseJack), PT3_G0_th2_tw2(UseJack), PT3_G0_th3_tw2(UseJack), PT3_G0_th4_tw2(UseJack), PT3_G0_tw2(UseJack);
-      distr_t_list PT3_G0_th1_sub_tw2(UseJack), PT3_G0_th2_sub_tw2(UseJack), PT3_G0_th3_sub_tw2(UseJack), PT3_G0_th4_sub_tw2(UseJack);
       distr_t_list PT3_G3_th1_sub_tw2(UseJack), PT3_G3_th2_sub_tw2(UseJack), PT3_G3_th3_sub_tw2(UseJack), PT3_G3_th4_sub_tw2(UseJack);
       
       
@@ -471,18 +448,6 @@ void hc_ee() {
 	PT3_G3_th3_tw2=Corr.corr_t(PT3_B3P5_G3_th3_tw2.col(0)[0], "../data/hc_ee/"+Ens+"/PT3_G3_th3_tw2");
 	PT3_G3_th4_tw2=Corr.corr_t(PT3_B3P5_G3_th4_tw2.col(0)[0], "../data/hc_ee/"+Ens+"/PT3_G3_th4_tw2");
 	PT3_G3_tw2=Corr.corr_t(PT3_B3P5_G3_th5_tw2.col(0)[0], "../data/hc_ee/"+Ens+"/PT3_G3_tw2");
-	
-	PT3_G0_th1_tw2=Corr.corr_t(PT3_B3P5_G0_th1_tw2.col(1)[0], "../data/hc_ee/"+Ens+"/PT3_G0_th1_tw2");
-	PT3_G0_th2_tw2=Corr.corr_t(PT3_B3P5_G0_th2_tw2.col(1)[0], "../data/hc_ee/"+Ens+"/PT3_G0_th2_tw2");
-	PT3_G0_th3_tw2=Corr.corr_t(PT3_B3P5_G0_th3_tw2.col(1)[0], "../data/hc_ee/"+Ens+"/PT3_G0_th3_tw2");
-	PT3_G0_th4_tw2=Corr.corr_t(PT3_B3P5_G0_th4_tw2.col(1)[0], "../data/hc_ee/"+Ens+"/PT3_G0_th4_tw2");
-	PT3_G0_tw2=Corr.corr_t(PT3_B3P5_G0_th5_tw2.col(1)[0], "../data/hc_ee/"+Ens+"/PT3_G0_tw2");
-
-
-	PT3_G0_th1_sub_tw2= Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(PT3_B3P5_G0_th1_tw2.col(1)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G0_th5_tw2.col(1)[iens],-1.0)), 1.0/moms[0]), "../data/hc_ee/"+Ens+"/PT3_G0_th1_sub_tw2");
-	PT3_G0_th2_sub_tw2= Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(PT3_B3P5_G0_th2_tw2.col(1)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G0_th5_tw2.col(1)[iens],-1.0)), 1.0/moms[0]), "../data/hc_ee/"+Ens+"/PT3_G0_th2_sub_tw2");
-	PT3_G0_th3_sub_tw2= Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(PT3_B3P5_G0_th3_tw2.col(1)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G0_th5_tw2.col(1)[iens],-1.0)), 1.0/moms[0]), "../data/hc_ee/"+Ens+"/PT3_G0_th3_sub_tw2");
-	PT3_G0_th4_sub_tw2= Corr.corr_t(Multiply_Vvector_by_scalar(summ_master(PT3_B3P5_G0_th4_tw2.col(1)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G0_th5_tw2.col(1)[iens],-1.0)), 1.0/moms[0]), "../data/hc_ee/"+Ens+"/PT3_G0_th4_sub_tw2");
 	
 	PT3_G3_th1_sub_tw2=Corr.corr_t(summ_master(PT3_B3P5_G3_th1_tw2.col(0)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G3_th5_tw2.col(0)[iens],-1.0), PT3_B1P5_G1_th5_tw2.col(0)[iens]), "../data/hc_ee/"+Ens+"/PT3_G3_th1_sub_tw2");
 	PT3_G3_th2_sub_tw2=Corr.corr_t(summ_master(PT3_B3P5_G3_th2_tw2.col(0)[iens], Multiply_Vvector_by_scalar(PT3_B3P5_G3_th5_tw2.col(0)[iens],-1.0), PT3_B1P5_G1_th5_tw2.col(0)[iens]), "../data/hc_ee/"+Ens+"/PT3_G3_th2_sub_tw2");
@@ -615,12 +580,6 @@ void hc_ee() {
       distr_t_list F1_th3_tw1 = ZV_had*PT3_G1_th3_tw1/(ETA_MEM_th3_tw1*H_MEM_tw1*H_mass);
       distr_t_list F1_th4_tw1 = ZV_had*PT3_G1_th4_tw1/(ETA_MEM_th4_tw1*H_MEM_tw1*H_mass);
 
-
-      distr_t_list G0_MEM_th1_tw1= ZV_had*PT3_G0_th1_sub_tw1/(ETA_MEM_th1_tw1*H_MEM_tw1);
-      distr_t_list G0_MEM_th2_tw1= ZV_had*PT3_G0_th2_sub_tw1/(ETA_MEM_th2_tw1*H_MEM_tw1);
-      distr_t_list G0_MEM_th3_tw1= ZV_had*PT3_G0_th3_sub_tw1/(ETA_MEM_th3_tw1*H_MEM_tw1);
-      distr_t_list G0_MEM_th4_tw1= ZV_had*PT3_G0_th4_sub_tw1/(ETA_MEM_th4_tw1*H_MEM_tw1);
-
       distr_t_list G3_MEM_th1_tw1= ZV_had*PT3_G3_th1_sub_tw1/(ETA_MEM_th1_tw1*H_MEM_tw1);
       distr_t_list G3_MEM_th2_tw1= ZV_had*PT3_G3_th2_sub_tw1/(ETA_MEM_th2_tw1*H_MEM_tw1);
       distr_t_list G3_MEM_th3_tw1= ZV_had*PT3_G3_th3_sub_tw1/(ETA_MEM_th3_tw1*H_MEM_tw1);
@@ -634,7 +593,6 @@ void hc_ee() {
       distr_t_list F1_th3_tw2(UseJack);
       distr_t_list F1_th4_tw2(UseJack);
 
-      distr_t_list G0_MEM_th1_tw2(UseJack), G0_MEM_th2_tw2(UseJack), G0_MEM_th3_tw2(UseJack), G0_MEM_th4_tw2(UseJack);
       distr_t_list G3_MEM_th1_tw2(UseJack), G3_MEM_th2_tw2(UseJack), G3_MEM_th3_tw2(UseJack), G3_MEM_th4_tw2(UseJack);
                
       if(compute_2nd_tw) {
@@ -643,11 +601,6 @@ void hc_ee() {
 	F1_th2_tw2 = ZV_had*PT3_G1_th2_tw2/(ETA_MEM_th2_tw2*H_MEM_tw2*H_mass);
 	F1_th3_tw2 = ZV_had*PT3_G1_th3_tw2/(ETA_MEM_th3_tw2*H_MEM_tw2*H_mass);
 	F1_th4_tw2 = ZV_had*PT3_G1_th4_tw2/(ETA_MEM_th4_tw2*H_MEM_tw2*H_mass);
-	
-	G0_MEM_th1_tw2= ZV_had*PT3_G0_th1_sub_tw2/(ETA_MEM_th1_tw2*H_MEM_tw2);
-	G0_MEM_th2_tw2= ZV_had*PT3_G0_th2_sub_tw2/(ETA_MEM_th2_tw2*H_MEM_tw2);
-	G0_MEM_th3_tw2= ZV_had*PT3_G0_th3_sub_tw2/(ETA_MEM_th3_tw2*H_MEM_tw2);
-	G0_MEM_th4_tw2= ZV_had*PT3_G0_th4_sub_tw2/(ETA_MEM_th4_tw2*H_MEM_tw2);
 	
 	G3_MEM_th1_tw2= ZV_had*PT3_G3_th1_sub_tw2/(ETA_MEM_th1_tw2*H_MEM_tw2);
 	G3_MEM_th2_tw2= ZV_had*PT3_G3_th2_sub_tw2/(ETA_MEM_th2_tw2*H_MEM_tw2);
@@ -665,9 +618,7 @@ void hc_ee() {
       distr_t_list F1_th0_tw1_RED(UseJack), F1_th1_tw1_RED(UseJack), F1_th2_tw1_RED(UseJack), F1_th3_tw1_RED(UseJack), F1_th4_tw1_RED(UseJack);
       distr_t_list F1_th0_tw2_RED(UseJack), F1_th1_tw2_RED(UseJack), F1_th2_tw2_RED(UseJack), F1_th3_tw2_RED(UseJack), F1_th4_tw2_RED(UseJack);
 
-      distr_t_list G0_MEM_th1_tw1_RED(UseJack), G0_MEM_th2_tw1_RED(UseJack), G0_MEM_th3_tw1_RED(UseJack), G0_MEM_th4_tw1_RED(UseJack);
-      distr_t_list G0_MEM_th1_tw2_RED(UseJack), G0_MEM_th2_tw2_RED(UseJack), G0_MEM_th3_tw2_RED(UseJack), G0_MEM_th4_tw2_RED(UseJack);
-      
+          
       distr_t_list G3_MEM_th1_tw1_RED(UseJack), G3_MEM_th2_tw1_RED(UseJack), G3_MEM_th3_tw1_RED(UseJack), G3_MEM_th4_tw1_RED(UseJack);
       distr_t_list G3_MEM_th1_tw2_RED(UseJack), G3_MEM_th2_tw2_RED(UseJack), G3_MEM_th3_tw2_RED(UseJack), G3_MEM_th4_tw2_RED(UseJack);
 
@@ -708,13 +659,11 @@ void hc_ee() {
 	
       }
 
-      distr_t_list F2_th0_tw1_RED(UseJack), F2_th1_tw1_RED(UseJack), F2_th2_tw1_RED(UseJack), F2_th3_tw1_RED(UseJack), F2_th4_tw1_RED(UseJack);
-      distr_t_list F2_th0_tw2_RED(UseJack), F2_th1_tw2_RED(UseJack), F2_th2_tw2_RED(UseJack), F2_th3_tw2_RED(UseJack), F2_th4_tw2_RED(UseJack);
-      
+          
       distr_t_list F23_th0_tw1_RED(UseJack), F23_th1_tw1_RED(UseJack), F23_th2_tw1_RED(UseJack), F23_th3_tw1_RED(UseJack), F23_th4_tw1_RED(UseJack);
       distr_t_list F23_th0_tw2_RED(UseJack), F23_th1_tw2_RED(UseJack), F23_th2_tw2_RED(UseJack), F23_th3_tw2_RED(UseJack), F23_th4_tw2_RED(UseJack);
      
-      
+      distr_t fact= a_distr*k2/H_mass;
       
       for(int t=tw1;t<Corr.Nt;t++)  {
 	F1_th0_tw1_RED.distr_list.push_back( F1_th0_tw1[t]);
@@ -723,22 +672,14 @@ void hc_ee() {
 	F1_th3_tw1_RED.distr_list.push_back( F1_th3_tw1[t]);
 	F1_th4_tw1_RED.distr_list.push_back( F1_th4_tw1[t]);
 
-	G0_MEM_th1_tw1_RED.distr_list.push_back( G0_MEM_th1_tw1[t]);
-	G0_MEM_th2_tw1_RED.distr_list.push_back( G0_MEM_th2_tw1[t]);
-	G0_MEM_th3_tw1_RED.distr_list.push_back( G0_MEM_th3_tw1[t]);
-	G0_MEM_th4_tw1_RED.distr_list.push_back( G0_MEM_th4_tw1[t]);
 
-	F2_th0_tw1_RED.distr_list.push_back( F1_th0_tw1[t]*H_mass/(a_distr*k2));
-	F2_th1_tw1_RED.distr_list.push_back( H_mass*(G0_MEM_th1_tw1[t] - Af[0]*F1_th1_tw1[t])/Bf[0]);
-	F2_th2_tw1_RED.distr_list.push_back( H_mass*(G0_MEM_th2_tw1[t] - Af[1]*F1_th2_tw1[t])/Bf[1]);
-	F2_th3_tw1_RED.distr_list.push_back( H_mass*(G0_MEM_th3_tw1[t] - Af[2]*F1_th3_tw1[t])/Bf[2]);
-	F2_th4_tw1_RED.distr_list.push_back( H_mass*(G0_MEM_th4_tw1[t] - Af[3]*F1_th4_tw1[t])/Bf[3]);
 
-	F23_th0_tw1_RED.distr_list.push_back( F1_th0_tw1[t]*H_mass/(a_distr*k2) );
-	F23_th1_tw1_RED.distr_list.push_back( H_mass*(G3_MEM_th1_tw1[t] - Cf[0]*F1_th1_tw1[t])/Df[0]);
-	F23_th2_tw1_RED.distr_list.push_back( H_mass*(G3_MEM_th2_tw1[t] - Cf[1]*F1_th2_tw1[t])/Df[1]);
-	F23_th3_tw1_RED.distr_list.push_back( H_mass*(G3_MEM_th3_tw1[t] - Cf[2]*F1_th3_tw1[t])/Df[2]);
-	F23_th4_tw1_RED.distr_list.push_back( H_mass*(G3_MEM_th4_tw1[t] - Cf[3]*F1_th4_tw1[t])/Df[3]);
+
+	F23_th0_tw1_RED.distr_list.push_back( F1_th0_tw1[t] );
+	F23_th1_tw1_RED.distr_list.push_back( fact*H_mass*(G3_MEM_th1_tw1[t] - Cf[0]*F1_th1_tw1[t])/Df[0]);
+	F23_th2_tw1_RED.distr_list.push_back( fact*H_mass*(G3_MEM_th2_tw1[t] - Cf[1]*F1_th2_tw1[t])/Df[1]);
+	F23_th3_tw1_RED.distr_list.push_back( fact*H_mass*(G3_MEM_th3_tw1[t] - Cf[2]*F1_th3_tw1[t])/Df[2]);
+	F23_th4_tw1_RED.distr_list.push_back( fact*H_mass*(G3_MEM_th4_tw1[t] - Cf[3]*F1_th4_tw1[t])/Df[3]);
 	
 
       }
@@ -750,32 +691,18 @@ void hc_ee() {
 	  F1_th3_tw2_RED.distr_list.push_back( F1_th3_tw2[t]);
 	  F1_th4_tw2_RED.distr_list.push_back( F1_th4_tw2[t]);
 
-	  
-	  G0_MEM_th1_tw2_RED.distr_list.push_back( G0_MEM_th1_tw2[t]);
-	  G0_MEM_th2_tw2_RED.distr_list.push_back( G0_MEM_th2_tw2[t]);
-	  G0_MEM_th3_tw2_RED.distr_list.push_back( G0_MEM_th3_tw2[t]);
-	  G0_MEM_th4_tw2_RED.distr_list.push_back( G0_MEM_th4_tw2[t]);
 
-	  F2_th0_tw2_RED.distr_list.push_back( F1_th0_tw2[t]*H_mass/(a_distr*k2));
-	  F2_th1_tw2_RED.distr_list.push_back( H_mass*(G0_MEM_th1_tw2[t] - Af[0]*F1_th1_tw2[t])/Bf[0]);
-	  F2_th2_tw2_RED.distr_list.push_back( H_mass*(G0_MEM_th2_tw2[t] - Af[1]*F1_th2_tw2[t])/Bf[1]);
-	  F2_th3_tw2_RED.distr_list.push_back( H_mass*(G0_MEM_th3_tw2[t] - Af[2]*F1_th3_tw2[t])/Bf[2]);
-	  F2_th4_tw2_RED.distr_list.push_back( H_mass*(G0_MEM_th4_tw2[t] - Af[3]*F1_th4_tw2[t])/Bf[3]);
-
-	  F23_th0_tw2_RED.distr_list.push_back( F1_th0_tw2[t]*H_mass/(a_distr*k2) );
-	  F23_th1_tw2_RED.distr_list.push_back( H_mass*(G3_MEM_th1_tw2[t] - Cf[0]*F1_th1_tw2[t])/Df[0]);
-	  F23_th2_tw2_RED.distr_list.push_back( H_mass*(G3_MEM_th2_tw2[t] - Cf[1]*F1_th2_tw2[t])/Df[1]);
-	  F23_th3_tw2_RED.distr_list.push_back( H_mass*(G3_MEM_th3_tw2[t] - Cf[2]*F1_th3_tw2[t])/Df[2]);
-	  F23_th4_tw2_RED.distr_list.push_back( H_mass*(G3_MEM_th4_tw2[t] - Cf[3]*F1_th4_tw2[t])/Df[3]);
+	  F23_th0_tw2_RED.distr_list.push_back( F1_th0_tw2[t] );
+	  F23_th1_tw2_RED.distr_list.push_back( fact*H_mass*(G3_MEM_th1_tw2[t] - Cf[0]*F1_th1_tw2[t])/Df[0]);
+	  F23_th2_tw2_RED.distr_list.push_back( fact*H_mass*(G3_MEM_th2_tw2[t] - Cf[1]*F1_th2_tw2[t])/Df[1]);
+	  F23_th3_tw2_RED.distr_list.push_back( fact*H_mass*(G3_MEM_th3_tw2[t] - Cf[2]*F1_th3_tw2[t])/Df[2]);
+	  F23_th4_tw2_RED.distr_list.push_back( fact*H_mass*(G3_MEM_th4_tw2[t] - Cf[3]*F1_th4_tw2[t])/Df[3]);
 	  
 	}
       }
       
       Print_To_File({}, {F1_th0_tw1_RED.ave(), F1_th0_tw1_RED.err(),F1_th1_tw1_RED.ave(), F1_th1_tw1_RED.err(),F1_th2_tw1_RED.ave(), F1_th2_tw1_RED.err(),F1_th3_tw1_RED.ave(), F1_th3_tw1_RED.err(), F1_th4_tw1_RED.ave(), F1_th4_tw1_RED.err()  }, "../data/hc_ee/"+Ens+"/F1_tw1", "", "");
 
-      Print_To_File({}, {G0_MEM_th1_tw1_RED.ave(), G0_MEM_th1_tw1_RED.err(),G0_MEM_th2_tw1_RED.ave(), G0_MEM_th2_tw1_RED.err(),G0_MEM_th3_tw1_RED.ave(), G0_MEM_th3_tw1_RED.err(), G0_MEM_th4_tw1_RED.ave(), G0_MEM_th4_tw1_RED.err()  }, "../data/hc_ee/"+Ens+"/G0_MEM_tw1", "", "");
-
-      Print_To_File({}, {F2_th0_tw1_RED.ave(), F2_th0_tw1_RED.err(), F2_th1_tw1_RED.ave(), F2_th1_tw1_RED.err(),F2_th2_tw1_RED.ave(), F2_th2_tw1_RED.err(),F2_th3_tw1_RED.ave(), F2_th3_tw1_RED.err(), F2_th4_tw1_RED.ave(), F2_th4_tw1_RED.err()  }, "../data/hc_ee/"+Ens+"/F2_tw1", "", "");
 
       Print_To_File({}, {F23_th0_tw1_RED.ave(), F23_th0_tw1_RED.err(), F23_th1_tw1_RED.ave(), F23_th1_tw1_RED.err(),F23_th2_tw1_RED.ave(), F23_th2_tw1_RED.err(),F23_th3_tw1_RED.ave(), F23_th3_tw1_RED.err(), F23_th4_tw1_RED.ave(), F23_th4_tw1_RED.err()  }, "../data/hc_ee/"+Ens+"/F23_tw1", "", "");
 
@@ -784,10 +711,7 @@ void hc_ee() {
 
         Print_To_File({}, { F1_th0_tw2_RED.ave(), F1_th0_tw2_RED.err(),F1_th1_tw2_RED.ave(), F1_th1_tw2_RED.err(),F1_th2_tw2_RED.ave(), F1_th2_tw2_RED.err(),F1_th3_tw2_RED.ave(), F1_th3_tw2_RED.err(), F1_th4_tw2_RED.ave(), F1_th4_tw2_RED.err()}, "../data/hc_ee/"+Ens+"/F1_tw2", "", "");
 
-	Print_To_File({}, {G0_MEM_th1_tw2_RED.ave(), G0_MEM_th1_tw2_RED.err(),G0_MEM_th2_tw2_RED.ave(), G0_MEM_th2_tw2_RED.err(),G0_MEM_th3_tw2_RED.ave(), G0_MEM_th3_tw2_RED.err(), G0_MEM_th4_tw2_RED.ave(), G0_MEM_th4_tw2_RED.err()  }, "../data/hc_ee/"+Ens+"/G0_MEM_tw2", "", "");
 
-	Print_To_File({}, {F2_th0_tw2_RED.ave(), F2_th0_tw2_RED.err(), F2_th1_tw2_RED.ave(), F2_th1_tw2_RED.err(),F2_th2_tw2_RED.ave(), F2_th2_tw2_RED.err(),F2_th3_tw2_RED.ave(), F2_th3_tw2_RED.err(), F2_th4_tw2_RED.ave(), F2_th4_tw2_RED.err()  }, "../data/hc_ee/"+Ens+"/F2_tw2", "", "");
-	
 	Print_To_File({}, {F23_th0_tw2_RED.ave(), F23_th0_tw2_RED.err(), F23_th1_tw2_RED.ave(), F23_th1_tw2_RED.err(),F23_th2_tw2_RED.ave(), F23_th2_tw2_RED.err(),F23_th3_tw2_RED.ave(), F23_th3_tw2_RED.err(), F23_th4_tw2_RED.ave(), F23_th4_tw2_RED.err()  }, "../data/hc_ee/"+Ens+"/F23_tw2", "", "");
 
       }
@@ -795,7 +719,7 @@ void hc_ee() {
       //################################################################################################
 
 
-      Corr.Tmin= (int)(1.0/(a_distr.ave()/fm_to_inv_Gev));
+      Corr.Tmin= (int)(1.1/(a_distr.ave()/fm_to_inv_Gev));
       Corr.Tmax= (int)(1.4/(a_distr.ave()/fm_to_inv_Gev));
 
       distr_t F1_th0=Corr.Fit_distr(F1_th0_tw1_RED);
@@ -804,12 +728,52 @@ void hc_ee() {
       distr_t F1_th3=Corr.Fit_distr(F1_th3_tw1_RED);
       distr_t F1_th4=Corr.Fit_distr(F1_th4_tw1_RED);
 
+
+      distr_t F2_th0=Corr.Fit_distr(F23_th0_tw1_RED);
+      distr_t F2_th1=Corr.Fit_distr(F23_th1_tw1_RED);
+      distr_t F2_th2=Corr.Fit_distr(F23_th2_tw1_RED);
+      distr_t F2_th3=Corr.Fit_distr(F23_th3_tw1_RED);
+      distr_t F2_th4=Corr.Fit_distr(F23_th4_tw1_RED);
+
+      //store in a vector and print
+
+      distr_t_list F1_list(UseJack), F2_list(UseJack);
+      F1_list.distr_list.push_back( F1_th0);
+      F1_list.distr_list.push_back( F1_th1);
+      F1_list.distr_list.push_back( F1_th2);
+      F1_list.distr_list.push_back( F1_th3);
+      F1_list.distr_list.push_back( F1_th4);
+      F2_list.distr_list.push_back( F2_th0);
+      F2_list.distr_list.push_back( F2_th1);
+      F2_list.distr_list.push_back( F2_th2);
+      F2_list.distr_list.push_back( F2_th3);
+      F2_list.distr_list.push_back( F2_th4);
+
+     
+
       cout<<"Ens: "<<Ens<<endl;
       cout<<"F1(th0): "<<F1_th0.ave()<<" +- "<<F1_th0.err()<<endl;
       cout<<"F1(th1): "<<F1_th1.ave()<<" +- "<<F1_th1.err()<<endl;
       cout<<"F1(th2): "<<F1_th2.ave()<<" +- "<<F1_th2.err()<<endl;
       cout<<"F1(th3): "<<F1_th3.ave()<<" +- "<<F1_th3.err()<<endl;
       cout<<"F1(th4): "<<F1_th4.ave()<<" +- "<<F1_th4.err()<<endl;
+
+
+      Vfloat q2_sqrt_list;
+      q2_sqrt_list.push_back( 0.0);
+
+      
+
+      for(int it=0;it<(signed)moms.size();it++) {
+	double mom= moms[it]/a_distr.ave();
+	double mom_half= mom*1.25;
+	double E_etac= sqrt( m_etac*m_etac + mom*mom);
+	double E_etac_half= sqrt( m_etac*m_etac + mom_half*mom_half);
+	q2_sqrt_list.push_back(sqrt( m_hc*m_hc + m_etac*m_etac - 2*m_hc*E_etac));
+	cout<<"it: "<<it<<" sqrt(q2):"<<q2_sqrt_list[it+1]<<" half mom: "<< sqrt(m_hc*m_hc + m_etac*m_etac - 2*m_hc*E_etac_half)<<endl;
+      }
+
+      Print_To_File({}, {q2_sqrt_list, F1_list.ave(), F1_list.err(), F2_list.ave(), F2_list.err() },  "../data/hc_ee/"+Ens+"/F_list_q2", "", "");
 	       
 
   
