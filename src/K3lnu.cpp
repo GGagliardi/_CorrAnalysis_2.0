@@ -1005,7 +1005,7 @@ void Do_HLT_virtual() {
 
   int Nj=50;
   double fm_to_inv_Gev=1.0/0.197327;
-  bool Skip_HLT=true;
+  bool Skip_HLT=false;
 
 
   //generate lattice spacings and RCs
@@ -1565,12 +1565,13 @@ void Do_HLT_virtual() {
 	    int gamma=3;
 	    
 	    double r= pow(E_p0/E_p1,4)*pow((1-pow(aE0/E_p0,2)),gamma)/pow((1-pow(aE0/E_p1,2)),gamma);
+	    double r2 =  pow(E_p0/E_p1,2)*pow((1-pow(aE0/E_p0,2)),gamma)/pow((1-pow(aE0/E_p1,2)),gamma);
 
 	  
 	    cout<<"r: "<<r<<endl;
 	    
 	    if(E_p0 < aE0) crash("E_p0 < aE0");
-	    if(E_p1 < E_p0)  { aE0 = E_p1; r=-1.0;}
+	    if(E_p1 < E_p0)  { aE0 = E_p1; r=-1.0; r2=-1.0;}
 	    
 	    
 	    double syst, l;
@@ -1656,36 +1657,38 @@ void Do_HLT_virtual() {
 
 	    //redo full HLT changing mult by one order of magnitude
 
-	    mult_IM *= 10.0;
-	    mult_RE *= 10.0;
+	    //mult_IM *= 10.0;
+	    //mult_RE *= 10.0;
+
+	    
 
 	    if(Ens.substr(0,1)=="B" ) tmax=38;
 	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
 
 	    
 	    //#######  H1
-	    distr_t F_RE_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C , syst, mult_RE, l, "TANT", "H1_odg_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0;
+	    distr_t F_RE_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r2,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C , syst, mult_RE, l, "TANT", "H1_odg_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0;
 	    F_RE_odg = F_RE_odg.ave() + (F_RE_odg-F_RE_odg.ave())*sqrt( 1.0 + pow(syst/F_RE_odg.err(),2));
-	    distr_t F_IM_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C , syst, mult_IM, l, "TANT", "H1_odg_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
+	    distr_t F_IM_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r2,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C , syst, mult_IM, l, "TANT", "H1_odg_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
 	    F_IM_odg = F_IM_odg.ave() + (F_IM_odg-F_IM_odg.ave())*sqrt( 1.0 + pow(syst/F_IM_odg.err(),2));
 
 	    if(Ens.substr(0,1)=="B" ) tmax=30;
 	    else tmax = (int)(  30.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
 	    
 	    //#########  H2
-	    distr_t F_2_RE_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C_2 , syst, mult_RE, l, "TANT", "H2_odg_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_2, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0_2;
+	    distr_t F_2_RE_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r2,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C_2 , syst, mult_RE, l, "TANT", "H2_odg_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_2, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0_2;
 	    F_2_RE_odg = F_2_RE_odg.ave() + (F_2_RE_odg-F_2_RE_odg.ave())*sqrt( 1.0 + pow(syst/F_2_RE_odg.err(),2));
-	    distr_t F_2_IM_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C_2 , syst, mult_IM, l, "TANT", "H2_odg_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_2, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha,1);
+	    distr_t F_2_IM_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r2,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C_2 , syst, mult_IM, l, "TANT", "H2_odg_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_2, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha,1);
 	    F_2_IM_odg = F_2_IM_odg.ave() + (F_2_IM_odg-F_2_IM_odg.ave())*sqrt( 1.0 + pow(syst/F_2_IM_odg.err(),2));
 	    //#########  FA
-	    distr_t F_A_RE_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C_A , syst, mult_RE, l, "TANT", "FA_odg_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_A, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0_A;
+	    distr_t F_A_RE_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r2,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C_A , syst, mult_RE, l, "TANT", "FA_odg_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_A, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0_A;
 	    F_A_RE_odg = F_A_RE_odg.ave() + (F_A_RE_odg-F_A_RE_odg.ave())*sqrt( 1.0 + pow(syst/F_A_RE_odg.err(),2));
-	    distr_t F_A_IM_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C_A , syst, mult_IM, l, "TANT", "FA_odg_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_A, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
+	    distr_t F_A_IM_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r2,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C_A , syst, mult_IM, l, "TANT", "FA_odg_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_A, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
 	    F_A_IM_odg = F_A_IM_odg.ave() + (F_A_IM_odg-F_A_IM_odg.ave())*sqrt( 1.0 + pow(syst/F_A_IM_odg.err(),2));
 	    //#########  FV
-	    distr_t F_V_RE_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C_V , syst, mult_RE, l, "TANT", "FV_odg_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_V, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0_V;
+	    distr_t F_V_RE_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r2,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C_V , syst, mult_RE, l, "TANT", "FV_odg_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_V, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0_V;
 	    F_V_RE_odg = F_V_RE_odg.ave() + (F_V_RE_odg-F_V_RE_odg.ave())*sqrt( 1.0 + pow(syst/F_V_RE_odg.err(),2));
-	    distr_t F_V_IM_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C_V , syst, mult_IM, l, "TANT", "FV_odg_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_V, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
+	    distr_t F_V_IM_odg =  Get_Laplace_transfo_piecewise(  erg,  sigma, aE0,  E_p0, E_p1, r2,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C_V , syst, mult_IM, l, "TANT", "FV_odg_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_V, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
 	    F_V_IM_odg = F_V_IM_odg.ave() + (F_V_IM_odg-F_V_IM_odg.ave())*sqrt( 1.0 + pow(syst/F_V_IM_odg.err(),2));
 	    
 	    
