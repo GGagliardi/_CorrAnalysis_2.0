@@ -1037,7 +1037,7 @@ void I0_gm2() {
     Vfloat En_B96;
     LL.Find_pipi_energy_lev(vol2, 0.770, 5.5, Mpi , 0.0, En_B96);
 
-    double Mpi_TM= 0.125;
+    double Mpi_TM= 0.1402;
     Vfloat En_B64_TM;
     LL.Find_pipi_energy_lev(vol1, 0.770, 5.5, Mpi_TM, 0.0, En_B64_TM);
     Vfloat En_B96_TM;
@@ -1061,6 +1061,19 @@ void I0_gm2() {
     distr_t_list dC_data_TM_conn(UseJack);
     distr_t_list dC_data_disc(UseJack);
     distr_t_list dC_data_art(UseJack);
+
+    Vfloat C_data_conn_B64;
+    Vfloat C_data_TM_conn_B64;
+
+    Vfloat C_data_conn_B96;
+    Vfloat C_data_TM_conn_B96;
+
+    distr_t_list dat_B64(UseJack);
+    distr_t_list dat_B64_TM(UseJack);
+
+    distr_t_list dat_B96(UseJack);
+    distr_t_list dat_B96_TM(UseJack);
+    
     for(int t=0;t<50;t++) {
 
       dC.push_back( (t==0)?0.0:(C_B96(t*0.0795*fm_to_inv_Gev) - C_B64(t*0.0795*fm_to_inv_Gev)));
@@ -1069,10 +1082,28 @@ void I0_gm2() {
       dC_data_TM_conn.distr_list.push_back( C_conn_TM_B96.distr_list[t] - C_conn_TM_B64.distr_list[t]) ;
       dC_data_disc.distr_list.push_back( C_disc_B96.distr_list[t] - C_disc_B64.distr_list[t]) ;
       dC_data_art.distr_list.push_back( C_art_disc_B96.distr_list[t] - C_art_disc_B64.distr_list[t]) ;
+
+      C_data_conn_B64.push_back( (t==0)?0.0:C_B64(t*0.0795*fm_to_inv_Gev) );
+      C_data_TM_conn_B64.push_back( (t==0)?0.0:C_B64_TM(t*0.0795*fm_to_inv_Gev) );
+
+      C_data_conn_B96.push_back( (t==0)?0.0:C_B96(t*0.0795*fm_to_inv_Gev) );
+      C_data_TM_conn_B96.push_back( (t==0)?0.0:C_B96_TM(t*0.0795*fm_to_inv_Gev) );
+
+
+      dat_B64.distr_list.push_back( C_conn_B64.distr_list[t]);
+      dat_B64_TM.distr_list.push_back( C_conn_TM_B64.distr_list[t]);
+
+      dat_B96.distr_list.push_back( C_conn_B96.distr_list[t]);
+      dat_B96_TM.distr_list.push_back( C_conn_TM_B96.distr_list[t]);
+      
     }
 
     Print_To_File({},{dC, dC_TM, dC_data_TM_conn.ave(), dC_data_TM_conn.err(),  dC_data_conn.ave(), dC_data_conn.err(), dC_data_disc.ave(), dC_data_disc.err() }, "../data/axial_WI_disco/FSE.GS", "", "");
     Print_To_File({}, { dC_data_art.ave(), dC_data_art.err() },  "../data/axial_WI_disco/C_art_OS", "", "");
+
+    Print_To_File( {}, { C_data_conn_B64, dat_B64.ave(), dat_B64.err() , C_data_TM_conn_B64, dat_B64_TM.ave(), dat_B64_TM.err() }, "../data/axial_WI_disco/C_GS_B64_comp", "","");
+    Print_To_File( {}, { C_data_conn_B96, dat_B96.ave(), dat_B96.err(), C_data_TM_conn_B96, dat_B96_TM.ave(), dat_B96_TM.err() }, "../data/axial_WI_disco/C_GS_B96_comp", "","");
+    
 
     
   }
