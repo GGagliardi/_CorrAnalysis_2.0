@@ -1385,13 +1385,16 @@ void Do_HLT_virtual() {
 
   for(int iens=0;iens<Nens;iens++) {
 
+
+    double Mpi=0.0;
+
     string Ens= Ens_Tag[iens];
 
     distr_t a_distr(UseJack);
     
-    if(Ens.substr(0,1) == "B") a_distr = a_B;
-    else if(Ens.substr(0,1) == "C") a_distr= a_C;
-    else if(Ens.substr(0,1) == "D") a_distr= a_D;
+    if(Ens.substr(0,1) == "B") { a_distr = a_B; Mpi=0.1402;}
+    else if(Ens.substr(0,1) == "C") { a_distr= a_C; Mpi = 0.1367; }
+    else if(Ens.substr(0,1) == "D") { a_distr= a_D; Mpi=0.141; } 
     else crash("Ensemble: "+Ens+" not found");
 
     int L= L_list[iens];
@@ -1540,12 +1543,12 @@ void Do_HLT_virtual() {
 	    
 	    double Emin=0;
 	    double k= 0.5*MK_FLAG*stod(xgamma_list[xg]);
-	    //Emin= 2*sqrt( pow(0.135,2) + pow(2*M_PI/(L*a_distr.ave()),2));
+	    //Emin= 2*sqrt( pow(Mpi,2) + pow(2*M_PI/(L*a_distr.ave()),2));
 	    //Emin= 0.93*sqrt( pow(Emin,2) + pow(0.5*MK_FLAG*stod(xgamma_list[xg]),2));
-	    double Ea = sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()) -k,2)) +  sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()),2));
-	    double Eb =  sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()) -k/2,2)) +  sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()) +k/2,2));
+	    double Ea = sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()) -k,2)) +  sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()),2));
+	    double Eb =  sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()) -k/2,2)) +  sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()) +k/2,2));
 	    Emin = 0.95*min(Ea,Eb);
-	    Emin = 2*sqrt( pow(0.135,2) + pow(k/2,2));
+	    Emin = 2*sqrt( pow(Mpi,2) + pow(k/2,2));
 
 	    
 	    
@@ -1557,7 +1560,7 @@ void Do_HLT_virtual() {
 	    double sigma= eps_list[ieps]*a_distr.ave();
 	    double sigma_GeV= sigma/a_distr.ave();
 
-	    double E_p0 = ( 0.135 + sqrt( pow(0.135,2) + pow(k,2)))*a_distr.ave();
+	    double E_p0 = ( Mpi + sqrt( pow(Mpi,2) + pow(k,2)))*a_distr.ave();
 
 	    E_p0 += (E_p0-aE0);
 	    double E_p1 = 0.95*min(Ea,Eb)*a_distr.ave();
@@ -1657,12 +1660,12 @@ void Do_HLT_virtual() {
 	    
 	    double Emin=0;
 	    double k= 0.5*MK_FLAG*stod(xgamma_list[xg]);
-	    //Emin= 2*sqrt( pow(0.135,2) + pow(2*M_PI/(L*a_distr.ave()),2));
+	    //Emin= 2*sqrt( pow(Mpi,2) + pow(2*M_PI/(L*a_distr.ave()),2));
 	    //Emin= 0.93*sqrt( pow(Emin,2) + pow(0.5*MK_FLAG*stod(xgamma_list[xg]),2));
-	    double Ea = sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()) -k,2)) +  sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()),2));
-	    double Eb =  sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()) -k/2,2)) +  sqrt( pow(0.135,2) + pow( 2*M_PI/(L*a_distr.ave()) +k/2,2));
+	    double Ea = sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()) -k,2)) +  sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()),2));
+	    double Eb =  sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()) -k/2,2)) +  sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()) +k/2,2));
 	    Emin = 0.95*min(Ea,Eb);
-	    Emin = 2*sqrt( pow(0.135,2) + pow(k/2,2));
+	    Emin = 2*sqrt( pow(Mpi,2) + pow(k/2,2));
 
 	    
 	    cout<<"##### XGAMMA: "<<xgamma_list[xg]<<endl;
@@ -1672,8 +1675,9 @@ void Do_HLT_virtual() {
 	    double erg_GeV = erg/a_distr.ave();
 	    double sigma= eps_list[ieps]*a_distr.ave();
 	    double sigma_GeV= sigma/a_distr.ave();
+	    double E_p0 = ( Mpi + sqrt( pow(Mpi,2) + pow(k,2)))*a_distr.ave();
+	    E_p0 += (E_p0-aE0);
 	    
-	    double E_p0 = 1.1*( 0.135 + sqrt( pow(0.135,2) + pow(k,2)))*a_distr.ave();
 	    double E_p1 = 0.95*min(Ea,Eb)*a_distr.ave();
 
 	    double aE0_odg = E_p1;
