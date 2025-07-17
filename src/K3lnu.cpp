@@ -1594,7 +1594,7 @@ void Do_HLT_virtual() {
 
 	    int gamma=3;
 	    
-	    double r= pow(E_p0/E_p1,4)*pow((1-pow(aE0/E_p0,2)),gamma)/pow((1-pow(aE0/E_p1,2)),gamma);
+	    double r= pow(E_p0/E_p1,2)*pow((1-pow(aE0/E_p0,2)),gamma)/pow((1-pow(aE0/E_p1,2)),gamma);
 	    	  
 	    cout<<"r: "<<r<<endl;
 	    
@@ -1739,6 +1739,7 @@ void Do_HLT_virtual() {
 	    distr_t C_0_V = 0.0*Get_id_jack_distr(Nj);
 	    distr_t C_0_A = 0.0*Get_id_jack_distr(Nj);
 	    
+
 	    
 	    for(int t=1;t<TT;t++) {
 	      C_0 = C_0 + C.distr_list[t];
