@@ -1143,6 +1143,9 @@ void Do_HLT_virtual() {
   vector<vector<vector<distr_t_list>>> H1_RE_odg(Ens_Tag.size());
   vector<vector<vector<distr_t_list>>> H1_IM_odg(Ens_Tag.size());
 
+  vector<vector<vector<distr_t_list>>> H1_RE_naive(Ens_Tag.size());
+  vector<vector<vector<distr_t_list>>> H1_IM_naive(Ens_Tag.size());
+
  
 
   
@@ -1205,6 +1208,9 @@ void Do_HLT_virtual() {
   vector<vector<vector<distr_t_list>>> FA_RE_odg(Ens_Tag.size());
   vector<vector<vector<distr_t_list>>> FA_IM_odg(Ens_Tag.size());
 
+  vector<vector<vector<distr_t_list>>> FA_RE_naive(Ens_Tag.size());
+  vector<vector<vector<distr_t_list>>> FA_IM_naive(Ens_Tag.size());
+
   
   iens=-1;
   for(auto &c: C_FA) {
@@ -1265,6 +1271,8 @@ void Do_HLT_virtual() {
   vector<vector<vector<distr_t_list>>> H2_RE_odg(Ens_Tag.size());
   vector<vector<vector<distr_t_list>>> H2_IM_odg(Ens_Tag.size());
 
+  vector<vector<vector<distr_t_list>>> H2_RE_naive(Ens_Tag.size());
+  vector<vector<vector<distr_t_list>>> H2_IM_naive(Ens_Tag.size());
   
   iens=-1;
   for(auto &c: C_H2) {
@@ -1325,6 +1333,9 @@ void Do_HLT_virtual() {
 
   vector<vector<vector<distr_t_list>>> FV_RE_odg(Ens_Tag.size());
   vector<vector<vector<distr_t_list>>> FV_IM_odg(Ens_Tag.size());
+
+  vector<vector<vector<distr_t_list>>> FV_RE_naive(Ens_Tag.size());
+  vector<vector<vector<distr_t_list>>> FV_IM_naive(Ens_Tag.size());
 
   
   iens=-1;
@@ -1403,22 +1414,30 @@ void Do_HLT_virtual() {
     H1_IM[iens].resize(xgamma_list.size());
     H1_RE_odg[iens].resize(xgamma_list.size());
     H1_IM_odg[iens].resize(xgamma_list.size());
+    H1_RE_naive[iens].resize(xgamma_list.size());
+    H1_IM_naive[iens].resize(xgamma_list.size());
 
     H2_RE[iens].resize(xgamma_list.size());
     H2_IM[iens].resize(xgamma_list.size());
     H2_RE_odg[iens].resize(xgamma_list.size());
     H2_IM_odg[iens].resize(xgamma_list.size());
+    H2_RE_naive[iens].resize(xgamma_list.size());
+    H2_IM_naive[iens].resize(xgamma_list.size());
 
     FA_RE[iens].resize(xgamma_list.size());
     FA_IM[iens].resize(xgamma_list.size());
     FA_RE_odg[iens].resize(xgamma_list.size());
     FA_IM_odg[iens].resize(xgamma_list.size());
+    FA_RE_naive[iens].resize(xgamma_list.size());
+    FA_IM_naive[iens].resize(xgamma_list.size());
 
 
     FV_RE[iens].resize(xgamma_list.size());
     FV_IM[iens].resize(xgamma_list.size());
     FV_RE_odg[iens].resize(xgamma_list.size());
     FV_IM_odg[iens].resize(xgamma_list.size());
+    FV_RE_naive[iens].resize(xgamma_list.size());
+    FV_IM_naive[iens].resize(xgamma_list.size());
 
     
     
@@ -1442,21 +1461,29 @@ void Do_HLT_virtual() {
 	H1_IM[iens][xg].emplace_back( UseJack, eps_list.size());
 	H1_RE_odg[iens][xg].emplace_back( UseJack, eps_list.size());
 	H1_IM_odg[iens][xg].emplace_back( UseJack, eps_list.size());
+	H1_RE_naive[iens][xg].emplace_back( UseJack, eps_list.size());
+	H1_IM_naive[iens][xg].emplace_back( UseJack, eps_list.size());
 	
 	H2_RE[iens][xg].emplace_back( UseJack, eps_list.size());
 	H2_IM[iens][xg].emplace_back( UseJack, eps_list.size());
 	H2_RE_odg[iens][xg].emplace_back( UseJack, eps_list.size());
 	H2_IM_odg[iens][xg].emplace_back( UseJack, eps_list.size());
+	H2_RE_naive[iens][xg].emplace_back( UseJack, eps_list.size());
+	H2_IM_naive[iens][xg].emplace_back( UseJack, eps_list.size());
 	
 	FA_RE[iens][xg].emplace_back( UseJack, eps_list.size());
 	FA_IM[iens][xg].emplace_back( UseJack, eps_list.size());
 	FA_RE_odg[iens][xg].emplace_back( UseJack, eps_list.size());
 	FA_IM_odg[iens][xg].emplace_back( UseJack, eps_list.size());
+	FA_RE_naive[iens][xg].emplace_back( UseJack, eps_list.size());
+	FA_IM_naive[iens][xg].emplace_back( UseJack, eps_list.size());
 	
 	FV_RE[iens][xg].emplace_back( UseJack, eps_list.size());
 	FV_IM[iens][xg].emplace_back( UseJack, eps_list.size());
 	FV_RE_odg[iens][xg].emplace_back( UseJack, eps_list.size());
 	FV_IM_odg[iens][xg].emplace_back( UseJack, eps_list.size());
+	FV_RE_naive[iens][xg].emplace_back( UseJack, eps_list.size());
+	FV_IM_naive[iens][xg].emplace_back( UseJack, eps_list.size());
 	
 	distr_t_list C =  C_H1[iens][xg][xk] ;
 	distr_t_list C_2 = C_H2[iens][xg][xk];
@@ -1562,7 +1589,7 @@ void Do_HLT_virtual() {
 
 	    double E_p0 = ( Mpi + sqrt( pow(Mpi,2) + pow(k,2)))*a_distr.ave();
 
-	    E_p0 += (E_p0-aE0);
+	    E_p0 += 2*(E_p0-aE0);
 	    double E_p1 = 0.95*min(Ea,Eb)*a_distr.ave();
 
 	    int gamma=3;
@@ -1676,7 +1703,7 @@ void Do_HLT_virtual() {
 	    double sigma= eps_list[ieps]*a_distr.ave();
 	    double sigma_GeV= sigma/a_distr.ave();
 	    double E_p0 = ( Mpi + sqrt( pow(Mpi,2) + pow(k,2)))*a_distr.ave();
-	    E_p0 += (E_p0-aE0);
+	    E_p0 += 2*(E_p0-aE0);
 	    
 	    double E_p1 = 0.95*min(Ea,Eb)*a_distr.ave();
 
@@ -1768,6 +1795,112 @@ void Do_HLT_virtual() {
 	    
 	  }
 #pragma omp barrier
+
+
+
+#pragma omp parallel for
+	  for(int ieps=0; ieps < (signed)eps_list.size(); ieps++) {
+	    
+	    double Emin=0;
+	    double k= 0.5*MK_FLAG*stod(xgamma_list[xg]);
+	    //Emin= 2*sqrt( pow(Mpi,2) + pow(2*M_PI/(L*a_distr.ave()),2));
+	    //Emin= 0.93*sqrt( pow(Emin,2) + pow(0.5*MK_FLAG*stod(xgamma_list[xg]),2));
+	    double Ea = sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()) -k,2)) +  sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()),2));
+	    double Eb =  sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()) -k/2,2)) +  sqrt( pow(Mpi,2) + pow( 2*M_PI/(L*a_distr.ave()) +k/2,2));
+	    Emin = 0.95*min(Ea,Eb);
+	    Emin = 2*sqrt( pow(Mpi,2) + pow(k/2,2));
+
+	    
+	    cout<<"##### XGAMMA: "<<xgamma_list[xg]<<endl;
+
+	    double aE0_naive =  ( Mpi + sqrt( pow(Mpi,2) + pow(k,2)))*a_distr.ave();
+	    double erg= MK_FLAG*a_distr.ave()*sqrt( pow(xk_list_tailored[xk],2) + pow(0.5*stod(xgamma_list[xg]),2));
+	    double erg_GeV = erg/a_distr.ave();
+	    double sigma= eps_list[ieps]*a_distr.ave();
+	    double sigma_GeV= sigma/a_distr.ave();
+	    	    
+	    double syst, l;
+	    
+	    //######### HLT PARS ##########
+	    double mult_IM = 5e-5;
+	    double mult_RE = 1e-4;
+
+	    mult_IM *= 10.0;
+	    mult_RE *= 10.0;
+	    
+	    double Ag_target= 1e-3;
+	    int tmax;
+	    if(Ens.substr(0,1)=="B" ) tmax=38;
+	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
+	    double Emax=0.0;
+	    int Is_Emax_Finite=(Emax > 1e-10)?1:0;
+	    double alpha=0.0;
+	    int prec=90;
+	    //############################
+	    PrecFloat::setDefaultPrecision(prec);
+	    
+	    
+	    distr_t C_0 = 0.0*Get_id_jack_distr(Nj);
+	    distr_t C_0_2 = 0.0*Get_id_jack_distr(Nj);
+	    distr_t C_0_V = 0.0*Get_id_jack_distr(Nj);
+	    distr_t C_0_A = 0.0*Get_id_jack_distr(Nj);
+	    
+	    
+	    for(int t=1;t<TT;t++) {
+	      C_0 = C_0 + C.distr_list[t];
+	      C_0_2 = C_0_2 + C_2.distr_list[t];
+	      C_0_V = C_0_V + C_V.distr_list[t];
+	      C_0_A = C_0_A + C_A.distr_list[t];
+	    }
+
+	    if(Ens.substr(0,1)=="B" ) tmax=38;
+	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
+
+	    
+	    //#######  H1
+	    distr_t F_RE_naive =  Get_Laplace_transfo(  erg,  sigma, aE0_naive,   TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C , syst, mult_RE, l, "TANT", "H1_naive_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0;
+	    F_RE_naive = F_RE_naive.ave() + (F_RE_naive-F_RE_naive.ave())*sqrt( 1.0 + pow(syst/F_RE_naive.err(),2));
+	    distr_t F_IM_naive =  Get_Laplace_transfo(  erg,  sigma, aE0_naive,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C , syst, mult_IM, l, "TANT", "H1_naive_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
+	    F_IM_naive = F_IM_naive.ave() + (F_IM_naive-F_IM_naive.ave())*sqrt( 1.0 + pow(syst/F_IM_naive.err(),2));
+
+	    if(Ens.substr(0,1)=="B" ) tmax=30;
+	    else tmax = (int)(  30.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
+	    
+	    //#########  H2
+	    distr_t F_2_RE_naive =  Get_Laplace_transfo(  erg,  sigma, aE0_naive,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C_2 , syst, mult_RE, l, "TANT", "H2_naive_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_2, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0_2;
+	    F_2_RE_naive = F_2_RE_naive.ave() + (F_2_RE_naive-F_2_RE_naive.ave())*sqrt( 1.0 + pow(syst/F_2_RE_naive.err(),2));
+	    distr_t F_2_IM_naive =  Get_Laplace_transfo(  erg,  sigma, aE0_naive,   TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C_2 , syst, mult_IM, l, "TANT", "H2_naive_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_2, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha,1);
+	    F_2_IM_naive = F_2_IM_naive.ave() + (F_2_IM_naive-F_2_IM_naive.ave())*sqrt( 1.0 + pow(syst/F_2_IM_naive.err(),2));
+	    //#########  FA
+	    distr_t F_A_RE_naive =  Get_Laplace_transfo(  erg,  sigma, aE0_naive,   TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C_A , syst, mult_RE, l, "TANT", "FA_naive_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_A, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0_A;
+	    F_A_RE_naive = F_A_RE_naive.ave() + (F_A_RE_naive-F_A_RE_naive.ave())*sqrt( 1.0 + pow(syst/F_A_RE_naive.err(),2));
+	    distr_t F_A_IM_naive =  Get_Laplace_transfo(  erg,  sigma, aE0_naive,   TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C_A , syst, mult_IM, l, "TANT", "FA_naive_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_A, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
+	    F_A_IM_naive = F_A_IM_naive.ave() + (F_A_IM_naive-F_A_IM_naive.ave())*sqrt( 1.0 + pow(syst/F_A_IM_naive.err(),2));
+	    //#########  FV
+	    distr_t F_V_RE_naive =  Get_Laplace_transfo(  erg,  sigma, aE0_naive,  TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C_V , syst, mult_RE, l, "TANT", "FV_naive_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_V, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0_V;
+	    F_V_RE_naive = F_V_RE_naive.ave() + (F_V_RE_naive-F_V_RE_naive.ave())*sqrt( 1.0 + pow(syst/F_V_RE_naive.err(),2));
+	    distr_t F_V_IM_naive =  Get_Laplace_transfo(  erg,  sigma, aE0_naive,   TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_IM, C_V , syst, mult_IM, l, "TANT", "FV_naive_"+Ens_Tag[iens], "IM", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov_V, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1);
+	    F_V_IM_naive = F_V_IM_naive.ave() + (F_V_IM_naive-F_V_IM_naive.ave())*sqrt( 1.0 + pow(syst/F_V_IM_naive.err(),2));
+	    
+	    
+	    //push back the results
+	    H1_RE_naive[iens][xg][xk].distr_list[ieps] = F_RE_naive;
+	    H1_IM_naive[iens][xg][xk].distr_list[ieps] = F_IM_naive;
+
+	    //push back the results
+	    H2_RE_naive[iens][xg][xk].distr_list[ieps] = F_2_RE_naive;
+	    H2_IM_naive[iens][xg][xk].distr_list[ieps] = F_2_IM_naive;
+
+	    //push back the results
+	    FA_RE_naive[iens][xg][xk].distr_list[ieps] = F_A_RE_naive;
+	    FA_IM_naive[iens][xg][xk].distr_list[ieps] = F_A_IM_naive;
+
+	    //push back the results
+	    FV_RE_naive[iens][xg][xk].distr_list[ieps] = F_V_RE_naive;
+	    FV_IM_naive[iens][xg][xk].distr_list[ieps] = F_V_IM_naive;
+	    
+	  }
+#pragma omp barrier
 	
 	  
 	  
@@ -1803,15 +1936,19 @@ void Do_HLT_virtual() {
 	for(int xk=0; xk<(signed)xk_list_tailored.size(); xk++) {
 	  Print_To_File({}, { eps_list,  H1_RE[iens][xg][xk].ave(), H1_RE[iens][xg][xk].err(), H1_IM[iens][xg][xk].ave(), H1_IM[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H1_xk_"+xk_list[xk],"","");
 	  Print_To_File({}, { eps_list,  H1_RE_odg[iens][xg][xk].ave(), H1_RE_odg[iens][xg][xk].err(), H1_IM_odg[iens][xg][xk].ave(), H1_IM_odg[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H1_xk_"+xk_list[xk]+"_odg","","");
+	  Print_To_File({}, { eps_list,  H1_RE_naive[iens][xg][xk].ave(), H1_RE_naive[iens][xg][xk].err(), H1_IM_naive[iens][xg][xk].ave(), H1_IM_naive[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H1_xk_"+xk_list[xk]+"_naive","","");
 
 	  Print_To_File({}, { eps_list,  H2_RE[iens][xg][xk].ave(), H2_RE[iens][xg][xk].err(), H2_IM[iens][xg][xk].ave(), H2_IM[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H2_xk_"+xk_list[xk],"","");
 	  Print_To_File({}, { eps_list,  H2_RE_odg[iens][xg][xk].ave(), H2_RE_odg[iens][xg][xk].err(), H2_IM_odg[iens][xg][xk].ave(), H2_IM_odg[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H2_xk_"+xk_list[xk]+"_odg","","");
+	  Print_To_File({}, { eps_list,  H2_RE_naive[iens][xg][xk].ave(), H2_RE_naive[iens][xg][xk].err(), H2_IM_naive[iens][xg][xk].ave(), H2_IM_naive[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H2_xk_"+xk_list[xk]+"_naive","","");
 
 	  Print_To_File({}, { eps_list,  FA_RE[iens][xg][xk].ave(), FA_RE[iens][xg][xk].err(), FA_IM[iens][xg][xk].ave(), FA_IM[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FA_xk_"+xk_list[xk],"","");
 	  Print_To_File({}, { eps_list,  FA_RE_odg[iens][xg][xk].ave(), FA_RE_odg[iens][xg][xk].err(), FA_IM_odg[iens][xg][xk].ave(), FA_IM_odg[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FA_xk_"+xk_list[xk]+"_odg","","");
+	  Print_To_File({}, { eps_list,  FA_RE_naive[iens][xg][xk].ave(), FA_RE_naive[iens][xg][xk].err(), FA_IM_naive[iens][xg][xk].ave(), FA_IM_naive[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FA_xk_"+xk_list[xk]+"_naive","","");
 	  
 	  Print_To_File({}, { eps_list,  FV_RE[iens][xg][xk].ave(), FV_RE[iens][xg][xk].err(), FV_IM[iens][xg][xk].ave(), FV_IM[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FV_xk_"+xk_list[xk],"","");
 	  Print_To_File({}, { eps_list,  FV_RE_odg[iens][xg][xk].ave(), FV_RE_odg[iens][xg][xk].err(), FV_IM_odg[iens][xg][xk].ave(), FV_IM_odg[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FV_xk_"+xk_list[xk]+"_odg","","");
+	  Print_To_File({}, { eps_list,  FV_RE_naive[iens][xg][xk].ave(), FV_RE_naive[iens][xg][xk].err(), FV_IM_naive[iens][xg][xk].ave(), FV_IM_naive[iens][xg][xk].err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FV_xk_"+xk_list[xk]+"_naive","","");
 
 	  
 
@@ -1825,21 +1962,29 @@ void Do_HLT_virtual() {
 	  distr_t_list H1_IM_reshuffled(UseJack);
 	  distr_t_list H1_RE_reshuffled_odg(UseJack);
 	  distr_t_list H1_IM_reshuffled_odg(UseJack);
+	  distr_t_list H1_RE_reshuffled_naive(UseJack);
+	  distr_t_list H1_IM_reshuffled_naive(UseJack);
 
 	  distr_t_list H2_RE_reshuffled(UseJack);
 	  distr_t_list H2_IM_reshuffled(UseJack);
 	  distr_t_list H2_RE_reshuffled_odg(UseJack);
 	  distr_t_list H2_IM_reshuffled_odg(UseJack);
+	  distr_t_list H2_RE_reshuffled_naive(UseJack);
+	  distr_t_list H2_IM_reshuffled_naive(UseJack);
 
 	  distr_t_list FA_RE_reshuffled(UseJack);
 	  distr_t_list FA_IM_reshuffled(UseJack);
 	  distr_t_list FA_RE_reshuffled_odg(UseJack);
 	  distr_t_list FA_IM_reshuffled_odg(UseJack);
+	  distr_t_list FA_RE_reshuffled_naive(UseJack);
+	  distr_t_list FA_IM_reshuffled_naive(UseJack);
 
 	  distr_t_list FV_RE_reshuffled(UseJack);
 	  distr_t_list FV_IM_reshuffled(UseJack);
 	  distr_t_list FV_RE_reshuffled_odg(UseJack);
 	  distr_t_list FV_IM_reshuffled_odg(UseJack);
+	  distr_t_list FV_RE_reshuffled_naive(UseJack);
+	  distr_t_list FV_IM_reshuffled_naive(UseJack);
 
 	 
 	  
@@ -1850,21 +1995,29 @@ void Do_HLT_virtual() {
 	    H1_IM_reshuffled.distr_list.push_back( H1_IM[iens][xg][xk].distr_list[eps] );
 	    H1_RE_reshuffled_odg.distr_list.push_back( H1_RE_odg[iens][xg][xk].distr_list[eps] );
 	    H1_IM_reshuffled_odg.distr_list.push_back( H1_IM_odg[iens][xg][xk].distr_list[eps] );
+	    H1_RE_reshuffled_naive.distr_list.push_back( H1_RE_naive[iens][xg][xk].distr_list[eps] );
+	    H1_IM_reshuffled_naive.distr_list.push_back( H1_IM_naive[iens][xg][xk].distr_list[eps] );
 
 	    H2_RE_reshuffled.distr_list.push_back( H2_RE[iens][xg][xk].distr_list[eps] );
 	    H2_IM_reshuffled.distr_list.push_back( H2_IM[iens][xg][xk].distr_list[eps] );
 	    H2_RE_reshuffled_odg.distr_list.push_back( H2_RE_odg[iens][xg][xk].distr_list[eps] );
 	    H2_IM_reshuffled_odg.distr_list.push_back( H2_IM_odg[iens][xg][xk].distr_list[eps] );
+	    H2_RE_reshuffled_naive.distr_list.push_back( H2_RE_naive[iens][xg][xk].distr_list[eps] );
+	    H2_IM_reshuffled_naive.distr_list.push_back( H2_IM_naive[iens][xg][xk].distr_list[eps] );
 
 	    FA_RE_reshuffled.distr_list.push_back( FA_RE[iens][xg][xk].distr_list[eps] );
 	    FA_IM_reshuffled.distr_list.push_back( FA_IM[iens][xg][xk].distr_list[eps] );
 	    FA_RE_reshuffled_odg.distr_list.push_back( FA_RE_odg[iens][xg][xk].distr_list[eps] );
 	    FA_IM_reshuffled_odg.distr_list.push_back( FA_IM_odg[iens][xg][xk].distr_list[eps] );
+	    FA_RE_reshuffled_naive.distr_list.push_back( FA_RE_naive[iens][xg][xk].distr_list[eps] );
+	    FA_IM_reshuffled_naive.distr_list.push_back( FA_IM_naive[iens][xg][xk].distr_list[eps] );
 
 	    FV_RE_reshuffled.distr_list.push_back( FV_RE[iens][xg][xk].distr_list[eps] );
 	    FV_IM_reshuffled.distr_list.push_back( FV_IM[iens][xg][xk].distr_list[eps] );
 	    FV_RE_reshuffled_odg.distr_list.push_back( FV_RE_odg[iens][xg][xk].distr_list[eps] );
 	    FV_IM_reshuffled_odg.distr_list.push_back( FV_IM_odg[iens][xg][xk].distr_list[eps] );
+	    FV_RE_reshuffled_naive.distr_list.push_back( FV_RE_naive[iens][xg][xk].distr_list[eps] );
+	    FV_IM_reshuffled_naive.distr_list.push_back( FV_IM_naive[iens][xg][xk].distr_list[eps] );
 
 	  }
 
@@ -1872,19 +2025,23 @@ void Do_HLT_virtual() {
 	  //H1
 	  Print_To_File({}, { xk_list_tailored , H1_RE_reshuffled.ave(), H1_RE_reshuffled.err(), H1_IM_reshuffled.ave(), H1_IM_reshuffled.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H1_eps_"+to_string_with_precision(eps,3),"","");
 	  Print_To_File({}, { xk_list_tailored , H1_RE_reshuffled_odg.ave(), H1_RE_reshuffled_odg.err(), H1_IM_reshuffled_odg.ave(), H1_IM_reshuffled_odg.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H1_eps_"+to_string_with_precision(eps,3)+"_odg","","");
+	  Print_To_File({}, { xk_list_tailored , H1_RE_reshuffled_naive.ave(), H1_RE_reshuffled_naive.err(), H1_IM_reshuffled_naive.ave(), H1_IM_reshuffled_naive.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H1_eps_"+to_string_with_precision(eps,3)+"_naive","","");
 
 	  //H2
 	  Print_To_File({}, { xk_list_tailored , H2_RE_reshuffled.ave(), H2_RE_reshuffled.err(), H2_IM_reshuffled.ave(), H2_IM_reshuffled.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H2_eps_"+to_string_with_precision(eps,3),"","");
 	  Print_To_File({}, { xk_list_tailored , H2_RE_reshuffled_odg.ave(), H2_RE_reshuffled_odg.err(), H2_IM_reshuffled_odg.ave(), H2_IM_reshuffled_odg.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H2_eps_"+to_string_with_precision(eps,3)+"_odg","","");
+	  Print_To_File({}, { xk_list_tailored , H2_RE_reshuffled_naive.ave(), H2_RE_reshuffled_naive.err(), H2_IM_reshuffled_naive.ave(), H2_IM_reshuffled_naive.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/H2_eps_"+to_string_with_precision(eps,3)+"_naive","","");
 
 	  //FA
 	  Print_To_File({}, { xk_list_tailored , FA_RE_reshuffled.ave(), FA_RE_reshuffled.err(), FA_IM_reshuffled.ave(), FA_IM_reshuffled.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FA_eps_"+to_string_with_precision(eps,3),"","");
 	  Print_To_File({}, { xk_list_tailored , FA_RE_reshuffled_odg.ave(), FA_RE_reshuffled_odg.err(), FA_IM_reshuffled_odg.ave(), FA_IM_reshuffled_odg.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FA_eps_"+to_string_with_precision(eps,3)+"_odg","","");
+	  Print_To_File({}, { xk_list_tailored , FA_RE_reshuffled_naive.ave(), FA_RE_reshuffled_naive.err(), FA_IM_reshuffled_naive.ave(), FA_IM_reshuffled_naive.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FA_eps_"+to_string_with_precision(eps,3)+"_naive","","");
 
 
 	  //FV
 	  Print_To_File({}, { xk_list_tailored , FV_RE_reshuffled.ave(), FV_RE_reshuffled.err(), FV_IM_reshuffled.ave(), FV_IM_reshuffled.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FV_eps_"+to_string_with_precision(eps,3),"","");
 	  Print_To_File({}, { xk_list_tailored , FV_RE_reshuffled_odg.ave(), FV_RE_reshuffled_odg.err(), FV_IM_reshuffled_odg.ave(), FV_IM_reshuffled_odg.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FV_eps_"+to_string_with_precision(eps,3)+"_odg","","");
+	  Print_To_File({}, { xk_list_tailored , FV_RE_reshuffled_naive.ave(), FV_RE_reshuffled_naive.err(), FV_IM_reshuffled_naive.ave(), FV_IM_reshuffled_naive.err() }, "../data/HLT_virtual/"+Ens_Tag[iens]+"/xg_"+xgamma_list[xg]+"/FV_eps_"+to_string_with_precision(eps,3)+"_naive","","");
 	
 	  
 	}
