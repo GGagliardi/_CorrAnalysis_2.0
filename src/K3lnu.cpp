@@ -1155,7 +1155,10 @@ void Do_HLT_virtual() {
     string Ens=Ens_Tag[iens];
     int id_xg=-1;
     int Ntimes;
-    if(Ens.substr(0,1) == "B") Ntimes=40;
+    if(Ens.substr(0,1) == "B") {
+      if(Ens == "cB211b.072.96") Ntimes=75;
+      else Ntimes=40;
+    }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
     else Ntimes=56;
     c.resize(xgamma_list.size());
@@ -1178,7 +1181,10 @@ void Do_HLT_virtual() {
     string Ens=Ens_Tag[iens];
     int id_xg=-1;
     int Ntimes;
-    if(Ens.substr(0,1) == "B") Ntimes=40;
+    if(Ens.substr(0,1) == "B") {
+      if(Ens == "cB211b.072.96") Ntimes=75;
+      else Ntimes=40;
+    }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
     else Ntimes=56;
     c.resize(xgamma_list.size());
@@ -1218,7 +1224,10 @@ void Do_HLT_virtual() {
     string Ens=Ens_Tag[iens];
     int id_xg=-1;
     int Ntimes;
-    if(Ens.substr(0,1) == "B") Ntimes=40;
+    if(Ens.substr(0,1) == "B") {
+      if(Ens == "cB211b.072.96") Ntimes=75;
+      else Ntimes=40;
+    }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
     else Ntimes=56;
     c.resize(xgamma_list.size());
@@ -1241,7 +1250,10 @@ void Do_HLT_virtual() {
     string Ens=Ens_Tag[iens];
     int id_xg=-1;
     int Ntimes;
-    if(Ens.substr(0,1) == "B") Ntimes=40;
+    if(Ens.substr(0,1) == "B") {
+      if(Ens == "cB211b.072.96") Ntimes=75;
+      else Ntimes=40;
+    }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
     else Ntimes=56;
     c.resize(xgamma_list.size());
@@ -1280,7 +1292,10 @@ void Do_HLT_virtual() {
     string Ens=Ens_Tag[iens];
     int id_xg=-1;
     int Ntimes;
-    if(Ens.substr(0,1) == "B") Ntimes=40;
+    if(Ens.substr(0,1) == "B") {
+      if(Ens == "cB211b.072.96") Ntimes=75;
+      else Ntimes=40;
+    }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
     else Ntimes=56;
     c.resize(xgamma_list.size());
@@ -1303,7 +1318,10 @@ void Do_HLT_virtual() {
     string Ens=Ens_Tag[iens];
     int id_xg=-1;
     int Ntimes;
-    if(Ens.substr(0,1) == "B") Ntimes=40;
+    if(Ens.substr(0,1) == "B") {
+      if(Ens == "cB211b.072.96") Ntimes=75;
+      else Ntimes=40;
+    }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
     else Ntimes=56;
     c.resize(xgamma_list.size());
@@ -1344,7 +1362,10 @@ void Do_HLT_virtual() {
     string Ens=Ens_Tag[iens];
     int id_xg=-1;
     int Ntimes;
-    if(Ens.substr(0,1) == "B") Ntimes=40;
+    if(Ens.substr(0,1) == "B") {
+      if(Ens == "cB211b.072.96") Ntimes=75;
+      else Ntimes=40;
+    }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
     else Ntimes=56;
     c.resize(xgamma_list.size());
@@ -1367,7 +1388,10 @@ void Do_HLT_virtual() {
     string Ens=Ens_Tag[iens];
     int id_xg=-1;
     int Ntimes;
-    if(Ens.substr(0,1) == "B") Ntimes=40;
+    if(Ens.substr(0,1) == "B") {
+      if(Ens == "cB211b.072.96") Ntimes=75;
+      else Ntimes=40;
+    }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
     else Ntimes=56;
     c.resize(xgamma_list.size());
@@ -1614,7 +1638,10 @@ void Do_HLT_virtual() {
 	    
 	    double Ag_target= 1e-3;
 	    int tmax;
-	    if(Ens.substr(0,1)=="B" ) tmax=38;
+	    if(Ens.substr(0,1) == "B") {
+	      if(Ens == "cB211b.072.96") tmax=48;
+	      else tmax=38;
+	    }
 	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
 	    double Emax=0.0;
 	    int Is_Emax_Finite=(Emax > 1e-10)?1:0;
@@ -1717,7 +1744,10 @@ void Do_HLT_virtual() {
 	    
 	    double Ag_target= 1e-3;
 	    int tmax;
-	    if(Ens.substr(0,1)=="B" ) tmax=38;
+	    if(Ens.substr(0,1) == "B") {
+	      if(Ens == "cB211b.072.96") tmax=48;
+	      else tmax=38;
+	    }
 	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
 	    double Emax=0.0;
 	    int Is_Emax_Finite=(Emax > 1e-10)?1:0;
@@ -1741,10 +1771,7 @@ void Do_HLT_virtual() {
 	      C_0_A = C_0_A + C_A.distr_list[t];
 	    }
 
-	    if(Ens.substr(0,1)=="B" ) tmax=38;
-	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
-
-	    
+	   	    
 	    //#######  H1
 	    distr_t F_RE_odg =  Get_Laplace_transfo(  erg,  sigma, aE0_odg, TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C , syst, mult_RE, l, "TANT", "H1_odg_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0;
 	    F_RE_odg = F_RE_odg.ave() + (F_RE_odg-F_RE_odg.ave())*sqrt( 1.0 + pow(syst/F_RE_odg.err(),2));
@@ -1822,7 +1849,10 @@ void Do_HLT_virtual() {
 	    
 	    double Ag_target= 1e-3;
 	    int tmax;
-	    if(Ens.substr(0,1)=="B" ) tmax=38;
+	    if(Ens.substr(0,1) == "B") {
+	      if(Ens == "cB211b.072.96") tmax=48;
+	      else tmax=38;
+	    }
 	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
 	    double Emax=0.0;
 	    int Is_Emax_Finite=(Emax > 1e-10)?1:0;
@@ -1845,10 +1875,7 @@ void Do_HLT_virtual() {
 	      C_0_A = C_0_A + C_A.distr_list[t];
 	    }
 
-	    if(Ens.substr(0,1)=="B" ) tmax=38;
-	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
-
-	    
+	  	    
 	    //#######  H1
 	    distr_t F_RE_naive =  Get_Laplace_transfo(  erg,  sigma, aE0_naive,   TT, tmax , prec, "xk_"+to_string_with_precision(xk_list_tailored[xk],3)+"_xg_"+xgamma_list[xg]+"_Erg_"+to_string_with_precision(erg_GeV,3)+"_Emin_"+to_string_with_precision(Emin,3)+"_s_"+to_string_with_precision(sigma_GeV,3),K_RE, C , syst, mult_RE, l, "TANT", "H1_naive_"+Ens_Tag[iens], "RE", Ag_target,0, Get_id_distr(Nj,UseJack) , 0.0 , "K_virtual", Cov, fake_func,0, fake_func_d , Is_Emax_Finite, Emax, alpha, 1) - C_0;
 	    F_RE_naive = F_RE_naive.ave() + (F_RE_naive-F_RE_naive.ave())*sqrt( 1.0 + pow(syst/F_RE_naive.err(),2));
