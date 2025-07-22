@@ -1156,7 +1156,7 @@ void Do_HLT_virtual() {
     int id_xg=-1;
     int Ntimes;
     if(Ens.substr(0,1) == "B") {
-      if(Ens == "cB211b.072.96") Ntimes=75;
+      if(Ens == "B96") Ntimes=75;
       else Ntimes=40;
     }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
@@ -1182,7 +1182,7 @@ void Do_HLT_virtual() {
     int id_xg=-1;
     int Ntimes;
     if(Ens.substr(0,1) == "B") {
-      if(Ens == "cB211b.072.96") Ntimes=75;
+      if(Ens == "B96") Ntimes=75;
       else Ntimes=40;
     }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
@@ -1225,7 +1225,7 @@ void Do_HLT_virtual() {
     int id_xg=-1;
     int Ntimes;
     if(Ens.substr(0,1) == "B") {
-      if(Ens == "cB211b.072.96") Ntimes=75;
+      if(Ens == "B96") Ntimes=75;
       else Ntimes=40;
     }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
@@ -1251,7 +1251,7 @@ void Do_HLT_virtual() {
     int id_xg=-1;
     int Ntimes;
     if(Ens.substr(0,1) == "B") {
-      if(Ens == "cB211b.072.96") Ntimes=75;
+      if(Ens == "B96") Ntimes=75;
       else Ntimes=40;
     }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
@@ -1293,7 +1293,7 @@ void Do_HLT_virtual() {
     int id_xg=-1;
     int Ntimes;
     if(Ens.substr(0,1) == "B") {
-      if(Ens == "cB211b.072.96") Ntimes=75;
+      if(Ens == "B96") Ntimes=75;
       else Ntimes=40;
     }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
@@ -1319,7 +1319,7 @@ void Do_HLT_virtual() {
     int id_xg=-1;
     int Ntimes;
     if(Ens.substr(0,1) == "B") {
-      if(Ens == "cB211b.072.96") Ntimes=75;
+      if(Ens == "B96") Ntimes=75;
       else Ntimes=40;
     }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
@@ -1363,7 +1363,7 @@ void Do_HLT_virtual() {
     int id_xg=-1;
     int Ntimes;
     if(Ens.substr(0,1) == "B") {
-      if(Ens == "cB211b.072.96") Ntimes=75;
+      if(Ens == "B96") Ntimes=75;
       else Ntimes=40;
     }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
@@ -1389,7 +1389,7 @@ void Do_HLT_virtual() {
     int id_xg=-1;
     int Ntimes;
     if(Ens.substr(0,1) == "B") {
-      if(Ens == "cB211b.072.96") Ntimes=75;
+      if(Ens == "B96") Ntimes=75;
       else Ntimes=40;
     }
     else if(Ens.substr(0,1) =="C") Ntimes=47;
@@ -1639,7 +1639,7 @@ void Do_HLT_virtual() {
 	    double Ag_target= 1e-3;
 	    int tmax;
 	    if(Ens.substr(0,1) == "B") {
-	      if(Ens == "cB211b.072.96") tmax=48;
+	      if(Ens == "B96") tmax=48;
 	      else tmax=38;
 	    }
 	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
@@ -1745,7 +1745,7 @@ void Do_HLT_virtual() {
 	    double Ag_target= 1e-3;
 	    int tmax;
 	    if(Ens.substr(0,1) == "B") {
-	      if(Ens == "cB211b.072.96") tmax=48;
+	      if(Ens == "B96") tmax=48;
 	      else tmax=38;
 	    }
 	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
@@ -1850,7 +1850,7 @@ void Do_HLT_virtual() {
 	    double Ag_target= 1e-3;
 	    int tmax;
 	    if(Ens.substr(0,1) == "B") {
-	      if(Ens == "cB211b.072.96") tmax=48;
+	      if(Ens == "B96") tmax=48;
 	      else tmax=38;
 	    }
 	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
