@@ -1639,7 +1639,7 @@ void Do_HLT_virtual() {
 	    double Ag_target= 1e-3;
 	    int tmax;
 	    if(Ens.substr(0,1) == "B") {
-	      if(Ens == "B96") tmax=48;
+	      if(Ens == "B96") tmax=58;
 	      else tmax=38;
 	    }
 	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
@@ -1745,7 +1745,7 @@ void Do_HLT_virtual() {
 	    double Ag_target= 1e-3;
 	    int tmax;
 	    if(Ens.substr(0,1) == "B") {
-	      if(Ens == "B96") tmax=48;
+	      if(Ens == "B96") tmax=58;
 	      else tmax=38;
 	    }
 	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
@@ -1850,7 +1850,7 @@ void Do_HLT_virtual() {
 	    double Ag_target= 1e-3;
 	    int tmax;
 	    if(Ens.substr(0,1) == "B") {
-	      if(Ens == "B96") tmax=48;
+	      if(Ens == "B96") tmax=58;
 	      else tmax=38;
 	    }
 	    else tmax = (int)(  38.0*0.0795*fm_to_inv_Gev/a_distr.ave() );
